@@ -6,6 +6,7 @@ from aqt.qt import *
 from anki.hooks import runHook, addHook, wrap
 import aqt
 import aqt.webview
+from anki.find import Finder
 import aqt.editor
 from aqt.editor import Editor
 import aqt.stats
@@ -63,7 +64,7 @@ def initAddon():
         }
         function sendSearchFieldContent() {
            html = $('#searchMask').val() + "\u001f";
-           pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
+           pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
         }
 
         function searchFor(text) {
@@ -87,6 +88,8 @@ def myOnBridgeCmd(self, cmd):
     """
     if (cmd.startswith("fldChgd ")):
         rerenderInfo(self, cmd[8:])
+    elif (cmd.startswith("srchDB ")):
+        rerenderInfo(self, cmd[7:], searchDB = True)
     elif (cmd.startswith("fldSlctd ")):
         rerenderInfo(self, cmd[9:])
     elif (cmd.startswith("wiki ")):
@@ -155,7 +158,7 @@ def onLoadNote(editor):
                      
                             <div class='flexCol'> 
                                 <div class='flexContainer' style="flex-wrap: nowrap;">
-                                    <input id='searchMask' placeholder='Type keywords to search...' onkeyup='searchMaskKeypress(event)'></input> 
+                                    <input id='searchMask' placeholder='Search here works like in the browser...' onkeyup='searchMaskKeypress(event)'></input> 
                                     <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
                                 </div>
                             </div>
@@ -216,6 +219,9 @@ def setWikiSummary(text):
         cmd = "document.getElementById('wiki').style.display = `block`; document.getElementById('wiki').innerHTML = `" + text+ "`;"
     editorO.web.eval(cmd)
 
+
+
+
 class SearchIndex:
     """
     Wraps the whoosh index object, provides method to query.
@@ -260,8 +266,33 @@ class SearchIndex:
                     else:
                         rList.append((r["content"], r["tags"], r["did"], r["nid"]))
             return rList
-    
 
+    def searchDB(self, text, decks):
+        """
+        WIP: this shall be used for searches in the search mask,
+        doesn't use the index, instead use the traditional anki search (which is more powerful for single keywords)
+        """
+        found = self.finder.findNotes(text)
+        
+        if len (found) > 0:
+            if not "-1" in decks:
+                deckQ =  "(%s)" % ",".join(decks)
+            else:
+                deckQ = ""
+            #query db with found ids
+            foundQ = "(%s)" % ",".join([str(f) for f in found])
+            if deckQ:
+                res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ)).fetchall()
+            else:
+                res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ)).fetchall()
+            rList = []
+            for r in res:
+                #pinned items should not appear in the results
+                if not str(r[0]) in self.pinned:
+                    #todo: implement highlighting
+                    rList.append((r[1], r[2], r[3], r[0]))
+            return rList
+        return []
 
     def _markHighlights(self, text, highlights):
         """
@@ -389,7 +420,7 @@ def renderSuggestions(editor, content=""):
             editor.web.eval("document.getElementById('hvrBox').style.display = 'block'; document.getElementById('hvrBox').innerHTML = `" + sugs[0] + "`; hvrBoxIndex = 0; hvrBoxLength = " + str(sugs[1]))
     sugRequestRunning = False
 
-def rerenderInfo(editor, content=""):
+def rerenderInfo(editor, content="", searchDB = False):
     """
     Main function that is executed when a user has typed or manually entered a search.
 
@@ -402,8 +433,12 @@ def rerenderInfo(editor, content=""):
     for s in content[:content.index('~')].split(','):
       decks.append(s.strip())
     content = cleanQueryString(content[content.index('~ ') + 2:])
-    if searchIndex is not None and len(content) > 2:
-      searchRes = searchIndex.search(content, decks)
+    if searchIndex is not None and len(content) > 1:
+      #distinguish between index searches and db searches
+      if searchDB:
+        searchRes = searchIndex.searchDB(content, decks)  
+      else:
+        searchRes = searchIndex.search(content, decks)
       if len(searchRes) > 0:
         printSearchResults(searchRes, editor)
       else:
@@ -521,6 +556,7 @@ def _buildIndex():
     end = time.time()
     initializationTime = round(end - start)
     searchIndex = SearchIndex(index, queryparser, deckQueryparser)
+    searchIndex.finder = Finder(mw.col)
     searchIndex.initializationTime = initializationTime
     try:
         limit = config['numberOfResults']
