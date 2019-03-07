@@ -277,3 +277,7 @@ function moveInsideHvrBox(keyCode) {
 
 }
 
+
+function toggleTooltip(elem) {
+    $(elem).children().first().toggle();
+}

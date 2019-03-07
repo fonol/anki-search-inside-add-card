@@ -298,3 +298,40 @@
       opacity: 0;
     }
 }
+
+   /* tooltip */
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+  }
+
+  .tooltip-blue {
+    color: white;
+    background: #2496dc;
+    border-radius: 2px;
+    font-size: 16px;
+    padding: 0 6px 0 6px;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+  
+  .tooltip .tooltiptext {
+    display: none;
+    width: 240px;
+    background-color: white;
+    color: black;
+    font-size: 12px;
+    text-align: center;
+    border: 1px solid #2496dc;
+    padding: 10px;
+    position: absolute;
+    z-index: 99999999;
+    bottom: 95%;
+    left: 50%;
+    margin-left: -7px;
+  }
+
+  .tooltiptext td {
+      text-align: left;
+  }
