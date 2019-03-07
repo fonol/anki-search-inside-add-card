@@ -509,7 +509,7 @@ def _buildIndex():
     #limitmb can be set down
     writer = index.writer(limitmb=256)
     #todo: check if there is some kind of batch insert
-    or note in corpus:
+    for note in corpus:
         writer.add_document(content=note[1], tags=note[2], did=str(note[3]), nid=str(note[0]))
     writer.commit()
     #todo: allow user to toggle between and / or queries
