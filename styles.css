@@ -213,7 +213,7 @@
     height: 120px;
     margin-bottom: 5px !important;
     width: 100%;
-    max-width: 300px;
+    max-width: 350px;
     overflow-y: auto;
 }
 
@@ -298,6 +298,23 @@
       opacity: 0;
     }
 }
+
+#freeze-icon {
+    position: absolute; 
+    bottom: 5px; 
+    right: 5px; 
+    font-size: 19px;
+    cursor: pointer;
+    color: grey;
+}
+#freeze-icon:hover {
+    color:  #2496dc;
+}
+
+#freeze-icon.frozen {
+    color:  #2496dc !important;
+}
+
 
    /* tooltip */
 

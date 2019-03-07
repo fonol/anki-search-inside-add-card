@@ -281,3 +281,14 @@ function moveInsideHvrBox(keyCode) {
 function toggleTooltip(elem) {
     $(elem).children().first().toggle();
 }
+
+function toggleFreeze(elem) {
+    isFrozen = ! isFrozen;
+    if ($(elem).hasClass('frozen')) {
+        $(elem).removeClass('frozen');
+        $(elem).html("FREEZE &#10052;");
+    } else {
+        $(elem).addClass('frozen');
+        $(elem).html("FROZEN &#10052;");
+    }
+}

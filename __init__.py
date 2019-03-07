@@ -136,13 +136,15 @@ def onLoadNote(editor):
                                 <table id='deckSel'></table>
                             </div>
                         </div>
-                        <div class='flexCol right'>
+                        <div class='flexCol right' style="position: relative;">
                             <table>
                                 <tr><td class='tbLb'>Search on selection</td><td><input type='checkbox' checked onchange='searchOnSelection = $(this).is(":checked");'/></td></tr>
                                 <tr><td class='tbLb'>Highlight results</td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
                                 <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='useInfoBox = $(this).is(":checked");'/></td></tr>
-                                <tr><td class='tbLb'>Freeze</td><td><input type='checkbox' id='freezeBox' onchange='isFrozen = $(this).is(":checked");'/></td></tr>
                             </table>
+                            <div id='freeze-icon' onclick='toggleFreeze(this)'>
+                                 FREEZE &#10052; 
+                            </div>
                        </div>
                   </div>
                   
@@ -164,10 +166,10 @@ def onLoadNote(editor):
                                                 <tr><td>dog or cat </td><td> either "dog" or "cat"  </td></tr>
                                                 <tr><td>dog (cat or mouse)  </td><td>  dog and cat, or dog and mouse </td></tr>
                                                 <tr><td> -cat </td><td> without the word "cat" </td></tr>
-                                                <tr><td> -cat -mouse  </td><td>  neither "cat" nor "mouse"  </td></tr>
-                                                <tr><td> "a dog" </td><td>  exact phrase </td></tr>
+                                                <tr><td> -cat -mouse </td><td>  neither "cat" nor "mouse"  </td></tr>
+                                                <tr><td> "a dog" </td><td>exact phrase </td></tr>
                                                 <tr><td> -"a dog" </td><td> without the exact phrase</td></tr>
-                                                <tr><td>d_g  </td><td>    d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
+                                                <tr><td>d_g  </td><td> d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
                                                 <tr><td> d*g </td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
                                             </table>
                                          </div>
@@ -176,7 +178,6 @@ def onLoadNote(editor):
                                     <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
                                 </div>
                             </div>
-                           
                         </div>
                       </div>
                  </div>`).insertAfter('#fields');
