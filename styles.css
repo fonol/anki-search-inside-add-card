@@ -11,7 +11,7 @@
 }
 #loader {
     position: absolute;
-    top: calc(50% - 55px);
+    top: calc(50% - 45px);
     left: calc(50% - 27px);
     width: 80px;
     font-size: 20px;
@@ -213,7 +213,7 @@
     height: 120px;
     margin-bottom: 5px !important;
     width: 100%;
-    max-width: 240px;
+    max-width: 300px;
     overflow-y: auto;
 }
 
@@ -250,7 +250,7 @@
     margin-bottom: 0px !important;
 }
 
-@media (max-width: 1200px) , (max-height: 700px) {
+@media (max-width: 1200px) , (max-height: 500px) {
   .secondCol {
         display: none;
   }

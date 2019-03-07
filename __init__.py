@@ -107,7 +107,8 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("setLimit ")):
         searchIndex.limit = int(cmd[9:])
     elif (cmd.startswith("highlight ")):
-        searchIndex.highlighting = cmd[10:] == "on"
+        if searchIndex is not None:
+            searchIndex.highlighting = cmd[10:] == "on"
     else:
         oldOnBridge(self, cmd)
 
@@ -138,22 +139,22 @@ def onLoadNote(editor):
                         <div class='flexCol right'>
                             <table>
                                 <tr><td class='tbLb'>Search on selection</td><td><input type='checkbox' checked onchange='searchOnSelection = $(this).is(":checked");'/></td></tr>
-                                <tr><td class='tbLb'>Highlight results</td><td><input type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
+                                <tr><td class='tbLb'>Highlight results</td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
                                 <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='useInfoBox = $(this).is(":checked");'/></td></tr>
                                 <tr><td class='tbLb'>Freeze</td><td><input type='checkbox' id='freezeBox' onchange='isFrozen = $(this).is(":checked");'/></td></tr>
                             </table>
                        </div>
                   </div>
-                  <hr/>
-                 <div style="height: calc(95vh - 400px); width: 100%;">
+                  
+                 <div style="height: calc(100vh - 280px); width: 100%; border-top: 1px solid grey; border-bottom: 1px solid grey;">
                     <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
                     <div style='height: 100%; padding-bottom: 10px; padding-top: 10px;' id='resultsWrapper'>
                         <div id='searchResults' style='display: none; height: 95%; overflow-y: auto; padding-right: 10px;'></div>
-                     </div>
-                   </div>
+                    </div>
+                 </div>
 
                      <div style="">
-                        <hr/>
+                     
                         <div class="flexContainer">
                      
                             <div class='flexCol'> 
@@ -162,9 +163,7 @@ def onLoadNote(editor):
                                     <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
                                 </div>
                             </div>
-                            <div class='flexCol'> 
-                       
-                            </div>
+                           
                         </div>
                       </div>
                  </div>`).insertAfter('#fields');
@@ -178,9 +177,13 @@ def onLoadNote(editor):
             var $fields = $('.field');
             }
         """)
+    
 
     if searchIndex is not None:
         showSearchResultArea(editor)
+        if not searchIndex.highlighting:
+            editor.web.eval("$('#highlightCb').prop('checked', false);")
+
 
     fillDeckSelect(editor)
     if corpus is None:
