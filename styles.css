@@ -1,0 +1,297 @@
+.signal {
+    border: 5px solid #2496dc;
+    border-radius: 30px;
+    height: 30px;
+    opacity: 0;
+    margin-left: 24px;
+    width: 30px;
+ 
+    animation: pulsate 1.5s ease-out;
+    animation-iteration-count: infinite;
+}
+#loader {
+    position: absolute;
+    top: calc(50% - 55px);
+    left: calc(50% - 27px);
+    width: 80px;
+    font-size: 20px;
+    color: #2496dc;
+ }
+
+.cardR {
+  cursor: pointer;
+  border: 1px solid grey; 
+  padding: 5px; 
+  padding-bottom: 25px; 
+  padding-left: 15px; 
+  background: white; 
+  position: relative;
+}
+
+.cardR:hover {
+     border: 1px solid  #2496dc; 
+}
+
+.score {
+     background:  #2496dc;
+     color: white;
+     border-radius: 2px;
+     padding: 0 3px 0 3px;
+     margin-bottom: 5px;
+      margin-right: 4px;
+}
+.smallMarginTop {
+    margin-top: 5px;
+}
+.smallMarginBottom {
+    margin-bottom: 4px;
+}
+.minorScore {
+     border: 1px solid  #2496dc;
+     color:  #2496dc;
+     border-radius: 2px;
+     padding: 0 3px 0 3px;
+     margin-right: 4px;
+}
+.statusBar {
+    float: right;
+    background: #2496dc;
+    color: white;
+    font-size: 14px;
+    padding: 0 5px 0 5px;
+    margin-right: 5px;
+    width: 200px;
+}
+
+.btnBar {
+    display: flex;
+    position: absolute;
+    top: 0;
+    right: 0px;
+     opacity: 0;
+}
+
+.flexCol > select {
+    width: 200px;
+}
+
+.btnBar:hover {
+    opacity: 1;
+}
+
+.tagLbl {
+    background: #f0506e; 
+    color: white; 
+    padding: 2px 4px 2px 4px; 
+    border-radius: 2px; 
+    margin-left: 5px; 
+    float: right; 
+    cursor: pointer;
+}
+.rankingLbl {
+    background: #2496dc; 
+    color: white; 
+    padding: 3px; 
+    padding-left: 8px; 
+    padding-right: 8px; 
+    position: absolute; 
+    left: 0px; 
+    top: 0px; 
+    z-index:9999;
+}
+.remLbl {
+  
+    border: 1px solid #2496dc;
+    border-left: 0px solid white;
+    background: white;
+    z-index:9999;
+    padding: 2px 6px 2px 6px; 
+    cursor: pointer;
+    flex: 1;
+    font-size: 13px;
+}
+.srchLbl {
+    background: white; 
+    color:  #2496dc;
+    z-index:9999;
+    border: 1px solid #2496dc;
+    border-right: 0px solid white;
+    padding: 3px 3px 3px 3px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.pinLbl {
+    background: #2496dc; 
+    color: white;
+    z-index:9999;
+    padding: 1px 5px 2px 5px; 
+    cursor: pointer;
+   flex: 1;
+}
+.pinLbl.unselected {
+    border: 1px solid #2496dc;
+    background: white;
+}
+
+.pinLbl > span {
+  color: transparent;
+  text-shadow: 0 0 0 rgb(255,255,255);
+  font-size: 8px;
+}
+.rankingLbl > span {
+  color: transparent;
+  text-shadow: 0 0 0 rgb(255,255,255);
+}
+
+
+.pinLbl.unselected > span {
+   color: transparent;
+  text-shadow: 0 0 0 #2496dc;
+  font-size: 8px;
+
+}
+
+#searchMask {
+    flex: 1;
+
+
+}
+#searchBtn {
+    flex:  0 0 40px;
+    margin-left: 10px;
+}
+
+#hvrBox {
+   position: absolute;
+   background: white;
+   border: 2px solid #2496dc;
+   padding: 3px;
+   font-size: 12px;
+   width: 220px;
+   z-index: 10000;
+   display: none;
+
+}
+
+#hvrBoxSub {
+   position: absolute;
+   background: white;
+   border: 2px solid #2496dc;
+   padding: 3px;
+   font-size: 12px;
+   width: 220px;
+   z-index: 10000;
+   display: none;
+}
+
+#sConsole {
+  float: right;
+  padding: 5px;
+}
+
+#wiki {
+    margin-top: 5px;
+    font-size: 12px;
+    padding: 5px;
+}
+
+.fldSep {
+  color: #2496dc;
+  margin: 0 5px 0 5px;
+}
+
+.darkGreen { background: #226600; color: white; padding: 0 3px 0 3px; }
+.green { background: #3bb300; color: white; padding: 0 3px 0 3px; }
+.lightGreen { background: #6be09e; color: white; padding: 0 3px 0 3px; }
+.darkRed { background: #991f00; color: white; padding: 0 3px 0 3px; }
+.red { background: #ff3300; color: white; padding: 0 3px 0 3px; }
+.lightRed { background:  #ff704d; color: white; padding: 0 3px 0 3px; }
+
+
+#deckSelWrapper {
+    height: 120px;
+    margin-bottom: 5px !important;
+    width: 100%;
+    max-width: 240px;
+    overflow-y: auto;
+}
+
+#deckSel {
+    width: 100%;
+}
+
+#deckSel tr>td {
+   text-align: left;
+   width: 90%;
+}
+
+.hvrLeftItem {
+    width: calc(100% - 10px);
+    padding: 3px 4px 3px 4px;
+}
+
+.hvrSelected {
+    background: #2496dc;
+    color: white;
+}
+
+.flexContainer {
+  display: flex;
+  flex-wrap: wrap;
+  padding-bottom: 0px !important;
+}
+
+
+.flexCol {
+    flex-grow: 1;
+    padding: 10px 10px 0 10px;
+    min-width: 40px !important;
+    margin-bottom: 0px !important;
+}
+
+@media (max-width: 1200px) , (max-height: 700px) {
+  .secondCol {
+        display: none;
+  }
+}
+
+  
+
+
+
+.flexCol.right {
+    flex-grow: 2;
+    min-width: 40px !important;
+    margin-bottom: 0px !important;
+
+} 
+.flexCol > table {
+    width: 100%;
+}
+.flexCol td {
+    text-align: right;
+}
+.tbLb {
+    width: 80%;
+}
+
+.matched b {
+      font-weight: normal;
+      background: yellow;
+}
+
+
+@keyframes pulsate {
+    0% {
+      transform: scale(.1);
+      opacity: 0.0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.2);
+      opacity: 0;
+    }
+}
