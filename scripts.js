@@ -73,6 +73,12 @@ function getSelectionText() {
     pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
 }
 
+function onResize() {
+    let vh = window.innerHeight * 0.01;
+    document.getElementById('resultsArea').style.setProperty('--vh', `${vh}px`);
+}
+
+
 function getWordPrecedingCaret(containerEl) {
     var precedingChar = "", sel, range, precedingRange;
     if (window.getSelection) {

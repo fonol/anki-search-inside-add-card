@@ -130,7 +130,7 @@ def onLoadNote(editor):
             $(`
             <div class='coll secondCol' style='flex-grow: 1; width: 50%; height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; margin-left: 30px; position: relative;' id='infoBox'>
              
-                  <div class="flexContainer">
+                  <div class="flexContainer" id="topContainer">
                         <div class='flexCol'>
                             <div id='deckSelWrapper'> 
                                 <table id='deckSel'></table>
@@ -146,7 +146,7 @@ def onLoadNote(editor):
                        </div>
                   </div>
                   
-                 <div style="height: calc(100vh - 280px); width: 100%; border-top: 1px solid grey; border-bottom: 1px solid grey;">
+                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - 250px); width: 100%; border-top: 1px solid grey; border-bottom: 1px solid grey;">
                     <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
                     <div style='height: 100%; padding-bottom: 10px; padding-top: 10px;' id='resultsWrapper'>
                         <div id='searchResults' style='display: none; height: 95%; overflow-y: auto; padding-right: 10px;'></div>
@@ -175,7 +175,10 @@ def onLoadNote(editor):
             $('.field').attr('onmouseup', 'getSelectionText()');
             $('.field').attr('onfocusout', 'hideHvrBox()');
             var $fields = $('.field');
-            }
+            
+            window.addEventListener('resize', onResize, true);
+            onResize();
+           }
         """)
     
 
