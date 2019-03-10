@@ -22,57 +22,87 @@ import platform
 import sys
 import html
 sys.path.insert(0, os.path.dirname(__file__))
-from .whoosh.index import create_in
-from .whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD
-from .whoosh.qparser import QueryParser
-from .whoosh.analysis import StandardAnalyzer
-from .whoosh import classify, highlight, query, scoring, qparser, reading
+
+config = mw.addonManager.getConfig(__name__)
+
+try:
+    loadWhoosh = not config['useFTS']  or config['disableNonNativeSearching'] 
+except KeyError:
+    loadWhoosh = True
+
+if loadWhoosh:
+    from .whoosh.index import create_in
+    from .whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD
+    from .whoosh.qparser import QueryParser
+    from .whoosh.analysis import StandardAnalyzer
+    from .whoosh import classify, highlight, query, scoring, qparser, reading
+
 from .wikipedia import summary, DisambiguationError
 from .web import getScriptPlatformSpecific
+from .db import FTSIndex
+from .output import Output
 
+searchingDisabled = config['disableNonNativeSearching'] 
 
 searchIndex = None
 sugIndex = None
 corpus = None
-editorO = None
 deckMap = None
+output = None
 sugRequestRunning = False
-TAG_RE = re.compile(r'<[^>]+>')
-SP_RE = re.compile(r'&nbsp;| {2,}')
-SEP_RE = re.compile(r'(\u001f){2,}')
 
 
 def initAddon():
-    global corpus
+    global corpus, output
     global oldOnBridge
     oldOnBridge = Editor.onBridgeCmd
     Editor.onBridgeCmd = myOnBridgeCmd
     #todo: Find out if there is a better moment to start index creation
     addHook("profileLoaded", buildIndex)
-    
     #main functions to search
-    aqt.editor._html += """
-        <script>
-        function sendContent(event) {
-           if ((event && event.repeat) || isFrozen)
-                return;
-           let html = "";
-           $fields.each(function(index, elem) {
-                html += $(elem).html() + "\u001f";
-           });
-           pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
-        }
-        function sendSearchFieldContent() {
-           html = $('#searchMask').val() + "\u001f";
-           pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
-        }
+    if not searchingDisabled:
+        aqt.editor._html += """
+            <script>
+            function sendContent(event) {
+                if ((event && event.repeat) || isFrozen)
+                    return;
+                let html = "";
+                $searchInfo.html("<span style='float: right;'>Searching</span>");
+                $fields.each(function(index, elem) {
+                    html += $(elem).html() + "\u001f";
+                });
+                pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
+            }
+            function sendSearchFieldContent() {
+                $searchInfo.html("<span style='float: right;'>Searching</span>");
+                html = $('#searchMask').val() + "\u001f";
+                pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
+            }
 
-        function searchFor(text) {
-           text += "\u001f";
-           pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + text);
-        }
-        </script>
-    """
+            function searchFor(text) {
+                $searchInfo.html("<span style='float: right;'>Searching</span>");
+                text += "\u001f";
+                pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + text);
+            }
+            </script>
+        """
+    else:
+        aqt.editor._html += """
+            <script>
+            function sendContent(event) {
+                return;
+            }
+            function sendSearchFieldContent() {
+                $searchInfo.html("<span style='float: right;'>Searching</span>");
+                html = $('#searchMask').val() + "\u001f";
+                pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
+            }
+
+            function searchFor(text) {
+                return;
+            }
+            </script>
+        """
 
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific()
@@ -86,11 +116,11 @@ def myOnBridgeCmd(self, cmd):
     Process the various commands coming from the ui - 
     this includes users clicks on option checkboxes, on rendered results, etc.
     """
-    if (cmd.startswith("fldChgd ")):
+    if (not searchingDisabled and cmd.startswith("fldChgd ")):
         rerenderInfo(self, cmd[8:])
     elif (cmd.startswith("srchDB ")):
         rerenderInfo(self, cmd[7:], searchDB = True)
-    elif (cmd.startswith("fldSlctd ")):
+    elif (not searchingDisabled and cmd.startswith("fldSlctd ")):
         rerenderInfo(self, cmd[9:])
     elif (cmd.startswith("wiki ")):
         setWikiSummary(getWikipediaSummary(cmd[5:]))
@@ -117,8 +147,8 @@ def onLoadNote(editor):
     Executed everytime a note is created/loaded in the add cards dialog.
     Wraps the normal editor html in a flex layout to render a second column for the searching ui.
     """
-    global corpus, editorO
-
+    global corpus, output
+   
     #only display in add cards dialog
     if (editor.addMode):
         editor.web.eval(""" 
@@ -139,7 +169,8 @@ def onLoadNote(editor):
                         <div class='flexCol right' style="position: relative;">
                             <table>
                                 <tr><td class='tbLb'>Search on selection</td><td><input type='checkbox' checked onchange='searchOnSelection = $(this).is(":checked");'/></td></tr>
-                                <tr><td class='tbLb'>Highlight results</td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
+                                <tr><td class='tbLb'>Search on typing</td><td><input type='checkbox' checked onchange='searchOnTyping = $(this).is(":checked");'/></td></tr>
+                                <tr><td class='tbLb'><mark>Highlighting</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
                                 <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='useInfoBox = $(this).is(":checked");'/></td></tr>
                             </table>
                             <div id='freeze-icon' onclick='toggleFreeze(this)'>
@@ -150,13 +181,13 @@ def onLoadNote(editor):
                   
                  <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - 250px); width: 100%; border-top: 1px solid grey; border-bottom: 1px solid grey;">
                     <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
-                    <div style='height: 100%; padding-bottom: 10px; padding-top: 10px;' id='resultsWrapper'>
+                    <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
+                        <div id='searchInfo'></div>
                         <div id='searchResults' style='display: none; height: 95%; overflow-y: auto; padding-right: 10px;'></div>
                     </div>
                  </div>
                      <div style="">
                         <div class="flexContainer">
-                     
                             <div class='flexCol' style='padding-left: 0px;'> 
                                 <div class='flexContainer' style="flex-wrap: nowrap;">
                                      <div class='tooltip tooltip-blue' onclick="toggleTooltip(this);">i
@@ -183,16 +214,17 @@ def onLoadNote(editor):
                  </div>`).insertAfter('#fields');
             $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; height: 100%;"></div>');    
             
-            
+            }
             $(`.field`).attr("onkeyup", "fieldKeypress(event, this);"); 
             $(`.field`).attr("onkeydown", "moveInHover(event, this);" + $(`.field`).attr("onkeydown")); 
             $('.field').attr('onmouseup', 'getSelectionText()');
             $('.field').attr('onfocusout', 'hideHvrBox()');
             var $fields = $('.field');
+            var $searchInfo = $('#searchInfo');
             
             window.addEventListener('resize', onResize, true);
             onResize();
-           }
+           
         """)
     
 
@@ -205,7 +237,10 @@ def onLoadNote(editor):
     fillDeckSelect(editor)
     if corpus is None:
         corpus = getCorpus()
-    editorO = editor
+
+    if searchIndex is not None and searchIndex.output.editor is None:
+        searchIndex.output.editor = editor
+
 
 def setPinned(cmd):
     """
@@ -224,7 +259,7 @@ def getLastCreatedNote():
     return newest
 
 def displayLastNote():
-    editorO.web.eval("document.getElementById('hvrBoxSub').innerHTML = `" + getLastCreatedNote() + "`;")
+    output.editor.web.eval("document.getElementById('hvrBoxSub').innerHTML = `" + getLastCreatedNote() + "`;")
 
 def getWikipediaSummary(query):
     try:
@@ -237,7 +272,7 @@ def setWikiSummary(text):
         cmd = "document.getElementById('wiki').style.display = `none`;"
     else:
         cmd = "document.getElementById('wiki').style.display = `block`; document.getElementById('wiki').innerHTML = `" + text+ "`;"
-    editorO.web.eval(cmd)
+    output.editor.web.eval(cmd)
 
 
 
@@ -256,6 +291,9 @@ class SearchIndex:
         self.pinned = []
         self.highlighting = True
         self.limit = 10
+        self.TAG_RE = re.compile(r'<[^>]+>')
+        self.SP_RE = re.compile(r'&nbsp;| {2,}')
+        self.SEP_RE = re.compile(r'(\u001f){2,}')
 
     def search(self, text, decks):
         """
@@ -265,6 +303,8 @@ class SearchIndex:
         text - string to search, typically fields content
         decks - list of deck ids, if -1 is contained, all decks are searched
         """
+        stamp = self.output.getMiliSecStamp()
+        self.output.latest = stamp
         deckQ = ""
         for d in decks:
             deckQ += d + " "
@@ -284,14 +324,18 @@ class SearchIndex:
                     if self.highlighting:
                         rList.append((self._markHighlights(r["content"], r.highlights("content", top=10)), r["tags"], r["did"], r["nid"]))
                     else:
-                        rList.append((r["content"], r["tags"], r["did"], r["nid"]))
-            return rList
+                        rList.append((r["content"].replace('`', '\\`'), r["tags"], r["did"], r["nid"]))
+            
+            return { "result" : rList, "stamp" : stamp }
 
     def searchDB(self, text, decks):
         """
         WIP: this shall be used for searches in the search mask,
         doesn't use the index, instead use the traditional anki search (which is more powerful for single keywords)
         """
+        stamp = self.output.getMiliSecStamp()
+        self.output.latest = stamp
+
         found = self.finder.findNotes(text)
         
         if len (found) > 0:
@@ -310,9 +354,9 @@ class SearchIndex:
                 #pinned items should not appear in the results
                 if not str(r[0]) in self.pinned:
                     #todo: implement highlighting
-                    rList.append((r[1], r[2], r[3], r[0]))
-            return rList
-        return []
+                    rList.append((r[1].replace('`', '\\`'), r[2], r[3], r[0]))
+            return { "result" : rList, "stamp" : stamp }
+        return { "result" : [], "stamp" : stamp }
 
     def _markHighlights(self, text, highlights):
         """
@@ -326,11 +370,11 @@ class SearchIndex:
         Returns:
         text where highlights are enclosed in <mark> tags
         """
-        highlights = cleanQueryString(highlights)
+        highlights = self.clean(highlights)
         if len(highlights) == 0:
             return text
         for token in set(highlights.split("...")):
-            if token == "mark":
+            if token == "mark" or token == "":
                 continue
             token = token.strip()
             text = re.sub('([^A-Za-zöäü]|^)(' + re.escape(token) + ')([^A-Za-zöäü]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
@@ -343,58 +387,24 @@ class SearchIndex:
             found = reg.findall(text)
         return text
 
-class SuggestionIndex:
-    """
-    Not used atm, can be utilized for autocomplete functionality in the fields
-    """
-    def __init__(self, n2Index, n3Index):
-        self.n2Index = n2Index
-        self.n3Index = n3Index
-        self.initializationTime = 0
+    def clean(self, text):
+        """
+        Clean linebreaks and some html entitíes from the query string.
+        TODO: could be more sensitive
+        """
+        text = text.replace("\n", " ").replace("\r\n", " ").strip()
+        text = self.removeTags(text)
+        return text.strip()
 
-    def getSuggestions(self, text):
-        html = ""
-        found = None
-        lastW = ""
-        count = 0
+    def removeTags(self, text):
+        """
+        Remove <br/> &nbsp; and multiple spaces.
+        TODO: check for other html entities
+        """
+        text = re.sub('< ?br/ ?>|< ?br ?> ?< ?/br ?>', " ", text,  flags=re.I).replace("&nbsp;", " ").replace("\t", " ")
+        return self.SP_RE.sub(' ', self.TAG_RE.sub(' ', text))
 
-        if removeTags(text)[-1:] == ' ':
-            #search based on trigram
-            found = self.n3Index.reader().most_distinctive_terms(fieldname='phrases', number=8, prefix=self._getTrigram(removeTags(text)))
-            if not found:
-                #search based on bigram
-                found = self.n2Index.reader().most_distinctive_terms(fieldname='phrases', number=8, prefix=self._getBigram(removeTags(text)))
-        else: 
-            #search based on word beginning
-            text = cleanQueryString(text)
-            lastW = self._lastWord(text)
-            found = searchIndex.index.reader().most_distinctive_terms(fieldname='content', number=8, prefix=lastW)
-        for res in found:
-            if len(lastW) > 0 and str(res[1], 'utf-8') == lastW:
-                continue
-            if count == 0:
-                html +=  "<div class='hvrLeftItem hvrSelected' id='hvrI-%s'>"%(count) + str(res[1], 'utf-8') + "</div>"
-            else:    
-                html +=  "<div class='hvrLeftItem' id='hvrI-%s'>"%(count) + str(res[1], 'utf-8') + "</div>"
-            count += 1
-        
-        return (html, count)
 
-    def _lastWord(self, text):
-        if len(text) == 0:
-            return ""
-        return text.split(' ')[-1]
-
-    def _getBigram(self, text):
-        if not " " in text:
-            return ""
-        return text.strip().split(" ")[-1:][0] + "AAAA"
-
-    def _getTrigram(self, text):
-        spl = text.strip().split(" ")
-        if not len(spl) > 1:
-            return ""
-        return spl[-2:][0] + "AAAA" + spl[-1:][0] + "AAAA"
 
 
 
@@ -422,23 +432,9 @@ def setStats(nid, stats):
     Insert the statistics inside the given card.
     """
     cmd = "document.getElementById('" + nid + "').innerHTML += `" + stats + "`;"
-    editorO.web.eval(cmd)
+    searchIndex.output.editor.web.eval(cmd)
 
-def renderSuggestions(editor, content=""):
-    """
-    Not used atm, was used for autocomplete.
-    """
-    global sugRequestRunning
-    if sugRequestRunning:
-        return
-    if sugIndex is not None:
-        sugRequestRunning = True
-        sugs = sugIndex.getSuggestions(content)
-        if sugs[1] == 0:
-            editor.web.eval("document.getElementById('hvrBox').style.display = 'none'; hvrBoxIndex = 0;")
-        else:
-            editor.web.eval("document.getElementById('hvrBox').style.display = 'block'; document.getElementById('hvrBox').innerHTML = `" + sugs[0] + "`; hvrBoxIndex = 0; hvrBoxLength = " + str(sugs[1]))
-    sugRequestRunning = False
+
 
 def rerenderInfo(editor, content="", searchDB = False):
     """
@@ -448,67 +444,42 @@ def rerenderInfo(editor, content="", searchDB = False):
         content: string containing the decks selected (did) + ~ + all input fields content / search masks content
     """
     if (len(content) < 1):
-        return
+        editor.web.eval("setSearchResults('', 'No results found for empty string')")
     decks = list()
     for s in content[:content.index('~')].split(','):
       decks.append(s.strip())
-    content = cleanQueryString(content[content.index('~ ') + 2:])
-    if searchIndex is not None and len(content) > 1:
-      #distinguish between index searches and db searches
+    
+    if searchIndex is not None:
+      if not searchDB:
+        content = searchIndex.clean(content[content.index('~ ') + 2:])
+      else:
+        content = content[content.index('~ ') + 2:].strip()
+      if len(content) == 0:
+        editor.web.eval("setSearchResults('', 'No results found for empty string')")
+        return
+      #distinguish between index searches and  Anki db searches
       if searchDB:
         searchRes = searchIndex.searchDB(content, decks)  
       else:
         searchRes = searchIndex.search(content, decks)
-      if len(searchRes) > 0:
-        printSearchResults(searchRes, editor)
-      else:
-        editor.web.eval("setSearchResults('')")
+      if searchRes is not None:
+        if len(searchRes["result"]) > 0:
+            searchIndex.output.printSearchResults(searchRes["result"], searchRes["stamp"], editor)
+        else:
+            editor.web.eval("setSearchResults('', 'No results found.')")
 
 
 
 
-def printSearchResults(searchResults, editor):
-    html = ""
-    
-    """
-    This is the html that gets rendered in the search results div.
-    
-    Args:
 
-    searchResults - a list of tuples, see SearchIndex.search()
-    """
-    for counter, res in enumerate(searchResults[:50]):
-        #todo: move in class
-        html += """<div class='cardWrapper'  style='padding: 9px; margin-bottom: 10px; position: relative;'> 
-                        <div id='cW-%s' class='rankingLbl'>%s</div> 
-                        <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                            <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
-                            <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
-                            <div id='rem-%s'  class='remLbl' onclick='$("#cW-%s").parents().first().remove(); updatePinned();'><span>&times;</span></div> 
-                        </div>
-                        <div class='cardR' onclick='expandCard(this);' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
-                        <div style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
-                    </div>
-                    """ %(res[3], counter + 1, res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], SEP_RE.sub("\u001f", res[0]).replace("\u001f", "<span class='fldSep'>|</span>"), buildTagString(res[1]))  
-    cmd = "setSearchResults(`" + html + "`);"
-    editor.web.eval(cmd)
 
-def buildTagString(tags):
-    """
-    Builds the html for the tags that are displayed at the bottom right of each rendered search result.
-    """
-    html = ""
-    for t in tags.split(' '):
-      if len(t) > 0:
-        html += "<div class='tagLbl' data-name='%s' onclick='tagClick(this);'>%s</div>" %(t, t)
-    return html
 
 def showSearchResultArea(editor=None, initializationTime=0):
     """
     Toggle between the loader and search result area when the index has finsihed building.
     """
-    if editorO is not None and editorO.web is not None:
-        editorO.web.eval("document.getElementById('searchResults').style.display = 'block'; document.getElementById('loader').style.display = 'none';")
+    if searchIndex.output is not None and searchIndex.output.editor is not None and searchIndex.output.editor.web is not None:
+        searchIndex.output.editor.web.eval("document.getElementById('searchResults').style.display = 'block'; document.getElementById('loader').style.display = 'none';")
     elif editor is not None and editor.web is not None:
         editor.web.eval("document.getElementById('searchResults').style.display = 'block'; document.getElementById('loader').style.display = 'none';")
         
@@ -542,42 +513,60 @@ def _buildIndex():
     """
     Builds the index. Result is stored in global var searchIndex.
     """
-    
-    global searchIndex, sugIndex
+    global searchIndex
     start = time.time()
 
     config = mw.addonManager.getConfig(__name__)
+
     try:
-        usersStopwords = config['stopwords']    
+        useFTS = config['useFTS']    
     except KeyError:
-        usersStopwords = []
-    if usersStopwords is not None and len(usersStopwords) > 0:
-        schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=StandardAnalyzer(stoplist=usersStopwords)), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True))
+        useFTS = False
+    #fts4 based sqlite reversed index
+    if searchingDisabled or useFTS:
+        searchIndex = FTSIndex(corpus, searchingDisabled)
+        end = time.time()
+        initializationTime = round(end - start)
+    #whoosh index
     else:
-        schema = whoosh.fields.Schema(content=TEXT(stored=True), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True))
-    
-    #index needs a folder to operate in
-    indexDir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/__init__.py", "") + "/index"
-    if not os.path.exists(indexDir):
-        os.makedirs(indexDir)
-    index = create_in(indexDir, schema)
-    #limitmb can be set down
-    writer = index.writer(limitmb=256)
-    #todo: check if there is some kind of batch insert
-    for note in corpus:
-        writer.add_document(content=note[1], tags=note[2], did=str(note[3]), nid=str(note[0]))
-    writer.commit()
-    #todo: allow user to toggle between and / or queries
-    og = qparser.OrGroup.factory(0.9)
-    #used to parse the main query
-    queryparser = QueryParser("content", index.schema, group=og)
-    #used to construct a filter query, to limit the results to a set of decks
-    deckQueryparser = QueryParser("did", index.schema, group=qparser.OrGroup)
-    end = time.time()
-    initializationTime = round(end - start)
-    searchIndex = SearchIndex(index, queryparser, deckQueryparser)
+        try:
+            usersStopwords = config['stopwords']    
+        except KeyError:
+            usersStopwords = []
+        if usersStopwords is not None and len(usersStopwords) > 0:
+            schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=StandardAnalyzer(stoplist=usersStopwords)), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True))
+        else:
+            schema = whoosh.fields.Schema(content=TEXT(stored=True), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True))
+        
+        #index needs a folder to operate in
+        indexDir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/__init__.py", "") + "/index"
+        if not os.path.exists(indexDir):
+            os.makedirs(indexDir)
+        index = create_in(indexDir, schema)
+        #limitmb can be set down
+        writer = index.writer(limitmb=256)
+        #todo: check if there is some kind of batch insert
+        for note in corpus:
+            writer.add_document(content=note[1], tags=note[2], did=str(note[3]), nid=str(note[0]))
+        writer.commit()
+        #todo: allow user to toggle between and / or queries
+        og = qparser.OrGroup.factory(0.9)
+        #used to parse the main query
+        queryparser = QueryParser("content", index.schema, group=og)
+        #used to construct a filter query, to limit the results to a set of decks
+        deckQueryparser = QueryParser("did", index.schema, group=qparser.OrGroup)
+        searchIndex = SearchIndex(index, queryparser, deckQueryparser)
+        searchIndex.stopWords = usersStopwords
+        end = time.time()
+        initializationTime = round(end - start)
+        searchIndex.initializationTime = initializationTime
+        
+
     searchIndex.finder = Finder(mw.col)
-    searchIndex.initializationTime = initializationTime
+    searchIndex.output = Output()
+    searchIndex.output.stopwords = searchIndex.stopWords
+
+
     try:
         limit = config['numberOfResults']
         if limit <= 0:
@@ -587,42 +576,23 @@ def _buildIndex():
     except KeyError:
         limit = 20
     searchIndex.limit = limit
-
-    showSearchResultArea(initializationTime=initializationTime)
-
-    # autocomplete still WIP
-
-    # start = time.time()
-    # n2Index = create_in(", whoosh.fields.Schema(phrases = KEYWORD(commas=True, lowercase=False)))
-    # n2Writer = n2Index.writer()
-    # n3Index = create_in(", whoosh.fields.Schema(phrases = KEYWORD(commas=True, lowercase=False)))
-    # n3Writer = n3Index.writer()
-    # for note in corpus:
-    #     for bigr in extractNgrams(note[1], 2):
-    #         n2Writer.add_document(phrases=bigr)
-    #     for bigr in extractNgrams(note[1], 3):
-    #         n3Writer.add_document(phrases=bigr)
-    # n2Writer.commit()
-    # n3Writer.commit()
-    # end = time.time()
-    # initializationTime = round(end - start)
-    # sugIndex = SuggestionIndex(n2Index, n3Index)
-    # sugIndex.initializationTime = initializationTime
-    # setMinorStatus("Prediction is ready. (Took %s s)"%(round(initializationTime)))
-    
+    editor = aqt.mw.app.activeWindow().editor if hasattr(aqt.mw.app.activeWindow(), "editor") else None
+    if editor is not None and editor.addMode:
+        searchIndex.output.editor = editor
+        showSearchResultArea(editor, initializationTime=initializationTime)
 
 def addTag(tag):
     """
     Insert the given tag in the tag field at bottom if not already there.
     """
-    if tag == "" or editorO is None:
+    if tag == "" or searchIndex is None or searchIndex.output.editor is None:
         return
-    tagsExisting = editorO.tags.text()
+    tagsExisting = searchIndex.output.editor.tags.text()
     if (tag == tagsExisting or  " " +  tag + " " in tagsExisting or tagsExisting.startswith(tag + " ") or tagsExisting.endswith(" " + tag)):
         return
     
-    editorO.tags.setText(tagsExisting + " " + tag)
-    editorO.saveTags()
+    searchIndex.output.editor.tags.setText(tagsExisting + " " + tag)
+    searchIndex.output.editor.saveTags()
 
 def extractNgrams(noteText, n):
     """
@@ -641,22 +611,7 @@ def generateMgrams(s, n):
     ngrams = zip(*[tokens[i:] for i in range(n)])
     return ["AAAA".join(ngram) for ngram in ngrams]
  
-def cleanQueryString(text):
-    """
-    Clean linebreaks and some html entitíes from the query string.
-    TODO: could be more sensitive
-    """
-    text = text.replace("\n", " ").replace("\r\n", " ").strip()
-    text = removeTags(text)
-    return text.strip()
 
-def removeTags(text):
-    """
-    Remove <br/> &nbsp; and multiples spaces.
-    TODO: check for other html entities
-    """
-    text = re.sub('< ?br/ ?>|< ?br ?> ?< ?/br ?>', " ", text,  flags=re.I).replace("&nbsp;", " ").replace("\t", " ")
-    return SP_RE.sub(' ', TAG_RE.sub(' ', text))
 
 
 
@@ -835,7 +790,6 @@ class ProcessRunnable(QRunnable):
     def __init__(self, target):
         QRunnable.__init__(self)
         self.t = target
-        
 
     def run(self):
         self.t()

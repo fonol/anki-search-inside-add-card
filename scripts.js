@@ -10,6 +10,7 @@ var timeout;
 var boxIsDisplayed = false;
 var isFrozen = false;
 var searchOnSelection = true;
+var searchOnTyping = true;
 var useInfoBox = false;
 var last = "";
 
@@ -70,7 +71,8 @@ function getSelectionText() {
     } else if (document.selection && document.selection.type != "Control") {
         text = document.selection.createRange().text;
     }
-    pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
+    if (text.length > 0)
+        pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
 }
 
 function onResize() {
@@ -143,14 +145,14 @@ function fieldKeydown(event, elem) {
 
 
 function fieldKeypress(event, elem) {
-    if (!boxIsDisplayed && event.keyCode != 13 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
+    if (searchOnTyping && !boxIsDisplayed && event.keyCode != 13 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
         if (timeout) {
             clearTimeout(timeout);
             timeout = null;
         }
         timeout = setTimeout(function () {
             sendContent(event);
-        }, 500)
+        }, 800)
     }
 }
 
@@ -239,6 +241,7 @@ function pinCard(elem, nid) {
 
 function searchCard(elem) {
     let html = $(elem).parent().next().html();
+    //$searchInfo.html("<span style='float: right;'>Searching</span>");
     pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
 }
 
@@ -250,9 +253,11 @@ function updatePinned() {
     pycmd(pincmd);
 }
 
-function setSearchResults(html) {
+function setSearchResults(html, infoStr) {
     $('.cardWrapper').not('.pinned').remove();
+    document.getElementById('searchInfo').innerHTML = infoStr;
     document.getElementById('searchResults').innerHTML += html;
+    document.getElementById('searchResults').scrollTop = 0;
 }
 
 function moveInsideHvrBox(keyCode) {
