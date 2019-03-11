@@ -109,7 +109,6 @@ function setHighlighting(elem) {
 }
 
 function lastWord(text, caretPos) {
-    var index = text.indexOf(caretPos);
     var preText = text.substring(0, caretPos);
     if (preText.indexOf(" ") > 0) {
         var words = preText.split(" ");

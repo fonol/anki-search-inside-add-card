@@ -414,7 +414,6 @@ def fillDeckSelect(editor):
     """
     global deckMap
     deckMap = dict()
-    html = "<tr><td ><span style='background: #2496dc; color: white;'>&nbsp;All Decks&nbsp;</span></td><td><input class='dCheck' data-id='-1' type='checkbox' checked onchange='updateSelectedDecks();'/></td></tr>"
     config = mw.addonManager.getConfig(__name__)
     deckList = config['decks']
     for d in list(mw.col.decks.decks.values()):
@@ -422,10 +421,58 @@ def fillDeckSelect(editor):
           continue
        if deckList is not None and len(deckList) > 0 and d['name'] not in deckList:
            continue
-       deckMap[d['id']] = d['name'] 
-       html += "<tr><td>&nbsp;%s</td><td><input class='dCheck' data-id='%s' type='checkbox' onchange='updateSelectedDecks();'/></td></tr>" %( d['name'], d['id'])
-    cmd = "document.getElementById('deckSel').innerHTML = `" + html + "`;"
+       deckMap[d['name']] = d['id'] 
+    dmap = {}
+    for name, id in deckMap.items():
+        dmap = addToDecklist(dmap, id, name)
+
+    def iterateMap(dmap, prefix, start=False):
+        if start:
+            html = "<ul class='deck-sub-list outer'><li class='deck-list-item'><span class='blueBG'>All (%s)</span> <input type='checkbox' checked='true' class='dCheck' data-id='-1' onclick='updateSelectedDecks();'/></li>" % len(dmap)
+        else:
+            html = "<ul class='deck-sub-list'>"
+        for key, value in dmap.items():
+            full = prefix + "::" + key if prefix else key
+            html += "<li class='deck-list-item'>%s %s <input type='checkbox' class='dCheck' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks();'/> %s</li>" % (key, "(%s)" % len(value) if value else "" , deckMap[full], iterateMap(value, full, False)) 
+        html += "</ul>"
+        return html
+
+
+    html = iterateMap(dmap, "", True)
+
+
+    
+
+
+    cmd = """document.getElementById('deckSel').innerHTML = `%s`; 
+    $('.deck-list-item').click(function(e) {
+		e.stopPropagation();
+    $(this).children('ul').toggle();
+});
+    
+    """ % html
     editor.web.eval(cmd)
+
+def addToDecklist(dmap, id, name):
+    """
+    There is probably a nice recursive soluttion, but 
+    assume for the moment that no-one has more than 5 level deep decks.
+    """
+    names = [s for s in name.split("::") if s != ""]
+    for c, d in enumerate(names):
+        found = dmap
+        for i in range(c):
+            found = found.setdefault(names[i], {})
+        if not d in found:
+            found.update({d : {}}) 
+
+     
+    return dmap
+       
+           
+
+    
+ 
 
 def setStats(nid, stats):
     """

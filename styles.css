@@ -392,3 +392,43 @@
   .tooltiptext td {
       text-align: left;
   }
+
+
+  /* deck list*/
+
+
+.deck-list-item {
+    list-style-type: none;
+    cursor: pointer;
+    margin-left: 0px;
+    padding-left: 0px;
+    width: 100%;
+    position: relative;
+    margin-bottom: 4px;
+   
+}
+.deck-list-item>input {
+    position: absolute;
+    right: 5px;
+}
+.deck-sub-list {
+    display: none;
+    margin-top: 4px;
+    margin-left: 12px;
+    padding-left: 0px;
+}
+.deck-list-item:before .deck-sub-list>.deck-list-item {
+    content: "+";
+}
+
+.blueBG {
+   background: #2496dc;
+   color: white;
+   padding: 0 4px 0 4px;
+}
+
+.deck-sub-list.outer {
+    display: block;
+    margin-left: 0px;
+    padding-left: 0px;
+}
