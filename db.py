@@ -32,13 +32,31 @@ class FTSIndex:
        
         if not searchingDisabled:
             cleaned = self._cleanText(corpus)
+
+            #if fts5 is compiled, use it
+            self.fts5 = self._checkIfFTS5Available()
+
+
             conn = sqlite3.connect(self.dir + "/search-data.db")
             conn.execute("drop table if exists notes")
-            conn.execute("create virtual table notes using fts4(nid, text, tags, did, source)")
+            if self.fts5:
+                conn.execute("create virtual table notes using fts5(nid, text, tags, did, source)")
+            else:
+                conn.execute("create virtual table notes using fts4(nid, text, tags, did, source)")
             conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?)', cleaned)
             conn.execute("INSERT INTO notes(notes) VALUES('optimize')")
             conn.commit()
             conn.close()
+
+
+    def _checkIfFTS5Available(self):
+        con = sqlite3.connect(':memory:')
+        cur = con.cursor()
+        cur.execute('pragma compile_options;')
+        available_pragmas = cur.fetchall()
+        con.close()
+        return ('ENABLE_FTS5',) in available_pragmas
+   
 
     def _cleanText(self, corpus):
         filtered = list()
@@ -46,7 +64,9 @@ class FTSIndex:
             filtered.append((row[0], clean(row[1], self.stopWords), row[2], row[3], row[1]))
         return filtered
 
-  
+    
+
+
 
     def removeStopwords(self, text):
         cleaned = ""
@@ -84,7 +104,10 @@ class FTSIndex:
             return []
 
         query = " OR ".join(["tags:" + s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ])
-        query += " OR " + " OR ".join([s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ]) 
+        if self.fts5:
+            query += " OR " + " OR ".join(["text:" + s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ]) 
+        else:
+            query += " OR " + " OR ".join([s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ]) 
         if query == " OR ":
             return
 
@@ -92,16 +115,30 @@ class FTSIndex:
         allDecks = "-1" in decks
         rList = list()
         conn = sqlite3.connect(self.dir + "/search-data.db")
-        for r in conn.execute("select nid, text, tags, did, source, matchinfo(notes, 'pcnalx') from notes where text match '%s'" %(query)):
+
+        if self.fts5:
+            dbStr = "select nid, text, tags, did, source from notes where notes match '%s' order by bm25(notes)" %(query)
+        else:
+            dbStr = "select nid, text, tags, did, source, matchinfo(notes, 'pcnalx') from notes where text match '%s'" %(query)
+
+
+        for r in conn.execute(dbStr):
             if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
                 if self.highlighting:
-                    rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0], self.bm25(r[5], 0, 1, 0, 0, 0)))
+                    if self.fts5:
+                        rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0]))
+                    else:
+                        rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0], self.bm25(r[5], 0, 1, 0, 0, 0)))
                 else:
-                    rList.append((r[4].replace('`', '\\`'), r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0)))
+                    if self.fts5:
+                        rList.append((r[4].replace('`', '\\`'), r[2], r[3], r[0]))
+                    else:
+                        rList.append((r[4].replace('`', '\\`'), r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0)))
                 c += 1
         conn.close()
-      
-        rList = sorted(rList, key=lambda x: x[4])
+        #if fts5 is not used, results are not sorted by score
+        if not self.fts5:
+            rList = sorted(rList, key=lambda x: x[4])
         return { "results" : rList[:min(self.limit, len(rList))] }
 
     def printOutput(self, result, stamp):
