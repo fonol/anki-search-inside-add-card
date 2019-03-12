@@ -259,7 +259,7 @@ def getLastCreatedNote():
     return newest
 
 def displayLastNote():
-    searchInde.output.editor.web.eval("document.getElementById('hvrBoxSub').innerHTML = `" + getLastCreatedNote() + "`;")
+    searchIndex.output.editor.web.eval("document.getElementById('hvrBoxSub').innerHTML = `" + getLastCreatedNote() + "`;")
 
 def getWikipediaSummary(query):
     try:
