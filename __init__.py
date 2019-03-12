@@ -41,6 +41,7 @@ from .wikipedia import summary, DisambiguationError
 from .web import getScriptPlatformSpecific
 from .db import FTSIndex
 from .output import Output
+from .textutils import trimIfLongerThan
 
 searchingDisabled = config['disableNonNativeSearching'] 
 
@@ -179,7 +180,7 @@ def onLoadNote(editor):
                        </div>
                   </div>
                   
-                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - 250px); width: 100%; border-top: 1px solid grey; border-bottom: 1px solid grey;">
+                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - 270px); width: 100%; border-top: 1px solid grey; border-bottom: 1px solid grey;">
                     <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
                     <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
                         <div id='searchInfo'></div>
@@ -428,26 +429,29 @@ def fillDeckSelect(editor):
 
     def iterateMap(dmap, prefix, start=False):
         if start:
-            html = "<ul class='deck-sub-list outer'><li class='deck-list-item'><span class='blueBG'>All (%s)</span> <input type='checkbox' checked='true' class='dCheck' data-id='-1' onclick='updateSelectedDecks();'/></li>" % len(dmap)
+            html = "<ul class='deck-sub-list outer'><li class='deck-list-item'><div style='display: inline-block; margin-top: 2px;'><span class='blueBG'>All (%s)</span> </div><input type='checkbox' checked='true' class='dCheck' data-id='-1' onclick='updateSelectedDecks();'/></li>" % len(dmap)
         else:
             html = "<ul class='deck-sub-list'>"
         for key, value in dmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item'>%s %s <input type='checkbox' class='dCheck' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks();'/> %s</li>" % (key, "(%s)" % len(value) if value else "" , deckMap[full], iterateMap(value, full, False)) 
+            html += "<li class='deck-list-item'><div style='display: inline-block; overflow-x: hidden; white-space:nowrap;'>%s <span class='exp'>%s</span></div><input type='checkbox' style='margin-bottom: 4px;' class='dCheck' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks();'/> %s</li>" % (trimIfLongerThan(key, 40), "[+]" if value else "" , deckMap[full], iterateMap(value, full, False)) 
         html += "</ul>"
         return html
 
-
     html = iterateMap(dmap, "", True)
-
-
-    
 
 
     cmd = """document.getElementById('deckSel').innerHTML = `%s`; 
     $('.deck-list-item').click(function(e) {
 		e.stopPropagation();
-    $(this).children('ul').toggle();
+        let icn = $(this).find('.exp').first();
+        if (icn.text()) {
+            if (icn.text() === '[+]')
+                icn.text('[-]');
+            else
+                icn.text('[+]');
+        }
+        $(this).children('ul').toggle();
     });
     
     """ % html

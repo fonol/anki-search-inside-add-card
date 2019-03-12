@@ -22,3 +22,9 @@ def clean(text, stopWords):
     if len(filtered) > 0:
         return filtered[:-1]
     return ""
+
+
+def trimIfLongerThan(text, n):
+    if len(text) <= n:
+        return text
+    return text[:n] + "..."

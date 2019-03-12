@@ -223,7 +223,7 @@
 
 
 #deckSelWrapper {
-    height: 120px;
+    height: 140px;
     margin-bottom: 5px !important;
     width: 100%;
   
@@ -404,7 +404,11 @@
     padding-left: 0px;
     width: 100%;
     position: relative;
-    margin-bottom: 4px;
+    margin-top: 3px;
+    margin-bottom: 1px;
+    border-top: 1px solid grey;
+    user-select: none;
+
    
 }
 .deck-list-item>input {
@@ -431,4 +435,9 @@
     display: block;
     margin-left: 0px;
     padding-left: 0px;
+}
+
+.exp {
+    user-select: none;
+
 }
