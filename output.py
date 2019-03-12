@@ -89,7 +89,7 @@ class Output:
         text = clean(text, self.stopwords)
         counts = {}
         for token in text.split():
-            if token == "":
+            if token == "" or len(token) == 1:
                 continue
             if token.lower() in counts:
                 counts[token.lower()][1] += 1

@@ -33,8 +33,9 @@ except KeyError:
 if loadWhoosh:
     from .whoosh.index import create_in
     from .whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD
+    from whoosh.support.charset import accent_map
     from .whoosh.qparser import QueryParser
-    from .whoosh.analysis import StandardAnalyzer
+    from .whoosh.analysis import StandardAnalyzer, CharsetFilter, StemmingAnalyzer
     from .whoosh import classify, highlight, query, scoring, qparser, reading
 
 from .wikipedia import summary, DisambiguationError
@@ -378,14 +379,17 @@ class SearchIndex:
             if token == "mark" or token == "":
                 continue
             token = token.strip()
-            text = re.sub('([^A-Za-zöäü]|^)(' + re.escape(token) + ')([^A-Za-zöäü]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
+            text = re.sub('([^\'a-zA-ZÀ-ÖØ-öø-ÿ]|^)(' + re.escape(token) + ')([^\'a-zA-ZÀ-ÖØ-öø-ÿ]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
+        
+        #todo: this sometimes causes problems, find out why
+        
         #combine adjacent highlights (very basic, won't work in all cases)
-        reg = re.compile('<mark>[^<>]+</mark> ?<mark>[^<>]+</mark>')
-        found = reg.findall(text)
-        while len(found) > 0:
-            for f in found:
-                text = text.replace(f, "<mark>%s</mark>" %(f.replace("<mark>", "").replace("</mark>", "")))
-            found = reg.findall(text)
+        # reg = re.compile('<mark>[^<>]+</mark>( |-)?<mark>[^<>]+</mark>')
+        # found = reg.findall(text)
+        # while len(found) > 0:
+        #     for f in found:
+        #         text = text.replace(f, "<mark>%s</mark>" %(f.replace("<mark>", "").replace("</mark>", "")))
+        #     found = reg.findall(text)
         return text
 
     def clean(self, text):
@@ -572,14 +576,15 @@ def _buildIndex():
         initializationTime = round(end - start)
     #whoosh index
     else:
+        
         try:
             usersStopwords = config['stopwords']    
         except KeyError:
             usersStopwords = []
-        if usersStopwords is not None and len(usersStopwords) > 0:
-            schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=StandardAnalyzer(stoplist=usersStopwords)), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True))
-        else:
-            schema = whoosh.fields.Schema(content=TEXT(stored=True), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True))
+        myAnalyzer = StemmingAnalyzer(stoplist=usersStopwords) | CharsetFilter(accent_map)
+        #StandardAnalyzer(stoplist=usersStopwords)
+        schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True))
+    
         
         #index needs a folder to operate in
         indexDir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/__init__.py", "") + "/index"
