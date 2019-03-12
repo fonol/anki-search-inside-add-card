@@ -240,7 +240,7 @@ def onLoadNote(editor):
     if corpus is None:
         corpus = getCorpus()
 
-    if searchIndex is not None and searchIndex.output.editor is None:
+    if searchIndex is not None and searchIndex.output is not None:
         searchIndex.output.editor = editor
 
 
@@ -495,7 +495,6 @@ def rerenderInfo(editor, content="", searchDB = False):
     decks = list()
     for s in content[:content.index('~')].split(','):
       decks.append(s.strip())
-    
     if searchIndex is not None:
       if not searchDB:
         content = searchIndex.clean(content[content.index('~ ') + 2:])
