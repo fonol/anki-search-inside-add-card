@@ -93,7 +93,7 @@ class FTSIndex:
         rList = list()
         conn = sqlite3.connect(self.dir + "/search-data.db")
         for r in conn.execute("select nid, text, tags, did, source, matchinfo(notes, 'pcnalx') from notes where text match '%s'" %(query)):
-            if not r[0] in self.pinned and (allDecks or str(r[3]) in decks):
+            if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
                 if self.highlighting:
                     rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0], self.bm25(r[5], 0, 1, 0, 0, 0)))
                 else:
