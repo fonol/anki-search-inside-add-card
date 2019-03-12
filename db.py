@@ -8,7 +8,7 @@ from aqt import *
 from aqt.utils import showInfo
 from .output import *
 import collections
-from .textutils import clean
+from .textutils import clean, replaceVowelsWithAccentedRegex
 
 
 class FTSIndex:
@@ -105,14 +105,15 @@ class FTSIndex:
         return { "results" : rList[:min(self.limit, len(rList))] }
 
     def printOutput(self, result, stamp):
-        self.output.printSearchResults(result["results"], stamp)
+        if result is not None:
+            self.output.printSearchResults(result["results"], stamp)
     
     def _markHighlights(self, text, cleanedQuery):
         for token in set(cleanedQuery.split(" ")):
             if token == "mark" or token == "":
                 continue
             token = token.strip()
-            text = re.sub('([^A-Za-zöäü]|^)(' + re.escape(token) + ')([^A-Za-zöäü]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
+            text = re.sub('([^\'a-zA-ZÀ-ÖØ-öø-ÿ]|^)(' +  replaceVowelsWithAccentedRegex(re.escape(token)) + ')([^\'a-zA-ZÀ-ÖØ-öø-ÿ]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
         #todo: find out why this doesnt work here
         #combine adjacent highlights (very basic, won't work in all cases)
         # reg = re.compile('<mark>[^<>]+</mark> ?<mark>[^<>]+</mark>')
