@@ -46,8 +46,7 @@ class Output:
             "Found" :  "<b>%s</b> notes" % str(len(searchResults))
         }
         infoStr = self.buildInfoTable(infoMap, tags, allText) 
-        
-        cmd = "setSearchResults(`" + html + "`, `" + infoStr + "`);"
+        cmd = "setSearchResults(`" + html.replace("`", "\\`") + "`, `" + infoStr + "`);"
         if editor is None:
             self.editor.web.eval(cmd)
         else:
