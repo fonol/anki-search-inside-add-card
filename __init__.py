@@ -259,7 +259,7 @@ def getLastCreatedNote():
     return newest
 
 def displayLastNote():
-    output.editor.web.eval("document.getElementById('hvrBoxSub').innerHTML = `" + getLastCreatedNote() + "`;")
+    searchInde.output.editor.web.eval("document.getElementById('hvrBoxSub').innerHTML = `" + getLastCreatedNote() + "`;")
 
 def getWikipediaSummary(query):
     try:
@@ -272,7 +272,7 @@ def setWikiSummary(text):
         cmd = "document.getElementById('wiki').style.display = `none`;"
     else:
         cmd = "document.getElementById('wiki').style.display = `block`; document.getElementById('wiki').innerHTML = `" + text+ "`;"
-    output.editor.web.eval(cmd)
+    searchIndex.output.editor.web.eval(cmd)
 
 
 
@@ -448,16 +448,12 @@ def fillDeckSelect(editor):
     $('.deck-list-item').click(function(e) {
 		e.stopPropagation();
     $(this).children('ul').toggle();
-});
+    });
     
     """ % html
     editor.web.eval(cmd)
 
 def addToDecklist(dmap, id, name):
-    """
-    There is probably a nice recursive soluttion, but 
-    assume for the moment that no-one has more than 5 level deep decks.
-    """
     names = [s for s in name.split("::") if s != ""]
     for c, d in enumerate(names):
         found = dmap
@@ -469,14 +465,10 @@ def addToDecklist(dmap, id, name):
      
     return dmap
        
-           
-
-    
- 
 
 def setStats(nid, stats):
     """
-    Insert the statistics inside the given card.
+    Insert the statistics into the given card.
     """
     cmd = "document.getElementById('" + nid + "').innerHTML += `" + stats + "`;"
     searchIndex.output.editor.web.eval(cmd)
