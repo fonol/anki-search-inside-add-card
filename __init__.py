@@ -438,7 +438,7 @@ def fillDeckSelect(editor):
             html = "<ul class='deck-sub-list'>"
         for key, value in dmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item'><div style='display: inline-block; overflow-x: hidden; white-space:nowrap;'>%s <span class='exp'>%s</span></div><input type='checkbox' style='margin-bottom: 4px;' class='dCheck' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks();'/> %s</li>" % (trimIfLongerThan(key, 40), "[+]" if value else "" , deckMap[full], iterateMap(value, full, False)) 
+            html += "<li class='deck-list-item'><div style='display: inline-block; overflow-x: hidden; white-space:nowrap;'>%s <span class='exp'>%s</span></div><input type='checkbox' style='margin-bottom: 4px;' class='dCheck' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks();'/> %s</li>" % (trimIfLongerThan(key, 35), "[+]" if value else "" , deckMap[full], iterateMap(value, full, False)) 
         html += "</ul>"
         return html
 
