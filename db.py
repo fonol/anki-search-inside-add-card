@@ -101,7 +101,7 @@ class FTSIndex:
 
         text = self.removeStopwords(text)
         if len(text) < 2:
-            return []
+            return { "results" : [] }
 
         query = " OR ".join(["tags:" + s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ])
         if self.fts5:
@@ -109,7 +109,7 @@ class FTSIndex:
         else:
             query += " OR " + " OR ".join([s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ]) 
         if query == " OR ":
-            return
+            return { "results" : [] }
 
         c = 1
         allDecks = "-1" in decks
