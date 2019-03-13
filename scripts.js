@@ -129,6 +129,11 @@ function getCursorCoords(input, selectionPoint) {
 }
 
 function tagClick(elem) {
+    if ($(elem).data('tags')) {
+        $('#a-modal').show();
+        pycmd('renderTags ' + $(elem).data('tags'));
+        return
+    }
     let name = $(elem).data('name');
     pycmd('tagClicked ' + name);
 }

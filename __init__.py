@@ -136,6 +136,8 @@ def myOnBridgeCmd(self, cmd):
         addTag(cmd[11:])
     elif (cmd.startswith("pinCrd")):
         setPinned(cmd[6:])
+    elif (cmd.startswith("renderTags")):
+        searchIndex.output.printTagHierarchy(cmd[11:].split(" "))
     elif (cmd.startswith("setLimit ")):
         searchIndex.limit = int(cmd[9:])
     elif (cmd.startswith("highlight ")):
@@ -162,6 +164,16 @@ def onLoadNote(editor):
             $(`
             <div class='coll secondCol' style='flex-grow: 1; width: 50%; height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; margin-left: 30px; position: relative;' id='infoBox'>
              
+            
+                <div id="a-modal" class="modal">
+                    <div class="modal-content">
+                        <div id="modalText">dffs</div>
+                       <div style='text-align: right; margin-top:25px;'>
+                         <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
+                         </div>
+                    </div>
+                </div>
+
                   <div class="flexContainer" id="topContainer">
                         <div class='flexCol'>
                             <div id='deckSelWrapper'> 
@@ -427,6 +439,7 @@ def fillDeckSelect(editor):
        if deckList is not None and len(deckList) > 0 and d['name'] not in deckList:
            continue
        deckMap[d['name']] = d['id'] 
+    
     dmap = {}
     for name, id in deckMap.items():
         dmap = addToDecklist(dmap, id, name)
@@ -443,7 +456,6 @@ def fillDeckSelect(editor):
         return html
 
     html = iterateMap(dmap, "", True)
-
 
     cmd = """document.getElementById('deckSel').innerHTML = `%s`; 
     $('.deck-list-item').click(function(e) {
