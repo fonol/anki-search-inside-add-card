@@ -17,9 +17,10 @@ def clean(text, stopWords):
     for token in text.split(" "):
         if ignoreReg.match(token) is not None:
             continue
-        if token.lower() in stopWords:
+        cleaned = cleanWordReg.sub(r'\1', token.strip())
+        if cleaned.lower() in stopWords:
             continue
-        filtered += cleanWordReg.sub(r'\1', token.strip()) + " "
+        filtered += cleaned + " "
     if len(filtered) > 0:
         return filtered[:-1]
     return ""
