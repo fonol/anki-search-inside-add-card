@@ -189,7 +189,7 @@ class FTSIndex:
                 if not str(r[0]) in self.pinned:
                     #todo: implement highlighting
                     rList.append((r[1], r[2], r[3], r[0]))
-            return { "result" : rList, "stamp" : stamp }
+            return { "result" : rList[:self.limit], "stamp" : stamp }
         return { "result" : [], "stamp" : stamp }
 
     def _parseMatchInfo(self, buf):
