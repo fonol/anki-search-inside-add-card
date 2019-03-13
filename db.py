@@ -124,9 +124,9 @@ class FTSIndex:
                         rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0], self.bm25(r[5], 0, 1, 0, 0, 0)))
                 else:
                     if self.fts5:
-                        rList.append((r[4].replace('`', '\\`'), r[2], r[3], r[0]))
+                        rList.append((r[4], r[2], r[3], r[0]))
                     else:
-                        rList.append((r[4].replace('`', '\\`'), r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0)))
+                        rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0)))
                 c += 1
         conn.close()
         #if fts5 is not used, results are not sorted by score

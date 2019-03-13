@@ -338,15 +338,32 @@
     }
 }
 
-#freeze-icon {
+
+#rnd-icon {
     position: absolute; 
     bottom: 5px; 
     right: 5px; 
-    font-size: 19px;
+    font-size: 15px;
     cursor: pointer;
     color: grey;
     user-select: none;
 }
+#rnd-icon:hover {
+    color:  #2496dc;
+}
+
+#freeze-icon {
+    position: absolute; 
+    bottom: 5px; 
+    right: 95px; 
+    font-size: 15px;
+    cursor: pointer;
+    color: grey;
+    user-select: none;
+}
+
+
+
 #freeze-icon:hover {
     color:  #2496dc;
 }

@@ -138,8 +138,9 @@ def myOnBridgeCmd(self, cmd):
         setPinned(cmd[6:])
     elif (cmd.startswith("renderTags")):
         searchIndex.output.printTagHierarchy(cmd[11:].split(" "))
-    elif (cmd.startswith("setLimit ")):
-        searchIndex.limit = int(cmd[9:])
+    elif (cmd.startswith("randomNotes ") and searchIndex is not None):
+        res = getRandomNotes(cmd[11:])
+        searchIndex.output.printSearchResults(res["result"], res["stamp"])
     elif (cmd.startswith("highlight ")):
         if searchIndex is not None:
             searchIndex.highlighting = cmd[10:] == "on"
@@ -191,6 +192,7 @@ def onLoadNote(editor):
                                 <div id='freeze-icon' onclick='toggleFreeze(this)'>
                                  FREEZE &#10052; 
                                 </div>
+                                <div id='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'>RANDOM &#9861;</div>
                             </div>
                        </div>
                   </div>
@@ -224,7 +226,7 @@ def onLoadNote(editor):
                                             </table>
                                          </div>
                                      </div>
-                                    <input id='searchMask' placeholder='Search here works like in the browser...' onkeyup='searchMaskKeypress(event)'></input> 
+                                    <input id='searchMask' placeholder='Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
                                     <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
                                 </div>
                             </div>
@@ -276,6 +278,27 @@ def getLastCreatedNote():
     res = mw.col.db.execute("select flds from notes order by id desc limit 1")
     newest = res.fetchone()[0]
     return newest
+
+def getRandomNotes(deckStr):
+    if searchIndex is None:
+        return
+    stamp = searchIndex.output.getMiliSecStamp()
+    searchIndex.output.latest = stamp
+
+    if not "-1" in deckStr:
+        deckQ =  "(%s)" % ",".join([s for s in deckStr.split(" ") if s != ""])
+    else:
+        deckQ = ""
+
+    limit = searchIndex.limit
+    if deckQ:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by random() limit %s" % (deckQ, limit)).fetchall()
+    else:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by random() limit %s" % limit).fetchall()
+    rList = []
+    for r in res:
+        rList.append((r[1], r[2], r[3], r[0]))
+    return { "result" : rList, "stamp" : stamp }
 
 def displayLastNote():
     searchIndex.output.editor.web.eval("document.getElementById('hvrBoxSub').innerHTML = `" + getLastCreatedNote() + "`;")
