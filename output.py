@@ -59,9 +59,19 @@ class Output:
         Builds the html for the tags that are displayed at the bottom right of each rendered search result.
         """
         html = ""
-        for t in tags.split(' '):
-            if len(t) > 0:
-                html += "<div class='tagLbl' data-name='%s' onclick='tagClick(this);'>%s</div>" %(t, t)
+        tm = self.getTagMap(tags.split(' '))
+        totalLength = sum([len(k) for k,v in tm.items()])
+        if len(tm) <= 3 or totalLength < 50:
+            for t, s in tm.items():
+                if len(s) > 0:
+                    tagData = " ".join(self.iterateTagmap({t : s}, ""))
+                    html += "<div class='tagLbl' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(tagData, trimIfLongerThan(t, 40) + " (+%s)"% len(s))
+                else:
+                    html += "<div class='tagLbl' data-name='%s' onclick='tagClick(this);'>%s</div>" %(t, trimIfLongerThan(t, 40))
+        else:
+            tagData = " ".join(self.iterateTagmap(tm, ""))
+            html += "<div class='tagLbl' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(tagData, str(len(tm)) + " tags ...")
+        
         return html
 
     def setSearchInfo(self, text, editor = None):
@@ -82,10 +92,10 @@ class Output:
             infoStr += "No tags in the results."
         for key, value in self.getTagMap(tags).items():
             if len(value)  == 0:
-                infoStr += "<span class='searchInfoTagLbl' data-name='%s' onclick='tagClick(this);'>%s</span>" % (key,trimIfLongerThan(key, 20))
+                infoStr += "<span class='searchInfoTagLbl' data-name='%s' onclick='tagClick(this);'>%s</span>" % (key,trimIfLongerThan(key, 19))
             else:
                 tagData = " ".join(self.iterateTagmap({key : value}, ""))
-                infoStr += "<span class='searchInfoTagLbl' data-tags='%s' onclick='tagClick(this);'>%s&nbsp; %s</span>" % (tagData, trimIfLongerThan(key, 20), "(+%s)"% len(value))
+                infoStr += "<span class='searchInfoTagLbl' data-tags='%s' onclick='tagClick(this);'>%s&nbsp; %s</span>" % (tagData, trimIfLongerThan(key,19), "(+%s)"% len(value))
 
         infoStr += "</div><br style='clear:both'/><div class='searchInfoTagSep'>Keywords:</div>"
         infoStr += self._mostCommonWords(allText)
@@ -150,7 +160,7 @@ class Output:
                 html = "<ul class='tag-list'>"
             for key, value in tmap.items():
                 full = prefix + "::" + key if prefix else key
-                html += "<li class='tag-list-item'><span class='tag-btn'>%s %s</span><div class='tag-add' data-name=\"%s\" onclick='event.stopPropagation(); tagClick(this)'>+</div>%s</li>" % (trimIfLongerThan(key, 40), "[-]" if value else "" ,  deleteChars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]), iterateMap(value, full)) 
+                html += "<li class='tag-list-item'><span class='tag-btn'>%s %s</span><div class='tag-add' data-name=\"%s\" onclick='event.stopPropagation(); tagClick(this)'>+</div>%s</li>" % (trimIfLongerThan(key, 25), "[-]" if value else "" ,  deleteChars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]), iterateMap(value, full)) 
             html += "</ul>"
             return html
 

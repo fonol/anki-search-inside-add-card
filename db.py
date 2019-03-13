@@ -36,7 +36,6 @@ class FTSIndex:
             #if fts5 is compiled, use it
             self.fts5 = self._checkIfFTS5Available()
 
-
             conn = sqlite3.connect(self.dir + "/search-data.db")
             conn.execute("drop table if exists notes")
             if self.fts5:
@@ -64,10 +63,6 @@ class FTSIndex:
             filtered.append((row[0], clean(row[1], self.stopWords), row[2], row[3], row[1]))
         return filtered
 
-    
-
-
-
     def removeStopwords(self, text):
         cleaned = ""
         for token in text.split(" "):
@@ -76,8 +71,6 @@ class FTSIndex:
         if len(cleaned) > 0:
             return cleaned[:-1]
         return ""
-
-
 
 
     def search(self, text, decks):
