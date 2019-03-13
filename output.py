@@ -32,12 +32,12 @@ class Output:
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                                 <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
                                 <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
-                                <div id='rem-%s'  class='remLbl' onclick='$("#cW-%s").parents().first().remove(); updatePinned();'><span>&times;</span></div> 
+                                <div id='rem-%s' class='remLbl' onclick='$("#cW-%s").parents().first().remove(); updatePinned();'><span>&times;</span></div> 
                             </div>
                             <div class='cardR' onclick='expandCard(this);' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
                             <div style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
                         </div>
-                        """ %(res[3], counter + 1, res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], self.SEP_RE.sub("\u001f", res[0]).replace("\u001f", "<span class='fldSep'>|</span>"), self.buildTagString(res[1]))  
+                        """ %(res[3], counter + 1, res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], self.SEP_RE.sub("\u001f", res[0]).replace("\u001f", "<span class='fldSep'>|</span>").replace("\\", "\\\\"), self.buildTagString(res[1]))  
             tags = self._addToTags(tags, res[1])
             if counter < 20:
                 allText += " " + res[0]
