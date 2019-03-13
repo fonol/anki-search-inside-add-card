@@ -530,3 +530,14 @@ span.tag-symbol {
     transform: rotate(90deg);
     display: inline-block;
   }
+
+  #toggleTop {
+    position: absolute; 
+    top: 5px; 
+    right: 5px; 
+    font-size: 19px;
+    cursor: pointer;
+    color: grey;
+    user-select: none;
+    font-weight: bold;
+  }

@@ -187,13 +187,18 @@ def onLoadNote(editor):
                                 <tr><td class='tbLb'><mark>Highlighting</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
                                 <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='useInfoBox = $(this).is(":checked");'/></td></tr>
                             </table>
-                            <div id='freeze-icon' onclick='toggleFreeze(this)'>
+                            <div>
+                                <div id='freeze-icon' onclick='toggleFreeze(this)'>
                                  FREEZE &#10052; 
+                                </div>
                             </div>
                        </div>
                   </div>
                   
                  <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - 270px); width: 100%; border-top: 1px solid grey; border-bottom: 1px solid grey;">
+                                <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
+                    
+                    
                     <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
                     <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
                         <div id='searchInfo'></div>
