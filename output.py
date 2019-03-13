@@ -95,7 +95,7 @@ class Output:
                 infoStr += "<span class='searchInfoTagLbl' data-name='%s' onclick='tagClick(this);'>%s</span>" % (key,trimIfLongerThan(key, 19))
             else:
                 tagData = " ".join(self.iterateTagmap({key : value}, ""))
-                infoStr += "<span class='searchInfoTagLbl' data-tags='%s' onclick='tagClick(this);'>%s&nbsp; %s</span>" % (tagData, trimIfLongerThan(key,19), "(+%s)"% len(value))
+                infoStr += "<span class='searchInfoTagLbl' data-tags='%s' onclick='tagClick(this);'>%s&nbsp; %s</span>" % (tagData, trimIfLongerThan(key,14), "(+%s)"% len(value))
 
         infoStr += "</div><br style='clear:both'/><div class='searchInfoTagSep'>Keywords:</div>"
         infoStr += self._mostCommonWords(allText)
