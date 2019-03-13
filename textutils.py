@@ -13,6 +13,7 @@ def clean(text, stopWords):
     text = text.replace("\u001f", " ")
     text = tagReg.sub(" ", text)
     text = spaceReg.sub(" ", text)
+    stopWords = [s.lower() for s in stopWords]
     for token in text.split(" "):
         if ignoreReg.match(token) is not None:
             continue
