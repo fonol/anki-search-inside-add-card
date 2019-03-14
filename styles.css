@@ -330,10 +330,13 @@
     width: 100%;
     border-bottom: 1px solid grey;
     margin-top: 7px;
-    margin-bottom: 7px;
+    margin-bottom: 6px;
     padding-bottom: 4px;    
 }
-
+.searchInfoTagSep.bottom {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
 
 @keyframes pulsate {
     0% {
