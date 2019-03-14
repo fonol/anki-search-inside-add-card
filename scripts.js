@@ -309,10 +309,10 @@ function toggleFreeze(elem) {
 function toggleTop(elem) {
     $('#topContainer').toggle();
     if ($('#topContainer').is(":hidden")) {
-        $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - 114px)').css('border-top', '0px');
+        $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - $h-1$px)').css('border-top', '0px');
         $(elem).children().first().html('&#10097;');
     } else {
-        $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - 270px)').css('border-top', '1px solid grey');;
+        $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - $h-2$px)').css('border-top', '1px solid grey');;
         $(elem).children().first().html('&#10096;');
     }
 }

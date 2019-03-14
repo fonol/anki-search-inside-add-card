@@ -1,8 +1,7 @@
 import platform
 import os
 import re
-from aqt.utils import showInfo
-
+from aqt import mw
 
 #css + js + hvrBox
 all = """
@@ -28,7 +27,7 @@ all = """
 
 
 
-def getScriptPlatformSpecific():
+def getScriptPlatformSpecific(addToHeight):
     
     #get path 
     dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/web.py", "")
@@ -37,6 +36,10 @@ def getScriptPlatformSpecific():
         script = f.read()
     with open(dir + "/styles.css") as f:
         css = f.read().replace("%", "%%")
+    
+    script = script.replace("$h-1$", str(114 - addToHeight))
+    script = script.replace("$h-2$", str(270 - addToHeight))
+    
     #replace command key with meta key for mac
     cplatform = platform.system().lower()
     if cplatform == "darwin":

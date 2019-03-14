@@ -108,7 +108,7 @@ def initAddon():
         """
 
     #this inserts all the javascript functions in scripts.js into the editor webview
-    aqt.editor._html += getScriptPlatformSpecific()
+    aqt.editor._html += getScriptPlatformSpecific(addToResultAreaHeight)
     
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     addHook("loadNote", onLoadNote)
