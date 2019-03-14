@@ -43,6 +43,7 @@ from .web import getScriptPlatformSpecific
 from .db import FTSIndex
 from .output import Output
 from .textutils import trimIfLongerThan
+from .editor import openEditor
 
 searchingDisabled = config['disableNonNativeSearching'] 
 delayWhileTyping = max(500, config['delayWhileTyping'])
@@ -136,6 +137,8 @@ def myOnBridgeCmd(self, cmd):
         setStats(cmd[7:], calculateStats(cmd[7:]))
     elif (cmd.startswith("tagClicked ")):
         addTag(cmd[11:])
+    elif (cmd.startswith("editN ")):
+        openEditor(mw, int(cmd[6:]))
     elif (cmd.startswith("pinCrd")):
         setPinned(cmd[6:])
     elif (cmd.startswith("renderTags")):
@@ -251,18 +254,18 @@ def onLoadNote(editor):
         """.replace("$height$", str(270 - addToResultAreaHeight)))
     
 
-    if searchIndex is not None:
-        showSearchResultArea(editor)
-        if not searchIndex.highlighting:
-            editor.web.eval("$('#highlightCb').prop('checked', false);")
+        if searchIndex is not None:
+            showSearchResultArea(editor)
+            if not searchIndex.highlighting:
+                editor.web.eval("$('#highlightCb').prop('checked', false);")
 
 
-    fillDeckSelect(editor)
-    if corpus is None:
-        corpus = getCorpus()
+        fillDeckSelect(editor)
+        if corpus is None:
+            corpus = getCorpus()
 
-    if searchIndex is not None and searchIndex.output is not None:
-        searchIndex.output.editor = editor
+        if searchIndex is not None and searchIndex.output is not None:
+            searchIndex.output.editor = editor
 
 
 def setPinned(cmd):
@@ -625,7 +628,6 @@ def _buildIndex():
         myAnalyzer = StandardAnalyzer(stoplist=usersStopwords) | CharsetFilter(accent_map)
         #StandardAnalyzer(stoplist=usersStopwords)
         schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True))
-    
         
         #index needs a folder to operate in
         indexDir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/__init__.py", "") + "/index"

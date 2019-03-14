@@ -255,6 +255,10 @@ function searchCard(elem) {
     pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
 }
 
+function edit(nid) {
+    pycmd('editN ' +  nid);
+}
+
 function updatePinned() {
     let pincmd = 'pinCrd';
     $('.pinned').each(function (index) {

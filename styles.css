@@ -144,7 +144,16 @@
     cursor: pointer;
     flex: 1;
 }
-
+.editLbl {
+    background: white; 
+    color:  #2496dc;
+    z-index:9999;
+    border: 1px solid #2496dc;
+    border-right: 0px solid white;
+    padding: 3px 3px 3px 3px;
+    cursor: pointer;
+    flex: 1;
+}
 .pinLbl {
     background: #2496dc; 
     color: white;
