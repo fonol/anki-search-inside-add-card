@@ -77,6 +77,9 @@ function getSelectionText() {
 
 function onResize() {
     let vh = window.innerHeight * 0.01;
+    // let topHeight = $('#topContainer').height();
+    // let bottomHeight = $('#bottomContainer').height();
+    // $('#resultsArea').css("height", `calc(var(--vh, 1vh) * 100 - ${topHeight + bottomHeight + 50}px)`);
     document.getElementById('resultsArea').style.setProperty('--vh', `${vh}px`);
 }
 

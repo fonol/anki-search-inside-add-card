@@ -1,5 +1,8 @@
 import platform
 import os
+import re
+from aqt.utils import showInfo
+
 
 #css + js + hvrBox
 all = """
@@ -35,7 +38,9 @@ def getScriptPlatformSpecific():
     with open(dir + "/styles.css") as f:
         css = f.read().replace("%", "%%")
     #replace command key with meta key for mac
-    if platform.system().lower() == "darwin":
+    cplatform = platform.system().lower()
+    if cplatform == "darwin":
         script = script.replace("event.ctrlKey", "event.metaKey")
-    
+    else:
+        css = re.sub(r'/\*MAC\*/(.|\n|\r\n)*/\*ENDMAC\*/', "", css, re.S)
     return all % (css, script)

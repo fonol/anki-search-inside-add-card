@@ -197,7 +197,7 @@ def onLoadNote(editor):
                        </div>
                   </div>
                   
-                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - 270px); width: 100%; border-top: 1px solid grey; border-bottom: 1px solid grey;">
+                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - 270px); width: 100%; border-top: 1px solid grey;">
                                 <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                     
                     
@@ -207,22 +207,22 @@ def onLoadNote(editor):
                         <div id='searchResults' style='display: none; height: 95%; overflow-y: auto; padding-right: 10px;'></div>
                     </div>
                  </div>
-                     <div style="">
+                     <div id='bottomContainer'>
                         <div class="flexContainer">
-                            <div class='flexCol' style='padding-left: 0px;'> 
+                            <div class='flexCol' style='padding-left: 0px; border-top: 1px solid grey;'> 
                                 <div class='flexContainer' style="flex-wrap: nowrap;">
                                      <div class='tooltip tooltip-blue' onclick="toggleTooltip(this);">i
                                          <div class='tooltiptext'>
                                             <table>
                                                 <tr><td> dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
                                                 <tr><td>dog or cat </td><td> either "dog" or "cat"  </td></tr>
-                                                <tr><td>dog (cat or mouse)  </td><td>  dog and cat, or dog and mouse </td></tr>
-                                                <tr><td> -cat </td><td> without the word "cat" </td></tr>
-                                                <tr><td> -cat -mouse </td><td>  neither "cat" nor "mouse"  </td></tr>
-                                                <tr><td> "a dog" </td><td>exact phrase </td></tr>
-                                                <tr><td> -"a dog" </td><td> without the exact phrase</td></tr>
-                                                <tr><td>d_g  </td><td> d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
-                                                <tr><td> d*g </td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
+                                                <tr><td>dog (cat or mouse)</td><td>  dog and cat, or dog and mouse </td></tr>
+                                                <tr><td>-cat</td><td> without the word "cat" </td></tr>
+                                                <tr><td>-cat -mouse </td><td>  neither "cat" nor "mouse"  </td></tr>
+                                                <tr><td>"a dog"</td><td>exact phrase </td></tr>
+                                                <tr><td>-"a dog" </td><td> without the exact phrase</td></tr>
+                                                <tr><td>d_g</td><td> d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
+                                                <tr><td>d*g</td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
                                             </table>
                                          </div>
                                      </div>

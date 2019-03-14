@@ -79,6 +79,12 @@
     opacity: 1;
 }
 
+#bottomContainer {
+    z-index: 2;
+}
+
+
+
 .searchInfoTagLbl {
     background: #f0506e; 
     color: white; 
@@ -560,3 +566,11 @@ span.tag-symbol {
     user-select: none;
     font-weight: bold;
   }
+
+
+  /*MAC*/
+.dCheck {
+    margin-right:   5px;
+}
+
+/*ENDMAC*/
