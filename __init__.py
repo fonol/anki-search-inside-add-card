@@ -621,7 +621,7 @@ def _buildIndex():
             usersStopwords = config['stopwords']    
         except KeyError:
             usersStopwords = []
-        myAnalyzer = StemmingAnalyzer(stoplist=usersStopwords) | CharsetFilter(accent_map)
+        myAnalyzer = StandardAnalyzer(stoplist=usersStopwords) | CharsetFilter(accent_map)
         #StandardAnalyzer(stoplist=usersStopwords)
         schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True))
     
