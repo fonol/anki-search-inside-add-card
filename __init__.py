@@ -45,6 +45,7 @@ from .output import Output
 from .textutils import trimIfLongerThan
 
 searchingDisabled = config['disableNonNativeSearching'] 
+delayWhileTyping = max(500, config['delayWhileTyping'])
 addToResultAreaHeight = max(-500, min(500, config['addToResultAreaHeight']))
 
 searchIndex = None
@@ -108,7 +109,7 @@ def initAddon():
         """
 
     #this inserts all the javascript functions in scripts.js into the editor webview
-    aqt.editor._html += getScriptPlatformSpecific(addToResultAreaHeight)
+    aqt.editor._html += getScriptPlatformSpecific(addToResultAreaHeight, delayWhileTyping)
     
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     addHook("loadNote", onLoadNote)
@@ -205,7 +206,7 @@ def onLoadNote(editor):
                     <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
                     <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
                         <div id='searchInfo'></div>
-                        <div id='searchResults' style='display: none; height: 95%; overflow-y: auto; padding-right: 10px;'></div>
+                        <div id='searchResults' style='display: none; height: 94%; overflow-y: auto; padding-right: 10px;'></div>
                     </div>
                  </div>
                      <div id='bottomContainer'>
@@ -215,7 +216,7 @@ def onLoadNote(editor):
                                      <div class='tooltip tooltip-blue' onclick="toggleTooltip(this);">i
                                          <div class='tooltiptext'>
                                             <table>
-                                                <tr><td> dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
+                                                <tr><td>dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
                                                 <tr><td>dog or cat </td><td> either "dog" or "cat"  </td></tr>
                                                 <tr><td>dog (cat or mouse)</td><td>  dog and cat, or dog and mouse </td></tr>
                                                 <tr><td>-cat</td><td> without the word "cat" </td></tr>

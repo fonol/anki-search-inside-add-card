@@ -159,7 +159,7 @@ function fieldKeypress(event, elem) {
         }
         timeout = setTimeout(function () {
             sendContent(event);
-        }, 800)
+        }, $del$);
     }
 }
 
@@ -175,6 +175,9 @@ function hideHvrBox() {
 }
 
 function moveInHover(event, elem) {
+
+    if (!useInfoBox)
+        return;
 
     //other keys, should hide box
     if (boxIsDisplayed && event.keyCode != 17 && event.keyCode != 13 && !(event.keyCode == 38 || event.keyCode == 40)) {

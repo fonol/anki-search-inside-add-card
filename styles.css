@@ -81,6 +81,7 @@
 
 #bottomContainer {
     z-index: 2;
+    padding-top: 5px;
 }
 
 .keyword {
@@ -328,8 +329,8 @@
 .searchInfoTagSep {
     width: 100%;
     border-bottom: 1px solid grey;
-    margin-top: 14px;
-    margin-bottom: 15px;
+    margin-top: 7px;
+    margin-bottom: 7px;
     padding-bottom: 4px;    
 }
 

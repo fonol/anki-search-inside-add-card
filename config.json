@@ -16,6 +16,7 @@
 "numberOfResults": 100,
 "useFTS": false,
 "disableNonNativeSearching" : false,
-"addToResultAreaHeight": 0
+"addToResultAreaHeight": 0,
+"delayWhileTyping": 1000
 
 }
