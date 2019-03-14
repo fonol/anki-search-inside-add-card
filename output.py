@@ -115,7 +115,7 @@ class Output:
         sortedCounts = sorted(counts.items(), key=lambda kv: kv[1][1], reverse=True)
         html = ""
         for entry in sortedCounts[:15]:
-            html += "<i>%s</i>, " % entry[1][0]
+            html += "<a href='#' onclick='event.preventDefault(); searchFor($(this).text())'>%s</a>, " % entry[1][0]
         return html[:-2]
 
    

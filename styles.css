@@ -83,6 +83,10 @@
     z-index: 2;
 }
 
+.keyword {
+    cursor: pointer;
+    color: #2496dc; 
+}
 
 
 .searchInfoTagLbl {
