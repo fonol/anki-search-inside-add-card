@@ -15,6 +15,7 @@
 
 "numberOfResults": 100,
 "useFTS": false,
-"disableNonNativeSearching" : false
+"disableNonNativeSearching" : false,
+"addToResultAreaHeight": 0
 
 }

@@ -45,6 +45,7 @@ from .output import Output
 from .textutils import trimIfLongerThan
 
 searchingDisabled = config['disableNonNativeSearching'] 
+addToResultAreaHeight = max(-500, min(500, config['addToResultAreaHeight']))
 
 searchIndex = None
 sugIndex = None
@@ -197,7 +198,7 @@ def onLoadNote(editor):
                        </div>
                   </div>
                   
-                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - 270px); width: 100%; border-top: 1px solid grey;">
+                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - $height$px); width: 100%; border-top: 1px solid grey;">
                                 <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                     
                     
@@ -246,7 +247,7 @@ def onLoadNote(editor):
             window.addEventListener('resize', onResize, true);
             onResize();
            
-        """)
+        """.replace("$height$", str(270 - addToResultAreaHeight)))
     
 
     if searchIndex is not None:
