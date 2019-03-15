@@ -526,7 +526,7 @@
 #modalText {
     z-index: 99999999999; 
     color: black;
-    max-height: 500px;
+    max-height: 450px;
     overflow-y: auto;
 }
 .modal-close {
