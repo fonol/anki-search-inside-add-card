@@ -42,7 +42,7 @@ from .wikipedia import summary, DisambiguationError
 from .web import getScriptPlatformSpecific
 from .db import FTSIndex
 from .output import Output
-from .textutils import trimIfLongerThan
+from .textutils import trimIfLongerThan, replaceAccentsWithVowels
 from .editor import openEditor
 
 searchingDisabled = config['disableNonNativeSearching'] 
@@ -50,12 +50,10 @@ delayWhileTyping = max(500, config['delayWhileTyping'])
 addToResultAreaHeight = max(-500, min(500, config['addToResultAreaHeight']))
 
 searchIndex = None
-sugIndex = None
 corpus = None
 deckMap = None
 output = None
-sugRequestRunning = False
-
+edit = None
 
 def initAddon():
     global corpus, output
@@ -157,7 +155,7 @@ def onLoadNote(editor):
     Executed everytime a note is created/loaded in the add cards dialog.
     Wraps the normal editor html in a flex layout to render a second column for the searching ui.
     """
-    global corpus, output
+    global corpus, output, edit
    
     #only display in add cards dialog
     if (editor.addMode):
@@ -209,7 +207,7 @@ def onLoadNote(editor):
                     <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
                     <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
                         <div id='searchInfo'></div>
-                        <div id='searchResults' style='display: none; height: 94%; overflow-y: auto; padding-right: 10px;'></div>
+                        <div id='searchResults' style=''></div>
                     </div>
                  </div>
                      <div id='bottomContainer'>
@@ -266,7 +264,8 @@ def onLoadNote(editor):
 
         if searchIndex is not None and searchIndex.output is not None:
             searchIndex.output.editor = editor
-
+    if edit is None and editor is not None:
+        edit = editor
 
 def setPinned(cmd):
     """
@@ -352,6 +351,7 @@ class SearchIndex:
         """
         stamp = self.output.getMiliSecStamp()
         self.output.latest = stamp
+
         deckQ = ""
         for d in decks:
             deckQ += d + " "
@@ -661,7 +661,7 @@ def _buildIndex():
     try:
         limit = config['numberOfResults']
         if limit <= 0:
-            limit = 20
+            limit = 1
         elif limit > 500:
             limit = 500
     except KeyError:
@@ -670,7 +670,8 @@ def _buildIndex():
     editor = aqt.mw.app.activeWindow().editor if hasattr(aqt.mw.app.activeWindow(), "editor") else None
     if editor is not None and editor.addMode:
         searchIndex.output.editor = editor
-        showSearchResultArea(editor, initializationTime=initializationTime)
+    editor = editor if editor is not None else edit    
+    showSearchResultArea(editor, initializationTime=initializationTime)
 
 def addTag(tag):
     """
