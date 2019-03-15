@@ -10,6 +10,7 @@ class Output:
         self.editor = None
         self.SEP_RE = re.compile(r'(\u001f){2,}|(\u001f[\s\r\n]+\u001f)')
         self.SEP_END = re.compile(r'</div>\u001f$')
+        self.SOUND_TAG = re.compile(r'sound[a-zA-Z0-9]*mp')
         self.latest = -1
         self.stopwords = []
 
@@ -115,7 +116,7 @@ class Output:
         text = clean(text, self.stopwords)
         counts = {}
         for token in text.split():
-            if token == "" or len(token) == 1:
+            if token == "" or len(token) == 1 or self.SOUND_TAG.match(token):
                 continue
             if token.lower() in counts:
                 counts[token.lower()][1] += 1

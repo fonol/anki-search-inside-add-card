@@ -424,7 +424,7 @@ class SearchIndex:
             if token == "mark" or token == "":
                 continue
             token = token.strip()
-            text = re.sub('([^\'a-zA-ZÀ-ÖØ-öø-ÿ]|^)(' + re.escape(token) + ')([^\'a-zA-ZÀ-ÖØ-öø-ÿ]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
+            text = re.sub('([^a-zA-ZÀ-ÖØ-öø-ÿ]|^)(' + re.escape(token) + ')([^a-zA-ZÀ-ÖØ-öø-ÿ]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
         
         #todo: this sometimes causes problems, find out why
         

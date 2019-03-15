@@ -1,7 +1,7 @@
 import re
 
-cleanWordReg = re.compile(r"[^\'a-zA-ZÀ-ÖØ-öø-ÿ]*(\S+?)[^\'a-zA-ZÀ-ÖØ-öø-ÿ]*")    
-ignoreReg = re.compile("^[^\'a-zA-ZÀ-ÖØ-öø-ÿǒ]+$")    
+cleanWordReg = re.compile(r"[^a-zA-ZÀ-ÖØ-öø-ÿ]*(\S+?)[^a-zA-ZÀ-ÖØ-öø-ÿ]*")    
+ignoreReg = re.compile("^[^a-zA-ZÀ-ÖØ-öø-ÿǒ]+$")    
 tagReg = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
 spaceReg = re.compile('\s{2,}')
 

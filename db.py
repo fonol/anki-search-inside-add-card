@@ -142,7 +142,7 @@ class FTSIndex:
             if token == "mark" or token == "":
                 continue
             token = token.strip()
-            text = re.sub('([^\'a-zA-ZÀ-ÖØ-öø-ÿ]|^)(' +  replaceVowelsWithAccentedRegex(re.escape(token)) + ')([^\'a-zA-ZÀ-ÖØ-öø-ÿ]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
+            text = re.sub('([^a-zA-ZÀ-ÖØ-öø-ÿ]|^)(' +  replaceVowelsWithAccentedRegex(re.escape(token)) + ')([^a-zA-ZÀ-ÖØ-öø-ÿ]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
         #todo: find out why this doesnt work here
         #combine adjacent highlights (very basic, won't work in all cases)
         # reg = re.compile('<mark>[^<>]+</mark> ?<mark>[^<>]+</mark>')
