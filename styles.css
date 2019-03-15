@@ -161,7 +161,7 @@
     z-index:9999;
     border: 1px solid #2496dc;
     border-right: 0px solid white;
-    padding: 3px 3px 3px 3px;
+    padding: 3px 5px 3px 5px;
     cursor: pointer;
     flex: 1;
 }
