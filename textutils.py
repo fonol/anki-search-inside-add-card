@@ -18,7 +18,7 @@ def clean(text, stopWords):
         if ignoreReg.match(token) is not None:
             continue
         cleaned = cleanWordReg.sub(r'\1', token.strip())
-        if cleaned.lower() in stopWords:
+        if len(cleaned) <= 1 or cleaned.lower() in stopWords:
             continue
         filtered += cleaned + " "
     if len(filtered) > 0:
@@ -46,9 +46,22 @@ def replaceVowelsWithAccentedRegex(text):
     text = text.replace("E", "[EÈÉÊËĒĚĘ]")
     text = text.replace("I", "[IÌÍÎÏĪǏ]")
     text = text.replace("Y", "[YÝỲŸȲ]")
-
     return text
 
+def replaceAccentsWithVowels(text):
+    text = re.sub(r"[àáâãåāă]", "a", text)
+    text = re.sub(r"[ùúûūǔ]", "u", text)
+    text = re.sub(r"[òóôōǒ]", "o", text)
+    text = re.sub(r"[èéêëēěę]", "e", text)
+    text = re.sub(r"[ìíîïīǐ]", "i", text)
+    text = re.sub(r"[ýỳÿȳ]", "y", text)
+    text = re.sub(r"[ÀÁÂÃÅĀĂ]", "A", text)
+    text = re.sub(r"[ÙÚÛŪǓ]", "U", text)
+    text = re.sub(r"[ÒÓÔŌǑ]", "O", text)
+    text = re.sub(r"[ÈÉÊËĒĚĘ]", "E", text)
+    text = re.sub(r"[ÌÍÎÏĪǏ]", "I", text)
+    text = re.sub(r"[ÝỲŸȲ]", "Y", text)
+    return text
  
 def deleteChars(text, chars):
     for c in chars:
