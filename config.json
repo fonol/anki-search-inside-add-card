@@ -17,6 +17,6 @@
 "useFTS": false,
 "disableNonNativeSearching" : false,
 "addToResultAreaHeight": 0,
-"delayWhileTyping": 1000
+"delayWhileTyping": 800
 
 }

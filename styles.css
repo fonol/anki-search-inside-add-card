@@ -18,6 +18,17 @@
     color: #2496dc;
  }
 
+#searchResults {
+
+    display: none; 
+    height: 94%; 
+    overflow-y: auto; 
+    padding-right: 10px;
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+
 .cardR {
   cursor: pointer;
   border: 1px solid grey; 
@@ -344,7 +355,7 @@
 }
 .searchInfoTagSep.bottom {
     margin-top: 0px;
-    margin-bottom: 0px;
+    margin-bottom: 4px;
 }
 
 @keyframes pulsate {
@@ -587,7 +598,7 @@ span.tag-symbol {
 
   /*MAC*/
 .dCheck {
-    margin-right:   5px;
+    margin-right:   10px;
 }
 
 /*ENDMAC*/

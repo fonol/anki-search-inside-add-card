@@ -251,7 +251,6 @@ function pinCard(elem, nid) {
 
 function searchCard(elem) {
     let html = $(elem).parent().next().html();
-    //$searchInfo.html("<span style='float: right;'>Searching</span>");
     pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
 }
 

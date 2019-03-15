@@ -108,7 +108,6 @@ class FTSIndex:
         allDecks = "-1" in decks
         rList = list()
         conn = sqlite3.connect(self.dir + "/search-data.db")
-
         if self.fts5:
             dbStr = "select nid, text, tags, did, source from notes where notes match '%s' order by bm25(notes)" %(query)
         else:
