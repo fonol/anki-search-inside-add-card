@@ -17,6 +17,15 @@
     font-size: 20px;
     color: #2496dc;
  }
+ #modal-loader {
+     display: none;
+    position: absolute;
+    top: calc(50% - 45px);
+    left: calc(50% - 27px);
+    width: 80px;
+    font-size: 20px;
+    color: #2496dc;
+ }
 
 #searchResults {
 
@@ -492,8 +501,25 @@
 
 }
 
+#indexInfo {
+    background: #2496dc;
+    color: white;
+    padding: 0 4px 0 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    position: absolute; 
+    top: 35px; 
+    right: 5px; 
+    display: inline;
+}
 
-
+#specialSearches {
+   
+    flex:  0 0 20px;
+    margin-left: 10px; 
+  
+}
 
 /* Modal */
 

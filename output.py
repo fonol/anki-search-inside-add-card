@@ -129,7 +129,15 @@ class Output:
         return html[:-2]
 
    
-       
+    def showInModal(self, text):
+        cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`;" % text
+        if self.editor is not None:
+            self.editor.web.eval(cmd)
+
+
+    def hideModal(self):
+        if self.editor is not None:
+            self.editor.web.eval("toggleModalLoader(false);$('#a-modal').hide();")
 
     def _addToTags(self, tags, tagStr):
         if tagStr == "":

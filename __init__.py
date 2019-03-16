@@ -46,6 +46,7 @@ from .whoosh_index import SearchIndex
 from .output import Output
 from .textutils import trimIfLongerThan, replaceAccentsWithVowels
 from .editor import openEditor
+from .stats import calculateStats, findNotesWithLowestPerformance
 
 searchingDisabled = config['disableNonNativeSearching'] 
 delayWhileTyping = max(500, config['delayWhileTyping'])
@@ -150,7 +151,26 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("randomNotes ") and searchIndex is not None):
         res = getRandomNotes(cmd[11:])
         searchIndex.output.printSearchResults(res["result"], res["stamp"])
-    
+    elif cmd == "indexInfo":
+        if searchIndex is not None:
+            searchIndex.output.showInModal(getIndexInfo())
+    elif cmd.startswith("lowestPerf "):
+        if searchIndex is not None:
+            stamp = searchIndex.output.getMiliSecStamp()
+            searchIndex.output.latest = stamp
+            res = findNotesWithLowestPerformance(cmd[11:].split(" "), searchIndex.limit)
+            searchIndex.output.printSearchResults(res, stamp)
+            searchIndex.output.hideModal()
+    elif cmd.startswith("lowestRet "):
+        if searchIndex is not None:
+            stamp = searchIndex.output.getMiliSecStamp()
+            searchIndex.output.latest = stamp
+            res = findNotesWithLowestPerformance(cmd[10:].split(" "), searchIndex.limit, retOnly = True)
+            searchIndex.output.printSearchResults(res, stamp)
+            searchIndex.output.hideModal()
+    elif cmd == "specialSearches":
+        if searchIndex is not None:
+            searchIndex.output.showInModal(getSpecialSearches())
     #used to remember settings when add dialog is closed
     elif (cmd.startswith("highlight ")):
         if searchIndex is not None:
@@ -185,10 +205,13 @@ def onLoadNote(editor):
             
                 <div id="a-modal" class="modal">
                     <div class="modal-content">
-                        <div id="modalText">dffs</div>
-                       <div style='text-align: right; margin-top:25px;'>
+                       <div id='modal-visible'>
+                        <div id="modalText"></div>
+                           <div style='text-align: right; margin-top:25px;'>
                          <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
                          </div>
+                         </div>
+                          <div id='modal-loader'> <div class='signal'></div><br/>Computing...</div>
                     </div>
                 </div>
 
@@ -216,6 +239,7 @@ def onLoadNote(editor):
                   
                  <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - $height$px); width: 100%; border-top: 1px solid grey;">
                                 <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
+                                <div id='indexInfo' onclick='pycmd("indexInfo");'>i</div>
                     
                     
                     <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
@@ -245,6 +269,8 @@ def onLoadNote(editor):
                                      </div>
                                     <input id='searchMask' placeholder='Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
                                     <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
+                                    <button id='specialSearches' onclick='pycmd("specialSearches");'>Special</button>
+                                
                                 </div>
                             </div>
                         </div>
@@ -339,10 +365,43 @@ def setWikiSummary(text):
     searchIndex.output.editor.web.eval(cmd)
 
 
+def getIndexInfo():
+    if searchIndex is None:
+        return ""
+    html = """<table style='width: 100%%'>
+                <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
+               <tr><td>Initialization:</td><td>  <b>%s s</b></td></tr>
+               <tr><td>Notes in Index:</td><td>  <b>%s</b></td></tr>
+             </table>
+            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.getNumberOfNotes())
+    return html
 
-
-
-
+def getSpecialSearches():
+    if searchIndex is None:
+        return ""
+    html = """
+                <div class='flexContainer'> 
+                    <div style='flex: 1 0'>
+                        <b>Worst Performance</b><br/>
+                        Find notes on whose cards you performed the worst. Score includes true retention, taken time, and how you rated the cards.
+                        Only cards that have been reviewed more than 3 times are counted.
+                    </div>
+                    <div style='flex: 0 0; padding-left: 10px;'>
+                        <button class='modal-close' style='margin-top: auto; margin-bottom: auto;' onclick=' toggleModalLoader(true); pycmd("lowestPerf " + selectedDecks.toString());'>Search</button>
+                   </div>
+                </div>
+                  <div class='flexContainer' style='margin-top: 20px;'> 
+                    <div style='flex: 1 0'>
+                        <b>Lowest Retention</b><br/>
+                        Find notes on whose cards you got the lowest retention.
+                        Only cards that have been reviewed more than 3 times are counted.
+                    </div>
+                    <div style='flex: 0 0; padding-left: 10px;'>
+                        <button class='modal-close' style='margin-top: auto; margin-bottom: auto;' onclick=' toggleModalLoader(true); pycmd("lowestRet " + selectedDecks.toString());'>Search</button>
+                   </div>
+                </div>
+            """
+    return html
 
 
 def fillDeckSelect(editor):
@@ -543,14 +602,15 @@ def _buildIndex():
         deckQueryparser = QueryParser("did", index.schema, group=qparser.OrGroup)
         searchIndex = SearchIndex(index, queryparser, deckQueryparser)
         searchIndex.stopWords = usersStopwords
+        searchIndex.type = "Whoosh"
         end = time.time()
         initializationTime = round(end - start)
-        searchIndex.initializationTime = initializationTime
         
 
     searchIndex.finder = Finder(mw.col)
     searchIndex.output = Output()
     searchIndex.output.stopwords = searchIndex.stopWords
+    searchIndex.initializationTime = initializationTime
 
 
     try:
@@ -626,148 +686,6 @@ def getCorpus():
         uList.append((id, flds, t, did))
     return uList
     
-
-
-def getAvgTrueRetentionAndTime():
-        eases = mw.col.db.all("select ease, time from revlog where type = 1")
-        if not eases:
-            return 0
-        cnt = 0
-        passed = 0
-        failed = 0
-        timeTaken = 0
-        for ease, taken in eases:
-            cnt += 1
-            if ease != 1:
-                passed += 1
-            else:
-                failed += 1
-            timeTaken += taken / 1000.0
-        retention = 100 * passed / (passed + failed) if cnt > 0 else 0
-        retention = round(retention, 2)
-        return (round(retention,1), round(timeTaken / cnt, 1))
-
-def calcAbsDiffInPercent(i1, i2):
-        diff = round(i1 - i2, 2)
-        if diff >= 0:
-            return "+ " + str(diff)
-        else:
-            return str(diff)
-
-def calculateStats(nid):
-        #get card ids for note
-        cards = mw.col.db.all("select * from cards where nid = %s" %(nid))
-        if not cards:
-            return ""
-        cStr = "("
-        for c in cards:
-            cStr += str(c[0]) + ", "
-        cStr = cStr[:-2] + ")"
-
-        entries = mw.col.db.all(
-            "select cid, ease, time, type "
-            "from revlog where cid in %s" %(cStr))
-        if not entries:
-            s = "<hr/>No card has been reviewed yet for this note."
-        else:
-            cnt = 0
-            passed = 0
-            failed = 0
-            goodAndEasy = 0
-            hard = 0
-            timeTaken = 0
-            for (cid, ease, taken, type) in reversed(entries):
-                #only look for reviews
-                if type != 1:
-                    continue
-                cnt += 1
-                if ease != 1:
-                    passed += 1
-                    if ease == 2:
-                        hard += 1
-                    else:
-                        goodAndEasy += 1
-                else:
-                    failed += 1
-                
-                timeTaken += taken  / 1000.0        
-            retention =  100 * passed / (passed + failed) if cnt > 0 else 0
-            retention = round(retention, 1)
-            avgTime = round(timeTaken / cnt, 1) if cnt > 0 else 0
-            score = _calcPerformanceScore(retention, avgTime, goodAndEasy, hard) if cnt > 0 else (0, 0, 0, 0)
-            s = ""
-            s += "<div class='smallMarginTop'><span class='score'>Performance: %s</span><span class='minorScore'>Retention: %s</span><span class='minorScore'>Time: %s</span><span class='minorScore'>Ratings: %s</span></div><hr/>" %(str(score[0]), str(score[2]), str(score[1]), str(score[3]))
-            s += "<b>%s</b> card(s) found for this note.<br/><br/>" %(str(len(cards)))
-            if cnt > 0:
-                avgRetAndTime = getAvgTrueRetentionAndTime()
-                if retention == 100.0:
-                    s += "<div class='smallMarginBottom'>Your <b>retention</b> on cards of this note is <span class='darkGreen'>perfect</span>: <b>" + str(retention) + " %</b></div>"
-                elif retention >= 98.0:
-                    s += "<div class='smallMarginBottom'>Your <b>retention</b> on cards of this note is <span class='darkGreen'>nearly perfect</span>: <b>" + str(retention) + " %</b></div>"
-                elif retention != avgRetAndTime[0]:
-                    s += _compString("retention", _getCompExp("retention", retention, avgRetAndTime[0]), retention, calcAbsDiffInPercent(retention, avgRetAndTime[0]), "%")  
-                else: 
-                    s += "<div class='smallMarginBottom'>Your <b>retention</b> on cards of this note is equal to your average retention: <b>" + str(retention) + " %</b></div>"
-
-          
-                if avgTime != avgRetAndTime[1]:
-                    s += _compString("time", _getCompExp("time", avgTime, avgRetAndTime[1]), avgTime, calcAbsDiffInPercent(avgTime, avgRetAndTime[1]), "s")  
-                else:
-                    s += "<div class='smallMarginBottom'>Your <b>time</b> on cards of this note is equal to your average time: <b>" + str(avgTime) + " s</b></div>"
-            
-        s = "<div id='i-%s' style='position: absolute; bottom: 3px; left: 0px; padding: 7px;'>%s</div>" %(nid,s) 
-        
-        return s
-
-def _getCompExp(field, value, avg):
-    bbb = 8
-    bb = 4
-    biggerIsBetter = True
-    if field == 'time':
-        bbb = 10
-        bb = 5
-        biggerIsBetter = False
-
-    if not biggerIsBetter:
-        v_h = value
-        value = avg
-        avg = v_h
-
-    if value > avg and value - avg >= bbb: 
-        return '<span class="darkGreen">significantly better</span>'
-    elif value > avg and value - avg >= bb:
-        return '<span class="green">better</span>'
-    elif value > avg:
-        return '<span class="lightGreen">slightly better</span>'
-    elif value < avg and avg - value >= bbb:
-        return '<span class="darkRed">significantly worse</span>'
-    elif value < avg and avg - value >= bb:
-        return '<span class="red">worse</span>'
-    elif value < avg:
-        return '<span class="lightRed">slightly worse</span>'
-    
-    
-    return "n.a."
-
-
-def _compString(fieldName, comp, value, diff, unit):
-      return "<div class='smallMarginBottom'>Your <b>%s</b> on cards of this note is %s than your average %s: <b>%s %s</b> (%s %s)</div>" %(fieldName, comp, fieldName, value, unit,  diff, unit) 
-
-def _calcPerformanceScore(retention, time, goodAndEasy, hard):
-      if goodAndEasy == 0 and hard == 0:
-          return (0,0,0,0)
-      #retention is counted higher, numbers are somewhat arbitrary
-      score = 0
-      retentionSc = 2 * retention * (1 - ((100 - retention) / 100))
-      score += retentionSc
-      timeSc = 100.0 - time / 3.0  * 10.0
-      if timeSc < 0:
-          timeSc = 0
-      score += timeSc
-      ratingSc = (goodAndEasy / (goodAndEasy + hard)) * 100
-      score += ratingSc
-      score = round(score * 100.0 / 400.0, 1)
-      return (int(score), int(timeSc), int(retentionSc * 100.0 / 200.0), int(ratingSc)) 
 
 
 class ProcessRunnable(QRunnable):

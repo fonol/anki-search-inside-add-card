@@ -44,8 +44,10 @@ class FTSIndex:
             conn = sqlite3.connect(self.dir + "/search-data.db")
             conn.execute("drop table if exists notes")
             if self.fts5:
+                self.type = "SQLite FTS 5"
                 conn.execute("create virtual table notes using fts5(nid, text, tags, did, source)")
             else:
+                self.type = "SQLite FTS 4"
                 conn.execute("create virtual table notes using fts4(nid, text, tags, did, source)")
             conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?)', cleaned)
             conn.execute("INSERT INTO notes(notes) VALUES('optimize')")
@@ -268,6 +270,12 @@ class FTSIndex:
         conn.commit()
         conn.close()
     
+
+    def getNumberOfNotes(self):
+        conn = sqlite3.connect(self.dir + "/search-data.db")
+        res = conn.cursor().execute("select count(*) from notes_content").fetchone()[0]
+        conn.close()
+        return res
 
 
 class Worker(QRunnable):

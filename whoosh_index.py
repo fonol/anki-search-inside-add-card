@@ -154,3 +154,7 @@ class SearchIndex:
         writer.add_document(content=content, tags=tags, did=did, nid=str(note.id))
         writer.commit()
         return note
+    
+    def getNumberOfNotes(self):
+        res = self.index.searcher().doc_count_all()
+        return res

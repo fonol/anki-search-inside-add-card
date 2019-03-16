@@ -83,6 +83,18 @@ function onResize() {
     document.getElementById('resultsArea').style.setProperty('--vh', `${vh}px`);
 }
 
+function toggleModalLoader(show) {
+        // if (show) {
+        //     document.getElementById('modal-text').style.visibility = "hidden";
+        //     document.getElementById('modal-loader').style.display = "block";
+        //     $('.modal-close').prop('disabled', true);
+        // } else {
+        //     document.getElementById('modal-text').style.visibility = "visible";
+        //     document.getElementById('modal-loader').style.display = "none";
+        //     $('.modal-close').prop('disabled', false);
+
+        // }
+}
 
 function getWordPrecedingCaret(containerEl) {
     var precedingChunk = "", sel, range, precedingRange;
