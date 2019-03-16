@@ -18,6 +18,8 @@ class FTSIndex:
         self.limit = 20
         self.pinned = []
         self.highlighting = True
+        self.searchWhileTyping = True
+        self.searchOnSelection = True
         self.dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/db.py", "")
         self.stopWords = []
         self.threadPool = QThreadPool()
@@ -35,7 +37,10 @@ class FTSIndex:
 
             #if fts5 is compiled, use it
             self.fts5 = self._checkIfFTS5Available()
-
+            try:
+                os.remove(self.dir + "/search-data.db")
+            except OSError:
+                pass
             conn = sqlite3.connect(self.dir + "/search-data.db")
             conn.execute("drop table if exists notes")
             if self.fts5:
@@ -252,6 +257,17 @@ class FTSIndex:
                 score += (idf * rhs) * weight 
         return -score - cd * 20
 
+
+    def addNote(self, note):
+        
+        content = " \u001f ".join(note.fields)
+        tags = " ".join(note.tags)
+        did = str(note.model()['did'])
+        conn = sqlite3.connect(self.dir + "/search-data.db")
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source) VALUES (?, ?, ?, ?, ?)", (str(note.id), clean(content, self.stopWords), tags, did, content))
+        conn.commit()
+        conn.close()
+    
 
 
 class Worker(QRunnable):

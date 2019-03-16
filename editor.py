@@ -26,14 +26,10 @@ class EditDialog(QDialog):
         self.resize(500, 700)
         self.form.buttonBox.button(QDialogButtonBox.Close).setShortcut( QKeySequence("Ctrl+Return"))
         self.editor = aqt.editor.Editor(self.mw, self.form.fieldsArea, self)
-            # # self.editor.card = card
         self.editor.setNote(note, focusTo=0)
-            # #estoreGeom(self, "editcurrent")
         addHook("reset", self.onReset)
         self.mw.requireReset()
         self.show()
-        # reset focus after open, taking care not to retain webview
-        # pylint: disable=unnecessary-lambda
         self.mw.progress.timer(100, lambda: self.editor.web.setFocus(), False)
 
     def onReset(self):

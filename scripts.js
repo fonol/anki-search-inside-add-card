@@ -85,23 +85,23 @@ function onResize() {
 
 
 function getWordPrecedingCaret(containerEl) {
-    var precedingChar = "", sel, range, precedingRange;
+    var precedingChunk = "", sel, range, precedingRange;
     if (window.getSelection) {
         sel = window.getSelection();
         if (sel.rangeCount > 0) {
             range = sel.getRangeAt(0).cloneRange();
             range.collapse(true);
             range.setStart(containerEl, 0);
-            precedingChar = range.toString().slice(-20);
+            precedingChunk = range.toString().slice(-20);
         }
     } else if ((sel = document.selection) && sel.type != "Control") {
         range = sel.createRange();
         precedingRange = range.duplicate();
         precedingRange.moveToElementText(containerEl);
         precedingRange.setEndPoint("EndToStart", range);
-        precedingChar = precedingRange.text.slice(-20);
+        precedingChunk = precedingRange.text.slice(-20);
     }
-    let spl = precedingChar.split(" ");
+    let spl = precedingChunk.split(" ");
     return spl[spl.length - 1];
 
 }
@@ -150,6 +150,14 @@ function fieldKeydown(event, elem) {
 
 }
 
+function sendSearchOnTyping() {
+    let cmd = searchOnTyping ? "on" : "off";
+    pycmd("searchWhileTyping " + cmd);
+}
+function sendSearchOnSelection() {
+    let cmd = searchOnSelection ? "on" : "off";
+    pycmd("searchOnSelection " + cmd);
+}
 
 function fieldKeypress(event, elem) {
     if (searchOnTyping && !boxIsDisplayed && event.keyCode != 13 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {

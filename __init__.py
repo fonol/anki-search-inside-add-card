@@ -6,6 +6,7 @@ from aqt.qt import *
 from anki.hooks import runHook, addHook, wrap
 import aqt
 import aqt.webview
+from aqt.addcards import  AddCards
 from anki.find import Finder
 import aqt.editor
 from aqt.editor import Editor
@@ -40,7 +41,8 @@ if loadWhoosh:
 
 from .wikipedia import summary, DisambiguationError
 from .web import getScriptPlatformSpecific
-from .db import FTSIndex
+from .fts_index import FTSIndex
+from .whoosh_index import SearchIndex
 from .output import Output
 from .textutils import trimIfLongerThan, replaceAccentsWithVowels
 from .editor import openEditor
@@ -57,11 +59,17 @@ edit = None
 
 def initAddon():
     global corpus, output
-    global oldOnBridge
+    global oldOnBridge, origAddNote
+    
     oldOnBridge = Editor.onBridgeCmd
     Editor.onBridgeCmd = myOnBridgeCmd
     #todo: Find out if there is a better moment to start index creation
     addHook("profileLoaded", buildIndex)
+    origAddNote = AddCards.addNote
+
+    AddCards.addNote = addNoteAndUpdateIndex
+
+
     #main functions to search
     if not searchingDisabled:
         aqt.editor._html += """
@@ -129,8 +137,6 @@ def myOnBridgeCmd(self, cmd):
         setWikiSummary(getWikipediaSummary(cmd[5:]))
     elif (cmd.startswith("lastnote")):
         displayLastNote()
-    # elif (cmd.startswith("fldSg")):
-    #     renderSuggestions(self, cmd[6:])
     elif (cmd.startswith("nStats ")):
         setStats(cmd[7:], calculateStats(cmd[7:]))
     elif (cmd.startswith("tagClicked ")):
@@ -144,9 +150,17 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("randomNotes ") and searchIndex is not None):
         res = getRandomNotes(cmd[11:])
         searchIndex.output.printSearchResults(res["result"], res["stamp"])
+    
+    #used to remember settings when add dialog is closed
     elif (cmd.startswith("highlight ")):
         if searchIndex is not None:
             searchIndex.highlighting = cmd[10:] == "on"
+    elif (cmd.startswith("searchWhileTyping ")):
+        if searchIndex is not None:
+            searchIndex.searchWhileTyping = cmd[18:] == "on"
+    elif (cmd.startswith("searchOnSelection ")):
+        if searchIndex is not None:
+            searchIndex.searchOnSelection = cmd[18:] == "on"
     else:
         oldOnBridge(self, cmd)
 
@@ -186,8 +200,8 @@ def onLoadNote(editor):
                         </div>
                         <div class='flexCol right' style="position: relative;">
                             <table>
-                                <tr><td class='tbLb'>Search on selection</td><td><input type='checkbox' checked onchange='searchOnSelection = $(this).is(":checked");'/></td></tr>
-                                <tr><td class='tbLb'>Search on typing</td><td><input type='checkbox' checked onchange='searchOnTyping = $(this).is(":checked");'/></td></tr>
+                                <tr><td class='tbLb'>Search on selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
+                                <tr><td class='tbLb'>Search on typing</td><td><input type='checkbox' id='typingCb' checked onchange='searchOnTyping = $(this).is(":checked"); sendSearchOnTyping();'/></td></tr>
                                 <tr><td class='tbLb'><mark>Highlighting</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
                                 <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='useInfoBox = $(this).is(":checked");'/></td></tr>
                             </table>
@@ -254,9 +268,13 @@ def onLoadNote(editor):
 
         if searchIndex is not None:
             showSearchResultArea(editor)
+            #restore previous settings
             if not searchIndex.highlighting:
                 editor.web.eval("$('#highlightCb').prop('checked', false);")
-
+            if not searchIndex.searchWhileTyping:
+                editor.web.eval("$('#typingCb').prop('checked', false);")
+            if not searchIndex.searchOnSelection:
+                editor.web.eval("$('#selectionCb').prop('checked', false);")
 
         fillDeckSelect(editor)
         if corpus is None:
@@ -322,137 +340,6 @@ def setWikiSummary(text):
 
 
 
-
-class SearchIndex:
-    """
-    Wraps the whoosh index object, provides method to query.
-    """
-    def __init__(self, index, qParser, dQParser):
-        self.initializationTime = 0
-        self.index = index
-        self.qParser = qParser
-        #used to construct deck filter
-        self.dQParser = dQParser
-        #contains nids of items that are currently pinned, I.e. should be excluded from results
-        self.pinned = []
-        self.highlighting = True
-        self.limit = 10
-        self.TAG_RE = re.compile(r'<[^>]+>')
-        self.SP_RE = re.compile(r'&nbsp;| {2,}')
-        self.SEP_RE = re.compile(r'(\u001f){2,}')
-
-    def search(self, text, decks):
-        """
-        Search for the given text.
-
-        Args: 
-        text - string to search, typically fields content
-        decks - list of deck ids, if -1 is contained, all decks are searched
-        """
-        stamp = self.output.getMiliSecStamp()
-        self.output.latest = stamp
-
-        deckQ = ""
-        for d in decks:
-            deckQ += d + " "
-        deckQ = deckQ[:-1]
-        with self.index.searcher() as searcher:
-            query = self.qParser.parse(text)
-            dq = self.dQParser.parse(deckQ)
-            if decks is None or len(decks) == 0 or "-1" in decks:
-                res = searcher.search(self.qParser.parse(text), limit=self.limit)
-            else:
-                res = searcher.search(self.qParser.parse(text), filter=dq, limit=self.limit)
-            res.fragmenter.surround = 0
-            rList = []
-            for r in res:
-                #pinned items should not appear in the results
-                if not r["nid"] in self.pinned:
-                    if self.highlighting:
-                        rList.append((self._markHighlights(r["content"], r.highlights("content", top=10)), r["tags"], r["did"], r["nid"]))
-                    else:
-                        rList.append((r["content"].replace('`', '\\`'), r["tags"], r["did"], r["nid"]))
-            
-            return { "result" : rList, "stamp" : stamp }
-
-    def searchDB(self, text, decks):
-        """
-        WIP: this shall be used for searches in the search mask,
-        doesn't use the index, instead use the traditional anki search (which is more powerful for single keywords)
-        """
-        stamp = self.output.getMiliSecStamp()
-        self.output.latest = stamp
-
-        found = self.finder.findNotes(text)
-        
-        if len (found) > 0:
-            if not "-1" in decks:
-                deckQ =  "(%s)" % ",".join(decks)
-            else:
-                deckQ = ""
-            #query db with found ids
-            foundQ = "(%s)" % ",".join([str(f) for f in found])
-            if deckQ:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ)).fetchall()
-            else:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ)).fetchall()
-            rList = []
-            for r in res:
-                #pinned items should not appear in the results
-                if not str(r[0]) in self.pinned:
-                    #todo: implement highlighting
-                    rList.append((r[1].replace('`', '\\`'), r[2], r[3], r[0]))
-            return { "result" : rList[:self.limit], "stamp" : stamp }
-        return { "result" : [], "stamp" : stamp }
-
-    def _markHighlights(self, text, highlights):
-        """
-        Whoosh highlighting seems to interfere with html tags, 
-        so we use our own here.
-        
-        Args: 
-        highlights - whoosh highlights string ("highlight1 ... highlight2")
-        text - note text
-
-        Returns:
-        text where highlights are enclosed in <mark> tags
-        """
-        highlights = self.clean(highlights)
-        if len(highlights) == 0:
-            return text
-        for token in set(highlights.split("...")):
-            if token == "mark" or token == "":
-                continue
-            token = token.strip()
-            text = re.sub('([^a-zA-ZÀ-ÖØ-öø-ÿ]|^)(' + re.escape(token) + ')([^a-zA-ZÀ-ÖØ-öø-ÿ]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
-        
-        #todo: this sometimes causes problems, find out why
-        
-        #combine adjacent highlights (very basic, won't work in all cases)
-        # reg = re.compile('<mark>[^<>]+</mark>( |-)?<mark>[^<>]+</mark>')
-        # found = reg.findall(text)
-        # while len(found) > 0:
-        #     for f in found:
-        #         text = text.replace(f, "<mark>%s</mark>" %(f.replace("<mark>", "").replace("</mark>", "")))
-        #     found = reg.findall(text)
-        return text
-
-    def clean(self, text):
-        """
-        Clean linebreaks and some html entitíes from the query string.
-        TODO: could be more sensitive
-        """
-        text = text.replace("\n", " ").replace("\r\n", " ").strip()
-        text = self.removeTags(text)
-        return text.strip()
-
-    def removeTags(self, text):
-        """
-        Remove <br/> &nbsp; and multiple spaces.
-        TODO: check for other html entities
-        """
-        text = re.sub('< ?br/ ?>|< ?br ?> ?< ?/br ?>', " ", text,  flags=re.I).replace("&nbsp;", " ").replace("\t", " ")
-        return self.SP_RE.sub(' ', self.TAG_RE.sub(' ', text))
 
 
 
@@ -588,6 +475,15 @@ def getCurrentContent(editor):
         text += f
     return text
 
+def addNoteAndUpdateIndex(dialog, note):
+    res = origAddNote(dialog, note)
+    addNoteToIndex(note)
+    return res
+
+def addNoteToIndex(note):
+    if searchIndex is not None:
+        searchIndex.addNote(note)
+
 def buildIndex():
     global corpus
     if searchIndex is None:
@@ -596,7 +492,6 @@ def buildIndex():
         #build index in background to prevent ui from freezing
         p = ProcessRunnable(target=_buildIndex)
         p.start()
-
 
 
 def _buildIndex():
