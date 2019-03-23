@@ -263,11 +263,13 @@
 
 
 #deckSelWrapper {
-    height: 140px;
-    margin-bottom: 5px !important;
-    width: 100%;
-  
+    height: 130px;
+    margin-bottom: 0px !important;
+    margin-right: 1px;
+    width: calc(100% - 1px);
+    border: 1px solid grey;
     overflow-y: auto;
+    background: white;
 }
 
 #deckSel {
@@ -461,20 +463,53 @@
 .deck-list-item {
     list-style-type: none;
     cursor: pointer;
-    margin-left: 0px;
-    padding-left: 0px;
-    width: 100%;
+    margin: 0px;
+    padding: 0px;
+    width: calc(100% - 8px);
     position: relative;
-    margin-top: 3px;
-    margin-bottom: 1px;
-    border-top: 1px solid grey;
     user-select: none;
-
-   
 }
-.deck-list-item>input {
-    position: absolute;
-    right: 5px;
+.deck-list-item .deck-list-item {
+    width: 100%;
+}
+.deck-list-item > div {
+    display: inline-block; 
+    overflow-x: hidden;
+     white-space:nowrap; 
+     width: 100%;
+     padding: 1px 4px 1px 4px;
+}
+.list-item-inner:hover {
+    background: #2496dc;
+    color: white;
+}
+.check {
+    float: right;
+    color: green;
+    display: none;
+}
+.deck-list-item.selected > .list-item-inner > .check {
+    display: inline;
+}
+.deck-list-item.selected:hover > .list-item-inner:hover > .check {
+    color: white;
+}
+.deck-list-button {
+border: 1px solid grey;
+border-top: 0px;
+background: white;
+color: grey;
+cursor: pointer;
+}
+.deck-list-button.center {
+    border-left: none;
+    border-right: none; 
+}
+.deck-list-button:hover {
+    color: #2496dc;
+}
+.deck-list-button:active,.deck-list-button:focus {
+    outline: none;
 }
 .deck-sub-list {
     display: none;
@@ -482,8 +517,6 @@
     margin-left: 12px;
     padding-left: 0px;
 }
-
-
 .blueBG {
    background: #2496dc;
    color: white;
@@ -492,15 +525,17 @@
 
 .deck-sub-list.outer {
     display: block;
+    margin-top: 0px;
     margin-left: 0px;
     padding-left: 0px;
 }
-
 .exp {
     user-select: none;
-
+  
 }
-
+.exp:empty {
+    display: none;
+}
 #indexInfo {
     background: #2496dc;
     color: white;

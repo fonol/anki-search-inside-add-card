@@ -184,6 +184,10 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("deckSelection ")):
         if searchIndex is not None:
             searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
+    elif cmd == "selectCurrent":
+        deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
+        if deckChooser is not None and searchIndex is not None:
+            searchIndex.output.editor.web.eval("selectDeckWithId(%s);" % deckChooser.selectedId())
     else:
         oldOnBridge(self, cmd)
 
@@ -218,10 +222,12 @@ def onLoadNote(editor):
             </div>
 
                 <div class="flexContainer" id="topContainer">
-                    <div class='flexCol'>
+                    <div class='flexCol' style='margin-left: 0px; padding-left: 0px;'>
                         <div id='deckSelWrapper'> 
                             <table id='deckSel'></table>
                         </div>
+                        <div style='margin-top: 0px; margin-bottom: 10px;'><button class='deck-list-button' onclick='selectAllDecks();'>Select All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>Select None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Select Current</button></div>
+
                     </div>
                     <div class='flexCol right' style="position: relative;">
                         <table>
@@ -291,7 +297,7 @@ def onLoadNote(editor):
         window.addEventListener('resize', onResize, true);
         onResize();
         
-        """.replace("$height$", str(270 - addToResultAreaHeight)))
+        """.replace("$height$", str(280 - addToResultAreaHeight)))
     
 
         if searchIndex is not None:
@@ -425,32 +431,35 @@ def fillDeckSelect(editor):
     for name, id in deckMap.items():
         dmap = addToDecklist(dmap, id, name)
 
+    dmap = dict(sorted(dmap.items(), key=lambda item: item[0].lower()))
+
     def iterateMap(dmap, prefix, start=False):
         decks = searchIndex.selectedDecks if searchIndex is not None else []
         if start:
-            html = "<ul class='deck-sub-list outer'><li class='deck-list-item'><div style='display: inline-block; margin-top: 2px;'><span class='blueBG'>All (%s)</span> </div><input type='checkbox' %s class='dCheck' data-id='-1' onclick='updateSelectedDecks();'/></li>" % (len(dmap),  "checked='true'" if  "-1" in decks or len(decks) == 0 else "")
+            html = "<ul class='deck-sub-list outer'>"
         else:
             html = "<ul class='deck-sub-list'>"
         for key, value in dmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item'><div style='display: inline-block; overflow-x: hidden; white-space:nowrap;'>%s <span class='exp'>%s</span></div><input type='checkbox' %s style='margin-bottom: 4px;' class='dCheck' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks();'/> %s</li>" % (trimIfLongerThan(key, 35), "[+]" if value else "", "checked='true'" if  str(deckMap[full]) in decks else "", deckMap[full], iterateMap(value, full, False)) 
+            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( "selected" if str(deckMap[full]) in decks or decks == [] else "", deckMap[full],  "[+]" if value else "", trimIfLongerThan(key, 35), iterateMap(value, full, False)) 
         html += "</ul>"
         return html
 
     html = iterateMap(dmap, "", True)
 
     cmd = """document.getElementById('deckSel').innerHTML = `%s`; 
-    $('.deck-list-item').click(function(e) {
+    $('.exp').click(function(e) {
 		e.stopPropagation();
-        let icn = $(this).find('.exp').first();
+        let icn = $(this);
         if (icn.text()) {
             if (icn.text() === '[+]')
                 icn.text('[-]');
             else
                 icn.text('[+]');
         }
-        $(this).children('ul').toggle();
+        $(this).parent().parent().children('ul').toggle();
     });
+    updateSelectedDecks();
     
     """ % html
     editor.web.eval(cmd)
@@ -613,7 +622,7 @@ def _buildIndex():
     searchIndex.finder = Finder(mw.col)
     searchIndex.output = Output()
     searchIndex.output.stopwords = searchIndex.stopWords
-    searchIndex.selectedDecks = ["-1"]
+    searchIndex.selectedDecks = []
     searchIndex.initializationTime = initializationTime
 
 

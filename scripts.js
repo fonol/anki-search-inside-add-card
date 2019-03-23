@@ -14,14 +14,35 @@ var searchOnTyping = true;
 var useInfoBox = false;
 var last = "";
 
-function updateSelectedDecks() {
+function updateSelectedDecks(elem) {
     selectedDecks = [];
     let str = "";
-    $(".dCheck:checked").each(function () {
+    if (elem)
+        $(elem).toggleClass("selected");
+    $(".deck-list-item.selected").each(function () {
         selectedDecks.push($(this).data('id'));
         str += " " + $(this).data('id');
     });
     pycmd("deckSelection" + str);
+}
+
+function selectAllDecks() {
+    $('.deck-list-item').addClass('selected');
+    updateSelectedDecks();
+}
+function unselectAllDecks() {
+    $('.deck-list-item').removeClass('selected');
+    updateSelectedDecks();
+}
+
+function selectDeckWithId(did) {
+    $('.deck-list-item').removeClass('selected');
+    $(".deck-list-item").each(function () {
+        if ($(this).data('id') == did) {
+           $(this).addClass("selected");
+        }
+    });
+    updateSelectedDecks();
 }
 
 function expandCard(elem) {
@@ -83,6 +104,7 @@ function specialSearch(mode) {
     $searchInfo.html("<span style='float: right;'>Searching</span>"); 
     pycmd(mode  + " " + selectedDecks.toString());
 }
+
 
 function onResize() {
     let vh = window.innerHeight * 0.01;

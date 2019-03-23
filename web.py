@@ -37,8 +37,8 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     with open(dir + "/styles.css") as f:
         css = f.read().replace("%", "%%")
     script = script.replace("$del$", str(delayWhileTyping))
-    script = script.replace("$h-1$", str(114 - addToHeight))
-    script = script.replace("$h-2$", str(270 - addToHeight))
+    script = script.replace("$h-1$", str(108 - addToHeight))
+    script = script.replace("$h-2$", str(280 - addToHeight))
     
     #replace command key with meta key for mac
     cplatform = platform.system().lower()
