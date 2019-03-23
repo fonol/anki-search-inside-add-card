@@ -181,6 +181,9 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("searchOnSelection ")):
         if searchIndex is not None:
             searchIndex.searchOnSelection = cmd[18:] == "on"
+    elif (cmd.startswith("deckSelection ")):
+        if searchIndex is not None:
+            searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
     else:
         oldOnBridge(self, cmd)
 
@@ -194,101 +197,100 @@ def onLoadNote(editor):
     #only display in add cards dialog
     if (editor.addMode):
         editor.web.eval(""" 
-            
-            //check if ui has been rendered already
-            if (!$('#outerWr').length) {
-       
-            $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; width: 50%;  flex-grow: 1 '></div>`);
-            $(`
-            <div class='coll secondCol' style='flex-grow: 1; width: 50%; height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; margin-left: 30px; position: relative;' id='infoBox'>
-             
-            
-                <div id="a-modal" class="modal">
-                    <div class="modal-content">
-                       <div id='modal-visible'>
-                        <div id="modalText"></div>
-                           <div style='text-align: right; margin-top:25px;'>
-                         <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
-                         </div>
-                         </div>
-                          <div id='modal-loader'> <div class='signal'></div><br/>Computing...</div>
+        
+        //check if ui has been rendered already
+        if (!$('#outerWr').length) {
+    
+        $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; width: 50%;  flex-grow: 1 '></div>`);
+        $(`
+        <div class='coll secondCol' style='flex-grow: 1; width: 50%; height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; margin-left: 30px; position: relative;' id='infoBox'>
+ 
+            <div id="a-modal" class="modal">
+                <div class="modal-content">
+                    <div id='modal-visible'>
+                    <div id="modalText"></div>
+                        <div style='text-align: right; margin-top:25px;'>
+                        <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
+                        </div>
+                        </div>
+                        <div id='modal-loader'> <div class='signal'></div><br/>Computing...</div>
+                </div>
+            </div>
+
+                <div class="flexContainer" id="topContainer">
+                    <div class='flexCol'>
+                        <div id='deckSelWrapper'> 
+                            <table id='deckSel'></table>
+                        </div>
+                    </div>
+                    <div class='flexCol right' style="position: relative;">
+                        <table>
+                            <tr><td class='tbLb'>Search on selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
+                            <tr><td class='tbLb'>Search on typing</td><td><input type='checkbox' id='typingCb' checked onchange='searchOnTyping = $(this).is(":checked"); sendSearchOnTyping();'/></td></tr>
+                            <tr><td class='tbLb'><mark>Highlighting</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
+                            <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='useInfoBox = $(this).is(":checked");'/></td></tr>
+                        </table>
+                        <div>
+                            <div id='freeze-icon' onclick='toggleFreeze(this)'>
+                                FREEZE &#10052; 
+                            </div>
+                            <div id='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'>RANDOM &#9861;</div>
+                        </div>
                     </div>
                 </div>
-
-                  <div class="flexContainer" id="topContainer">
-                        <div class='flexCol'>
-                            <div id='deckSelWrapper'> 
-                                <table id='deckSel'></table>
+                
+                <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - $height$px); width: 100%; border-top: 1px solid grey;">
+                            <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
+                            <div id='indexInfo' onclick='pycmd("indexInfo");'>i</div>
+                
+                
+                <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
+                <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
+                    <div id='searchInfo'></div>
+                    <div id='searchResults' style=''></div>
+                </div>
+                </div>
+                    <div id='bottomContainer'>
+                    <div class="flexContainer">
+                        <div class='flexCol' style='padding-left: 0px; border-top: 1px solid grey;'> 
+                            <div class='flexContainer' style="flex-wrap: nowrap;">
+                                    <div class='tooltip tooltip-blue' onclick="toggleTooltip(this);">i
+                                        <div class='tooltiptext'>
+                                        <table>
+                                            <tr><td>dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
+                                            <tr><td>dog or cat </td><td> either "dog" or "cat"  </td></tr>
+                                            <tr><td>dog (cat or mouse)</td><td>  dog and cat, or dog and mouse </td></tr>
+                                            <tr><td>-cat</td><td> without the word "cat" </td></tr>
+                                            <tr><td>-cat -mouse </td><td>  neither "cat" nor "mouse"  </td></tr>
+                                            <tr><td>"a dog"</td><td>exact phrase </td></tr>
+                                            <tr><td>-"a dog" </td><td> without the exact phrase</td></tr>
+                                            <tr><td>d_g</td><td> d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
+                                            <tr><td>d*g</td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
+                                        </table>
+                                        </div>
+                                    </div>
+                                <input id='searchMask' placeholder='Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
+                                <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
+                                <button id='specialSearches' onclick='pycmd("specialSearches");'>Special</button>
+                            
                             </div>
                         </div>
-                        <div class='flexCol right' style="position: relative;">
-                            <table>
-                                <tr><td class='tbLb'>Search on selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
-                                <tr><td class='tbLb'>Search on typing</td><td><input type='checkbox' id='typingCb' checked onchange='searchOnTyping = $(this).is(":checked"); sendSearchOnTyping();'/></td></tr>
-                                <tr><td class='tbLb'><mark>Highlighting</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
-                                <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='useInfoBox = $(this).is(":checked");'/></td></tr>
-                            </table>
-                            <div>
-                                <div id='freeze-icon' onclick='toggleFreeze(this)'>
-                                 FREEZE &#10052; 
-                                </div>
-                                <div id='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'>RANDOM &#9861;</div>
-                            </div>
-                       </div>
-                  </div>
-                  
-                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - $height$px); width: 100%; border-top: 1px solid grey;">
-                                <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
-                                <div id='indexInfo' onclick='pycmd("indexInfo");'>i</div>
-                    
-                    
-                    <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
-                    <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
-                        <div id='searchInfo'></div>
-                        <div id='searchResults' style=''></div>
                     </div>
-                 </div>
-                     <div id='bottomContainer'>
-                        <div class="flexContainer">
-                            <div class='flexCol' style='padding-left: 0px; border-top: 1px solid grey;'> 
-                                <div class='flexContainer' style="flex-wrap: nowrap;">
-                                     <div class='tooltip tooltip-blue' onclick="toggleTooltip(this);">i
-                                         <div class='tooltiptext'>
-                                            <table>
-                                                <tr><td>dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
-                                                <tr><td>dog or cat </td><td> either "dog" or "cat"  </td></tr>
-                                                <tr><td>dog (cat or mouse)</td><td>  dog and cat, or dog and mouse </td></tr>
-                                                <tr><td>-cat</td><td> without the word "cat" </td></tr>
-                                                <tr><td>-cat -mouse </td><td>  neither "cat" nor "mouse"  </td></tr>
-                                                <tr><td>"a dog"</td><td>exact phrase </td></tr>
-                                                <tr><td>-"a dog" </td><td> without the exact phrase</td></tr>
-                                                <tr><td>d_g</td><td> d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
-                                                <tr><td>d*g</td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
-                                            </table>
-                                         </div>
-                                     </div>
-                                    <input id='searchMask' placeholder='Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
-                                    <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
-                                    <button id='specialSearches' onclick='pycmd("specialSearches");'>Special</button>
-                                
-                                </div>
-                            </div>
-                        </div>
-                      </div>
-                 </div>`).insertAfter('#fields');
-            $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; height: 100%;"></div>');    
-            
-            }
-            $(`.field`).attr("onkeyup", "fieldKeypress(event, this);"); 
-            $(`.field`).attr("onkeydown", "moveInHover(event, this);" + $(`.field`).attr("onkeydown")); 
-            $('.field').attr('onmouseup', 'getSelectionText()');
-            $('.field').attr('onfocusout', 'hideHvrBox()');
-            var $fields = $('.field');
-            var $searchInfo = $('#searchInfo');
-            
-            window.addEventListener('resize', onResize, true);
-            onResize();
-           
+                    </div>
+                </div>`).insertAfter('#fields');
+        $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; height: 100%;"></div>');    
+        
+        }
+        $(`.field`).attr("onkeyup", "fieldKeypress(event, this);"); 
+        $(`.field`).attr("onkeydown", "moveInHover(event, this);" + $(`.field`).attr("onkeydown")); 
+        $('.field').attr('onmouseup', 'getSelectionText()');
+        $('.field').attr('onfocusout', 'hideHvrBox()');
+        var $fields = $('.field');
+        var $searchInfo = $('#searchInfo');
+        
+        window.addEventListener('resize', onResize, true);
+        onResize();
+        
         """.replace("$height$", str(270 - addToResultAreaHeight)))
     
 
@@ -387,7 +389,7 @@ def getSpecialSearches():
                         Only cards that have been reviewed more than 3 times are counted.
                     </div>
                     <div style='flex: 0 0; padding-left: 10px;'>
-                        <button class='modal-close' style='margin-top: auto; margin-bottom: auto;' onclick=' toggleModalLoader(true); pycmd("lowestPerf " + selectedDecks.toString());'>Search</button>
+                        <button class='modal-close' style='margin-top: auto; margin-bottom: auto;' onclick='specialSearch("lowestPerf")'>Search</button>
                    </div>
                 </div>
                   <div class='flexContainer' style='margin-top: 20px;'> 
@@ -397,7 +399,7 @@ def getSpecialSearches():
                         Only cards that have been reviewed more than 3 times are counted.
                     </div>
                     <div style='flex: 0 0; padding-left: 10px;'>
-                        <button class='modal-close' style='margin-top: auto; margin-bottom: auto;' onclick=' toggleModalLoader(true); pycmd("lowestRet " + selectedDecks.toString());'>Search</button>
+                        <button class='modal-close' style='margin-top: auto; margin-bottom: auto;' onclick='specialSearch("lowestRet")'>Search</button>
                    </div>
                 </div>
             """
@@ -424,13 +426,14 @@ def fillDeckSelect(editor):
         dmap = addToDecklist(dmap, id, name)
 
     def iterateMap(dmap, prefix, start=False):
+        decks = searchIndex.selectedDecks if searchIndex is not None else []
         if start:
-            html = "<ul class='deck-sub-list outer'><li class='deck-list-item'><div style='display: inline-block; margin-top: 2px;'><span class='blueBG'>All (%s)</span> </div><input type='checkbox' checked='true' class='dCheck' data-id='-1' onclick='updateSelectedDecks();'/></li>" % len(dmap)
+            html = "<ul class='deck-sub-list outer'><li class='deck-list-item'><div style='display: inline-block; margin-top: 2px;'><span class='blueBG'>All (%s)</span> </div><input type='checkbox' %s class='dCheck' data-id='-1' onclick='updateSelectedDecks();'/></li>" % (len(dmap),  "checked='true'" if  "-1" in decks or len(decks) == 0 else "")
         else:
             html = "<ul class='deck-sub-list'>"
         for key, value in dmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item'><div style='display: inline-block; overflow-x: hidden; white-space:nowrap;'>%s <span class='exp'>%s</span></div><input type='checkbox' style='margin-bottom: 4px;' class='dCheck' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks();'/> %s</li>" % (trimIfLongerThan(key, 35), "[+]" if value else "" , deckMap[full], iterateMap(value, full, False)) 
+            html += "<li class='deck-list-item'><div style='display: inline-block; overflow-x: hidden; white-space:nowrap;'>%s <span class='exp'>%s</span></div><input type='checkbox' %s style='margin-bottom: 4px;' class='dCheck' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks();'/> %s</li>" % (trimIfLongerThan(key, 35), "[+]" if value else "", "checked='true'" if  str(deckMap[full]) in decks else "", deckMap[full], iterateMap(value, full, False)) 
         html += "</ul>"
         return html
 
@@ -610,6 +613,7 @@ def _buildIndex():
     searchIndex.finder = Finder(mw.col)
     searchIndex.output = Output()
     searchIndex.output.stopwords = searchIndex.stopWords
+    searchIndex.selectedDecks = ["-1"]
     searchIndex.initializationTime = initializationTime
 
 

@@ -16,9 +16,12 @@ var last = "";
 
 function updateSelectedDecks() {
     selectedDecks = [];
+    let str = "";
     $(".dCheck:checked").each(function () {
         selectedDecks.push($(this).data('id'));
+        str += " " + $(this).data('id');
     });
+    pycmd("deckSelection" + str);
 }
 
 function expandCard(elem) {
@@ -73,6 +76,12 @@ function getSelectionText() {
     }
     if (text.length > 0)
         pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
+}
+
+function specialSearch(mode) {
+    document.getElementById("a-modal").style.display = 'none'; 
+    $searchInfo.html("<span style='float: right;'>Searching</span>"); 
+    pycmd(mode  + " " + selectedDecks.toString());
 }
 
 function onResize() {
