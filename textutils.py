@@ -85,7 +85,7 @@ def expandBySynonyms(text, synonyms):
     found = []
     for sList in synonyms:
         for syn in sList:
-            if " " + syn.lower() + " " in textLower:
+            if " " + syn.lower() + " " in textLower or syn.lower() == textLower:
                 found += sList
                 break
             
