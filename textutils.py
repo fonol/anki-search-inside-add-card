@@ -68,3 +68,27 @@ def deleteChars(text, chars):
         text = text.replace(c, "")
     return text
 
+
+def cleanSynonym(text):
+    text = text.replace("\r\n", " ").replace("\n", " ")
+    text = text.replace("\t", " ")
+    text = tagReg.sub(" ", text)
+    text = spaceReg.sub(" ", text)
+    text = text.strip()
+    return text
+
+
+def expandBySynonyms(text, synonyms):
+    if not synonyms:
+        return text
+    textLower = text.lower()
+    found = []
+    for sList in synonyms:
+        for syn in sList:
+            if syn.lower() in textLower:
+                found += sList
+                break
+            
+    if found:
+        return  text + " " + " ".join(found)
+    return text

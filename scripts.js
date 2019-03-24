@@ -193,6 +193,19 @@ function fieldKeydown(event, elem) {
 
 }
 
+function synInputKeyup(event,elem) {
+    if (event.keyCode == 13 && elem.value)
+        pycmd("saveSynonyms " + elem.value);
+}
+
+function synonymSetKeydown(event, elem, index) {
+    if (event.keyCode == 13 && elem.innerHTML.length) {
+        pycmd("editSynonyms " + index + " " +  elem.innerHTML);
+        event.preventDefault();
+        $(elem).blur();
+    }
+}
+
 function sendSearchOnTyping() {
     let cmd = searchOnTyping ? "on" : "off";
     pycmd("searchWhileTyping " + cmd);

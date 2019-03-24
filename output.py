@@ -215,8 +215,6 @@ class Output:
                 else:
                     res.append(prefix + key)
         return res
-
-
     
 
     def getMiliSecStamp(self):

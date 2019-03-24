@@ -1,7 +1,9 @@
 import platform
 import os
+import json
 import re
 from aqt import mw
+from .textutils import cleanSynonym
 
 #css + js + hvrBox
 all = """
@@ -26,6 +28,95 @@ all = """
 """
 
 
+synonymEditor = """
+    <div style='max-height: 300px; overflow-y: auto;    '>
+        <table id='synTable' style='width: 100%%;'>
+            <thead><tr style='margin-bottom: 20px;'><th style='word-wrap: break-word; max-width: 100px;'>Set</th><th style='width: 100px; text-align: center;'></th></thead>
+            %s
+        </table>
+    </div>
+    <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
+"""
+
+def getSynonymEditor():
+    synonyms = loadSynonyms()
+    st = ""
+    for c, sList in enumerate(synonyms):
+        st += "<tr><td><div contenteditable='true' onkeydown='synonymSetKeydown(event, this, %s)'>%s</div></td><td style='text-align: right;'><button class='modal-close' onclick='pycmd(\"deleteSynonyms %s\")'>Delete</button></td></tr>" % (c, ", ".join(sList), c)
+    if not synonyms:
+        return """No synonyms defined yet. Input a set of terms, separated by ',' and hit enter.
+        <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
+        """
+    return synonymEditor % st
+
+def saveSynonyms(synonyms):
+    filtered = []
+    for sList in synonyms:
+        filtered.append(sorted(sList))
+    
+    dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/web.py", "")
+    with open(dir + '/synonyms.json', 'w') as outfile:
+        json.dump(filtered, outfile)
+
+def newSynonyms(sListStr):
+    existing = loadSynonyms()
+    sList = [cleanSynonym(s) for s in sListStr.split(",") if len(cleanSynonym(s)) > 1]
+    if not sList:
+        return
+    found = []
+    foundIndex = []
+    for c, eList in enumerate(existing):
+        for s in sList:
+            if s in eList:
+                found += eList
+                foundIndex.append(c)
+    if found:
+        existing = [i for j, i in enumerate(existing) if j not in foundIndex]
+        existing.append(list(set(sList + found)))
+    else:
+        existing.append(sList)
+    saveSynonyms(existing)
+
+def deleteSynonymSet(cmd):
+    index = int(cmd.strip())
+    existing = loadSynonyms()
+    if index >= 0 and index < len(existing):
+        existing.pop(index)
+    saveSynonyms(existing)
+
+def editSynonymSet(cmd):
+    index = int(cmd.strip().split()[0])
+    existing = loadSynonyms()
+    existing.pop(index)
+    sList = [cleanSynonym(s) for s in cmd[len(cmd.strip().split()[0]):].split(",") if len(cleanSynonym(s)) > 1]
+    if not sList:
+        return
+    found = []
+    foundIndex = []
+    for c, eList in enumerate(existing):
+        for s in sList:
+            if s in eList:
+                found += eList
+                foundIndex.append(c)
+    if found:
+        existing = [i for j, i in enumerate(existing) if j not in foundIndex]
+        existing.append(list(set(sList + found)))
+    else:
+        existing.append(sList)
+    saveSynonyms(existing)
+
+def loadSynonyms():
+    dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/web.py", "")
+    if not os.path.exists(dir + '/synonyms.json'):
+        open(dir + '/synonyms.json', 'w').close() 
+    
+    with open(dir + '/synonyms.json') as s_file:  
+        try:
+            synonyms = json.load(s_file)
+        except:
+            synonyms = []
+    return synonyms
+
 
 def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     
@@ -47,3 +138,6 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     else:
         css = re.sub(r'/\*MAC\*/(.|\n|\r\n)*/\*ENDMAC\*/', "", css, re.S)
     return all % (css, script)
+
+
+

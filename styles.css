@@ -546,14 +546,39 @@ cursor: pointer;
     position: absolute; 
     top: 35px; 
     right: 5px; 
-    display: inline;
+    width: 8px;
+    text-align: center;
+    display: block;
+}
+#synonymsIcon {
+    background: #2496dc;
+    color: white;
+    padding: 0 4px 0 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    position: absolute; 
+    top: 60px; 
+    right: 5px; 
+    width: 8px;
+    text-align: center;
+    display: block;
 }
 
+#synonymInput {
+    width: 99%;
+    margin-top: 20px;
+}
+
+#synTable tr td:first-child {
+    max-width: 150px;
+    word-wrap: break-word;
+}
+
+
 #specialSearches {
-   
     flex:  0 0 20px;
     margin-left: 10px; 
-  
 }
 
 /* Modal */
@@ -648,7 +673,7 @@ span.tag-symbol {
   #toggleTop {
     position: absolute; 
     top: 5px; 
-    right: 5px; 
+    right: 7px; 
     font-size: 19px;
     cursor: pointer;
     color: grey;

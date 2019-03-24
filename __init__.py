@@ -40,11 +40,11 @@ if loadWhoosh:
     from .whoosh import classify, highlight, query, scoring, qparser, reading
 
 from .wikipedia import summary, DisambiguationError
-from .web import getScriptPlatformSpecific
+from .web import getScriptPlatformSpecific, editSynonymSet, newSynonyms, getSynonymEditor, deleteSynonymSet, loadSynonyms
 from .fts_index import FTSIndex
 from .whoosh_index import SearchIndex
 from .output import Output
-from .textutils import trimIfLongerThan, replaceAccentsWithVowels
+from .textutils import trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms
 from .editor import openEditor
 from .stats import calculateStats, findNotesWithLowestPerformance
 
@@ -151,9 +151,39 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("randomNotes ") and searchIndex is not None):
         res = getRandomNotes(cmd[11:])
         searchIndex.output.printSearchResults(res["result"], res["stamp"])
+
+    #
+    #   Synonyms
+    #
+
+    elif cmd == "synonyms":
+        searchIndex.output.showInModal(getSynonymEditor())
+    elif cmd.startswith("saveSynonyms "):
+        newSynonyms(cmd[13:])
+        searchIndex.output.showInModal(getSynonymEditor())
+        searchIndex.synonyms = loadSynonyms()
+    elif cmd.startswith("editSynonyms "):
+        editSynonymSet(cmd[13:])
+        searchIndex.output.showInModal(getSynonymEditor())
+        searchIndex.synonyms = loadSynonyms()
+    elif cmd.startswith("deleteSynonyms "):
+        deleteSynonymSet(cmd[15:])
+        searchIndex.output.showInModal(getSynonymEditor())
+        searchIndex.synonyms = loadSynonyms()
+
+
+    #
+    #  Index info modal
+    #
+    
     elif cmd == "indexInfo":
         if searchIndex is not None:
             searchIndex.output.showInModal(getIndexInfo())
+    
+    #
+    #   Special searches
+    #
+    
     elif cmd.startswith("lowestPerf "):
         if searchIndex is not None:
             stamp = searchIndex.output.getMiliSecStamp()
@@ -171,7 +201,12 @@ def myOnBridgeCmd(self, cmd):
     elif cmd == "specialSearches":
         if searchIndex is not None:
             searchIndex.output.showInModal(getSpecialSearches())
-    #used to remember settings when add dialog is closed
+
+
+    #
+    #   Checkboxes
+    #
+
     elif (cmd.startswith("highlight ")):
         if searchIndex is not None:
             searchIndex.highlighting = cmd[10:] == "on"
@@ -184,6 +219,8 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("deckSelection ")):
         if searchIndex is not None:
             searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
+    
+    
     elif cmd == "selectCurrent":
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and searchIndex is not None:
@@ -248,7 +285,7 @@ def onLoadNote(editor):
                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - $height$px); width: 100%; border-top: 1px solid grey;">
                             <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                             <div id='indexInfo' onclick='pycmd("indexInfo");'>i</div>
-                
+                            <div id='synonymsIcon' onclick='pycmd("synonyms");'>s</div>
                 
                 <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
                 <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
@@ -501,6 +538,7 @@ def rerenderInfo(editor, content="", searchDB = False):
     if searchIndex is not None:
       if not searchDB:
         content = searchIndex.clean(content[content.index('~ ') + 2:])
+        content = expandBySynonyms(content, searchIndex.synonyms)
       else:
         content = content[content.index('~ ') + 2:].strip()
       if len(content) == 0:
@@ -624,7 +662,7 @@ def _buildIndex():
     searchIndex.output.stopwords = searchIndex.stopWords
     searchIndex.selectedDecks = []
     searchIndex.initializationTime = initializationTime
-
+    searchIndex.synonyms = loadSynonyms()
 
     try:
         limit = config['numberOfResults']
