@@ -29,7 +29,7 @@ all = """
 
 
 synonymEditor = """
-    <div style='max-height: 300px; overflow-y: auto;    '>
+    <div style='max-height: 300px; overflow-y: auto; padding-right: 10px;'>
         <table id='synTable' style='width: 100%%;'>
             <thead><tr style='margin-bottom: 20px;'><th style='word-wrap: break-word; max-width: 100px;'>Set</th><th style='width: 100px; text-align: center;'></th></thead>
             %s
@@ -37,6 +37,8 @@ synonymEditor = """
     </div>
     <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
 """
+
+config = mw.addonManager.getConfig(__name__)
 
 def getSynonymEditor():
     synonyms = loadSynonyms()
@@ -54,9 +56,11 @@ def saveSynonyms(synonyms):
     for sList in synonyms:
         filtered.append(sorted(sList))
     
-    dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/web.py", "")
-    with open(dir + '/synonyms.json', 'w') as outfile:
-        json.dump(filtered, outfile)
+    # dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/web.py", "")
+    # with open(dir + '/synonyms.json', 'w') as outfile:
+    #     json.dump(filtered, outfile)
+    config["synonyms"] = filtered
+    mw.addonManager.writeConfig(__name__, config)
 
 def newSynonyms(sListStr):
     existing = loadSynonyms()
@@ -106,15 +110,21 @@ def editSynonymSet(cmd):
     saveSynonyms(existing)
 
 def loadSynonyms():
-    dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/web.py", "")
-    if not os.path.exists(dir + '/synonyms.json'):
-        open(dir + '/synonyms.json', 'w').close() 
+    # dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/web.py", "")
+    # if not os.path.exists(dir + '/synonyms.json'):
+    #     open(dir + '/synonyms.json', 'w').close() 
     
-    with open(dir + '/synonyms.json') as s_file:  
-        try:
-            synonyms = json.load(s_file)
-        except:
-            synonyms = []
+    # with open(dir + '/synonyms.json') as s_file:  
+    #     try:
+    #         synonyms = json.load(s_file)
+    #     except:
+    #         synonyms = []
+
+    try:
+        synonyms = config['synonyms']
+    except KeyError:
+        synonyms = []
+
     return synonyms
 
 
