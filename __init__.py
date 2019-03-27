@@ -40,7 +40,7 @@ if loadWhoosh:
     from .whoosh import classify, highlight, query, scoring, qparser, reading
 
 from .wikipedia import summary, DisambiguationError
-from .web import getScriptPlatformSpecific, editSynonymSet, newSynonyms, getSynonymEditor, deleteSynonymSet, loadSynonyms
+from .web import *
 from .fts_index import FTSIndex
 from .whoosh_index import SearchIndex
 from .output import Output
@@ -79,20 +79,20 @@ def initAddon():
                 if ((event && event.repeat) || isFrozen)
                     return;
                 let html = "";
-                $searchInfo.html("<span style='float: right;'>Searching</span>");
+                $searchInfo.html("<span style='float: right; margin-right: 20px;'>Searching</span>");
                 $fields.each(function(index, elem) {
                     html += $(elem).html() + "\u001f";
                 });
                 pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
             }
             function sendSearchFieldContent() {
-                $searchInfo.html("<span style='float: right;'>Searching</span>");
+                $searchInfo.html("<span style='float: right; margin-right: 20px;'>Searching</span>");
                 html = $('#searchMask').val() + "\u001f";
                 pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
             }
 
             function searchFor(text) {
-                $searchInfo.html("<span style='float: right;'>Searching</span>");
+                $searchInfo.html("<span style='float: right; margin-right: 20px;'>Searching</span>");
                 text += "\u001f";
                 pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + text);
             }
@@ -105,7 +105,7 @@ def initAddon():
                 return;
             }
             function sendSearchFieldContent() {
-                $searchInfo.html("<span style='float: right;'>Searching</span>");
+                $searchInfo.html("<span style='float: right; margin-right: 20px;'>Searching</span>");
                 html = $('#searchMask').val() + "\u001f";
                 pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
             }
@@ -269,9 +269,9 @@ def onLoadNote(editor):
                     <div class='flexCol right' style="position: relative;">
                         <table>
                             <tr><td class='tbLb'>Search on selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
-                            <tr><td class='tbLb'>Search on typing</td><td><input type='checkbox' id='typingCb' checked onchange='searchOnTyping = $(this).is(":checked"); sendSearchOnTyping();'/></td></tr>
+                            <tr><td class='tbLb'>Search on typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
                             <tr><td class='tbLb'><mark>Highlighting</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
-                            <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='useInfoBox = $(this).is(":checked");'/></td></tr>
+                            <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='setUseInfoBox($(this).is(":checked"));'/></td></tr>
                         </table>
                         <div>
                             <div id='freeze-icon' onclick='toggleFreeze(this)'>
@@ -325,7 +325,6 @@ def onLoadNote(editor):
         
         }
         $(`.field`).attr("onkeyup", "fieldKeypress(event, this);"); 
-        $(`.field`).attr("onkeydown", "moveInHover(event, this);" + $(`.field`).attr("onkeydown")); 
         $('.field').attr('onmouseup', 'getSelectionText()');
         $('.field').attr('onfocusout', 'hideHvrBox()');
         var $fields = $('.field');
@@ -343,7 +342,7 @@ def onLoadNote(editor):
             if not searchIndex.highlighting:
                 editor.web.eval("$('#highlightCb').prop('checked', false);")
             if not searchIndex.searchWhileTyping:
-                editor.web.eval("$('#typingCb').prop('checked', false);")
+                editor.web.eval("$('#typingCb').prop('checked', false); setSearchOnTyping(false);")
             if not searchIndex.searchOnSelection:
                 editor.web.eval("$('#selectionCb').prop('checked', false);")
 
@@ -538,7 +537,6 @@ def rerenderInfo(editor, content="", searchDB = False):
     if searchIndex is not None:
       if not searchDB:
         content = searchIndex.clean(content[content.index('~ ') + 2:])
-        content = expandBySynonyms(content, searchIndex.synonyms)
       else:
         content = content[content.index('~ ') + 2:].strip()
       if len(content) == 0:

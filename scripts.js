@@ -206,6 +206,25 @@ function synonymSetKeydown(event, elem, index) {
     }
 }
 
+function setUseInfoBox(active) {
+    useInfoBox = active;
+    if (!active) 
+        $('.field').attr("onkeydown", "moveInHover(event, this);" + $(`.field`).attr("onkeydown")); 
+    else 
+        $('.field').attr("onkeydown", $(`.field`).attr("onkeydown").replace("moveInHover(event, this);", "")); 
+
+}
+
+function setSearchOnTyping(active) {
+    searchOnTyping = active;
+    if (!active) 
+        $('.field').attr('onkeyup', '');
+    else
+        $('.field').attr('onkeyup', 'fieldKeypress(event, this)');
+
+    sendSearchOnTyping();
+}
+
 function sendSearchOnTyping() {
     let cmd = searchOnTyping ? "on" : "off";
     pycmd("searchWhileTyping " + cmd);
