@@ -10,6 +10,7 @@ import aqt.stats
 from aqt.main import AnkiQt
 import sqlite3
 import re
+from .textutils import *
 
 
 class SearchIndex:
@@ -42,6 +43,7 @@ class SearchIndex:
         """
         stamp = self.output.getMiliSecStamp()
         self.output.latest = stamp
+        text = expandBySynonyms(text, self.synonyms)
 
         deckQ = ""
         for d in decks:

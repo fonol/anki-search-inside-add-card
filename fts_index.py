@@ -8,8 +8,7 @@ from aqt import *
 from aqt.utils import showInfo
 from .output import *
 import collections
-from .textutils import clean, replaceVowelsWithAccentedRegex
-
+from .textutils import *
 
 class FTSIndex:
 
@@ -99,7 +98,8 @@ class FTSIndex:
 
     def searchProc(self, text, decks):
 
-        text = self.removeStopwords(text)
+        text = expandBySynonyms(text, self.synonyms)
+
         if len(text) < 2:
             return { "results" : [] }
 
