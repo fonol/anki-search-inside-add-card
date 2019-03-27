@@ -72,7 +72,9 @@ def deleteChars(text, chars):
 def cleanSynonym(text):
     text = text.replace("\r\n", " ").replace("\n", " ")
     text = text.replace("\t", " ")
+    text = text.replace("-", " ")
     text = tagReg.sub(" ", text)
+    text = re.sub(r"[^ a-zA-ZÀ-ÖØ-öø-ÿ]", "", text, flags=re.IGNORECASE)
     text = spaceReg.sub(" ", text)
     text = text.strip()
     return text
