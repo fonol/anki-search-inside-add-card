@@ -14,9 +14,10 @@
     "very", "can", "will", "just", "done", "should", "no" ],
 
 "numberOfResults": 100,
-"useFTS": false,
+"useFTS": true,
 "disableNonNativeSearching" : false,
 "addToResultAreaHeight": 0,
-"delayWhileTyping": 800
+"delayWhileTyping": 800,
+"synonyms": []
 
 }
