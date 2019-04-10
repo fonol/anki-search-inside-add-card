@@ -45,12 +45,14 @@ function selectDeckWithId(did) {
     updateSelectedDecks();
 }
 
-function expandCard(elem) {
+function expandCard(id, icn) {
+    let elem = document.getElementById(id);
     if ($(elem).hasClass('expanded')) {
         $(elem).animate({ height: $(elem).height() - 80 }, 200);
         $(elem).removeClass("expanded");
         $(elem).css("padding-bottom", "25px")
         $('#i-' + $(elem).data('nid')).hide();
+        $(icn).children().first().html('&#10097;');
 
     } else {
         $(elem).css("padding-bottom", "90px")
@@ -61,6 +63,7 @@ function expandCard(elem) {
             pycmd('nStats ' + $(elem).data('nid'));
         }
         $(elem).addClass("expanded");
+        $(icn).children().first().html('&#10096;');
 
     }
 }
@@ -153,6 +156,10 @@ function setHighlighting(elem) {
     let highlight = $(elem).is(":checked") ? "on" : "off";
     pycmd("highlight " + highlight);
 }
+function setTagSearch(elem) {
+    let tagSearch = $(elem).is(":checked") ? "on" : "off";
+    pycmd("tagSearch " + tagSearch);
+}
 
 function lastWord(text, caretPos) {
     var preText = text.substring(0, caretPos);
@@ -218,9 +225,9 @@ function setUseInfoBox(active) {
 function setSearchOnTyping(active) {
     searchOnTyping = active;
     if (!active) 
-        $('.field').attr('onkeyup', '');
+        $('.field').unbind('keypress', fieldKeypress);
     else
-        $('.field').attr('onkeyup', 'fieldKeypress(event, this)');
+        $('.field').on('keypress', fieldKeypress);
 
     sendSearchOnTyping();
 }
@@ -400,9 +407,12 @@ function toggleTop(elem) {
     if ($('#topContainer').is(":hidden")) {
         $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - $h-1$px)').css('border-top', '0px');
         $(elem).children().first().html('&#10097;');
+        pycmd("toggleTop off");
+
     } else {
         $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - $h-2$px)').css('border-top', '1px solid grey');;
         $(elem).children().first().html('&#10096;');
+        pycmd("toggleTop on");
     }
 }
 

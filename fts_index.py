@@ -162,6 +162,7 @@ class FTSIndex:
         return text
 
 
+
     def searchDB(self, text, decks):
         """
         Used for searches in the search mask,

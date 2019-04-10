@@ -10,9 +10,11 @@ from aqt.addcards import  AddCards
 from anki.find import Finder
 import aqt.editor
 from aqt.editor import Editor
+from aqt.tagedit import TagEdit
 import aqt.stats
 from aqt.main import AnkiQt
 from aqt.webview import AnkiWebPage
+from datetime import datetime
 import os
 import random
 import sqlite3
@@ -46,11 +48,13 @@ from .whoosh_index import SearchIndex
 from .output import Output
 from .textutils import trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms
 from .editor import openEditor
+from .tag_find import findBySameTag
 from .stats import calculateStats, findNotesWithLowestPerformance
 
 searchingDisabled = config['disableNonNativeSearching'] 
 delayWhileTyping = max(500, config['delayWhileTyping'])
 addToResultAreaHeight = max(-500, min(500, config['addToResultAreaHeight']))
+lastTagEditKeypress = 1
 
 searchIndex = None
 corpus = None
@@ -60,7 +64,7 @@ edit = None
 
 def initAddon():
     global corpus, output
-    global oldOnBridge, origAddNote
+    global oldOnBridge, origAddNote, origTagKeypress
     
     oldOnBridge = Editor.onBridgeCmd
     Editor.onBridgeCmd = myOnBridgeCmd
@@ -69,7 +73,10 @@ def initAddon():
     origAddNote = AddCards.addNote
 
     AddCards.addNote = addNoteAndUpdateIndex
+    origTagKeypress = TagEdit.keyPressEvent
+    TagEdit.keyPressEvent = tagEditKeypress
 
+    setupTagEditTimer()
 
     #main functions to search
     if not searchingDisabled:
@@ -152,12 +159,14 @@ def myOnBridgeCmd(self, cmd):
         res = getRandomNotes(cmd[11:])
         searchIndex.output.printSearchResults(res["result"], res["stamp"])
 
+
     #
     #   Synonyms
     #
 
     elif cmd == "synonyms":
-        searchIndex.output.showInModal(getSynonymEditor())
+        if searchIndex is not None:
+            searchIndex.output.showInModal(getSynonymEditor())
     elif cmd.startswith("saveSynonyms "):
         newSynonyms(cmd[13:])
         searchIndex.output.showInModal(getSynonymEditor())
@@ -216,11 +225,20 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("searchOnSelection ")):
         if searchIndex is not None:
             searchIndex.searchOnSelection = cmd[18:] == "on"
+    elif (cmd.startswith("tagSearch ")):
+        if searchIndex is not None:
+            searchIndex.tagSearch = cmd[10:] == "on"
     elif (cmd.startswith("deckSelection ")):
         if searchIndex is not None:
             searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
+    elif cmd == "toggleTop on":
+        if searchIndex is not None:
+            searchIndex.topToggled = True
     
-    
+    elif cmd == "toggleTop off":
+        if searchIndex is not None:
+            searchIndex.topToggled = False
+
     elif cmd == "selectCurrent":
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and searchIndex is not None:
@@ -244,7 +262,7 @@ def onLoadNote(editor):
     
         $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; width: 50%;  flex-grow: 1 '></div>`);
         $(`
-        <div class='coll secondCol' style='flex-grow: 1; width: 50%; height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; margin-left: 30px; position: relative;' id='infoBox'>
+        <div class='coll secondCol' style='flex-grow: 1; width: 50%; height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; padding-bottom: 4px; margin-left: 30px; position: relative;' id='infoBox'>
  
             <div id="a-modal" class="modal">
                 <div class="modal-content">
@@ -268,10 +286,11 @@ def onLoadNote(editor):
                     </div>
                     <div class='flexCol right' style="position: relative;">
                         <table>
-                            <tr><td class='tbLb'>Search on selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
-                            <tr><td class='tbLb'>Search on typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
-                            <tr><td class='tbLb'><mark>Highlighting</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
-                            <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='setUseInfoBox($(this).is(":checked"));'/></td></tr>
+                            <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
+                            <tr><td class='tbLb'>Search on Typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
+                            <tr><td class='tbLb'>Search on Tag Entry</td><td><input id="tagCb" type='checkbox' checked onchange='setTagSearch(this)'/></td></tr>
+                            <tr><td class='tbLb'><mark>&nbsp;Highlighting&nbsp;</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
+                          <!--  <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='setUseInfoBox($(this).is(":checked"));'/></td></tr> -->
                         </table>
                         <div>
                             <div id='freeze-icon' onclick='toggleFreeze(this)'>
@@ -324,9 +343,8 @@ def onLoadNote(editor):
         $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; height: 100%;"></div>');    
         
         }
-        $(`.field`).attr("onkeyup", "fieldKeypress(event, this);"); 
+        $('.field').on('keypress', fieldKeypress);
         $('.field').attr('onmouseup', 'getSelectionText()');
-        $('.field').attr('onfocusout', 'hideHvrBox()');
         var $fields = $('.field');
         var $searchInfo = $('#searchInfo');
         
@@ -345,6 +363,10 @@ def onLoadNote(editor):
                 editor.web.eval("$('#typingCb').prop('checked', false); setSearchOnTyping(false);")
             if not searchIndex.searchOnSelection:
                 editor.web.eval("$('#selectionCb').prop('checked', false);")
+            if not searchIndex.tagSearch:
+                editor.web.eval("$('#tagCb').prop('checked', false);")
+            if not searchIndex.topToggled:
+                editor.web.eval("toggleTop(document.getElementById('toggleTop'));")
 
         fillDeckSelect(editor)
         if corpus is None:
@@ -512,6 +534,24 @@ def addToDecklist(dmap, id, name):
      
     return dmap
        
+def setupTagEditTimer():
+    global tagEditTimer
+    tagEditTimer = QTimer() 
+    tagEditTimer.setSingleShot(True) # set up your QTimer
+
+
+def tagEditKeypress(self, evt):
+    global lastTagEditKeypress
+    origTagKeypress(self, evt)
+    if searchIndex is not None and searchIndex.tagSearch and len(self.text()) > 0:
+        text = self.text()
+        try: 
+            tagEditTimer.timeout.disconnect() 
+        except Exception: pass
+        tagEditTimer.timeout.connect(lambda: rerenderInfo(searchIndex.output.editor, text, searchByTags = True))  # connect it to your update function
+        tagEditTimer.start(1000)    
+              
+
 
 def setStats(nid, stats):
     """
@@ -522,7 +562,7 @@ def setStats(nid, stats):
 
 
 
-def rerenderInfo(editor, content="", searchDB = False):
+def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
     """
     Main function that is executed when a user has typed or manually entered a search.
 
@@ -532,26 +572,41 @@ def rerenderInfo(editor, content="", searchDB = False):
     if (len(content) < 1):
         editor.web.eval("setSearchResults('', 'No results found for empty string')")
     decks = list()
-    for s in content[:content.index('~')].split(','):
-      decks.append(s.strip())
+    if "~" in content:
+        for s in content[:content.index('~')].split(','):
+            decks.append(s.strip())
     if searchIndex is not None:
-      if not searchDB:
-        content = searchIndex.clean(content[content.index('~ ') + 2:])
-      else:
-        content = content[content.index('~ ') + 2:].strip()
-      if len(content) == 0:
-        editor.web.eval("setSearchResults('', 'No results found for empty string')")
-        return
-      #distinguish between index searches and  Anki db searches
-      if searchDB:
-        searchRes = searchIndex.searchDB(content, decks)  
-      else:
-        searchRes = searchIndex.search(content, decks)
-      if searchRes is not None:
-        if len(searchRes["result"]) > 0:
-            searchIndex.output.printSearchResults(searchRes["result"], searchRes["stamp"], editor)
+    
+        
+        if searchDB:
+            content = content[content.index('~ ') + 2:].strip()
+            if len(content) == 0:
+                editor.web.eval("setSearchResults('', 'No results found for empty string')")
+                return
+            searchRes = searchIndex.searchDB(content, decks)  
+
+        elif searchByTags:
+            stamp = searchIndex.output.getMiliSecStamp()
+            searchIndex.output.latest = stamp
+            searchRes = findBySameTag(content, searchIndex.limit, [], searchIndex.pinned)
+
+        else:
+            content = searchIndex.clean(content[content.index('~ ') + 2:])
+            if len(content) == 0:
+                editor.web.eval("setSearchResults('', 'No results found for empty string')")
+                return
+            searchRes = searchIndex.search(content, decks)
+      
+      
+        if searchRes is not None:
+            if len(searchRes["result"]) > 0:
+                searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor)
+            else:
+                editor.web.eval("setSearchResults('', 'No results found.')")
         else:
             editor.web.eval("setSearchResults('', 'No results found.')")
+
+       
 
 
 
@@ -659,6 +714,8 @@ def _buildIndex():
     searchIndex.output = Output()
     searchIndex.output.stopwords = searchIndex.stopWords
     searchIndex.selectedDecks = []
+    searchIndex.tagSearch = True
+    searchIndex.topToggled = True
     searchIndex.initializationTime = initializationTime
     searchIndex.synonyms = loadSynonyms()
 

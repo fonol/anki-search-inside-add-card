@@ -39,7 +39,6 @@
 
 
 .cardR {
-  cursor: pointer;
   border: 1px solid grey; 
   padding: 5px; 
   padding-bottom: 25px; 
@@ -145,8 +144,9 @@
 }
 .remLbl {
   
-    border: 1px solid #2496dc;
+    border: 1px solid grey;
     border-left: 0px solid white;
+    color: grey;
     background: white;
     z-index:9999;
     padding: 2px 6px 2px 6px; 
@@ -156,9 +156,9 @@
 }
 .srchLbl {
     background: white; 
-    color:  #2496dc;
+    color:  grey;
     z-index:9999;
-    border: 1px solid #2496dc;
+    border: 1px solid grey;
     border-right: 0px solid white;
     padding: 3px 3px 3px 3px;
     cursor: pointer;
@@ -166,24 +166,24 @@
 }
 .editLbl {
     background: white; 
-    color:  #2496dc;
+    color: grey;
     z-index:9999;
-    border: 1px solid #2496dc;
+    border: 1px solid grey;
     border-right: 0px solid white;
     padding: 3px 5px 3px 5px;
     cursor: pointer;
     flex: 1;
 }
 .pinLbl {
-    background: #2496dc; 
-    color: white;
+    background: white; 
+    color: grey;
     z-index:9999;
     padding: 1px 5px 2px 5px; 
     cursor: pointer;
    flex: 1;
 }
 .pinLbl.unselected {
-    border: 1px solid #2496dc;
+    border: 1px solid grey;
     background: white;
 }
 
@@ -197,13 +197,41 @@
   text-shadow: 0 0 0 rgb(255,255,255);
 }
 
+.editLbl:hover,.srchLbl:hover,.remLbl:hover {
+    color: #2496dc;
+}
+
+
 
 .pinLbl.unselected > span {
    color: transparent;
-  text-shadow: 0 0 0 #2496dc;
-  font-size: 8px;
+  text-shadow: 0 0 0 grey;
+  font-size: 7px;
 
 }
+.pinLbl.unselected:hover > span {
+    text-shadow: 0 0 0 #2496dc;
+}
+
+.cardWrapper .tag-symbol {
+    color: grey; 
+}
+.cardLeftBot {
+    position: absolute; 
+    bottom: 2px; 
+    left: 0px; 
+    z-index:9999; 
+    padding: 0 8px 0 8px;
+    border: 1px solid grey;
+    background: white;
+    cursor: pointer;
+    user-select: none;
+
+}
+.cardLeftBot:hover span {
+    color: #2496dc;
+}
+
 
 #searchMask {
     flex: 1;
@@ -291,6 +319,10 @@
     color: white;
 }
 
+#tagContainer {
+    overflow-x: hidden;
+}
+
 .flexContainer {
   display: flex;
   flex-wrap: wrap;
@@ -305,11 +337,45 @@
     margin-bottom: 0px !important;
 }
 
-@media (max-width: 1200px) , (max-height: 500px) {
+@media (max-height: 630px) {
+    #tagContainer {
+        max-height: 100px !important;
+    }
+    .searchInfoTagSep{
+       margin-top: 5px !important;
+    }
+    .searchInfoTagSep.bottom {
+       margin-top: 8px !important;
+
+    }
+}
+
+
+@media (max-width: 1000px) , (max-height: 500px) {
   .secondCol {
         display: none;
   }
+ 
 }
+
+@media (max-width: 1200px) {
+    .cardR, .tagLbl, .searchInfoTagLbl, .keyword {
+        font-size: 12px !important;
+    }
+    .minorScore {
+        display: none;
+    }
+}
+
+@media (min-height: 900px) {
+    #tagContainer {
+        max-height: 400px !important;
+    }
+    .searchInfoTagSep{
+        margin-top: 20px !important;
+     }
+}
+
 
 .secondCol {
     max-height: 100vh;
@@ -360,12 +426,12 @@
 .searchInfoTagSep {
     width: 100%;
     border-bottom: 1px solid grey;
-    margin-top: 7px;
+    margin-top: 13px;
     margin-bottom: 6px;
     padding-bottom: 4px;    
 }
 .searchInfoTagSep.bottom {
-    margin-top: 0px;
+    margin-top: 10px;
     margin-bottom: 4px;
 }
 

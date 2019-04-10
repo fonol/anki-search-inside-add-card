@@ -37,10 +37,11 @@ class Output:
                                 <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
                                 <div id='rem-%s' class='remLbl' onclick='$("#cW-%s").parents().first().remove(); updatePinned();'><span>&times;</span></div> 
                             </div>
-                            <div class='cardR' onclick='expandCard(this);' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
+                            <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
                             <div style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
+                            <div class='cardLeftBot' onclick='expandCard(%s, this)'><span class='tag-symbol'>&#10097;</span></div>     
                         </div>
-                        """ %(res[3], counter + 1, res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), self.buildTagString(res[1]))  
+                        """ %(res[3], counter + 1, res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), self.buildTagString(res[1]), res[3])  
             tags = self._addToTags(tags, res[1])
             if counter < 20:
                 allText += " " + res[0]
@@ -64,7 +65,7 @@ class Output:
         html = ""
         tm = self.getTagMap(tags.split(' '))
         totalLength = sum([len(k) for k,v in tm.items()])
-        if len(tm) <= 3 or totalLength < 50:
+        if len(tm) <= 3 or totalLength < 40:
             for t, s in tm.items():
                 if len(s) > 0:
                     tagData = " ".join(self.iterateTagmap({t : s}, ""))
@@ -90,7 +91,7 @@ class Output:
         infoStr = "<table>"
         for key, value in infoMap.items():
             infoStr += "<tr><td>%s</td><td>%s</td></tr>" %(key, value)
-        infoStr += "</table><br/><div class='searchInfoTagSep'><span class='tag-symbol'>&#9750;</span>&nbsp;Tags:</div><div style='max-height: 200px; overflow-y: auto;'>"
+        infoStr += "</table><div class='searchInfoTagSep'><span class='tag-symbol'>&#9750;</span>&nbsp;Tags:</div><div id='tagContainer' style='max-height: 180px; overflow-y: auto;'>"
         if len(tags) == 0:
             infoStr += "No tags in the results."
         for key, value in self.getTagMap(tags).items():
@@ -100,7 +101,7 @@ class Output:
                 tagData = " ".join(self.iterateTagmap({key : value}, ""))
                 infoStr += "<span class='searchInfoTagLbl' data-tags='%s' onclick='tagClick(this);'>%s&nbsp; %s</span>" % (tagData, trimIfLongerThan(key,12), "(+%s)"% len(value))
 
-        infoStr += "</div><br style='clear:both'/><div><div class='searchInfoTagSep bottom'>Keywords:</div>"
+        infoStr += "</div><div><div class='searchInfoTagSep bottom'>Keywords:</div>"
         infoStr += self._mostCommonWords(allText) + "</div>"
         return infoStr
 
@@ -125,7 +126,7 @@ class Output:
         sortedCounts = sorted(counts.items(), key=lambda kv: kv[1][1], reverse=True)
         html = ""
         for entry in sortedCounts[:15]:
-            html += "<a href='#' onclick='event.preventDefault(); searchFor($(this).text())'>%s</a>, " % entry[1][0]
+            html += "<a class='keyword' href='#' onclick='event.preventDefault(); searchFor($(this).text())'>%s</a>, " % entry[1][0]
         return html[:-2]
 
    
