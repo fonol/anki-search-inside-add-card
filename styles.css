@@ -546,7 +546,7 @@
      padding: 1px 4px 1px 4px;
 }
 .list-item-inner:hover {
-    background: #2496dc;
+    background: #5f6468;
     color: white;
 }
 .check {
@@ -570,6 +570,9 @@ cursor: pointer;
 .deck-list-button.center {
     border-left: none;
     border-right: none; 
+}
+#toggleBrowseMode {
+    border-left: none;
 }
 .deck-list-button:hover {
     color: #2496dc;

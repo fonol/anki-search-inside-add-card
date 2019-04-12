@@ -158,6 +158,16 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("randomNotes ") and searchIndex is not None):
         res = getRandomNotes(cmd[11:])
         searchIndex.output.printSearchResults(res["result"], res["stamp"])
+    elif cmd == "toggleTagSelect":
+        if searchIndex is not None:
+            searchIndex.tagSelect = not searchIndex.tagSelect
+            if searchIndex.tagSelect:
+                fillTagSelect()
+            else:
+                fillDeckSelect(self)
+    elif cmd.startswith("searchTag "):
+        if searchIndex is not None:
+            rerenderInfo(self, cmd[10:].strip(), searchByTags=True)
 
 
     #
@@ -281,7 +291,7 @@ def onLoadNote(editor):
                         <div id='deckSelWrapper'> 
                             <table id='deckSel'></table>
                         </div>
-                        <div style='margin-top: 0px; margin-bottom: 10px;'><button class='deck-list-button' onclick='selectAllDecks();'>Select All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>Select None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Select Current</button></div>
+                        <div style='margin-top: 0px; margin-bottom: 10px;'><button class='deck-list-button' onclick='selectAllDecks();'>All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Current</button><button class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')">Browse Tags</button></div>
 
                     </div>
                     <div class='flexCol right' style="position: relative;">
@@ -365,10 +375,13 @@ def onLoadNote(editor):
                 editor.web.eval("$('#selectionCb').prop('checked', false);")
             if not searchIndex.tagSearch:
                 editor.web.eval("$('#tagCb').prop('checked', false);")
+            if searchIndex.tagSelect:
+                fillTagSelect(editor)
             if not searchIndex.topToggled:
                 editor.web.eval("toggleTop(document.getElementById('toggleTop'));")
 
-        fillDeckSelect(editor)
+        if searchIndex is None or not searchIndex.tagSelect:
+            fillDeckSelect(editor)
         if corpus is None:
             corpus = getCorpus()
 
@@ -470,6 +483,58 @@ def getSpecialSearches():
     return html
 
 
+def _addToTagList(tmap, name):
+    names = [s for s in name.split("::") if s != ""]
+    for c, d in enumerate(names):
+        found = tmap
+        for i in range(c):
+            found = found.setdefault(names[i], {})
+        if not d in found:
+            found.update({d : {}}) 
+    return tmap
+
+
+def fillTagSelect(editor = None) :
+    tmap = {}
+    for t in sorted(mw.col.tags.all(), key=lambda t: t.lower()):
+        tmap = _addToTagList(tmap, t)
+    tmap = dict(sorted(tmap.items(), key=lambda item: item[0].lower()))
+    
+  
+    def iterateMap(tmap, prefix, start=False):
+        if start:
+            html = "<ul class='deck-sub-list outer'>"
+        else:
+            html = "<ul class='deck-sub-list'>"
+        for key, value in tmap.items():
+            full = prefix + "::" + key if prefix else key
+            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('searchTag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (key, "[+]" if value else "", trimIfLongerThan(key, 35), iterateMap(value, full, False)) 
+        html += "</ul>"
+        return html
+
+    html = iterateMap(tmap, "", True)
+
+    cmd = """document.getElementById('deckSel').innerHTML = `%s`; 
+    $('.exp').click(function(e) {
+		e.stopPropagation();
+        let icn = $(this);
+        if (icn.text()) {
+            if (icn.text() === '[+]')
+                icn.text('[-]');
+            else
+                icn.text('[+]');
+        }
+        $(this).parent().parent().children('ul').toggle();
+    });
+    $(".deck-list-button:not(#toggleBrowseMode)").prop("disabled", true);
+    $('#toggleBrowseMode').text('Back to Decks');
+    $('#toggleBrowseMode').click("pycmd('toggleTagSelect')");
+    """ % html
+    if editor is not None:
+        editor.web.eval(cmd)
+    else:
+        searchIndex.output.editor.web.eval(cmd)
+
 def fillDeckSelect(editor):
     """
     Fill the selection with user's decks
@@ -518,7 +583,9 @@ def fillDeckSelect(editor):
         $(this).parent().parent().children('ul').toggle();
     });
     updateSelectedDecks();
-    
+    $('#toggleBrowseMode').text('Browse Tags');
+    $(".deck-list-button").prop("disabled", false);
+
     """ % html
     editor.web.eval(cmd)
 
@@ -716,6 +783,7 @@ def _buildIndex():
     searchIndex.output.stopwords = searchIndex.stopWords
     searchIndex.selectedDecks = []
     searchIndex.tagSearch = True
+    searchIndex.tagSelect = False
     searchIndex.topToggled = True
     searchIndex.initializationTime = initializationTime
     searchIndex.synonyms = loadSynonyms()
