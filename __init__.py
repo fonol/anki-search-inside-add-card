@@ -316,7 +316,7 @@ def onLoadNote(editor):
                     <div class="flexContainer">
                         <div class='flexCol' style='padding-left: 0px; border-top: 1px solid grey;'> 
                             <div class='flexContainer' style="flex-wrap: nowrap;">
-                                    <div class='tooltip tooltip-blue' onclick="toggleTooltip(this);">i
+                                    <div class='tooltip tooltip-blue' onclick="toggleTooltip(this);">&#9432;
                                         <div class='tooltiptext'>
                                         <table>
                                             <tr><td>dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
@@ -598,13 +598,14 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
             searchRes = searchIndex.search(content, decks)
       
       
-        if searchRes is not None:
-            if len(searchRes["result"]) > 0:
-                searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor)
+        if editor is not None and editor.web is not None:
+            if searchRes is not None:
+                if len(searchRes["result"]) > 0:
+                    searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor)
+                else:
+                    editor.web.eval("setSearchResults('', 'No results found.')")
             else:
                 editor.web.eval("setSearchResults('', 'No results found.')")
-        else:
-            editor.web.eval("setSearchResults('', 'No results found.')")
 
        
 
