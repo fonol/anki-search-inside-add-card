@@ -9,7 +9,7 @@ def findBySameTag(tagStr, limit, decks, pinned):
         if len(t) > 0:
             if len(query) > 6:
                 query += " or "
-            query += "lower(tags) like '% " + t + " %' or lower(tags) like '%::" + t + " %' or lower(tags) like '% " + t + "::%'"
+            query += "lower(tags) like '% " + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '%::" + t + " %' or lower(tags) like '% " + t + "::%'"
 
   
     if not "-1" in decks:
