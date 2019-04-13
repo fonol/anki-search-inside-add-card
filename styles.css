@@ -39,16 +39,20 @@
 
 
 .cardR {
-  border: 1px solid grey; 
+  border: 1px solid $noteBorderColor$; 
   padding: 5px; 
   padding-bottom: 25px; 
   padding-left: 15px; 
   background: white; 
   position: relative;
+  font-size: $noteFontSize$;
+  color: $noteForegroundColor$;
+  background: $noteBackgroundColor$;
 }
 
 .cardR:hover {
      border: 1px solid  #2496dc; 
+   
 }
 
 .score {
@@ -105,13 +109,14 @@
 
 .keyword {
     cursor: pointer;
-    color: #2496dc; 
+    color: $keywordColor$; 
 }
 
 
 .searchInfoTagLbl {
-    background: #f0506e; 
-    color: white; 
+    background: $tagBackgroundColor$; 
+    color: $tagForegroundColor$; 
+    font-size: $tagFontSize$;
     padding: 2px 4px 2px 4px; 
     border-radius: 2px; 
     margin-right: 7px; 
@@ -123,31 +128,31 @@
 
 
 .tagLbl {
-    background: #f0506e; 
-    color: white; 
+    background: $tagBackgroundColor$; 
+    color: $tagForegroundColor$; 
     padding: 2px 4px 2px 4px; 
     border-radius: 2px; 
     margin-left: 5px; 
     float: right; 
+    font-size: $tagFontSize$;
     cursor: pointer;
 }
 .rankingLbl {
     background: #2496dc; 
     color: white; 
-    padding: 3px; 
-    padding-left: 8px; 
-    padding-right: 8px; 
+    padding: 2px 6px 2px 6px; 
     position: absolute; 
+    font-size: 11px;
     left: 0px; 
     top: 0px; 
     z-index:9999;
 }
 .remLbl {
   
-    border: 1px solid grey;
-    border-left: 0px solid white;
-    color: grey;
-    background: white;
+    border: 1px solid $noteBorderColor$;
+    border-left: 0px solid  $noteBackgroundColor$; 
+    color: $noteForegroundColor$;
+    background:  $noteBackgroundColor$; 
     z-index:9999;
     padding: 2px 6px 2px 6px; 
     cursor: pointer;
@@ -155,45 +160,47 @@
     font-size: 13px;
 }
 .srchLbl {
-    background: white; 
-    color:  grey;
+    background:  $noteBackgroundColor$; 
+    color: $noteForegroundColor$;
     z-index:9999;
-    border: 1px solid grey;
-    border-right: 0px solid white;
+    border: 1px solid $noteBorderColor$;
+    border-right: 0px solid $noteBackgroundColor$; 
     padding: 3px 3px 3px 3px;
     cursor: pointer;
     flex: 1;
 }
 .editLbl {
-    background: white; 
-    color: grey;
+    background:  $noteBackgroundColor$; 
+    color: $noteForegroundColor$;
     z-index:9999;
-    border: 1px solid grey;
-    border-right: 0px solid white;
+    border: 1px solid $noteBorderColor$;
+    border-right: 0px solid  $noteBackgroundColor$; 
     padding: 3px 5px 3px 5px;
     cursor: pointer;
     flex: 1;
 }
 .pinLbl {
-    background: white; 
-    color: grey;
+    background: $noteBackgroundColor$; 
+    color: $noteForegroundColor$;
     z-index:9999;
     padding: 1px 5px 2px 5px; 
     cursor: pointer;
    flex: 1;
 }
 .pinLbl.unselected {
-    border: 1px solid grey;
-    background: white;
+    border: 1px solid $noteBorderColor$;
+    background: $noteBackgroundColor$;
 }
 
 .pinLbl > span {
   color: transparent;
-  text-shadow: 0 0 0 rgb(255,255,255);
+  text-shadow: 0 0 0 $noteForegroundColor$;
   font-size: 8px;
 }
 .rankingLbl > span {
+  margin-top: -4px;
   color: transparent;
+  font-size: 8px;
   text-shadow: 0 0 0 rgb(255,255,255);
 }
 
@@ -205,7 +212,7 @@
 
 .pinLbl.unselected > span {
    color: transparent;
-  text-shadow: 0 0 0 grey;
+  text-shadow: 0 0 0 $noteForegroundColor$;
   font-size: 7px;
 
 }
@@ -222,12 +229,17 @@
     left: 0px; 
     z-index:9999; 
     padding: 0 8px 0 8px;
-    border: 1px solid grey;
-    background: white;
+    border: 1px solid  $noteBorderColor$;
+    background:  $noteBackgroundColor$;
     cursor: pointer;
     user-select: none;
 
 }
+.cardLeftBot > .tag-symbol {
+    color: $noteForegroundColor$;
+    background: $noteBackgroundColor$;
+}
+
 .cardLeftBot:hover span {
     color: #2496dc;
 }
@@ -235,12 +247,17 @@
 
 #searchMask {
     flex: 1;
-
+    background: $browserSearchInputBackgroundColor$;
+    color: $browserSearchInputForegroundColor$;
+    border: 1px solid $browserSearchInputBorderColor$;
 
 }
 #searchBtn {
     flex:  0 0 40px;
     margin-left: 10px;
+    background: $browserSearchButtonBackgroundColor$;
+    color: $browserSearchButtonForegroundColor$;
+    border: 1px solid $browserSearchButtonBorderColor$;
 }
 
 #hvrBox {
@@ -297,11 +314,14 @@
     width: calc(100% - 1px);
     border: 1px solid grey;
     overflow-y: auto;
-    background: white;
+    background:  $deckSelectBackgroundColor$;
 }
 
 #deckSel {
     width: 100%;
+    font-size: $deckSelectFontSize$;
+    background: $deckSelectBackgroundColor$;
+    color: $deckSelectForegroundColor$;
 }
 
 #deckSel tr>td {
@@ -380,6 +400,7 @@
 .secondCol {
     max-height: 100vh;
     position: relative;
+    font-size: 12px !important;
 }
   
 
@@ -492,29 +513,29 @@
   }
 
   .tooltip-blue {
-    color: white;
-    background: #2496dc;
-    border-radius: 2px;
-    font-size: 16px;
-    padding: 0 6px 0 6px;
+    color: $browserSearchButtonForegroundColor$;
+    background: $browserSearchButtonBackgroundColor$;
+    border: 1px solid  $browserSearchButtonBorderColor$;
     cursor: pointer;
     margin-right: 10px;
+    outline: none;
   }
   
   .tooltip .tooltiptext {
     display: none;
     width: 240px;
-    background-color: white;
-    color: black;
+    background-color: $modalBackgroundColor$;
+    color: $modalForegroundColor$;
     font-size: 12px;
     text-align: center;
-    border: 1px solid #2496dc;
+    border: 2px solid #2496dc;
     padding: 10px;
     position: absolute;
     z-index: 99999999;
     bottom: 95%;
     left: 50%;
-    margin-left: -7px;
+    margin-left: -12px;
+    margin-top: -5px;
     user-select: none;
   }
 
@@ -546,8 +567,8 @@
      padding: 1px 4px 1px 4px;
 }
 .list-item-inner:hover {
-    background: #5f6468;
-    color: white;
+    background: $deckSelectHoverBackgroundColor$;
+    color: $deckSelectHoverForegroundColor$;
 }
 .check {
     float: right;
@@ -558,14 +579,15 @@
     display: inline;
 }
 .deck-list-item.selected:hover > .list-item-inner:hover > .check {
-    color: white;
+    color: $deckSelectHoverForegroundColor$;
 }
 .deck-list-button {
-border: 1px solid grey;
+border: 1px solid $deckSelectButtonBorderColor$;
 border-top: 0px;
-background: white;
-color: grey;
+background: $deckSelectBackgroundColor$;
+color: $deckSelectButtonForegroundColor$;
 cursor: pointer;
+font-size: 12px;
 }
 .deck-list-button.center {
     border-left: none;
@@ -606,37 +628,36 @@ cursor: pointer;
     display: none;
 }
 #indexInfo {
-    background: #2496dc;
-    color: white;
-    padding: 0 4px 0 4px;
-    border-radius: 4px;
+    display: inline;
+    padding: 1px 4px 1px 4px;
+    color: $infoButtonForegroundColor$;
+    background: $infoButtonBackgroundColor$;
+    border: 1px solid  $infoButtonBorderColor$;
     cursor: pointer;
     user-select: none;
-    position: absolute; 
-    top: 35px; 
-    right: 5px; 
-    width: 8px;
-    text-align: center;
-    display: block;
+    font-size: 11px;
+    outline: none;
+    margin-right: 5px;
+
 }
 #synonymsIcon {
-    background: #2496dc;
-    color: white;
-    padding: 0 4px 0 4px;
-    border-radius: 4px;
+    display: inline;
+    padding: 1px 4px 1px 4px;
+    color: $infoButtonForegroundColor$;
+    background: $infoButtonBackgroundColor$;
+    border: 1px solid $infoButtonBorderColor$;
     cursor: pointer;
     user-select: none;
-    position: absolute; 
-    top: 60px; 
-    right: 5px; 
-    width: 8px;
-    text-align: center;
-    display: block;
+    font-size: 11px;
+    outline: none;
+
 }
 
 #synonymInput {
     width: 97%;
     margin-top: 20px;
+    background: $modalBackgroundColor$;
+    color: $modalForegroundColor$;
 }
 
 #synTable tr td:first-child {
@@ -648,6 +669,9 @@ cursor: pointer;
 #specialSearches {
     flex:  0 0 20px;
     margin-left: 10px; 
+    background: $browserSearchButtonBackgroundColor$;
+    color: $browserSearchButtonForegroundColor$;
+    border: 1px solid $browserSearchButtonBorderColor$;
 }
 
 /* Modal */
@@ -668,7 +692,8 @@ cursor: pointer;
   
   .modal-content {
     z-index: 99999999999; 
-    background-color: #fefefe;
+    background: $modalBackgroundColor$;
+    color: $modalForegroundColor$;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -680,14 +705,14 @@ cursor: pointer;
 
 #modalText {
     z-index: 99999999999; 
-    color: black;
+    color: $modalForegroundColor$;
     max-height: 450px;
     overflow-y: auto;
 }
 .modal-close {
 
     border: 1px solid #2496dc;
-    background: white;
+    background: $modalBackgroundColor$;
     color: #2496dc;
     cursor: pointer;
 }
@@ -715,12 +740,13 @@ cursor: pointer;
 
 }
 .tag-btn {
-    background: #f0506e; 
-    color: white;
+    background: $tagBackgroundColor$;  
+    color: $tagForegroundColor$; 
     padding: 2px 5px 2px 5px;
     border-radius: 2px;
     cursor: pointer;
     user-select: none;
+    font-size: $tagFontSize$;
 
 }
 
@@ -740,14 +766,13 @@ span.tag-symbol {
   }
 
   #toggleTop {
-    position: absolute; 
-    top: 5px; 
-    right: 7px; 
     font-size: 19px;
     cursor: pointer;
     color: grey;
     user-select: none;
     font-weight: bold;
+    text-align: center;
+    width: 100%;
   }
 
 

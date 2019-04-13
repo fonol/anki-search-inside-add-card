@@ -296,6 +296,8 @@ def onLoadNote(editor):
                     </div>
                     <div class='flexCol right' style="position: relative;">
                         <table>
+                            <tr><td style='text-align: left; padding-bottom: 10px; '> <div id='indexInfo' onclick='pycmd("indexInfo");'>Info</div>
+                            <div id='synonymsIcon' onclick='pycmd("synonyms");'>SynSets</div></td></tr>
                             <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
                             <tr><td class='tbLb'>Search on Typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
                             <tr><td class='tbLb'>Search on Tag Entry</td><td><input id="tagCb" type='checkbox' checked onchange='setTagSearch(this)'/></td></tr>
@@ -312,10 +314,10 @@ def onLoadNote(editor):
                 </div>
                 
                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - $height$px); width: 100%; border-top: 1px solid grey;">
+                        <div style='position: absolute; top: 5px; right: 7px; width: 30px;'>
                             <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
-                            <div id='indexInfo' onclick='pycmd("indexInfo");'>i</div>
-                            <div id='synonymsIcon' onclick='pycmd("synonyms");'>s</div>
-                
+                           
+                        </div>
                 <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
                 <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
                     <div id='searchInfo'></div>
@@ -326,7 +328,7 @@ def onLoadNote(editor):
                     <div class="flexContainer">
                         <div class='flexCol' style='padding-left: 0px; border-top: 1px solid grey;'> 
                             <div class='flexContainer' style="flex-wrap: nowrap;">
-                                    <div class='tooltip tooltip-blue' onclick="toggleTooltip(this);">&#9432;
+                                    <button class='tooltip tooltip-blue' onclick="toggleTooltip(this);">&#9432;
                                         <div class='tooltiptext'>
                                         <table>
                                             <tr><td>dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
@@ -340,7 +342,7 @@ def onLoadNote(editor):
                                             <tr><td>d*g</td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
                                         </table>
                                         </div>
-                                    </div>
+                                    </button>
                                 <input id='searchMask' placeholder='Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
                                 <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
                                 <button id='specialSearches' onclick='pycmd("specialSearches");'>Special</button>

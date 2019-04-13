@@ -332,7 +332,7 @@ function displayInfoBoxSubMenu(index) {
 
 
 function pinCard(elem, nid) {
-    $('#cW-' + nid).css('padding', '5px 4px 5px 5px');
+    $('#cW-' + nid).css('padding', '3px 4px 5px 5px');
     $('#cW-' + nid).css('font-size', '10px');
     $('#cW-' + nid).html('<span>&#128204;</span>');
     $('#' + nid).parents().first().addClass('pinned');

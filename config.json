@@ -18,6 +18,36 @@
 "disableNonNativeSearching" : false,
 "addToResultAreaHeight": 0,
 "delayWhileTyping": 800,
-"synonyms": []
+"synonyms": [],
+"noteForegroundColor": "black",
+"noteBackgroundColor": "white",
+"noteBorderColor": "grey",
+"tagForegroundColor": "white",
+"tagBackgroundColor": "#f0506e",
+"tagFontSize" : 12,
+"deckSelectFontSize": 12,
+"deckSelectForegroundColor": "black",
+"deckSelectBackgroundColor": "white",
+"deckSelectHoverForegroundColor": "white",
+"deckSelectHoverBackgroundColor": "#5f6468",
+"deckSelectButtonForegroundColor": "grey",
+"deckSelectButtonBorderColor": "grey",
+"deckSelectButtonBackgroundColor": "white",
+"infoButtonBackgroundColor": "white",
+"infoButtonForegroundColor": "#2496dc",
+"infoButtonBorderColor":"#2496dc",
+
+"modalForegroundColor": "black",
+"modalBackgroundColor": "white",
+
+"browserSearchInputForegroundColor": "black",
+"browserSearchInputBackgroundColor": "white",
+"browserSearchInputBorderColor": "#2496dc",
+"browserSearchButtonBackgroundColor": "white",
+"browserSearchButtonForegroundColor": "#2496dc",
+"browserSearchButtonBorderColor": "#2496dc",
+"keywordColor": "#2496dc",
+
+"noteFontSize": 12
 
 }
