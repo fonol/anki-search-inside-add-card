@@ -588,6 +588,7 @@ background: $deckSelectBackgroundColor$;
 color: $deckSelectButtonForegroundColor$;
 cursor: pointer;
 font-size: 12px;
+user-select: none;
 }
 .deck-list-button.center {
     border-left: none;
@@ -627,7 +628,7 @@ font-size: 12px;
 .exp:empty {
     display: none;
 }
-#indexInfo {
+#indexInfo, #synonymsIcon {
     display: inline;
     padding: 1px 4px 1px 4px;
     color: $infoButtonForegroundColor$;
@@ -640,7 +641,7 @@ font-size: 12px;
     margin-right: 5px;
 
 }
-#synonymsIcon {
+#lastAdded {
     display: inline;
     padding: 1px 4px 1px 4px;
     color: $infoButtonForegroundColor$;

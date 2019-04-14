@@ -169,6 +169,10 @@ def myOnBridgeCmd(self, cmd):
         if searchIndex is not None:
             rerenderInfo(self, cmd[10:].strip(), searchByTags=True)
 
+    elif cmd == "lastAdded":
+        if searchIndex is not None:
+            getLastCreatedNotes(self)
+        
 
     #
     #   Synonyms
@@ -297,7 +301,9 @@ def onLoadNote(editor):
                     <div class='flexCol right' style="position: relative;">
                         <table>
                             <tr><td style='text-align: left; padding-bottom: 10px; '> <div id='indexInfo' onclick='pycmd("indexInfo");'>Info</div>
-                            <div id='synonymsIcon' onclick='pycmd("synonyms");'>SynSets</div></td></tr>
+                            <div id='synonymsIcon' onclick='pycmd("synonyms");'>SynSets</div>
+                            <div id='lastAdded' onclick='pycmd("lastAdded");'>Last Added</div>
+                            </td></tr>
                             <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
                             <tr><td class='tbLb'>Search on Typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
                             <tr><td class='tbLb'>Search on Tag Entry</td><td><input id="tagCb" type='checkbox' checked onchange='setTagSearch(this)'/></td></tr>
@@ -343,7 +349,7 @@ def onLoadNote(editor):
                                         </table>
                                         </div>
                                     </button>
-                                <input id='searchMask' placeholder='Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
+                                <input id='searchMask' placeholder=' Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
                                 <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
                                 <button id='specialSearches' onclick='pycmd("specialSearches");'>Special</button>
                             
@@ -444,6 +450,33 @@ def setWikiSummary(text):
     else:
         cmd = "document.getElementById('wiki').style.display = `block`; document.getElementById('wiki').innerHTML = `" + text+ "`;"
     searchIndex.output.editor.web.eval(cmd)
+
+def getLastCreatedNotes(editor):
+    stamp = searchIndex.output.getMiliSecStamp()
+    searchIndex.output.latest = stamp
+    decks = searchIndex.selectedDecks
+
+    if not "-1" in decks or len(decks) == 0:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+    if deckQ:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by nid desc limit 50" %(deckQ)).fetchall()
+    else:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by nid desc limit 50").fetchall()
+    rList = []
+    for r in res:
+        #pinned items should not appear in the results
+        if not str(r[0]) in searchIndex.pinned:
+            #todo: implement highlighting
+            rList.append((r[1], r[2], r[3], r[0]))
+
+    if editor.web is not None:
+        if len(rList) > 0:
+            searchIndex.output.printSearchResults(rList, stamp, editor)
+        else:
+            editor.web.eval("setSearchResults('', 'No results found.')")
+
 
 
 def getIndexInfo():
