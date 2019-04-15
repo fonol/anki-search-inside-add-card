@@ -173,6 +173,9 @@ def myOnBridgeCmd(self, cmd):
         if searchIndex is not None:
             getLastCreatedNotes(self)
         
+    elif cmd.startswith("addedSameDay "):
+        if searchIndex is not None:
+            getCreatedSameDay(self, int(cmd[13:]))
 
     #
     #   Synonyms
@@ -477,6 +480,33 @@ def getLastCreatedNotes(editor):
         else:
             editor.web.eval("setSearchResults('', 'No results found.')")
 
+def getCreatedSameDay(editor, nid):
+    stamp = searchIndex.output.getMiliSecStamp()
+    searchIndex.output.latest = stamp
+
+    nidMinusOneDay = nid - (24 * 60 * 60 * 1000)
+    nidPlusOneDay = nid + (24 * 60 * 60 * 1000)
+
+    res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid desc" %(nidMinusOneDay, nidPlusOneDay)).fetchall()
+
+    dayOfNote = int(time.strftime("%d", time.localtime(nid/1000)))
+    rList = []
+    c = 0
+    for r in res:
+        dayCreated = int(time.strftime("%d", time.localtime(int(r[0])/1000)))
+        if dayCreated != dayOfNote:
+            continue
+        if not str(r[0]) in searchIndex.pinned:
+            #todo: implement highlighting
+            rList.append((r[1], r[2], r[3], r[0]))
+            c += 1
+            if c >= searchIndex.limit:
+                break
+    if editor.web is not None:
+        if len(rList) > 0:
+            searchIndex.output.printSearchResults(rList, stamp, editor)
+        else:
+            editor.web.eval("setSearchResults('', 'No results found.')")
 
 
 def getIndexInfo():

@@ -1,4 +1,5 @@
 import re
+import time
 import json
 from datetime import datetime
 from aqt.utils import showInfo
@@ -27,10 +28,11 @@ class Output:
         html = ""
         allText = ""
         tags = []
+        epochTime = int(time.time() * 1000)
         for counter, res in enumerate(searchResults):
             #todo: move in class
-            html += """<div class='cardWrapper'  style='padding: 9px; margin-bottom: 10px; position: relative;'> 
-                            <div id='cW-%s' class='rankingLbl'>%s</div> 
+            html += """<div class='cardWrapper' style='padding: 9px; margin-bottom: 10px; position: relative;'> 
+                            <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s <div class='rankingLblAddInfo'>%s</div></div> 
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                                 <div class='editLbl' onclick='edit(%s)'>Edit</div> 
                                <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
@@ -41,7 +43,7 @@ class Output:
                             <div style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'><span class='tag-symbol'>&#10097;</span></div>     
                         </div>
-                        """ %(res[3], counter + 1, res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), self.buildTagString(res[1]), res[3])  
+                        """ %(res[3], counter + 1, "&nbsp;&nbsp;&#128336; " + self._getTimeDifferenceString(res[3], epochTime) + "&nbsp; | &nbsp;<a href='#' style='color: white;' onclick='pycmd(\"addedSameDay %s\")'>Added Same Day</a>" % res[3],res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), self.buildTagString(res[1]), res[3])  
             tags = self._addToTags(tags, res[1])
             if counter < 20:
                 allText += " " + res[0]
@@ -77,6 +79,25 @@ class Output:
             html += "<div class='tagLbl' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(tagData, str(len(tm)) + " tags ...")
         
         return html
+
+    def _getTimeDifferenceString(self, nid, now):
+        diffInMinutes = (now - nid) / 1000 / 60
+        diffInDays = diffInMinutes / 60 / 24
+
+        if diffInDays < 1:
+            if diffInMinutes < 2:
+                return "Created just now"
+            if diffInMinutes < 60:
+                return "Created %s minutes ago" % diffInMinutes
+            return "Created %s hours ago" % int(diffInMinutes / 60)
+            
+
+        if diffInDays >= 1 and diffInDays < 2:
+            return "Created yesterday"
+        if diffInDays >= 2:
+            return "Created %s days ago" % int(diffInDays)
+        return ""
+
 
     def setSearchInfo(self, text, editor = None):
         if editor is not None:

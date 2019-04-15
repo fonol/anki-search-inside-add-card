@@ -146,6 +146,12 @@
     left: 0px; 
     top: 0px; 
     z-index:9999;
+    user-select: none;
+    cursor: pointer;
+}
+.rankingLblAddInfo {
+    display: none;
+  user-select: none;
 }
 .remLbl {
   
@@ -168,6 +174,7 @@
     padding: 3px 3px 3px 3px;
     cursor: pointer;
     flex: 1;
+    user-select: none;
 }
 .editLbl {
     background:  $noteBackgroundColor$; 
@@ -178,6 +185,7 @@
     padding: 3px 5px 3px 5px;
     cursor: pointer;
     flex: 1;
+    user-select: none;
 }
 .pinLbl {
     background: $noteBackgroundColor$; 
@@ -186,6 +194,7 @@
     padding: 1px 5px 2px 5px; 
     cursor: pointer;
    flex: 1;
+   user-select: none;
 }
 .pinLbl.unselected {
     border: 1px solid $noteBorderColor$;
@@ -196,12 +205,14 @@
   color: transparent;
   text-shadow: 0 0 0 $noteForegroundColor$;
   font-size: 8px;
+  user-select: none;
 }
 .rankingLbl > span {
   margin-top: -4px;
   color: transparent;
   font-size: 8px;
   text-shadow: 0 0 0 rgb(255,255,255);
+  user-select: none;
 }
 
 .editLbl:hover,.srchLbl:hover,.remLbl:hover {

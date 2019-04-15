@@ -45,6 +45,16 @@ function selectDeckWithId(did) {
     updateSelectedDecks();
 }
 
+function expandRankingLbl(elem) {
+    
+    if (elem.getElementsByClassName("rankingLblAddInfo")[0].offsetParent === null) {
+        elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "inline";
+    } else {
+        elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "none";
+    }
+}
+
+
 function expandCard(id, icn) {
     let elem = document.getElementById(id);
     if ($(elem).hasClass('expanded')) {
@@ -118,16 +128,6 @@ function onResize() {
 }
 
 function toggleModalLoader(show) {
-        // if (show) {
-        //     document.getElementById('modal-text').style.visibility = "hidden";
-        //     document.getElementById('modal-loader').style.display = "block";
-        //     $('.modal-close').prop('disabled', true);
-        // } else {
-        //     document.getElementById('modal-text').style.visibility = "visible";
-        //     document.getElementById('modal-loader').style.display = "none";
-        //     $('.modal-close').prop('disabled', false);
-
-        // }
 }
 
 function getWordPrecedingCaret(containerEl) {
@@ -334,7 +334,9 @@ function displayInfoBoxSubMenu(index) {
 function pinCard(elem, nid) {
     $('#cW-' + nid).css('padding', '3px 4px 5px 5px');
     $('#cW-' + nid).css('font-size', '10px');
+    let info = document.getElementById('cW-' + nid).getElementsByClassName("rankingLblAddInfo")[0];
     $('#cW-' + nid).html('<span>&#128204;</span>');
+    document.getElementById('cW-' + nid).appendChild(info);
     $('#' + nid).parents().first().addClass('pinned');
     updatePinned();
 }
