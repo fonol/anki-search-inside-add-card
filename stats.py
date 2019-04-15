@@ -114,7 +114,14 @@ def calculateStats(nid, avgRetAndTime = None):
     entries = mw.col.db.all(
         "select cid, ease, time, type "
         "from revlog where cid in %s" %(cStr))
-    if not entries:
+    
+    hasReview = False
+    if entries:
+        for (_, _, _, ty) in entries:
+                if ty == 1:
+                    hasReview = True
+                    break
+    if not entries or not hasReview:
         s = "<hr/>No card has been reviewed yet for this note."
     else:
         cnt = 0
