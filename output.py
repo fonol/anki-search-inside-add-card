@@ -43,7 +43,7 @@ class Output:
                             <div style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'><span class='tag-symbol'>&#10097;</span></div>     
                         </div>
-                        """ %(res[3], counter + 1, "&nbsp;&nbsp;&#128336; " + self._getTimeDifferenceString(res[3], epochTime) + "&nbsp; | &nbsp;<a href='#' style='color: white;' onclick='pycmd(\"addedSameDay %s\")'>Added Same Day</a>" % res[3],res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), self.buildTagString(res[1]), res[3])  
+                        """ %(res[3], counter + 1, "&nbsp;&nbsp;&#128336; " + self._getTimeDifferenceString(res[3], epochTime) + "&nbsp; | &nbsp;<a href='#' style='color: white;' onclick='pycmd(\"addedSameDay %s\"); return false;'>Added Same Day</a>" % res[3],res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), self.buildTagString(res[1]), res[3])  
             tags = self._addToTags(tags, res[1])
             if counter < 20:
                 allText += " " + res[0]
