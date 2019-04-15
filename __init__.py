@@ -459,11 +459,11 @@ def getLastCreatedNotes(editor):
     searchIndex.output.latest = stamp
     decks = searchIndex.selectedDecks
 
-    if not "-1" in decks or len(decks) == 0:
+    if not "-1" in decks and len(decks) > 0:
         deckQ =  "(%s)" % ",".join(decks)
     else:
         deckQ = ""
-    if deckQ:
+    if len(deckQ) > 0:
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by nid desc limit 50" %(deckQ)).fetchall()
     else:
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by nid desc limit 50").fetchall()
