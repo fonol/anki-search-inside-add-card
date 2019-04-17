@@ -32,7 +32,6 @@ try:
     loadWhoosh = not config['useFTS']  or config['disableNonNativeSearching'] 
 except KeyError:
     loadWhoosh = True
-
 if loadWhoosh:
     from .whoosh.index import create_in
     from .whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD
@@ -41,7 +40,7 @@ if loadWhoosh:
     from .whoosh.analysis import StandardAnalyzer, CharsetFilter, StemmingAnalyzer
     from .whoosh import classify, highlight, query, scoring, qparser, reading
 
-from .wikipedia import summary, DisambiguationError
+from .logging import log
 from .web import *
 from .fts_index import FTSIndex
 from .whoosh_index import SearchIndex
@@ -139,12 +138,10 @@ def myOnBridgeCmd(self, cmd):
         rerenderInfo(self, cmd[8:])
     elif (cmd.startswith("srchDB ")):
         rerenderInfo(self, cmd[7:], searchDB = True)
-    elif (not searchingDisabled and cmd.startswith("fldSlctd ")):
+    elif (cmd.startswith("fldSlctd ") and not searchingDisabled and searchIndex is not None):
+        if searchIndex.logging:
+            log("Selected in field: " + cmd[9:])
         rerenderInfo(self, cmd[9:])
-    elif (cmd.startswith("wiki ")):
-        setWikiSummary(getWikipediaSummary(cmd[5:]))
-    elif (cmd.startswith("lastnote")):
-        displayLastNote()
     elif (cmd.startswith("nStats ")):
         setStats(cmd[7:], calculateStats(cmd[7:]))
     elif (cmd.startswith("tagClicked ")):
@@ -247,6 +244,8 @@ def myOnBridgeCmd(self, cmd):
             searchIndex.tagSearch = cmd[10:] == "on"
     elif (cmd.startswith("deckSelection ")):
         if searchIndex is not None:
+            if searchIndex.logging:
+                log("Updating selected decks: " + str( [d for d in cmd[14:].split(" ") if d != ""]))
             searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
     elif cmd == "toggleTop on":
         if searchIndex is not None:
@@ -272,6 +271,8 @@ def onLoadNote(editor):
    
     #only display in add cards dialog
     if (editor.addMode):
+        if searchIndex is not None and searchIndex.logging:
+            log("Trying to insert html in editor")
         editor.web.eval(""" 
         
         //check if ui has been rendered already
@@ -280,7 +281,8 @@ def onLoadNote(editor):
         $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; width: 50%;  flex-grow: 1 '></div>`);
         $(`
         <div class='coll secondCol' style='flex-grow: 1; width: 50%; height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; padding-bottom: 4px; margin-left: 30px; position: relative;' id='infoBox'>
- 
+
+
             <div id="a-modal" class="modal">
                 <div class="modal-content">
                     <div id='modal-visible'>
@@ -292,13 +294,12 @@ def onLoadNote(editor):
                         <div id='modal-loader'> <div class='signal'></div><br/>Computing...</div>
                 </div>
             </div>
-
                 <div class="flexContainer" id="topContainer">
                     <div class='flexCol' style='margin-left: 0px; padding-left: 0px;'>
                         <div id='deckSelWrapper'> 
                             <table id='deckSel'></table>
                         </div>
-                        <div style='margin-top: 0px; margin-bottom: 10px;'><button class='deck-list-button' onclick='selectAllDecks();'>All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Current</button><button class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')">Browse Tags</button></div>
+                        <div style='margin-top: 0px; margin-bottom: 10px;'><button class='deck-list-button' onclick='selectAllDecks();'>All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Current</button><button class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</button></div>
 
                     </div>
                     <div class='flexCol right' style="position: relative;">
@@ -361,7 +362,7 @@ def onLoadNote(editor):
                     </div>
                     </div>
                 </div>`).insertAfter('#fields');
-        $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; height: 100%;"></div>');    
+        $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; overflow-y: hidden; height: 100%;"></div>');    
         
         }
         $('.field').on('keypress', fieldKeypress);
@@ -371,7 +372,6 @@ def onLoadNote(editor):
         
         window.addEventListener('resize', onResize, true);
         onResize();
-        
         """.replace("$height$", str(280 - addToResultAreaHeight)))
     
 
@@ -394,7 +394,11 @@ def onLoadNote(editor):
         if searchIndex is None or not searchIndex.tagSelect:
             fillDeckSelect(editor)
         if corpus is None:
+            if searchIndex is not None and searchIndex.logging:
+                log("loading notes from anki db...")
             corpus = getCorpus()
+            if searchIndex is not None and searchIndex.logging:
+                log("loaded notes: len(corpus): " + str(len(corpus)))
 
         if searchIndex is not None and searchIndex.output is not None:
             searchIndex.output.editor = editor
@@ -411,11 +415,8 @@ def setPinned(cmd):
         if len(id) > 0:
             pinned.append(id)
     searchIndex.pinned = pinned
-        
-def getLastCreatedNote():
-    res = mw.col.db.execute("select flds from notes order by id desc limit 1")
-    newest = res.fetchone()[0]
-    return newest
+    if searchIndex.logging:
+        log("Updated pinned: " + str(searchIndex.pinned))
 
 def getRandomNotes(deckStr):
     if searchIndex is None:
@@ -438,21 +439,6 @@ def getRandomNotes(deckStr):
         rList.append((r[1], r[2], r[3], r[0]))
     return { "result" : rList, "stamp" : stamp }
 
-def displayLastNote():
-    searchIndex.output.editor.web.eval("document.getElementById('hvrBoxSub').innerHTML = `" + getLastCreatedNote() + "`;")
-
-def getWikipediaSummary(query):
-    try:
-        return summary(query, sentences=2)
-    except:
-        return ""
-
-def setWikiSummary(text):
-    if len(text) < 5:
-        cmd = "document.getElementById('wiki').style.display = `none`;"
-    else:
-        cmd = "document.getElementById('wiki').style.display = `block`; document.getElementById('wiki').innerHTML = `" + text+ "`;"
-    searchIndex.output.editor.web.eval(cmd)
 
 def getLastCreatedNotes(editor):
     stamp = searchIndex.output.getMiliSecStamp()
@@ -483,31 +469,33 @@ def getLastCreatedNotes(editor):
 def getCreatedSameDay(editor, nid):
     stamp = searchIndex.output.getMiliSecStamp()
     searchIndex.output.latest = stamp
+    try:
+        nidMinusOneDay = nid - (24 * 60 * 60 * 1000)
+        nidPlusOneDay = nid + (24 * 60 * 60 * 1000)
 
-    nidMinusOneDay = nid - (24 * 60 * 60 * 1000)
-    nidPlusOneDay = nid + (24 * 60 * 60 * 1000)
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid desc" %(nidMinusOneDay, nidPlusOneDay)).fetchall()
 
-    res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid desc" %(nidMinusOneDay, nidPlusOneDay)).fetchall()
-
-    dayOfNote = int(time.strftime("%d", time.localtime(nid/1000)))
-    rList = []
-    c = 0
-    for r in res:
-        dayCreated = int(time.strftime("%d", time.localtime(int(r[0])/1000)))
-        if dayCreated != dayOfNote:
-            continue
-        if not str(r[0]) in searchIndex.pinned:
-            #todo: implement highlighting
-            rList.append((r[1], r[2], r[3], r[0]))
-            c += 1
-            if c >= searchIndex.limit:
-                break
-    if editor.web is not None:
-        if len(rList) > 0:
-            searchIndex.output.printSearchResults(rList, stamp, editor)
-        else:
-            editor.web.eval("setSearchResults('', 'No results found.')")
-
+        dayOfNote = int(time.strftime("%d", time.localtime(nid/1000)))
+        rList = []
+        c = 0
+        for r in res:
+            dayCreated = int(time.strftime("%d", time.localtime(int(r[0])/1000)))
+            if dayCreated != dayOfNote:
+                continue
+            if not str(r[0]) in searchIndex.pinned:
+                #todo: implement highlighting
+                rList.append((r[1], r[2], r[3], r[0]))
+                c += 1
+                if c >= searchIndex.limit:
+                    break
+        if editor.web is not None:
+            if len(rList) > 0:
+                searchIndex.output.printSearchResults(rList, stamp, editor)
+            else:
+                editor.web.eval("setSearchResults('', 'No results found.')")
+    except:
+        if editor.web is not None:
+            editor.web.eval("setSearchResults('', 'Error in calculation.')")
 
 def getIndexInfo():
     if searchIndex is None:
@@ -516,8 +504,11 @@ def getIndexInfo():
                 <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
                <tr><td>Initialization:</td><td>  <b>%s s</b></td></tr>
                <tr><td>Notes in Index:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Stopwords:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Logging:</td><td>  <b>%s</b></td></tr>
              </table>
-            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.getNumberOfNotes())
+            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.getNumberOfNotes(), len(searchIndex.stopWords), "On" if searchIndex.logging else "Off")
+    
     return html
 
 def getSpecialSearches():
@@ -648,7 +639,7 @@ def fillDeckSelect(editor):
         $(this).parent().parent().children('ul').toggle();
     });
     updateSelectedDecks();
-    $('#toggleBrowseMode').text('Browse Tags');
+    $('#toggleBrowseMode').html('<span class="tag-symbol">&#9750;</span> Browse Tags');
     $(".deck-list-button").prop("disabled", false);
 
     """ % html
@@ -733,7 +724,7 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
         if editor is not None and editor.web is not None:
             if searchRes is not None:
                 if len(searchRes["result"]) > 0:
-                    searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor)
+                    searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor, searchIndex.logging)
                 else:
                     editor.web.eval("setSearchResults('', 'No results found.')")
             else:
@@ -852,7 +843,7 @@ def _buildIndex():
     searchIndex.topToggled = True
     searchIndex.initializationTime = initializationTime
     searchIndex.synonyms = loadSynonyms()
-
+    searchIndex.logging = config["logging"]
     try:
         limit = config['numberOfResults']
         if limit <= 0:
@@ -862,6 +853,11 @@ def _buildIndex():
     except KeyError:
         limit = 20
     searchIndex.limit = limit
+
+    if searchIndex.logging:
+        log("\n--------------------\nInitialized searchIndex:")
+        log("""Type: %s\n# Stopwords: %s \n# Synonyms: %s \nLimit: %s \n""" % (searchIndex.type, len(searchIndex.stopWords), len(searchIndex.synonyms), limit))
+
     editor = aqt.mw.app.activeWindow().editor if hasattr(aqt.mw.app.activeWindow(), "editor") else None
     if editor is not None and editor.addMode:
         searchIndex.output.editor = editor
