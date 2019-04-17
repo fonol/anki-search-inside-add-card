@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from aqt.utils import showInfo
 from .textutils import clean, trimIfLongerThan, deleteChars
+from .logging import log
 
 class Output:
 
@@ -16,7 +17,7 @@ class Output:
         self.stopwords = []
 
 
-    def printSearchResults(self, searchResults, stamp, editor=None):
+    def printSearchResults(self, searchResults, stamp, editor=None, logging=False):
         """
         This is the html that gets rendered in the search results div.
         Args:
@@ -24,26 +25,43 @@ class Output:
         """
         if stamp is not None:
             if stamp != self.latest:
+                if logging:
+                    log("PrintSearchResults: Aborting because stamp != latest")
                 return
+        if logging:
+            log("Entering printSearchResults")
+            log("Length (searchResults): " + str(len(searchResults)))
         html = ""
         allText = ""
         tags = []
         epochTime = int(time.time() * 1000)
+        timeDiffString = ""
         for counter, res in enumerate(searchResults):
-            #todo: move in class
+            try:
+                timeDiffString = self._getTimeDifferenceString(res[3], epochTime)
+            except:
+                if logging:
+                    log("Failed to determine creation date: " + str(res[3]))
+                timeDiffString = "Could not determine creation date"
+
             html += """<div class='cardWrapper' style='padding: 9px; margin-bottom: 10px; position: relative;'> 
                             <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s <div class='rankingLblAddInfo'>%s</div></div> 
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                                 <div class='editLbl' onclick='edit(%s)'>Edit</div> 
-                               <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
+                                <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
                                 <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
+                                <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div> 
                                 <div id='rem-%s' class='remLbl' onclick='$("#cW-%s").parents().first().remove(); updatePinned();'><span>&times;</span></div> 
                             </div>
                             <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
                             <div style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'><span class='tag-symbol'>&#10097;</span></div>     
                         </div>
-                        """ %(res[3], counter + 1, "&nbsp;&nbsp;&#128336; " + self._getTimeDifferenceString(res[3], epochTime) + "&nbsp; | &nbsp;<a href='#' style='color: white;' onclick='pycmd(\"addedSameDay %s\"); return false;'>Added Same Day</a>" % res[3],res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), self.buildTagString(res[1]), res[3])  
+                        """ %(res[3], counter + 1, 
+                        "&nbsp;&nbsp;&#128336; " + timeDiffString + "&nbsp; | &nbsp;<a href='#' style='color: white;' onclick='pycmd(\"addedSameDay %s\"); return false;'>Added Same Day</a>" % res[3],
+                        res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
+                        self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), 
+                        self.buildTagString(res[1]), res[3])  
             tags = self._addToTags(tags, res[1])
             if counter < 20:
                 allText += " " + res[0]
@@ -53,11 +71,15 @@ class Output:
             "Found" :  "<b>%s</b> notes" % str(len(searchResults))
         }
         infoStr = self.buildInfoTable(infoMap, tags, allText) 
-        cmd = "setSearchResults(`" + html.replace("`", "\\`") + "`, `" + infoStr.replace("`", "\\`") + "`);"
-        if editor is None:
+        cmd = "setSearchResults(`" + html.replace("`", "&#96;").replace("$", "&#36;") + "`, `" + infoStr.replace("`", "&#96;") + "`);"
+        if editor is None or editor.web is None:
             if self.editor is not None and self.editor.web is not None:
+                if logging:
+                    log("printing the result html...")
                 self.editor.web.eval(cmd)
         else:
+            if logging:
+                log("printing the result html...")
             editor.web.eval(cmd)
 
     def buildTagString(self, tags):
@@ -81,14 +103,14 @@ class Output:
         return html
 
     def _getTimeDifferenceString(self, nid, now):
-        diffInMinutes = (now - nid) / 1000 / 60
+        diffInMinutes = (now - int(nid)) / 1000 / 60
         diffInDays = diffInMinutes / 60 / 24
 
         if diffInDays < 1:
             if diffInMinutes < 2:
                 return "Created just now"
             if diffInMinutes < 60:
-                return "Created %s minutes ago" % diffInMinutes
+                return "Created %s minutes ago" % int(diffInMinutes)
             return "Created %s hours ago" % int(diffInMinutes / 60)
             
 

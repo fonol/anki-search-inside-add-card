@@ -39,7 +39,7 @@
 
 "modalForegroundColor": "black",
 "modalBackgroundColor": "white",
-
+"logging": false,
 "browserSearchInputForegroundColor": "black",
 "browserSearchInputBackgroundColor": "white",
 "browserSearchInputBorderColor": "#2496dc",
