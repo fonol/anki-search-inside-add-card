@@ -1,3 +1,8 @@
+
+body {
+    overflow-y: hidden;
+}
+
 .signal {
     border: 5px solid #2496dc;
     border-radius: 30px;
@@ -93,6 +98,15 @@
     right: 0px;
      opacity: 0;
 }
+.floatingBtnBar {
+    display: inline;
+    color: white;
+   
+}
+.floatingBtnBarItem {
+    display: inline; 
+    cursor: pointer;
+}
 
 .flexCol > select {
     width: 200px;
@@ -153,7 +167,7 @@
     display: none;
   user-select: none;
 }
-.remLbl {
+.remLbl, .floatLbl {
   
     border: 1px solid $noteBorderColor$;
     border-left: 0px solid  $noteBackgroundColor$; 
@@ -165,7 +179,7 @@
     flex: 1;
     font-size: 13px;
 }
-.srchLbl {
+.srchLbl  {
     background:  $noteBackgroundColor$; 
     color: $noteForegroundColor$;
     z-index:9999;
@@ -215,7 +229,7 @@
   user-select: none;
 }
 
-.editLbl:hover,.srchLbl:hover,.remLbl:hover {
+.editLbl:hover,.srchLbl:hover,.remLbl:hover,.floatLbl:hover {
     color: #2496dc;
 }
 
@@ -412,6 +426,7 @@
     max-height: 100vh;
     position: relative;
     font-size: 12px !important;
+    overflow-y: hidden;
 }
   
 
@@ -786,8 +801,37 @@ span.tag-symbol {
     text-align: center;
     width: 100%;
   }
+  .noteFloating {
+    position: absolute;
+    z-index: 9999999999;
+    border: 1px solid #2496dc;
+    text-align: center;
+  }
+  
+.noteFloatingContent {
+    padding: 10px;
+    min-width: 150px;
+    max-width: 280px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: $noteBackgroundColor$;
+    color: $noteForegroundColor$;
+    font-size: $noteFontSize$;
+    text-align: left;
+}
 
-
+  .noteFloatingHeader {
+    height: 15px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    cursor: move;
+    z-index: 9999999999;
+    background-color: #2496dc;
+    color: #fff;
+    user-select: none;
+    font-size: 11px !important;
+    text-align: right;
+  }
   /*MAC*/
 .dCheck {
     margin-right:   10px;

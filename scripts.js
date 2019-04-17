@@ -345,6 +345,11 @@ function searchCard(elem) {
     let html = $(elem).parent().next().html();
     pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
 }
+function searchCardFromFloated(id) {
+    let html = document.getElementById(id).innerHTML;
+    pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
+}
+
 
 function edit(nid) {
     pycmd('editN ' +  nid);
@@ -354,6 +359,9 @@ function updatePinned() {
     let pincmd = 'pinCrd';
     $('.pinned').each(function (index) {
         pincmd += " " + $(this).children().first().attr('id').substring(3);
+    });
+    $('.noteFloating').each(function (index) {
+        pincmd += " " + $(this).attr('id').substring(3);
     });
     pycmd(pincmd);
 }
@@ -418,6 +426,61 @@ function toggleTop(elem) {
     }
 }
 
+
+function addFloatingNote(nid) {
+    let content = document.getElementById(nid).innerHTML;
+    $('#cW-' +nid).parent().remove();
+    let btnBar =  `<div class='floatingBtnBar'>
+        <div class="floatingBtnBarItem" onclick='edit(${nid})'>Edit</div>&nbsp;&#65372;
+        <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>&nbsp;&#65372;
+        <div class="floatingBtnBarItem" id='rem-${nid}' onclick='document.getElementById("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div> 
+    </div>`
+
+
+    let floatingNote = `<div id="nF-${nid}" class='noteFloating'>
+            <div id="nFH-${nid}" class='noteFloatingHeader' onmousedown='dragElement(this.parentElement, "nFH-${nid}")'>&nbsp;${btnBar}</div>
+            <div id="nFC-${nid}" class='noteFloatingContent'>${content}</div>
+                </div>
+            `;  
+        document.getElementsByClassName("coll")[0].insertAdjacentHTML( 'beforeend', floatingNote );        dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
+        updatePinned();
+}
+
+
+
+function dragElement(elmnt, headerId) {
+    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    if (document.getElementById(headerId)) {
+      document.getElementById(headerId).onmousedown = dragMouseDown;
+    } else {
+      elmnt.onmousedown = dragMouseDown;
+    }
+  
+    function dragMouseDown(e) {
+      e = e || window.event;
+      e.preventDefault();
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      document.onmouseup = closeDragElement;
+      document.onmousemove = elementDrag;
+    }
+  
+    function elementDrag(e) {
+      e = e || window.event;
+      e.preventDefault();
+      pos1 = pos3 - e.clientX;
+      pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+  
+    function closeDragElement() {
+      document.onmouseup = null;
+      document.onmousemove = null;
+    }
+  }
 
 
 
