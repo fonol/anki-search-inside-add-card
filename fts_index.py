@@ -9,6 +9,7 @@ from aqt.utils import showInfo
 from .output import *
 import collections
 from .textutils import *
+from .logging import log
 
 class FTSIndex:
 
@@ -35,32 +36,41 @@ class FTSIndex:
             cleaned = self._cleanText(corpus)
 
             #if fts5 is compiled, use it
-            self.fts5 = self._checkIfFTS5Available()
+            self.type = self._checkIfFTS5Available(config["logging"])
             try:
                 os.remove(self.dir + "/search-data.db")
             except OSError:
                 pass
             conn = sqlite3.connect(self.dir + "/search-data.db")
             conn.execute("drop table if exists notes")
-            if self.fts5:
-                self.type = "SQLite FTS 5"
+            if self.type == "SQLite FTS5":
                 conn.execute("create virtual table notes using fts5(nid, text, tags, did, source)")
-            else:
-                self.type = "SQLite FTS 4"
+            elif self.type == "SQLite FTS4":
                 conn.execute("create virtual table notes using fts4(nid, text, tags, did, source)")
+            else:
+                conn.execute("create virtual table notes using fts3(nid, text, tags, did, source)")
+            
             conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?)', cleaned)
             conn.execute("INSERT INTO notes(notes) VALUES('optimize')")
             conn.commit()
             conn.close()
 
 
-    def _checkIfFTS5Available(self):
+    def _checkIfFTS5Available(self, logging):
         con = sqlite3.connect(':memory:')
         cur = con.cursor()
         cur.execute('pragma compile_options;')
-        available_pragmas = cur.fetchall()
+        available_pragmas = [s[0].lower() for s in cur.fetchall()]
         con.close()
-        return ('ENABLE_FTS5',) in available_pragmas
+        if logging:
+            log("\nSQlite compile options: " + str(available_pragmas))
+        if 'enable_fts5' in available_pragmas:
+            return "SQLite FTS5"
+        if 'enable_fts4' in available_pragmas:
+            return "SQLite FTS4"
+        if 'enable_fts3' in available_pragmas:
+            return "SQLite FTS3"
+        return "SQLite - No FTS detected (trying to use FTS3)"
    
 
     def _cleanText(self, corpus):
@@ -87,62 +97,87 @@ class FTSIndex:
         text - string to search, typically fields content
         decks - list of deck ids, if -1 is contained, all decks are searched
         """
-        worker = Worker(self.searchProc, text, decks) # Any other args, kwargs are passed to the run function
+        worker = Worker(self.searchProc, text, decks) 
         worker.stamp = self.output.getMiliSecStamp()
         self.output.latest = worker.stamp
         worker.signals.result.connect(self.printOutput)
         
-        # Execute
         self.threadPool.start(worker)
 
 
     def searchProc(self, text, decks):
-
+        if self.logging:
+            log("\nFTS index - Received query: " + text)
+            log("Decks (arg): " + str(decks))
+            log("Self.pinned: " + str(self.pinned))
+            log("Self.limit: " +str(self.limit))
         text = expandBySynonyms(text, self.synonyms)
 
         if len(text) < 2:
+            if self.logging:
+                log("Returning - Text was < 2 chars: " + text)
             return { "results" : [] }
 
         query = " OR ".join(["tags:" + s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ])
-        if self.fts5:
+        if self.type == "SQLite FTS5":
             query += " OR " + " OR ".join(["text:" + s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ]) 
         else:
             query += " OR " + " OR ".join([s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ]) 
         if query == " OR ":
+            if self.logging:
+                log("Returning. Query was: " + query)
             return { "results" : [] }
 
         c = 1
         allDecks = "-1" in decks
         rList = list()
         conn = sqlite3.connect(self.dir + "/search-data.db")
-        if self.fts5:
+        if self.type == "SQLite FTS5":
             dbStr = "select nid, text, tags, did, source from notes where notes match '%s' order by bm25(notes)" %(query)
-        else:
+        elif self.type == "SQLite FTS4":
             dbStr = "select nid, text, tags, did, source, matchinfo(notes, 'pcnalx') from notes where text match '%s'" %(query)
+        else:
+            dbStr = "select nid, text, tags, did, source, matchinfo(notes) from notes where text match '%s'" %(query)
 
-
-        for r in conn.execute(dbStr):
+        try:
+            res = conn.execute(dbStr).fetchall()
+        except Exception as e:
+            if self.logging:
+                log("Executing db query threw exception: " + e.message)
+            res = []
+        if self.logging: 
+            log("dbStr was: " + dbStr)
+            log("Result length of db query: " + str(len(res)))
+        for r in res:
             if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
                 if self.highlighting:
-                    if self.fts5:
+                    if self.type == "SQLite FTS5":
                         rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0]))
-                    else:
+                    elif self.type == "SQLite FTS4":
                         rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0], self.bm25(r[5], 0, 1, 0, 0, 0)))
-                else:
-                    if self.fts5:
-                        rList.append((r[4], r[2], r[3], r[0]))
                     else:
+                        rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0], self.simpleRank(r[5])))
+                else:
+                    if self.type == "SQLite FTS5":
+                        rList.append((r[4], r[2], r[3], r[0]))
+                    elif self.type == "SQLite FTS4":
                         rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0)))
+                    else:
+                        rList.append((r[4], r[2], r[3], r[0], self.simpleRank(r[5])))
+                        
                 c += 1
         conn.close()
         #if fts5 is not used, results are not sorted by score
-        if not self.fts5:
+        if not self.type == "SQLite FTS5":
             rList = sorted(rList, key=lambda x: x[4])
+        if self.logging:
+            log("Query was: " + query)
+            log("Result length (after removing pinned and unselected decks): " + str(len(rList)))
         return { "results" : rList[:min(self.limit, len(rList))] }
 
     def printOutput(self, result, stamp):
         if result is not None:
-            self.output.printSearchResults(result["results"], stamp)
+            self.output.printSearchResults(result["results"], stamp, logging = self.logging)
     
     def _markHighlights(self, text, cleanedQuery):
         for token in set(cleanedQuery.split(" ")):
@@ -199,6 +234,26 @@ class FTSIndex:
 
     def clean(self, text):
         return clean(text, self.stopWords)
+
+
+    
+    def simpleRank(self, rawMatchInfo):
+        """
+        Based on https://github.com/saaj/sqlite-fts-python/blob/master/sqlitefts/ranking.py
+        """
+        match_info = self._parseMatchInfo(rawMatchInfo)
+        score = 0.0
+        p, c = match_info[:2]
+        for phrase_num in range(p):
+            phrase_info_idx = 2 + (phrase_num * c * 3)
+            for col_num in range(c):
+                col_idx = phrase_info_idx + (col_num * 3)
+                x1, x2 = match_info[col_idx:col_idx + 2]
+                if x1 > 0:
+                    score += float(x1) / x2
+        return -score
+
+    
 
     def bm25(self, rawMatchInfo, *args):
         match_info = self._parseMatchInfo(rawMatchInfo)
