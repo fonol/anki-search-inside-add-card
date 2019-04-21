@@ -1,17 +1,20 @@
 import re
 
-cleanWordReg = re.compile(r"[^a-zA-ZÀ-ÖØ-öø-ÿ]*(\S+?)[^a-zA-ZÀ-ÖØ-öø-ÿ]*")    
-ignoreReg = re.compile("^[^a-zA-ZÀ-ÖØ-öø-ÿǒ]+$")    
+cleanWordReg = re.compile(r"^[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ]*(\S+?)[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ]*$")    
+ignoreReg = re.compile("^[^a-zA-ZÀ-ÖØ-öø-ÿǒāōūēīȳǒ]+$")
+nonWordReg = re.compile("[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ]")    
 tagReg = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
 spaceReg = re.compile('\s{2,}')
-
+normalChar = re.compile("[a-zöäü]", flags = re.I ) 
 
 def clean(text, stopWords):
+   
     filtered = ""
     text = text.replace("\r\n", " ").replace("\n", " ")
     text = text.replace("\t", " ")
     text = text.replace("\u001f", " ")
     text = tagReg.sub(" ", text)
+    text = nonWordReg.sub(" ", text)
     text = spaceReg.sub(" ", text)
     stopWords = [s.lower() for s in stopWords]
     for token in text.split(" "):
@@ -30,7 +33,6 @@ def trimIfLongerThan(text, n):
     if len(text) <= n:
         return text
     return text[:n] + "..."
-
 
 def replaceVowelsWithAccentedRegex(text):
     text = text.replace("a", "[aàáâãåāă]")
@@ -62,7 +64,24 @@ def replaceAccentsWithVowels(text):
     text = re.sub(r"[ÌÍÎÏĪǏ]", "I", text)
     text = re.sub(r"[ÝỲŸȲ]", "Y", text)
     return text
- 
+
+def asciiFoldChar(char):
+    if normalChar.match(char):
+        return char
+    if char.lower() in "àáâãåāă":
+        return 'a'
+    if char.lower() in "ùúûūǔ":
+        return 'u'
+    if char.lower() in "òóôōǒ":
+        return 'o'
+    if char.lower() in "èéêëēěę":
+        return 'e'
+    if char.lower() in "ìíîïīǐ":
+        return 'i'
+    if char.lower() in "ýỳÿȳ":
+        return 'y'
+    return char
+
 def deleteChars(text, chars):
     for c in chars:
         text = text.replace(c, "")
@@ -88,7 +107,7 @@ def expandBySynonyms(text, synonyms):
     for sList in synonyms:
         for syn in sList:
             if " " + syn.lower() + " " in textLower or syn.lower() == textLower:
-                found += sList
+                found += [s for s in sList if s != syn]
                 break
             
     if found:
