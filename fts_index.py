@@ -3,6 +3,7 @@ import os
 import sys
 import struct
 import re
+import time
 import math
 from aqt import *
 from aqt.utils import showInfo
@@ -21,6 +22,7 @@ class FTSIndex:
         self.searchWhileTyping = True
         self.searchOnSelection = True
         self.dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/db.py", "")
+        self.wordToken = re.compile("[a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ]", flags = re.I)
         self.stopWords = []
         self.threadPool = QThreadPool()
         self.output = None
@@ -106,13 +108,25 @@ class FTSIndex:
 
 
     def searchProc(self, text, decks):
+        resDict = {}
+        start = time.time()
+        text = self.clean(text)
+        resDict["time-stopwords"] = int((time.time() - start) * 1000)
+     
         if self.logging:
             log("\nFTS index - Received query: " + text)
             log("Decks (arg): " + str(decks))
             log("Self.pinned: " + str(self.pinned))
             log("Self.limit: " +str(self.limit))
+        self.lastSearch = (text, decks, "default")
+        
+        if len(text) == 0:
+            self.output.editor.web.eval("setSearchResults('', 'Query was empty after cleaning')")
+            return
+        start = time.time()
         text = expandBySynonyms(text, self.synonyms)
-
+        resDict["time-synonyms"] = int((time.time() - start) * 1000)
+        resDict["query"] = text
         if len(text) < 2:
             if self.logging:
                 log("Returning - Text was < 2 chars: " + text)
@@ -128,7 +142,7 @@ class FTSIndex:
                 log("Returning. Query was: " + query)
             return { "results" : [] }
 
-        c = 1
+        c = 0
         allDecks = "-1" in decks
         rList = list()
         conn = sqlite3.connect(self.dir + "/search-data.db")
@@ -140,7 +154,9 @@ class FTSIndex:
             dbStr = "select nid, text, tags, did, source, matchinfo(notes) from notes where text match '%s'" %(query)
 
         try:
+            start = time.time()
             res = conn.execute(dbStr).fetchall()
+            resDict["time-query"] = int((time.time() - start) * 1000)
         except Exception as e:
             if self.logging:
                 log("Executing db query threw exception: " + e.message)
@@ -148,53 +164,124 @@ class FTSIndex:
         if self.logging: 
             log("dbStr was: " + dbStr)
             log("Result length of db query: " + str(len(res)))
-        for r in res:
-            if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                if self.highlighting:
-                    if self.type == "SQLite FTS5":
-                        rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0]))
-                    elif self.type == "SQLite FTS4":
-                        rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0], self.bm25(r[5], 0, 1, 0, 0, 0)))
-                    else:
-                        rList.append((self._markHighlights(r[4], text).replace('`', '\\`'), r[2], r[3], r[0], self.simpleRank(r[5])))
-                else:
-                    if self.type == "SQLite FTS5":
+
+
+        resDict["highlighting"] = self.highlighting
+        if self.highlighting:
+            start = time.time()
+            querySet =  set(replaceAccentsWithVowels(s).lower() for s in text.split(" "))
+            resDict["time-highlighting"] = int((time.time() - start) * 1000)
+        
+           
+
+        if self.highlighting and self.type == "SQLite FTS5":
+            start = time.time()
+            for r in res:
+                if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
+                    rList.append((self._markHighlights(r[4], querySet).replace('`', '\\`'), r[2], r[3], r[0]))
+                    c += 1
+                    if c >= self.limit:
+                        break
+            resDict["time-highlighting"] += int((time.time() - start) * 1000)
+
+        else:
+            
+            if self.type == "SQLite FTS5":
+                for r in res:
+                    if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
                         rList.append((r[4], r[2], r[3], r[0]))
-                    elif self.type == "SQLite FTS4":
+                        c += 1
+                        if c >= self.limit:
+                            break
+
+            elif self.type == "SQLite FTS4":
+                start = time.time()
+                for r in res:
+                    if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
                         rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0)))
-                    else:
+                resDict["time-ranking"] = int((time.time() - start) * 1000)
+                
+            else:
+                start = time.time()
+                for r in res:
+                    if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
                         rList.append((r[4], r[2], r[3], r[0], self.simpleRank(r[5])))
-                        
-                c += 1
+                resDict["time-ranking"] = int((time.time() - start) * 1000)
+      
         conn.close()
+
         #if fts5 is not used, results are not sorted by score
         if not self.type == "SQLite FTS5":
-            rList = sorted(rList, key=lambda x: x[4])
+            listSorted = sorted(rList, key=lambda x: x[4])
+            if self.highlighting:
+                start = time.time()
+                rList = []
+                for r in listSorted[:min(self.limit, len(listSorted))]:
+                    rList.append((self._markHighlights(r[0], querySet).replace('`', '\\`'), r[1], r[2], r[3], r[4]))
+                resDict["time-highlighting"] += int((time.time() - start) * 1000)
+                
+            else:
+                rList = listSorted
         if self.logging:
             log("Query was: " + query)
             log("Result length (after removing pinned and unselected decks): " + str(len(rList)))
-        return { "results" : rList[:min(self.limit, len(rList))] }
+        resDict["results"] = rList[:min(self.limit, len(rList))]
+        self.lastResDict = resDict
+        return resDict
 
     def printOutput(self, result, stamp):
         if result is not None:
-            self.output.printSearchResults(result["results"], stamp, logging = self.logging)
+            self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True)
     
-    def _markHighlights(self, text, cleanedQuery):
-        for token in set(cleanedQuery.split(" ")):
-            if token == "mark" or token == "":
-                continue
-            token = token.strip()
-            text = re.sub('([^a-zA-ZÀ-ÖØ-öø-ÿ]|^)(' +  replaceVowelsWithAccentedRegex(re.escape(token)) + ')([^a-zA-ZÀ-ÖØ-öø-ÿ]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
+    def _markHighlights(self, text, querySet):
+     
+        currentWord = ""
+        currentWordNormalized = ""
+        textMarked = ""
+        lastIsMarked = False
+        for char in text:
+            if self.wordToken.match(char):
+                currentWordNormalized += asciiFoldChar(char).lower()
+                currentWord += char
+            else:
+                #check if word is empty
+                if currentWord == "":
+                    textMarked += char
+                else:
+                    if currentWordNormalized in querySet:
+                        if lastIsMarked:
+                            textMarked = textMarked[0: textMarked.rfind("</mark>")] + textMarked[textMarked.rfind("</mark>") + 7 :]
+                            textMarked += currentWord + "</mark>" + char
+                        else:
+                            textMarked += "<mark>" + currentWord + "</mark>" + char
+                        lastIsMarked = True
+                    else:
+                        textMarked += currentWord + char
+                        lastIsMarked = False
+                    currentWord = ""
+                    currentWordNormalized = ""
+        if currentWord != "":
+            if currentWordNormalized in querySet and currentWord != "mark":
+                textMarked += "<mark>" + currentWord + "</mark>"
+            else:
+                textMarked += currentWord
+        
+      
+
+       
+        return textMarked
+            
+        
         #todo: find out why this doesnt work here
         #combine adjacent highlights (very basic, won't work in all cases)
         # reg = re.compile('<mark>[^<>]+</mark> ?<mark>[^<>]+</mark>')
         # found = reg.findall(text)
-        # while len(found) > 0:
+        # whsile len(found) > 0:
         #     for f in found:
         #         text = text.replace(f, "<mark>%s</mark>" %(f.replace("<mark>", "").replace("</mark>", "")))
         #     found = reg.findall(text)
        
-        return text
+     #   return text
 
 
 

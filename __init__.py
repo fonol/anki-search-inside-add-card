@@ -11,6 +11,7 @@ from anki.find import Finder
 import aqt.editor
 from aqt.editor import Editor
 from aqt.tagedit import TagEdit
+from aqt.editcurrent import EditCurrent
 import aqt.stats
 from aqt.main import AnkiQt
 from aqt.webview import AnkiWebPage
@@ -45,7 +46,7 @@ from .web import *
 from .fts_index import FTSIndex
 from .whoosh_index import SearchIndex
 from .output import Output
-from .textutils import trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms
+from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms
 from .editor import openEditor
 from .tag_find import findBySameTag
 from .stats import calculateStats, findNotesWithLowestPerformance
@@ -85,20 +86,20 @@ def initAddon():
                 if ((event && event.repeat) || isFrozen)
                     return;
                 let html = "";
-                $searchInfo.html("<span style='float: right; margin-right: 20px;'>Searching</span>");
+                document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Typing</i></td></tr></table>";
                 $fields.each(function(index, elem) {
                     html += $(elem).html() + "\u001f";
                 });
                 pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
             }
             function sendSearchFieldContent() {
-                $searchInfo.html("<span style='float: right; margin-right: 20px;'>Searching</span>");
+                document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Browser Search</i></td></tr></table>";
                 html = $('#searchMask').val() + "\u001f";
                 pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
             }
 
             function searchFor(text) {
-                $searchInfo.html("<span style='float: right; margin-right: 20px;'>Searching</span>");
+                document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Keyword</i></td></tr></table>";
                 text += "\u001f";
                 pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + text);
             }
@@ -111,7 +112,7 @@ def initAddon():
                 return;
             }
             function sendSearchFieldContent() {
-                $searchInfo.html("<span style='float: right; margin-right: 20px;'>Searching</span>");
+                document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr></table>";
                 html = $('#searchMask').val() + "\u001f";
                 pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
             }
@@ -134,6 +135,10 @@ def myOnBridgeCmd(self, cmd):
     Process the various commands coming from the ui - 
     this includes users clicks on option checkboxes, on rendered results, etc.
     """
+    if searchIndex is not None and searchIndex.output.editor is None:
+        searchIndex.output.editor = self
+
+
     if (not searchingDisabled and cmd.startswith("fldChgd ")):
         rerenderInfo(self, cmd[8:])
     elif (cmd.startswith("srchDB ")):
@@ -153,7 +158,7 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("renderTags")):
         searchIndex.output.printTagHierarchy(cmd[11:].split(" "))
     elif (cmd.startswith("randomNotes ") and searchIndex is not None):
-        res = getRandomNotes(cmd[11:])
+        res = getRandomNotes([s for s in cmd[11:].split(" ") if s != ""])
         searchIndex.output.printSearchResults(res["result"], res["stamp"])
     elif cmd == "toggleTagSelect":
         if searchIndex is not None:
@@ -173,6 +178,29 @@ def myOnBridgeCmd(self, cmd):
     elif cmd.startswith("addedSameDay "):
         if searchIndex is not None:
             getCreatedSameDay(self, int(cmd[13:]))
+    
+    elif cmd == "lastTiming":
+        if searchIndex is not None and searchIndex.lastResDict is not None:
+            html = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % searchIndex.lastResDict["query"]
+            html += "<h4>Execution time:</h4><table style='width: 100%'>"
+            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", searchIndex.lastResDict["time-stopwords"] if searchIndex.lastResDict["time-stopwords"] > 0 else "< 1") 
+            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", searchIndex.lastResDict["time-synonyms"] if searchIndex.lastResDict["time-synonyms"] > 0 else "< 1") 
+            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Executing Query", searchIndex.lastResDict["time-query"] if searchIndex.lastResDict["time-query"] > 0 else "< 1")
+            if searchIndex.type == "Whoosh":
+                if searchIndex.lastResDict["highlighting"]:
+                    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
+                    
+            
+            elif searchIndex.type == "SQLite FTS5":
+                if searchIndex.lastResDict["highlighting"]:
+                    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
+            else:
+                html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Ranking", searchIndex.lastResDict["time-ranking"] if searchIndex.lastResDict["time-ranking"] > 0 else "< 1")
+                if searchIndex.lastResDict["highlighting"]:
+                    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
+
+            html += "</table>"
+            searchIndex.output.showInModal(html)
 
     #
     #   Synonyms
@@ -211,12 +239,14 @@ def myOnBridgeCmd(self, cmd):
         if searchIndex is not None:
             stamp = searchIndex.output.getMiliSecStamp()
             searchIndex.output.latest = stamp
+            searchIndex.lastSearch = (None, cmd[11:].split(" "), "lowestPerf")
             res = findNotesWithLowestPerformance(cmd[11:].split(" "), searchIndex.limit)
             searchIndex.output.printSearchResults(res, stamp)
             searchIndex.output.hideModal()
     elif cmd.startswith("lowestRet "):
         if searchIndex is not None:
             stamp = searchIndex.output.getMiliSecStamp()
+            searchIndex.lastSearch = (None, cmd[10:].split(" "), "lowestRet")
             searchIndex.output.latest = stamp
             res = findNotesWithLowestPerformance(cmd[10:].split(" "), searchIndex.limit, retOnly = True)
             searchIndex.output.printSearchResults(res, stamp)
@@ -247,6 +277,16 @@ def myOnBridgeCmd(self, cmd):
             if searchIndex.logging:
                 log("Updating selected decks: " + str( [d for d in cmd[14:].split(" ") if d != ""]))
             searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
+            #repeat last search if default 
+            if searchIndex.lastSearch is not None:
+                if searchIndex.lastSearch[2] == "default":
+                    defaultSearchWithDecks(self, searchIndex.lastSearch[0], searchIndex.selectedDecks)
+                elif searchIndex.lastSearch[2] == "random":
+                    res = getRandomNotes(searchIndex.selectedDecks)
+                    searchIndex.output.printSearchResults(res["result"], res["stamp"])
+                elif searchIndex.lastSearch[2] == "lastCreated":
+                    getLastCreatedNotes(self)
+
     elif cmd == "toggleTop on":
         if searchIndex is not None:
             searchIndex.topToggled = True
@@ -270,7 +310,7 @@ def onLoadNote(editor):
     global corpus, output, edit
    
     #only display in add cards dialog
-    if (editor.addMode):
+    if editor.addMode or (config["useInEdit"] and isinstance(editor.parentWindow, EditCurrent)):
         if searchIndex is not None and searchIndex.logging:
             log("Trying to insert html in editor")
         editor.web.eval(""" 
@@ -278,7 +318,7 @@ def onLoadNote(editor):
         //check if ui has been rendered already
         if (!$('#outerWr').length) {
     
-        $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; width: 50%;  flex-grow: 1 '></div>`);
+        $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; width: 50%; flex-grow: 1; '></div>`);
         $(`
         <div class='coll secondCol' style='flex-grow: 1; width: 50%; height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; padding-bottom: 4px; margin-left: 30px; position: relative;' id='infoBox'>
 
@@ -362,7 +402,7 @@ def onLoadNote(editor):
                     </div>
                     </div>
                 </div>`).insertAfter('#fields');
-        $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; overflow-y: hidden; height: 100%;"></div>');    
+        $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; overflow-x: hidden; height: 100%;"></div>');    
         
         }
         $('.field').on('keypress', fieldKeypress);
@@ -393,6 +433,8 @@ def onLoadNote(editor):
 
         if searchIndex is None or not searchIndex.tagSelect:
             fillDeckSelect(editor)
+            if searchIndex is None or searchIndex.lastSearch is None:
+                printStartingInfo(editor)
         if corpus is None:
             if searchIndex is not None and searchIndex.logging:
                 log("loading notes from anki db...")
@@ -418,14 +460,15 @@ def setPinned(cmd):
     if searchIndex.logging:
         log("Updated pinned: " + str(searchIndex.pinned))
 
-def getRandomNotes(deckStr):
+def getRandomNotes(decks):
     if searchIndex is None:
         return
     stamp = searchIndex.output.getMiliSecStamp()
     searchIndex.output.latest = stamp
+    searchIndex.lastSearch = (None, decks, "random")
 
-    if not "-1" in deckStr:
-        deckQ =  "(%s)" % ",".join([s for s in deckStr.split(" ") if s != ""])
+    if not "-1" in decks:
+        deckQ =  "(%s)" % ",".join(decks)
     else:
         deckQ = ""
 
@@ -444,7 +487,7 @@ def getLastCreatedNotes(editor):
     stamp = searchIndex.output.getMiliSecStamp()
     searchIndex.output.latest = stamp
     decks = searchIndex.selectedDecks
-
+    searchIndex.lastSearch = (None, decks, "lastCreated")
     if not "-1" in decks and len(decks) > 0:
         deckQ =  "(%s)" % ",".join(decks)
     else:
@@ -469,6 +512,7 @@ def getLastCreatedNotes(editor):
 def getCreatedSameDay(editor, nid):
     stamp = searchIndex.output.getMiliSecStamp()
     searchIndex.output.latest = stamp
+    searchIndex.lastSearch = (nid, None, "createdSameDay")
     try:
         nidMinusOneDay = nid - (24 * 60 * 60 * 1000)
         nidPlusOneDay = nid + (24 * 60 * 60 * 1000)
@@ -501,7 +545,7 @@ def getIndexInfo():
     if searchIndex is None:
         return ""
     html = """<table style='width: 100%%'>
-                <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
+               <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
                <tr><td>Initialization:</td><td>  <b>%s s</b></td></tr>
                <tr><td>Notes in Index:</td><td>  <b>%s</b></td></tr>
                <tr><td>Stopwords:</td><td>  <b>%s</b></td></tr>
@@ -706,22 +750,24 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
             if len(content) == 0:
                 editor.web.eval("setSearchResults('', 'No results found for empty string')")
                 return
+            searchIndex.lastSearch = (content, decks, "db")
             searchRes = searchIndex.searchDB(content, decks)  
 
         elif searchByTags:
             stamp = searchIndex.output.getMiliSecStamp()
             searchIndex.output.latest = stamp
+            searchIndex.lastSearch = (content, ["-1"], "tags")
             searchRes = findBySameTag(content, searchIndex.limit, [], searchIndex.pinned)
 
         else:
-            content = searchIndex.clean(content[content.index('~ ') + 2:])
-            if len(content) == 0:
-                editor.web.eval("setSearchResults('', 'No results found for empty string')")
+            if len(content[content.index('~ ') + 2:]) > 2000:
+                editor.web.eval("setSearchResults('', 'Query was <b>too long</b>')")
                 return
+            content = content[content.index('~ ') + 2:]
             searchRes = searchIndex.search(content, decks)
       
       
-        if editor is not None and editor.web is not None:
+        if (searchDB or searchByTags) and editor is not None and editor.web is not None:
             if searchRes is not None:
                 if len(searchRes["result"]) > 0:
                     searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor, searchIndex.logging)
@@ -732,9 +778,25 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
 
        
 
-
-
-
+def defaultSearchWithDecks(editor, textRaw, decks):
+    """
+    Uses the searchIndex to clean the input and find notes.
+    
+    Args:
+        decks: list of deck ids (string), if "-1" is contained, all decks are searched
+    """
+    if len(textRaw) > 2000:
+        if editor is not None:
+            editor.web.eval("setSearchResults('', 'Query was <b>too long</b>')")
+        return
+    cleaned = searchIndex.clean(textRaw)
+    if len(cleaned) == 0:
+        if editor is not None:
+            editor.web.eval("setSearchResults('', 'Query was empty after cleaning')")
+        return
+    searchIndex.lastSearch = (cleaned, decks, "default")
+    searchRes = searchIndex.search(cleaned, decks)
+    
 
 
 
@@ -806,9 +868,9 @@ def _buildIndex():
             usersStopwords = config['stopwords']    
         except KeyError:
             usersStopwords = []
-        myAnalyzer = StandardAnalyzer(stoplist=usersStopwords) | CharsetFilter(accent_map)
+        myAnalyzer = StandardAnalyzer() | CharsetFilter(accent_map)
         #StandardAnalyzer(stoplist=usersStopwords)
-        schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True))
+        schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True), source=TEXT(stored=True))
         
         #index needs a folder to operate in
         indexDir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/__init__.py", "") + "/index"
@@ -819,7 +881,7 @@ def _buildIndex():
         writer = index.writer(limitmb=256)
         #todo: check if there is some kind of batch insert
         for note in corpus:
-            writer.add_document(content=note[1], tags=note[2], did=str(note[3]), nid=str(note[0]))
+            writer.add_document(content=clean(note[1], usersStopwords), tags=note[2], did=str(note[3]), nid=str(note[0]), source=note[1])
         writer.commit()
         #todo: allow user to toggle between and / or queries
         og = qparser.OrGroup.factory(0.9)
@@ -838,6 +900,8 @@ def _buildIndex():
     searchIndex.output = Output()
     searchIndex.output.stopwords = searchIndex.stopWords
     searchIndex.selectedDecks = []
+    searchIndex.lastSearch = None
+    searchIndex.lastResDict = None
     searchIndex.tagSearch = True
     searchIndex.tagSelect = False
     searchIndex.topToggled = True
@@ -863,6 +927,7 @@ def _buildIndex():
         searchIndex.output.editor = editor
     editor = editor if editor is not None else edit    
     showSearchResultArea(editor, initializationTime=initializationTime)
+    printStartingInfo(editor)
 
 def addTag(tag):
     """
@@ -877,27 +942,19 @@ def addTag(tag):
     searchIndex.output.editor.tags.setText(tagsExisting + " " + tag)
     searchIndex.output.editor.saveTags()
 
-def extractNgrams(noteText, n):
-    """
-    Not used atm, see SuggestionIndex
-    """
-    bigrams = list()
-    for field in noteText.split("\u001f"):
-        bigrams += generate_ngrams(cleanQueryString(field), n)
-    return bigrams
+def printStartingInfo(editor):
+    if editor is None:
+        return
+    html = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  searchIndex.type if searchIndex is not None else "?"
+    if searchIndex is not None:
+        html += "Initalized in <b>%s</b> s." % searchIndex.initializationTime
+        html += "<br/>Index contains <b>%s</b> notes." % searchIndex.getNumberOfNotes()
+        html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
+        html += "<br/>Logging is turned <b>%s</b>. %s" % ("on" if searchIndex.logging else "off", "You should probably disable it if you don't have any problems." if searchIndex.logging else "")
 
-def generateMgrams(s, n):
-    """
-    Not used atm, see SuggestionIndex
-    """
-    tokens = [token for token in s.split(" ") if token != ""]
-    ngrams = zip(*[tokens[i:] for i in range(n)])
-    return ["AAAA".join(ngram) for ngram in ngrams]
- 
-
-
-
-
+    if searchIndex is None or searchIndex.output is None:
+        html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
+    editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
 
 
 def getCorpus():  

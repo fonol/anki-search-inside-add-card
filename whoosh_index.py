@@ -10,7 +10,9 @@ import aqt.stats
 from aqt.main import AnkiQt
 import sqlite3
 import re
+import time
 from .textutils import *
+from .fts_index import Worker, WorkerSignals
 
 
 class SearchIndex:
@@ -25,8 +27,10 @@ class SearchIndex:
         self.dQParser = dQParser
         #contains nids of items that are currently pinned, I.e. should be excluded from results
         self.pinned = []
+        self.threadPool = QThreadPool()
         self.highlighting = True
         self.searchWhileTyping = True
+        self.wordToken = re.compile("[a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ]", flags = re.I)
         self.searchOnSelection = True
         self.limit = 10
         self.TAG_RE = re.compile(r'<[^>]+>')
@@ -41,10 +45,35 @@ class SearchIndex:
         text - string to search, typically fields content
         decks - list of deck ids, if -1 is contained, all decks are searched
         """
-        stamp = self.output.getMiliSecStamp()
-        self.output.latest = stamp
-        text = expandBySynonyms(text, self.synonyms)
+        worker = Worker(self.searchProc, text, decks) 
+        worker.stamp = self.output.getMiliSecStamp()
+        self.output.latest = worker.stamp
+        worker.signals.result.connect(self.printOutput)
+        
+        self.threadPool.start(worker)
 
+
+
+
+        #stamp = self.output.getMiliSecStamp()
+        #self.output.latest = stamp
+        
+    def searchProc(self, text, decks):    
+        resDict = {}
+        start = time.time()
+        text = self.clean(text)
+        resDict["time-stopwords"] = int((time.time() - start) * 1000)
+        self.lastSearch = (text, decks, "default")
+        if len(text) == 0:
+            self.output.editor.web.eval("setSearchResults('', 'Query was empty after cleaning')")
+            return
+        start = time.time()
+        text = expandBySynonyms(text, self.synonyms)
+        resDict["time-synonyms"] = int((time.time() - start) * 1000)
+        resDict["query"] = text
+
+
+        start = time.time()
         deckQ = ""
         for d in decks:
             deckQ += d + " "
@@ -58,15 +87,25 @@ class SearchIndex:
                 res = searcher.search(self.qParser.parse(text), filter=dq, limit=self.limit)
             res.fragmenter.surround = 0
             rList = []
-            for r in res:
-                #pinned items should not appear in the results
-                if not r["nid"] in self.pinned:
-                    if self.highlighting:
-                        rList.append((self._markHighlights(r["content"], r.highlights("content", top=10)), r["tags"], r["did"], r["nid"]))
-                    else:
-                        rList.append((r["content"].replace('`', '\\`'), r["tags"], r["did"], r["nid"]))
+            resDict["time-query"] = int((time.time() - start) * 1000)
+            resDict["highlighting"] = self.highlighting
+            if self.highlighting:
+                start = time.time()
+                querySet = set(replaceAccentsWithVowels(s).lower() for s in text.split(" "))
+                for r in res:
+                    if not r["nid"] in self.pinned:
+                        rList.append((self._markHighlights(r["source"], querySet), r["tags"], r["did"], r["nid"]))
+                resDict["time-highlighting"] = int((time.time() - start) * 1000)
+            else:
+                for r in res:
+                    if not r["nid"] in self.pinned:
+                        rList.append((r["source"].replace('`', '\\`'), r["tags"], r["did"], r["nid"]))
+
+                
+
+            self.lastResDict = resDict
             
-            return { "result" : rList, "stamp" : stamp }
+            return { "results" : rList }
 
     def searchDB(self, text, decks):
         """
@@ -98,46 +137,61 @@ class SearchIndex:
             return { "result" : rList[:self.limit], "stamp" : stamp }
         return { "result" : [], "stamp" : stamp }
 
-    def _markHighlights(self, text, highlights):
-        """
-        Whoosh highlighting seems to interfere with html tags, 
-        so we use our own here.
-        
-        Args: 
-        highlights - whoosh highlights string ("highlight1 ... highlight2")
-        text - note text
 
-        Returns:
-        text where highlights are enclosed in <mark> tags
-        """
-        highlights = self.clean(highlights)
-        if len(highlights) == 0:
-            return text
-        for token in set(highlights.split("...")):
-            if token == "mark" or token == "":
-                continue
-            token = token.strip()
-            text = re.sub('([^a-zA-ZÀ-ÖØ-öø-ÿ]|^)(' + re.escape(token) + ')([^a-zA-ZÀ-ÖØ-öø-ÿ]|$)', r"\1<mark>\2</mark>\3", text,  flags=re.I)
-        
-        #todo: this sometimes causes problems, find out why
-        
-        #combine adjacent highlights (very basic, won't work in all cases)
-        # reg = re.compile('<mark>[^<>]+</mark>( |-)?<mark>[^<>]+</mark>')
-        # found = reg.findall(text)
-        # while len(found) > 0:
-        #     for f in found:
-        #         text = text.replace(f, "<mark>%s</mark>" %(f.replace("<mark>", "").replace("</mark>", "")))
-        #     found = reg.findall(text)
-        return text
+    def _markHighlights(self, text, querySet):
+     
+        currentWord = ""
+        currentWordNormalized = ""
+        textMarked = ""
+        lastIsMarked = False
+        for char in text:
+            if self.wordToken.match(char):
+                currentWordNormalized += asciiFoldChar(char).lower()
+                currentWord += char
+            else:
+                #check if word is empty
+                if currentWord == "":
+                    textMarked += char
+                else:
+                    if currentWordNormalized in querySet:
+                        if lastIsMarked:
+                            textMarked = textMarked[0: textMarked.rfind("</mark>")] + textMarked[textMarked.rfind("</mark>") + 7 :]
+                            textMarked += currentWord + "</mark>" + char
+                        else:
+                            textMarked += "<mark>" + currentWord + "</mark>" + char
+                        lastIsMarked = True
+                        
+                    else:
+                        textMarked += currentWord + char
+                        lastIsMarked = False
 
-    def clean(self, text):
+                    currentWord = ""
+                    currentWordNormalized = ""
+        if currentWord != "":
+            if currentWordNormalized in querySet and currentWord != "mark":
+                textMarked += "<mark>" + currentWord + "</mark>"
+            else:
+                textMarked += currentWord
+        return textMarked
+
+
+   
+
+    def cleanHighlights(self, text):
         """
-        Clean linebreaks and some html entitíes from the query string.
-        TODO: could be more sensitive
+        Clean linebreaks and some html entitíes from the highlights string.
         """
         text = text.replace("\n", " ").replace("\r\n", " ").strip()
         text = self.removeTags(text)
         return text.strip()
+
+    def clean(self, text):
+        return clean(text, self.stopWords)
+
+
+    def printOutput(self, result, stamp):
+        if result is not None:
+            self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True)
 
     def removeTags(self, text):
         """
