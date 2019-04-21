@@ -17,7 +17,7 @@ class Output:
         self.stopwords = []
 
 
-    def printSearchResults(self, searchResults, stamp, editor=None, logging=False):
+    def printSearchResults(self, searchResults, stamp, editor=None, logging=False, printTimingInfo=False):
         """
         This is the html that gets rendered in the search results div.
         Args:
@@ -44,7 +44,7 @@ class Output:
                     log("Failed to determine creation date: " + str(res[3]))
                 timeDiffString = "Could not determine creation date"
 
-            html += """<div class='cardWrapper' style='padding: 9px; margin-bottom: 10px; position: relative;'> 
+            html += """<div class='cardWrapper' id='nWr-%s'> 
                             <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s <div class='rankingLblAddInfo'>%s</div></div> 
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                                 <div class='editLbl' onclick='edit(%s)'>Edit</div> 
@@ -57,7 +57,7 @@ class Output:
                             <div style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'><span class='tag-symbol'>&#10097;</span></div>     
                         </div>
-                        """ %(res[3], counter + 1, 
+                        """ %( counter + 1, res[3], counter + 1, 
                         "&nbsp;&nbsp;&#128336; " + timeDiffString + "&nbsp; | &nbsp;<a href='#' style='color: white;' onclick='pycmd(\"addedSameDay %s\"); return false;'>Added Same Day</a>" % res[3],
                         res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
                         self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), 
@@ -67,8 +67,8 @@ class Output:
                 allText += " " + res[0]
         tags.sort()
         infoMap = {
-            "Took" :  "<b>%s</b> ms" % str(self.getMiliSecStamp() - stamp) if stamp is not None else "?",
-            "Found" :  "<b>%s</b> notes" % str(len(searchResults))
+            "Took" :  "<b>%s</b> ms %s" % (str(self.getMiliSecStamp() - stamp) if stamp is not None else "?", "&nbsp;<b style='cursor: pointer' onclick='pycmd(`lastTiming`)'>&#9432;</b>" if printTimingInfo else ""),
+            "Found" :  "<b>%s</b> notes" % (len(searchResults) if len(searchResults) > 0 else "<span style='color: red;'>0</span>")
         }
         infoStr = self.buildInfoTable(infoMap, tags, allText) 
         cmd = "setSearchResults(`" + html.replace("`", "&#96;").replace("$", "&#36;") + "`, `" + infoStr.replace("`", "&#96;") + "`);"
@@ -157,6 +157,8 @@ class Output:
         return text
 
     def _mostCommonWords(self, text):
+        if len(text) == 0:
+            return "No keywords for empty result."
         text = clean(text, self.stopwords)
         counts = {}
         for token in text.split():

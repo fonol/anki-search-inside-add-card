@@ -95,7 +95,7 @@ function cardMouseLeave(elem, nid) {
     setTimeout(function () {
         if (!$('#btnBar-' + nid).is(':hover'))
             $('#btnBar-' + nid).css('opacity', '0');
-        x
+        
     }, 100);
 }
 
@@ -108,13 +108,15 @@ function getSelectionText() {
     } else if (document.selection && document.selection.type != "Control") {
         text = document.selection.createRange().text;
     }
-    if (text.length > 0)
+    if (text.length > 1 && text != "&nbsp;") {
+        document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Selection</i></td></tr></table>";
         pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
+    }
 }
 
 function specialSearch(mode) {
     document.getElementById("a-modal").style.display = 'none'; 
-    $searchInfo.html("<span style='float: right;'>Searching</span>"); 
+    document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Special Search</i></td></tr></table>";
     pycmd(mode  + " " + selectedDecks.toString());
 }
 
@@ -130,27 +132,6 @@ function onResize() {
 function toggleModalLoader(show) {
 }
 
-function getWordPrecedingCaret(containerEl) {
-    var precedingChunk = "", sel, range, precedingRange;
-    if (window.getSelection) {
-        sel = window.getSelection();
-        if (sel.rangeCount > 0) {
-            range = sel.getRangeAt(0).cloneRange();
-            range.collapse(true);
-            range.setStart(containerEl, 0);
-            precedingChunk = range.toString().slice(-20);
-        }
-    } else if ((sel = document.selection) && sel.type != "Control") {
-        range = sel.createRange();
-        precedingRange = range.duplicate();
-        precedingRange.moveToElementText(containerEl);
-        precedingRange.setEndPoint("EndToStart", range);
-        precedingChunk = precedingRange.text.slice(-20);
-    }
-    let spl = precedingChunk.split(" ");
-    return spl[spl.length - 1];
-
-}
 
 function setHighlighting(elem) {
     let highlight = $(elem).is(":checked") ? "on" : "off";
@@ -159,17 +140,6 @@ function setHighlighting(elem) {
 function setTagSearch(elem) {
     let tagSearch = $(elem).is(":checked") ? "on" : "off";
     pycmd("tagSearch " + tagSearch);
-}
-
-function lastWord(text, caretPos) {
-    var preText = text.substring(0, caretPos);
-    if (preText.indexOf(" ") > 0) {
-        var words = preText.split(" ");
-        return words[words.length - 1]; //return last word
-    }
-    else {
-        return preText;
-    }
 }
 
 function getCursorCoords(input, selectionPoint) {
@@ -213,14 +183,7 @@ function synonymSetKeydown(event, elem, index) {
     }
 }
 
-function setUseInfoBox(active) {
-    useInfoBox = active;
-    if (!active) 
-        $('.field').attr("onkeydown", "moveInHover(event, this);" + $(`.field`).attr("onkeydown")); 
-    else 
-        $('.field').attr("onkeydown", $(`.field`).attr("onkeydown").replace("moveInHover(event, this);", "")); 
 
-}
 
 function setSearchOnTyping(active) {
     searchOnTyping = active;
@@ -258,77 +221,6 @@ function searchMaskKeypress(event) {
         sendSearchFieldContent();
 }
 
-function hideHvrBox() {
-    boxIsDisplayed = false;
-    $hvrBox.hide();
-    $hvrBoxSub.hide();
-}
-
-function moveInHover(event, elem) {
-
-    if (!useInfoBox)
-        return;
-
-    //other keys, should hide box
-    if (boxIsDisplayed && event.keyCode != 17 && event.keyCode != 13 && !(event.keyCode == 38 || event.keyCode == 40)) {
-        hideHvrBox();
-        return;
-    }
-
-    //enter when box is displayed
-    if (boxIsDisplayed && event.keyCode == 13) {
-        if ($('.hvrSelected').length && $('.hvrSelected').attr('id') == "hvrI-0") {
-            event.preventDefault();
-            searchFor(last);
-            hideHvrBox();
-            return false;
-        } else if ($('.hvrSelected').length && $('.hvrSelected').attr('id') == "hvrI-1") {
-            event.preventDefault();
-            pycmd('tagClicked ' + last);
-            hideHvrBox();
-            return false;
-        }
-    }
-
-    //ctrl + space  
-    if (useInfoBox && (event.which == 32 || event.keyCode == 32) && event.ctrlKey) {
-        event.preventDefault();
-        displaySearchInfoBox(event, elem);
-        return false;
-    }
-
-    //up down when box is displayed
-    if (boxIsDisplayed && event.keyCode == 38 || event.keyCode == 40) {
-        event.preventDefault();
-        moveInsideHvrBox(event.keyCode);
-    }
-}
-
-function displaySearchInfoBox(event, elem) {
-    last = getWordPrecedingCaret(elem);
-    let pos = getCursorCoords(elem, elem.selectionStart);
-    fontSize = parseFloat(window.getComputedStyle(elem, null).getPropertyValue('font-size'));
-    $hvrBox.css("left", pos.x + 3);
-    $hvrBox.css("top", pos.y + fontSize + 3);
-    $('#wiki').html('');
-    $hvrBox.show();
-
-    //get last word
-    $('#hvrI-0').html(`<b>search</b> for <i>${last}</i>`);
-    $('#hvrI-1').html(`add as <b>tag</b>: <i>${last}</i>`);
-  
-    hvrBoxIndex = -1; hvrBoxLength = 3;
-    $('.hvrLeftItem').removeClass('hvrSelected');
-    hvrBoxPos.x = pos.x; hvrBoxPos.y = pos.y;
-    pycmd('wiki ' + last);
-    boxIsDisplayed = true;
-}
-
-function displayInfoBoxSubMenu(index) {
-    $hvrBoxSub.css("left", hvrBoxPos.x + 231);
-    $hvrBoxSub.css("top", hvrBoxPos.y + 5 + (21 * (index + 1)));
-    $hvrBoxSub.show();
-}
 
 
 function pinCard(elem, nid) {
@@ -343,10 +235,12 @@ function pinCard(elem, nid) {
 
 function searchCard(elem) {
     let html = $(elem).parent().next().html();
+    document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Note Search</i></td></tr></table>";
     pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
 }
 function searchCardFromFloated(id) {
     let html = document.getElementById(id).innerHTML;
+    document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Note Search</i></td></tr></table>";
     pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
 }
 
@@ -367,10 +261,32 @@ function updatePinned() {
 }
 
 function setSearchResults(html, infoStr) {
+    $("#startInfo").remove();
     $('.cardWrapper').not('.pinned').remove();
+    document.getElementById("searchResults").style.overflowY = 'hidden';
+    document.getElementById("searchResults").style.paddingRight = '24px';
     document.getElementById('searchInfo').innerHTML = infoStr;
     document.getElementById('searchResults').innerHTML += html;
     document.getElementById('searchResults').scrollTop = 0;
+    let c = 1;
+    function renderLoop() {
+
+        $("#nWr-" + c).fadeIn();
+        setTimeout(function () {   
+            c++;                    
+            if (c< 10) {            
+               renderLoop();            
+            } else {
+                $('.cardWrapper').show();
+                document.getElementById("searchResults").style.overflowY = 'auto';
+                document.getElementById("searchResults").style.paddingRight = '10px';
+
+            }  
+         }, 130);
+    }    
+    renderLoop();
+
+   
 }
 
 function moveInsideHvrBox(keyCode) {
@@ -442,7 +358,11 @@ function addFloatingNote(nid) {
             <div id="nFC-${nid}" class='noteFloatingContent'>${content}</div>
                 </div>
             `;  
-        document.getElementsByClassName("coll")[0].insertAdjacentHTML( 'beforeend', floatingNote );        dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
+        if ($('.field').length > 8)
+            $('.field').first().after(floatingNote );       
+        else
+            $('.field').last().after(floatingNote );       
+        dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
         updatePinned();
 }
 
