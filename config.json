@@ -17,7 +17,7 @@
 "useFTS": true,
 "disableNonNativeSearching" : false,
 "addToResultAreaHeight": 0,
-"delayWhileTyping": 800,
+"delayWhileTyping": 1000,
 "synonyms": [],
 "noteForegroundColor": "black",
 "noteBackgroundColor": "white",
@@ -36,7 +36,7 @@
 "infoButtonBackgroundColor": "white",
 "infoButtonForegroundColor": "#2496dc",
 "infoButtonBorderColor":"#2496dc",
-
+"useInEdit" : false,
 "modalForegroundColor": "black",
 "modalBackgroundColor": "white",
 "logging": false,
