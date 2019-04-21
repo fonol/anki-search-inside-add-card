@@ -1,6 +1,16 @@
 
 body {
-    overflow-y: hidden;
+    overflow-x: hidden;
+    overflow: hidden;
+}
+
+#fields {
+    overflow-y: auto;
+    height: 90vh;
+}
+
+#startInfo {
+    padding-left: 20px;
 }
 
 .signal {
@@ -45,10 +55,7 @@ body {
 
 .cardR {
   border: 1px solid $noteBorderColor$; 
-  padding: 5px; 
-  padding-bottom: 25px; 
-  padding-left: 15px; 
-  background: white; 
+  padding: 10px 15px 25px 15px; 
   position: relative;
   font-size: $noteFontSize$;
   color: $noteForegroundColor$;
@@ -244,10 +251,17 @@ body {
 .pinLbl.unselected:hover > span {
     text-shadow: 0 0 0 #2496dc;
 }
+.cardWrapper {
+    padding: 9px;
+     margin-bottom: 10px; 
+     position: relative;
+     display: none;
+}
 
 .cardWrapper .tag-symbol {
     color: grey; 
 }
+
 .cardLeftBot {
     position: absolute; 
     bottom: 2px; 
@@ -447,7 +461,7 @@ body {
 .tbLb {
     width: 80%;
     text-align: left !important;
-
+    user-select: none;
 }
 
 .matched b {
@@ -613,7 +627,7 @@ border-top: 0px;
 background: $deckSelectBackgroundColor$;
 color: $deckSelectButtonForegroundColor$;
 cursor: pointer;
-font-size: 12px;
+font-size: 11px;
 user-select: none;
 }
 .deck-list-button.center {
