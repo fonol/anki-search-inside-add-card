@@ -1,18 +1,13 @@
 var selectedDecks = ["-1"];
-var $hvrBox = $('#hvrBox');
-var $hvrBoxSub = $('#hvrBoxSub');
-var hvrBoxIndex = 0;
-var hvrBoxLength = 0;
-var fontSize = 12;
-var hvrBoxPos = { x: 0, y: 0 };
-var divTmp = document.createElement('span');
 var timeout;
-var boxIsDisplayed = false;
 var isFrozen = false;
 var searchOnSelection = true;
 var searchOnTyping = true;
 var useInfoBox = false;
 var last = "";
+var lastHadResults = false;
+var loadingTimer;
+var gridView = false;
 
 function updateSelectedDecks(elem) {
     selectedDecks = [];
@@ -49,33 +44,17 @@ function expandRankingLbl(elem) {
     
     if (elem.getElementsByClassName("rankingLblAddInfo")[0].offsetParent === null) {
         elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "inline";
+        elem.getElementsByClassName("editedStamp")[0].style.display = "none";
     } else {
         elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "none";
+        elem.getElementsByClassName("editedStamp")[0].style.display = "inline";
     }
 }
 
 
 function expandCard(id, icn) {
     let elem = document.getElementById(id);
-    if ($(elem).hasClass('expanded')) {
-        $(elem).animate({ height: $(elem).height() - 80 }, 200);
-        $(elem).removeClass("expanded");
-        $(elem).css("padding-bottom", "25px")
-        $('#i-' + $(elem).data('nid')).hide();
-        $(icn).children().first().html('&#10097;');
-
-    } else {
-        $(elem).css("padding-bottom", "90px")
-        $(elem).animate({ height: $(elem).height() + 80 }, 200);
-        if ($('#i-' + $(elem).data('nid')).length) {
-            $('#i-' + $(elem).data('nid')).fadeIn();
-        } else {
-            pycmd('nStats ' + $(elem).data('nid'));
-        }
-        $(elem).addClass("expanded");
-        $(icn).children().first().html('&#10096;');
-
-    }
+    pycmd('nStats ' + $(elem).data('nid'))
 }
 
 function pinMouseLeave(elem) {
@@ -88,7 +67,12 @@ function pinMouseEnter(elem) {
 function cardMouseEnter(elem, nid) {
     $(`#btnBar-${nid}`).css('opacity', '1');
 }
-
+ 
+function showLoading(source) {
+    loadingTimer = setTimeout(function() {
+        document.getElementById('searchInfo').innerHTML = `<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>${source}</i></td></tr></table>`;
+    }, 1000);
+}
 
 
 function cardMouseLeave(elem, nid) {
@@ -109,14 +93,15 @@ function getSelectionText() {
         text = document.selection.createRange().text;
     }
     if (text.length > 1 && text != "&nbsp;") {
-        document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Selection</i></td></tr></table>";
+        showLoading("Selection");
         pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
+
     }
 }
 
 function specialSearch(mode) {
     document.getElementById("a-modal").style.display = 'none'; 
-    document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Special Search</i></td></tr></table>";
+    showLoading("Special Search");
     pycmd(mode  + " " + selectedDecks.toString());
 }
 
@@ -129,10 +114,6 @@ function onResize() {
     document.getElementById('resultsArea').style.setProperty('--vh', `${vh}px`);
 }
 
-function toggleModalLoader(show) {
-}
-
-
 function setHighlighting(elem) {
     let highlight = $(elem).is(":checked") ? "on" : "off";
     pycmd("highlight " + highlight);
@@ -140,15 +121,6 @@ function setHighlighting(elem) {
 function setTagSearch(elem) {
     let tagSearch = $(elem).is(":checked") ? "on" : "off";
     pycmd("tagSearch " + tagSearch);
-}
-
-function getCursorCoords(input, selectionPoint) {
-    var sel = window.getSelection();
-    var range = sel.getRangeAt(0);
-    range.insertNode(divTmp);
-    let rect = divTmp.getBoundingClientRect();
-    return { x: rect.left, y: rect.top };
-
 }
 
 function tagClick(elem) {
@@ -188,10 +160,11 @@ function synonymSetKeydown(event, elem, index) {
 function setSearchOnTyping(active) {
     searchOnTyping = active;
     if (!active) 
-        $('.field').unbind('keypress', fieldKeypress);
-    else
-        $('.field').on('keypress', fieldKeypress);
-
+        $('.field').off('keyup', fieldKeypress);
+    else {
+        $('.field').on('keyup', fieldKeypress);
+        sendContent();
+    }
     sendSearchOnTyping();
 }
 
@@ -203,9 +176,8 @@ function sendSearchOnSelection() {
     let cmd = searchOnSelection ? "on" : "off";
     pycmd("searchOnSelection " + cmd);
 }
-
-function fieldKeypress(event, elem) {
-    if (searchOnTyping && !boxIsDisplayed && event.keyCode != 13 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
+function fieldKeypress(event) {
+    if (event.keyCode != 13 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
         if (timeout) {
             clearTimeout(timeout);
             timeout = null;
@@ -227,20 +199,22 @@ function pinCard(elem, nid) {
     $('#cW-' + nid).css('padding', '3px 4px 5px 5px');
     $('#cW-' + nid).css('font-size', '10px');
     let info = document.getElementById('cW-' + nid).getElementsByClassName("rankingLblAddInfo")[0];
+    let editedStamp = document.getElementById('cW-' + nid).getElementsByClassName("editedStamp")[0];
     $('#cW-' + nid).html('<span>&#128204;</span>');
     document.getElementById('cW-' + nid).appendChild(info);
+    document.getElementById('cW-' + nid).appendChild(editedStamp);
     $('#' + nid).parents().first().addClass('pinned');
     updatePinned();
 }
 
 function searchCard(elem) {
     let html = $(elem).parent().next().html();
-    document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Note Search</i></td></tr></table>";
+    showLoading("Note Search");
     pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
 }
 function searchCardFromFloated(id) {
     let html = document.getElementById(id).innerHTML;
-    document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Note Search</i></td></tr></table>";
+    showLoading("Note Search");
     pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
 }
 
@@ -260,57 +234,59 @@ function updatePinned() {
     pycmd(pincmd);
 }
 
-function setSearchResults(html, infoStr) {
+function setSearchResults(html, infoStr, infoMap) {
     $("#startInfo").remove();
     $('.cardWrapper').not('.pinned').remove();
     document.getElementById("searchResults").style.overflowY = 'hidden';
     document.getElementById("searchResults").style.paddingRight = '24px';
-    document.getElementById('searchInfo').innerHTML = infoStr;
     document.getElementById('searchResults').innerHTML += html;
     document.getElementById('searchResults').scrollTop = 0;
     let c = 1;
+    clearTimeout(loadingTimer);
+
+    if (infoMap && lastHadResults && document.getElementById("info-Took")) {
+        document.getElementById("info-Took").innerHTML = infoMap["Took"];
+        document.getElementById("info-Found").innerHTML = infoMap["Found"];
+        document.getElementById("tagContainer").innerHTML = infoMap["Tags"];
+        document.getElementById("keywordContainer").innerHTML = infoMap["Keywords"];
+    } else {
+        document.getElementById('searchInfo').innerHTML = infoStr;
+    }
+
+
+
+
+    if (infoMap)
+        lastHadResults = true;
+    else
+        lastHadResults = false;
+
+    time = gridView ? 100 : 130;    
+    count = gridView ? 16 : 10;
     function renderLoop() {
 
-        $("#nWr-" + c).fadeIn();
+        if (gridView)
+            $("#nWr-" + c).fadeIn().css("display", "inline-block");
+        else
+            $("#nWr-" + c).fadeIn();
+
         setTimeout(function () {   
             c++;                    
-            if (c< 10) {            
+            if (c< count) {            
                renderLoop();            
             } else {
-                $('.cardWrapper').show();
+                if (gridView)
+                    $('.cardWrapper').css("display", "inline-block");
+                else
+                    $('.cardWrapper').show();
                 document.getElementById("searchResults").style.overflowY = 'auto';
                 document.getElementById("searchResults").style.paddingRight = '10px';
 
             }  
-         }, 130);
+         }, time);
     }    
     renderLoop();
-
-   
 }
-
-function moveInsideHvrBox(keyCode) {
-    if (keyCode == 38 && hvrBoxIndex > 0) {
-        document.getElementById('hvrI-' + hvrBoxIndex).className = 'hvrLeftItem';
-        document.getElementById('hvrI-' + (hvrBoxIndex - 1)).className += ' hvrSelected';
-        hvrBoxIndex -= 1;
-
-    } else if (keyCode == 40 && hvrBoxLength - 1 > hvrBoxIndex) {
-        if (hvrBoxIndex >= 0)
-            document.getElementById('hvrI-' + hvrBoxIndex).className = 'hvrLeftItem';
-        document.getElementById('hvrI-' + (hvrBoxIndex + 1)).className += ' hvrSelected';
-        hvrBoxIndex += 1;
-
-    }
-    if (hvrBoxIndex == 2) {
-        displayInfoBoxSubMenu(2);
-        pycmd("lastnote");
-    }
-    else
-        $hvrBoxSub.hide();
-
-}
-
 
 function toggleTooltip(elem) {
     $(elem).children().first().toggle();
@@ -327,6 +303,12 @@ function toggleFreeze(elem) {
     }
 }
 
+function hideTop(){
+    $('#topContainer').hide();
+    $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - $h-1$px)').css('border-top', '0px');
+    $(elem).children().first().html('&#10097;');
+    pycmd("toggleTop off");
+}
 
 function toggleTop(elem) {
     $('#topContainer').toggle();
@@ -341,6 +323,25 @@ function toggleTop(elem) {
         pycmd("toggleTop on");
     }
 }
+
+function toggleGrid(elem) {
+
+   $(elem).toggleClass('active');
+   if ($(elem).hasClass('active')) {
+       pycmd("toggleGrid on");
+       gridView = true;
+   } else {
+       pycmd("toggleGrid off");
+       gridView = false;
+   }
+}
+
+function activateGridView() {
+    $('#grid-icon').addClass('active');
+    gridView = true;
+}
+
+
 
 
 function addFloatingNote(nid) {
