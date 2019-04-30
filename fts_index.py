@@ -121,7 +121,7 @@ class FTSIndex:
         self.lastSearch = (text, decks, "default")
         
         if len(text) == 0:
-            self.output.editor.web.eval("setSearchResults('', 'Query was empty after cleaning')")
+            self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning')") 
             return
         start = time.time()
         text = expandBySynonyms(text, self.synonyms)
@@ -266,22 +266,9 @@ class FTSIndex:
             else:
                 textMarked += currentWord
         
-      
-
-       
         return textMarked
             
         
-        #todo: find out why this doesnt work here
-        #combine adjacent highlights (very basic, won't work in all cases)
-        # reg = re.compile('<mark>[^<>]+</mark> ?<mark>[^<>]+</mark>')
-        # found = reg.findall(text)
-        # whsile len(found) > 0:
-        #     for f in found:
-        #         text = text.replace(f, "<mark>%s</mark>" %(f.replace("<mark>", "").replace("</mark>", "")))
-        #     found = reg.findall(text)
-       
-     #   return text
 
 
 
@@ -402,17 +389,33 @@ class FTSIndex:
                 score += (idf * rhs) * weight 
         return -score - cd * 20
 
+    def deleteNote(self, nid):
+        conn = sqlite3.connect(self.dir + "/search-data.db")
+        conn.cursor().execute("DELETE FROM notes WHERE CAST(nid AS INTEGER) = %s;" % nid)
+        conn.commit()
+        conn.close()
+
+
 
     def addNote(self, note):
         
         content = " \u001f ".join(note.fields)
         tags = " ".join(note.tags)
-        did = str(note.model()['did'])
+        #did = note.model()['did']
+        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id).fetchone()
+        if did is None or len(did) == 0:
+            return
+        did = did[0]
         conn = sqlite3.connect(self.dir + "/search-data.db")
-        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source) VALUES (?, ?, ?, ?, ?)", (str(note.id), clean(content, self.stopWords), tags, did, content))
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source) VALUES (?, ?, ?, ?, ?)", (note.id, clean(content, self.stopWords), tags, did, content))
         conn.commit()
         conn.close()
-    
+
+    def updateNote(self, note):
+        self.deleteNote(note.id)
+        self.addNote(note)
+
+
 
     def getNumberOfNotes(self):
         conn = sqlite3.connect(self.dir + "/search-data.db")
