@@ -10,6 +10,7 @@ from aqt.addcards import  AddCards
 from anki.find import Finder
 import aqt.editor
 from aqt.editor import Editor
+from aqt.browser import Browser
 from aqt.tagedit import TagEdit
 from aqt.editcurrent import EditCurrent
 import aqt.stats
@@ -35,7 +36,7 @@ except KeyError:
     loadWhoosh = True
 if loadWhoosh:
     from .whoosh.index import create_in
-    from .whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD
+    from .whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD, ID
     from whoosh.support.charset import accent_map
     from .whoosh.qparser import QueryParser
     from .whoosh.analysis import StandardAnalyzer, CharsetFilter, StemmingAnalyzer
@@ -47,7 +48,7 @@ from .fts_index import FTSIndex
 from .whoosh_index import SearchIndex
 from .output import Output
 from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms
-from .editor import openEditor
+from .editor import openEditor, EditDialog
 from .tag_find import findBySameTag
 from .stats import calculateStats, findNotesWithLowestPerformance
 
@@ -64,7 +65,7 @@ edit = None
 
 def initAddon():
     global corpus, output
-    global oldOnBridge, origAddNote, origTagKeypress
+    global oldOnBridge, origAddNote, origTagKeypress, origSaveAndClose
     
     oldOnBridge = Editor.onBridgeCmd
     Editor.onBridgeCmd = myOnBridgeCmd
@@ -78,6 +79,9 @@ def initAddon():
 
     setupTagEditTimer()
 
+    origSaveAndClose = EditDialog.saveAndClose
+    EditDialog.saveAndClose = editorSaveWithIndexUpdate
+
     #main functions to search
     if not searchingDisabled:
         aqt.editor._html += """
@@ -86,20 +90,20 @@ def initAddon():
                 if ((event && event.repeat) || isFrozen)
                     return;
                 let html = "";
-                document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Typing</i></td></tr></table>";
+                showLoading("Typing");
                 $fields.each(function(index, elem) {
                     html += $(elem).html() + "\u001f";
                 });
                 pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
             }
             function sendSearchFieldContent() {
-                document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Browser Search</i></td></tr></table>";
+                showLoading("Browser Search");
                 html = $('#searchMask').val() + "\u001f";
                 pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
             }
 
             function searchFor(text) {
-                document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>Keyword</i></td></tr></table>";
+                showLoading("Note Search");
                 text += "\u001f";
                 pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + text);
             }
@@ -112,7 +116,7 @@ def initAddon():
                 return;
             }
             function sendSearchFieldContent() {
-                document.getElementById('searchInfo').innerHTML = "<table><tr><td>Status</td><td><b>Searching</b></td></tr></table>";
+                showLoading("Note Search");
                 html = $('#searchMask').val() + "\u001f";
                 pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
             }
@@ -125,10 +129,20 @@ def initAddon():
 
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific(addToResultAreaHeight, delayWhileTyping)
-    
+    aqt.editor._html += "<script type='text/javascript' src='http://127.0.0.1:59842/_anki/plot.js'></script>"  
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     addHook("loadNote", onLoadNote)
    
+def editorSaveWithIndexUpdate(dialog):
+
+    # update index
+    if searchIndex is not None and dialog.editor is not None and dialog.editor.note is not None:
+        searchIndex.updateNote(dialog.editor.note)
+        # note should be rerendered
+        rerenderNote(dialog.editor.note.id)
+         # keep track of edited notes (to display a little remark in the results)
+        searchIndex.output.edited[str(dialog.editor.note.id)] = time.time()
+    origSaveAndClose(dialog)
    
 def myOnBridgeCmd(self, cmd):
     """
@@ -148,7 +162,7 @@ def myOnBridgeCmd(self, cmd):
             log("Selected in field: " + cmd[9:])
         rerenderInfo(self, cmd[9:])
     elif (cmd.startswith("nStats ")):
-        setStats(cmd[7:], calculateStats(cmd[7:]))
+        setStats(cmd[7:], calculateStats(cmd[7:], searchIndex.output.gridView))
     elif (cmd.startswith("tagClicked ")):
         addTag(cmd[11:])
     elif (cmd.startswith("editN ")):
@@ -272,20 +286,19 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("tagSearch ")):
         if searchIndex is not None:
             searchIndex.tagSearch = cmd[10:] == "on"
-    elif (cmd.startswith("deckSelection ")):
+    elif (cmd.startswith("deckSelection")):
         if searchIndex is not None:
             if searchIndex.logging:
-                log("Updating selected decks: " + str( [d for d in cmd[14:].split(" ") if d != ""]))
-            searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
+                if len(cmd) > 13:
+                    log("Updating selected decks: " + str( [d for d in cmd[14:].split(" ") if d != ""]))
+                else:
+                    log("Updating selected decks: []")
+            if len(cmd) > 13:
+                searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
+            else:
+                searchIndex.selectedDecks = []
             #repeat last search if default 
-            if searchIndex.lastSearch is not None:
-                if searchIndex.lastSearch[2] == "default":
-                    defaultSearchWithDecks(self, searchIndex.lastSearch[0], searchIndex.selectedDecks)
-                elif searchIndex.lastSearch[2] == "random":
-                    res = getRandomNotes(searchIndex.selectedDecks)
-                    searchIndex.output.printSearchResults(res["result"], res["stamp"])
-                elif searchIndex.lastSearch[2] == "lastCreated":
-                    getLastCreatedNotes(self)
+            tryRepeatLastSearch(self)
 
     elif cmd == "toggleTop on":
         if searchIndex is not None:
@@ -294,6 +307,17 @@ def myOnBridgeCmd(self, cmd):
     elif cmd == "toggleTop off":
         if searchIndex is not None:
             searchIndex.topToggled = False
+
+    elif cmd == "toggleGrid on":
+        if searchIndex is not None and searchIndex.output is not None:
+            searchIndex.output.gridView = True
+            tryRepeatLastSearch(self)
+
+
+    elif cmd == "toggleGrid off":
+        if searchIndex is not None and searchIndex.output is not None:
+            searchIndex.output.gridView = False
+            tryRepeatLastSearch(self)
 
     elif cmd == "selectCurrent":
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
@@ -313,6 +337,7 @@ def onLoadNote(editor):
     if editor.addMode or (config["useInEdit"] and isinstance(editor.parentWindow, EditCurrent)):
         if searchIndex is not None and searchIndex.logging:
             log("Trying to insert html in editor")
+            log("Editor.addMode: %s" % editor.addMode)
         editor.web.eval(""" 
         
         //check if ui has been rendered already
@@ -355,6 +380,7 @@ def onLoadNote(editor):
                           <!--  <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='setUseInfoBox($(this).is(":checked"));'/></td></tr> -->
                         </table>
                         <div>
+                            <div id='grid-icon' onclick='toggleGrid(this)'>Grid &#9783;</div>
                             <div id='freeze-icon' onclick='toggleFreeze(this)'>
                                 FREEZE &#10052; 
                             </div>
@@ -403,9 +429,9 @@ def onLoadNote(editor):
                     </div>
                 </div>`).insertAfter('#fields');
         $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; overflow-x: hidden; height: 100%;"></div>');    
-        
-        }
-        $('.field').on('keypress', fieldKeypress);
+        updatePinned();
+        } 
+        $('.field').on('keyup', fieldKeypress);
         $('.field').attr('onmouseup', 'getSelectionText()');
         var $fields = $('.field');
         var $searchInfo = $('#searchInfo');
@@ -429,7 +455,13 @@ def onLoadNote(editor):
             if searchIndex.tagSelect:
                 fillTagSelect(editor)
             if not searchIndex.topToggled:
-                editor.web.eval("toggleTop(document.getElementById('toggleTop'));")
+                editor.web.eval("hideTop();")
+            if searchIndex.output is not None and searchIndex.output.gridView:
+                editor.web.eval('activateGridView();')
+            if searchIndex.output is not None:
+                #plot.js is already loaded if a note was just added, so this is a lazy solution for now
+                searchIndex.output.plotjsLoaded = False
+
 
         if searchIndex is None or not searchIndex.tagSelect:
             fillDeckSelect(editor)
@@ -456,9 +488,10 @@ def setPinned(cmd):
     for id in cmd.split(" "):
         if len(id) > 0:
             pinned.append(id)
-    searchIndex.pinned = pinned
-    if searchIndex.logging:
-        log("Updated pinned: " + str(searchIndex.pinned))
+    if searchIndex is not None:
+        searchIndex.pinned = pinned
+        if searchIndex.logging:
+            log("Updated pinned: " + str(searchIndex.pinned))
 
 def getRandomNotes(decks):
     if searchIndex is None:
@@ -507,7 +540,21 @@ def getLastCreatedNotes(editor):
         if len(rList) > 0:
             searchIndex.output.printSearchResults(rList, stamp, editor)
         else:
-            editor.web.eval("setSearchResults('', 'No results found.')")
+            editor.web.eval("setSearchResults(``, 'No results found.')")
+
+def tryRepeatLastSearch(editor = None):
+    if searchIndex is not None and searchIndex.lastSearch is not None:
+        if editor is None and searchIndex.output.editor is not None:
+            editor = searchIndex.output.editor
+        
+        if searchIndex.lastSearch[2] == "default":
+            defaultSearchWithDecks(editor, searchIndex.lastSearch[0], searchIndex.selectedDecks)
+        # elif searchIndex.lastSearch[2] == "random":
+        #     res = getRandomNotes(searchIndex.selectedDecks)
+        #     searchIndex.output.printSearchResults(res["result"], res["stamp"])
+        elif searchIndex.lastSearch[2] == "lastCreated":
+            getLastCreatedNotes(editor)
+
 
 def getCreatedSameDay(editor, nid):
     stamp = searchIndex.output.getMiliSecStamp()
@@ -536,7 +583,7 @@ def getCreatedSameDay(editor, nid):
             if len(rList) > 0:
                 searchIndex.output.printSearchResults(rList, stamp, editor)
             else:
-                editor.web.eval("setSearchResults('', 'No results found.')")
+                editor.web.eval("setSearchResults(``, 'No results found.')")
     except:
         if editor.web is not None:
             editor.web.eval("setSearchResults('', 'Error in calculation.')")
@@ -708,8 +755,11 @@ def setupTagEditTimer():
 
 
 def tagEditKeypress(self, evt):
-    global lastTagEditKeypress
     origTagKeypress(self, evt)
+    win = aqt.mw.app.activeWindow()
+    # dont trigger keypress in edit dialogs opened within the add dialog
+    if isinstance(win, EditDialog) or isinstance(win, Browser):
+        return
     if searchIndex is not None and searchIndex.tagSearch and len(self.text()) > 0:
         text = self.text()
         try: 
@@ -724,8 +774,7 @@ def setStats(nid, stats):
     """
     Insert the statistics into the given card.
     """
-    cmd = "document.getElementById('" + nid + "').innerHTML += `" + stats + "`;"
-    searchIndex.output.editor.web.eval(cmd)
+    searchIndex.output.showStats(stats[0], stats[1])
 
 
 
@@ -737,7 +786,7 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
         content: string containing the decks selected (did) + ~ + all input fields content / search masks content
     """
     if (len(content) < 1):
-        editor.web.eval("setSearchResults('', 'No results found for empty string')")
+        editor.web.eval("setSearchResults(``, 'No results found for empty string')")
     decks = list()
     if "~" in content:
         for s in content[:content.index('~')].split(','):
@@ -748,7 +797,7 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
         if searchDB:
             content = content[content.index('~ ') + 2:].strip()
             if len(content) == 0:
-                editor.web.eval("setSearchResults('', 'No results found for empty string')")
+                editor.web.eval("setSearchResults(``, 'No results found for empty string')")
                 return
             searchIndex.lastSearch = (content, decks, "db")
             searchRes = searchIndex.searchDB(content, decks)  
@@ -761,7 +810,7 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
 
         else:
             if len(content[content.index('~ ') + 2:]) > 2000:
-                editor.web.eval("setSearchResults('', 'Query was <b>too long</b>')")
+                editor.web.eval("setSearchResults(``, 'Query was <b>too long</b>')")
                 return
             content = content[content.index('~ ') + 2:]
             searchRes = searchIndex.search(content, decks)
@@ -772,11 +821,17 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
                 if len(searchRes["result"]) > 0:
                     searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor, searchIndex.logging)
                 else:
-                    editor.web.eval("setSearchResults('', 'No results found.')")
+                    editor.web.eval("setSearchResults(``, 'No results found.')")
             else:
-                editor.web.eval("setSearchResults('', 'No results found.')")
-
+                editor.web.eval("setSearchResults(``, 'No results found.')")
        
+
+def rerenderNote(nid):
+    res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid).fetchone()
+    if res is not None and len(res) > 0:
+        if searchIndex is not None:
+            searchIndex.output.updateSingle(res)
+
 
 def defaultSearchWithDecks(editor, textRaw, decks):
     """
@@ -787,12 +842,12 @@ def defaultSearchWithDecks(editor, textRaw, decks):
     """
     if len(textRaw) > 2000:
         if editor is not None:
-            editor.web.eval("setSearchResults('', 'Query was <b>too long</b>')")
+            editor.web.eval("setSearchResults(``, 'Query was <b>too long</b>')")
         return
     cleaned = searchIndex.clean(textRaw)
     if len(cleaned) == 0:
         if editor is not None:
-            editor.web.eval("setSearchResults('', 'Query was empty after cleaning')")
+            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning')")
         return
     searchIndex.lastSearch = (cleaned, decks, "default")
     searchRes = searchIndex.search(cleaned, decks)
@@ -905,6 +960,7 @@ def _buildIndex():
     searchIndex.tagSearch = True
     searchIndex.tagSelect = False
     searchIndex.topToggled = True
+    searchIndex.output.edited = {}
     searchIndex.initializationTime = initializationTime
     searchIndex.synonyms = loadSynonyms()
     searchIndex.logging = config["logging"]
@@ -943,7 +999,7 @@ def addTag(tag):
     searchIndex.output.editor.saveTags()
 
 def printStartingInfo(editor):
-    if editor is None:
+    if editor is None or editor.web is None:
         return
     html = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  searchIndex.type if searchIndex is not None else "?"
     if searchIndex is not None:
