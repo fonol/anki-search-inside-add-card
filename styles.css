@@ -43,7 +43,7 @@ body {
  }
 
 #searchResults {
-
+    position: relative;
     display: none; 
     height: 94%; 
     overflow-y: auto; 
@@ -51,7 +51,9 @@ body {
     overflow-x: hidden;
     max-width: 100%;
 }
-
+.editedStamp {
+    display: inline;
+}
 
 .cardR {
   border: 1px solid $noteBorderColor$; 
@@ -60,6 +62,9 @@ body {
   font-size: $noteFontSize$;
   color: $noteForegroundColor$;
   background: $noteBackgroundColor$;
+}
+.cardWrapper.grid .cardR {
+    word-wrap: break-word;
 }
 
 .cardR:hover {
@@ -252,10 +257,21 @@ body {
     text-shadow: 0 0 0 #2496dc;
 }
 .cardWrapper {
-    padding: 9px;
+     padding: 9px;
      margin-bottom: 10px; 
      position: relative;
      display: none;
+}
+.cardWrapper.grid {
+    width: calc(50% - 29px);
+    vertical-align: top;
+    margin-left: 5px;
+}
+
+.gridRow {
+    width: 100%;
+    vertical-align: top;
+    padding: 0px !important;
 }
 
 .cardWrapper .tag-symbol {
@@ -267,19 +283,14 @@ body {
     bottom: 2px; 
     left: 0px; 
     z-index:9999; 
-    padding: 0 8px 0 8px;
     border: 1px solid  $noteBorderColor$;
     background:  $noteBackgroundColor$;
+    color: $noteForegroundColor$;
     cursor: pointer;
     user-select: none;
 
 }
-.cardLeftBot > .tag-symbol {
-    color: $noteForegroundColor$;
-    background: $noteBackgroundColor$;
-}
-
-.cardLeftBot:hover span {
+.cardLeftBot:hover {
     color: #2496dc;
 }
 
@@ -520,9 +531,7 @@ body {
     color: grey;
     user-select: none;
 }
-#rnd-icon:hover {
-    color:  #2496dc;
-}
+
 
 #freeze-icon {
     position: absolute; 
@@ -536,11 +545,23 @@ body {
 
 
 
-#freeze-icon:hover {
+#freeze-icon:hover, #grid-icon:hover, #rnd-icon:hover {
     color:  #2496dc;
 }
 
 #freeze-icon.frozen {
+    color:  #2496dc !important;
+}
+#grid-icon {
+    position: absolute; 
+    bottom: 5px; 
+    right: 175px; 
+    font-size: 15px;
+    cursor: pointer;
+    color: grey;
+    user-select: none;
+}
+#grid-icon.active {
     color:  #2496dc !important;
 }
 
@@ -740,7 +761,7 @@ user-select: none;
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 15px;
-    width: 50%;
+    width: 70%;
     border: 2px solid #2496dc;
   }
 
@@ -749,6 +770,12 @@ user-select: none;
     color: $modalForegroundColor$;
     max-height: 450px;
     overflow-y: auto;
+}
+#modalText.small {
+    max-height: 200px !important;
+    background: yellow;
+    color: green;
+    font-size: 30px;
 }
 .modal-close {
 
@@ -851,4 +878,11 @@ span.tag-symbol {
     margin-right:   10px;
 }
 
-/*ENDMAC*/
+.flot-x-axis .flot-tick-label {
+    white-space: nowrap;
+    transform: translate(-9px, 0) rotate(-60deg);
+    text-indent: -100%;
+    transform-origin: top right;
+    text-align: right !important;
+
+}

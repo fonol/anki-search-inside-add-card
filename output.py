@@ -1,6 +1,7 @@
 import re
 import time
 import json
+import os
 from datetime import datetime
 from aqt.utils import showInfo
 from .textutils import clean, trimIfLongerThan, deleteChars
@@ -14,7 +15,9 @@ class Output:
         self.SEP_END = re.compile(r'</div>\u001f$')
         self.SOUND_TAG = re.compile(r'sound[a-zA-Z0-9]*mp')
         self.latest = -1
+        self.gridView = False
         self.stopwords = []
+        self.plotjsLoaded = False
 
 
     def printSearchResults(self, searchResults, stamp, editor=None, logging=False, printTimingInfo=False):
@@ -36,6 +39,8 @@ class Output:
         tags = []
         epochTime = int(time.time() * 1000)
         timeDiffString = ""
+        newNote = ""
+        lastNote = "" 
         for counter, res in enumerate(searchResults):
             try:
                 timeDiffString = self._getTimeDifferenceString(res[3], epochTime)
@@ -43,9 +48,9 @@ class Output:
                 if logging:
                     log("Failed to determine creation date: " + str(res[3]))
                 timeDiffString = "Could not determine creation date"
-
-            html += """<div class='cardWrapper' id='nWr-%s'> 
-                            <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s <div class='rankingLblAddInfo'>%s</div></div> 
+            lastNote = newNote
+            newNote = """<div class='cardWrapper %s' id='nWr-%s'> 
+                            <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s <div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                                 <div class='editLbl' onclick='edit(%s)'>Edit</div> 
                                 <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
@@ -54,14 +59,21 @@ class Output:
                                 <div id='rem-%s' class='remLbl' onclick='$("#cW-%s").parents().first().remove(); updatePinned();'><span>&times;</span></div> 
                             </div>
                             <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
-                            <div style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
-                            <div class='cardLeftBot' onclick='expandCard(%s, this)'><span class='tag-symbol'>&#10097;</span></div>     
+                            <div id='tags-%s' style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
+                            <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
                         </div>
-                        """ %( counter + 1, res[3], counter + 1, 
-                        "&nbsp;&nbsp;&#128336; " + timeDiffString + "&nbsp; | &nbsp;<a href='#' style='color: white;' onclick='pycmd(\"addedSameDay %s\"); return false;'>Added Same Day</a>" % res[3],
+                        """ %("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
+                        "&nbsp;&nbsp;&#128336; " + timeDiffString,
+                        "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                         res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
                         self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), 
-                        self.buildTagString(res[1]), res[3])  
+                        res[3], self.buildTagString(res[1]), res[3])  
+            if self.gridView:
+                if counter % 2 == 1 or counter == len(searchResults) - 1:
+                    html += "<div class='gridRow'>%s</div>" % (lastNote + newNote)
+                
+            else:
+                html += newNote
             tags = self._addToTags(tags, res[1])
             if counter < 20:
                 allText += " " + res[0]
@@ -70,8 +82,9 @@ class Output:
             "Took" :  "<b>%s</b> ms %s" % (str(self.getMiliSecStamp() - stamp) if stamp is not None else "?", "&nbsp;<b style='cursor: pointer' onclick='pycmd(`lastTiming`)'>&#9432;</b>" if printTimingInfo else ""),
             "Found" :  "<b>%s</b> notes" % (len(searchResults) if len(searchResults) > 0 else "<span style='color: red;'>0</span>")
         }
-        infoStr = self.buildInfoTable(infoMap, tags, allText) 
-        cmd = "setSearchResults(`" + html.replace("`", "&#96;").replace("$", "&#36;") + "`, `" + infoStr.replace("`", "&#96;") + "`);"
+        info = self.buildInfoTable(infoMap, tags, allText) 
+        html = html.replace("`", "&#96;").replace("$", "&#36;")
+        cmd = "setSearchResults(`" + html + "`, `" + info[0].replace("`", "&#96;") + "`, %s);" % json.dumps(info[1])
         if editor is None or editor.web is None:
             if self.editor is not None and self.editor.web is not None:
                 if logging:
@@ -82,6 +95,7 @@ class Output:
                 log("printing the result html...")
             editor.web.eval(cmd)
 
+
     def buildTagString(self, tags):
         """
         Builds the html for the tags that are displayed at the bottom right of each rendered search result.
@@ -89,18 +103,32 @@ class Output:
         html = ""
         tm = self.getTagMap(tags.split(' '))
         totalLength = sum([len(k) for k,v in tm.items()])
-        if len(tm) <= 3 or totalLength < 40:
+        maxLength = 40 if not self.gridView else 30
+        maxCount = 3 if not self.gridView else 2
+        if len(tm) <= maxCount or totalLength < maxLength:
             for t, s in tm.items():
                 if len(s) > 0:
                     tagData = " ".join(self.iterateTagmap({t : s}, ""))
-                    html += "<div class='tagLbl' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(tagData, trimIfLongerThan(t, 40) + " (+%s)"% len(s))
+                    html += "<div class='tagLbl' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(tagData, trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
                 else:
-                    html += "<div class='tagLbl' data-name='%s' onclick='tagClick(this);'>%s</div>" %(t, trimIfLongerThan(t, 40))
+                    html += "<div class='tagLbl' data-name='%s' onclick='tagClick(this);'>%s</div>" %(t, trimIfLongerThan(t, maxLength))
         else:
             tagData = " ".join(self.iterateTagmap(tm, ""))
             html += "<div class='tagLbl' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(tagData, str(len(tm)) + " tags ...")
         
         return html
+
+
+
+    def _buildEditedInfo(self, timestamp):
+        diffInSeconds = time.time() - timestamp
+        if diffInSeconds < 60:
+            return "Edited just now"
+        if diffInSeconds < 120:
+            return "Edited 1 minute ago"
+        if diffInSeconds < 3600:
+            return "Edited %s minutes ago" % int(diffInSeconds / 60)
+        return "Edited today"
 
     def _getTimeDifferenceString(self, nid, now):
         diffInMinutes = (now - int(nid)) / 1000 / 60
@@ -133,20 +161,28 @@ class Output:
     def buildInfoTable(self, infoMap, tags, allText):
         infoStr = "<table>"
         for key, value in infoMap.items():
-            infoStr += "<tr><td>%s</td><td>%s</td></tr>" %(key, value)
+            infoStr += "<tr><td>%s</td><td id='info-%s'>%s</td></tr>" %(key, key, value)
         infoStr += "</table><div class='searchInfoTagSep'><span class='tag-symbol'>&#9750;</span>&nbsp;Tags:</div><div id='tagContainer' style='max-height: 180px; overflow-y: auto;'>"
+        tagStr = ""
         if len(tags) == 0:
             infoStr += "No tags in the results."
-        for key, value in self.getTagMap(tags).items():
-            if len(value)  == 0:
-                infoStr += "<span class='searchInfoTagLbl' data-name='%s' onclick='tagClick(this);'>%s</span>" % (key,trimIfLongerThan(key, 19))
-            else:
-                tagData = " ".join(self.iterateTagmap({key : value}, ""))
-                infoStr += "<span class='searchInfoTagLbl' data-tags='%s' onclick='tagClick(this);'>%s&nbsp; %s</span>" % (tagData, trimIfLongerThan(key,12), "(+%s)"% len(value))
+            infoMap["Tags"] = "No tags in the results."
+        else:
+            for key, value in self.getTagMap(tags).items():
+                if len(value)  == 0:
+                    tagStr += "<span class='searchInfoTagLbl' data-name='%s' onclick='tagClick(this);'>%s</span>" % (key,trimIfLongerThan(key, 19))
+                else:
+                    tagData = " ".join(self.iterateTagmap({key : value}, ""))
+                    tagStr += "<span class='searchInfoTagLbl' data-tags='%s' onclick='tagClick(this);'>%s&nbsp; %s</span>" % (tagData, trimIfLongerThan(key,12), "(+%s)"% len(value))
 
-        infoStr += "</div><div><div class='searchInfoTagSep bottom'>Keywords:</div>"
-        infoStr += self._mostCommonWords(allText) + "</div>"
-        return infoStr
+            infoStr += tagStr
+            infoMap["Tags"] = tagStr
+
+        infoStr += "</div><div class='searchInfoTagSep bottom' >Keywords:</div><div id='keywordContainer'>"
+        mostCommonWords = self._mostCommonWords(allText)
+        infoStr += mostCommonWords + "</div>"
+        infoMap["Keywords"] = mostCommonWords
+        return (infoStr, infoMap)
 
     def _cleanFieldSeparators(self, text):
         text = self.SEP_RE.sub("\u001f", text)
@@ -177,13 +213,58 @@ class Output:
    
     def showInModal(self, text):
         cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`;" % text
+        
         if self.editor is not None:
             self.editor.web.eval(cmd)
 
 
+    def showStats(self, text, reviewPlotData):
+        
+        if not self.plotjsLoaded:
+            dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/output.py", "")
+            with open(dir + "/plot.js") as f:
+                plotjs = f.read()
+            self.editor.web.eval(plotjs)
+            self.plotjsLoaded = True
+        
+        cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`; document.getElementById('modalText').scrollTop = 0; " % (text)
+        c = 0
+        for k,v in reviewPlotData.items():
+            if v is not None and len(v) > 0:
+                c += 1
+                rawData = [[r[0], r[1]] for r in v]
+                xlabels = [[r[0], r[2]] for r in v]
+                if len(xlabels) > 30:
+                    xlabels = xlabels[0::2]
+                options = """
+                    {  series: { 
+                            lines: { show: true, fillColor: "#2496dc" }, 
+                            points: { show: true, fillColor: "#2496dc" } 
+                    }, 
+                    label: "Ease", 
+                    yaxis: { max: 5, min: 0, ticks: [[0, ''], [1, 'Failed'], [2, 'Hard'], [3, 'Good'], [4, 'Easy']],    
+                                tickFormatter: function (v, axis) {
+                                if (v == 1) {
+                                    $(this).css("color", "red");
+                                }
+                                return v;
+                                }
+                    } , 
+                    xaxis: { ticks : %s },
+                    colors: ["#2496dc"] 
+                    }
+    
+                """ % json.dumps(xlabels)
+            cmd += "$.plot($('#graph-%s'), [ %s ],  %s);" % (c, json.dumps(rawData), options)
+            
+
+
+        if self.editor is not None:
+            self.editor.web.eval(cmd)
+
     def hideModal(self):
         if self.editor is not None:
-            self.editor.web.eval("toggleModalLoader(false);$('#a-modal').hide();")
+            self.editor.web.eval("$('#a-modal').hide();")
 
     def _addToTags(self, tags, tagStr):
         if tagStr == "":
@@ -262,6 +343,23 @@ class Output:
                     res.append(prefix + key)
         return res
     
+    def updateSingle(self, note):
+        """
+        Used after note has been edited. The edited note should be rerendered.
+        To keep things simple, only note text and tags are replaced. 
+        """
+        tags = note[2]
+        tagStr =  self.buildTagString(tags)  
+        nid = note[0]
+        text = self._cleanFieldSeparators(note[1])
+        #find rendered note and replace text and tags
+        self.editor.web.eval("""
+            document.getElementById('%s').innerHTML = `%s`; 
+            document.getElementById('tags-%s').innerHTML = `%s`;
+        """ % (nid, text, nid, tagStr))
+        self.editor.web.eval("$('#cW-%s').find('.rankingLblAddInfo').hide();" % nid)
+        self.editor.web.eval("$('#cW-%s .editedStamp').html(`&nbsp;&#128336; Edited just now`).show();" % nid)
+
 
     def getMiliSecStamp(self):
         return int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds() * 1000)
