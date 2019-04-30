@@ -53,10 +53,6 @@ class SearchIndex:
         self.threadPool.start(worker)
 
 
-
-
-        #stamp = self.output.getMiliSecStamp()
-        #self.output.latest = stamp
         
     def searchProc(self, text, decks):    
         resDict = {}
@@ -65,7 +61,7 @@ class SearchIndex:
         resDict["time-stopwords"] = int((time.time() - start) * 1000)
         self.lastSearch = (text, decks, "default")
         if len(text) == 0:
-            self.output.editor.web.eval("setSearchResults('', 'Query was empty after cleaning')")
+            self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning')")
             return
         start = time.time()
         text = expandBySynonyms(text, self.synonyms)
@@ -205,12 +201,33 @@ class SearchIndex:
         
         content = " \u001f ".join(note.fields)
         tags = " ".join(note.tags)
-        did = str(note.model()['did'])
+        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id).fetchone()
+        if did is None or len(did) == 0:
+            return
+        did = did[0]
         writer = self.index.writer()
-        writer.add_document(content=content, tags=tags, did=did, nid=str(note.id))
+        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content)
         writer.commit()
         return note
     
+    def updateNote(self, note):
+        
+        # not supported until I find out what is going wrong here
+        #pass
+     
+        writer = self.index.writer()
+        c = writer.delete_by_term("nid", str(note.id))
+        content = " \u001f ".join(note.fields)
+        tags = " ".join(note.tags)
+        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id).fetchone()
+        if did is None or len(did) == 0:
+            return
+        did = did[0]
+        #writer.update_document(content=clean(content, self.stopWords), tags=tags, did=did, nid=str(note.id), source=content)
+        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content)
+        writer.commit()
+   
+
     def getNumberOfNotes(self):
         res = self.index.searcher().doc_count_all()
         return res
