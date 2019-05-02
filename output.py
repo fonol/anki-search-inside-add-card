@@ -348,6 +348,8 @@ class Output:
         Used after note has been edited. The edited note should be rerendered.
         To keep things simple, only note text and tags are replaced. 
         """
+        if self.editor is None or self.editor.web is None:
+            return
         tags = note[2]
         tagStr =  self.buildTagString(tags)  
         nid = note[0]
