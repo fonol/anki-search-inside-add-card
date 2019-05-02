@@ -235,15 +235,15 @@ function updatePinned() {
 }
 
 function setSearchResults(html, infoStr, infoMap) {
-    $("#startInfo").remove();
+    
     $('.cardWrapper').not('.pinned').remove();
+    $("#startInfo,.gridRow:empty").remove();
     document.getElementById("searchResults").style.overflowY = 'hidden';
     document.getElementById("searchResults").style.paddingRight = '24px';
     document.getElementById('searchResults').innerHTML += html;
     document.getElementById('searchResults').scrollTop = 0;
     let c = 1;
     clearTimeout(loadingTimer);
-
     if (infoMap && lastHadResults && document.getElementById("info-Took")) {
         document.getElementById("info-Took").innerHTML = infoMap["Took"];
         document.getElementById("info-Found").innerHTML = infoMap["Found"];
