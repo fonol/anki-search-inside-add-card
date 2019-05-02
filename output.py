@@ -61,17 +61,17 @@ class Output:
                             <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
                             <div id='tags-%s' style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
-                        </div>
-                        """ %("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
+                        </div>""" %("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
                         "&nbsp;&nbsp;&#128336; " + timeDiffString,
                         "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                         res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
                         self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), 
                         res[3], self.buildTagString(res[1]), res[3])  
             if self.gridView:
-                if counter % 2 == 1 or counter == len(searchResults) - 1:
+                if counter % 2 == 1:
                     html += "<div class='gridRow'>%s</div>" % (lastNote + newNote)
-                
+                elif counter == len(searchResults) - 1:
+                    html += "<div class='gridRow'>%s</div>" % (newNote)
             else:
                 html += newNote
             tags = self._addToTags(tags, res[1])
