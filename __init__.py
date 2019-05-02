@@ -774,7 +774,8 @@ def setStats(nid, stats):
     """
     Insert the statistics into the given card.
     """
-    searchIndex.output.showStats(stats[0], stats[1])
+    if searchIndex is not None and searchIndex.output is not None:
+        searchIndex.output.showStats(stats[0], stats[1])
 
 
 
@@ -829,7 +830,7 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
 def rerenderNote(nid):
     res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid).fetchone()
     if res is not None and len(res) > 0:
-        if searchIndex is not None:
+        if searchIndex is not None and searchIndex.output is not None:
             searchIndex.output.updateSingle(res)
 
 
@@ -841,12 +842,12 @@ def defaultSearchWithDecks(editor, textRaw, decks):
         decks: list of deck ids (string), if "-1" is contained, all decks are searched
     """
     if len(textRaw) > 2000:
-        if editor is not None:
+        if editor is not None and editor.web is not None:
             editor.web.eval("setSearchResults(``, 'Query was <b>too long</b>')")
         return
     cleaned = searchIndex.clean(textRaw)
     if len(cleaned) == 0:
-        if editor is not None:
+        if editor is not None and editor.web is not None:
             editor.web.eval("setSearchResults(``, 'Query was empty after cleaning')")
         return
     searchIndex.lastSearch = (cleaned, decks, "default")
