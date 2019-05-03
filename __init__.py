@@ -129,12 +129,11 @@ def initAddon():
 
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific(addToResultAreaHeight, delayWhileTyping)
-    aqt.editor._html += "<script type='text/javascript' src='http://127.0.0.1:59842/_anki/plot.js'></script>"  
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     addHook("loadNote", onLoadNote)
    
 def editorSaveWithIndexUpdate(dialog):
-
+    origSaveAndClose(dialog)
     # update index
     if searchIndex is not None and dialog.editor is not None and dialog.editor.note is not None:
         searchIndex.updateNote(dialog.editor.note)
@@ -142,7 +141,7 @@ def editorSaveWithIndexUpdate(dialog):
         rerenderNote(dialog.editor.note.id)
          # keep track of edited notes (to display a little remark in the results)
         searchIndex.output.edited[str(dialog.editor.note.id)] = time.time()
-    origSaveAndClose(dialog)
+ 
    
 def myOnBridgeCmd(self, cmd):
     """
