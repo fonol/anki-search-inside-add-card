@@ -50,19 +50,19 @@ class Output:
                 timeDiffString = "Could not determine creation date"
             lastNote = newNote
             newNote = """<div class='cardWrapper %s' id='nWr-%s'> 
-                            <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s <div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
+                            <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                                 <div class='editLbl' onclick='edit(%s)'>Edit</div> 
                                 <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
                                 <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
                                 <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div> 
-                                <div id='rem-%s' class='remLbl' onclick='$("#cW-%s").parents().first().remove(); updatePinned();'><span>&times;</span></div> 
+                                <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div> 
                             </div>
                             <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
                             <div id='tags-%s' style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
                         </div>""" %("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
-                        "&nbsp;&nbsp;&#128336; " + timeDiffString,
+                        "&nbsp;&#128336; " + timeDiffString,
                         "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                         res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
                         self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), 
