@@ -299,12 +299,20 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
 
     css = css.replace("$keywordColor$", keywordColor)
 
+
+    try:
+        renderImmediately = str(config["renderImmediately"]).lower()
+    except KeyError:
+        renderImmediately = "false"
+    script = script.replace("$renderImmediately$", renderImmediately)
+
     #replace command key with meta key for mac
     cplatform = platform.system().lower()
     if cplatform == "darwin":
         script = script.replace("event.ctrlKey", "event.metaKey")
     else:
         css = re.sub(r'/\*MAC\*/(.|\n|\r\n)*/\*ENDMAC\*/', "", css, re.S)
+
 
     return all % (css, script)
 
