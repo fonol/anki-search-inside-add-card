@@ -2,8 +2,49 @@ from aqt import mw
 import time
 
 
-def findNotesWithLowestPerformance(decks, limit, retOnly = False):
+def findNotesWithLowestPerformance(decks, limit, pinned, retOnly = False):
     #avgRetAndTime = getAvgTrueRetentionAndTime()
+    scores = _calcScores(decks, limit, retOnly)
+    scores = sorted(scores.items(), key=lambda x: x[1][0], reverse=False)
+    rList = []
+    c = 0
+    for r in scores:
+        if str(r[1][1][0]) not in pinned:
+            rList.append((r[1][1][2], r[1][1][3],r[1][1][4], r[1][1][0]))
+            c += 1
+            if c >= limit:
+                break
+    return rList
+
+def findNotesWithHighestPerformance(decks, limit, pinned, retOnly = False):
+    scores = _calcScores(decks, limit, retOnly)
+    scores = sorted(scores.items(), key=lambda x: x[1][0], reverse=True)
+    rList = []
+    c = 0
+    for r in scores:
+        if str(r[1][1][0]) not in pinned:
+            rList.append((r[1][1][2], r[1][1][3],r[1][1][4], r[1][1][0]))
+            c += 1
+            if c >= limit:
+                break
+    return rList
+
+def getSortedByInterval(decks, limit, pinned, sortOrder):
+    if not "-1" in decks:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+    if deckQ:
+        res = mw.col.db.execute("select notes.id, flds, tags, did, cards.nid FROM cards left join notes on cards.nid = notes.id where did in %s and reps > 0 group by cards.nid order by ivl %s limit %s" % (deckQ, sortOrder, limit)).fetchall()
+    else:
+        res = mw.col.db.execute("select notes.id, flds, tags, did, cards.nid FROM cards left join notes on cards.nid = notes.id where reps > 0 group by cards.nid order by ivl %s limit %s" % (sortOrder, limit)).fetchall()
+    rList = []
+    for r in res:
+        if not str(r[0]) in pinned:
+            rList.append((r[1], r[2], r[3], r[0]))
+    return rList
+
+def _calcScores(decks, limit, retOnly):
     if not "-1" in decks:
         deckQ =  "(%s)" % ",".join(decks)
     else:
@@ -26,11 +67,7 @@ def findNotesWithLowestPerformance(decks, limit, retOnly = False):
                     scores[k] = (score, v[0]) 
             else:
                 scores[k] = (score[0], v[0]) 
-    scores = sorted(scores.items(), key=lambda x: x[1][0], reverse=False)
-    rList = []
-    for r in scores[:limit]:
-        rList.append((r[1][1][2], r[1][1][3],r[1][1][4], r[1][1][0]))
-    return rList
+    return scores
 
 
 def getAvgTrueRetentionAndTime():
@@ -226,15 +263,15 @@ def calculateStats(nid, gridView):
         if cnt > 0:
             avgRetAndTime = getAvgTrueRetentionAndTime()
             infoTable = {}
-            infoTable["True Retention (Cards from this note)"] = retention
-            infoTable["True Retention (Collection)"] = avgRetAndTime[0]
+            infoTable["True Retention (Cards from this note)"] = str(retention) + "%"
+            infoTable["True Retention (Collection)"] = str(avgRetAndTime[0]) + "%"
             infoTable["True Retention (Difference)"] =  str(calcAbsDiffInPercent(retention, avgRetAndTime[0])) + "%"
             tables.append(infoTable)    
 
             infoTable = {}
-            infoTable["Average Time (Cards from this note)"] = avgTime
-            infoTable["Average Time (Collection)"] = avgRetAndTime[1]
-            infoTable["Average Time (Difference)"] = str(calcAbsDiffInPercent(avgTime, avgRetAndTime[1])) + "s"
+            infoTable["Average Time (Cards from this note)"] = str(avgTime) + " s"
+            infoTable["Average Time (Collection)"] = str(avgRetAndTime[1]) + " s"
+            infoTable["Average Time (Difference)"] = str(calcAbsDiffInPercent(avgTime, avgRetAndTime[1])) + " s"
             tables.append(infoTable)
            
 
@@ -261,7 +298,7 @@ def _buildTable(tables, reviewPlotData):
         if len(v) > 1:
             c+= 1
             s += "<div><h3 style='margin-top: 10px;'>%s:</h3>" % k
-            s += "<div id='graph-" + str(c) + "' style='width: 96%; height: 300px; margin-top: 5px; margin-bottom: 40px;'></div></div>"
+            s += "<div id='graph-" + str(c) + "' style='width: 96%; height: 300px; margin-top: 5px; margin-bottom: 45px;'></div></div>"
 
     return s
 
