@@ -262,8 +262,11 @@ function setSearchResults(html, infoStr, infoMap) {
     else
         lastHadResults = false;
 
-    if (renderImmediately)
+    if (renderImmediately) {
         $('.cardWrapper').show();
+        document.getElementById("searchResults").style.overflowY = 'auto';
+        document.getElementById("searchResults").style.paddingRight = '10px';
+    }
     else {
         time = gridView ? 100 : 130;    
         count = gridView ? 16 : 10;
