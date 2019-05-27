@@ -167,7 +167,11 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("nStats ")):
         setStats(cmd[7:], calculateStats(cmd[7:], searchIndex.output.gridView))
     elif (cmd.startswith("tagClicked ")):
-        addTag(cmd[11:])
+        if config["tagClickShouldSearch"]:
+            if checkIndex():
+                rerenderInfo(self, cmd[11:].strip(), searchByTags=True)
+        else:    
+            addTag(cmd[11:])
     elif (cmd.startswith("editN ")):
         openEditor(mw, int(cmd[6:]))
     elif (cmd.startswith("pinCrd")):
@@ -721,8 +725,10 @@ def getIndexInfo():
                <tr><td>Notes in Index:</td><td>  <b>%s</b></td></tr>
                <tr><td>Stopwords:</td><td>  <b>%s</b></td></tr>
                <tr><td>Logging:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Render Immediately:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Tag Click:</td><td>  <b>%s</b></td></tr>
              </table>
-            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.getNumberOfNotes(), len(searchIndex.stopWords), "On" if searchIndex.logging else "Off")
+            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.getNumberOfNotes(), len(searchIndex.stopWords), "On" if searchIndex.logging else "Off", "On" if config["renderImmediately"] else "Off", "Search" if config["tagClickShouldSearch"] else "Add")
     
     return html
 

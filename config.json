@@ -47,7 +47,8 @@
 "browserSearchButtonForegroundColor": "#2496dc",
 "browserSearchButtonBorderColor": "#2496dc",
 "keywordColor": "#2496dc",
-
+"renderImmediately": false,
+"tagClickShouldSearch": true,
 "noteFontSize": 12
 
 }
