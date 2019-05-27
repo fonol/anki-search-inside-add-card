@@ -25,7 +25,7 @@
 "tagForegroundColor": "white",
 "tagBackgroundColor": "#f0506e",
 "tagFontSize" : 12,
-"deckSelectFontSize": 12,
+"deckSelectFontSize": 11,
 "deckSelectForegroundColor": "black",
 "deckSelectBackgroundColor": "white",
 "deckSelectHoverForegroundColor": "white",
