@@ -8,6 +8,7 @@ var last = "";
 var lastHadResults = false;
 var loadingTimer;
 var gridView = false;
+var renderImmediately = $renderImmediately$;
 
 function updateSelectedDecks(elem) {
     selectedDecks = [];
@@ -261,31 +262,35 @@ function setSearchResults(html, infoStr, infoMap) {
     else
         lastHadResults = false;
 
-    time = gridView ? 100 : 130;    
-    count = gridView ? 16 : 10;
-    function renderLoop() {
+    if (renderImmediately)
+        $('.cardWrapper').show();
+    else {
+        time = gridView ? 100 : 130;    
+        count = gridView ? 16 : 10;
+        function renderLoop() {
 
-        if (gridView)
-            $("#nWr-" + c).fadeIn().css("display", "inline-block");
-        else
-            $("#nWr-" + c).fadeIn();
+            if (gridView)
+                $("#nWr-" + c).fadeIn().css("display", "inline-block");
+            else
+                $("#nWr-" + c).fadeIn();
 
-        setTimeout(function () {   
-            c++;                    
-            if (c< count) {            
-               renderLoop();            
-            } else {
-                if (gridView)
-                    $('.cardWrapper').css("display", "inline-block");
-                else
-                    $('.cardWrapper').show();
-                document.getElementById("searchResults").style.overflowY = 'auto';
-                document.getElementById("searchResults").style.paddingRight = '10px';
+            setTimeout(function () {   
+                c++;                    
+                if (c< count) {            
+                renderLoop();            
+                } else {
+                    if (gridView)
+                        $('.cardWrapper').css("display", "inline-block");
+                    else
+                        $('.cardWrapper').show();
+                    document.getElementById("searchResults").style.overflowY = 'auto';
+                    document.getElementById("searchResults").style.paddingRight = '10px';
 
-            }  
-         }, time);
-    }    
-    renderLoop();
+                }  
+            }, time);
+        }    
+        renderLoop();
+    }
 }
 
 function toggleTooltip(elem) {
@@ -306,7 +311,7 @@ function toggleFreeze(elem) {
 function hideTop(){
     $('#topContainer').hide();
     $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - $h-1$px)').css('border-top', '0px');
-    $(elem).children().first().html('&#10097;');
+    $('#toggleTop').children().first().html('&#10097;');
     pycmd("toggleTop off");
 }
 
@@ -342,7 +347,14 @@ function activateGridView() {
 }
 
 
-
+function predefSearch() {
+    let e = document.getElementById("predefSearchSelect");
+    let search = e.options[e.selectedIndex].value;
+    let c = document.getElementById("predefSearchNumberSel");
+    let count = c.options[c.selectedIndex].value;
+    let decks = selectedDecks.toString();
+    pycmd("predefSearch " + search + " " + count + " " + decks);
+}
 
 function addFloatingNote(nid) {
     let content = document.getElementById(nid).innerHTML;
@@ -404,5 +416,25 @@ function dragElement(elmnt, headerId) {
   }
 
 
+function reflowGrid() {
+    let shouldReflow = false;   
+    $('.gridRow').each(function() {
+        if( $(this).find(".cardWrapper").length == 1) {
+            if ($(this).next('.gridRow').length) {
+               if ($(this).next('.gridRow').find('.cardWrapper').length) {
+                    $(this).next('.gridRow').find('.cardWrapper').first().appendTo(this);
+               }
+            }
+        }
+    });
+}
+
+  function removeNote(nid){
+    $("#cW-" + nid).parents().first().remove(); 
+    updatePinned();
+    if (gridView)
+         reflowGrid();
+
+  }
 
 
