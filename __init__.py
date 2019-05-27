@@ -50,7 +50,7 @@ from .output import Output
 from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms
 from .editor import openEditor, EditDialog
 from .tag_find import findBySameTag
-from .stats import calculateStats, findNotesWithLowestPerformance
+from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 
 searchingDisabled = config['disableNonNativeSearching'] 
 delayWhileTyping = max(500, config['delayWhileTyping'])
@@ -62,6 +62,7 @@ corpus = None
 deckMap = None
 output = None
 edit = None
+
 
 def initAddon():
     global corpus, output
@@ -81,6 +82,7 @@ def initAddon():
 
     origSaveAndClose = EditDialog.saveAndClose
     EditDialog.saveAndClose = editorSaveWithIndexUpdate
+
 
     #main functions to search
     if not searchingDisabled:
@@ -142,6 +144,8 @@ def editorSaveWithIndexUpdate(dialog):
          # keep track of edited notes (to display a little remark in the results)
         searchIndex.output.edited[str(dialog.editor.note.id)] = time.time()
  
+def checkIndex():
+    return searchIndex is not None and searchIndex.output is not None and searchIndex.output.editor is not None and searchIndex.output.editor.web is not None
    
 def myOnBridgeCmd(self, cmd):
     """
@@ -174,53 +178,32 @@ def myOnBridgeCmd(self, cmd):
         res = getRandomNotes([s for s in cmd[11:].split(" ") if s != ""])
         searchIndex.output.printSearchResults(res["result"], res["stamp"])
     elif cmd == "toggleTagSelect":
-        if searchIndex is not None:
+        if checkIndex():
             searchIndex.tagSelect = not searchIndex.tagSelect
             if searchIndex.tagSelect:
                 fillTagSelect()
             else:
                 fillDeckSelect(self)
     elif cmd.startswith("searchTag "):
-        if searchIndex is not None:
+        if checkIndex():
             rerenderInfo(self, cmd[10:].strip(), searchByTags=True)
 
-    elif cmd == "lastAdded":
-        if searchIndex is not None:
-            getLastCreatedNotes(self)
+    
         
     elif cmd.startswith("addedSameDay "):
-        if searchIndex is not None:
+        if checkIndex():
             getCreatedSameDay(self, int(cmd[13:]))
     
     elif cmd == "lastTiming":
         if searchIndex is not None and searchIndex.lastResDict is not None:
-            html = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % searchIndex.lastResDict["query"]
-            html += "<h4>Execution time:</h4><table style='width: 100%'>"
-            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", searchIndex.lastResDict["time-stopwords"] if searchIndex.lastResDict["time-stopwords"] > 0 else "< 1") 
-            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", searchIndex.lastResDict["time-synonyms"] if searchIndex.lastResDict["time-synonyms"] > 0 else "< 1") 
-            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Executing Query", searchIndex.lastResDict["time-query"] if searchIndex.lastResDict["time-query"] > 0 else "< 1")
-            if searchIndex.type == "Whoosh":
-                if searchIndex.lastResDict["highlighting"]:
-                    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
-                    
-            
-            elif searchIndex.type == "SQLite FTS5":
-                if searchIndex.lastResDict["highlighting"]:
-                    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
-            else:
-                html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Ranking", searchIndex.lastResDict["time-ranking"] if searchIndex.lastResDict["time-ranking"] > 0 else "< 1")
-                if searchIndex.lastResDict["highlighting"]:
-                    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
-
-            html += "</table>"
-            searchIndex.output.showInModal(html)
+            showTimingModal()
 
     #
     #   Synonyms
     #
 
     elif cmd == "synonyms":
-        if searchIndex is not None:
+        if checkIndex():
             searchIndex.output.showInModal(getSynonymEditor())
     elif cmd.startswith("saveSynonyms "):
         newSynonyms(cmd[13:])
@@ -241,31 +224,16 @@ def myOnBridgeCmd(self, cmd):
     #
     
     elif cmd == "indexInfo":
-        if searchIndex is not None:
+        if checkIndex():
             searchIndex.output.showInModal(getIndexInfo())
     
     #
     #   Special searches
     #
-    
-    elif cmd.startswith("lowestPerf "):
-        if searchIndex is not None:
-            stamp = searchIndex.output.getMiliSecStamp()
-            searchIndex.output.latest = stamp
-            searchIndex.lastSearch = (None, cmd[11:].split(" "), "lowestPerf")
-            res = findNotesWithLowestPerformance(cmd[11:].split(" "), searchIndex.limit)
-            searchIndex.output.printSearchResults(res, stamp)
-            searchIndex.output.hideModal()
-    elif cmd.startswith("lowestRet "):
-        if searchIndex is not None:
-            stamp = searchIndex.output.getMiliSecStamp()
-            searchIndex.lastSearch = (None, cmd[10:].split(" "), "lowestRet")
-            searchIndex.output.latest = stamp
-            res = findNotesWithLowestPerformance(cmd[10:].split(" "), searchIndex.limit, retOnly = True)
-            searchIndex.output.printSearchResults(res, stamp)
-            searchIndex.output.hideModal()
+    elif cmd.startswith("predefSearch "):
+        parsePredefSearchCmd(cmd, self)
     elif cmd == "specialSearches":
-        if searchIndex is not None:
+        if checkIndex():
             searchIndex.output.showInModal(getSpecialSearches())
 
 
@@ -274,19 +242,19 @@ def myOnBridgeCmd(self, cmd):
     #
 
     elif (cmd.startswith("highlight ")):
-        if searchIndex is not None:
+        if checkIndex():
             searchIndex.highlighting = cmd[10:] == "on"
     elif (cmd.startswith("searchWhileTyping ")):
-        if searchIndex is not None:
+        if checkIndex():
             searchIndex.searchWhileTyping = cmd[18:] == "on"
     elif (cmd.startswith("searchOnSelection ")):
-        if searchIndex is not None:
+        if checkIndex():
             searchIndex.searchOnSelection = cmd[18:] == "on"
     elif (cmd.startswith("tagSearch ")):
-        if searchIndex is not None:
+        if checkIndex():
             searchIndex.tagSearch = cmd[10:] == "on"
     elif (cmd.startswith("deckSelection")):
-        if searchIndex is not None:
+        if checkIndex():
             if searchIndex.logging:
                 if len(cmd) > 13:
                     log("Updating selected decks: " + str( [d for d in cmd[14:].split(" ") if d != ""]))
@@ -300,11 +268,11 @@ def myOnBridgeCmd(self, cmd):
             tryRepeatLastSearch(self)
 
     elif cmd == "toggleTop on":
-        if searchIndex is not None:
+        if checkIndex():
             searchIndex.topToggled = True
     
     elif cmd == "toggleTop off":
-        if searchIndex is not None:
+        if checkIndex():
             searchIndex.topToggled = False
 
     elif cmd == "toggleGrid on":
@@ -325,13 +293,83 @@ def myOnBridgeCmd(self, cmd):
     else:
         oldOnBridge(self, cmd)
 
+def parsePredefSearchCmd(cmd, editor):
+    if not checkIndex():
+        return 
+    cmd = cmd[13:]
+    searchtype = cmd.split(" ")[0]
+    limit = int(cmd.split(" ")[1])
+    decks = cmd.split(" ")[2:]
+
+    if searchtype == "lowestPerf":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "lowestPerf")
+        res = findNotesWithLowestPerformance(decks, limit, searchIndex.pinned)
+        searchIndex.output.printSearchResults(res, stamp)
+    elif searchtype == "highestPerf":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "highestPerf")
+        res = findNotesWithHighestPerformance(decks, limit, searchIndex.pinned)
+        searchIndex.output.printSearchResults(res, stamp)
+
+    elif searchtype == "lastAdded":
+        getCreatedNotesOrderedByDate(editor, decks, limit, "desc")
+    elif searchtype == "firstAdded":
+        getCreatedNotesOrderedByDate(editor, decks, limit, "asc")
+    
+    elif searchtype == "lastModified":
+        getLastModifiedNotes(editor, decks, limit)
+    elif searchtype == "lowestRet":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "lowestRet")
+        res = findNotesWithLowestPerformance(decks, limit, searchIndex.pinned,  retOnly = True)
+        searchIndex.output.printSearchResults(res, stamp)
+    elif searchtype == "highestRet":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "highestRet")
+        res = findNotesWithHighestPerformance(decks, limit, searchIndex.pinned,  retOnly = True)
+        searchIndex.output.printSearchResults(res, stamp)
+    elif searchtype == "longestText":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "highestRet")
+        res = findNotesWithLongestText(decks, limit)
+        searchIndex.output.printSearchResults(res, stamp)
+    elif searchtype == "randomUntagged":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "randomUntagged")
+        res = getRandomUntagged(decks, limit)
+        searchIndex.output.printSearchResults(res, stamp)
+    elif searchtype == "highestInterval":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "highestInterval", limit)
+        res = getSortedByInterval(decks, limit, searchIndex.pinned, "desc")
+        searchIndex.output.printSearchResults(res, stamp)
+    elif searchtype == "lowestInterval":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "lowestInterval", limit)
+        res = getSortedByInterval(decks, limit, searchIndex.pinned, "asc")
+        searchIndex.output.printSearchResults(res, stamp)
+
+
+
+
+
+
 def onLoadNote(editor):
     """
     Executed everytime a note is created/loaded in the add cards dialog.
     Wraps the normal editor html in a flex layout to render a second column for the searching ui.
     """
     global corpus, output, edit
-   
+
     #only display in add cards dialog
     if editor.addMode or (config["useInEdit"] and isinstance(editor.parentWindow, EditCurrent)):
         if searchIndex is not None and searchIndex.logging:
@@ -368,15 +406,14 @@ def onLoadNote(editor):
                     </div>
                     <div class='flexCol right' style="position: relative;">
                         <table>
-                            <tr><td style='text-align: left; padding-bottom: 10px; '> <div id='indexInfo' onclick='pycmd("indexInfo");'>Info</div>
+                            <tr><td style='text-align: left; padding-bottom: 10px; '><div id='indexInfo' onclick='pycmd("indexInfo");'>Info</div>
                             <div id='synonymsIcon' onclick='pycmd("synonyms");'>SynSets</div>
-                            <div id='lastAdded' onclick='pycmd("lastAdded");'>Last Added</div>
+                           
                             </td></tr>
                             <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
                             <tr><td class='tbLb'>Search on Typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
                             <tr><td class='tbLb'>Search on Tag Entry</td><td><input id="tagCb" type='checkbox' checked onchange='setTagSearch(this)'/></td></tr>
                             <tr><td class='tbLb'><mark>&nbsp;Highlighting&nbsp;</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
-                          <!--  <tr><td class='tbLb'>(WIP) Infobox</td><td><input type='checkbox' onchange='setUseInfoBox($(this).is(":checked"));'/></td></tr> -->
                         </table>
                         <div>
                             <div id='grid-icon' onclick='toggleGrid(this)'>Grid &#9783;</div>
@@ -419,9 +456,34 @@ def onLoadNote(editor):
                                         </div>
                                     </button>
                                 <input id='searchMask' placeholder=' Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
+                             <div style='flex: 1; text-align: center; user-select: none;'>&nbsp;&nbsp;</div>
+                              <select id='predefSearchSelect'>
+                                <option value='lastAdded' selected='true'>Last Added</option>
+                                <option value='firstAdded'>First Added</option>
+                                <option value='lastModified'>Last Modified</option>
+                                <option value='highestPerf'>Performance (desc.)</option>
+                                <option value='lowestPerf'>Performance (asc.)</option>
+                                <option value='highestRet'>True Retention (desc.)</option>
+                                <option value='lowestRet'>True Retention (asc.)</option>
+                                <option value='highestInterval'>Interval (desc.)</option>
+                                <option value='lowestInterval'>Interval (asc.)</option>
+                                <option value='longestText'>Longest Text</option>
+                                <option value='randomUntagged'>Random Untagged</option> 
+                            </select>
+                            <select id='predefSearchNumberSel'>
+                                <option value='10'>10</option>
+                                <option value='50' selected='true'>50</option>
+                                <option value='100'>100</option>
+                                <option value='200'>200</option>
+                                <option value='500'>500</option>
+                            </select>
+                             <button id='lastAdded' onclick='predefSearch();'>GO</button>
+                             
+                             
+                             <!--
                                 <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
                                 <button id='specialSearches' onclick='pycmd("specialSearches");'>Special</button>
-                            
+                           --> 
                             </div>
                         </div>
                     </div>
@@ -492,6 +554,22 @@ def setPinned(cmd):
         if searchIndex.logging:
             log("Updated pinned: " + str(searchIndex.pinned))
 
+def getRandomUntagged(decks, limit):
+    if not "-1" in decks:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+    if deckQ:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s and (tags is null or tags = '') order by random() limit %s" % (deckQ, limit)).fetchall()
+    else:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by random() limit %s" % limit).fetchall()
+    rList = []
+    for r in res:
+        rList.append((r[1], r[2], r[3], r[0]))
+    return rList
+    
+
+
 def getRandomNotes(decks):
     if searchIndex is None:
         return
@@ -514,25 +592,43 @@ def getRandomNotes(decks):
         rList.append((r[1], r[2], r[3], r[0]))
     return { "result" : rList, "stamp" : stamp }
 
-
-def getLastCreatedNotes(editor):
-    stamp = searchIndex.output.getMiliSecStamp()
-    searchIndex.output.latest = stamp
-    decks = searchIndex.selectedDecks
-    searchIndex.lastSearch = (None, decks, "lastCreated")
+def findNotesWithLongestText(decks, limit):
     if not "-1" in decks and len(decks) > 0:
         deckQ =  "(%s)" % ",".join(decks)
     else:
         deckQ = ""
     if len(deckQ) > 0:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by nid desc limit 50" %(deckQ)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by length(replace(trim(flds), '\u001f', '')) desc limit %s" %(deckQ, limit)).fetchall()
     else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by nid desc limit 50").fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by length(replace(trim(flds), '\u001f', '')) desc limit %s" % (limit )).fetchall()
     rList = []
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in searchIndex.pinned:
-            #todo: implement highlighting
+            rList.append((r[1], r[2], r[3], r[0]))
+    return rList
+
+
+def getCreatedNotesOrderedByDate(editor, decks, limit, sortOrder):
+    stamp = searchIndex.output.getMiliSecStamp()
+    searchIndex.output.latest = stamp
+    if sortOrder == "desc":
+        searchIndex.lastSearch = (None, decks, "lastCreated", limit)
+    else:
+        searchIndex.lastSearch = (None, decks, "firstCreated", limit)
+
+    if not "-1" in decks and len(decks) > 0:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+    if len(deckQ) > 0:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by nid %s limit %s" %(deckQ, sortOrder, limit)).fetchall()
+    else:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by nid %s limit %s" % (sortOrder, limit)).fetchall()
+    rList = []
+    for r in res:
+        #pinned items should not appear in the results
+        if not str(r[0]) in searchIndex.pinned:
             rList.append((r[1], r[2], r[3], r[0]))
 
     if editor.web is not None:
@@ -540,6 +636,8 @@ def getLastCreatedNotes(editor):
             searchIndex.output.printSearchResults(rList, stamp, editor)
         else:
             editor.web.eval("setSearchResults(``, 'No results found.')")
+
+
 
 def tryRepeatLastSearch(editor = None):
     if searchIndex is not None and searchIndex.lastSearch is not None:
@@ -552,8 +650,35 @@ def tryRepeatLastSearch(editor = None):
         #     res = getRandomNotes(searchIndex.selectedDecks)
         #     searchIndex.output.printSearchResults(res["result"], res["stamp"])
         elif searchIndex.lastSearch[2] == "lastCreated":
-            getLastCreatedNotes(editor)
+            getCreatedNotesOrderedByDate(editor, searchIndex.selectedDecks, searchIndex.lastSearch[3], "desc")
+        elif searchIndex.lastSearch[2] == "firstCreated":
+            getCreatedNotesOrderedByDate(editor, searchIndex.selectedDecks, searchIndex.lastSearch[3], "asc")
 
+def getLastModifiedNotes(editor, decks, limit):
+    stamp = searchIndex.output.getMiliSecStamp()
+    searchIndex.output.latest = stamp
+    searchIndex.lastSearch = (None, decks, "lastModified")
+
+    if not "-1" in decks and len(decks) > 0:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+    if len(deckQ) > 0:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mod from notes left join cards on notes.id = cards.nid where did in %s order by notes.mod desc limit %s" %(deckQ, limit)).fetchall()
+    else:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mod from notes left join cards on notes.id = cards.nid order by notes.mod desc limit %s" % (limit)).fetchall()
+    rList = []
+    for r in res:
+        #pinned items should not appear in the results
+        if not str(r[0]) in searchIndex.pinned:
+            #todo: implement highlighting
+            rList.append((r[1], r[2], r[3], r[0]))
+
+    if editor.web is not None:
+        if len(rList) > 0:
+            searchIndex.output.printSearchResults(rList, stamp, editor)
+        else:
+            editor.web.eval("setSearchResults(``, 'No results found.')")
 
 def getCreatedSameDay(editor, nid):
     stamp = searchIndex.output.getMiliSecStamp()
@@ -600,6 +725,29 @@ def getIndexInfo():
             """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.getNumberOfNotes(), len(searchIndex.stopWords), "On" if searchIndex.logging else "Off")
     
     return html
+
+def showTimingModal():
+    html = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % searchIndex.lastResDict["query"]
+    html += "<h4>Execution time:</h4><table style='width: 100%'>"
+    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", searchIndex.lastResDict["time-stopwords"] if searchIndex.lastResDict["time-stopwords"] > 0 else "< 1") 
+    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", searchIndex.lastResDict["time-synonyms"] if searchIndex.lastResDict["time-synonyms"] > 0 else "< 1") 
+    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Executing Query", searchIndex.lastResDict["time-query"] if searchIndex.lastResDict["time-query"] > 0 else "< 1")
+    if searchIndex.type == "Whoosh":
+        if searchIndex.lastResDict["highlighting"]:
+            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
+            
+    
+    elif searchIndex.type == "SQLite FTS5":
+        if searchIndex.lastResDict["highlighting"]:
+            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
+    else:
+        html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Ranking", searchIndex.lastResDict["time-ranking"] if searchIndex.lastResDict["time-ranking"] > 0 else "< 1")
+        if searchIndex.lastResDict["highlighting"]:
+            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
+
+    html += "</table>"
+    searchIndex.output.showInModal(html)
+
 
 def getSpecialSearches():
     if searchIndex is None:
@@ -1035,6 +1183,8 @@ def getCorpus():
         uList.append((id, flds, t, did))
     return uList
     
+
+
 
 
 class ProcessRunnable(QRunnable):
