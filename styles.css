@@ -190,6 +190,7 @@ body {
     cursor: pointer;
     flex: 1;
     font-size: 13px;
+    user-select: none;
 }
 .srchLbl  {
     background:  $noteBackgroundColor$; 
@@ -293,10 +294,14 @@ body {
 .cardLeftBot:hover {
     color: #2496dc;
 }
-
-
+#predefSearchSelect {
+    margin-right: 5px;
+}
+#predefSearchNumberSel {
+    margin-right: 5px;
+}
 #searchMask {
-    flex: 1;
+    flex: 3;
     background: $browserSearchInputBackgroundColor$;
     color: $browserSearchInputForegroundColor$;
     border: 1px solid $browserSearchInputBorderColor$;
@@ -407,7 +412,7 @@ body {
     margin-bottom: 0px !important;
 }
 
-@media (max-height: 630px) {
+@media (max-height: 640px) {
     #tagContainer {
         max-height: 100px !important;
     }
@@ -526,7 +531,7 @@ body {
     position: absolute; 
     bottom: 5px; 
     right: 5px; 
-    font-size: 15px;
+    font-size: 13px;
     cursor: pointer;
     color: grey;
     user-select: none;
@@ -536,8 +541,8 @@ body {
 #freeze-icon {
     position: absolute; 
     bottom: 5px; 
-    right: 95px; 
-    font-size: 15px;
+    right: 80px; 
+    font-size: 13px;
     cursor: pointer;
     color: grey;
     user-select: none;
@@ -555,8 +560,8 @@ body {
 #grid-icon {
     position: absolute; 
     bottom: 5px; 
-    right: 175px; 
-    font-size: 15px;
+    right: 145px; 
+    font-size: 13px;
     cursor: pointer;
     color: grey;
     user-select: none;
@@ -704,13 +709,11 @@ user-select: none;
 }
 #lastAdded {
     display: inline;
-    padding: 1px 4px 1px 4px;
     color: $infoButtonForegroundColor$;
     background: $infoButtonBackgroundColor$;
     border: 1px solid $infoButtonBorderColor$;
     cursor: pointer;
     user-select: none;
-    font-size: 11px;
     outline: none;
 
 }
@@ -783,6 +786,7 @@ user-select: none;
     background: $modalBackgroundColor$;
     color: #2496dc;
     cursor: pointer;
+    user-select: none;
 }
 
 /*  tag list */
