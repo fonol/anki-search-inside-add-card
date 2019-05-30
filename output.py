@@ -6,6 +6,7 @@ from datetime import datetime
 from aqt.utils import showInfo
 from .textutils import clean, trimIfLongerThan, deleteChars
 from .logging import log
+from .stats import getRetentions
 
 class Output:
 
@@ -18,6 +19,7 @@ class Output:
         self.gridView = False
         self.stopwords = []
         self.plotjsLoaded = False
+        self.showRetentionScores = True
 
 
     def printSearchResults(self, searchResults, stamp, editor=None, logging=False, printTimingInfo=False):
@@ -41,6 +43,10 @@ class Output:
         timeDiffString = ""
         newNote = ""
         lastNote = "" 
+        nids = [r[3] for r in searchResults]
+        if self.showRetentionScores:
+            retsByNid = getRetentions(nids)
+        ret = 0
         for counter, res in enumerate(searchResults):
             try:
                 timeDiffString = self._getTimeDifferenceString(res[3], epochTime)
@@ -48,9 +54,24 @@ class Output:
                 if logging:
                     log("Failed to determine creation date: " + str(res[3]))
                 timeDiffString = "Could not determine creation date"
+            ret = retsByNid[int(res[3])] if self.showRetentionScores and int(res[3]) in retsByNid else None
+
+            if ret is not None:
+                retMark = "background: %s;" % (self._retToColor(ret)) 
+                if str(res[3]) in self.edited:
+                    retMark += "max-width: 20px;"
+                retInfo = """<div class='retMark' style='%s'>%s</div>
+                             """ % (retMark, int(ret))
+            else:
+                retInfo = ""
+
             lastNote = newNote
             newNote = """<div class='cardWrapper %s' id='nWr-%s'> 
-                            <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
+                            
+                            <div class='topLeftWr'>
+                                <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
+                                %s
+                            </div>
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                                 <div class='editLbl' onclick='edit(%s)'>Edit</div> 
                                 <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
@@ -59,12 +80,12 @@ class Output:
                                 <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div> 
                             </div>
                             <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
-                            <div id='tags-%s' style='position: absolute; bottom: 0px; right: 0px; z-index:9999'>%s</div>     
+                            <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
                         </div>""" %("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
                         "&nbsp;&#128336; " + timeDiffString,
                         "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
-                        res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
+                        retInfo, res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
                         self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), 
                         res[3], self.buildTagString(res[1]), res[3])  
             if self.gridView:
@@ -109,9 +130,9 @@ class Output:
             for t, s in tm.items():
                 if len(s) > 0:
                     tagData = " ".join(self.iterateTagmap({t : s}, ""))
-                    html += "<div class='tagLbl' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(tagData, trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
+                    html += "<div class='tagLbl tooltip' data-tags='%s' data-name='%s' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)' onclick='tagClick(this);'><div class='tooltiptext-tag' onclick='event.stopPropagation();'></div>%s</div>" %(tagData, tagData, trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
                 else:
-                    html += "<div class='tagLbl' data-name='%s' onclick='tagClick(this);'>%s</div>" %(t, trimIfLongerThan(t, maxLength))
+                    html += "<div class='tagLbl tooltip' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)' data-name='%s' onclick='tagClick(this);'><div class='tooltiptext-tag' onclick='event.stopPropagation();'></div>%s</div>" %(t, trimIfLongerThan(t, maxLength))
         else:
             tagData = " ".join(self.iterateTagmap(tm, ""))
             html += "<div class='tagLbl' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(tagData, str(len(tm)) + " tags ...")
@@ -217,15 +238,40 @@ class Output:
         if self.editor is not None:
             self.editor.web.eval(cmd)
 
-
-    def showStats(self, text, reviewPlotData):
-        
+    def _loadPlotJsIfNotLoaded(self):
         if not self.plotjsLoaded:
             dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/output.py", "")
             with open(dir + "/plot.js") as f:
                 plotjs = f.read()
             self.editor.web.eval(plotjs)
             self.plotjsLoaded = True
+
+
+    def showTrueRetStatsForTag(self, trueRetOverTime):
+        
+        if trueRetOverTime is None or len(trueRetOverTime) < 2:
+            cmd = "$('#trueRetGraph,#trueRetGraphLbl').hide();"
+        else:
+            self._loadPlotJsIfNotLoaded()
+            options = """
+                        {  series: { 
+                                lines: { show: true, fillColor: "#2496dc" }, 
+                        }, 
+                        label: "True Retention", 
+                        yaxis: { max: 100, min: 0
+                        } , 
+                        colors: ["#2496dc"] 
+                        }
+                    """
+            rawData = [[i,t] for i, t in enumerate(trueRetOverTime)]
+            cmd = "$.plot($('#trueRetGraph'), [ %s ],  %s);" % (json.dumps(rawData), options)
+        if self.editor is not None:
+            cmd += "$('.t-inverted').css('margin-bottom', '-' + ($('.t-inverted').first().height() + 23) + 'px');"
+            self.editor.web.eval(cmd)
+
+    def showStats(self, text, reviewPlotData):
+        
+        self._loadPlotJsIfNotLoaded()
         
         cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`; document.getElementById('modalText').scrollTop = 0; " % (text)
         c = 0
@@ -359,8 +405,26 @@ class Output:
             document.getElementById('%s').innerHTML = `%s`; 
             document.getElementById('tags-%s').innerHTML = `%s`;
         """ % (nid, text, nid, tagStr))
+
         self.editor.web.eval("$('#cW-%s').find('.rankingLblAddInfo').hide();" % nid)
+        self.editor.web.eval("fixRetMarkWidth(document.getElementById('cW-%s'));" % nid)
         self.editor.web.eval("$('#cW-%s .editedStamp').html(`&nbsp;&#128336; Edited just now`).show();" % nid)
+
+
+    def _retToColor(self, retention):
+        if retention < (100 / 7.0):
+            return "#ff0000"
+        if retention < (100 / 7.0) * 2:
+            return "#ff4c00"
+        if retention < (100 / 7.0) * 3:
+            return "#ff9900"
+        if retention < (100 / 7.0) * 4:
+            return "#ffe500"
+        if retention < (100 / 7.0) * 5:
+            return "#cbff00"
+        if retention < (100 / 7.0) * 6:
+            return "#7fff00"
+        return "#32ff00"
 
 
     def getMiliSecStamp(self):
