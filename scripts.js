@@ -41,8 +41,13 @@ function selectDeckWithId(did) {
     updateSelectedDecks();
 }
 
+function fixRetMarkWidth(elem) {
+    if (elem.parentElement.getElementsByClassName("retMark").length > 0 && elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth.length == 0)
+        elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth = elem.offsetWidth + "px";
+}
+
 function expandRankingLbl(elem) {
-    
+    fixRetMarkWidth(elem);
     if (elem.getElementsByClassName("rankingLblAddInfo")[0].offsetParent === null) {
         elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "inline";
         elem.getElementsByClassName("editedStamp")[0].style.display = "none";
@@ -83,6 +88,36 @@ function cardMouseLeave(elem, nid) {
         
     }, 100);
 }
+
+function tagMouseEnter(elem) {
+    setTimeout(function() {
+        if (elem.parentElement.querySelector(':hover') === elem) {
+            $(elem).css("z-index", "9999");
+            $("#greyout").show();
+            let offsetTop = $(elem.parentElement.parentElement).offset().top;
+            if (!$('#topContainer').is(":hidden"))
+                offsetTop -= $('#topContainer').height();
+            let offsetBot = $('#searchResults').height() - offsetTop - $('#bottomContainer').height() + 20;
+            
+            if (offsetTop < 0) {
+                offsetTop += $(elem.parentElement.parentElement).height();
+                offsetBot = $('#searchResults').height() - offsetTop;
+            }
+
+            if (offsetTop > 0 && offsetTop < offsetBot) {
+                $(elem).children().first().addClass("t-inverted");
+            }           
+            $(elem).children().first().addClass("shouldFill");
+            pycmd("tagInfo " + $(elem).data("name"));
+        }
+    }, 300);
+}
+function tagMouseLeave(elem) {
+    $("#greyout").hide();
+    $(elem).css("z-index", "999");
+    $(elem).children().first().removeClass('t-inverted').removeClass("shouldFill").css('margin-bottom', '0px').html('').hide();
+}
+
 
 function getSelectionText() {
     if (!searchOnSelection || isFrozen)
@@ -131,6 +166,7 @@ function tagClick(elem) {
         return
     }
     let name = $(elem).data('name');
+    $("#greyout").hide();
     pycmd('tagClicked ' + name);
 }
 
@@ -198,7 +234,7 @@ function searchMaskKeypress(event) {
 
 function pinCard(elem, nid) {
     $('#cW-' + nid).css('padding', '3px 4px 5px 5px');
-    $('#cW-' + nid).css('font-size', '10px');
+    $('#cW-' + nid).css('font-size', '9px');
     let info = document.getElementById('cW-' + nid).getElementsByClassName("rankingLblAddInfo")[0];
     let editedStamp = document.getElementById('cW-' + nid).getElementsByClassName("editedStamp")[0];
     $('#cW-' + nid).html('<span>&#128204;</span>');
@@ -227,7 +263,7 @@ function edit(nid) {
 function updatePinned() {
     let pincmd = 'pinCrd';
     $('.pinned').each(function (index) {
-        pincmd += " " + $(this).children().first().attr('id').substring(3);
+        pincmd += " " + $(this).children().first().children().first().attr('id').substring(3);
     });
     $('.noteFloating').each(function (index) {
         pincmd += " " + $(this).attr('id').substring(3);
@@ -239,6 +275,7 @@ function setSearchResults(html, infoStr, infoMap) {
     
     $('.cardWrapper').not('.pinned').remove();
     $("#startInfo,.gridRow:empty").remove();
+    $("#greyout").hide();
     document.getElementById("searchResults").style.overflowY = 'hidden';
     document.getElementById("searchResults").style.paddingRight = '24px';
     document.getElementById('searchResults').innerHTML += html;
@@ -263,7 +300,10 @@ function setSearchResults(html, infoStr, infoMap) {
         lastHadResults = false;
 
     if (renderImmediately) {
-        $('.cardWrapper').show();
+        if (gridView)
+            $('.cardWrapper').css("display", "inline-block");
+        else
+            $('.cardWrapper').show();
         document.getElementById("searchResults").style.overflowY = 'auto';
         document.getElementById("searchResults").style.paddingRight = '10px';
     }
@@ -433,7 +473,7 @@ function reflowGrid() {
 }
 
   function removeNote(nid){
-    $("#cW-" + nid).parents().first().remove(); 
+    $(document.getElementById("cW-" + nid).parentElement.parentElement).remove(); 
     updatePinned();
     if (gridView)
          reflowGrid();
