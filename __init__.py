@@ -49,8 +49,8 @@ from .whoosh_index import SearchIndex
 from .output import Output
 from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms
 from .editor import openEditor, EditDialog
-from .tag_find import findBySameTag
-from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
+from .tag_find import findBySameTag, buildTagInfo
+from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval, getTrueRetentionOverTime
 
 searchingDisabled = config['disableNonNativeSearching'] 
 delayWhileTyping = max(500, config['delayWhileTyping'])
@@ -192,6 +192,12 @@ def myOnBridgeCmd(self, cmd):
         if checkIndex():
             rerenderInfo(self, cmd[10:].strip(), searchByTags=True)
 
+    elif cmd.startswith("tagInfo "):
+        if checkIndex():
+            #this renders the popup, but the true retention graph is not yet created
+            nids = buildTagInfo(self, cmd[8:], searchIndex.synonyms)
+            trueRetentionOverTime = getTrueRetentionOverTime(nids)
+            searchIndex.output.showTrueRetStatsForTag(trueRetentionOverTime)
     
         
     elif cmd.startswith("addedSameDay "):
@@ -376,6 +382,13 @@ def onLoadNote(editor):
 
     #only display in add cards dialog
     if editor.addMode or (config["useInEdit"] and isinstance(editor.parentWindow, EditCurrent)):
+        
+        #read the size of the two columns from the config, default is 50/50
+        leftSideWidth = config["leftSideWidthInPercent"]
+        if not isinstance(leftSideWidth, int) or leftSideWidth <= 0 or leftSideWidth > 100:
+            leftSideWidth = 50
+        rightSideWidth = 100 - leftSideWidth
+
         if searchIndex is not None and searchIndex.logging:
             log("Trying to insert html in editor")
             log("Editor.addMode: %s" % editor.addMode)
@@ -384,11 +397,11 @@ def onLoadNote(editor):
         //check if ui has been rendered already
         if (!$('#outerWr').length) {
     
-        $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; width: 50%; flex-grow: 1; '></div>`);
+        $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; flex-grow: 1; width: $leftSideWidth$%;'></div>`);
         $(`
-        <div class='coll secondCol' style='flex-grow: 1; width: 50%; height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; padding-bottom: 4px; margin-left: 30px; position: relative;' id='infoBox'>
+        <div class='coll secondCol' style='flex-grow: 1; width: $rightSideWidth$%;  height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; padding-bottom: 4px; margin-left: 30px; position: relative;' id='infoBox'>
 
-
+            <div id="greyout"></div>
             <div id="a-modal" class="modal">
                 <div class="modal-content">
                     <div id='modal-visible'>
@@ -432,12 +445,11 @@ def onLoadNote(editor):
                 <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - $height$px); width: 100%; border-top: 1px solid grey;">
                         <div style='position: absolute; top: 5px; right: 7px; width: 30px;'>
                             <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
-                           
                         </div>
                 <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
                 <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
                     <div id='searchInfo'></div>
-                    <div id='searchResults' style=''></div>
+                    <div id='searchResults'></div>
                 </div>
                 </div>
                     <div id='bottomContainer'>
@@ -446,17 +458,17 @@ def onLoadNote(editor):
                             <div class='flexContainer' style="flex-wrap: nowrap;">
                                     <button class='tooltip tooltip-blue' onclick="toggleTooltip(this);">&#9432;
                                         <div class='tooltiptext'>
-                                        <table>
-                                            <tr><td>dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
-                                            <tr><td>dog or cat </td><td> either "dog" or "cat"  </td></tr>
-                                            <tr><td>dog (cat or mouse)</td><td>  dog and cat, or dog and mouse </td></tr>
-                                            <tr><td>-cat</td><td> without the word "cat" </td></tr>
-                                            <tr><td>-cat -mouse </td><td>  neither "cat" nor "mouse"  </td></tr>
-                                            <tr><td>"a dog"</td><td>exact phrase </td></tr>
-                                            <tr><td>-"a dog" </td><td> without the exact phrase</td></tr>
-                                            <tr><td>d_g</td><td> d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
-                                            <tr><td>d*g</td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
-                                        </table>
+                                            <table>
+                                                <tr><td>dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
+                                                <tr><td>dog or cat </td><td> either "dog" or "cat"  </td></tr>
+                                                <tr><td>dog (cat or mouse)</td><td>  dog and cat, or dog and mouse </td></tr>
+                                                <tr><td>-cat</td><td> without the word "cat" </td></tr>
+                                                <tr><td>-cat -mouse </td><td>  neither "cat" nor "mouse"  </td></tr>
+                                                <tr><td>"a dog"</td><td>exact phrase </td></tr>
+                                                <tr><td>-"a dog" </td><td> without the exact phrase</td></tr>
+                                                <tr><td>d_g</td><td> d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
+                                                <tr><td>d*g</td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
+                                            </table>
                                         </div>
                                     </button>
                                 <input id='searchMask' placeholder=' Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
@@ -482,12 +494,6 @@ def onLoadNote(editor):
                                 <option value='500'>500</option>
                             </select>
                              <button id='lastAdded' onclick='predefSearch();'>GO</button>
-                             
-                             
-                             <!--
-                                <button id='searchBtn' onclick='sendSearchFieldContent()'>Search</button>
-                                <button id='specialSearches' onclick='pycmd("specialSearches");'>Special</button>
-                           --> 
                             </div>
                         </div>
                     </div>
@@ -503,7 +509,7 @@ def onLoadNote(editor):
         
         window.addEventListener('resize', onResize, true);
         onResize();
-        """.replace("$height$", str(280 - addToResultAreaHeight)))
+        """.replace("$height$", str(280 - addToResultAreaHeight)).replace("$leftSideWidth$", str(leftSideWidth)).replace("$rightSideWidth$", str(rightSideWidth)))
     
 
         if searchIndex is not None:
@@ -643,6 +649,8 @@ def getCreatedNotesOrderedByDate(editor, decks, limit, sortOrder):
 
 
 
+
+
 def tryRepeatLastSearch(editor = None):
     if searchIndex is not None and searchIndex.lastSearch is not None:
         if editor is None and searchIndex.output.editor is not None:
@@ -727,8 +735,17 @@ def getIndexInfo():
                <tr><td>Logging:</td><td>  <b>%s</b></td></tr>
                <tr><td>Render Immediately:</td><td>  <b>%s</b></td></tr>
                <tr><td>Tag Click:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Show Retention in Results:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Window split:</td><td>  <b>%s</b></td></tr>
              </table>
-            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.getNumberOfNotes(), len(searchIndex.stopWords), "On" if searchIndex.logging else "Off", "On" if config["renderImmediately"] else "Off", "Search" if config["tagClickShouldSearch"] else "Add")
+            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.getNumberOfNotes(), len(searchIndex.stopWords), 
+            "On" if searchIndex.logging else "Off", 
+            "On" if config["renderImmediately"] else "Off", 
+            "Search" if config["tagClickShouldSearch"] else "Add",
+            "On" if config["showRetentionScores"] else "Off", 
+            str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"])
+
+            )
     
     return html
 
@@ -1128,6 +1145,12 @@ def _buildIndex():
         limit = 20
     searchIndex.limit = limit
 
+    try:
+        showRetentionScores = config["showRetentionScores"]
+    except KeyError:
+        showRetentionScores = True
+    searchIndex.output.showRetentionScores = showRetentionScores
+
     if searchIndex.logging:
         log("\n--------------------\nInitialized searchIndex:")
         log("""Type: %s\n# Stopwords: %s \n# Synonyms: %s \nLimit: %s \n""" % (searchIndex.type, len(searchIndex.stopWords), len(searchIndex.synonyms), limit))
@@ -1161,6 +1184,9 @@ def printStartingInfo(editor):
         html += "<br/>Index contains <b>%s</b> notes." % searchIndex.getNumberOfNotes()
         html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
         html += "<br/>Logging is turned <b>%s</b>. %s" % ("on" if searchIndex.logging else "off", "You should probably disable it if you don't have any problems." if searchIndex.logging else "")
+        html += "<br/>Results are rendered <b>%s</b>." % ("immediately" if config["renderImmediately"] else "with fade-in")
+        html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
+        html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - config["leftSideWidthInPercent"])
 
     if searchIndex is None or searchIndex.output is None:
         html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"

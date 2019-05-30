@@ -1,6 +1,8 @@
 
 from aqt import *
 from aqt.utils import showInfo
+from .textutils import trimIfLongerThan
+from .stats import getAvgTrueRetention
 
 def findBySameTag(tagStr, limit, decks, pinned):
    
@@ -26,3 +28,60 @@ def findBySameTag(tagStr, limit, decks, pinned):
         if not str(r[0]) in pinned:
             rList.append((r[1], r[2], r[3], r[0]))
     return { "result" : rList[:limit]}
+
+def buildTagInfo(editor, tag, synonyms):
+    if " " in tag:
+        tagsContained = tag.split(" ")
+    else:
+        tagsContained = [tag]
+    for synset in synonyms:
+        synsetNorm = [s.lower() for s in synset]
+        for tag in tagsContained:
+            if tag.lower() in synsetNorm:
+                tag += " " + " ".join(synset)
+                break
+    searchRes = findBySameTag(tag, 30000, [], [])
+    tagsfound = {}
+    for r in searchRes["result"]:
+        spl = r[1].split()
+        for s in spl:
+            if s == tag or s in tag.split():
+                continue
+            if s in tagsfound:
+                tagsfound[s] += 1
+            else:
+                tagsfound[s] = 1
+    sortedCounts = sorted(tagsfound.items(), key=lambda kv: kv[1], reverse=True)
+    html = """
+        <span id='trueRetGraphLbl'>Retention for this Topic / Reviews</span>
+        <div id="trueRetGraph" style='width: 290px; height: 150px;'></div>
+        <table style='width: 100%%; margin-top: 5px;'>
+            <tr><td style='text-align: left;'>Retention</td><td style='text-align: right;'><b>%s</b></td></tr>
+            <tr><td style='text-align: left;'>Notes</td><td style='text-align: right;'><b>%s</b></td></tr>
+            <tr><td style='text-align: left'>Related</td><td>%s</td></tr></table>
+    """ 
+    tags = ""
+   
+    if len(sortedCounts) < 3:
+        starter = set([t[0] for t in sortedCounts])
+        for t in sortedCounts:
+            res = findBySameTag(t[0], 30000, [], [])
+            for r in res["result"]:
+                spl = r[1].split()
+                for s in spl:
+                    if s == tag or s in tag.split(): #or s in starter:
+                        continue
+                    if s in tagsfound:
+                        tagsfound[s] += 1
+                    else:
+                        tagsfound[s] = 1
+        sortedCounts = sorted(tagsfound.items(), key=lambda kv: kv[1], reverse=True)
+    for k in sortedCounts[:10]:
+        tags += "<div class='tagLbl smallMarginBottom' data-name='%s' onclick='tagClick(this);'>%s</div>" % (k[0], trimIfLongerThan(k[0], 40))
+    
+    nids = [r[3] for r in searchRes["result"]]
+    tret = getAvgTrueRetention(nids)
+    
+    html = html % (tret if tret is not None else "Not enough reviews", len(searchRes["result"]), tags)
+    editor.web.eval("$('.tooltiptext-tag.shouldFill').html(`%s`).show();" % html)
+    return nids
