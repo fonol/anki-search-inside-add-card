@@ -43,7 +43,6 @@ body {
  }
 
 #searchResults {
-    position: relative;
     display: none; 
     height: 94%; 
     overflow-y: auto; 
@@ -138,6 +137,10 @@ body {
     color: $keywordColor$; 
 }
 
+#topContainer {
+    z-index: 999;
+    position: relative;
+}
 
 .searchInfoTagLbl {
     background: $tagBackgroundColor$; 
@@ -154,6 +157,7 @@ body {
 
 
 .tagLbl {
+    position: relative;
     background: $tagBackgroundColor$; 
     color: $tagForegroundColor$; 
     padding: 2px 4px 2px 4px; 
@@ -162,22 +166,37 @@ body {
     float: right; 
     font-size: $tagFontSize$;
     cursor: pointer;
+    z-index: 999;
 }
+
+.topLeftWr {
+    position: absolute; 
+    left: 0px; 
+    top: 0px; 
+    z-index:999;
+    font-size: 0;
+}
+
+.retMark {
+    display: inline-block;
+    width: calc(100% - 0px);
+    height: 17px;
+    font-size: 9px;
+    text-align: center;
+    line-height: 17px;
+}
+
 .rankingLbl {
     background: #2496dc; 
     color: white; 
     padding: 2px 6px 2px 6px; 
-    position: absolute; 
     font-size: 11px;
-    left: 0px; 
-    top: 0px; 
-    z-index:9999;
     user-select: none;
     cursor: pointer;
 }
 .rankingLblAddInfo {
     display: none;
-  user-select: none;
+    user-select: none;
 }
 .remLbl, .floatLbl {
   
@@ -283,7 +302,7 @@ body {
     position: absolute; 
     bottom: 2px; 
     left: 0px; 
-    z-index:9999; 
+    z-index:999; 
     border: 1px solid  $noteBorderColor$;
     background:  $noteBackgroundColor$;
     color: $noteForegroundColor$;
@@ -440,6 +459,9 @@ body {
     .minorScore {
         display: none;
     }
+    #searchInfo {
+        display: none;
+    }
 }
 
 @media (min-height: 900px) {
@@ -574,9 +596,9 @@ body {
    /* tooltip */
 
 .tooltip {
-    position: relative;
+    position: relative !important;
     display: inline-block;
-  }
+}
 
   .tooltip-blue {
     color: $browserSearchButtonForegroundColor$;
@@ -589,7 +611,7 @@ body {
   
   .tooltip .tooltiptext {
     display: none;
-    width: 240px;
+    width: 300px;
     background-color: $modalBackgroundColor$;
     color: $modalForegroundColor$;
     font-size: 12px;
@@ -608,7 +630,31 @@ body {
   .tooltiptext td {
       text-align: left;
   }
+  .tooltiptext-tag {
+    display: none;
+    width: 300px;
+    background-color: $modalBackgroundColor$;
+    color: $modalForegroundColor$;
+    font-size: 12px;
+    text-align: center;
+    border: 2px solid $tagBackgroundColor$ !important;
+    padding: 10px;
+    position: absolute;
+    z-index: 99999999;
+    bottom: 95%;
+    margin-top: -5px;
+    right: 0px;
+    user-select: none;
+    cursor: default;
 
+
+     
+
+  }
+  .t-inverted {
+       top: 100 !important;
+       bottom: 0 !important;
+  }
 
   /* deck list*/
 
@@ -741,6 +787,18 @@ user-select: none;
 
 /* Modal */
 
+#greyout {
+    display: none; 
+    position: absolute; 
+    z-index: 9999; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto;
+    background-color: rgb(0,0,0); 
+    background-color: rgba(0,0,0,0.4); 
+}
 
 .modal {
     display: none; 
