@@ -49,6 +49,8 @@
 "keywordColor": "#2496dc",
 "renderImmediately": false,
 "tagClickShouldSearch": true,
-"noteFontSize": 12
+"noteFontSize": 12,
+"leftSideWidthInPercent": 50,
+"showRetentionScores": true
 
 }
