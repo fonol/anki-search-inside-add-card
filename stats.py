@@ -70,6 +70,45 @@ def _calcScores(decks, limit, retOnly):
     return scores
 
 
+def getAvgTrueRetention(nids):
+    query = "select id from cards where nid in %s" % ("(%s)" % ",".join([str(nid) for nid in nids]))
+    cids = mw.col.db.execute(query).fetchall()
+    cids = [c[0] for c in cids]
+    tret = _getScore(cids, True)
+    return tret
+
+def getTrueRetentionOverTime(nids):
+    query = "select id from cards where nid in %s" % ("(%s)" % ",".join([str(nid) for nid in nids]))
+    cids = mw.col.db.execute(query).fetchall()
+    cids = [c[0] for c in cids]
+    return _getTrueRetentionOverTime(cids)
+        
+def getRetentions(nids):
+    passedById = dict()
+    failedById = dict()
+    retsByNid = {}
+    query = "select a.nid, ease from revlog join (select notes.id as nid, cards.id as cid from notes join cards on notes.id = cards.nid where notes.id in (%s)) as a on revlog.cid = a.cid where revlog.type = 1"
+    query = query % ",".join([str(n) for n in nids]) 
+    res = list(mw.col.db.execute(query).fetchall())
+        
+    for r in res:
+        if r[0] is None:
+            continue
+        if r[0] not in passedById:
+            passedById[r[0]] = 0
+        if r[0] not in failedById:
+            failedById[r[0]] = 0
+        if r[1] != 1:
+            passedById[r[0]] += 1
+        else:
+            failedById[r[0]] += 1
+    for k,v in passedById.items():
+        retsByNid[k] = round(100 * v / (v + failedById[k]), 0)
+    return retsByNid
+    
+
+
+
 def getAvgTrueRetentionAndTime():
     eases = mw.col.db.all("select ease, time from revlog where type = 1")
     if not eases:
@@ -95,6 +134,47 @@ def calcAbsDiffInPercent(i1, i2):
         return "+ " + str(diff)
     else:
         return str(diff)
+
+
+def _getTrueRetentionOverTime(cards):
+    if not cards:
+        return None
+    cStr = "("
+    for c in cards:
+        cStr += str(c) + ", "
+    cStr = cStr[:-2] + ")"
+
+    entries = mw.col.db.all( "select cid, ease, time, type from revlog where cid in %s" %(cStr))
+    if not entries:
+        return None
+    cnt = 0
+    passed = 0
+    failed = 0
+    goodAndEasy = 0
+    hard = 0
+
+    retentionsOverTime = []
+
+    for (_, ease, _, ty) in entries:
+        #only look for reviews
+        if ty != 1:
+            continue
+        cnt += 1
+        if ease != 1:
+            passed += 1
+            if ease == 2:
+                hard += 1
+            else:
+                goodAndEasy += 1
+        else:
+            failed += 1
+        if cnt > 3:
+            retention =  100 * passed / (passed + failed)
+            retention = round(retention, 1)
+            retentionsOverTime.append(retention)
+    if cnt <= 3:
+        return None
+    return retentionsOverTime
 
 
 def _getScore(cards, onlyRet = False):
@@ -141,7 +221,11 @@ def _getScore(cards, onlyRet = False):
 
 def calculateStats(nid, gridView):
     
-    tables = []
+    tables = {
+        "Note" : [],
+        "Cards": [],
+        "Stats": []
+    }
     infoTable = {}
     infoTable["Note ID"] = nid
 
@@ -162,7 +246,7 @@ def calculateStats(nid, gridView):
     cards = mw.col.db.all("select * from cards where nid = %s" %(nid))
     if not cards:
         infoTable["Result"] = "No cards found"
-        tables.append(infoTable)
+        tables["Note"].append(infoTable)
         return _buildTable(tables)
     cardOrdById = {}
     cardTypeById = {}
@@ -194,7 +278,7 @@ def calculateStats(nid, gridView):
    
     if not entries or not hasReview:
         infoTable["Result"] = "No cards have been reviewed yet for this note"
-        tables.append(infoTable)
+        tables["Note"].append(infoTable)
     else:
         cnt = 0
         passed = 0
@@ -234,11 +318,11 @@ def calculateStats(nid, gridView):
         retention = round(retention, 1)
         avgTime = round(timeTaken / cnt, 1) if cnt > 0 else 0
         score = _calcPerformanceScore(retention, avgTime, goodAndEasy, hard) if cnt > 0 else (0, 0, 0, 0)
-        tables.append(infoTable)
+        tables["Note"].append(infoTable)
         infoTable = {}        
         
         infoTable["Cards Found"] = len(cards)
-        tables.append(infoTable)
+        tables["Cards"].append(infoTable)
         
         for k,v in cardNameById.items():
             infoTable = {}
@@ -247,16 +331,16 @@ def calculateStats(nid, gridView):
                 infoTable["Interval"] = "%s %s" % (abs(intervalsByName[v]), "Days" if intervalsByName[v] > 0 else "Seconds")
             if k in cardTypeById:
                 infoTable["Type"] = cardTypeById[k]
-            tables.append(infoTable)
+            tables["Cards"].append(infoTable)
 
       
         infoTable = {}
-        infoTable["Reviews (Cards from this note)"] = cnt
+        infoTable["<b>Reviews (Cards from this note)</b>"] = cnt
         infoTable["Reviews - <span style='color: red'>Failed</span>"] = failed
         infoTable["Reviews - <span style='color: black'>Hard</span>"] = hard
         infoTable["Reviews - <span style='color: green'>Good</span>"] = good
         infoTable["Reviews - <span style='color: blue'>Easy</span>"] = easy
-        tables.append(infoTable)
+        tables["Stats"].append(infoTable)
 
       
 
@@ -266,40 +350,58 @@ def calculateStats(nid, gridView):
             infoTable["True Retention (Cards from this note)"] = str(retention) + "%"
             infoTable["True Retention (Collection)"] = str(avgRetAndTime[0]) + "%"
             infoTable["True Retention (Difference)"] =  str(calcAbsDiffInPercent(retention, avgRetAndTime[0])) + "%"
-            tables.append(infoTable)    
+            tables["Stats"].append(infoTable)    
 
             infoTable = {}
             infoTable["Average Time (Cards from this note)"] = str(avgTime) + " s"
             infoTable["Average Time (Collection)"] = str(avgRetAndTime[1]) + " s"
             infoTable["Average Time (Difference)"] = str(calcAbsDiffInPercent(avgTime, avgRetAndTime[1])) + " s"
-            tables.append(infoTable)
+            tables["Stats"].append(infoTable)
            
 
         infoTable = {}
         infoTable["Retention Score"] = score[2]
         infoTable["Time Score"] = score[1]
         infoTable["Rating Score"] = score[3]
-        infoTable["-> Performance"] = score[0]
-        tables.append(infoTable)
+        infoTable["<b>Performance</b>"] = score[0]
+        tables["Stats"].append(infoTable)
     
     return( _buildTable(tables, reviewPlotData), reviewPlotData)
 
 
 def _buildTable(tables, reviewPlotData):
-    s = "<div style='width: calc(100%% - 5px); overflow-y: auto; padding-right: 5px;'><table style='width: 100%%; margin-bottom: 5px;'>%s </table></div>" 
+    s = "<div style='width: calc(100%% - 5px); overflow-y: auto; padding-right: 5px;'>%s</div>" 
     rows = ""
-    for table in tables:     
-        for key, value in table.items():
-            rows += "<tr><td>%s</td><td>%s</td></tr>" % (key, value)
-        rows += "<tr><td>&nbsp;</td><td>&nbsp;</td></tr>"
+    for k, v in tables.items():
+        if len(v) > 0:
+            rows += "<fieldset style='margin-bottom: 10px;'><legend>%s</legend>" % k
+            rows += "<table style='width: 100%; margin-bottom: 5px;'>"
+        scount = 0
+        for table in v:
+            scount += 1
+            for key, value in table.items():
+                rows += "<tr style='width: 100%%'><td>%s</td><td><b>%s</b></td></tr>" % (key, value)
+            if scount != len(v):
+                rows += "<tr><td> </td><td></td> </tr>"
+        if len(v) > 0:
+            rows += "</table>"
+            rows += "</fieldset>"
     c = 0
     s = s % rows
+
+    hasGraph = False
     for k,v in reviewPlotData.items(): 
         if len(v) > 1:
-            c+= 1
-            s += "<div><h3 style='margin-top: 10px;'>%s:</h3>" % k
-            s += "<div id='graph-" + str(c) + "' style='width: 96%; height: 300px; margin-top: 5px; margin-bottom: 45px;'></div></div>"
-
+            hasGraph = True
+            break
+    if hasGraph:
+        s += "<fieldset><legend>Graphs</legend>"
+        for k,v in reviewPlotData.items(): 
+            if len(v) > 1:
+                c+= 1
+                s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Reviews over time for <i>%s</i>:</h3>" % k
+                s += "<div id='graph-" + str(c) + "' style='width: 68%; height: 250px; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 45px;'></div></div>"
+        s+= "</fieldset>"
     return s
 
 
