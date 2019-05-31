@@ -263,6 +263,11 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     except KeyError:
         keywordColor = "#2496dc"
 
+    try:
+        imgMaxHeight = str(config["imageMaxHeight"]) + "px"
+    except KeyError:
+        imgMaxHeight = "300px"
+
     css = css.replace("$deckSelectFontSize$", str(deckSelectFontSize) + "px")
     css = css.replace("$deckSelectForegroundColor$", deckSelectForegroundColor)
     css = css.replace("$deckSelectBackgroundColor$", deckSelectBackgroundColor)
@@ -299,6 +304,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
 
     css = css.replace("$keywordColor$", keywordColor)
 
+    css = css.replace("$imgMaxHeight$", imgMaxHeight)
 
     try:
         renderImmediately = str(config["renderImmediately"]).lower()
@@ -317,4 +323,138 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     return all % (css, script)
 
 
+
+
+def rightSideHtml(addToResultAreaHeight, leftSideWidth, rightSideWidth):
+    """
+    Returns the javascript call that inserts the html that is essentially the right side of the add card dialog.
+    The right side html is only inserted if not already present, so it is safe to call this function on every note load.
+    """
+
+    return """ 
+        
+        //check if ui has been rendered already
+        if (!$('#outerWr').length) {
+    
+        $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; flex-grow: 1; width: $leftSideWidth$%;'></div>`);
+        $(`
+        <div class='coll secondCol' style='flex-grow: 1; width: $rightSideWidth$%;  height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; padding-bottom: 4px; margin-left: 30px; position: relative;' id='infoBox'>
+
+            <div id="greyout"></div>
+            <div id="a-modal" class="modal">
+                <div class="modal-content">
+                    <div id='modal-visible'>
+                    <div id="modalText"></div>
+                        <div style='text-align: right; margin-top:25px;'>
+                        <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
+                        </div>
+                        </div>
+                        <div id='modal-loader'> <div class='signal'></div><br/>Computing...</div>
+                </div>
+            </div>
+                <div class="flexContainer" id="topContainer">
+                    <div class='flexCol' style='margin-left: 0px; padding-left: 0px;'>
+                        <div id='deckSelWrapper'> 
+                            <table id='deckSel'></table>
+                        </div>
+                        <div style='margin-top: 0px; margin-bottom: 10px;'><button class='deck-list-button' onclick='selectAllDecks();'>All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Current</button><button class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</button></div>
+
+                    </div>
+                    <div class='flexCol right' style="position: relative;">
+                        <table>
+                            <tr><td style='text-align: left; padding-bottom: 10px; '><div id='indexInfo' onclick='pycmd("indexInfo");'>Info</div>
+                            <div id='synonymsIcon' onclick='pycmd("synonyms");'>SynSets</div>
+                           
+                            </td></tr>
+                            <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
+                            <tr><td class='tbLb'>Search on Typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
+                            <tr><td class='tbLb'>Search on Tag Entry</td><td><input id="tagCb" type='checkbox' checked onchange='setTagSearch(this)'/></td></tr>
+                            <tr><td class='tbLb'><mark>&nbsp;Highlighting&nbsp;</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
+                        </table>
+                        <div>
+                            <div id='grid-icon' onclick='toggleGrid(this)'>Grid &#9783;</div>
+                            <div id='freeze-icon' onclick='toggleFreeze(this)'>
+                                FREEZE &#10052; 
+                            </div>
+                            <div id='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'>RANDOM &#9861;</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - $height$px); width: 100%; border-top: 1px solid grey;">
+                        <div style='position: absolute; top: 5px; right: 7px; width: 30px;'>
+                            <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
+                        </div>
+                <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
+                <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
+                    <div id='searchInfo'></div>
+                    <div id='searchResults'></div>
+                </div>
+                </div>
+                    <div id='bottomContainer'>
+                    <div class="flexContainer">
+                        <div class='flexCol' style='padding-left: 0px; '> 
+                            <div class='flexContainer' style="flex-wrap: nowrap;">
+                                    <fieldset>
+                                        <legend>Browser Search</legend>
+                                        <button class='tooltip tooltip-blue' onclick="toggleTooltip(this);">&#9432;
+                                            <div class='tooltiptext'>
+                                                <table>
+                                                    <tr><td>dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
+                                                    <tr><td>dog or cat </td><td> either "dog" or "cat"  </td></tr>
+                                                    <tr><td>dog (cat or mouse)</td><td>  dog and cat, or dog and mouse </td></tr>
+                                                    <tr><td>-cat</td><td> without the word "cat" </td></tr>
+                                                    <tr><td>-cat -mouse </td><td>  neither "cat" nor "mouse"  </td></tr>
+                                                    <tr><td>"a dog"</td><td>exact phrase </td></tr>
+                                                    <tr><td>-"a dog" </td><td> without the exact phrase</td></tr>
+                                                    <tr><td>d_g</td><td> d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
+                                                    <tr><td>d*g</td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
+                                                </table>
+                                            </div>
+                                        </button>
+                                        <input id='searchMask' placeholder=' Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
+                                    </fieldset>
+
+                             <div style='flex: 1; text-align: center; user-select: none;'>&nbsp;&nbsp;</div>
+                              
+                               <fieldset>
+                                    <legend>Predefined Searches</legend>
+                                    <select id='predefSearchSelect'>
+                                        <option value='lastAdded' selected='true'>Last Added</option>
+                                        <option value='firstAdded'>First Added</option>
+                                        <option value='lastModified'>Last Modified</option>
+                                        <option value='highestPerf'>Performance (desc.)</option>
+                                        <option value='lowestPerf'>Performance (asc.)</option>
+                                        <option value='highestRet'>True Retention (desc.)</option>
+                                        <option value='lowestRet'>True Retention (asc.)</option>
+                                        <option value='highestInterval'>Interval (desc.)</option>
+                                        <option value='lowestInterval'>Interval (asc.)</option>
+                                        <option value='longestText'>Longest Text</option>
+                                        <option value='randomUntagged'>Random Untagged</option> 
+                                    </select>
+                                    <select id='predefSearchNumberSel'>
+                                        <option value='10'>10</option>
+                                        <option value='50' selected='true'>50</option>
+                                        <option value='100'>100</option>
+                                        <option value='200'>200</option>
+                                        <option value='500'>500</option>
+                                    </select>
+                                    <button id='lastAdded' onclick='predefSearch();'>GO</button>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>`).insertAfter('#fields');
+        $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; overflow-x: hidden; height: 100%;"></div>');    
+        updatePinned();
+        } 
+        $('.field').on('keyup', fieldKeypress);
+        $('.field').attr('onmouseup', 'getSelectionText()');
+        var $fields = $('.field');
+        var $searchInfo = $('#searchInfo');
+        
+        window.addEventListener('resize', onResize, true);
+        onResize();
+    """.replace("$height$", str(280 - addToResultAreaHeight)).replace("$leftSideWidth$", str(leftSideWidth)).replace("$rightSideWidth$", str(rightSideWidth))
 

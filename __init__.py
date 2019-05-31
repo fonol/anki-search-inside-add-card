@@ -150,7 +150,7 @@ def checkIndex():
 def myOnBridgeCmd(self, cmd):
     """
     Process the various commands coming from the ui - 
-    this includes users clicks on option checkboxes, on rendered results, etc.
+    this includes users clicks on option checkboxes, on rendered results, on special searches, etc.
     """
     if searchIndex is not None and searchIndex.output.editor is None:
         searchIndex.output.editor = self
@@ -304,6 +304,9 @@ def myOnBridgeCmd(self, cmd):
         oldOnBridge(self, cmd)
 
 def parsePredefSearchCmd(cmd, editor):
+    """
+    Helper function to parse the various predefined searches (last added/longest text/...)
+    """
     if not checkIndex():
         return 
     cmd = cmd[13:]
@@ -380,7 +383,7 @@ def onLoadNote(editor):
     """
     global corpus, output, edit
 
-    #only display in add cards dialog
+    #only display in add cards dialog or in the review edit dialog (if enabled)
     if editor.addMode or (config["useInEdit"] and isinstance(editor.parentWindow, EditCurrent)):
         
         #read the size of the two columns from the config, default is 50/50
@@ -392,125 +395,11 @@ def onLoadNote(editor):
         if searchIndex is not None and searchIndex.logging:
             log("Trying to insert html in editor")
             log("Editor.addMode: %s" % editor.addMode)
-        editor.web.eval(""" 
-        
-        //check if ui has been rendered already
-        if (!$('#outerWr').length) {
-    
-        $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; flex-grow: 1; width: $leftSideWidth$%;'></div>`);
-        $(`
-        <div class='coll secondCol' style='flex-grow: 1; width: $rightSideWidth$%;  height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; padding-bottom: 4px; margin-left: 30px; position: relative;' id='infoBox'>
 
-            <div id="greyout"></div>
-            <div id="a-modal" class="modal">
-                <div class="modal-content">
-                    <div id='modal-visible'>
-                    <div id="modalText"></div>
-                        <div style='text-align: right; margin-top:25px;'>
-                        <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
-                        </div>
-                        </div>
-                        <div id='modal-loader'> <div class='signal'></div><br/>Computing...</div>
-                </div>
-            </div>
-                <div class="flexContainer" id="topContainer">
-                    <div class='flexCol' style='margin-left: 0px; padding-left: 0px;'>
-                        <div id='deckSelWrapper'> 
-                            <table id='deckSel'></table>
-                        </div>
-                        <div style='margin-top: 0px; margin-bottom: 10px;'><button class='deck-list-button' onclick='selectAllDecks();'>All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Current</button><button class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</button></div>
-
-                    </div>
-                    <div class='flexCol right' style="position: relative;">
-                        <table>
-                            <tr><td style='text-align: left; padding-bottom: 10px; '><div id='indexInfo' onclick='pycmd("indexInfo");'>Info</div>
-                            <div id='synonymsIcon' onclick='pycmd("synonyms");'>SynSets</div>
-                           
-                            </td></tr>
-                            <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
-                            <tr><td class='tbLb'>Search on Typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
-                            <tr><td class='tbLb'>Search on Tag Entry</td><td><input id="tagCb" type='checkbox' checked onchange='setTagSearch(this)'/></td></tr>
-                            <tr><td class='tbLb'><mark>&nbsp;Highlighting&nbsp;</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
-                        </table>
-                        <div>
-                            <div id='grid-icon' onclick='toggleGrid(this)'>Grid &#9783;</div>
-                            <div id='freeze-icon' onclick='toggleFreeze(this)'>
-                                FREEZE &#10052; 
-                            </div>
-                            <div id='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'>RANDOM &#9861;</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - $height$px); width: 100%; border-top: 1px solid grey;">
-                        <div style='position: absolute; top: 5px; right: 7px; width: 30px;'>
-                            <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
-                        </div>
-                <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
-                <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
-                    <div id='searchInfo'></div>
-                    <div id='searchResults'></div>
-                </div>
-                </div>
-                    <div id='bottomContainer'>
-                    <div class="flexContainer">
-                        <div class='flexCol' style='padding-left: 0px; border-top: 1px solid grey;'> 
-                            <div class='flexContainer' style="flex-wrap: nowrap;">
-                                    <button class='tooltip tooltip-blue' onclick="toggleTooltip(this);">&#9432;
-                                        <div class='tooltiptext'>
-                                            <table>
-                                                <tr><td>dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
-                                                <tr><td>dog or cat </td><td> either "dog" or "cat"  </td></tr>
-                                                <tr><td>dog (cat or mouse)</td><td>  dog and cat, or dog and mouse </td></tr>
-                                                <tr><td>-cat</td><td> without the word "cat" </td></tr>
-                                                <tr><td>-cat -mouse </td><td>  neither "cat" nor "mouse"  </td></tr>
-                                                <tr><td>"a dog"</td><td>exact phrase </td></tr>
-                                                <tr><td>-"a dog" </td><td> without the exact phrase</td></tr>
-                                                <tr><td>d_g</td><td> d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
-                                                <tr><td>d*g</td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
-                                            </table>
-                                        </div>
-                                    </button>
-                                <input id='searchMask' placeholder=' Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
-                             <div style='flex: 1; text-align: center; user-select: none;'>&nbsp;&nbsp;</div>
-                              <select id='predefSearchSelect'>
-                                <option value='lastAdded' selected='true'>Last Added</option>
-                                <option value='firstAdded'>First Added</option>
-                                <option value='lastModified'>Last Modified</option>
-                                <option value='highestPerf'>Performance (desc.)</option>
-                                <option value='lowestPerf'>Performance (asc.)</option>
-                                <option value='highestRet'>True Retention (desc.)</option>
-                                <option value='lowestRet'>True Retention (asc.)</option>
-                                <option value='highestInterval'>Interval (desc.)</option>
-                                <option value='lowestInterval'>Interval (asc.)</option>
-                                <option value='longestText'>Longest Text</option>
-                                <option value='randomUntagged'>Random Untagged</option> 
-                            </select>
-                            <select id='predefSearchNumberSel'>
-                                <option value='10'>10</option>
-                                <option value='50' selected='true'>50</option>
-                                <option value='100'>100</option>
-                                <option value='200'>200</option>
-                                <option value='500'>500</option>
-                            </select>
-                             <button id='lastAdded' onclick='predefSearch();'>GO</button>
-                            </div>
-                        </div>
-                    </div>
-                    </div>
-                </div>`).insertAfter('#fields');
-        $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; overflow-x: hidden; height: 100%;"></div>');    
-        updatePinned();
-        } 
-        $('.field').on('keyup', fieldKeypress);
-        $('.field').attr('onmouseup', 'getSelectionText()');
-        var $fields = $('.field');
-        var $searchInfo = $('#searchInfo');
+        # render the right side (search area) of the editor
+        # (the script checks if it has been rendered already)
+        editor.web.eval(rightSideHtml(addToResultAreaHeight, leftSideWidth, rightSideWidth))
         
-        window.addEventListener('resize', onResize, true);
-        onResize();
-        """.replace("$height$", str(280 - addToResultAreaHeight)).replace("$leftSideWidth$", str(leftSideWidth)).replace("$rightSideWidth$", str(rightSideWidth)))
-    
 
         if searchIndex is not None:
             showSearchResultArea(editor)
@@ -652,6 +541,10 @@ def getCreatedNotesOrderedByDate(editor, decks, limit, sortOrder):
 
 
 def tryRepeatLastSearch(editor = None):
+    """
+    Sometimes it is useful if we can simply repeat the last search,
+    e.g. the user has clicked another deck in the deck select.
+    """
     if searchIndex is not None and searchIndex.lastSearch is not None:
         if editor is None and searchIndex.output.editor is not None:
             editor = searchIndex.output.editor
@@ -681,7 +574,6 @@ def getLastModifiedNotes(editor, decks, limit):
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mod from notes left join cards on notes.id = cards.nid order by notes.mod desc limit %s" % (limit)).fetchall()
     rList = []
     for r in res:
-        #pinned items should not appear in the results
         if not str(r[0]) in searchIndex.pinned:
             #todo: implement highlighting
             rList.append((r[1], r[2], r[3], r[0]))
@@ -725,6 +617,9 @@ def getCreatedSameDay(editor, nid):
             editor.web.eval("setSearchResults('', 'Error in calculation.')")
 
 def getIndexInfo():
+    """
+    Returns the html that is rendered in the popup that appears on clicking the "info" button
+    """
     if searchIndex is None:
         return ""
     html = """<table style='width: 100%%'>
@@ -750,6 +645,9 @@ def getIndexInfo():
     return html
 
 def showTimingModal():
+    """
+    Builds the html and shows the modal which gives some info about the last executed search (timing, query after stopwords etc.)
+    """
     html = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % searchIndex.lastResDict["query"]
     html += "<h4>Execution time:</h4><table style='width: 100%'>"
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", searchIndex.lastResDict["time-stopwords"] if searchIndex.lastResDict["time-stopwords"] > 0 else "< 1") 
@@ -772,35 +670,12 @@ def showTimingModal():
     searchIndex.output.showInModal(html)
 
 
-def getSpecialSearches():
-    if searchIndex is None:
-        return ""
-    html = """
-                <div class='flexContainer'> 
-                    <div style='flex: 1 0'>
-                        <b>Worst Performance</b><br/>
-                        Find notes on whose cards you performed the worst. Score includes true retention, taken time, and how you rated the cards.
-                        Only cards that have been reviewed more than 3 times are counted.
-                    </div>
-                    <div style='flex: 0 0; padding-left: 10px;'>
-                        <button class='modal-close' style='margin-top: auto; margin-bottom: auto;' onclick='specialSearch("lowestPerf")'>Search</button>
-                   </div>
-                </div>
-                  <div class='flexContainer' style='margin-top: 20px;'> 
-                    <div style='flex: 1 0'>
-                        <b>Lowest Retention</b><br/>
-                        Find notes on whose cards you got the lowest retention.
-                        Only cards that have been reviewed more than 3 times are counted.
-                    </div>
-                    <div style='flex: 0 0; padding-left: 10px;'>
-                        <button class='modal-close' style='margin-top: auto; margin-bottom: auto;' onclick='specialSearch("lowestRet")'>Search</button>
-                   </div>
-                </div>
-            """
-    return html
 
 
 def _addToTagList(tmap, name):
+    """
+    Helper function to build the tag hierarchy.
+    """
     names = [s for s in name.split("::") if s != ""]
     for c, d in enumerate(names):
         found = tmap
@@ -812,6 +687,10 @@ def _addToTagList(tmap, name):
 
 
 def fillTagSelect(editor = None) :
+    """
+    Builds the html for the "browse tags" mode in the deck select.
+    Also renders the html.
+    """
     tmap = {}
     for t in sorted(mw.col.tags.all(), key=lambda t: t.lower()):
         tmap = _addToTagList(tmap, t)
@@ -925,6 +804,10 @@ def setupTagEditTimer():
 
 
 def tagEditKeypress(self, evt):
+    """
+    Used if "search on tag entry" is enabled.
+    Triggers a search if the user has stopped typing in the tag field.
+    """
     origTagKeypress(self, evt)
     win = aqt.mw.app.activeWindow()
     # dont trigger keypress in edit dialogs opened within the add dialog
@@ -1072,6 +955,7 @@ def _buildIndex():
     
     """
     Builds the index. Result is stored in global var searchIndex.
+    The index.type is either "Whoosh"/"SQLite FTS3"/"SQLite FTS4"/"SQLite FTS5"
     """
     global searchIndex
     start = time.time()
