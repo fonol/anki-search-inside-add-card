@@ -1,11 +1,13 @@
 import re
 
-cleanWordReg = re.compile(r"^[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ]*(\S+?)[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ]*$")    
-ignoreReg = re.compile("^[^a-zA-ZÀ-ÖØ-öø-ÿǒāōūēīȳǒ]+$")
-nonWordReg = re.compile("[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ]")    
+cleanWordReg = re.compile(u"^[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*(\S+?)[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*$", re.U)    
+ignoreReg = re.compile(u"^[^a-zA-ZÀ-ÖØ-öø-ÿǒāōūēīȳǒ\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+$", re.U)
+nonWordReg = re.compile(u"[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.U) 
 tagReg = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
 spaceReg = re.compile('\s{2,}')
-normalChar = re.compile("[a-zöäü]", flags = re.I ) 
+normalChar = re.compile(u"[a-zöäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U) 
+chineseChar = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.U)
+japaneseChar = re.compile("")
 
 def clean(text, stopWords):
    
@@ -17,11 +19,11 @@ def clean(text, stopWords):
     text = nonWordReg.sub(" ", text)
     text = spaceReg.sub(" ", text)
     stopWords = [s.lower() for s in stopWords]
-    for token in text.split(" "):
+    for token in tokenize(text):
         if ignoreReg.match(token) is not None:
             continue
         cleaned = cleanWordReg.sub(r'\1', token.strip())
-        if len(cleaned) <= 1 or cleaned.lower() in stopWords:
+        if (len(cleaned) <= 1 and not chineseChar.search(cleaned)) or cleaned.lower() in stopWords:
             continue
         filtered += cleaned + " "
     if len(filtered) > 0:
@@ -64,6 +66,31 @@ def replaceAccentsWithVowels(text):
     text = re.sub(r"[ÌÍÎÏĪǏ]", "I", text)
     text = re.sub(r"[ÝỲŸȲ]", "Y", text)
     return text
+
+
+def tokenize(text):
+    result = []
+    spl = text.split(" ")
+    for token in spl:
+        if re.search(u'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]', token):
+            for char in token:
+                result.append(str(char))
+        else:
+            result.append(token)
+    return result
+
+def textTooSmall(text):
+    if len(text) > 1:
+        return False
+    if len(text) == 0:
+        return True
+    if chineseChar.search(text):
+        return False
+    return True
+
+def isChineseChar(char):
+    return chineseChar.search(char)
+
 
 def asciiFoldChar(char):
     if normalChar.match(char):

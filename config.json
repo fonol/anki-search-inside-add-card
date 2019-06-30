@@ -34,15 +34,15 @@
 "deckSelectButtonBorderColor": "grey",
 "deckSelectButtonBackgroundColor": "white",
 "infoButtonBackgroundColor": "white",
-"infoButtonForegroundColor": "#2496dc",
-"infoButtonBorderColor":"#2496dc",
+"infoButtonForegroundColor": "#404040",
+"infoButtonBorderColor":"#404040",
 "useInEdit" : false,
 "modalForegroundColor": "black",
 "modalBackgroundColor": "white",
 "logging": false,
 "browserSearchInputForegroundColor": "black",
 "browserSearchInputBackgroundColor": "white",
-"browserSearchInputBorderColor": "#2496dc",
+"browserSearchInputBorderColor": "grey",
 "browserSearchButtonBackgroundColor": "white",
 "browserSearchButtonForegroundColor": "#2496dc",
 "browserSearchButtonBorderColor": "#2496dc",
@@ -51,6 +51,8 @@
 "tagClickShouldSearch": true,
 "noteFontSize": 12,
 "leftSideWidthInPercent": 50,
-"showRetentionScores": true
+"showRetentionScores": true,
+"imageMaxHeight": 300,
+"hideSidebar": false
 
 }

@@ -3,8 +3,9 @@ import time
 import json
 import os
 from datetime import datetime
+from aqt import mw
 from aqt.utils import showInfo
-from .textutils import clean, trimIfLongerThan, deleteChars
+from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar
 from .logging import log
 from .stats import getRetentions
 
@@ -15,11 +16,35 @@ class Output:
         self.SEP_RE = re.compile(r'(\u001f){2,}|(\u001f[\s\r\n]+\u001f)')
         self.SEP_END = re.compile(r'</div>\u001f$')
         self.SOUND_TAG = re.compile(r'sound[a-zA-Z0-9]*mp')
+        self.IO_REPLACE = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>)?-[OA]|-(<mark>)?ao(</mark>)?-[OA])\.svg" ?/?>(</img>)?')
         self.latest = -1
+        self.wordToken = re.compile(u"[a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U)
         self.gridView = False
         self.stopwords = []
         self.plotjsLoaded = False
         self.showRetentionScores = True
+        self.lastResults = None
+        self.hideSidebar = False
+
+
+        self.noteTemplate = """<div class='cardWrapper %s' id='nWr-%s'> 
+                            <div class='topLeftWr'>
+                                <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
+                                %s
+                            </div>
+                            <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+                                <div class='editLbl' onclick='edit(%s)'>Edit</div> 
+                                <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
+                                <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
+                                <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div> 
+                                <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div> 
+                            </div>
+                            <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
+                            <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
+                            <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
+                        </div>"""
+
+
 
 
     def printSearchResults(self, searchResults, stamp, editor=None, logging=False, printTimingInfo=False):
@@ -44,6 +69,9 @@ class Output:
         newNote = ""
         lastNote = "" 
         nids = [r[3] for r in searchResults]
+
+        self.lastResults = searchResults
+
         if self.showRetentionScores:
             retsByNid = getRetentions(nids)
         ret = 0
@@ -66,27 +94,13 @@ class Output:
                 retInfo = ""
 
             lastNote = newNote
-            newNote = """<div class='cardWrapper %s' id='nWr-%s'> 
-                            
-                            <div class='topLeftWr'>
-                                <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
-                                %s
-                            </div>
-                            <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='editLbl' onclick='edit(%s)'>Edit</div> 
-                                <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
-                                <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
-                                <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div> 
-                                <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div> 
-                            </div>
-                            <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
-                            <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
-                            <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
-                        </div>""" %("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
+            text = self._cleanFieldSeparators(res[0]).replace("\\", "\\\\")
+            text = self.tryHideImageOcclusion(text)
+            newNote = self.noteTemplate % ("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
                         "&nbsp;&#128336; " + timeDiffString,
                         "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                         retInfo, res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
-                        self._cleanFieldSeparators(res[0]).replace("\\", "\\\\"), 
+                        text, 
                         res[3], self.buildTagString(res[1]), res[3])  
             if self.gridView:
                 if counter % 2 == 1:
@@ -99,13 +113,17 @@ class Output:
             if counter < 20:
                 allText += " " + res[0]
         tags.sort()
-        infoMap = {
-            "Took" :  "<b>%s</b> ms %s" % (str(self.getMiliSecStamp() - stamp) if stamp is not None else "?", "&nbsp;<b style='cursor: pointer' onclick='pycmd(`lastTiming`)'>&#9432;</b>" if printTimingInfo else ""),
-            "Found" :  "<b>%s</b> notes" % (len(searchResults) if len(searchResults) > 0 else "<span style='color: red;'>0</span>")
-        }
-        info = self.buildInfoTable(infoMap, tags, allText) 
         html = html.replace("`", "&#96;").replace("$", "&#36;")
-        cmd = "setSearchResults(`" + html + "`, `" + info[0].replace("`", "&#96;") + "`, %s);" % json.dumps(info[1])
+        if not self.hideSidebar:
+            infoMap = {
+                "Took" :  "<b>%s</b> ms %s" % (str(self.getMiliSecStamp() - stamp) if stamp is not None else "?", "&nbsp;<b style='cursor: pointer' onclick='pycmd(`lastTiming`)'>&#9432;</b>" if printTimingInfo else ""),
+                "Found" :  "<b>%s</b> notes" % (len(searchResults) if len(searchResults) > 0 else "<span style='color: red;'>0</span>")
+            }
+            info = self.buildInfoTable(infoMap, tags, allText) 
+            cmd = "setSearchResults(`" + html + "`, `" + info[0].replace("`", "&#96;") + "`, %s);" % json.dumps(info[1])
+        else:
+            cmd = "setSearchResults(`" + html + "`, ``);"
+        cmd += "updateSwitchBtn(%s)" % len(searchResults)
         if editor is None or editor.web is None:
             if self.editor is not None and self.editor.web is not None:
                 if logging:
@@ -140,6 +158,75 @@ class Output:
         return html
 
 
+
+    def sortByDate(self, mode):
+        """
+        Rerenders the last search results, but sorted by creation date.
+        """
+        if self.lastResults is None:
+            return
+        stamp = self.getMiliSecStamp()
+        self.latest = stamp
+        sortedByDate = list(sorted(self.lastResults, key=lambda x: x[3]))
+        if mode == "desc":
+            sortedByDate = list(reversed(sortedByDate))
+        self.printSearchResults(sortedByDate, stamp)
+
+
+    def removeUntagged(self):
+        if self.lastResults is None:
+            return
+        stamp = self.getMiliSecStamp()
+        self.latest = stamp
+        filtered = []
+        for r in self.lastResults:
+            if r[1] is None or len(r[1]) == 0:
+                continue
+            filtered.append(r)
+        self.printSearchResults(filtered, stamp)
+
+    def removeTagged(self):
+        if self.lastResults is None:
+            return
+        stamp = self.getMiliSecStamp()
+        self.latest = stamp
+        filtered = []
+        for r in self.lastResults:
+            if r[1] is None or len(r[1]) == 0:
+                filtered.append(r)
+        self.printSearchResults(filtered, stamp)
+
+    def removeUnreviewed(self):
+        if self.lastResults is None:
+            return
+        stamp = self.getMiliSecStamp()
+        self.latest = stamp
+        filtered = [] 
+        nids = []
+        for r in self.lastResults:
+            nids.append(str(r[3]))
+        nidStr =  "(%s)" % ",".join(nids)
+        unreviewed = [r[0] for r in mw.col.db.execute("select nid from cards where nid in %s and reps = 0" % nidStr).fetchall()]
+        for r in self.lastResults:
+            if int(r[3]) not in unreviewed:
+                filtered.append(r)
+        self.printSearchResults(filtered, stamp)
+
+    def removeReviewed(self):
+        if self.lastResults is None:
+            return
+        stamp = self.getMiliSecStamp()
+        self.latest = stamp
+        filtered = [] 
+        nids = []
+        for r in self.lastResults:
+            nids.append(str(r[3]))
+        nidStr =  "(%s)" % ",".join(nids)
+        reviewed = [r[0] for r in mw.col.db.execute("select nid from cards where nid in %s and reps > 0" % nidStr).fetchall()]
+        for r in self.lastResults:
+            if int(r[3]) not in reviewed:
+                filtered.append(r)
+        self.printSearchResults(filtered, stamp)
 
     def _buildEditedInfo(self, timestamp):
         diffInSeconds = time.time() - timestamp
@@ -207,11 +294,20 @@ class Output:
 
     def _cleanFieldSeparators(self, text):
         text = self.SEP_RE.sub("\u001f", text)
-        #text = self.SEP_END.sub("\u001f", text)
         if text.endswith("\u001f"):
             text = text[:-1]
         text = text.replace("\u001f", "<span class='fldSep'>|</span>")
         return text
+
+    def tryHideImageOcclusion(self, text):
+        """
+        Image occlusion cards take up too much space, so we try to hide all images except for the first.
+        """
+        if not text.count("<img ") > 1:
+            return text
+        text = self.IO_REPLACE.sub("(IO - image hidden)", text)
+        return text
+
 
     def _mostCommonWords(self, text):
         if len(text) == 0:
@@ -269,7 +365,7 @@ class Output:
             cmd += "$('.t-inverted').css('margin-bottom', '-' + ($('.t-inverted').first().height() + 23) + 'px');"
             self.editor.web.eval(cmd)
 
-    def showStats(self, text, reviewPlotData):
+    def showStats(self, text, reviewPlotData, ivlPlotData, timePlotData):
         
         self._loadPlotJsIfNotLoaded()
         
@@ -302,8 +398,45 @@ class Output:
     
                 """ % json.dumps(xlabels)
             cmd += "$.plot($('#graph-%s'), [ %s ],  %s);" % (c, json.dumps(rawData), options)
-            
+        for k,v in ivlPlotData.items():
+            if v is not None and len(v) > 0:
+                c += 1
+                rawData = [[r[0], r[1]] for r in v]
+                xlabels = [[r[0], r[2]] for r in v]
+                if len(xlabels) > 30:
+                    xlabels = xlabels[0::2]
+                options = """
+                    {  series: { 
+                            lines: { show: true, fillColor: "#2496dc" }, 
+                            points: { show: true, fillColor: "#2496dc" } 
+                    }, 
+                    label: "Interval", 
+                    xaxis: { ticks : %s },
+                    colors: ["#2496dc"] 
+                    }
+    
+                """ % json.dumps(xlabels)
+            cmd += "$.plot($('#graph-%s'), [ %s ],  %s);" % (c, json.dumps(rawData), options)            
 
+        for k,v in timePlotData.items():
+            if v is not None and len(v) > 0:
+                c += 1
+                rawData = [[r[0], r[1]] for r in v]
+                xlabels = [[r[0], r[2]] for r in v]
+                if len(xlabels) > 30:
+                    xlabels = xlabels[0::2]
+                options = """
+                    {  series: { 
+                            lines: { show: true, fillColor: "#2496dc" }, 
+                            points: { show: true, fillColor: "#2496dc" } 
+                    }, 
+                    label: "Answer Time", 
+                    xaxis: { ticks : %s },
+                    colors: ["#2496dc"] 
+                    }
+    
+                """ % json.dumps(xlabels)
+            cmd += "$.plot($('#graph-%s'), [ %s ],  %s);" % (c, json.dumps(rawData), options)    
 
         if self.editor is not None:
             self.editor.web.eval(cmd)
@@ -410,8 +543,55 @@ class Output:
         self.editor.web.eval("fixRetMarkWidth(document.getElementById('cW-%s'));" % nid)
         self.editor.web.eval("$('#cW-%s .editedStamp').html(`&nbsp;&#128336; Edited just now`).show();" % nid)
 
+    def _markHighlights(self, text, querySet):
+     
+        currentWord = ""
+        currentWordNormalized = ""
+        textMarked = ""
+        lastIsMarked = False
+        for char in text:
+            if self.wordToken.match(char):
+                currentWordNormalized += asciiFoldChar(char).lower()
+                if isChineseChar(char) and str(char) in querySet:
+                    currentWord += "<mark>%s</mark>" % char
+                else:
+                    currentWord += char
+                
+            else:
+                #we have reached a word boundary
+                #check if word is empty
+                if currentWord == "":
+                    textMarked += char
+                else:
+                    #if the word before the word boundary is in the query, we want to highlight it
+                    if currentWordNormalized in querySet:
+                        #we check if the word before has been marked too, if so, we want to enclose both, the current word and 
+                        # the word before in the same <mark></mark> tag (looks better)
+                        if lastIsMarked:
+                            textMarked = textMarked[0: textMarked.rfind("</mark>")] + textMarked[textMarked.rfind("</mark>") + 7 :]
+                            textMarked += currentWord + "</mark>" + char
+                        else:
+                            textMarked += "<mark>" + currentWord + "</mark>" + char
+                        lastIsMarked = True
+                    #if the word is not in the query, we simply append it unhighlighted
+                    else:
+                        textMarked += currentWord + char
+                        lastIsMarked = False
+                    currentWord = ""
+                    currentWordNormalized = ""
+        if currentWord != "":
+            if currentWordNormalized in querySet and currentWord != "mark":
+                textMarked += "<mark>" + currentWord + "</mark>"
+            else:
+                textMarked += "%s" % currentWord
+        
+        return textMarked
 
-    def _retToColor(self, retention):
+
+
+
+    @staticmethod
+    def _retToColor(retention):
         if retention < (100 / 7.0):
             return "#ff0000"
         if retention < (100 / 7.0) * 2:

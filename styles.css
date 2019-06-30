@@ -44,11 +44,12 @@ body {
 
 #searchResults {
     display: none; 
-    height: 94%; 
+    height: calc(100% - 20px); 
     overflow-y: auto; 
     padding-right: 10px;
     overflow-x: hidden;
     max-width: 100%;
+
 }
 .editedStamp {
     display: inline;
@@ -61,6 +62,10 @@ body {
   font-size: $noteFontSize$;
   color: $noteForegroundColor$;
   background: $noteBackgroundColor$;
+  
+}
+.cardR img {
+    max-height: $imgMaxHeight$;
 }
 .cardWrapper.grid .cardR {
     word-wrap: break-word;
@@ -107,7 +112,7 @@ body {
     position: absolute;
     top: 0;
     right: 0px;
-     opacity: 0;
+    opacity: 0;
 }
 .floatingBtnBar {
     display: inline;
@@ -129,7 +134,10 @@ body {
 
 #bottomContainer {
     z-index: 2;
-    padding-top: 5px;
+    padding-top: 0px;
+    margin-right: 0px;
+    padding-right: 0px;
+    overflow-x: hidden;
 }
 
 .keyword {
@@ -140,6 +148,7 @@ body {
 #topContainer {
     z-index: 999;
     position: relative;
+    flex-wrap: nowrap;
 }
 
 .searchInfoTagLbl {
@@ -320,11 +329,11 @@ body {
     margin-right: 5px;
 }
 #searchMask {
-    flex: 3;
     background: $browserSearchInputBackgroundColor$;
     color: $browserSearchInputForegroundColor$;
     border: 1px solid $browserSearchInputBorderColor$;
-
+    width: 100%;
+    min-width: 50px;
 }
 #searchBtn {
     flex:  0 0 40px;
@@ -346,27 +355,7 @@ body {
 
 }
 
-#hvrBoxSub {
-   position: absolute;
-   background: white;
-   border: 2px solid #2496dc;
-   padding: 3px;
-   font-size: 12px;
-   width: 220px;
-   z-index: 10000;
-   display: none;
-}
 
-#sConsole {
-  float: right;
-  padding: 5px;
-}
-
-#wiki {
-    margin-top: 5px;
-    font-size: 12px;
-    padding: 5px;
-}
 
 .fldSep {
   color: #2496dc;
@@ -393,9 +382,9 @@ body {
 
 #deckSel {
     width: 100%;
-    font-size: $deckSelectFontSize$;
     background: $deckSelectBackgroundColor$;
     color: $deckSelectForegroundColor$;
+    font-size: 0;
 }
 
 #deckSel tr>td {
@@ -416,6 +405,11 @@ body {
 #tagContainer {
     overflow-x: hidden;
 }
+
+#switchBtn {
+    display: none;
+    }
+
 
 .flexContainer {
   display: flex;
@@ -449,19 +443,47 @@ body {
   .secondCol {
         display: none;
   }
+  
+  #outerWr.onesided > .secondCol {
+        display: block;
+        width: 100% !important;
+        margin-left: 0px !important;
+        border-left: 0px solid white !important;
+        padding-left: 0px !important;
+  }
+  #switchBtn {
+      display: inline-block;
+  }
  
 }
+@media (max-width: 1300px) {
+    #searchMaskCol {
+        display: none;
+    }
+   
+    #predefCol {
+        margin-left: 5px;
+    }
+}
+
+
 
 @media (max-width: 1200px) {
     .cardR, .tagLbl, .searchInfoTagLbl, .keyword {
         font-size: 12px !important;
     }
-    .minorScore {
+    .minorScore, #searchInfo {
         display: none;
     }
-    #searchInfo {
-        display: none;
+}
+@media (min-width: 650px) {
+    #outerWr.onesided #searchMaskCol {
+        display: flex;
     }
+    #outerWr.onesided #searchInfo:not(.hidden) {
+        display: block;
+    }
+
 }
 
 @media (min-height: 900px) {
@@ -472,7 +494,13 @@ body {
         margin-top: 20px !important;
      }
 }
+@media (max-width: 500px) {
+    #sortCol {
+        display: none;
+    }
+  
 
+}
 
 .secondCol {
     max-height: 100vh;
@@ -481,7 +509,9 @@ body {
     overflow-y: hidden;
 }
   
-
+.hidden {
+    display: none;
+}
 
 
 .flexCol.right {
@@ -500,6 +530,8 @@ body {
     width: 80%;
     text-align: left !important;
     user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .matched b {
@@ -557,6 +589,8 @@ body {
     cursor: pointer;
     color: grey;
     user-select: none;
+    white-space: nowrap;
+  overflow: hidden;
 }
 
 
@@ -568,6 +602,8 @@ body {
     cursor: pointer;
     color: grey;
     user-select: none;
+    white-space: nowrap;
+  overflow: hidden;
 }
 
 
@@ -587,6 +623,8 @@ body {
     cursor: pointer;
     color: grey;
     user-select: none;
+    white-space: nowrap;
+  overflow: hidden;
 }
 #grid-icon.active {
     color:  #2496dc !important;
@@ -655,6 +693,9 @@ body {
        top: 100 !important;
        bottom: 0 !important;
   }
+  .t-right {
+      margin-right: calc(-324px + 100%);
+  }
 
   /* deck list*/
 
@@ -667,6 +708,7 @@ body {
     width: calc(100% - 8px);
     position: relative;
     user-select: none;
+    font-size: $deckSelectFontSize$;
 }
 .deck-list-item .deck-list-item {
     width: 100%;
@@ -740,7 +782,7 @@ user-select: none;
 .exp:empty {
     display: none;
 }
-#indexInfo, #synonymsIcon {
+#indexInfo, #synonymsIcon, #stylingIcon {
     display: inline;
     padding: 1px 4px 1px 4px;
     color: $infoButtonForegroundColor$;
@@ -753,16 +795,40 @@ user-select: none;
     margin-right: 5px;
 
 }
-#lastAdded {
-    display: inline;
+#lastAdded, #sortBtn {
     color: $infoButtonForegroundColor$;
     background: $infoButtonBackgroundColor$;
     border: 1px solid $infoButtonBorderColor$;
     cursor: pointer;
     user-select: none;
     outline: none;
-
+    vertical-align: middle;
+    text-align: center;
+    height: 20px;
+    box-sizing: border-box;
+    font-size: 8px;
+    display: inline-block;
+    line-height: 1em;   
+    padding: 5px;
+    max-width: 30px;
 }
+
+
+fieldset {
+  
+    padding: 0.7em;
+}
+
+
+select {
+    height: 20px;
+    vertical-align: top;
+}
+
+#modal-content > fieldset {
+    font-size: 1.9em;
+}
+
 
 #synonymInput {
     width: 97%;
@@ -774,6 +840,14 @@ user-select: none;
 #synTable tr td:first-child {
     max-width: 150px;
     word-wrap: break-word;
+}
+
+#deckInfoBox {
+    display: none;
+    background: $deckSelectHoverBackgroundColor$;
+    color: $deckSelectHoverForegroundColor$;
+    height: 100%;
+    width: 100%;
 }
 
 
@@ -935,6 +1009,9 @@ span.tag-symbol {
     font-size: 11px !important;
     text-align: right;
   }
+
+
+
   /*MAC*/
 .dCheck {
     margin-right:   10px;

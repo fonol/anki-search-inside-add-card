@@ -9,7 +9,7 @@ import aqt.webview
 from aqt.addcards import  AddCards
 from anki.find import Finder
 import aqt.editor
-from aqt.editor import Editor
+from aqt.editor import Editor, EditorWebView
 from aqt.browser import Browser
 from aqt.tagedit import TagEdit
 from aqt.editcurrent import EditCurrent
@@ -23,7 +23,9 @@ import sqlite3
 import re
 import time
 import math
+import webbrowser
 import platform
+import functools
 import sys
 import html
 sys.path.insert(0, os.path.dirname(__file__))
@@ -37,7 +39,7 @@ except KeyError:
 if loadWhoosh:
     from .whoosh.index import create_in
     from .whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD, ID
-    from whoosh.support.charset import accent_map
+    from .whoosh.support.charset import accent_map
     from .whoosh.qparser import QueryParser
     from .whoosh.analysis import StandardAnalyzer, CharsetFilter, StemmingAnalyzer
     from .whoosh import classify, highlight, query, scoring, qparser, reading
@@ -54,9 +56,8 @@ from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWith
 
 searchingDisabled = config['disableNonNativeSearching'] 
 delayWhileTyping = max(500, config['delayWhileTyping'])
-addToResultAreaHeight = max(-500, min(500, config['addToResultAreaHeight']))
-lastTagEditKeypress = 1
 
+contextEvt = None
 searchIndex = None
 corpus = None
 deckMap = None
@@ -66,19 +67,21 @@ edit = None
 
 def initAddon():
     global corpus, output
-    global oldOnBridge, origAddNote, origTagKeypress, origSaveAndClose
+    global oldOnBridge, origAddNote, origTagKeypress, origSaveAndClose, origEditorContextMenuEvt
     
     oldOnBridge = Editor.onBridgeCmd
     Editor.onBridgeCmd = myOnBridgeCmd
     #todo: Find out if there is a better moment to start index creation
     addHook("profileLoaded", buildIndex)
     origAddNote = AddCards.addNote
+    origEditorContextMenuEvt = EditorWebView.contextMenuEvent
 
     AddCards.addNote = addNoteAndUpdateIndex
     origTagKeypress = TagEdit.keyPressEvent
     TagEdit.keyPressEvent = tagEditKeypress
-
+     
     setupTagEditTimer()
+    EditorWebView.contextMenuEvent = editorContextMenuEventWrapper
 
     origSaveAndClose = EditDialog.saveAndClose
     EditDialog.saveAndClose = editorSaveWithIndexUpdate
@@ -130,7 +133,7 @@ def initAddon():
         """
 
     #this inserts all the javascript functions in scripts.js into the editor webview
-    aqt.editor._html += getScriptPlatformSpecific(addToResultAreaHeight, delayWhileTyping)
+    aqt.editor._html += getScriptPlatformSpecific(config["addToResultAreaHeight"], delayWhileTyping)
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     addHook("loadNote", onLoadNote)
    
@@ -199,6 +202,10 @@ def myOnBridgeCmd(self, cmd):
             trueRetentionOverTime = getTrueRetentionOverTime(nids)
             searchIndex.output.showTrueRetStatsForTag(trueRetentionOverTime)
     
+    elif cmd.startswith("pSort "):
+        if checkIndex():
+            parseSortCommand(cmd[6:])
+    
         
     elif cmd.startswith("addedSameDay "):
         if checkIndex():
@@ -227,7 +234,16 @@ def myOnBridgeCmd(self, cmd):
         deleteSynonymSet(cmd[15:])
         searchIndex.output.showInModal(getSynonymEditor())
         searchIndex.synonyms = loadSynonyms()
+    
+    
+    elif cmd == "styling":
+        showStylingModal(editor)
 
+    elif cmd.startswith("styling "):
+        updateStyling(cmd[8:])
+
+    elif cmd == "writeConfig":
+        writeConfig()
 
     #
     #  Index info modal
@@ -303,6 +319,24 @@ def myOnBridgeCmd(self, cmd):
     else:
         oldOnBridge(self, cmd)
 
+
+def parseSortCommand(cmd):
+    """
+    Helper function to parse the various sort commands (newest/remove tagged/...)
+    """
+    if cmd == "newest":
+        searchIndex.output.sortByDate("desc")
+    elif cmd == "oldest":
+        searchIndex.output.sortByDate("asc")
+    elif cmd == "remUntagged":
+        searchIndex.output.removeUntagged()
+    elif cmd == "remTagged":
+        searchIndex.output.removeTagged()
+    elif cmd == "remUnreviewed":
+        searchIndex.output.removeUnreviewed()
+    elif cmd == "remReviewed":
+        searchIndex.output.removeReviewed()    
+
 def parsePredefSearchCmd(cmd, editor):
     """
     Helper function to parse the various predefined searches (last added/longest text/...)
@@ -370,10 +404,62 @@ def parsePredefSearchCmd(cmd, editor):
         searchIndex.lastSearch = (None, decks, "lowestInterval", limit)
         res = getSortedByInterval(decks, limit, searchIndex.pinned, "asc")
         searchIndex.output.printSearchResults(res, stamp)
+    elif searchtype == "lastReviewed":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "lastReviewed", limit)
+        res = getLastReviewed(decks, limit)
+        searchIndex.output.printSearchResults(res, stamp)
+    elif searchtype == "lastLapses":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "lastLapses", limit)
+        res = getLastLapses(decks, limit)
+        searchIndex.output.printSearchResults(res, stamp)
+    elif searchtype == "longestTime":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "longestTime", limit)
+        res = getByTimeTaken(decks, limit, "desc")
+        searchIndex.output.printSearchResults(res, stamp)
+    elif searchtype == "shortestTime":
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        searchIndex.lastSearch = (None, decks, "shortestTime", limit)
+        res = getByTimeTaken(decks, limit, "asc")
+        searchIndex.output.printSearchResults(res, stamp)
 
+def getLastReviewed(decks, limit):
+    if decks is not None and len(decks) > 0 and not "-1" in decks:
+        deckQ = "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
 
+    if deckQ:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
+    else:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid order by cr.rid desc limit %s" % limit
+    res = mw.col.db.execute(cmd).fetchall()
+    rList = []
+    for r in res:
+        rList.append((r[1], r[2], r[3], r[0]))
+    return rList
 
+def getLastLapses(decks, limit):
+    if decks is not None and len(decks) > 0 and not "-1" in decks:
+        deckQ = "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
 
+    if deckQ:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
+    else:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.ease = 1 order by cr.rid desc limit %s" % limit
+    res = mw.col.db.execute(cmd).fetchall()
+    rList = []
+    for r in res:
+        rList.append((r[1], r[2], r[3], r[0]))
+    return rList
 
 
 def onLoadNote(editor):
@@ -386,19 +472,13 @@ def onLoadNote(editor):
     #only display in add cards dialog or in the review edit dialog (if enabled)
     if editor.addMode or (config["useInEdit"] and isinstance(editor.parentWindow, EditCurrent)):
         
-        #read the size of the two columns from the config, default is 50/50
-        leftSideWidth = config["leftSideWidthInPercent"]
-        if not isinstance(leftSideWidth, int) or leftSideWidth <= 0 or leftSideWidth > 100:
-            leftSideWidth = 50
-        rightSideWidth = 100 - leftSideWidth
-
         if searchIndex is not None and searchIndex.logging:
             log("Trying to insert html in editor")
             log("Editor.addMode: %s" % editor.addMode)
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
-        editor.web.eval(rightSideHtml(addToResultAreaHeight, leftSideWidth, rightSideWidth))
+        editor.web.eval(rightSideHtml(config, searchIndex is not None))
         
 
         if searchIndex is not None:
@@ -507,6 +587,23 @@ def findNotesWithLongestText(decks, limit):
             rList.append((r[1], r[2], r[3], r[0]))
     return rList
 
+def getByTimeTaken(decks, limit, mode):
+    if decks is not None and len(decks) > 0 and not "-1" in decks:
+        deckQ = "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+
+    if deckQ:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s group by cr.nid order by timeavg %s limit %s" % (deckQ, mode, limit)
+    else:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 group by cr.nid order by timeavg %s limit %s" % (mode, limit)
+    res = mw.col.db.execute(cmd).fetchall()
+    rList = []
+    for r in res:
+        rList.append((r[1], r[2], r[3], r[0]))
+    return rList
+
+
 
 def getCreatedNotesOrderedByDate(editor, decks, limit, sortOrder):
     stamp = searchIndex.output.getMiliSecStamp()
@@ -536,9 +633,63 @@ def getCreatedNotesOrderedByDate(editor, decks, limit, sortOrder):
         else:
             editor.web.eval("setSearchResults(``, 'No results found.')")
 
+def editorContextMenuEventWrapper(view, evt):
+    global contextEvt
+    contextEvt = evt
+    pos = evt.pos()
+    determineClickTarget(pos)
+    #origEditorContextMenuEvt(view, evt)
+
+def determineClickTarget(pos):
+    if checkIndex():
+        searchIndex.output.editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
+
+def addOptionsToContextMenu(clickInfo):
+    if clickInfo is not None and clickInfo.startswith("img "):
+        src = clickInfo[4:]
+        m = QMenu(searchIndex.output.editor.web)
+        a = m.addAction("Open Image in Browser")
+        a.triggered.connect(lambda: openImgInBrowser(src))
+        cpSubMenu = m.addMenu("Copy Image To Field...")
+        for key in searchIndex.output.editor.note.keys():
+            cpSubMenu.addAction("Append to %s" % key).triggered.connect(functools.partial(appendImgToField, src, key))
+        m.popup(QCursor.pos())
+    elif clickInfo is not None and clickInfo.startswith("note "):
+        content = " ".join(clickInfo.split()[2:])
+        nid = int(clickInfo.split()[1])
+        m = QMenu(searchIndex.output.editor.web)
+        a = m.addAction("Find Notes Added On The Same Day")
+        a.triggered.connect(lambda: getCreatedSameDay(searchIndex.output.editor, nid))
+        # subMenu = m.addMenu("Copy Note To Field")
+        # for key in searchIndex.output.editor.note.keys():
+        #     subMenu.addAction("Append to %s" % key).triggered.connect(functools.partial(appendNoteToField, content, key))
+        m.popup(QCursor.pos())
+    elif clickInfo is not None and clickInfo.startswith("span "):
+        content = clickInfo.split()[1]
+        
+    else: 
+        origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
 
 
 
+def openImgInBrowser(url):
+    webbrowser.open(url)
+
+def appendNoteToField(content, key):
+    if not checkIndex():
+        return
+    note = searchIndex.output.editor.note
+    note.fields[note._fieldOrd(key)] += content
+    note.flush()
+    searchIndex.output.editor.loadNote()
+
+def appendImgToField(src, key):
+    if not checkIndex():
+        return
+    note = searchIndex.output.editor.note
+    note.fields[note._fieldOrd(key)] += "<img src='%s'/>" % src
+    note.flush()
+    searchIndex.output.editor.loadNote()
 
 def tryRepeatLastSearch(editor = None):
     """
@@ -575,7 +726,6 @@ def getLastModifiedNotes(editor, decks, limit):
     rList = []
     for r in res:
         if not str(r[0]) in searchIndex.pinned:
-            #todo: implement highlighting
             rList.append((r[1], r[2], r[3], r[0]))
 
     if editor.web is not None:
@@ -602,7 +752,6 @@ def getCreatedSameDay(editor, nid):
             if dayCreated != dayOfNote:
                 continue
             if not str(r[0]) in searchIndex.pinned:
-                #todo: implement highlighting
                 rList.append((r[1], r[2], r[3], r[0]))
                 c += 1
                 if c >= searchIndex.limit:
@@ -670,7 +819,31 @@ def showTimingModal():
     searchIndex.output.showInModal(html)
 
 
+def updateStyling(cmd):
+    name = cmd.split()[0]
+    value = cmd.split()[1]
 
+    if name == "addToResultAreaHeight":
+        if int(value) < 501 and int(value) > -501:
+            config[name] = int(value)
+            searchIndex.output.editor.web.eval("addToHeightSmall = %s; addToHeightLarge= %s; $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - %spx)');" % (116 - int(value), 288 - int(value), 295 - int(value)))
+    
+    elif name == "renderImmediately":
+        m = value == "true" or value == "on"
+        config["renderImmediately"] = m
+        searchIndex.output.editor.web.eval("renderImmediately = %s;" % ("true" if m else "false"))
+
+    elif name == "hideSidebar":
+        m = value == "true" or value == "on"
+        config["hideSidebar"] = m
+        searchIndex.output.hideSidebar = m
+        searchIndex.output.editor.web.eval("document.getElementById('searchInfo').classList.%s('hidden');"  % ("add" if m else "remove"))
+
+    elif name == "leftSideWidthInPercent":
+        config[name] = int(value)
+        right = 100 - int(value)
+        searchIndex.output.editor.web.eval("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('infoBox').style.width = '%s%%';" % (value, right) )
+    
 
 def _addToTagList(tmap, name):
     """
@@ -684,6 +857,50 @@ def _addToTagList(tmap, name):
         if not d in found:
             found.update({d : {}}) 
     return tmap
+
+def writeConfig():
+    mw.addonManager.writeConfig(__name__, config)
+    searchIndex.output.editor.web.eval("$('.modal-close').unbind('click')")
+
+
+def showStylingModal(editor):
+    html = """
+            <fieldset>
+                <span><mark>Important:</mark> Modify this value if the bottom bar (containing the predefined searches and the browser search) sits too low or too high.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Add To Result Area Height</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" style='width: 60px;' onchange="pycmd('styling addToResultAreaHeight ' + this.value)" value="%s"/> px</td></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <fieldset>
+                <span>Controls whether the results are faded in or not.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Render Immediately</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling renderImmediately ' + this.checked)" %s/></td></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <fieldset>
+                <span>This controls how the window is split into search pane and field input. A value of 40 means the left side will take 40%% and the right side will take 60%%.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Left Side Width</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" min="0" max="100" style='width: 60px;' onchange="pycmd('styling leftSideWidthInPercent ' + this.value)" value="%s"/> %%</td></tr>
+                </table>
+            </fieldset>
+             <br/>
+            <fieldset>
+                <span>This controls whether the sidebar (containing the tags and found keywords) is visible or not.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Hide Sidebar</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling hideSidebar ' + this.checked)" %s/></tr>
+                </table>
+            </fieldset>
+            <br/>
+            For other settings, see the config.json file.
+                        """ % (config["addToResultAreaHeight"], "checked='true'" if config["renderImmediately"] else "", config["leftSideWidthInPercent"], "checked='true'" if config["hideSidebar"] else "")
+    if checkIndex():
+        searchIndex.output.showInModal(html)
+        searchIndex.output.editor.web.eval("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")
+
+    
+
 
 
 def fillTagSelect(editor = None) :
@@ -828,7 +1045,7 @@ def setStats(nid, stats):
     Insert the statistics into the given card.
     """
     if searchIndex is not None and searchIndex.output is not None:
-        searchIndex.output.showStats(stats[0], stats[1])
+        searchIndex.output.showStats(stats[0], stats[1], stats[2], stats[3])
 
 
 
@@ -901,7 +1118,7 @@ def defaultSearchWithDecks(editor, textRaw, decks):
     cleaned = searchIndex.clean(textRaw)
     if len(cleaned) == 0:
         if editor is not None and editor.web is not None:
-            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning')")
+            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(textRaw, 100))
         return
     searchIndex.lastSearch = (cleaned, decks, "default")
     searchRes = searchIndex.search(cleaned, decks)
@@ -978,7 +1195,7 @@ def _buildIndex():
             usersStopwords = config['stopwords']    
         except KeyError:
             usersStopwords = []
-        myAnalyzer = StandardAnalyzer() | CharsetFilter(accent_map)
+        myAnalyzer = StandardAnalyzer(stoplist= None, minsize=1) | CharsetFilter(accent_map)
         #StandardAnalyzer(stoplist=usersStopwords)
         schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True), source=TEXT(stored=True))
         
@@ -1034,6 +1251,11 @@ def _buildIndex():
     except KeyError:
         showRetentionScores = True
     searchIndex.output.showRetentionScores = showRetentionScores
+    try:
+        hideSidebar = config["hideSidebar"]
+    except KeyError:
+        hideSidebar = False
+    searchIndex.output.hideSidebar = hideSidebar
 
     if searchIndex.logging:
         log("\n--------------------\nInitialized searchIndex:")
@@ -1070,7 +1292,7 @@ def printStartingInfo(editor):
         html += "<br/>Logging is turned <b>%s</b>. %s" % ("on" if searchIndex.logging else "off", "You should probably disable it if you don't have any problems." if searchIndex.logging else "")
         html += "<br/>Results are rendered <b>%s</b>." % ("immediately" if config["renderImmediately"] else "with fade-in")
         html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
-        html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - config["leftSideWidthInPercent"])
+        html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
 
     if searchIndex is None or searchIndex.output is None:
         html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"

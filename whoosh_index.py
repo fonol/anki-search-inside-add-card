@@ -30,7 +30,6 @@ class SearchIndex:
         self.threadPool = QThreadPool()
         self.highlighting = True
         self.searchWhileTyping = True
-        self.wordToken = re.compile("[a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ]", flags = re.I)
         self.searchOnSelection = True
         self.limit = 10
         self.TAG_RE = re.compile(r'<[^>]+>')
@@ -49,7 +48,7 @@ class SearchIndex:
         worker.stamp = self.output.getMiliSecStamp()
         self.output.latest = worker.stamp
         worker.signals.result.connect(self.printOutput)
-        
+        #cs = self.searchProc(text, decks) 
         self.threadPool.start(worker)
 
 
@@ -57,11 +56,12 @@ class SearchIndex:
     def searchProc(self, text, decks):    
         resDict = {}
         start = time.time()
+        orig = text
         text = self.clean(text)
         resDict["time-stopwords"] = int((time.time() - start) * 1000)
         self.lastSearch = (text, decks, "default")
         if len(text) == 0:
-            self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning')")
+            self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100))
             return
         start = time.time()
         text = expandBySynonyms(text, self.synonyms)
@@ -90,7 +90,7 @@ class SearchIndex:
                 querySet = set(replaceAccentsWithVowels(s).lower() for s in text.split(" "))
                 for r in res:
                     if not r["nid"] in self.pinned:
-                        rList.append((self._markHighlights(r["source"], querySet), r["tags"], r["did"], r["nid"]))
+                        rList.append((self.output._markHighlights(r["source"], querySet), r["tags"], r["did"], r["nid"]))
                 resDict["time-highlighting"] = int((time.time() - start) * 1000)
             else:
                 for r in res:
@@ -134,42 +134,7 @@ class SearchIndex:
         return { "result" : [], "stamp" : stamp }
 
 
-    def _markHighlights(self, text, querySet):
-     
-        currentWord = ""
-        currentWordNormalized = ""
-        textMarked = ""
-        lastIsMarked = False
-        for char in text:
-            if self.wordToken.match(char):
-                currentWordNormalized += asciiFoldChar(char).lower()
-                currentWord += char
-            else:
-                #check if word is empty
-                if currentWord == "":
-                    textMarked += char
-                else:
-                    if currentWordNormalized in querySet:
-                        if lastIsMarked:
-                            textMarked = textMarked[0: textMarked.rfind("</mark>")] + textMarked[textMarked.rfind("</mark>") + 7 :]
-                            textMarked += currentWord + "</mark>" + char
-                        else:
-                            textMarked += "<mark>" + currentWord + "</mark>" + char
-                        lastIsMarked = True
-                        
-                    else:
-                        textMarked += currentWord + char
-                        lastIsMarked = False
-
-                    currentWord = ""
-                    currentWordNormalized = ""
-        if currentWord != "":
-            if currentWordNormalized in querySet and currentWord != "mark":
-                textMarked += "<mark>" + currentWord + "</mark>"
-            else:
-                textMarked += currentWord
-        return textMarked
-
+    
 
    
 

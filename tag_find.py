@@ -3,6 +3,7 @@ from aqt import *
 from aqt.utils import showInfo
 from .textutils import trimIfLongerThan
 from .stats import getAvgTrueRetention
+from .output import Output
 
 def findBySameTag(tagStr, limit, decks, pinned):
    
@@ -54,7 +55,7 @@ def buildTagInfo(editor, tag, synonyms):
     sortedCounts = sorted(tagsfound.items(), key=lambda kv: kv[1], reverse=True)
     html = """
         <span id='trueRetGraphLbl'>Retention for this Topic / Reviews</span>
-        <div id="trueRetGraph" style='width: 290px; height: 150px;'></div>
+        <div id="trueRetGraph" style='width: 250px; height: 130px; margin-right: auto; margin-left: auto;'></div>
         <table style='width: 100%%; margin-top: 5px;'>
             <tr><td style='text-align: left;'>Retention</td><td style='text-align: right;'><b>%s</b></td></tr>
             <tr><td style='text-align: left;'>Notes</td><td style='text-align: right;'><b>%s</b></td></tr>
@@ -81,7 +82,10 @@ def buildTagInfo(editor, tag, synonyms):
     
     nids = [r[3] for r in searchRes["result"]]
     tret = getAvgTrueRetention(nids)
-    
+    if tret is not None:
+        color = Output._retToColor(tret)    
+        tret = "<span style='background: %s'>&nbsp;%s&nbsp;</span>" % (color, tret)
+
     html = html % (tret if tret is not None else "Not enough reviews", len(searchRes["result"]), tags)
     editor.web.eval("$('.tooltiptext-tag.shouldFill').html(`%s`).show();" % html)
     return nids

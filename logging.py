@@ -5,7 +5,7 @@ import sys
 def log(text):
     dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/logging.py", "")
     try:
-        with open(dir + '/log.txt', 'a') as out:
+        with open(dir + '/log.txt', 'a', encoding="utf-8") as out:
             out.write(text + '\n')
     except:
         pass

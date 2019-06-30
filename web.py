@@ -30,7 +30,7 @@ all = """
 
 synonymEditor = """
     <div style='max-height: 300px; overflow-y: auto; padding-right: 10px;'>
-        <table id='synTable' style='width: 100%%;'>
+        <table id='synTable' style='width: 100%%; border-collapse: collapse; '>
             <thead><tr style='margin-bottom: 20px;'><th style='word-wrap: break-word; max-width: 100px;'>Set</th><th style='width: 100px; text-align: center;'></th></thead>
             %s
         </table>
@@ -44,7 +44,7 @@ def getSynonymEditor():
     synonyms = loadSynonyms()
     st = ""
     for c, sList in enumerate(synonyms):
-        st += "<tr><td><div contenteditable='true' onkeydown='synonymSetKeydown(event, this, %s)'>%s</div></td><td style='text-align: right;'><button class='modal-close' onclick='pycmd(\"deleteSynonyms %s\")'>Delete</button></td></tr>" % (c, ", ".join(sList), c)
+        st += "<tr ><td style='border-top: 1px solid grey;'><div contenteditable='true' onkeydown='synonymSetKeydown(event, this, %s)'>%s</div></td><td style='text-align: right; border-top: 1px solid grey;'><button class='modal-close' onclick='pycmd(\"deleteSynonyms %s\")'>Delete</button></td></tr>" % (c, ", ".join(sList), c)
     if not synonyms:
         return """No synonyms defined yet. Input a set of terms, separated by ',' and hit enter.
         <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
@@ -127,8 +127,8 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     with open(dir + "/styles.css") as f:
         css = f.read().replace("%", "%%")
     script = script.replace("$del$", str(delayWhileTyping))
-    script = script.replace("$h-1$", str(108 - addToHeight))
-    script = script.replace("$h-2$", str(280 - addToHeight))
+    script = script.replace("$h-1$", str(116 - addToHeight))
+    script = script.replace("$h-2$", str(288 - addToHeight))
     
     try:
         deckSelectFontSize = config["deckSelectFontSize"]
@@ -325,20 +325,28 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
 
 
 
-def rightSideHtml(addToResultAreaHeight, leftSideWidth, rightSideWidth):
+def rightSideHtml(config, searchIndexIsLoaded = False):
     """
     Returns the javascript call that inserts the html that is essentially the right side of the add card dialog.
     The right side html is only inserted if not already present, so it is safe to call this function on every note load.
     """
+    
+    addToResultAreaHeight = int(config["addToResultAreaHeight"])
+    leftSideWidth = config["leftSideWidthInPercent"]
+    if not isinstance(leftSideWidth, int) or leftSideWidth <= 0 or leftSideWidth > 100:
+        leftSideWidth = 50
+    rightSideWidth = 100 - leftSideWidth
+    hideSidebar = config["hideSidebar"]
+
 
     return """ 
         
         //check if ui has been rendered already
         if (!$('#outerWr').length) {
     
-        $(`#fields`).wrap(`<div class='coll' style='min-width: 200px; flex-grow: 1; width: $leftSideWidth$%;'></div>`);
-        $(`
-        <div class='coll secondCol' style='flex-grow: 1; width: $rightSideWidth$%;  height: 100%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; padding-bottom: 4px; margin-left: 30px; position: relative;' id='infoBox'>
+        $(`#fields`).wrap(`<div class='coll' id='leftSide' style='min-width: 200px; flex-grow: 1; width: %s%%;'></div>`);
+        document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
+        $(`<div class='coll secondCol' style='width: %s%%; flex-grow: 1;  height: 100%%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; padding-bottom: 4px; margin-left: 30px; position: relative;' id='infoBox'>
 
             <div id="greyout"></div>
             <div id="a-modal" class="modal">
@@ -346,10 +354,10 @@ def rightSideHtml(addToResultAreaHeight, leftSideWidth, rightSideWidth):
                     <div id='modal-visible'>
                     <div id="modalText"></div>
                         <div style='text-align: right; margin-top:25px;'>
-                        <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
+                            <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
                         </div>
-                        </div>
-                        <div id='modal-loader'> <div class='signal'></div><br/>Computing...</div>
+                    </div>
+                    <div id='modal-loader'> <div class='signal'></div><br/>Computing...</div>
                 </div>
             </div>
                 <div class="flexContainer" id="topContainer">
@@ -357,13 +365,14 @@ def rightSideHtml(addToResultAreaHeight, leftSideWidth, rightSideWidth):
                         <div id='deckSelWrapper'> 
                             <table id='deckSel'></table>
                         </div>
-                        <div style='margin-top: 0px; margin-bottom: 10px;'><button class='deck-list-button' onclick='selectAllDecks();'>All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Current</button><button class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</button></div>
+                        <div style='margin-top: 0px; margin-bottom: 10px; white-space: nowrap;'><button class='deck-list-button' onclick='selectAllDecks();'>All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Current</button><button class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</button></div>
 
                     </div>
                     <div class='flexCol right' style="position: relative;">
                         <table>
-                            <tr><td style='text-align: left; padding-bottom: 10px; '><div id='indexInfo' onclick='pycmd("indexInfo");'>Info</div>
+                            <tr><td style='text-align: left; padding-bottom: 10px; white-space: nowrap;'><div id='indexInfo' onclick='pycmd("indexInfo");'>Info</div>
                             <div id='synonymsIcon' onclick='pycmd("synonyms");'>SynSets</div>
+                            <div id='stylingIcon' onclick='pycmd("styling");'>Styling</div>
                            
                             </td></tr>
                             <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
@@ -380,14 +389,14 @@ def rightSideHtml(addToResultAreaHeight, leftSideWidth, rightSideWidth):
                         </div>
                     </div>
                 </div>
-                
-                <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - $height$px); width: 100%; border-top: 1px solid grey;">
-                        <div style='position: absolute; top: 5px; right: 7px; width: 30px;'>
+               <!-- --> 
+                <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - %spx);  width: 100%%; border-top: 1px solid grey;">
+                        <div style='position: absolute; top: 5px; right: 12px; width: 30px;'>
                             <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                         </div>
-                <div id='loader'> <div class='signal'></div><br/>Preparing index...</div>
-                <div style='height: 100%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
-                    <div id='searchInfo'></div>
+                <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
+                <div style='height: 100%%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
+                    <div id='searchInfo' class='%s'></div>
                     <div id='searchResults'></div>
                 </div>
                 </div>
@@ -395,38 +404,38 @@ def rightSideHtml(addToResultAreaHeight, leftSideWidth, rightSideWidth):
                     <div class="flexContainer">
                         <div class='flexCol' style='padding-left: 0px; '> 
                             <div class='flexContainer' style="flex-wrap: nowrap;">
-                                    <fieldset>
-                                        <legend>Browser Search</legend>
-                                        <button class='tooltip tooltip-blue' onclick="toggleTooltip(this);">&#9432;
-                                            <div class='tooltiptext'>
-                                                <table>
-                                                    <tr><td>dog cat </td><td> must contain both, "dog" and "cat" </td></tr>
-                                                    <tr><td>dog or cat </td><td> either "dog" or "cat"  </td></tr>
-                                                    <tr><td>dog (cat or mouse)</td><td>  dog and cat, or dog and mouse </td></tr>
-                                                    <tr><td>-cat</td><td> without the word "cat" </td></tr>
-                                                    <tr><td>-cat -mouse </td><td>  neither "cat" nor "mouse"  </td></tr>
-                                                    <tr><td>"a dog"</td><td>exact phrase </td></tr>
-                                                    <tr><td>-"a dog" </td><td> without the exact phrase</td></tr>
-                                                    <tr><td>d_g</td><td> d, <a letter>, g, e.g. dog, dig, dug   </td></tr>
-                                                    <tr><td>d*g</td><td> d, <zero or more letters>, g, like dg, dog, dung </td></tr>
-                                                </table>
-                                            </div>
-                                        </button>
-                                        <input id='searchMask' placeholder=' Browser-like search...' onkeyup='searchMaskKeypress(event)'></input> 
-                                    </fieldset>
+                                <fieldset id="sortCol" style="flex: 0 0 auto; font-size: 0.85em;">
+                                    <legend>Sorting & Filtering</legend>
+                                    <select id='sortSelect'>
+                                        <option value='newest' selected='true'>Sort By Newest</option>
+                                        <option value='oldest' selected='true'>Sort By Oldest</option>
+                                        <option value='remUntagged'>Remove Untagged</option>
+                                        <option value='remTagged'>Remove Tagged</option>
+                                        <option value='remUnreviewed'>Remove Unreviewed</option>
+                                        <option value='remReviewed'>Remove Reviewed</option>
+                                    </select>
+                                    <div id='sortBtn' onclick='sort();'>GO</div>
+                                </fieldset>
+                                
+                                <fieldset id="searchMaskCol" style="flex: 1 1 auto; font-size: 0.85em;">
+                                    <legend>Browser Search</legend>
+                                    <input id='searchMask' placeholder='' onkeyup='searchMaskKeypress(event)'></input> 
+                                </fieldset>
 
-                             <div style='flex: 1; text-align: center; user-select: none;'>&nbsp;&nbsp;</div>
-                              
-                               <fieldset>
+                                <fieldset id="predefCol" style="flex: 0 0 auto; font-size: 0.85em;">
                                     <legend>Predefined Searches</legend>
                                     <select id='predefSearchSelect'>
                                         <option value='lastAdded' selected='true'>Last Added</option>
                                         <option value='firstAdded'>First Added</option>
                                         <option value='lastModified'>Last Modified</option>
+                                        <option value='lastReviewed'>Last Reviewed</option>
+                                        <option value='lastLapses'>Last Lapses</option>
                                         <option value='highestPerf'>Performance (desc.)</option>
                                         <option value='lowestPerf'>Performance (asc.)</option>
                                         <option value='highestRet'>True Retention (desc.)</option>
                                         <option value='lowestRet'>True Retention (asc.)</option>
+                                        <option value='longestTime'>Time Taken (desc.)</option>
+                                        <option value='shortestTime'>Time Taken (asc.)</option>
                                         <option value='highestInterval'>Interval (desc.)</option>
                                         <option value='lowestInterval'>Interval (asc.)</option>
                                         <option value='longestText'>Longest Text</option>
@@ -437,16 +446,16 @@ def rightSideHtml(addToResultAreaHeight, leftSideWidth, rightSideWidth):
                                         <option value='50' selected='true'>50</option>
                                         <option value='100'>100</option>
                                         <option value='200'>200</option>
-                                        <option value='500'>500</option>
+                                        <option value='500'>500</option>    
                                     </select>
-                                    <button id='lastAdded' onclick='predefSearch();'>GO</button>
+                                    <div id='lastAdded' onclick='predefSearch();'>GO</div>
                                 </fieldset>
                             </div>
                         </div>
                     </div>
                     </div>
                 </div>`).insertAfter('#fields');
-        $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%; display: flex; overflow-x: hidden; height: 100%;"></div>');    
+        $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow-x: hidden; height: 100%%;"></div>');    
         updatePinned();
         } 
         $('.field').on('keyup', fieldKeypress);
@@ -456,5 +465,13 @@ def rightSideHtml(addToResultAreaHeight, leftSideWidth, rightSideWidth):
         
         window.addEventListener('resize', onResize, true);
         onResize();
-    """.replace("$height$", str(280 - addToResultAreaHeight)).replace("$leftSideWidth$", str(leftSideWidth)).replace("$rightSideWidth$", str(rightSideWidth))
+""" % (
+    leftSideWidth,
+    rightSideWidth,
+    295 - addToResultAreaHeight,
+    "display: none;" if searchIndexIsLoaded else "",
+    "hidden" if hideSidebar else ""
+       )
+
+
 

@@ -22,7 +22,6 @@ class FTSIndex:
         self.searchWhileTyping = True
         self.searchOnSelection = True
         self.dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/db.py", "")
-        self.wordToken = re.compile("[a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ]", flags = re.I)
         self.stopWords = []
         self.threadPool = QThreadPool()
         self.output = None
@@ -103,16 +102,15 @@ class FTSIndex:
         worker.stamp = self.output.getMiliSecStamp()
         self.output.latest = worker.stamp
         worker.signals.result.connect(self.printOutput)
-        
         self.threadPool.start(worker)
 
 
     def searchProc(self, text, decks):
         resDict = {}
         start = time.time()
+        orig = text
         text = self.clean(text)
         resDict["time-stopwords"] = int((time.time() - start) * 1000)
-     
         if self.logging:
             log("\nFTS index - Received query: " + text)
             log("Decks (arg): " + str(decks))
@@ -121,22 +119,22 @@ class FTSIndex:
         self.lastSearch = (text, decks, "default")
         
         if len(text) == 0:
-            self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning')") 
+            self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100))
             return
         start = time.time()
         text = expandBySynonyms(text, self.synonyms)
         resDict["time-synonyms"] = int((time.time() - start) * 1000)
         resDict["query"] = text
-        if len(text) < 2:
+        if textTooSmall(text):
             if self.logging:
                 log("Returning - Text was < 2 chars: " + text)
             return { "results" : [] }
 
-        query = " OR ".join(["tags:" + s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ])
+        query = u" OR ".join(["tags:" + s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ])
         if self.type == "SQLite FTS5":
-            query += " OR " + " OR ".join(["text:" + s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ]) 
+            query += " OR " + " OR ".join(["text:" + s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ]) 
         else:
-            query += " OR " + " OR ".join([s.strip().replace("OR", "or") for s in text.split(" ") if len(s) > 1 ]) 
+            query += " OR " + " OR ".join([s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ]) 
         if query == " OR ":
             if self.logging:
                 log("Returning. Query was: " + query)
@@ -178,7 +176,7 @@ class FTSIndex:
             start = time.time()
             for r in res:
                 if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                    rList.append((self._markHighlights(r[4], querySet).replace('`', '\\`'), r[2], r[3], r[0]))
+                    rList.append((self.output._markHighlights(r[4], querySet).replace('`', '\\`'), r[2], r[3], r[0]))
                     c += 1
                     if c >= self.limit:
                         break
@@ -217,7 +215,7 @@ class FTSIndex:
                 start = time.time()
                 rList = []
                 for r in listSorted[:min(self.limit, len(listSorted))]:
-                    rList.append((self._markHighlights(r[0], querySet).replace('`', '\\`'), r[1], r[2], r[3], r[4]))
+                    rList.append((self.output._markHighlights(r[0], querySet).replace('`', '\\`'), r[1], r[2], r[3], r[4]))
                 resDict["time-highlighting"] += int((time.time() - start) * 1000)
                 
             else:
@@ -233,40 +231,7 @@ class FTSIndex:
         if result is not None:
             self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True)
     
-    def _markHighlights(self, text, querySet):
-     
-        currentWord = ""
-        currentWordNormalized = ""
-        textMarked = ""
-        lastIsMarked = False
-        for char in text:
-            if self.wordToken.match(char):
-                currentWordNormalized += asciiFoldChar(char).lower()
-                currentWord += char
-            else:
-                #check if word is empty
-                if currentWord == "":
-                    textMarked += char
-                else:
-                    if currentWordNormalized in querySet:
-                        if lastIsMarked:
-                            textMarked = textMarked[0: textMarked.rfind("</mark>")] + textMarked[textMarked.rfind("</mark>") + 7 :]
-                            textMarked += currentWord + "</mark>" + char
-                        else:
-                            textMarked += "<mark>" + currentWord + "</mark>" + char
-                        lastIsMarked = True
-                    else:
-                        textMarked += currentWord + char
-                        lastIsMarked = False
-                    currentWord = ""
-                    currentWordNormalized = ""
-        if currentWord != "":
-            if currentWordNormalized in querySet and currentWord != "mark":
-                textMarked += "<mark>" + currentWord + "</mark>"
-            else:
-                textMarked += currentWord
-        
-        return textMarked
+    
             
         
 
@@ -398,7 +363,6 @@ class FTSIndex:
 
 
     def addNote(self, note):
-        
         content = " \u001f ".join(note.fields)
         tags = " ".join(note.tags)
         #did = note.model()['did']

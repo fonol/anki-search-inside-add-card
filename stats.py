@@ -250,11 +250,13 @@ def calculateStats(nid, gridView):
         return _buildTable(tables)
     cardOrdById = {}
     cardTypeById = {}
+    cardEaseFactorById = {}
     cStr = "("
     for c in cards:
         cStr += str(c[0]) + ", "
         cardOrdById[c[0]] = c[3]
         cardTypeById[c[0]] = _cardTypeStr(c[6])
+        cardEaseFactorById[c[0]] = int(c[10] / 10)
     cStr = cStr[:-2] + ")"
     
     cardNameById = {}
@@ -275,7 +277,8 @@ def calculateStats(nid, gridView):
                     break
     
     reviewPlotData = {}
-   
+    ivlPlotData = {}
+    timePlotData = {}
     if not entries or not hasReview:
         infoTable["Result"] = "No cards have been reviewed yet for this note"
         tables["Note"].append(infoTable)
@@ -288,16 +291,22 @@ def calculateStats(nid, gridView):
         good = 0
         hard = 0
         timeTaken = 0
-        intervalsByName = {}
+        intervalsByCid = {}
         for (stamp, cid, ease, ivl, taken, ty) in entries:
             #only look for reviews
             if ty != 1:
                 continue
             cnt += 1
-            intervalsByName[cardNameById[cid]] = ivl
-            if not cardNameById[cid] in reviewPlotData:
-                reviewPlotData[cardNameById[cid]] = []
-            reviewPlotData[cardNameById[cid]].append([cnt, ease, time.strftime("%Y-%m-%d", time.localtime(int(stamp)/1000))])
+            intervalsByCid[cid] = ivl
+            if not cid in reviewPlotData:
+                reviewPlotData[cid] = []
+            if not cid in ivlPlotData:
+                ivlPlotData[cid] = []
+            if not cid in timePlotData:
+                timePlotData[cid] = []
+            reviewPlotData[cid].append([cnt, ease, time.strftime("%Y-%m-%d", time.localtime(int(stamp)/1000))])
+            ivlPlotData[cid].append([cnt, max(0, ivl), time.strftime("%Y-%m-%d", time.localtime(int(stamp)/1000))])
+            timePlotData[cid].append([cnt, taken / 1000, time.strftime("%Y-%m-%d", time.localtime(int(stamp)/1000))])
             if ease != 1:
                 passed += 1
                 if ease == 2:
@@ -326,9 +335,11 @@ def calculateStats(nid, gridView):
         
         for k,v in cardNameById.items():
             infoTable = {}
-            infoTable["<b>%s</b>:" % v] = ""
-            if v in intervalsByName:
-                infoTable["Interval"] = "%s %s" % (abs(intervalsByName[v]), "Days" if intervalsByName[v] > 0 else "Seconds")
+            infoTable["<b>%s</b>  &nbsp;(%s):" % (v, k)] = ""
+            if k in intervalsByCid:
+                infoTable["Interval"] = "%s %s" % (abs(intervalsByCid[k]), "Days" if intervalsByCid[k] > 0 else "Seconds")
+            if k in cardEaseFactorById:
+                infoTable["Ease"] = str(cardEaseFactorById[k]) + " %"
             if k in cardTypeById:
                 infoTable["Type"] = cardTypeById[k]
             tables["Cards"].append(infoTable)
@@ -366,15 +377,15 @@ def calculateStats(nid, gridView):
         infoTable["<b>Performance</b>"] = score[0]
         tables["Stats"].append(infoTable)
     
-    return( _buildTable(tables, reviewPlotData), reviewPlotData)
+    return( _buildTable(tables, reviewPlotData, ivlPlotData, timePlotData, cardNameById), reviewPlotData, ivlPlotData, timePlotData)
 
 
-def _buildTable(tables, reviewPlotData):
+def _buildTable(tables, reviewPlotData, ivlPlotData, timePlotData, namesByCid):
     s = "<div style='width: calc(100%% - 5px); overflow-y: auto; padding-right: 5px;'>%s</div>" 
     rows = ""
     for k, v in tables.items():
         if len(v) > 0:
-            rows += "<fieldset style='margin-bottom: 10px;'><legend>%s</legend>" % k
+            rows += "<fieldset style='margin-bottom: 10px; font-size: 11px;'><legend>%s</legend>" % k
             rows += "<table style='width: 100%; margin-bottom: 5px;'>"
         scount = 0
         for table in v:
@@ -394,12 +405,32 @@ def _buildTable(tables, reviewPlotData):
         if len(v) > 1:
             hasGraph = True
             break
+    if not hasGraph:
+        for k,v in ivlPlotData.items(): 
+            if len(v) > 1:
+                hasGraph = True
+                break
+    if not hasGraph:
+        for k,v in timePlotData.items(): 
+            if len(v) > 1:
+                hasGraph = True
+                break
     if hasGraph:
-        s += "<fieldset><legend>Graphs</legend>"
+        s += "<fieldset style='font-size: 11px;'><legend>Graphs</legend>"
         for k,v in reviewPlotData.items(): 
             if len(v) > 1:
                 c+= 1
-                s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Reviews over time for <i>%s</i>:</h3>" % k
+                s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Reviews over time for <i>%s</i>:</h3>" % namesByCid[k]
+                s += "<div id='graph-" + str(c) + "' style='width: 68%; height: 250px; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 45px;'></div></div>"
+        for k,v in ivlPlotData.items(): 
+            if len(v) > 1:
+                c+= 1
+                s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Interval over time for <i>%s</i>:</h3>" %  namesByCid[k]
+                s += "<div id='graph-" + str(c) + "' style='width: 68%; height: 250px; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 45px;'></div></div>"
+        for k,v in timePlotData.items(): 
+            if len(v) > 1:
+                c+= 1
+                s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Answer times for <i>%s</i>:</h3>" %  namesByCid[k]
                 s += "<div id='graph-" + str(c) + "' style='width: 68%; height: 250px; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 45px;'></div></div>"
         s+= "</fieldset>"
     return s

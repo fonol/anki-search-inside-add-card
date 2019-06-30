@@ -9,6 +9,9 @@ var lastHadResults = false;
 var loadingTimer;
 var gridView = false;
 var renderImmediately = $renderImmediately$;
+var addToHeightSmall = $h-1$;
+var addToHeightLarge = $h-2$;
+
 
 function updateSelectedDecks(elem) {
     selectedDecks = [];
@@ -35,7 +38,7 @@ function selectDeckWithId(did) {
     $('.deck-list-item').removeClass('selected');
     $(".deck-list-item").each(function () {
         if ($(this).data('id') == did) {
-           $(this).addClass("selected");
+            $(this).addClass("selected");
         }
     });
     updateSelectedDecks();
@@ -73,9 +76,9 @@ function pinMouseEnter(elem) {
 function cardMouseEnter(elem, nid) {
     $(`#btnBar-${nid}`).css('opacity', '1');
 }
- 
+
 function showLoading(source) {
-    loadingTimer = setTimeout(function() {
+    loadingTimer = setTimeout(function () {
         document.getElementById('searchInfo').innerHTML = `<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>${source}</i></td></tr></table>`;
     }, 1000);
 }
@@ -85,12 +88,12 @@ function cardMouseLeave(elem, nid) {
     setTimeout(function () {
         if (!$('#btnBar-' + nid).is(':hover'))
             $('#btnBar-' + nid).css('opacity', '0');
-        
+
     }, 100);
 }
 
 function tagMouseEnter(elem) {
-    setTimeout(function() {
+    setTimeout(function () {
         if (elem.parentElement.querySelector(':hover') === elem) {
             $(elem).css("z-index", "9999");
             $("#greyout").show();
@@ -98,24 +101,25 @@ function tagMouseEnter(elem) {
             if (!$('#topContainer').is(":hidden"))
                 offsetTop -= $('#topContainer').height();
             let offsetBot = $('#searchResults').height() - offsetTop - $('#bottomContainer').height() + 20;
-            
-            if (offsetTop < 0) {
+            if (offsetTop < 0 || elem.parentElement.previousElementSibling.getElementsByTagName('img').length > 0) {
                 offsetTop += $(elem.parentElement.parentElement).height();
                 offsetBot = $('#searchResults').height() - offsetTop;
             }
-
             if (offsetTop > 0 && offsetTop < offsetBot) {
                 $(elem).children().first().addClass("t-inverted");
-            }           
+            }
+            if (gridView && $(elem.parentElement.parentElement).is(':first-child')) {
+                $(elem).children().first().addClass("t-right");
+            }
             $(elem).children().first().addClass("shouldFill");
             pycmd("tagInfo " + $(elem).data("name"));
         }
-    }, 300);
+    }, 800);
 }
 function tagMouseLeave(elem) {
     $("#greyout").hide();
     $(elem).css("z-index", "999");
-    $(elem).children().first().removeClass('t-inverted').removeClass("shouldFill").css('margin-bottom', '0px').html('').hide();
+    $(elem).children().first().removeClass('t-inverted').removeClass("shouldFill").removeClass("t-right").css('margin-bottom', '0px').html('').hide();
 }
 
 
@@ -128,7 +132,7 @@ function getSelectionText() {
     } else if (document.selection && document.selection.type != "Control") {
         text = document.selection.createRange().text;
     }
-    if (text.length > 1 && text != "&nbsp;") {
+    if (text.length > 0 && text != "&nbsp;") {
         showLoading("Selection");
         pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
 
@@ -136,18 +140,21 @@ function getSelectionText() {
 }
 
 function specialSearch(mode) {
-    document.getElementById("a-modal").style.display = 'none'; 
+    document.getElementById("a-modal").style.display = 'none';
     showLoading("Special Search");
-    pycmd(mode  + " " + selectedDecks.toString());
+    pycmd(mode + " " + selectedDecks.toString());
 }
 
 
 function onResize() {
     let vh = window.innerHeight * 0.01;
-    // let topHeight = $('#topContainer').height();
-    // let bottomHeight = $('#bottomContainer').height();
-    // $('#resultsArea').css("height", `calc(var(--vh, 1vh) * 100 - ${topHeight + bottomHeight + 50}px)`);
     document.getElementById('resultsArea').style.setProperty('--vh', `${vh}px`);
+
+    if (!$('#switchBtn').is(":visible")) {
+        $('#leftSide').show();
+        $('#outerWr').css('display', 'flex').removeClass('onesided');
+        document.getElementById('switchBtn').innerHTML = "&#10149; Search";
+    }
 }
 
 function setHighlighting(elem) {
@@ -163,7 +170,7 @@ function tagClick(elem) {
     if ($(elem).data('tags')) {
         $('#a-modal').show();
         pycmd('renderTags ' + $(elem).data('tags'));
-        return
+        return;
     }
     let name = $(elem).data('name');
     $("#greyout").hide();
@@ -179,14 +186,14 @@ function fieldKeydown(event, elem) {
 
 }
 
-function synInputKeyup(event,elem) {
+function synInputKeyup(event, elem) {
     if (event.keyCode == 13 && elem.value)
         pycmd("saveSynonyms " + elem.value);
 }
 
 function synonymSetKeydown(event, elem, index) {
     if (event.keyCode == 13 && elem.innerHTML.length) {
-        pycmd("editSynonyms " + index + " " +  elem.innerHTML);
+        pycmd("editSynonyms " + index + " " + elem.innerHTML);
         event.preventDefault();
         $(elem).blur();
     }
@@ -196,7 +203,7 @@ function synonymSetKeydown(event, elem, index) {
 
 function setSearchOnTyping(active) {
     searchOnTyping = active;
-    if (!active) 
+    if (!active)
         $('.field').off('keyup', fieldKeypress);
     else {
         $('.field').on('keyup', fieldKeypress);
@@ -257,7 +264,7 @@ function searchCardFromFloated(id) {
 
 
 function edit(nid) {
-    pycmd('editN ' +  nid);
+    pycmd('editN ' + nid);
 }
 
 function updatePinned() {
@@ -272,14 +279,16 @@ function updatePinned() {
 }
 
 function setSearchResults(html, infoStr, infoMap) {
-    
-    $('.cardWrapper').not('.pinned').remove();
-    $("#startInfo,.gridRow:empty").remove();
+    if (html.length > 0) {
+        $('.cardWrapper').not('.pinned').remove();
+        $("#startInfo,.gridRow:empty").remove();
+    }
     $("#greyout").hide();
     document.getElementById("searchResults").style.overflowY = 'hidden';
     document.getElementById("searchResults").style.paddingRight = '24px';
     document.getElementById('searchResults').innerHTML += html;
-    document.getElementById('searchResults').scrollTop = 0;
+    if (html.length > 0)
+        document.getElementById('searchResults').scrollTop = 0;
     let c = 1;
     clearTimeout(loadingTimer);
     if (infoMap && lastHadResults && document.getElementById("info-Took")) {
@@ -290,9 +299,6 @@ function setSearchResults(html, infoStr, infoMap) {
     } else {
         document.getElementById('searchInfo').innerHTML = infoStr;
     }
-
-
-
 
     if (infoMap)
         lastHadResults = true;
@@ -308,7 +314,7 @@ function setSearchResults(html, infoStr, infoMap) {
         document.getElementById("searchResults").style.paddingRight = '10px';
     }
     else {
-        time = gridView ? 100 : 130;    
+        time = gridView ? 100 : 130;
         count = gridView ? 16 : 10;
         function renderLoop() {
 
@@ -317,10 +323,10 @@ function setSearchResults(html, infoStr, infoMap) {
             else
                 $("#nWr-" + c).fadeIn();
 
-            setTimeout(function () {   
-                c++;                    
-                if (c< count) {            
-                renderLoop();            
+            setTimeout(function () {
+                c++;
+                if (c < count) {
+                    renderLoop();
                 } else {
                     if (gridView)
                         $('.cardWrapper').css("display", "inline-block");
@@ -329,19 +335,36 @@ function setSearchResults(html, infoStr, infoMap) {
                     document.getElementById("searchResults").style.overflowY = 'auto';
                     document.getElementById("searchResults").style.paddingRight = '10px';
 
-                }  
+                }
             }, time);
-        }    
+        }
         renderLoop();
     }
 }
+
+function sendClickedInformation(x, y) {
+    let el = document.elementFromPoint(x, y);
+    if (el.tagName == "IMG") {
+        return "img " + el.src;
+    }
+    if ((el.tagName == "SPAN" || el.tagName == "DIV" || el.tagName == "MARK") && el.parentElement.className == "cardR") {
+        return "note " + el.parentElement.id + " " + el.parentElement.innerHTML;
+    }
+    if (el.className == "cardR") {
+        return "note " + el.id + " " + el.innerHTML;
+    }
+ 
+  
+}
+
+
 
 function toggleTooltip(elem) {
     $(elem).children().first().toggle();
 }
 
 function toggleFreeze(elem) {
-    isFrozen = ! isFrozen;
+    isFrozen = !isFrozen;
     if ($(elem).hasClass('frozen')) {
         $(elem).removeClass('frozen');
         $(elem).html("FREEZE &#10052;");
@@ -351,9 +374,9 @@ function toggleFreeze(elem) {
     }
 }
 
-function hideTop(){
+function hideTop() {
     $('#topContainer').hide();
-    $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - $h-1$px)').css('border-top', '0px');
+    $('#resultsArea').css('height', `calc(var(--vh, 1vh) * 100 - ${addToHeightSmall}px)`).css('border-top', '0px');
     $('#toggleTop').children().first().html('&#10097;');
     pycmd("toggleTop off");
 }
@@ -361,12 +384,12 @@ function hideTop(){
 function toggleTop(elem) {
     $('#topContainer').toggle();
     if ($('#topContainer').is(":hidden")) {
-        $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - $h-1$px)').css('border-top', '0px');
+        $('#resultsArea').css('height', `calc(var(--vh, 1vh) * 100 - ${addToHeightSmall}px)`).css('border-top', '0px');
         $(elem).children().first().html('&#10097;');
         pycmd("toggleTop off");
 
     } else {
-        $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - $h-2$px)').css('border-top', '1px solid grey');;
+        $('#resultsArea').css('height', `calc(var(--vh, 1vh) * 100 - ${addToHeightLarge}px)`).css('border-top', '1px solid grey');;
         $(elem).children().first().html('&#10096;');
         pycmd("toggleTop on");
     }
@@ -374,14 +397,14 @@ function toggleTop(elem) {
 
 function toggleGrid(elem) {
 
-   $(elem).toggleClass('active');
-   if ($(elem).hasClass('active')) {
-       pycmd("toggleGrid on");
-       gridView = true;
-   } else {
-       pycmd("toggleGrid off");
-       gridView = false;
-   }
+    $(elem).toggleClass('active');
+    if ($(elem).hasClass('active')) {
+        pycmd("toggleGrid on");
+        gridView = true;
+    } else {
+        pycmd("toggleGrid off");
+        gridView = false;
+    }
 }
 
 function activateGridView() {
@@ -399,85 +422,112 @@ function predefSearch() {
     pycmd("predefSearch " + search + " " + count + " " + decks);
 }
 
+
+function sort() {
+    let e = document.getElementById("sortSelect");
+    let sort = e.options[e.selectedIndex].value;
+    pycmd("pSort " + sort);
+
+}
+
 function addFloatingNote(nid) {
     let content = document.getElementById(nid).innerHTML;
-    $('#cW-' +nid).parent().remove();
-    let btnBar =  `<div class='floatingBtnBar'>
+    $('#cW-' + nid).parent().parent().remove();
+    let btnBar = `<div class='floatingBtnBar'>
         <div class="floatingBtnBarItem" onclick='edit(${nid})'>Edit</div>&nbsp;&#65372;
         <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>&nbsp;&#65372;
         <div class="floatingBtnBarItem" id='rem-${nid}' onclick='document.getElementById("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div> 
-    </div>`
+    </div>`;
 
 
     let floatingNote = `<div id="nF-${nid}" class='noteFloating'>
             <div id="nFH-${nid}" class='noteFloatingHeader' onmousedown='dragElement(this.parentElement, "nFH-${nid}")'>&nbsp;${btnBar}</div>
             <div id="nFC-${nid}" class='noteFloatingContent'>${content}</div>
                 </div>
-            `;  
-        if ($('.field').length > 8)
-            $('.field').first().after(floatingNote );       
-        else
-            $('.field').last().after(floatingNote );       
-        dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
-        updatePinned();
+            `;
+    if ($('.field').length > 8)
+        $('.field').first().after(floatingNote);
+    else
+        $('.field').last().after(floatingNote);
+    dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
+    updatePinned();
+    if (gridView)
+        reflowGrid();
 }
+
 
 
 
 function dragElement(elmnt, headerId) {
     var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     if (document.getElementById(headerId)) {
-      document.getElementById(headerId).onmousedown = dragMouseDown;
+        document.getElementById(headerId).onmousedown = dragMouseDown;
     } else {
-      elmnt.onmousedown = dragMouseDown;
+        elmnt.onmousedown = dragMouseDown;
     }
-  
+
     function dragMouseDown(e) {
-      e = e || window.event;
-      e.preventDefault();
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      document.onmouseup = closeDragElement;
-      document.onmousemove = elementDrag;
+        e = e || window.event;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
     }
-  
+
     function elementDrag(e) {
-      e = e || window.event;
-      e.preventDefault();
-      pos1 = pos3 - e.clientX;
-      pos2 = pos4 - e.clientY;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
     }
-  
+
     function closeDragElement() {
-      document.onmouseup = null;
-      document.onmousemove = null;
+        document.onmouseup = null;
+        document.onmousemove = null;
     }
-  }
+}
 
 
 function reflowGrid() {
-    let shouldReflow = false;   
-    $('.gridRow').each(function() {
-        if( $(this).find(".cardWrapper").length == 1) {
+    $('.gridRow').each(function () {
+        if ($(this).find(".cardWrapper").length == 1) {
             if ($(this).next('.gridRow').length) {
-               if ($(this).next('.gridRow').find('.cardWrapper').length) {
+                if ($(this).next('.gridRow').find('.cardWrapper').length) {
                     $(this).next('.gridRow').find('.cardWrapper').first().appendTo(this);
-               }
+                }
             }
         }
     });
 }
 
-  function removeNote(nid){
-    $(document.getElementById("cW-" + nid).parentElement.parentElement).remove(); 
+function showSearchPaneOnLeftSide() {
+    if ($('#outerWr').hasClass("onesided")) {
+        $('#leftSide').show();
+        document.getElementById('switchBtn').innerHTML = "&#10149; Search";
+        $('#outerWr').css('display', 'flex').removeClass('onesided');
+    } else {
+        $('#leftSide').hide();
+        document.getElementById('switchBtn').innerHTML = "&#10149; Back";
+        $('#outerWr').css('display', 'block').addClass('onesided');
+    }
+}
+
+function updateSwitchBtn(count) {
+    if (!$('#outerWr').hasClass("onesided"))
+        document.getElementById('switchBtn').innerHTML = `&#10149; Search (${count})`;
+}
+
+function removeNote(nid) {
+    $(document.getElementById("cW-" + nid).parentElement.parentElement).remove();
     updatePinned();
     if (gridView)
-         reflowGrid();
+        reflowGrid();
 
-  }
+}
 
 
