@@ -1,4 +1,7 @@
 from aqt import mw
+from aqt.qt import *
+import aqt
+
 import time
 
 
@@ -234,7 +237,7 @@ def calculateStats(nid, gridView):
     templates = mw.col.findTemplates(note)
 
     try:
-        infoTable["Created Date"] = time.strftime("%Y-%m-%d", time.localtime(int(nid)/1000)) + " &nbsp;&nbsp;<a href='#' style='' onclick='pycmd(\"addedSameDay %s\"); $(\"#a-modal\").hide(); return false;'>Added Same Day</a>" % nid
+        infoTable["Created Date"] = time.strftime("%Y-%m-%d", time.localtime(int(nid)/1000)) + " &nbsp;&nbsp;<a href='#' style='float: right;' onclick='pycmd(\"addedSameDay %s\"); $(\"#a-modal\").hide(); return false;'>Added Same Day</a>" % nid
         infoTable["Last Modified"] = time.strftime("%Y-%m-%d", time.localtime(note.mod))
     except:
         pass
@@ -386,14 +389,14 @@ def _buildTable(tables, reviewPlotData, ivlPlotData, timePlotData, namesByCid):
     for k, v in tables.items():
         if len(v) > 0:
             rows += "<fieldset style='margin-bottom: 10px; font-size: 11px;'><legend>%s</legend>" % k
-            rows += "<table style='width: 100%; margin-bottom: 5px;'>"
+            rows += "<table class='striped' style='width: 100%; margin-bottom: 5px;'>"
         scount = 0
         for table in v:
             scount += 1
             for key, value in table.items():
                 rows += "<tr style='width: 100%%'><td>%s</td><td><b>%s</b></td></tr>" % (key, value)
-            if scount != len(v):
-                rows += "<tr><td> </td><td></td> </tr>"
+        #     if scount != len(v):
+        #         rows += "<tr><td> </td><td></td> </tr>"
         if len(v) > 0:
             rows += "</table>"
             rows += "</fieldset>"
@@ -416,22 +419,31 @@ def _buildTable(tables, reviewPlotData, ivlPlotData, timePlotData, namesByCid):
                 hasGraph = True
                 break
     if hasGraph:
+        currentWindow = aqt.mw.app.activeWindow()
+        w = currentWindow.geometry().width()
+        if w <= 450:
+            graphWidth = "90%"
+            graphHeight = "180px"
+        else:
+            graphWidth = "68%"
+            graphHeight = "250px"
+
         s += "<fieldset style='font-size: 11px;'><legend>Graphs</legend>"
         for k,v in reviewPlotData.items(): 
             if len(v) > 1:
                 c+= 1
                 s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Reviews over time for <i>%s</i>:</h3>" % namesByCid[k]
-                s += "<div id='graph-" + str(c) + "' style='width: 68%; height: 250px; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 45px;'></div></div>"
+                s += "<div id='graph-" + str(c) + "' style='width: %s; height: %s; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 45px;'></div></div>" % (graphWidth, graphHeight)
         for k,v in ivlPlotData.items(): 
             if len(v) > 1:
                 c+= 1
                 s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Interval over time for <i>%s</i>:</h3>" %  namesByCid[k]
-                s += "<div id='graph-" + str(c) + "' style='width: 68%; height: 250px; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 45px;'></div></div>"
+                s += "<div id='graph-" + str(c) + "' style='width: %s; height: %s; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 45px;'></div></div>" % (graphWidth, graphHeight)
         for k,v in timePlotData.items(): 
             if len(v) > 1:
                 c+= 1
                 s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Answer times for <i>%s</i>:</h3>" %  namesByCid[k]
-                s += "<div id='graph-" + str(c) + "' style='width: 68%; height: 250px; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 45px;'></div></div>"
+                s += "<div id='graph-" + str(c) + "' style='width: %s; height: %s; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 45px;'></div></div>" % (graphWidth, graphHeight)
         s+= "</fieldset>"
     return s
 

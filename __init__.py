@@ -6,7 +6,7 @@ from aqt.qt import *
 from anki.hooks import runHook, addHook, wrap
 import aqt
 import aqt.webview
-from aqt.addcards import  AddCards
+from aqt.addcards import AddCards
 from anki.find import Finder
 import aqt.editor
 from aqt.editor import Editor, EditorWebView
@@ -46,6 +46,7 @@ if loadWhoosh:
 
 from .logging import log
 from .web import *
+from .special_searches import *
 from .fts_index import FTSIndex
 from .whoosh_index import SearchIndex
 from .output import Output
@@ -85,6 +86,9 @@ def initAddon():
 
     origSaveAndClose = EditDialog.saveAndClose
     EditDialog.saveAndClose = editorSaveWithIndexUpdate
+
+    addHook("setupEditorShortcuts", addHideShowShortcut)
+
 
 
     #main functions to search
@@ -215,6 +219,13 @@ def myOnBridgeCmd(self, cmd):
         if searchIndex is not None and searchIndex.lastResDict is not None:
             showTimingModal()
 
+
+    elif cmd.startswith("calInfo "):
+        if checkIndex():
+            context_html = get_cal_info_context(int(cmd[8:]))
+            res = get_notes_added_on_day_of_year(int(cmd[8:]), searchIndex.limit)
+            searchIndex.output.print_timeline_info(context_html, res)
+
     #
     #   Synonyms
     #
@@ -306,11 +317,17 @@ def myOnBridgeCmd(self, cmd):
             searchIndex.output.gridView = True
             tryRepeatLastSearch(self)
 
-
     elif cmd == "toggleGrid off":
         if searchIndex is not None and searchIndex.output is not None:
             searchIndex.output.gridView = False
             tryRepeatLastSearch(self)
+    
+    elif cmd == "toggleAll on":
+        if checkIndex():
+            searchIndex.output.uiVisible = True
+    elif cmd == "toggleAll off":
+        if checkIndex():
+            searchIndex.output.uiVisible = False
 
     elif cmd == "selectCurrent":
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
@@ -476,10 +493,13 @@ def onLoadNote(editor):
             log("Trying to insert html in editor")
             log("Editor.addMode: %s" % editor.addMode)
 
+        editor.web.eval("var addToResultAreaHeight = %s;" % config["addToResultAreaHeight"])
+
+
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
         editor.web.eval(rightSideHtml(config, searchIndex is not None))
-        
+
 
         if searchIndex is not None:
             showSearchResultArea(editor)
@@ -496,6 +516,8 @@ def onLoadNote(editor):
                 fillTagSelect(editor)
             if not searchIndex.topToggled:
                 editor.web.eval("hideTop();")
+            if searchIndex.output is not None and not searchIndex.output.uiVisible:
+                editor.web.eval("$('#infoBox').addClass('addon-hidden')")
             if searchIndex.output is not None and searchIndex.output.gridView:
                 editor.web.eval('activateGridView();')
             if searchIndex.output is not None:
@@ -646,26 +668,30 @@ def determineClickTarget(pos):
 
 def addOptionsToContextMenu(clickInfo):
     if clickInfo is not None and clickInfo.startswith("img "):
-        src = clickInfo[4:]
-        m = QMenu(searchIndex.output.editor.web)
-        a = m.addAction("Open Image in Browser")
-        a.triggered.connect(lambda: openImgInBrowser(src))
-        cpSubMenu = m.addMenu("Copy Image To Field...")
-        for key in searchIndex.output.editor.note.keys():
-            cpSubMenu.addAction("Append to %s" % key).triggered.connect(functools.partial(appendImgToField, src, key))
-        m.popup(QCursor.pos())
+        try:
+            src = clickInfo[4:]
+            m = QMenu(searchIndex.output.editor.web)
+            a = m.addAction("Open Image in Browser")
+            a.triggered.connect(lambda: openImgInBrowser(src))
+            cpSubMenu = m.addMenu("Copy Image To Field...")
+            for key in searchIndex.output.editor.note.keys():
+                cpSubMenu.addAction("Append to %s" % key).triggered.connect(functools.partial(appendImgToField, src, key))
+            m.popup(QCursor.pos())
+        except:
+            origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
     elif clickInfo is not None and clickInfo.startswith("note "):
-        content = " ".join(clickInfo.split()[2:])
-        nid = int(clickInfo.split()[1])
-        m = QMenu(searchIndex.output.editor.web)
-        a = m.addAction("Find Notes Added On The Same Day")
-        a.triggered.connect(lambda: getCreatedSameDay(searchIndex.output.editor, nid))
-        # subMenu = m.addMenu("Copy Note To Field")
-        # for key in searchIndex.output.editor.note.keys():
-        #     subMenu.addAction("Append to %s" % key).triggered.connect(functools.partial(appendNoteToField, content, key))
-        m.popup(QCursor.pos())
-    elif clickInfo is not None and clickInfo.startswith("span "):
-        content = clickInfo.split()[1]
+        try:
+            content = " ".join(clickInfo.split()[2:])
+            nid = int(clickInfo.split()[1])
+            m = QMenu(searchIndex.output.editor.web)
+            a = m.addAction("Find Notes Added On The Same Day")
+            a.triggered.connect(lambda: getCreatedSameDay(searchIndex.output.editor, nid))
+            m.popup(QCursor.pos())
+        except:
+            origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
+            
+    # elif clickInfo is not None and clickInfo.startswith("span "):
+    #     content = clickInfo.split()[1]
         
     else: 
         origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
@@ -826,7 +852,7 @@ def updateStyling(cmd):
     if name == "addToResultAreaHeight":
         if int(value) < 501 and int(value) > -501:
             config[name] = int(value)
-            searchIndex.output.editor.web.eval("addToHeightSmall = %s; addToHeightLarge= %s; $('#resultsArea').css('height', 'calc(var(--vh, 1vh) * 100 - %spx)');" % (116 - int(value), 288 - int(value), 295 - int(value)))
+            searchIndex.output.editor.web.eval("addToResultAreaHeight = %s; onResize();" % value)
     
     elif name == "renderImmediately":
         m = value == "true" or value == "on"
@@ -866,7 +892,7 @@ def writeConfig():
 def showStylingModal(editor):
     html = """
             <fieldset>
-                <span><mark>Important:</mark> Modify this value if the bottom bar (containing the predefined searches and the browser search) sits too low or too high.</span> 
+            <span><mark>Important:</mark> Modify this value if the bottom bar (containing the predefined searches and the browser search) sits too low or too high. (Can be negative)</span> 
                 <table style="width: 100%%">
                     <tr><td><b>Add To Result Area Height</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" style='width: 60px;' onchange="pycmd('styling addToResultAreaHeight ' + this.value)" value="%s"/> px</td></tr>
                 </table>
@@ -1124,6 +1150,15 @@ def defaultSearchWithDecks(editor, textRaw, decks):
     searchRes = searchIndex.search(cleaned, decks)
     
 
+def addHideShowShortcut(shortcuts, editor):
+    if not "toggleShortcut" in config:
+        return
+    QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
+
+
+def toggleAddon():
+    if checkIndex():
+        searchIndex.output.editor.web.eval("toggleAddon();")
 
 
 def showSearchResultArea(editor=None, initializationTime=0):
@@ -1293,6 +1328,7 @@ def printStartingInfo(editor):
         html += "<br/>Results are rendered <b>%s</b>." % ("immediately" if config["renderImmediately"] else "with fade-in")
         html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
+        html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
 
     if searchIndex is None or searchIndex.output is None:
         html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"

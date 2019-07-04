@@ -53,6 +53,7 @@
 "leftSideWidthInPercent": 50,
 "showRetentionScores": true,
 "imageMaxHeight": 300,
-"hideSidebar": false
+"hideSidebar": false,
+"toggleShortcut": "Ctrl+F"
 
 }

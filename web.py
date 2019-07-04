@@ -2,25 +2,16 @@ import platform
 import os
 import json
 import re
+import datetime
+import time
 from aqt import mw
 from .textutils import cleanSynonym
 
-#css + js + hvrBox
+#css + js 
 all = """
 <style>
 %s
 </style>
-
- <div id="hvrBox">
-    <div class='hvrLeftItem' id='hvrI-0'></div>
-    <div class='hvrLeftItem' id='hvrI-1'></div>
-    <div class='hvrLeftItem' id='hvrI-2'>last note</div>
-    <div id="wiki"></div>
- </div>
-
-<div id="hvrBoxSub">
-
-</div>
 
 <script>
 %s
@@ -127,9 +118,10 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     with open(dir + "/styles.css") as f:
         css = f.read().replace("%", "%%")
     script = script.replace("$del$", str(delayWhileTyping))
-    script = script.replace("$h-1$", str(116 - addToHeight))
-    script = script.replace("$h-2$", str(288 - addToHeight))
-    
+    # script = script.replace("$h-1$", str(116 - addToHeight))
+    # script = script.replace("$h-2$", str(288 - addToHeight))
+    script = script.replace("$h-1$", str(120 - addToHeight))
+    script = script.replace("$h-2$", str(291 - addToHeight))
     try:
         deckSelectFontSize = config["deckSelectFontSize"]
     except KeyError:
@@ -369,7 +361,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
 
                     </div>
                     <div class='flexCol right' style="position: relative;">
-                        <table>
+                        <table class=''>
                             <tr><td style='text-align: left; padding-bottom: 10px; white-space: nowrap;'><div id='indexInfo' onclick='pycmd("indexInfo");'>Info</div>
                             <div id='synonymsIcon' onclick='pycmd("synonyms");'>SynSets</div>
                             <div id='stylingIcon' onclick='pycmd("styling");'>Styling</div>
@@ -380,27 +372,28 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                             <tr><td class='tbLb'>Search on Tag Entry</td><td><input id="tagCb" type='checkbox' checked onchange='setTagSearch(this)'/></td></tr>
                             <tr><td class='tbLb'><mark>&nbsp;Highlighting&nbsp;</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
                         </table>
-                        <div>
-                            <div id='grid-icon' onclick='toggleGrid(this)'>Grid &#9783;</div>
-                            <div id='freeze-icon' onclick='toggleFreeze(this)'>
-                                FREEZE &#10052; 
-                            </div>
-                            <div id='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'>RANDOM &#9861;</div>
+                        <div id="icns-large">
+                            <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
+                            <div class='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
+                            <div class='grid-icon' onclick='toggleGrid(this)'> <span class='icns-add'>Grid </span>&#9783; </div>
                         </div>
                     </div>
                 </div>
-               <!-- --> 
-                <div id="resultsArea" style="height: calc(var(--vh, 1vh) * 100 - %spx);  width: 100%%; border-top: 1px solid grey;">
-                        <div style='position: absolute; top: 5px; right: 12px; width: 30px;'>
-                            <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
-                        </div>
-                <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
-                <div style='height: 100%%; padding-bottom: 15px; padding-top: 15px;' id='resultsWrapper'>
-                    <div id='searchInfo' class='%s'></div>
-                    <div id='searchResults'></div>
+               <!--height: calc(var(--vh, 1vh) * 100 - %spx) --> 
+                <div id="resultsArea" style="height: 100px;  width: 100%%; border-top: 1px solid grey;">
+                    <div style='position: absolute; top: 5px; right: 12px; width: 30px;'>
+                        <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
+                    </div>
+                    <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
+                    <div style='height: 100%%; padding-bottom: 15px; padding-top: 15px; z-index: 100;' id='resultsWrapper'>
+                        <div id='searchInfo' class='%s'></div>
+                        <div id='searchResults'></div>
+                    </div>
                 </div>
-                </div>
-                    <div id='bottomContainer'>
+                <div id='bottomContainer' style='display: block;'>
+                    <div style='position: relative;'>
+                        %s
+                    </div>
                     <div class="flexContainer">
                         <div class='flexCol' style='padding-left: 0px; '> 
                             <div class='flexContainer' style="flex-wrap: nowrap;">
@@ -453,7 +446,8 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                             </div>
                         </div>
                     </div>
-                    </div>
+
+                </div>
                 </div>`).insertAfter('#fields');
         $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow-x: hidden; height: 100%%;"></div>');    
         updatePinned();
@@ -462,16 +456,79 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
         $('.field').attr('onmouseup', 'getSelectionText()');
         var $fields = $('.field');
         var $searchInfo = $('#searchInfo');
-        
-        window.addEventListener('resize', onResize, true);
         onResize();
+        window.addEventListener('resize', onResize, true);
+        $('.cal-block-outer').on('mouseenter', function() { calBlockMouseEnter(this);});
+        $(`<div id='cal-info' onmouseleave='calMouseLeave()'></div>`).insertAfter('#outerWr');
 """ % (
     leftSideWidth,
     rightSideWidth,
-    295 - addToResultAreaHeight,
+    300 - addToResultAreaHeight,
     "display: none;" if searchIndexIsLoaded else "",
-    "hidden" if hideSidebar else ""
+    "hidden" if hideSidebar else "",
+    getCalendarHtml()
        )
 
+
+def getCalendarHtml():
+    start = time.time();
+    html = """<div id='cal-row' style="width: 100%%; height: 8px;" onmouseleave='calMouseLeave()'>%s</div>
+            """
+    #get notes created since the beginning of the year
+    day_of_year = datetime.datetime.now().timetuple().tm_yday
+    date_year_begin = datetime.datetime(year=datetime.datetime.utcnow().year, month=1, day=1, hour=0 ,minute=0)  
+    nid_now = int(time.time()* 1000)
+    nid_minus_day_of_year = int(date_year_begin.timestamp() * 1000)
+
+    res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now)).fetchall()
+
+    counts = []
+    c = 0
+    notes_in_current_day = 0
+    for i, r in enumerate(res):
+        #date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(r[0]/1000))
+        c_day_of_year = time.localtime(r[0]/1000).tm_yday
+        notes_in_current_day += 1
+
+        if c_day_of_year != c or i == len(res) - 1:
+            if c != 1:
+                counts.append(notes_in_current_day)
+            for _ in range(0, c_day_of_year - c - 1):
+                counts.append(0)
+            c = c_day_of_year
+            
+            notes_in_current_day = 1
+    if time.localtime(res[-1][0]/1000).tm_yday != day_of_year:
+        counts.append(notes_in_current_day)
+    elif notes_in_current_day > 0:
+        counts.append(notes_in_current_day)
+    if len(counts) < day_of_year:
+        counts.append
+
+    html_content = ""
+    size = 1
+    c_sum = 0
+    added = 0
+    for i, notes_in_current_day in enumerate(counts):
+        c_sum += notes_in_current_day
+        if i > 0 and (i + 1) % size == 0:
+            avg = c_sum / size
+            if avg > 20:
+                color = "cal-three"
+            elif avg > 10:
+                color = "cal-two"
+            elif avg > 0:
+                color = "cal-one"
+            else: 
+                color = ""
+            
+            html_content += "<div class='cal-block-outer'><div class='cal-block %s %s' data-index='%s'></div></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
+            c_sum = 0
+            added += 1
+
+    html = html % html_content
+    taken = (time.time()- start) * 1000
+    return html
+        
 
 

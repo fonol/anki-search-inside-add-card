@@ -25,6 +25,7 @@ class Output:
         self.showRetentionScores = True
         self.lastResults = None
         self.hideSidebar = False
+        self.uiVisible = True
 
 
         self.noteTemplate = """<div class='cardWrapper %s' id='nWr-%s'> 
@@ -44,7 +45,18 @@ class Output:
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
                         </div>"""
 
-
+        self.noteTemplateSimple = """<div class='cardWrapper' style="display: block;"> 
+                            <div class='topLeftWr'>
+                                <div class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
+                                %s
+                            </div>
+                            <div class='btnBar' id='btnBarSmp-%s' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+                                <div class='editLbl' onclick='edit(%s)'>Edit</div> 
+                            </div>
+                            <div class='cardR' onmouseup='getSelectionText()'  onmouseenter='cardMouseEnter(this, %s, "simple")' onmouseleave='cardMouseLeave(this, %s, "simple")'>%s</div> 
+                            <div style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
+                            <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
+                        </div>"""
 
 
     def printSearchResults(self, searchResults, stamp, editor=None, logging=False, printTimingInfo=False):
@@ -85,7 +97,7 @@ class Output:
             ret = retsByNid[int(res[3])] if self.showRetentionScores and int(res[3]) in retsByNid else None
 
             if ret is not None:
-                retMark = "background: %s;" % (self._retToColor(ret)) 
+                retMark = "background: %s; color: black;" % (self._retToColor(ret)) 
                 if str(res[3]) in self.edited:
                     retMark += "max-width: 20px;"
                 retInfo = """<div class='retMark' style='%s'>%s</div>
@@ -135,22 +147,24 @@ class Output:
             editor.web.eval(cmd)
 
 
-    def buildTagString(self, tags):
+    def buildTagString(self, tags, hover = True, maxLength = -1, maxCount = -1):
         """
         Builds the html for the tags that are displayed at the bottom right of each rendered search result.
         """
         html = ""
         tm = self.getTagMap(tags.split(' '))
         totalLength = sum([len(k) for k,v in tm.items()])
-        maxLength = 40 if not self.gridView else 30
-        maxCount = 3 if not self.gridView else 2
+        if maxLength == -1:
+            maxLength = 40 if not self.gridView else 30
+        if maxCount == -1:
+            maxCount = 3 if not self.gridView else 2
         if len(tm) <= maxCount or totalLength < maxLength:
             for t, s in tm.items():
                 if len(s) > 0:
                     tagData = " ".join(self.iterateTagmap({t : s}, ""))
-                    html += "<div class='tagLbl tooltip' data-tags='%s' data-name='%s' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)' onclick='tagClick(this);'><div class='tooltiptext-tag' onclick='event.stopPropagation();'></div>%s</div>" %(tagData, tagData, trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
+                    html += "<div class='tagLbl tooltip' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'><div class='tooltiptext-tag' onclick='event.stopPropagation();'></div>%s</div>" %(tagData, tagData, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
                 else:
-                    html += "<div class='tagLbl tooltip' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)' data-name='%s' onclick='tagClick(this);'><div class='tooltiptext-tag' onclick='event.stopPropagation();'></div>%s</div>" %(t, trimIfLongerThan(t, maxLength))
+                    html += "<div class='tagLbl tooltip' %s data-name='%s' onclick='tagClick(this);'><div class='tooltiptext-tag' onclick='event.stopPropagation();'></div>%s</div>" %("onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", t, trimIfLongerThan(t, maxLength))
         else:
             tagData = " ".join(self.iterateTagmap(tm, ""))
             html += "<div class='tagLbl' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(tagData, str(len(tm)) + " tags ...")
@@ -326,6 +340,53 @@ class Output:
         for entry in sortedCounts[:15]:
             html += "<a class='keyword' href='#' onclick='event.preventDefault(); searchFor($(this).text())'>%s</a>, " % entry[1][0]
         return html[:-2]
+
+    def print_timeline_info(self, context_html, db_list):
+        html = ""
+        epochTime = int(time.time() * 1000)
+        timeDiffString = ""
+        newNote = ""
+        lastNote = "" 
+        nids = [r[3] for r in db_list]
+        if self.showRetentionScores:
+            retsByNid = getRetentions(nids)
+        ret = 0
+        for counter, res in enumerate(db_list):
+            try:
+                timeDiffString = self._getTimeDifferenceString(res[3], epochTime)
+            except:
+                timeDiffString = "Could not determine creation date"
+            ret = retsByNid[int(res[3])] if self.showRetentionScores and int(res[3]) in retsByNid else None
+
+            if ret is not None:
+                retMark = "background: %s; color: black;" % (self._retToColor(ret)) 
+                if str(res[3]) in self.edited:
+                    retMark += "max-width: 20px;"
+                retInfo = """<div class='retMark' style='%s'>%s</div>
+                             """ % (retMark, int(ret))
+            else:
+                retInfo = ""
+
+            lastNote = newNote
+            text = self._cleanFieldSeparators(res[0]).replace("\\", "\\\\")
+            text = self.tryHideImageOcclusion(text)
+            newNote = self.noteTemplateSimple % ( counter + 1,
+                        "&nbsp;&#128336; " + timeDiffString,
+                        "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
+                        retInfo, res[3],res[3],res[3],res[3],
+                        text, 
+                        self.buildTagString(res[1], False, maxLength = 25, maxCount = 2), res[3]) 
+           
+            html += newNote
+        
+        if len(html) == 0:
+            html = "%s <div style='vertical-align:center; text-align: center; line-height: 200px;'>No notes added on that day.</div>" % (context_html)
+        else:
+            html = """
+                %s
+                <div style='overflow-y: auto; height: 200px; margin-top: 5px; padding-left: 4px; padding-right: 8px;'>%s</div> 
+            """ % (context_html, html)
+        self.editor.web.eval("document.getElementById('cal-info').innerHTML = `%s`;" % html)
 
    
     def showInModal(self, text):

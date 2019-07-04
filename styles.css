@@ -1,4 +1,8 @@
 
+:root {
+    --tleft : 50%;
+}
+
 body {
     overflow-x: hidden;
     overflow: hidden;
@@ -49,6 +53,7 @@ body {
     padding-right: 10px;
     overflow-x: hidden;
     max-width: 100%;
+    z-index: 100;
 
 }
 .editedStamp {
@@ -59,14 +64,17 @@ body {
   border: 1px solid $noteBorderColor$; 
   padding: 10px 15px 25px 15px; 
   position: relative;
-  font-size: $noteFontSize$;
+  font-size: $noteFontSize$ !important;
   color: $noteForegroundColor$;
   background: $noteBackgroundColor$;
+  overflow-x: hidden;
   
 }
 .cardR img {
     max-height: $imgMaxHeight$;
+    max-width: 100%;
 }
+
 .cardWrapper.grid .cardR {
     word-wrap: break-word;
 }
@@ -154,7 +162,7 @@ body {
 .searchInfoTagLbl {
     background: $tagBackgroundColor$; 
     color: $tagForegroundColor$; 
-    font-size: $tagFontSize$;
+    font-size: $tagFontSize$ !important;
     padding: 2px 4px 2px 4px; 
     border-radius: 2px; 
     margin-right: 7px; 
@@ -173,7 +181,7 @@ body {
     border-radius: 2px; 
     margin-left: 5px; 
     float: right; 
-    font-size: $tagFontSize$;
+    font-size: $tagFontSize$ !important;
     cursor: pointer;
     z-index: 999;
 }
@@ -217,7 +225,7 @@ body {
     padding: 2px 6px 2px 6px; 
     cursor: pointer;
     flex: 1;
-    font-size: 13px;
+    font-size: 13px !important;
     user-select: none;
 }
 .srchLbl  {
@@ -259,13 +267,13 @@ body {
 .pinLbl > span {
   color: transparent;
   text-shadow: 0 0 0 $noteForegroundColor$;
-  font-size: 8px;
+  font-size: 8px !important;
   user-select: none;
 }
 .rankingLbl > span {
   margin-top: -4px;
   color: transparent;
-  font-size: 8px;
+  font-size: 8px !important;
   text-shadow: 0 0 0 rgb(255,255,255);
   user-select: none;
 }
@@ -279,7 +287,7 @@ body {
 .pinLbl.unselected > span {
    color: transparent;
   text-shadow: 0 0 0 $noteForegroundColor$;
-  font-size: 7px;
+  font-size: 7px !important;
 
 }
 .pinLbl.unselected:hover > span {
@@ -407,7 +415,7 @@ body {
 }
 
 #switchBtn {
-    display: none;
+    display: none !important;
     }
 
 
@@ -424,6 +432,12 @@ body {
     min-width: 40px !important;
     margin-bottom: 0px !important;
 }
+
+
+.addon-hidden {
+    display: none !important;
+}
+
 
 @media (max-height: 640px) {
     #tagContainer {
@@ -443,7 +457,9 @@ body {
   .secondCol {
         display: none;
   }
-  
+
+
+
   #outerWr.onesided > .secondCol {
         display: block;
         width: 100% !important;
@@ -452,7 +468,7 @@ body {
         padding-left: 0px !important;
   }
   #switchBtn {
-      display: inline-block;
+      display: inline-block !important;
   }
  
 }
@@ -466,7 +482,15 @@ body {
     }
 }
 
-
+@media (max-width: 800px) {
+   
+   .icns-add {
+        display: none !important;
+    }
+    .grid-icon, .freeze-icon, .rnd-icon {
+        font-size: 17px !important;
+    }
+}
 
 @media (max-width: 1200px) {
     .cardR, .tagLbl, .searchInfoTagLbl, .keyword {
@@ -493,13 +517,26 @@ body {
     .searchInfoTagSep{
         margin-top: 20px !important;
      }
+     #modalText {
+         max-height: 650px !important;
+     }
 }
 @media (max-width: 500px) {
     #sortCol {
         display: none;
     }
+    .modal-content 
+    {
+        width: 80% !important;
+    }
+   
   
 
+}
+@media (max-height: 600px) {
+    #modalText {
+        max-height: 350px !important;
+    }
 }
 
 .secondCol {
@@ -537,6 +574,10 @@ body {
 .matched b {
       font-weight: normal;
       background: yellow;
+}
+
+#icns-small {
+    display: none;
 }
 
 #searchInfo {
@@ -580,12 +621,29 @@ body {
     }
 }
 
+#icns-large, #icns-small {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    text-align: right;
 
-#rnd-icon {
-    position: absolute; 
-    bottom: 5px; 
-    right: 5px; 
-    font-size: 13px;
+}
+
+.rnd-icon {
+    float: right;
+    font-size: 13px !important;
+    cursor: pointer;
+    color: grey;
+    user-select: none;
+    white-space: nowrap;
+  overflow: hidden;
+  margin-right: 5px;
+}
+
+
+.freeze-icon {
+    float: right;
+    font-size: 13px !important;
     cursor: pointer;
     color: grey;
     user-select: none;
@@ -594,39 +652,26 @@ body {
 }
 
 
-#freeze-icon {
-    position: absolute; 
-    bottom: 5px; 
-    right: 80px; 
-    font-size: 13px;
-    cursor: pointer;
-    color: grey;
-    user-select: none;
-    white-space: nowrap;
-  overflow: hidden;
-}
 
-
-
-#freeze-icon:hover, #grid-icon:hover, #rnd-icon:hover {
+.freeze-icon:hover, .grid-icon:hover, .rnd-icon:hover {
     color:  #2496dc;
 }
 
-#freeze-icon.frozen {
+.freeze-icon.frozen {
     color:  #2496dc !important;
 }
-#grid-icon {
-    position: absolute; 
-    bottom: 5px; 
-    right: 145px; 
-    font-size: 13px;
+.grid-icon {
+   float: right;
+    font-size: 13px !important;
     cursor: pointer;
     color: grey;
     user-select: none;
     white-space: nowrap;
   overflow: hidden;
+  margin-right: 5px;
+
 }
-#grid-icon.active {
+.grid-icon.active {
     color:  #2496dc !important;
 }
 
@@ -648,7 +693,7 @@ body {
   }
   
   .tooltip .tooltiptext {
-    display: none;
+    visibility:  hidden;
     width: 300px;
     background-color: $modalBackgroundColor$;
     color: $modalForegroundColor$;
@@ -689,6 +734,10 @@ body {
      
 
   }
+
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+  }
   .t-inverted {
        top: 100 !important;
        bottom: 0 !important;
@@ -705,10 +754,11 @@ body {
     cursor: pointer;
     margin: 0px;
     padding: 0px;
+    border-spacing: 0px;
     width: calc(100% - 8px);
     position: relative;
     user-select: none;
-    font-size: $deckSelectFontSize$;
+    font-size: $deckSelectFontSize$ !important;
 }
 .deck-list-item .deck-list-item {
     width: 100%;
@@ -741,7 +791,7 @@ border-top: 0px;
 background: $deckSelectBackgroundColor$;
 color: $deckSelectButtonForegroundColor$;
 cursor: pointer;
-font-size: 11px;
+font-size: 11px !important;
 user-select: none;
 }
 .deck-list-button.center {
@@ -779,6 +829,14 @@ user-select: none;
     user-select: none;
   
 }
+table.striped {
+    border-collapse: collapse;
+}
+
+table.striped tr:nth-child(even) {
+    background-color: #f2f2f2 !important;
+  }
+
 .exp:empty {
     display: none;
 }
@@ -790,11 +848,15 @@ user-select: none;
     border: 1px solid  $infoButtonBorderColor$;
     cursor: pointer;
     user-select: none;
-    font-size: 11px;
+    font-size: 11px !important;
     outline: none;
     margin-right: 5px;
 
 }
+#indexInfo:hover, #synonymsIcon:hover, #stylingIcon:hover {
+    color: #2496dc;
+}
+
 #lastAdded, #sortBtn {
     color: $infoButtonForegroundColor$;
     background: $infoButtonBackgroundColor$;
@@ -802,15 +864,15 @@ user-select: none;
     cursor: pointer;
     user-select: none;
     outline: none;
-    vertical-align: middle;
-    text-align: center;
-    height: 20px;
-    box-sizing: border-box;
-    font-size: 8px;
-    display: inline-block;
-    line-height: 1em;   
-    padding: 5px;
-    max-width: 30px;
+    vertical-align: middle !important;
+    text-align: center !important;
+    height: 20px !important;
+    box-sizing: border-box !important;
+    font-size: 8px !important;
+    display: inline-block !important;
+    line-height: 1em !important;   
+    padding: 5px !important;
+    max-width: 30px !important;
 }
 
 
@@ -950,7 +1012,7 @@ select {
     border-radius: 2px;
     cursor: pointer;
     user-select: none;
-    font-size: $tagFontSize$;
+    font-size: $tagFontSize$ !important;
 
 }
 
@@ -977,6 +1039,10 @@ span.tag-symbol {
     font-weight: bold;
     text-align: center;
     width: 100%;
+  }
+  #toggleTop:hover {
+      transform: scale(1.2);
+      color: #2496dc;
   }
   .noteFloating {
     position: absolute;
@@ -1009,8 +1075,85 @@ span.tag-symbol {
     font-size: 11px !important;
     text-align: right;
   }
+.cal-block-outer {
+    height: 100%;
+     padding-top: 5px;
+     padding-bottom: 5px;
+      cursor:pointer;
+      display: inline-block;
+      width: calc(100% / 365);
+}
+.cal-block-outer:hover > .cal-block, .cal-block-outer:hover > .cal-block {
+    background-color: $tagBackgroundColor$;
+}
+
+  .cal-block {
+      position: relative;
+      height: 100%;
+      width: 100%;
+  }
+  .cal-block-week {
+    display: inline-block;
+    cursor:pointer;
+    width: 17px;
+    height: 17px;
+    background: white;
+    margin-right: 3px; margin-left: 3px;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 17px; 
+    color: black;
+    user-select: none;
+}
+.cal-block-week:hover {
+    transform: scale(1.15);
+}
+.cal-lg {
+    height: 24px;
+    width: 24px;
+    line-height: 24px; 
+}
+
+  .cal-one {
+      background: #c6e48b;
+  }
+  .cal-two {
+    background: #7bc96f;
+}
+.cal-three {
+   background: #196127; 
+}
+.cal-block-week.cal-three {
+    color: white;
+}
+.cal-today {
+    background: #2496dc;
+}
+
+#cal-info {
+    position:absolute;
+    left: 0px;
+    display: none;
+    z-index:99999;
+    width: 300px;
+    height: 250px;
+    padding: 5px;
+   background:#595959;
+   color: white;
+   border-radius: 3px;
+}
 
 
+#cal-info:after {
+  content: " ";
+  position: absolute;
+  top: 100%; 
+  left: var(--tleft);
+  margin-left: -8px;
+  border-width: 8px;
+  border-style: solid;
+  border-color: #595959 transparent transparent transparent;
+}
 
   /*MAC*/
 .dCheck {
