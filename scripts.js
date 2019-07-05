@@ -101,6 +101,8 @@ function cardMouseLeave(elem, nid, mode = "full") {
 }
 
 function tagMouseEnter(elem) {
+    if (!showTagInfoOnHover)
+        return;
     setTimeout(function () {
         if (elem.parentElement.querySelector(':hover') === elem && $('#resultsArea').height() > 400 && $('#resultsArea').width() > 450) {
             $(elem).css("z-index", "9999");

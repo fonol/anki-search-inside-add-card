@@ -51,6 +51,198 @@ def get_cal_info_context(day_of_year : int):
     return html
 
 
+def getCreatedSameDay(searchIndex, editor, nid):
+    stamp = searchIndex.output.getMiliSecStamp()
+    searchIndex.output.latest = stamp
+    searchIndex.lastSearch = (nid, None, "createdSameDay")
+    try:
+        nidMinusOneDay = nid - (24 * 60 * 60 * 1000)
+        nidPlusOneDay = nid + (24 * 60 * 60 * 1000)
+
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid desc" %(nidMinusOneDay, nidPlusOneDay)).fetchall()
+
+        dayOfNote = int(time.strftime("%d", time.localtime(nid/1000)))
+        rList = []
+        c = 0
+        for r in res:
+            dayCreated = int(time.strftime("%d", time.localtime(int(r[0])/1000)))
+            if dayCreated != dayOfNote:
+                continue
+            if not str(r[0]) in searchIndex.pinned:
+                rList.append((r[1], r[2], r[3], r[0]))
+                c += 1
+                if c >= searchIndex.limit:
+                    break
+        if editor.web is not None:
+            if len(rList) > 0:
+                searchIndex.output.printSearchResults(rList, stamp, editor)
+            else:
+                editor.web.eval("setSearchResults(``, 'No results found.')")
+    except:
+        if editor.web is not None:
+            editor.web.eval("setSearchResults('', 'Error in calculation.')")
+
+def getRandomNotes(searchIndex, decks):
+    if searchIndex is None:
+        return
+    stamp = searchIndex.output.getMiliSecStamp()
+    searchIndex.output.latest = stamp
+    searchIndex.lastSearch = (None, decks, "random")
+
+    if not "-1" in decks:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+
+    limit = searchIndex.limit
+    if deckQ:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by random() limit %s" % (deckQ, limit)).fetchall()
+    else:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by random() limit %s" % limit).fetchall()
+    rList = []
+    for r in res:
+        rList.append((r[1], r[2], r[3], r[0]))
+    return { "result" : rList, "stamp" : stamp }
+
+
+def getCreatedNotesOrderedByDate(searchIndex, editor, decks, limit, sortOrder):
+    stamp = searchIndex.output.getMiliSecStamp()
+    searchIndex.output.latest = stamp
+    if sortOrder == "desc":
+        searchIndex.lastSearch = (None, decks, "lastCreated", limit)
+    else:
+        searchIndex.lastSearch = (None, decks, "firstCreated", limit)
+
+    if not "-1" in decks and len(decks) > 0:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+    if len(deckQ) > 0:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by nid %s limit %s" %(deckQ, sortOrder, limit)).fetchall()
+    else:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by nid %s limit %s" % (sortOrder, limit)).fetchall()
+    rList = []
+    for r in res:
+        #pinned items should not appear in the results
+        if not str(r[0]) in searchIndex.pinned:
+            rList.append((r[1], r[2], r[3], r[0]))
+
+    if editor.web is not None:
+        if len(rList) > 0:
+            searchIndex.output.printSearchResults(rList, stamp, editor)
+        else:
+            editor.web.eval("setSearchResults(``, 'No results found.')")
+
+
+def getLastReviewed(decks, limit):
+    if decks is not None and len(decks) > 0 and not "-1" in decks:
+        deckQ = "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+
+    if deckQ:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
+    else:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid order by cr.rid desc limit %s" % limit
+    res = mw.col.db.execute(cmd).fetchall()
+    rList = []
+    for r in res:
+        rList.append((r[1], r[2], r[3], r[0]))
+    return rList
+
+def getLastLapses(decks, limit):
+    if decks is not None and len(decks) > 0 and not "-1" in decks:
+        deckQ = "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+
+    if deckQ:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
+    else:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.ease = 1 order by cr.rid desc limit %s" % limit
+    res = mw.col.db.execute(cmd).fetchall()
+    rList = []
+    for r in res:
+        rList.append((r[1], r[2], r[3], r[0]))
+    return rList
+
+def getRandomUntagged(decks, limit):
+    if not "-1" in decks:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+    if deckQ:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s and (tags is null or tags = '') order by random() limit %s" % (deckQ, limit)).fetchall()
+    else:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by random() limit %s" % limit).fetchall()
+    rList = []
+    for r in res:
+        rList.append((r[1], r[2], r[3], r[0]))
+    return rList
+    
+
+def findNotesWithLongestText(decks, limit, pinned):
+    if not "-1" in decks and len(decks) > 0:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+    if pinned is None:
+        pinned = []
+    if len(deckQ) > 0:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by length(replace(trim(flds), '\u001f', '')) desc limit %s" %(deckQ, limit)).fetchall()
+    else:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by length(replace(trim(flds), '\u001f', '')) desc limit %s" % (limit )).fetchall()
+    rList = []
+    for r in res:
+        #pinned items should not appear in the results
+        if not str(r[0]) in pinned:
+            rList.append((r[1], r[2], r[3], r[0]))
+    return rList
+
+def getByTimeTaken(decks, limit, mode):
+    if decks is not None and len(decks) > 0 and not "-1" in decks:
+        deckQ = "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+
+    if deckQ:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s group by cr.nid order by timeavg %s limit %s" % (deckQ, mode, limit)
+    else:
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 group by cr.nid order by timeavg %s limit %s" % (mode, limit)
+    res = mw.col.db.execute(cmd).fetchall()
+    rList = []
+    for r in res:
+        rList.append((r[1], r[2], r[3], r[0]))
+    return rList
+
+def getLastModifiedNotes(searchIndex, editor, decks, limit):
+    stamp = searchIndex.output.getMiliSecStamp()
+    searchIndex.output.latest = stamp
+    searchIndex.lastSearch = (None, decks, "lastModified")
+
+    if not "-1" in decks and len(decks) > 0:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+    if len(deckQ) > 0:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mod from notes left join cards on notes.id = cards.nid where did in %s order by notes.mod desc limit %s" %(deckQ, limit)).fetchall()
+    else:
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mod from notes left join cards on notes.id = cards.nid order by notes.mod desc limit %s" % (limit)).fetchall()
+    rList = []
+    for r in res:
+        if not str(r[0]) in searchIndex.pinned:
+            rList.append((r[1], r[2], r[3], r[0]))
+
+    if editor.web is not None:
+        if len(rList) > 0:
+            searchIndex.output.printSearchResults(rList, stamp, editor)
+        else:
+            editor.web.eval("setSearchResults(``, 'No results found.')")
+
+
+
+
+
 def to_print_list(db_list):
     rList = []
     for r in db_list:

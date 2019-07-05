@@ -54,6 +54,7 @@
 "showRetentionScores": true,
 "imageMaxHeight": 300,
 "hideSidebar": false,
-"toggleShortcut": "Ctrl+F"
-
+"toggleShortcut": "Ctrl+F",
+"showTimeline": true,
+"showTagInfoOnHover": true
 }

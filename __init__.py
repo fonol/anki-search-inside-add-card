@@ -185,8 +185,8 @@ def myOnBridgeCmd(self, cmd):
         setPinned(cmd[6:])
     elif (cmd.startswith("renderTags")):
         searchIndex.output.printTagHierarchy(cmd[11:].split(" "))
-    elif (cmd.startswith("randomNotes ") and searchIndex is not None):
-        res = getRandomNotes([s for s in cmd[11:].split(" ") if s != ""])
+    elif (cmd.startswith("randomNotes ") and checkIndex()):
+        res = getRandomNotes(searchIndex, [s for s in cmd[11:].split(" ") if s != ""])
         searchIndex.output.printSearchResults(res["result"], res["stamp"])
     elif cmd == "toggleTagSelect":
         if checkIndex():
@@ -213,7 +213,7 @@ def myOnBridgeCmd(self, cmd):
         
     elif cmd.startswith("addedSameDay "):
         if checkIndex():
-            getCreatedSameDay(self, int(cmd[13:]))
+            getCreatedSameDay(searchIndex, self, int(cmd[13:]))
     
     elif cmd == "lastTiming":
         if searchIndex is not None and searchIndex.lastResDict is not None:
@@ -291,18 +291,19 @@ def myOnBridgeCmd(self, cmd):
         if checkIndex():
             searchIndex.tagSearch = cmd[10:] == "on"
     elif (cmd.startswith("deckSelection")):
-        if checkIndex():
-            if searchIndex.logging:
-                if len(cmd) > 13:
-                    log("Updating selected decks: " + str( [d for d in cmd[14:].split(" ") if d != ""]))
-                else:
-                    log("Updating selected decks: []")
+        if not checkIndex():
+            return
+        if searchIndex.logging:
             if len(cmd) > 13:
-                searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
+                log("Updating selected decks: " + str( [d for d in cmd[14:].split(" ") if d != ""]))
             else:
-                searchIndex.selectedDecks = []
-            #repeat last search if default 
-            tryRepeatLastSearch(self)
+                log("Updating selected decks: []")
+        if len(cmd) > 13:
+            searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
+        else:
+            searchIndex.selectedDecks = []
+        #repeat last search if default 
+        tryRepeatLastSearch(self)
 
     elif cmd == "toggleTop on":
         if checkIndex():
@@ -313,14 +314,16 @@ def myOnBridgeCmd(self, cmd):
             searchIndex.topToggled = False
 
     elif cmd == "toggleGrid on":
-        if searchIndex is not None and searchIndex.output is not None:
-            searchIndex.output.gridView = True
-            tryRepeatLastSearch(self)
+        if not checkIndex():
+            return
+        searchIndex.output.gridView = True
+        tryRepeatLastSearch(self)
 
     elif cmd == "toggleGrid off":
-        if searchIndex is not None and searchIndex.output is not None:
-            searchIndex.output.gridView = False
-            tryRepeatLastSearch(self)
+        if not checkIndex():
+            return
+        searchIndex.output.gridView = False
+        tryRepeatLastSearch(self)
     
     elif cmd == "toggleAll on":
         if checkIndex():
@@ -364,119 +367,76 @@ def parsePredefSearchCmd(cmd, editor):
     searchtype = cmd.split(" ")[0]
     limit = int(cmd.split(" ")[1])
     decks = cmd.split(" ")[2:]
-
     if searchtype == "lowestPerf":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "lowestPerf")
         res = findNotesWithLowestPerformance(decks, limit, searchIndex.pinned)
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "highestPerf":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "highestPerf")
         res = findNotesWithHighestPerformance(decks, limit, searchIndex.pinned)
         searchIndex.output.printSearchResults(res, stamp)
-
     elif searchtype == "lastAdded":
-        getCreatedNotesOrderedByDate(editor, decks, limit, "desc")
+        getCreatedNotesOrderedByDate(searchIndex, editor, decks, limit, "desc")
     elif searchtype == "firstAdded":
-        getCreatedNotesOrderedByDate(editor, decks, limit, "asc")
-    
+        getCreatedNotesOrderedByDate(searchIndex, editor, decks, limit, "asc")
     elif searchtype == "lastModified":
-        getLastModifiedNotes(editor, decks, limit)
+        getLastModifiedNotes(searchIndex, editor, decks, limit)
     elif searchtype == "lowestRet":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "lowestRet")
         res = findNotesWithLowestPerformance(decks, limit, searchIndex.pinned,  retOnly = True)
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "highestRet":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "highestRet")
         res = findNotesWithHighestPerformance(decks, limit, searchIndex.pinned,  retOnly = True)
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "longestText":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "highestRet")
-        res = findNotesWithLongestText(decks, limit)
+        res = findNotesWithLongestText(decks, limit, searchIndex.pinned)
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "randomUntagged":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "randomUntagged")
         res = getRandomUntagged(decks, limit)
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "highestInterval":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "highestInterval", limit)
         res = getSortedByInterval(decks, limit, searchIndex.pinned, "desc")
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "lowestInterval":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "lowestInterval", limit)
         res = getSortedByInterval(decks, limit, searchIndex.pinned, "asc")
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "lastReviewed":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "lastReviewed", limit)
         res = getLastReviewed(decks, limit)
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "lastLapses":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "lastLapses", limit)
         res = getLastLapses(decks, limit)
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "longestTime":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "longestTime", limit)
         res = getByTimeTaken(decks, limit, "desc")
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "shortestTime":
-        stamp = searchIndex.output.getMiliSecStamp()
-        searchIndex.output.latest = stamp
+        stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "shortestTime", limit)
         res = getByTimeTaken(decks, limit, "asc")
         searchIndex.output.printSearchResults(res, stamp)
 
-def getLastReviewed(decks, limit):
-    if decks is not None and len(decks) > 0 and not "-1" in decks:
-        deckQ = "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
 
-    if deckQ:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
-    else:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid order by cr.rid desc limit %s" % limit
-    res = mw.col.db.execute(cmd).fetchall()
-    rList = []
-    for r in res:
-        rList.append((r[1], r[2], r[3], r[0]))
-    return rList
 
-def getLastLapses(decks, limit):
-    if decks is not None and len(decks) > 0 and not "-1" in decks:
-        deckQ = "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
 
-    if deckQ:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
-    else:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.ease = 1 order by cr.rid desc limit %s" % limit
-    res = mw.col.db.execute(cmd).fetchall()
-    rList = []
-    for r in res:
-        rList.append((r[1], r[2], r[3], r[0]))
-    return rList
 
 
 def onLoadNote(editor):
@@ -493,7 +453,7 @@ def onLoadNote(editor):
             log("Trying to insert html in editor")
             log("Editor.addMode: %s" % editor.addMode)
 
-        editor.web.eval("var addToResultAreaHeight = %s;" % config["addToResultAreaHeight"])
+        editor.web.eval("var addToResultAreaHeight = %s; var showTagInfoOnHover = %s;" % (config["addToResultAreaHeight"], "true" if config["showTagInfoOnHover"] else "false"))
 
 
         # render the right side (search area) of the editor
@@ -555,105 +515,6 @@ def setPinned(cmd):
         if searchIndex.logging:
             log("Updated pinned: " + str(searchIndex.pinned))
 
-def getRandomUntagged(decks, limit):
-    if not "-1" in decks:
-        deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
-    if deckQ:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s and (tags is null or tags = '') order by random() limit %s" % (deckQ, limit)).fetchall()
-    else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by random() limit %s" % limit).fetchall()
-    rList = []
-    for r in res:
-        rList.append((r[1], r[2], r[3], r[0]))
-    return rList
-    
-
-
-def getRandomNotes(decks):
-    if searchIndex is None:
-        return
-    stamp = searchIndex.output.getMiliSecStamp()
-    searchIndex.output.latest = stamp
-    searchIndex.lastSearch = (None, decks, "random")
-
-    if not "-1" in decks:
-        deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
-
-    limit = searchIndex.limit
-    if deckQ:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by random() limit %s" % (deckQ, limit)).fetchall()
-    else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by random() limit %s" % limit).fetchall()
-    rList = []
-    for r in res:
-        rList.append((r[1], r[2], r[3], r[0]))
-    return { "result" : rList, "stamp" : stamp }
-
-def findNotesWithLongestText(decks, limit):
-    if not "-1" in decks and len(decks) > 0:
-        deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
-    if len(deckQ) > 0:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by length(replace(trim(flds), '\u001f', '')) desc limit %s" %(deckQ, limit)).fetchall()
-    else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by length(replace(trim(flds), '\u001f', '')) desc limit %s" % (limit )).fetchall()
-    rList = []
-    for r in res:
-        #pinned items should not appear in the results
-        if not str(r[0]) in searchIndex.pinned:
-            rList.append((r[1], r[2], r[3], r[0]))
-    return rList
-
-def getByTimeTaken(decks, limit, mode):
-    if decks is not None and len(decks) > 0 and not "-1" in decks:
-        deckQ = "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
-
-    if deckQ:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s group by cr.nid order by timeavg %s limit %s" % (deckQ, mode, limit)
-    else:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 group by cr.nid order by timeavg %s limit %s" % (mode, limit)
-    res = mw.col.db.execute(cmd).fetchall()
-    rList = []
-    for r in res:
-        rList.append((r[1], r[2], r[3], r[0]))
-    return rList
-
-
-
-def getCreatedNotesOrderedByDate(editor, decks, limit, sortOrder):
-    stamp = searchIndex.output.getMiliSecStamp()
-    searchIndex.output.latest = stamp
-    if sortOrder == "desc":
-        searchIndex.lastSearch = (None, decks, "lastCreated", limit)
-    else:
-        searchIndex.lastSearch = (None, decks, "firstCreated", limit)
-
-    if not "-1" in decks and len(decks) > 0:
-        deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
-    if len(deckQ) > 0:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by nid %s limit %s" %(deckQ, sortOrder, limit)).fetchall()
-    else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by nid %s limit %s" % (sortOrder, limit)).fetchall()
-    rList = []
-    for r in res:
-        #pinned items should not appear in the results
-        if not str(r[0]) in searchIndex.pinned:
-            rList.append((r[1], r[2], r[3], r[0]))
-
-    if editor.web is not None:
-        if len(rList) > 0:
-            searchIndex.output.printSearchResults(rList, stamp, editor)
-        else:
-            editor.web.eval("setSearchResults(``, 'No results found.')")
 
 def editorContextMenuEventWrapper(view, evt):
     global contextEvt
@@ -663,8 +524,9 @@ def editorContextMenuEventWrapper(view, evt):
     #origEditorContextMenuEvt(view, evt)
 
 def determineClickTarget(pos):
-    if checkIndex():
-        searchIndex.output.editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
+    if not checkIndex():
+        return
+    searchIndex.output.editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
 
 def addOptionsToContextMenu(clickInfo):
     if clickInfo is not None and clickInfo.startswith("img "):
@@ -685,7 +547,7 @@ def addOptionsToContextMenu(clickInfo):
             nid = int(clickInfo.split()[1])
             m = QMenu(searchIndex.output.editor.web)
             a = m.addAction("Find Notes Added On The Same Day")
-            a.triggered.connect(lambda: getCreatedSameDay(searchIndex.output.editor, nid))
+            a.triggered.connect(lambda: getCreatedSameDay(searchIndex, searchIndex.output.editor, nid))
             m.popup(QCursor.pos())
         except:
             origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
@@ -697,9 +559,21 @@ def addOptionsToContextMenu(clickInfo):
         origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
 
 
+def setStamp():
+    """
+    Generate a milisec stamp and give it to the index.
+    The result of a search is not printed if it has a non-matching stamp.
+    """
+    if checkIndex():
+        stamp = searchIndex.output.getMiliSecStamp()
+        searchIndex.output.latest = stamp
+        return stamp
+    return None
+
 
 def openImgInBrowser(url):
-    webbrowser.open(url)
+    if len(url) > 0:
+        webbrowser.open(url)
 
 def appendNoteToField(content, key):
     if not checkIndex():
@@ -729,67 +603,14 @@ def tryRepeatLastSearch(editor = None):
         if searchIndex.lastSearch[2] == "default":
             defaultSearchWithDecks(editor, searchIndex.lastSearch[0], searchIndex.selectedDecks)
         # elif searchIndex.lastSearch[2] == "random":
-        #     res = getRandomNotes(searchIndex.selectedDecks)
+        #     res = getRandomNotes(searchIndex, searchIndex.selectedDecks)
         #     searchIndex.output.printSearchResults(res["result"], res["stamp"])
         elif searchIndex.lastSearch[2] == "lastCreated":
-            getCreatedNotesOrderedByDate(editor, searchIndex.selectedDecks, searchIndex.lastSearch[3], "desc")
+            getCreatedNotesOrderedByDate(searchIndex, editor, searchIndex.selectedDecks, searchIndex.lastSearch[3], "desc")
         elif searchIndex.lastSearch[2] == "firstCreated":
-            getCreatedNotesOrderedByDate(editor, searchIndex.selectedDecks, searchIndex.lastSearch[3], "asc")
+            getCreatedNotesOrderedByDate(searchIndex, editor, searchIndex.selectedDecks, searchIndex.lastSearch[3], "asc")
 
-def getLastModifiedNotes(editor, decks, limit):
-    stamp = searchIndex.output.getMiliSecStamp()
-    searchIndex.output.latest = stamp
-    searchIndex.lastSearch = (None, decks, "lastModified")
 
-    if not "-1" in decks and len(decks) > 0:
-        deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
-    if len(deckQ) > 0:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mod from notes left join cards on notes.id = cards.nid where did in %s order by notes.mod desc limit %s" %(deckQ, limit)).fetchall()
-    else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mod from notes left join cards on notes.id = cards.nid order by notes.mod desc limit %s" % (limit)).fetchall()
-    rList = []
-    for r in res:
-        if not str(r[0]) in searchIndex.pinned:
-            rList.append((r[1], r[2], r[3], r[0]))
-
-    if editor.web is not None:
-        if len(rList) > 0:
-            searchIndex.output.printSearchResults(rList, stamp, editor)
-        else:
-            editor.web.eval("setSearchResults(``, 'No results found.')")
-
-def getCreatedSameDay(editor, nid):
-    stamp = searchIndex.output.getMiliSecStamp()
-    searchIndex.output.latest = stamp
-    searchIndex.lastSearch = (nid, None, "createdSameDay")
-    try:
-        nidMinusOneDay = nid - (24 * 60 * 60 * 1000)
-        nidPlusOneDay = nid + (24 * 60 * 60 * 1000)
-
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid desc" %(nidMinusOneDay, nidPlusOneDay)).fetchall()
-
-        dayOfNote = int(time.strftime("%d", time.localtime(nid/1000)))
-        rList = []
-        c = 0
-        for r in res:
-            dayCreated = int(time.strftime("%d", time.localtime(int(r[0])/1000)))
-            if dayCreated != dayOfNote:
-                continue
-            if not str(r[0]) in searchIndex.pinned:
-                rList.append((r[1], r[2], r[3], r[0]))
-                c += 1
-                if c >= searchIndex.limit:
-                    break
-        if editor.web is not None:
-            if len(rList) > 0:
-                searchIndex.output.printSearchResults(rList, stamp, editor)
-            else:
-                editor.web.eval("setSearchResults(``, 'No results found.')")
-    except:
-        if editor.web is not None:
-            editor.web.eval("setSearchResults('', 'Error in calculation.')")
 
 def getIndexInfo():
     """
@@ -797,7 +618,7 @@ def getIndexInfo():
     """
     if searchIndex is None:
         return ""
-    html = """<table style='width: 100%%'>
+    html = """<table class="striped" style='width: 100%%'>
                <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
                <tr><td>Initialization:</td><td>  <b>%s s</b></td></tr>
                <tr><td>Notes in Index:</td><td>  <b>%s</b></td></tr>
@@ -805,15 +626,21 @@ def getIndexInfo():
                <tr><td>Logging:</td><td>  <b>%s</b></td></tr>
                <tr><td>Render Immediately:</td><td>  <b>%s</b></td></tr>
                <tr><td>Tag Click:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Timeline:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Tag Info on Hover:</td><td>  <b>%s</b></td></tr>
                <tr><td>Show Retention in Results:</td><td>  <b>%s</b></td></tr>
                <tr><td>Window split:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Toggle Shortcut:</td><td>  <b>%s</b></td></tr>
              </table>
             """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.getNumberOfNotes(), len(searchIndex.stopWords), 
             "On" if searchIndex.logging else "Off", 
             "On" if config["renderImmediately"] else "Off", 
             "Search" if config["tagClickShouldSearch"] else "Add",
+            "On" if config["showTimeline"] else "Off", 
+            "On" if config["showTagInfoOnHover"] else "Off", 
             "On" if config["showRetentionScores"] else "Off", 
-            str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"])
+            str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
+            config["toggleShortcut"]
 
             )
     
@@ -868,8 +695,30 @@ def updateStyling(cmd):
     elif name == "leftSideWidthInPercent":
         config[name] = int(value)
         right = 100 - int(value)
-        searchIndex.output.editor.web.eval("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('infoBox').style.width = '%s%%';" % (value, right) )
-    
+        if checkIndex():
+            searchIndex.output.editor.web.eval("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('infoBox').style.width = '%s%%';" % (value, right) )
+
+    elif name == "showTimeline":
+        config[name] = value == "true" or value == "on"
+        if not config[name] and checkIndex():
+            searchIndex.output.editor.web.eval("document.getElementById('cal-row').style.display = 'none'; onResize();")
+        elif config[name] and checkIndex():
+            searchIndex.output.editor.web.eval("""
+            if (document.getElementById('cal-row')) {
+                document.getElementById('cal-row').style.display = 'block';
+            } else {
+                document.getElementById('bottomContainer').children[0].innerHTML = `%s`;
+                $('.cal-block-outer').on('mouseenter', function() { calBlockMouseEnter(this);});
+            }
+            onResize();
+            """ % getCalendarHtml())
+
+    elif name == "showTagInfoOnHover":
+        config[name] = value == "true" or value == "on"
+        if not config[name] and checkIndex():
+            searchIndex.output.editor.web.eval("showTagInfoOnHover = false;")
+        elif config[name] and checkIndex():
+            searchIndex.output.editor.web.eval("showTagInfoOnHover = true;")
 
 def _addToTagList(tmap, name):
     """
@@ -890,37 +739,7 @@ def writeConfig():
 
 
 def showStylingModal(editor):
-    html = """
-            <fieldset>
-            <span><mark>Important:</mark> Modify this value if the bottom bar (containing the predefined searches and the browser search) sits too low or too high. (Can be negative)</span> 
-                <table style="width: 100%%">
-                    <tr><td><b>Add To Result Area Height</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" style='width: 60px;' onchange="pycmd('styling addToResultAreaHeight ' + this.value)" value="%s"/> px</td></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>Controls whether the results are faded in or not.</span> 
-                <table style="width: 100%%">
-                    <tr><td><b>Render Immediately</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling renderImmediately ' + this.checked)" %s/></td></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>This controls how the window is split into search pane and field input. A value of 40 means the left side will take 40%% and the right side will take 60%%.</span> 
-                <table style="width: 100%%">
-                    <tr><td><b>Left Side Width</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" min="0" max="100" style='width: 60px;' onchange="pycmd('styling leftSideWidthInPercent ' + this.value)" value="%s"/> %%</td></tr>
-                </table>
-            </fieldset>
-             <br/>
-            <fieldset>
-                <span>This controls whether the sidebar (containing the tags and found keywords) is visible or not.</span> 
-                <table style="width: 100%%">
-                    <tr><td><b>Hide Sidebar</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling hideSidebar ' + this.checked)" %s/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            For other settings, see the config.json file.
-                        """ % (config["addToResultAreaHeight"], "checked='true'" if config["renderImmediately"] else "", config["leftSideWidthInPercent"], "checked='true'" if config["hideSidebar"] else "")
+    html = stylingModal(config)
     if checkIndex():
         searchIndex.output.showInModal(html)
         searchIndex.output.editor.web.eval("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")

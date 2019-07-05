@@ -381,7 +381,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                 </div>
                <!--height: calc(var(--vh, 1vh) * 100 - %spx) --> 
                 <div id="resultsArea" style="height: 100px;  width: 100%%; border-top: 1px solid grey;">
-                    <div style='position: absolute; top: 5px; right: 12px; width: 30px;'>
+                    <div style='position: absolute; top: 15px; right: 16px; width: 30px; z-index: 999999;'>
                         <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                     </div>
                     <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
@@ -466,7 +466,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
     300 - addToResultAreaHeight,
     "display: none;" if searchIndexIsLoaded else "",
     "hidden" if hideSidebar else "",
-    getCalendarHtml()
+    getCalendarHtml() if config["showTimeline"] else ""
        )
 
 
@@ -531,4 +531,57 @@ def getCalendarHtml():
     return html
         
 
+def stylingModal(config):
+    return """
+            <fieldset>
+            <span><mark>Important:</mark> Modify this value if the bottom bar (containing the predefined searches and the browser search) sits too low or too high. (Can be negative)</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Add To Result Area Height</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" style='width: 60px;' onchange="pycmd('styling addToResultAreaHeight ' + this.value)" value="%s"/> px</td></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <fieldset>
+                <span>Controls whether the results are faded in or not.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Render Immediately</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling renderImmediately ' + this.checked)" %s/></td></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <fieldset>
+                <span>This controls how the window is split into search pane and field input. A value of 40 means the left side will take 40%% and the right side will take 60%%.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Left Side Width</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" min="0" max="100" style='width: 60px;' onchange="pycmd('styling leftSideWidthInPercent ' + this.value)" value="%s"/> %%</td></tr>
+                </table>
+            </fieldset>
+             <br/>
+            <fieldset>
+                <span>This controls whether the sidebar (containing the tags and found keywords) is visible or not.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Hide Sidebar</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling hideSidebar ' + this.checked)" %s/></tr>
+                </table>
+            </fieldset>
+             <br/>
+              <fieldset>
+                <span>This controls whether the timeline row (added notes over the year) is visible or not.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Show Timeline</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling showTimeline ' + this.checked)" %s/></tr>
+                </table>
+            </fieldset>
+            <br/>
+              <fieldset>
+                <span>This controls whether the small info box will be shown when a tag is hovered over with the mouse.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Show Tag Info on Hover</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling showTagInfoOnHover ' + this.checked)" %s/></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
+                        """ % (config["addToResultAreaHeight"], 
+                        "checked='true'" if config["renderImmediately"] else "", 
+                        config["leftSideWidthInPercent"], 
+                        "checked='true'" if config["hideSidebar"] else "",
+                        "checked='true'" if config["showTimeline"] else "",
+                        "checked='true'" if config["showTagInfoOnHover"] else ""
 
+                        
+                        )

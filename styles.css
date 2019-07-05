@@ -1039,6 +1039,7 @@ span.tag-symbol {
     font-weight: bold;
     text-align: center;
     width: 100%;
+    z-index: 99999999;
   }
   #toggleTop:hover {
       transform: scale(1.2);
