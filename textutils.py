@@ -1,8 +1,8 @@
 import re
 
-cleanWordReg = re.compile(u"^[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*(\S+?)[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*$", re.U)    
-ignoreReg = re.compile(u"^[^a-zA-ZÀ-ÖØ-öø-ÿǒāōūēīȳǒ\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+$", re.U)
-nonWordReg = re.compile(u"[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.U) 
+cleanWordReg = re.compile(u"^[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*(\S+?)[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*$", re.U)    
+ignoreReg = re.compile(u"^[^a-zA-ZÀ-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+$", re.U)
+nonWordReg = re.compile(u"[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.U) 
 tagReg = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
 spaceReg = re.compile('\s{2,}')
 normalChar = re.compile(u"[a-zöäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U) 
@@ -37,7 +37,7 @@ def trimIfLongerThan(text, n):
     return text[:n] + "..."
 
 def replaceVowelsWithAccentedRegex(text):
-    text = text.replace("a", "[aàáâãåāă]")
+    text = text.replace("a", "[aàáâãåāăǎ]")
     text = text.replace("u", "[uùúûūǔ]")
     text = text.replace("o", "[oòóôōǒ]")
     text = text.replace("e", "[eèéêëēěę]")
@@ -53,7 +53,7 @@ def replaceVowelsWithAccentedRegex(text):
     return text
 
 def replaceAccentsWithVowels(text):
-    text = re.sub(r"[àáâãåāă]", "a", text)
+    text = re.sub(r"[àáâãåāăǎ]", "a", text)
     text = re.sub(r"[ùúûūǔ]", "u", text)
     text = re.sub(r"[òóôōǒ]", "o", text)
     text = re.sub(r"[èéêëēěę]", "e", text)
@@ -95,7 +95,7 @@ def isChineseChar(char):
 def asciiFoldChar(char):
     if normalChar.match(char):
         return char
-    if char.lower() in "àáâãåāă":
+    if char.lower() in "àáâãåāăǎ":
         return 'a'
     if char.lower() in "ùúûūǔ":
         return 'u'
@@ -140,3 +140,7 @@ def expandBySynonyms(text, synonyms):
     if found:
         return  text + " " + " ".join(found)
     return text
+
+
+def remove_fields(text, field_ords):
+    return "\u001f".join([t for i,t in enumerate(text.split("\u001f")) if i not in field_ords])

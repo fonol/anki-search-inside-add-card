@@ -56,5 +56,6 @@
 "hideSidebar": false,
 "toggleShortcut": "Ctrl+F",
 "showTimeline": true,
-"showTagInfoOnHover": true
+"showTagInfoOnHover": true,
+"fieldsToExclude": {}
 }

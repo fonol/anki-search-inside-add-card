@@ -23,6 +23,8 @@ class FTSIndex:
         self.searchOnSelection = True
         self.dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/db.py", "")
         self.stopWords = []
+        # mid : [fld_ord]
+        self.fields_to_exclude = {}
         self.threadPool = QThreadPool()
         self.output = None
 
@@ -31,8 +33,22 @@ class FTSIndex:
             self.stopWords = set(config['stopwords'])
         except KeyError:
             self.stopWords = []
-       
-       
+        
+        #exclude fields
+        try:
+            fld_dict = config['fieldsToExclude']
+            self.fields_to_exclude = {}
+            for note_templ_name, fld_names in fld_dict.items():
+                model = mw.col.models.byName(note_templ_name)
+                if model is None:
+                    continue
+                self.fields_to_exclude[model['id']] = []
+                for fld in model['flds']:
+                    if fld['name'] in fld_names:
+                        self.fields_to_exclude[model['id']].append(fld['ord'])
+        except KeyError:
+            self.fields_to_exclude = {} 
+
         if not searchingDisabled:
             cleaned = self._cleanText(corpus)
 
@@ -76,8 +92,14 @@ class FTSIndex:
 
     def _cleanText(self, corpus):
         filtered = list()
+        text = ""
         for row in corpus:
-            filtered.append((row[0], clean(row[1], self.stopWords), row[2], row[3], row[1]))
+            #if the notes model id is in our filter dict, that means we want to exclude some field(s)
+            text = row[1]
+            if row[4] in self.fields_to_exclude:
+                text = remove_fields(text, self.fields_to_exclude[row[4]])
+            text = clean(text, self.stopWords)
+            filtered.append((row[0], text, row[2], row[3], row[1]))
         return filtered
 
     def removeStopwords(self, text):

@@ -240,6 +240,86 @@ def getLastModifiedNotes(searchIndex, editor, decks, limit):
             editor.web.eval("setSearchResults(``, 'No results found.')")
 
 
+def find_cards_with_similar_rep_history(cid : int):
+    card = mw.col.getCard(cid)
+    reps = mw.col.db.execute("select count(*) from revlog where type = 1 and cid = %s" % cid).fetchone()[0]
+
+    cards_ivls = []
+    cards_times = []
+    cards_eases = []
+
+    others = {}
+
+    query = "select ro.id, ro.cid, ro.ease, ro.ivl, ro.factor, ro.time from revlog ro join (select cid, count(*) from revlog where type = 1 group by cid having count(*) > %s or cid = %s) ri on ro.cid = ri.cid where type = 1" % (reps, cid)
+
+    res = mw.col.db.execute(query).fetchall()
+
+    for r in res:
+        if r[1] == cid:
+            cards_ivls.append(r[3])
+            cards_times.append(r[5])
+            cards_eases.append(r[2])
+        else:
+            if not r[1] in others:
+                others[r[1]] = []
+            if len(others[r[1]]) < reps + 1:
+                others[r[1]].append([r[3], r[5], r[2]])
+
+    #find most similar
+    similarities = []
+
+    for cid, rev_list in others.items():
+        
+        ivl_diff = 0.0
+        times_diff = 0.0
+        
+        for i, rev_list_item in enumerate(rev_list):
+            #if rev_list_item[2] != cards_eases[i]:
+            if i < len(rev_list) - 1:
+                if rev_list_item[0] < 0:
+                    c_ivl = abs(rev_list_item[0]) / 24 * 60 * 60
+                else:
+                    c_ivl = rev_list_item[0]
+                if cards_ivls[i] < 0:
+                    card_ivl = abs(cards_ivls[i]) / 24 * 60 * 60
+                else:
+                    card_ivl = cards_ivls[i]
+                ivl_diff += abs(c_ivl - card_ivl)
+            else:
+                similarities.append([ivl_diff, cid, rev_list_item])                
+    similarities = sorted(similarities, key=lambda x: x[0])
+
+    #take 100 most similar
+    most_similar = similarities[:100]
+
+    successes = 0.0
+    counts = 0.0
+    for x in most_similar:
+        if x[2][2] != 1:
+            if x[0] > 0:
+                successes += (1 / x[0]) 
+            else:
+                successes += (1 / 0.1) 
+      
+        if x[0] > 0:
+            counts += (1 / x[0]) 
+        else:
+            counts += (1 / 0.1) 
+
+    success_rate = round((successes / counts) * 100, 1)
+
+    return success_rate
+    
+
+        
+    
+    
+        
+
+
+
+          
+
 
 
 

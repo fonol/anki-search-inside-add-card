@@ -18,7 +18,7 @@ class Output:
         self.SOUND_TAG = re.compile(r'sound[a-zA-Z0-9]*mp')
         self.IO_REPLACE = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>)?-[OA]|-(<mark>)?ao(</mark>)?-[OA])\.svg" ?/?>(</img>)?')
         self.latest = -1
-        self.wordToken = re.compile(u"[a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒ\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U)
+        self.wordToken = re.compile(u"[a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U)
         self.gridView = False
         self.stopwords = []
         self.plotjsLoaded = False
@@ -368,7 +368,7 @@ class Output:
                 retInfo = ""
 
             lastNote = newNote
-            text = self._cleanFieldSeparators(res[0]).replace("\\", "\\\\")
+            text = self._cleanFieldSeparators(res[0]).replace("\\", "\\\\").replace("`", "\\`")
             text = self.tryHideImageOcclusion(text)
             newNote = self.noteTemplateSimple % ( counter + 1,
                         "&nbsp;&#128336; " + timeDiffString,
@@ -384,7 +384,7 @@ class Output:
         else:
             html = """
                 %s
-                <div style='overflow-y: auto; height: 200px; margin-top: 5px; padding-left: 4px; padding-right: 8px;'>%s</div> 
+                <div style='overflow-y: auto; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div> 
             """ % (context_html, html)
         self.editor.web.eval("document.getElementById('cal-info').innerHTML = `%s`;" % html)
 
@@ -394,7 +394,7 @@ class Output:
         
         if self.editor is not None:
             self.editor.web.eval(cmd)
-
+        
     def _loadPlotJsIfNotLoaded(self):
         if not self.plotjsLoaded:
             dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/output.py", "")

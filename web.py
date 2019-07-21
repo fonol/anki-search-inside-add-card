@@ -391,7 +391,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                     </div>
                 </div>
                 <div id='bottomContainer' style='display: block;'>
-                    <div style='position: relative;'>
+                    <div style='position: relative;' id='cal-wrapper'>
                         %s
                     </div>
                     <div class="flexContainer">
@@ -500,10 +500,10 @@ def getCalendarHtml():
             notes_in_current_day = 1
     if time.localtime(res[-1][0]/1000).tm_yday != day_of_year:
         counts.append(notes_in_current_day)
-    elif notes_in_current_day > 0:
-        counts.append(notes_in_current_day)
+    # elif notes_in_current_day > 0:
+    #     counts.append(notes_in_current_day)
     if len(counts) < day_of_year:
-        counts.append
+        counts.append(0)
 
     html_content = ""
     size = 1
@@ -511,7 +511,7 @@ def getCalendarHtml():
     added = 0
     for i, notes_in_current_day in enumerate(counts):
         c_sum += notes_in_current_day
-        if i > 0 and (i + 1) % size == 0:
+        if (i + 1) % size == 0:
             avg = c_sum / size
             if avg > 20:
                 color = "cal-three"

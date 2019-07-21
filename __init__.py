@@ -50,7 +50,7 @@ from .special_searches import *
 from .fts_index import FTSIndex
 from .whoosh_index import SearchIndex
 from .output import Output
-from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms
+from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms, remove_fields
 from .editor import openEditor, EditDialog
 from .tag_find import findBySameTag, buildTagInfo
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval, getTrueRetentionOverTime
@@ -455,7 +455,6 @@ def onLoadNote(editor):
 
         editor.web.eval("var addToResultAreaHeight = %s; var showTagInfoOnHover = %s;" % (config["addToResultAreaHeight"], "true" if config["showTagInfoOnHover"] else "false"))
 
-
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
         editor.web.eval(rightSideHtml(config, searchIndex is not None))
@@ -483,6 +482,8 @@ def onLoadNote(editor):
             if searchIndex.output is not None:
                 #plot.js is already loaded if a note was just added, so this is a lazy solution for now
                 searchIndex.output.plotjsLoaded = False
+                
+        editor.web.eval("onResize()")
 
 
         if searchIndex is None or not searchIndex.tagSelect:
@@ -492,7 +493,7 @@ def onLoadNote(editor):
         if corpus is None:
             if searchIndex is not None and searchIndex.logging:
                 log("loading notes from anki db...")
-            corpus = getCorpus()
+            corpus = get_notes_in_collection()
             if searchIndex is not None and searchIndex.logging:
                 log("loaded notes: len(corpus): " + str(len(corpus)))
 
@@ -889,7 +890,7 @@ def setStats(nid, stats):
     """
     Insert the statistics into the given card.
     """
-    if searchIndex is not None and searchIndex.output is not None:
+    if checkIndex():
         searchIndex.output.showStats(stats[0], stats[1], stats[2], stats[3])
 
 
@@ -1006,6 +1007,7 @@ def getCurrentContent(editor):
 def addNoteAndUpdateIndex(dialog, note):
     res = origAddNote(dialog, note)
     addNoteToIndex(note)
+        
     return res
 
 def addNoteToIndex(note):
@@ -1014,9 +1016,10 @@ def addNoteToIndex(note):
 
 def buildIndex():
     global corpus
+
     if searchIndex is None:
         if corpus is None:
-            corpus = getCorpus()
+            corpus = get_notes_in_collection()
         #build index in background to prevent ui from freezing
         p = ProcessRunnable(target=_buildIndex)
         p.start()
@@ -1037,6 +1040,8 @@ def _buildIndex():
         useFTS = config['useFTS']    
     except KeyError:
         useFTS = False
+   
+
     #fts4 based sqlite reversed index
     if searchingDisabled or useFTS:
         searchIndex = FTSIndex(corpus, searchingDisabled)
@@ -1049,6 +1054,22 @@ def _buildIndex():
             usersStopwords = config['stopwords']    
         except KeyError:
             usersStopwords = []
+
+        try:
+            fld_dict = config['fieldsToExclude']
+            fields_to_exclude = {}
+            for note_templ_name, fld_names in fld_dict.items():
+                model = mw.col.models.byName(note_templ_name)
+                if model is None:
+                    continue
+                fields_to_exclude[model['id']] = []
+                for fld in model['flds']:
+                    if fld['name'] in fld_names:
+                        fields_to_exclude[model['id']].append(fld['ord'])
+        except KeyError:
+            fields_to_exclude = {} 
+
+
         myAnalyzer = StandardAnalyzer(stoplist= None, minsize=1) | CharsetFilter(accent_map)
         #StandardAnalyzer(stoplist=usersStopwords)
         schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True), source=TEXT(stored=True))
@@ -1061,8 +1082,14 @@ def _buildIndex():
         #limitmb can be set down
         writer = index.writer(limitmb=256)
         #todo: check if there is some kind of batch insert
+        text = ""
         for note in corpus:
-            writer.add_document(content=clean(note[1], usersStopwords), tags=note[2], did=str(note[3]), nid=str(note[0]), source=note[1])
+            #if the notes model id is in our filter dict, that means we want to exclude some field(s)
+            text = note[1]
+            if note[4] in fields_to_exclude:
+                text = remove_fields(text, fields_to_exclude[note[4]])
+            text = clean(text, usersStopwords)
+            writer.add_document(content=text, tags=note[2], did=str(note[3]), nid=str(note[0]), source=note[1])
         writer.commit()
         #todo: allow user to toggle between and / or queries
         og = qparser.OrGroup.factory(0.9)
@@ -1072,6 +1099,7 @@ def _buildIndex():
         deckQueryparser = QueryParser("did", index.schema, group=qparser.OrGroup)
         searchIndex = SearchIndex(index, queryparser, deckQueryparser)
         searchIndex.stopWords = usersStopwords
+        searchIndex.fieldsToExclude = fields_to_exclude
         searchIndex.type = "Whoosh"
         end = time.time()
         initializationTime = round(end - start)
@@ -1154,7 +1182,7 @@ def printStartingInfo(editor):
     editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
 
 
-def getCorpus():  
+def get_notes_in_collection():  
     """
     Reads the collection and builds a list of tuples (note id, note fields as string, note tags, deck id)
     """
@@ -1168,12 +1196,12 @@ def getCorpus():
         deckStr = "(%s)" %(deckStr[:-1])
     
     if deckStr:
-        oList = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s" %(deckStr))
+        oList = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s" %(deckStr))
     else:
-        oList = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid")
+        oList = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid")
     uList = list()
-    for id, flds, t, did in oList:
-        uList.append((id, flds, t, did))
+    for id, flds, t, did, mid in oList:
+        uList.append((id, flds, t, did, mid))
     return uList
     
 

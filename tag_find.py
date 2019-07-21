@@ -10,6 +10,7 @@ def findBySameTag(tagStr, limit, decks, pinned):
     query = "where "
     for t in tagStr.split(" "):
         if len(t) > 0:
+            t = t.replace("'", "''")
             if len(query) > 6:
                 query += " or "
             query += "lower(tags) like '% " + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '%::" + t + " %' or lower(tags) like '% " + t + "::%'"
@@ -77,8 +78,12 @@ def buildTagInfo(editor, tag, synonyms):
                     else:
                         tagsfound[s] = 1
         sortedCounts = sorted(tagsfound.items(), key=lambda kv: kv[1], reverse=True)
+    total_length = 0
     for k in sortedCounts[:10]:
         tags += "<div class='tagLbl smallMarginBottom' data-name='%s' onclick='tagClick(this);'>%s</div>" % (k[0], trimIfLongerThan(k[0], 40))
+        total_length += len(trimIfLongerThan(k[0], 40))
+        if total_length > 120:
+            break
     
     nids = [r[3] for r in searchRes["result"]]
     tret = getAvgTrueRetention(nids)

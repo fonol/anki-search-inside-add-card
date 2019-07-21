@@ -2,6 +2,8 @@ from aqt import mw
 from aqt.qt import *
 import aqt
 
+from .special_searches import *
+
 import time
 
 
@@ -345,6 +347,8 @@ def calculateStats(nid, gridView):
                 infoTable["Ease"] = str(cardEaseFactorById[k]) + " %"
             if k in cardTypeById:
                 infoTable["Type"] = cardTypeById[k]
+            # success_rate = find_cards_with_similar_rep_history(int(k))
+            # infoTable["Est. Success Chance for next Review"] = str(success_rate) + " %"
             tables["Cards"].append(infoTable)
 
       
