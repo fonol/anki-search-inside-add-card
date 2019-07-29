@@ -608,3 +608,15 @@ function calMouseLeave() {
         calTimer = null;
     }, 300);
 }
+
+
+function showModalSubpage(html) {
+    $('#modalText').hide();
+    $('#modal-subpage-inner').html(html);
+    $('#modal-subpage').show();
+}
+function hideModalSubpage() {
+    $('#modal-subpage-inner').html('');
+    $('#modal-subpage').hide();
+    $('#modalText').show();
+}

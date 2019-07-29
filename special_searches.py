@@ -240,87 +240,227 @@ def getLastModifiedNotes(searchIndex, editor, decks, limit):
             editor.web.eval("setSearchResults(``, 'No results found.')")
 
 
-def find_cards_with_similar_rep_history(cid : int):
-    card = mw.col.getCard(cid)
-    reps = mw.col.db.execute("select count(*) from revlog where type = 1 and cid = %s" % cid).fetchone()[0]
+def _find_cards_with_one_more_rep(cid: int):
+    reps = mw.col.db.execute("select count(*) from revlog where (type = 1 or type = 2) and cid = %s" % cid).fetchone()[0]
 
     cards_ivls = []
-    cards_times = []
-    cards_eases = []
-
     others = {}
 
-    query = "select ro.id, ro.cid, ro.ease, ro.ivl, ro.factor, ro.time from revlog ro join (select cid, count(*) from revlog where type = 1 group by cid having count(*) > %s or cid = %s) ri on ro.cid = ri.cid where type = 1" % (reps, cid)
+    query = "select ro.id, ro.cid, ro.ease, ro.ivl, ro.factor, ro.time, ro.type from revlog ro join (select cid, count(*) from revlog where type = 1 or type = 2 group by cid having count(*) > %s or cid = %s) ri on ro.cid = ri.cid where type = 1 or type = 2" % (reps, cid)
 
     res = mw.col.db.execute(query).fetchall()
 
     for r in res:
         if r[1] == cid:
             cards_ivls.append(r[3])
-            cards_times.append(r[5])
-            cards_eases.append(r[2])
         else:
             if not r[1] in others:
                 others[r[1]] = []
             if len(others[r[1]]) < reps + 1:
-                others[r[1]].append([r[3], r[5], r[2]])
+                others[r[1]].append([r[3], r[5], r[2], r[6]])
 
     #find most similar
     similarities = []
+    
+    if cards_ivls:
+        ivl_one_percent = sum(cards_ivls) / 100.0
+    else:
+        ivl_one_percent = 1
 
     for cid, rev_list in others.items():
         
         ivl_diff = 0.0
+        ivl_diff_in_percent_total = 0.0
         times_diff = 0.0
+        pass_rate_sum = 0.0
         
         for i, rev_list_item in enumerate(rev_list):
-            #if rev_list_item[2] != cards_eases[i]:
             if i < len(rev_list) - 1:
-                if rev_list_item[0] < 0:
-                    c_ivl = abs(rev_list_item[0]) / 24 * 60 * 60
-                else:
-                    c_ivl = rev_list_item[0]
-                if cards_ivls[i] < 0:
-                    card_ivl = abs(cards_ivls[i]) / 24 * 60 * 60
-                else:
-                    card_ivl = cards_ivls[i]
+                c_ivl = _to_day_ivl(rev_list_item[0])
+                card_ivl = _to_day_ivl(cards_ivls[i])
                 ivl_diff += abs(c_ivl - card_ivl)
+                pass_rate_sum += (1 if rev_list_item[2] != 1 else 0) 
             else:
-                similarities.append([ivl_diff, cid, rev_list_item])                
-    similarities = sorted(similarities, key=lambda x: x[0])
+                ivl_diff_in_percent_total = round(ivl_diff / ivl_one_percent, 1)
+                ivl_diff_in_percent_avg = round(ivl_diff_in_percent_total / (len(rev_list) - 1), 1)
+                ivl_at_current_step = _to_day_ivl(rev_list[-2][0])
+                avg_pass_rate = 100 * pass_rate_sum / (len(rev_list) - 1)
 
-    #take 100 most similar
-    most_similar = similarities[:100]
+                similarities.append([ivl_diff, cid, rev_list_item, ivl_diff_in_percent_total, ivl_diff_in_percent_avg, ivl_at_current_step, avg_pass_rate, rev_list])                
+    similarities = sorted(similarities, key=lambda x: x[4])
 
-    successes = 0.0
-    counts = 0.0
-    for x in most_similar:
-        if x[2][2] != 1:
-            if x[0] > 0:
-                successes += (1 / x[0]) 
-            else:
-                successes += (1 / 0.1) 
+    return [cards_ivls, similarities]
+
+
+
+def find_similar_cards(cid : int, min_similarity: int, limit : int):
+    loaded = _find_cards_with_one_more_rep(cid)
+    similarities = loaded[1]
+    avg_similarity = 0.0
+    ivl_diff_in_percent_avg_sum = 0.0
+
+    next_success_sum = 0.0
+    current_ivl_sum = 0.0
+    pass_rate_sum = 0.0
+
+    avg_next_success_chance_up_to_now = 0.0
+    avg_current_ivl_up_to_now = 0.0
+    avg_pass_rate_up_to_now = 0.0
+
+    revlists = []
+
+    for i, s in enumerate(similarities):
+        
+        ivl_diff_in_percent_avg_sum += s[4]
+        avg_similarity = 100.0 - ivl_diff_in_percent_avg_sum / (i + 1)
+
+        if i > limit or avg_similarity < min_similarity and current_ivl_sum != 0.0:
+            res = { "avg_next_success_chance" : avg_next_success_chance_up_to_now,
+                                                "avg_current_ivl": avg_current_ivl_up_to_now,
+                                                "avg_pass_rate" : avg_pass_rate_up_to_now,
+                                                "sample_size" : i,
+                                                "revlists" : revlists
+            }
+            html = _build_similar_cards_subpage(res)
+            return [res, html]
+
+        current_ivl_sum += _to_day_ivl(s[5])
+        avg_current_ivl_up_to_now = current_ivl_sum / (i + 1)
+
+        next_success_sum += (1 if s[2][2]  != 1 else 0)
+        avg_next_success_chance_up_to_now = 100 * next_success_sum / (i + 1)
+
+        pass_rate_sum += s[6]
+        avg_pass_rate_up_to_now = pass_rate_sum / (i + 1)
+
+        revlists.append(s[7])
+
+    return None
+
+def _build_similar_cards_subpage(res):
+    html = """
+    <table class="striped full-width" >
+        <tr>
+            <td>Est. Success Chance (Next Review)</td>
+            <td>%s</td>
+        </tr>
+        <tr>
+            <td>Avg. Interval at Cards Current Step</td>
+            <td>%s</td>
+        </tr>
+        <tr>
+            <td>Sample Size</td>
+            <td>%s</td>
+        </tr>
+    </table>
+    <br/><br/>
+
+
+    """ % (res["avg_next_success_chance"],
+    res["avg_current_ivl"],
+    res["sample_size"]
+    )
+
+    rows = ""
+    for i, revl in enumerate(res["revlists"]):
+        rows += "<tr>" 
+        for rev in revl:
+            type = rev[3]
+            ivl = rev[0]
+            rows += "<td>%s</td>" % round(_to_day_ivl(ivl), 1)
+        rows += "</tr>"
+    
+    html += """
+    <table class='striped full-width'>
+       %s 
+    </table>
+    """ % rows
+    return html
+
+def find_cards_with_similar_rep_history(cid : int):
+    
+    loaded = _find_cards_with_one_more_rep(cid)
+    cards_ivls = loaded[0]
+    similarities = loaded[1]
+
+
+    avg_similarity = 0.0
+    avg_similarity_steps_results = {}
+    ivl_diff_in_percent_avg_sum = 0.0
+
+    next_success_sum = 0.0
+    current_ivl_sum = 0.0
+    pass_rate_sum = 0.0
+
+    avg_next_success_chance_up_to_now = 0.0
+    avg_current_ivl_up_to_now = 0.0
+    avg_pass_rate_up_to_now = 0.0
+
+    for i, s in enumerate(similarities):
+        ivl_diff_in_percent_avg_sum += s[4]
+        avg_similarity = 100.0 - ivl_diff_in_percent_avg_sum / (i + 1)
+
+        if avg_similarity < 90.0 and 90 not in avg_similarity_steps_results and current_ivl_sum != 0.0:
+            avg_similarity_steps_results[90] = { "avg_next_success_chance" : avg_next_success_chance_up_to_now,
+                                                "avg_current_ivl": avg_current_ivl_up_to_now,
+                                                "avg_pass_rate" : avg_pass_rate_up_to_now,
+                                                "sample_size" : i
+            }
+        if avg_similarity < 80.0 and 80 not in avg_similarity_steps_results and current_ivl_sum != 0.0:
+            avg_similarity_steps_results[80] = { "avg_next_success_chance" : avg_next_success_chance_up_to_now,
+                                                "avg_current_ivl": avg_current_ivl_up_to_now,
+                                                "avg_pass_rate" : avg_pass_rate_up_to_now,
+                                                "sample_size" : i
+            }
+
+        if avg_similarity < 70.0 and 70 not in avg_similarity_steps_results and current_ivl_sum != 0.0:
+            avg_similarity_steps_results[70] = { "avg_next_success_chance" : avg_next_success_chance_up_to_now,
+                                                "avg_current_ivl": avg_current_ivl_up_to_now,
+                                                "avg_pass_rate" : avg_pass_rate_up_to_now,
+                                                "sample_size" : i
+            }
+        
+        if avg_similarity < 60.0 and 60 not in avg_similarity_steps_results and current_ivl_sum != 0.0:
+            avg_similarity_steps_results[60] = { "avg_next_success_chance" : avg_next_success_chance_up_to_now,
+                                                "avg_current_ivl": avg_current_ivl_up_to_now,
+                                                "avg_pass_rate" : avg_pass_rate_up_to_now,
+                                                "sample_size" : i
+            }
+
+        if avg_similarity < 50.0 and 50 not in avg_similarity_steps_results:
+            avg_similarity_steps_results[50] = { "avg_next_success_chance" : avg_next_success_chance_up_to_now,
+                                                "avg_current_ivl": avg_current_ivl_up_to_now,
+                                                "avg_pass_rate" : avg_pass_rate_up_to_now,
+                                                "sample_size" : i
+            }
+            break
+
+        current_ivl_sum += _to_day_ivl(s[5])
+        avg_current_ivl_up_to_now = current_ivl_sum / (i + 1)
+
+        next_success_sum += (1 if s[2][2]  != 1 else 0)
+        avg_next_success_chance_up_to_now = 100 * next_success_sum / (i + 1)
+
+        pass_rate_sum += s[6]
+        avg_pass_rate_up_to_now = pass_rate_sum / (i + 1)
+
+    # successes = 0.0
+    # counts = 0.0
+    # for x in most_similar:
+    #     if x[2][2] != 1:
+    #         if x[0] > 0:
+    #             successes += (1 / x[0]) 
+    #         else:
+    #             successes += (1 / 0.1) 
       
-        if x[0] > 0:
-            counts += (1 / x[0]) 
-        else:
-            counts += (1 / 0.1) 
+    #     if x[0] > 0:
+    #         counts += (1 / x[0]) 
+    #     else:
+    #         counts += (1 / 0.1) 
 
-    success_rate = round((successes / counts) * 100, 1)
+    # success_rate = round((successes / counts) * 100, 1)
 
-    return success_rate
-    
-
-        
-    
-    
-        
-
-
-
-          
-
-
+    return [avg_similarity_steps_results] 
 
 
 def to_print_list(db_list):
@@ -328,3 +468,8 @@ def to_print_list(db_list):
     for r in db_list:
         rList.append((r[1], r[2], r[3], r[0]))
     return rList
+
+def _to_day_ivl(ivl):
+    if ivl < 0:
+        return abs(ivl) / (24 * 60 * 60)
+    return ivl

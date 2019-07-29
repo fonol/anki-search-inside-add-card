@@ -345,6 +345,12 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                 <div class="modal-content">
                     <div id='modal-visible'>
                     <div id="modalText"></div>
+                    <div id="modal-subpage">
+                        <button class='modal-close' onclick='hideModalSubpage()'>&#8592; Back</button>
+                        <div id="modal-subpage-inner">
+
+                        </div>
+                    </div>
                         <div style='text-align: right; margin-top:25px;'>
                             <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
                         </div>
@@ -425,8 +431,8 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                                         <option value='lastLapses'>Last Lapses</option>
                                         <option value='highestPerf'>Performance (desc.)</option>
                                         <option value='lowestPerf'>Performance (asc.)</option>
-                                        <option value='highestRet'>True Retention (desc.)</option>
-                                        <option value='lowestRet'>True Retention (asc.)</option>
+                                        <option value='highestRet'>Pass Rate (desc.)</option>
+                                        <option value='lowestRet'>Pass Rate (asc.)</option>
                                         <option value='longestTime'>Time Taken (desc.)</option>
                                         <option value='shortestTime'>Time Taken (asc.)</option>
                                         <option value='highestInterval'>Interval (desc.)</option>
@@ -498,11 +504,9 @@ def getCalendarHtml():
             c = c_day_of_year
             
             notes_in_current_day = 1
-    if time.localtime(res[-1][0]/1000).tm_yday != day_of_year:
+    if time.localtime(res[-1][0]/1000).tm_yday != day_of_year and len(counts) < day_of_year:
         counts.append(notes_in_current_day)
-    # elif notes_in_current_day > 0:
-    #     counts.append(notes_in_current_day)
-    if len(counts) < day_of_year:
+    while len(counts) < day_of_year:
         counts.append(0)
 
     html_content = ""

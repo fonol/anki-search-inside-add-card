@@ -6,7 +6,7 @@ import re
 import time
 import math
 from aqt import *
-from aqt.utils import showInfo
+from aqt.utils import showInfo, tooltip
 from .output import *
 import collections
 from .textutils import *
@@ -124,6 +124,7 @@ class FTSIndex:
         worker.stamp = self.output.getMiliSecStamp()
         self.output.latest = worker.stamp
         worker.signals.result.connect(self.printOutput)
+        worker.signals.tooltip.connect(self.output.show_tooltip)
         self.threadPool.start(worker)
 
 
@@ -142,6 +143,8 @@ class FTSIndex:
         
         if len(text) == 0:
             self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100))
+            if mw.addonManager.getConfig(__name__)["hideSidebar"]:
+                return "Found 0 notes. Query was empty after cleaning."
             return
         start = time.time()
         text = expandBySynonyms(text, self.synonyms)
@@ -250,7 +253,11 @@ class FTSIndex:
         return resDict
 
     def printOutput(self, result, stamp):
-        if result is not None:
+
+        if type(result) is str:
+            #self.output.show_tooltip(result)
+            pass
+        elif result is not None:
             self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True)
     
     
@@ -442,3 +449,4 @@ class WorkerSignals(QObject):
     error = pyqtSignal(tuple)
     result = pyqtSignal(object, object)
     progress = pyqtSignal(int)
+    tooltip = pyqtSignal(str)

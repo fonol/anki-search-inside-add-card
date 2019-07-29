@@ -827,8 +827,11 @@ user-select: none;
 }
 .exp {
     user-select: none;
-  
 }
+.full-width {
+    width: 100%;
+}
+
 table.striped {
     border-collapse: collapse;
 }
@@ -967,12 +970,23 @@ select {
     color: $modalForegroundColor$;
     max-height: 450px;
     overflow-y: auto;
+    padding-right: 10px;
 }
 #modalText.small {
     max-height: 200px !important;
     background: yellow;
     color: green;
     font-size: 30px;
+}
+#modal-subpage {
+    display:none;
+    z-index: 99999999999; 
+    color: $modalForegroundColor$;
+    max-height: 450px;
+}
+#modal-subpage-inner {
+    overflow-y: auto;
+    width: 100%;
 }
 .modal-close {
 
@@ -1168,4 +1182,41 @@ span.tag-symbol {
     transform-origin: top right;
     text-align: right !important;
 
+}
+
+.sa-blue-hover:hover {
+    background: #2496dc !important;
+    color: white;
+}
+.sa-cursor-pointer {
+    cursor: pointer;
+}
+
+.revlog-block {
+    height: 15px;
+    width: 15px;
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 15px; 
+    font-size: 8px;    
+    margin: 0 2px 0 2px;
+}
+.revlog-block.larger {
+    width: 20px;
+}
+.revlog-block-1 {
+    background: red;
+}
+.revlog-block-2 {
+    background: black;
+    color: white;
+}
+.revlog-block-3 {
+    background: green;
+    color: white;
+}
+.revlog-block-4 {
+    background: blue;
+    color: white;
 }

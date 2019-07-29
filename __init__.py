@@ -269,9 +269,13 @@ def myOnBridgeCmd(self, cmd):
     #
     elif cmd.startswith("predefSearch "):
         parsePredefSearchCmd(cmd, self)
-    elif cmd == "specialSearches":
+   
+    elif cmd.startswith("similarForCard "):
         if checkIndex():
-            searchIndex.output.showInModal(getSpecialSearches())
+            cid = int(cmd.split()[1])
+            min_sim = int(cmd.split()[2])
+            res_and_html = find_similar_cards(cid, min_sim, 20)
+            searchIndex.output.show_in_modal_subpage(res_and_html[1])
 
 
     #

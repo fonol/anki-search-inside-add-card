@@ -4,7 +4,7 @@ import json
 import os
 from datetime import datetime
 from aqt import mw
-from aqt.utils import showInfo
+from aqt.utils import showInfo, tooltip
 from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar
 from .logging import log
 from .stats import getRetentions
@@ -648,8 +648,13 @@ class Output:
         
         return textMarked
 
+    def show_tooltip(self, text):
+        if mw.addonManager.getConfig(__name__)["hideSidebar"]:
+            tooltip("Query was empty after cleaning.")
 
-
+    def show_in_modal_subpage(self, html):
+        if self.editor is not None and self.editor.web is not None:
+            self.editor.web.eval("showModalSubpage(`%s`);" % html)
 
     @staticmethod
     def _retToColor(retention):
