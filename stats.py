@@ -6,6 +6,7 @@ from .special_searches import *
 from .special_searches import _to_day_ivl
 
 import time
+import json
 
 
 def findNotesWithLowestPerformance(decks, limit, pinned, retOnly=False):
@@ -352,8 +353,11 @@ def calculateStats(nid, gridView):
         avgTime = round(timeTaken / cnt, 1) if cnt > 0 else 0
         score = _calcPerformanceScore(
             retention, avgTime, goodAndEasy, hard) if cnt > 0 else (0, 0, 0, 0)
+        
         tables["Note"].append(infoTable)
         infoTable = {}
+
+
 
         infoTable["Cards Found"] = len(cards)
         tables["Cards"].append(infoTable)
@@ -594,3 +598,27 @@ def _calcPerformanceScore(retention, time, goodAndEasy, hard):
     score += ratingSc
     score = round(score * 100.0 / 400.0, 1)
     return (int(score), int(timeSc), int(retentionSc * 100.0 / 200.0), int(ratingSc))
+
+
+def retention_stats_for_tag(true_ret_over_time, graph_div_id, graph_div_lbl_id):
+        
+    """
+    Assumes that the tag info box ('#siac-tag-info-box') is already rendered.
+    The box contains a div that is the placeholder for the retention graph.
+    """
+    if true_ret_over_time is None or len(true_ret_over_time) < 2:
+        cmd = "$('#%s,#%s').hide();" % (graph_div_id, graph_div_lbl_id)
+    else:
+        options = """
+                    {  series: { 
+                            lines: { show: true, fillColor: "#2496dc" }, 
+                    }, 
+                    label: "True Retention", 
+                    yaxis: { max: 100, min: 0
+                    } , 
+                    colors: ["#2496dc"] 
+                    }
+                """
+        raw_data = [[i,t] for i, t in enumerate(true_ret_over_time)]
+        cmd = "if ($.plot) { $.plot($('#%s'), [ %s ],  %s); }" % (graph_div_id, json.dumps(raw_data), options)
+    return cmd

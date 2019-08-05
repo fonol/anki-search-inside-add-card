@@ -159,18 +159,7 @@ body {
     flex-wrap: nowrap;
 }
 
-.searchInfoTagLbl {
-    background: $tagBackgroundColor$; 
-    color: $tagForegroundColor$; 
-    font-size: $tagFontSize$ !important;
-    padding: 2px 4px 2px 4px; 
-    border-radius: 2px; 
-    margin-right: 7px; 
-    cursor: pointer;
-    hyphens: manual;
-    float: left;
-    margin-bottom: 5px;
-}
+
 
 
 .tagLbl {
@@ -184,6 +173,14 @@ body {
     font-size: $tagFontSize$ !important;
     cursor: pointer;
     z-index: 999;
+    user-select: none;
+}
+#tagContainer .tagLbl {
+    float: left;
+    margin-bottom: 5px;
+    hyphens: manual;
+    margin-right: 7px; 
+    margin-left: 0px;
 }
 
 .topLeftWr {
@@ -242,7 +239,7 @@ body {
 .editLbl {
     background:  $noteBackgroundColor$; 
     color: $noteForegroundColor$;
-    z-index:9999;
+    z-index:99999;
     border: 1px solid $noteBorderColor$;
     border-right: 0px solid  $noteBackgroundColor$; 
     padding: 3px 5px 3px 5px;
@@ -713,39 +710,12 @@ body {
   .tooltiptext td {
       text-align: left;
   }
-  .tooltiptext-tag {
-    display: none;
-    width: 300px;
-    background-color: $modalBackgroundColor$;
-    color: $modalForegroundColor$;
-    font-size: 12px;
-    text-align: center;
-    border: 2px solid $tagBackgroundColor$ !important;
-    padding: 10px;
-    position: absolute;
-    z-index: 99999999;
-    bottom: 95%;
-    margin-top: -5px;
-    right: 0px;
-    user-select: none;
-    cursor: default;
-
-
-     
-
-  }
+  
 
   .tooltip:hover .tooltiptext {
     visibility: visible;
   }
-  .t-inverted {
-       top: 100 !important;
-       bottom: 0 !important;
-  }
-  .t-right {
-      margin-right: calc(-324px + 100%);
-  }
-
+  
   /* deck list*/
 
 
@@ -843,7 +813,8 @@ table.striped tr:nth-child(even) {
 .exp:empty {
     display: none;
 }
-#indexInfo, #synonymsIcon, #stylingIcon {
+
+.siac-btn-small {
     display: inline;
     padding: 1px 4px 1px 4px;
     color: $infoButtonForegroundColor$;
@@ -853,6 +824,20 @@ table.striped tr:nth-child(even) {
     user-select: none;
     font-size: 11px !important;
     outline: none;
+}
+.siac-btn-smaller {
+    display: inline;
+    padding: 1px 4px 1px 4px;
+    color: $infoButtonForegroundColor$;
+    background: $infoButtonBackgroundColor$;
+    border: 1px solid  $infoButtonBorderColor$;
+    cursor: pointer;
+    user-select: none;
+    font-size: 10px !important;
+    outline: none;
+}
+
+#indexInfo, #synonymsIcon, #stylingIcon {
     margin-right: 5px;
 
 }
@@ -897,7 +882,7 @@ select {
 
 #synonymInput {
     width: 97%;
-    margin-top: 20px;
+    margin-top: 5px;
     background: $modalBackgroundColor$;
     color: $modalForegroundColor$;
 }
@@ -1149,25 +1134,25 @@ span.tag-symbol {
     position:absolute;
     left: 0px;
     display: none;
-    z-index:99999;
+    z-index: 1000;
     width: 300px;
     height: 250px;
     padding: 5px;
-   background:#595959;
-   color: white;
-   border-radius: 3px;
+    background:#595959;
+    color: white;
+    border-radius: 3px;
 }
 
 
 #cal-info:after {
-  content: " ";
-  position: absolute;
-  top: 100%; 
-  left: var(--tleft);
-  margin-left: -8px;
-  border-width: 8px;
-  border-style: solid;
-  border-color: #595959 transparent transparent transparent;
+    content: " ";
+    position: absolute;
+    top: 100%; 
+    left: var(--tleft);
+    margin-left: -8px;
+    border-width: 8px;
+    border-style: solid;
+    border-color: #595959 transparent transparent transparent;
 }
 
   /*MAC*/
@@ -1219,4 +1204,42 @@ span.tag-symbol {
 .revlog-block-4 {
     background: blue;
     color: white;
+}
+
+.siac-tag-info-box {
+    position: absolute;
+    z-index: 9999;
+    display: none;
+    box-sizing: border-box;
+    width: 600px;
+    background-color: $modalBackgroundColor$;
+    color: $modalForegroundColor$;
+    font-size: 12px;
+    text-align: center;
+    border: 2px solid $tagBackgroundColor$ !important;
+    padding: 10px;
+    user-select: none;
+    cursor: default;
+}
+.siac-tag-info-box-small {
+    width: 300px;
+}
+
+.siac-tag-info-box-left {
+    overflow-y: auto;
+    max-height: 250px;
+    padding-right: 5px;
+    margin-top: 5px;
+    text-align: left;
+    overflow-x: hidden;
+    cursor: auto;
+}
+.siac-tag-info-box-left .cardR {
+    user-select: text;
+}
+.siac-tag-info-box-left .editLbl {
+    border-right: 1px solid $noteBorderColor$;
+}
+.siac-tag-info-box .flot-y-axis {
+    left: -15px !important;
 }

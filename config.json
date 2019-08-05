@@ -57,5 +57,6 @@
 "toggleShortcut": "Ctrl+F",
 "showTimeline": true,
 "showTagInfoOnHover": true,
-"fieldsToExclude": {}
+"fieldsToExclude": {},
+"tagHoverDelayInMiliSec": 750
 }

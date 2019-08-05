@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from aqt import mw
 from aqt.utils import showInfo, tooltip
-from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar
+from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar, get_stamp
 from .logging import log
 from .stats import getRetentions
 
@@ -82,7 +82,8 @@ class Output:
         lastNote = "" 
         nids = [r[3] for r in searchResults]
 
-        self.lastResults = searchResults
+        if searchResults is not None and len(searchResults) > 0:
+            self.lastResults = searchResults
 
         if self.showRetentionScores:
             retsByNid = getRetentions(nids)
@@ -160,14 +161,19 @@ class Output:
             maxCount = 3 if not self.gridView else 2
         if len(tm) <= maxCount or totalLength < maxLength:
             for t, s in tm.items():
+                stamp = "siac-tg-" + get_stamp()
                 if len(s) > 0:
                     tagData = " ".join(self.iterateTagmap({t : s}, ""))
-                    html += "<div class='tagLbl tooltip' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'><div class='tooltiptext-tag' onclick='event.stopPropagation();'></div>%s</div>" %(tagData, tagData, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
+                    if len(s) == 1 and tagData.count("::") < 2:
+                        html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", trimIfLongerThan(tagData.split(" ")[1], maxLength))
+                    else:
+                        html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
                 else:
-                    html += "<div class='tagLbl tooltip' %s data-name='%s' onclick='tagClick(this);'><div class='tooltiptext-tag' onclick='event.stopPropagation();'></div>%s</div>" %("onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", t, trimIfLongerThan(t, maxLength))
+                    html += "<div class='tagLbl' data-stamp='%s' %s data-name='%s' onclick='tagClick(this);'>%s</div>" %(stamp, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", t, trimIfLongerThan(t, maxLength))
         else:
+            stamp = "siac-tg-" + get_stamp()
             tagData = " ".join(self.iterateTagmap(tm, ""))
-            html += "<div class='tagLbl' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(tagData, str(len(tm)) + " tags ...")
+            html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(stamp, tagData, str(len(tm)) + " tags ...")
         
         return html
 
@@ -291,11 +297,15 @@ class Output:
             infoMap["Tags"] = "No tags in the results."
         else:
             for key, value in self.getTagMap(tags).items():
+                stamp = "siac-tg-" + get_stamp()
                 if len(value)  == 0:
-                    tagStr += "<span class='searchInfoTagLbl' data-name='%s' onclick='tagClick(this);'>%s</span>" % (key,trimIfLongerThan(key, 19))
+                    tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, key,trimIfLongerThan(key, 19))
                 else:
                     tagData = " ".join(self.iterateTagmap({key : value}, ""))
-                    tagStr += "<span class='searchInfoTagLbl' data-tags='%s' onclick='tagClick(this);'>%s&nbsp; %s</span>" % (tagData, trimIfLongerThan(key,12), "(+%s)"% len(value))
+                    if len(value) == 1 and tagData.count("::") < 2:
+                        tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, tagData, tagData, trimIfLongerThan(tagData.split()[1],16))
+                    else:
+                        tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s&nbsp; %s</span>" % (stamp, tagData, tagData, trimIfLongerThan(key,12), "(+%s)"% len(value))
 
             infoStr += tagStr
             infoMap["Tags"] = tagStr
@@ -341,7 +351,7 @@ class Output:
             html += "<a class='keyword' href='#' onclick='event.preventDefault(); searchFor($(this).text())'>%s</a>, " % entry[1][0]
         return html[:-2]
 
-    def print_timeline_info(self, context_html, db_list):
+    def get_result_html_simple(self, db_list, tag_hover = True):
         html = ""
         epochTime = int(time.time() * 1000)
         timeDiffString = ""
@@ -368,23 +378,29 @@ class Output:
                 retInfo = ""
 
             lastNote = newNote
-            text = self._cleanFieldSeparators(res[0]).replace("\\", "\\\\").replace("`", "\\`")
+            
+            text = self._cleanFieldSeparators(res[0]).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
             text = self.tryHideImageOcclusion(text)
             newNote = self.noteTemplateSimple % ( counter + 1,
                         "&nbsp;&#128336; " + timeDiffString,
                         "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                         retInfo, res[3],res[3],res[3],res[3],
                         text, 
-                        self.buildTagString(res[1], False, maxLength = 25, maxCount = 2), res[3]) 
+                        self.buildTagString(res[1], tag_hover, maxLength = 25, maxCount = 2), res[3]) 
            
             html += newNote
+        return html
+
+
+    def print_timeline_info(self, context_html, db_list):
+        html = self.get_result_html_simple(db_list, tag_hover= False)
         
         if len(html) == 0:
             html = "%s <div style='vertical-align:center; text-align: center; line-height: 200px;'>No notes added on that day.</div>" % (context_html)
         else:
             html = """
                 %s
-                <div style='overflow-y: auto; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div> 
+                <div id='cal-info-notes' style='overflow-y: auto; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div> 
             """ % (context_html, html)
         self.editor.web.eval("document.getElementById('cal-info').innerHTML = `%s`;" % html)
 
@@ -404,27 +420,8 @@ class Output:
             self.plotjsLoaded = True
 
 
-    def showTrueRetStatsForTag(self, trueRetOverTime):
-        
-        if trueRetOverTime is None or len(trueRetOverTime) < 2:
-            cmd = "$('#trueRetGraph,#trueRetGraphLbl').hide();"
-        else:
-            self._loadPlotJsIfNotLoaded()
-            options = """
-                        {  series: { 
-                                lines: { show: true, fillColor: "#2496dc" }, 
-                        }, 
-                        label: "True Retention", 
-                        yaxis: { max: 100, min: 0
-                        } , 
-                        colors: ["#2496dc"] 
-                        }
-                    """
-            rawData = [[i,t] for i, t in enumerate(trueRetOverTime)]
-            cmd = "$.plot($('#trueRetGraph'), [ %s ],  %s);" % (json.dumps(rawData), options)
-        if self.editor is not None:
-            cmd += "$('.t-inverted').css('margin-bottom', '-' + ($('.t-inverted').first().height() + 23) + 'px');"
-            self.editor.web.eval(cmd)
+
+    
 
     def showStats(self, text, reviewPlotData, ivlPlotData, timePlotData):
         

@@ -115,7 +115,6 @@ class FTSIndex:
     def search(self, text, decks):
         """
         Search for the given text.
-
         Args: 
         text - string to search, typically fields content
         decks - list of deck ids, if -1 is contained, all decks are searched

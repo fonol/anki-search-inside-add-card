@@ -52,7 +52,7 @@ from .whoosh_index import SearchIndex
 from .output import Output
 from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms, remove_fields
 from .editor import openEditor, EditDialog
-from .tag_find import findBySameTag, buildTagInfo
+from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval, getTrueRetentionOverTime
 
 searchingDisabled = config['disableNonNativeSearching'] 
@@ -201,10 +201,8 @@ def myOnBridgeCmd(self, cmd):
 
     elif cmd.startswith("tagInfo "):
         if checkIndex():
-            #this renders the popup, but the true retention graph is not yet created
-            nids = buildTagInfo(self, cmd[8:], searchIndex.synonyms)
-            trueRetentionOverTime = getTrueRetentionOverTime(nids)
-            searchIndex.output.showTrueRetStatsForTag(trueRetentionOverTime)
+            #this renders the popup
+            display_tag_info(self, cmd.split()[1], " ".join(cmd.split()[2:]), searchIndex)
     
     elif cmd.startswith("pSort "):
         if checkIndex():
@@ -245,8 +243,12 @@ def myOnBridgeCmd(self, cmd):
         deleteSynonymSet(cmd[15:])
         searchIndex.output.showInModal(getSynonymEditor())
         searchIndex.synonyms = loadSynonyms()
-    
-    
+    elif cmd.startswith("siac-synset-search "):
+        if checkIndex():
+            searchIndex.output.hideModal()
+            defaultSearchWithDecks(editor, cmd.split()[1], ["-1"])
+            
+
     elif cmd == "styling":
         showStylingModal(editor)
 
@@ -457,7 +459,7 @@ def onLoadNote(editor):
             log("Trying to insert html in editor")
             log("Editor.addMode: %s" % editor.addMode)
 
-        editor.web.eval("var addToResultAreaHeight = %s; var showTagInfoOnHover = %s;" % (config["addToResultAreaHeight"], "true" if config["showTagInfoOnHover"] else "false"))
+        editor.web.eval("var addToResultAreaHeight = %s; var showTagInfoOnHover = %s; tagHoverTimeout = %s;" % (config["addToResultAreaHeight"], "true" if config["showTagInfoOnHover"] else "false", config["tagHoverDelayInMiliSec"]))
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
@@ -503,6 +505,7 @@ def onLoadNote(editor):
 
         if searchIndex is not None and searchIndex.output is not None:
             searchIndex.output.editor = editor
+            searchIndex.output._loadPlotJsIfNotLoaded()
     if edit is None and editor is not None:
         edit = editor
 
@@ -633,7 +636,8 @@ def getIndexInfo():
                <tr><td>Tag Click:</td><td>  <b>%s</b></td></tr>
                <tr><td>Timeline:</td><td>  <b>%s</b></td></tr>
                <tr><td>Tag Info on Hover:</td><td>  <b>%s</b></td></tr>
-               <tr><td>Show Retention in Results:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Tag Hover Delay [ms]:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Show Pass Rate in Results:</td><td>  <b>%s</b></td></tr>
                <tr><td>Window split:</td><td>  <b>%s</b></td></tr>
                <tr><td>Toggle Shortcut:</td><td>  <b>%s</b></td></tr>
              </table>
@@ -643,10 +647,10 @@ def getIndexInfo():
             "Search" if config["tagClickShouldSearch"] else "Add",
             "On" if config["showTimeline"] else "Off", 
             "On" if config["showTagInfoOnHover"] else "Off", 
+            config["tagHoverDelayInMiliSec"],
             "On" if config["showRetentionScores"] else "Off", 
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"]
-
             )
     
     return html
@@ -679,6 +683,8 @@ def showTimingModal():
 
 def updateStyling(cmd):
     name = cmd.split()[0]
+    if len(cmd.split()) < 2:
+        return
     value = cmd.split()[1]
 
     if name == "addToResultAreaHeight":
@@ -724,6 +730,11 @@ def updateStyling(cmd):
             searchIndex.output.editor.web.eval("showTagInfoOnHover = false;")
         elif config[name] and checkIndex():
             searchIndex.output.editor.web.eval("showTagInfoOnHover = true;")
+
+    elif name == "tagHoverDelayInMiliSec":
+        config[name] = int(value)
+        if checkIndex():
+            searchIndex.output.editor.web.eval("tagHoverTimeout = %s;" % value) 
 
 def _addToTagList(tmap, name):
     """
@@ -938,11 +949,8 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
       
       
         if (searchDB or searchByTags) and editor is not None and editor.web is not None:
-            if searchRes is not None:
-                if len(searchRes["result"]) > 0:
+            if searchRes is not None and len(searchRes["result"]) > 0:
                     searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor, searchIndex.logging)
-                else:
-                    editor.web.eval("setSearchResults(``, 'No results found.')")
             else:
                 editor.web.eval("setSearchResults(``, 'No results found.')")
        
@@ -989,10 +997,17 @@ def showSearchResultArea(editor=None, initializationTime=0):
     """
     Toggle between the loader and search result area when the index has finsihed building.
     """
-    if searchIndex.output is not None and searchIndex.output.editor is not None and searchIndex.output.editor.web is not None:
-        searchIndex.output.editor.web.eval("document.getElementById('searchResults').style.display = 'block'; document.getElementById('loader').style.display = 'none';")
+    js = """
+        if (document.getElementById('searchResults')) {
+            document.getElementById('searchResults').style.display = 'block'; 
+        } 
+        if (document.getElementById('loader')) { 
+            document.getElementById('loader').style.display = 'none'; 
+        }"""
+    if checkIndex():
+        searchIndex.output.editor.web.eval(js)
     elif editor is not None and editor.web is not None:
-        editor.web.eval("document.getElementById('searchResults').style.display = 'block'; document.getElementById('loader').style.display = 'none';")
+        editor.web.eval(js)
         
 
 def setInfoboxHtml(html, editor):
@@ -1177,6 +1192,7 @@ def printStartingInfo(editor):
         html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
         html += "<br/>Logging is turned <b>%s</b>. %s" % ("on" if searchIndex.logging else "off", "You should probably disable it if you don't have any problems." if searchIndex.logging else "")
         html += "<br/>Results are rendered <b>%s</b>." % ("immediately" if config["renderImmediately"] else "with fade-in")
+        html += "<br/>Tag Info on hover is <b>%s</b>.%s" % ("shown" if config["showTagInfoOnHover"] else "not shown", (" Delay: [<b>%s</b> ms]" % config["tagHoverDelayInMiliSec"]) if config["showTagInfoOnHover"] else "")
         html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
         html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])

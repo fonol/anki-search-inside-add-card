@@ -20,12 +20,15 @@ all = """
 
 
 synonymEditor = """
-    <div style='max-height: 300px; overflow-y: auto; padding-right: 10px;'>
-        <table id='synTable' style='width: 100%%; border-collapse: collapse; '>
-            <thead><tr style='margin-bottom: 20px;'><th style='word-wrap: break-word; max-width: 100px;'>Set</th><th style='width: 100px; text-align: center;'></th></thead>
+    <b>Sets (Click inside to edit)</b>
+    <div style='max-height: 300px; overflow-y: auto; padding-right: 10px; margin-top: 4px;'>
+        <table id='synTable' style='width: 100%%; border-collapse: collapse;' class='striped'>
+            <thead><tr style='margin-bottom: 20px;'><th style='word-wrap: break-word; max-width: 100px;'></th><th style='width: 100px; text-align: center;'></th></thead>
             %s
         </table>
     </div>
+    <br/>
+    <span>Input a set of terms, separated by ',' and hit enter.</span>
     <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
 """
 
@@ -35,7 +38,15 @@ def getSynonymEditor():
     synonyms = loadSynonyms()
     st = ""
     for c, sList in enumerate(synonyms):
-        st += "<tr ><td style='border-top: 1px solid grey;'><div contenteditable='true' onkeydown='synonymSetKeydown(event, this, %s)'>%s</div></td><td style='text-align: right; border-top: 1px solid grey;'><button class='modal-close' onclick='pycmd(\"deleteSynonyms %s\")'>Delete</button></td></tr>" % (c, ", ".join(sList), c)
+        st += """<tr>
+                    <td>
+                        <div contenteditable='true' onkeydown='synonymSetKeydown(event, this, %s)'>%s</div>
+                    </td>
+                    <td style='text-align: right; height: 20px;'>
+                        <div class='siac-btn-smaller' onclick='pycmd(\"deleteSynonyms %s\")'>Del</div>
+                        <div class='siac-btn-smaller' style='margin-left: 4px;' onclick='searchSynset(this)'>Search</div>
+                    </td>
+                </tr>""" % (c, ", ".join(sList), c)
     if not synonyms:
         return """No synonyms defined yet. Input a set of terms, separated by ',' and hit enter.
         <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
@@ -368,9 +379,9 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                     </div>
                     <div class='flexCol right' style="position: relative;">
                         <table class=''>
-                            <tr><td style='text-align: left; padding-bottom: 10px; white-space: nowrap;'><div id='indexInfo' onclick='pycmd("indexInfo");'>Info</div>
-                            <div id='synonymsIcon' onclick='pycmd("synonyms");'>SynSets</div>
-                            <div id='stylingIcon' onclick='pycmd("styling");'>Styling</div>
+                            <tr><td style='text-align: left; padding-bottom: 10px; white-space: nowrap;'><div id='indexInfo' class='siac-btn-small' onclick='pycmd("indexInfo");'>Info</div>
+                            <div id='synonymsIcon' class='siac-btn-small' onclick='pycmd("synonyms");'>SynSets</div>
+                            <div id='stylingIcon' class='siac-btn-small' onclick='pycmd("styling");'>Styling</div>
                            
                             </td></tr>
                             <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
@@ -454,8 +465,10 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                     </div>
 
                 </div>
-                </div>`).insertAfter('#fields');
+                </div>
+                `).insertAfter('#fields');
         $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow-x: hidden; height: 100%%;"></div>');    
+        
         updatePinned();
         } 
         $('.field').on('keyup', fieldKeypress);
@@ -477,7 +490,6 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
 
 
 def getCalendarHtml():
-    start = time.time();
     html = """<div id='cal-row' style="width: 100%%; height: 8px;" onmouseleave='calMouseLeave()'>%s</div>
             """
     #get notes created since the beginning of the year
@@ -489,49 +501,40 @@ def getCalendarHtml():
     res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now)).fetchall()
 
     counts = []
-    c = 0
+    c = 1
     notes_in_current_day = 0
     for i, r in enumerate(res):
-        #date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(r[0]/1000))
         c_day_of_year = time.localtime(r[0]/1000).tm_yday
-        notes_in_current_day += 1
-
-        if c_day_of_year != c or i == len(res) - 1:
-            if c != 1:
+        if c_day_of_year == c:
+            notes_in_current_day += 1
+            if i == len(res) - 1:
                 counts.append(notes_in_current_day)
+        else:
+            counts.append(notes_in_current_day)
+            notes_in_current_day = 1
             for _ in range(0, c_day_of_year - c - 1):
                 counts.append(0)
-            c = c_day_of_year
-            
-            notes_in_current_day = 1
-    if time.localtime(res[-1][0]/1000).tm_yday != day_of_year and len(counts) < day_of_year:
-        counts.append(notes_in_current_day)
+        
+        c = c_day_of_year
     while len(counts) < day_of_year:
         counts.append(0)
 
     html_content = ""
-    size = 1
-    c_sum = 0
     added = 0
     for i, notes_in_current_day in enumerate(counts):
-        c_sum += notes_in_current_day
-        if (i + 1) % size == 0:
-            avg = c_sum / size
-            if avg > 20:
-                color = "cal-three"
-            elif avg > 10:
-                color = "cal-two"
-            elif avg > 0:
-                color = "cal-one"
-            else: 
-                color = ""
-            
-            html_content += "<div class='cal-block-outer'><div class='cal-block %s %s' data-index='%s'></div></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
-            c_sum = 0
-            added += 1
+        if notes_in_current_day > 20:
+            color = "cal-three"
+        elif notes_in_current_day > 10:
+            color = "cal-two"
+        elif notes_in_current_day > 0:
+            color = "cal-one"
+        else: 
+            color = ""
+        
+        html_content += "<div class='cal-block-outer'><div class='cal-block %s %s' data-index='%s'></div></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
+        added += 1
 
     html = html % html_content
-    taken = (time.time()- start) * 1000
     return html
         
 
@@ -579,13 +582,21 @@ def stylingModal(config):
                 </table>
             </fieldset>
             <br/>
+            <fieldset>
+                <span>This controls how long you have to hover over a tag until the info box is shown. Allowed values are 0 (not recommended) to 10000.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Tag Hover Delay in Miliseconds</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="10000" style='width: 60px;' onchange="pycmd('styling tagHoverDelayInMiliSec ' + this.value)" value="%s"/></tr>
+                </table>
+            </fieldset>
+            <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
                         """ % (config["addToResultAreaHeight"], 
                         "checked='true'" if config["renderImmediately"] else "", 
                         config["leftSideWidthInPercent"], 
                         "checked='true'" if config["hideSidebar"] else "",
                         "checked='true'" if config["showTimeline"] else "",
-                        "checked='true'" if config["showTagInfoOnHover"] else ""
+                        "checked='true'" if config["showTagInfoOnHover"] else "",
+                        config["tagHoverDelayInMiliSec"]
 
                         
                         )

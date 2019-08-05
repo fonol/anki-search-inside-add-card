@@ -1,4 +1,7 @@
 import re
+from datetime import datetime
+import time
+import random
 
 cleanWordReg = re.compile(u"^[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*(\S+?)[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*$", re.U)    
 ignoreReg = re.compile(u"^[^a-zA-ZÀ-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+$", re.U)
@@ -140,6 +143,10 @@ def expandBySynonyms(text, synonyms):
     if found:
         return  text + " " + " ".join(found)
     return text
+
+
+def get_stamp():
+    return  str(random.randint(0, 999999999))
 
 
 def remove_fields(text, field_ords):

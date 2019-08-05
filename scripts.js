@@ -10,6 +10,7 @@ var loadingTimer;
 var calTimer;
 var gridView = false;
 var renderImmediately = $renderImmediately$;
+var tagHoverTimeout = 750;
 
 
 function updateSelectedDecks(elem) {
@@ -84,7 +85,19 @@ function showLoading(source) {
         document.getElementById('searchInfo').innerHTML = `<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>${source}</i></td></tr></table>`;
     }, 1000);
 }
+function totalOffset(elem) {
+    var top = 0, left = 0;
+    do {
+        top += elem.offsetTop || 0;
+        left += elem.offsetLeft || 0;
+        elem = elem.offsetParent;
+    } while (elem);
 
+    return {
+        top: top,
+        left: left
+    };
+}
 
 function cardMouseLeave(elem, nid, mode = "full") {
     setTimeout(function () {
@@ -101,37 +114,110 @@ function cardMouseLeave(elem, nid, mode = "full") {
 }
 
 function tagMouseEnter(elem) {
-    if (!showTagInfoOnHover)
+    if (!showTagInfoOnHover || !elem || !elem.parentElement) 
         return;
     setTimeout(function () {
-        if (elem.parentElement.querySelector(':hover') === elem && $('#resultsArea').height() > 400 && $('#resultsArea').width() > 450) {
-            $(elem).css("z-index", "9999");
-            $("#greyout").show();
-            let offsetTop = $(elem.parentElement.parentElement).offset().top;
-            if (!$('#topContainer').is(":hidden"))
-                offsetTop -= $('#topContainer').height();
-            let offsetBot = $('#searchResults').height() - offsetTop - $('#bottomContainer').height() + 20;
-            if (offsetTop < 0 || elem.parentElement.previousElementSibling.getElementsByTagName('img').length > 0) {
-                offsetTop += $(elem.parentElement.parentElement).height();
-                offsetBot = $('#searchResults').height() - offsetTop;
-            }
-            if (offsetTop > 0 && offsetTop < offsetBot) {
-                $(elem).children().first().addClass("t-inverted");
-            }
-            if (gridView && $(elem.parentElement.parentElement).is(':first-child')) {
-                $(elem).children().first().addClass("t-right");
-            }
-            $(elem).children().first().addClass("shouldFill");
-            pycmd("tagInfo " + $(elem).data("name"));
-        }
-    }, 800);
-}
-function tagMouseLeave(elem) {
-    $("#greyout").hide();
-    $(elem).css("z-index", "999");
-    $(elem).children().first().removeClass('t-inverted').removeClass("shouldFill").removeClass("t-right").css('margin-bottom', '0px').html('').hide();
+            if (elem && elem.parentElement.querySelector(':hover') === elem && !document.getElementById('siac-tag-info-box-' + $(elem).data('stamp'))) {
+                pycmd("tagInfo " + $(elem).data("stamp") + " " + $(elem).data("name"));
+            } 
+    }, tagHoverTimeout);
 }
 
+function showTagInfo(elem) {
+
+    let stamp = $(elem).data("stamp");
+    $(elem).css("z-index", "9999");
+    if (elem) {
+        $("#greyout").show();
+    }
+    let offset = totalOffset(elem);
+    offset.top += 17;
+    let existing = document.getElementsByClassName("siac-tag-info-box");
+        if (elem.parentElement.id && elem.parentElement.id ===  "tagContainer") {
+            offset.top -= document.getElementById("tagContainer").scrollTop;
+        } else if (existing.length > 1) {
+            if (elem.parentElement.parentElement.parentElement.className.indexOf("siac-tag-info-box-left") >= 0) {
+                offset.top -= elem.parentElement.parentElement.parentElement.scrollTop;
+            }
+        } else if (document.getElementById('cal-info').offsetParent !== null) {
+            offset.top -= document.getElementById("cal-info-notes").scrollTop;
+        } else {
+            offset.top -= document.getElementById("searchResults").scrollTop;
+        }
+    let id = 'siac-tag-info-box-' + stamp;
+   
+    if (offset.left > window.outerWidth - offset.left) {
+        offset.left -= $('#siac-tag-info-box-' + stamp).outerWidth();
+        offset.left += $(elem).outerWidth() + 2;
+    }
+    let highestZ = 0;
+    for (var i = 0; i < existing.length; i++)  {
+        if (Number($(existing[i]).css("z-index")) > highestZ)
+            highestZ = Number($(existing[i]).css("z-index"));
+    }
+    $('#siac-tag-info-box-' + stamp).css("top", offset.top).css("left", offset.left).css("z-index", highestZ + 1);
+    if (offset.top > window.outerHeight - offset.top) {
+        document.getElementById(id).style.visibility = "hidden";
+        document.getElementById(id).style.display = "block";
+        let diff = 17;
+        if (existing.length > 1)
+            diff = 15;
+        $('#' + id).css('top', offset.top - $('#' + id).outerHeight() - diff);
+        document.getElementById(id).style.visibility = "visible";
+    } else {
+        document.getElementById(id).style.display = "block";
+    }
+}
+
+function tagMouseLeave(elem) {
+    let stamp = $(elem).data('stamp');
+    if ($('#siac-tag-info-box-' + stamp + ":hover").length || $(`.tagLbl[data-stamp='${stamp}']:hover`).length) {
+        return;
+    }
+    let existing = document.getElementsByClassName("siac-tag-info-box");
+    let elems_z = Number($(elem).css("z-index"));
+
+    let hovered = $(".siac-tag-info-box:hover").first();
+    
+    if (!hovered.length && !$(`.tagLbl[data-stamp]:hover`).length) {
+        $('.siac-tag-info-box').remove();
+        $('.tagLbl').css("z-index", "999");
+        $("#greyout").hide();
+        return;
+    }
+    if (hovered.length){
+        let hovered_z = Number(hovered.css("z-index"));
+        if (elem.id && hovered_z > elems_z)
+            return;
+
+        for(var i = 0; i < existing.length; i++) {
+            if (Number($(existing[i]).css("z-index")) > hovered_z) {
+                $(existing[i]).remove();
+                i--;
+            }
+
+        }
+    }
+    $(`.tagLbl[data-stamp='${stamp}']`).first().css("z-index", "999");
+    if (document.getElementById("siac-tag-info-box-"+ stamp))
+        $('#siac-tag-info-box-' + stamp).remove();
+    if (!existing || existing.length < 1) { 
+         $("#greyout").hide(); 
+    }
+
+}
+
+function tagInfoBoxClicked(elem) {
+    let elems_z_index = Number($(elem).css("z-index"));
+    let otherBoxes = document.getElementsByClassName("siac-tag-info-box");
+    for (var i = 0; i < otherBoxes.length; i++) {
+        if (Number($(otherBoxes[i]).css("z-index")) < elems_z_index) {
+            $(otherBoxes[i]).remove();
+            i--;
+        }
+    }
+
+}
 
 function getSelectionText() {
     if (!searchOnSelection || isFrozen)
@@ -187,6 +273,7 @@ function tagClick(elem) {
         return;
     }
     let name = $(elem).data('name');
+    $(".siac-tag-info-box").remove();
     $("#greyout").hide();
     pycmd('tagClicked ' + name);
 }
@@ -211,6 +298,14 @@ function synonymSetKeydown(event, elem, index) {
         event.preventDefault();
         $(elem).blur();
     }
+}
+
+function searchSynset(elem) {
+    let set = elem.parentElement.parentElement.children[0].children[0].innerHTML;
+    if (set) {
+        pycmd("siac-synset-search " + set);
+    }
+
 }
 
 
@@ -298,6 +393,8 @@ function setSearchResults(html, infoStr, infoMap) {
         $("#startInfo,.gridRow:empty").remove();
     }
     $("#greyout").hide();
+    $('.siac-tag-info-box').remove();
+    $('.tagLbl').css("z-index", "999");
     document.getElementById("searchResults").style.overflowY = 'hidden';
     document.getElementById("searchResults").style.paddingRight = '24px';
     document.getElementById('searchResults').innerHTML += html;
@@ -326,6 +423,7 @@ function setSearchResults(html, infoStr, infoMap) {
             $('.cardWrapper').show();
         document.getElementById("searchResults").style.overflowY = 'auto';
         document.getElementById("searchResults").style.paddingRight = '10px';
+        $("#greyout").hide();
     }
     else {
         time = gridView ? 100 : 130;
@@ -336,7 +434,6 @@ function setSearchResults(html, infoStr, infoMap) {
                 $("#nWr-" + c).fadeIn().css("display", "inline-block");
             else
                 $("#nWr-" + c).fadeIn();
-
             setTimeout(function () {
                 c++;
                 if (c < count) {
@@ -348,7 +445,7 @@ function setSearchResults(html, infoStr, infoMap) {
                         $('.cardWrapper').show();
                     document.getElementById("searchResults").style.overflowY = 'auto';
                     document.getElementById("searchResults").style.paddingRight = '10px';
-
+                    $("#greyout").hide();
                 }
             }, time);
         }
@@ -367,11 +464,7 @@ function sendClickedInformation(x, y) {
     if (el.className == "cardR") {
         return "note " + el.id + " " + el.innerHTML;
     }
-
-
 }
-
-
 
 function toggleTooltip(elem) {
     $(elem).children().first().toggle();
@@ -412,7 +505,6 @@ function toggleTop(elem) {
         $(elem).children().first().html('&#10096;');
         pycmd("toggleTop on");
     }
-
 }
 
 function toggleGrid(elem) {
@@ -441,7 +533,6 @@ function predefSearch() {
     let decks = selectedDecks.toString();
     pycmd("predefSearch " + search + " " + count + " " + decks);
 }
-
 
 function sort() {
     let e = document.getElementById("sortSelect");
@@ -474,9 +565,6 @@ function addFloatingNote(nid) {
     if (gridView)
         reflowGrid();
 }
-
-
-
 
 function dragElement(elmnt, headerId) {
     var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
