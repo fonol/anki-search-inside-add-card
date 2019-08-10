@@ -22,14 +22,14 @@ def findBySameTag(tagStr, limit, decks, pinned):
     else:
         deckQ = ""
     if deckQ:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid %s and did in %s" %(query, deckQ)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s and did in %s" %(query, deckQ)).fetchall()
     else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid %s" %(query)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s" %(query)).fetchall()
     rList = []
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in pinned:
-            rList.append((r[1], r[2], r[3], r[0]))
+            rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
     return { "result" : rList[:limit]}
 
 def display_tag_info(editor, stamp, tag, searchIndex):
@@ -123,7 +123,7 @@ def display_tag_info(editor, stamp, tag, searchIndex):
     tret = getAvgTrueRetention(nids)
     if tret is not None:
         color = Output._retToColor(tret)    
-        tret = "<span style='background: %s'>&nbsp;%s&nbsp;</span>" % (color, tret)
+        tret = "<span style='background: %s; color: black;'>&nbsp;%s&nbsp;</span>" % (color, tret)
 
     if not should_hide_left_side:
         sorted_db_list = sorted(searchRes["result"], key=lambda x: x[3], reverse=True)

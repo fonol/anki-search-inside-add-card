@@ -10,11 +10,11 @@ from aqt.utils import showInfo, tooltip
 from .output import *
 import collections
 from .textutils import *
-from .logging import log
+from .logging import log, persist_index_info
 
 class FTSIndex:
 
-    def __init__(self, corpus, searchingDisabled):
+    def __init__(self, corpus, searchingDisabled, index_up_to_date):
 
         self.limit = 20
         self.pinned = []
@@ -25,18 +25,22 @@ class FTSIndex:
         self.stopWords = []
         # mid : [fld_ord]
         self.fields_to_exclude = {}
+        # stores values useful to determine whether the index has to be rebuilt on restart or not
+        self.creation_info = {}
         self.threadPool = QThreadPool()
-        self.output = None
+        self.output = Output()
 
         config = mw.addonManager.getConfig(__name__)
         try:
             self.stopWords = set(config['stopwords'])
         except KeyError:
             self.stopWords = []
-        
+        self.creation_info["stopwords_size"] = len(self.stopWords)
+        self.creation_info["decks"] = config["decks"]
         #exclude fields
         try:
             fld_dict = config['fieldsToExclude']
+            self.creation_info["fields_to_exclude_original"] = fld_dict
             self.fields_to_exclude = {}
             for note_templ_name, fld_names in fld_dict.items():
                 model = mw.col.models.byName(note_templ_name)
@@ -48,12 +52,13 @@ class FTSIndex:
                         self.fields_to_exclude[model['id']].append(fld['ord'])
         except KeyError:
             self.fields_to_exclude = {} 
+        self.output.fields_to_exclude = self.fields_to_exclude
 
-        if not searchingDisabled:
+        #if fts5 is compiled, use it
+        self.type = self._checkIfFTS5Available(config["logging"])
+        self.creation_info["index_was_rebuilt"] = not index_up_to_date
+        if not searchingDisabled and not index_up_to_date:
             cleaned = self._cleanText(corpus)
-
-            #if fts5 is compiled, use it
-            self.type = self._checkIfFTS5Available(config["logging"])
             try:
                 os.remove(self.dir + "/search-data.db")
             except OSError:
@@ -61,16 +66,18 @@ class FTSIndex:
             conn = sqlite3.connect(self.dir + "/search-data.db")
             conn.execute("drop table if exists notes")
             if self.type == "SQLite FTS5":
-                conn.execute("create virtual table notes using fts5(nid, text, tags, did, source)")
+                conn.execute("create virtual table notes using fts5(nid, text, tags, did, source, mid)")
             elif self.type == "SQLite FTS4":
-                conn.execute("create virtual table notes using fts4(nid, text, tags, did, source)")
+                conn.execute("create virtual table notes using fts4(nid, text, tags, did, source, mid)")
             else:
-                conn.execute("create virtual table notes using fts3(nid, text, tags, did, source)")
+                conn.execute("create virtual table notes using fts3(nid, text, tags, did, source, mid)")
             
-            conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?)', cleaned)
+            conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?,?)', cleaned)
             conn.execute("INSERT INTO notes(notes) VALUES('optimize')")
             conn.commit()
             conn.close()
+        if not index_up_to_date:
+            persist_index_info(self)
 
 
     def _checkIfFTS5Available(self, logging):
@@ -99,7 +106,7 @@ class FTSIndex:
             if row[4] in self.fields_to_exclude:
                 text = remove_fields(text, self.fields_to_exclude[row[4]])
             text = clean(text, self.stopWords)
-            filtered.append((row[0], text, row[2], row[3], row[1]))
+            filtered.append((row[0], text, row[2], row[3], row[1], row[4]))
         return filtered
 
     def removeStopwords(self, text):
@@ -169,11 +176,11 @@ class FTSIndex:
         rList = list()
         conn = sqlite3.connect(self.dir + "/search-data.db")
         if self.type == "SQLite FTS5":
-            dbStr = "select nid, text, tags, did, source from notes where notes match '%s' order by bm25(notes)" %(query)
+            dbStr = "select nid, text, tags, did, source, bm25(notes), mid from notes where notes match '%s' order by bm25(notes)" %(query)
         elif self.type == "SQLite FTS4":
-            dbStr = "select nid, text, tags, did, source, matchinfo(notes, 'pcnalx') from notes where text match '%s'" %(query)
+            dbStr = "select nid, text, tags, did, source, matchinfo(notes, 'pcnalx'), mid from notes where text match '%s'" %(query)
         else:
-            dbStr = "select nid, text, tags, did, source, matchinfo(notes) from notes where text match '%s'" %(query)
+            dbStr = "select nid, text, tags, did, source, matchinfo(notes), mid from notes where text match '%s'" %(query)
 
         try:
             start = time.time()
@@ -198,9 +205,9 @@ class FTSIndex:
 
         if self.highlighting and self.type == "SQLite FTS5":
             start = time.time()
-            for r in res:
-                if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                    rList.append((self.output._markHighlights(r[4], querySet).replace('`', '\\`'), r[2], r[3], r[0]))
+            for nid, text, tags, did, source, score, mid in res:
+                if not str(nid) in self.pinned and (allDecks or str(did) in decks):
+                    rList.append((self.output._markHighlights(source, querySet).replace('`', '\\`'), tags, did, nid, score, mid))
                     c += 1
                     if c >= self.limit:
                         break
@@ -211,7 +218,7 @@ class FTSIndex:
             if self.type == "SQLite FTS5":
                 for r in res:
                     if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                        rList.append((r[4], r[2], r[3], r[0]))
+                        rList.append((r[4], r[2], r[3], r[0], r[5], r[6]))
                         c += 1
                         if c >= self.limit:
                             break
@@ -220,14 +227,14 @@ class FTSIndex:
                 start = time.time()
                 for r in res:
                     if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                        rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0)))
+                        rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0), r[6]))
                 resDict["time-ranking"] = int((time.time() - start) * 1000)
                 
             else:
                 start = time.time()
                 for r in res:
                     if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                        rList.append((r[4], r[2], r[3], r[0], self.simpleRank(r[5])))
+                        rList.append((r[4], r[2], r[3], r[0], self.simpleRank(r[5]), r[6]))
                 resDict["time-ranking"] = int((time.time() - start) * 1000)
       
         conn.close()
@@ -239,7 +246,7 @@ class FTSIndex:
                 start = time.time()
                 rList = []
                 for r in listSorted[:min(self.limit, len(listSorted))]:
-                    rList.append((self.output._markHighlights(r[0], querySet).replace('`', '\\`'), r[1], r[2], r[3], r[4]))
+                    rList.append((self.output._markHighlights(r[0], querySet).replace('`', '\\`'), r[1], r[2], r[3], r[4], r[5]))
                 resDict["time-highlighting"] += int((time.time() - start) * 1000)
                 
             else:
@@ -282,15 +289,15 @@ class FTSIndex:
             #query db with found ids
             foundQ = "(%s)" % ",".join([str(f) for f in found])
             if deckQ:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ)).fetchall()
+                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ)).fetchall()
             else:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ)).fetchall()
+                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ)).fetchall()
             rList = []
             for r in res:
                 #pinned items should not appear in the results
                 if not str(r[0]) in self.pinned:
                     #todo: implement highlighting
-                    rList.append((r[1], r[2], r[3], r[0]))
+                    rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
             return { "result" : rList[:self.limit], "stamp" : stamp }
         return { "result" : [], "stamp" : stamp }
 
@@ -399,17 +406,22 @@ class FTSIndex:
             return
         did = did[0]
         conn = sqlite3.connect(self.dir + "/search-data.db")
-        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source) VALUES (?, ?, ?, ?, ?)", (note.id, clean(content, self.stopWords), tags, did, content))
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid) VALUES (?, ?, ?, ?, ?, ?)", (note.id, clean(content, self.stopWords), tags, did, content, note.mid))
         conn.commit()
         conn.close()
+        persist_index_info(self)
 
     def updateNote(self, note):
         self.deleteNote(note.id)
         self.addNote(note)
 
+    def get_last_inserted_id(self):
+        conn = sqlite3.connect(self.dir + "/search-data.db")
+        row_id = conn.cursor().execute("SELECT id FROM notes_content ORDER BY id DESC LIMIT 1").fetchone()[0]
+        conn.close()
+        return row_id
 
-
-    def getNumberOfNotes(self):
+    def get_number_of_notes(self):
         conn = sqlite3.connect(self.dir + "/search-data.db")
         res = conn.cursor().execute("select count(*) from notes_content").fetchone()[0]
         conn.close()

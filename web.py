@@ -6,6 +6,7 @@ import datetime
 import time
 from aqt import mw
 from .textutils import cleanSynonym
+from .state import get_index, checkIndex
 
 #css + js 
 all = """
@@ -32,7 +33,6 @@ synonymEditor = """
     <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
 """
 
-config = mw.addonManager.getConfig(__name__)
 
 def getSynonymEditor():
     synonyms = loadSynonyms()
@@ -48,12 +48,13 @@ def getSynonymEditor():
                     </td>
                 </tr>""" % (c, ", ".join(sList), c)
     if not synonyms:
-        return """No synonyms defined yet. Input a set of terms, separated by ',' and hit enter.
+        return """No synonyms defined yet. Input a set of terms, separated by ',' and hit enter.<br/><br/>
         <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
         """
     return synonymEditor % st
 
 def saveSynonyms(synonyms):
+    config = mw.addonManager.getConfig(__name__)
     filtered = []
     for sList in synonyms:
         filtered.append(sorted(sList))
@@ -112,160 +113,213 @@ def editSynonymSet(cmd):
     saveSynonyms(existing)
 
 def loadSynonyms():
+    config = mw.addonManager.getConfig(__name__)
     try:
         synonyms = config['synonyms']
     except KeyError:
         synonyms = []
-
     return synonyms
 
 
 def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     #get path 
     dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/web.py", "")
+    config = mw.addonManager.getConfig(__name__)
     
     with open(dir + "/scripts.js") as f:
         script = f.read()
     with open(dir + "/styles.css") as f:
         css = f.read().replace("%", "%%")
     script = script.replace("$del$", str(delayWhileTyping))
-    # script = script.replace("$h-1$", str(116 - addToHeight))
-    # script = script.replace("$h-2$", str(288 - addToHeight))
-    script = script.replace("$h-1$", str(120 - addToHeight))
-    script = script.replace("$h-2$", str(291 - addToHeight))
+   
     try:
-        deckSelectFontSize = config["deckSelectFontSize"]
+        deckSelectFontSize = config["styling"]["topBar"]["deckSelectFontSize"]
     except KeyError:
         deckSelectFontSize = 12
-
     try:
-        noteFontSize = config["noteFontSize"]
+        noteFontSize = config["styling"]["general"]["noteFontSize"]
     except KeyError:
         noteFontSize = 12
 
     try: 
-        noteForegroundColor = config["noteForegroundColor"]
+        noteForegroundColor = config["styling"]["general"]["noteForegroundColor"]
     except KeyError:
         noteForegroundColor = "black"
 
     try:
-        noteBackgroundColor = config["noteBackgroundColor"]
+        noteBackgroundColor = config["styling"]["general"]["noteBackgroundColor"]
     except KeyError:
         noteBackgroundColor = "white"
    
     try:
-        noteBorderColor = config["noteBorderColor"]
+        noteBorderColor = config["styling"]["general"]["noteBorderColor"]
     except KeyError:
         noteBorderColor = "grey"
-
     try:
-        tagBackgroundColor = config["tagBackgroundColor"]
+        noteHoverBorderColor = config["styling"]["general"]["noteHoverBorderColor"]
+    except KeyError:
+        noteHoverBorderColor = "#2496dc"
+    try:
+        tagBackgroundColor = config["styling"]["general"]["tagBackgroundColor"]
     except KeyError:
         tagBackgroundColor = "#f0506e"
     
     try:
-        tagForegroundColor = config["tagForegroundColor"]
+        tagForegroundColor = config["styling"]["general"]["tagForegroundColor"]
     except KeyError:
         tagForegroundColor = "white"
     try:
-        tagFontSize = config["tagFontSize"]
+        tagFontSize = config["styling"]["general"]["tagFontSize"]
     except KeyError:
         tagFontSize = 12
     try:
-        deckSelectForegroundColor = config["deckSelectForegroundColor"]
+        deckSelectForegroundColor = config["styling"]["topBar"]["deckSelectForegroundColor"]
     except KeyError:
         deckSelectForegroundColor = "black"
     
     try:
-        deckSelectBackgroundColor = config["deckSelectBackgroundColor"]
+        deckSelectBackgroundColor = config["styling"]["topBar"]["deckSelectBackgroundColor"]
     except KeyError:
         deckSelectBackgroundColor = "white"
     try:
-        deckSelectHoverForegroundColor = config["deckSelectHoverForegroundColor"]
+        deckSelectHoverForegroundColor = config["styling"]["topBar"]["deckSelectHoverForegroundColor"]
     except KeyError:
         deckSelectHoverForegroundColor = "white"
     
     try:
-        deckSelectHoverBackgroundColor = config["deckSelectHoverBackgroundColor"]
+        deckSelectHoverBackgroundColor = config["styling"]["topBar"]["deckSelectHoverBackgroundColor"]
     except KeyError:
         deckSelectHoverBackgroundColor = "#5f6468"
 
     try:
-        deckSelectButtonForegroundColor = config["deckSelectButtonForegroundColor"]
+        deckSelectButtonForegroundColor = config["styling"]["topBar"]["deckSelectButtonForegroundColor"]
     except KeyError:
         deckSelectButtonForegroundColor = "grey"
     
     try:
-        deckSelectButtonBackgroundColor = config["deckSelectButtonBackgroundColor"]
+        deckSelectButtonBackgroundColor = config["styling"]["topBar"]["deckSelectButtonBackgroundColor"]
     except KeyError:
         deckSelectButtonBackgroundColor = "white"
 
     try:
-        deckSelectButtonBorderColor = config["deckSelectButtonBorderColor"]
+        deckSelectButtonBorderColor = config["styling"]["topBar"]["deckSelectButtonBorderColor"]
     except KeyError:
         deckSelectButtonBorderColor = "grey"
+    try:
+        deckSelectCheckmarkColor = config["styling"]["topBar"]["deckSelectCheckmarkColor"]
+    except KeyError:
+        deckSelectCheckmarkColor = "grey"
 
     try:
-        modalBackgroundColor = config["modalBackgroundColor"]
+        modalBackgroundColor = config["styling"]["modal"]["modalBackgroundColor"]
     except KeyError:
         modalBackgroundColor = "white"
 
     try:
-        modalForegroundColor = config["modalForegroundColor"]
+        modalForegroundColor = config["styling"]["modal"]["modalForegroundColor"]
     except KeyError:
         modalForegroundColor = "black"
 
     try:
-        browserSearchButtonBorderColor = config["browserSearchButtonBorderColor"]
+        browserSearchButtonBorderColor = config["styling"]["bottomBar"]["browserSearchButtonBorderColor"]
     except KeyError:
         browserSearchButtonBorderColor = "#2496dc"
 
     try:
-        browserSearchButtonBackgroundColor = config["browserSearchButtonBackgroundColor"]
+        browserSearchButtonBackgroundColor = config["styling"]["bottomBar"]["browserSearchButtonBackgroundColor"]
     except KeyError:
         browserSearchButtonBackgroundColor = "white"
 
     try:
-        browserSearchButtonForegroundColor = config["browserSearchButtonForegroundColor"]
+        browserSearchButtonForegroundColor = config["styling"]["bottomBar"]["browserSearchButtonForegroundColor"]
     except KeyError:
         browserSearchButtonForegroundColor = "#2496dc"
 
     try:
-        browserSearchInputBorderColor = config["browserSearchInputBorderColor"]
+        browserSearchInputBorderColor = config["styling"]["bottomBar"]["browserSearchInputBorderColor"]
     except KeyError:
         browserSearchInputBorderColor = "#2496dc"
 
     try:
-        browserSearchInputBackgroundColor = config["browserSearchInputBackgroundColor"]
+        browserSearchInputBackgroundColor = config["styling"]["bottomBar"]["browserSearchInputBackgroundColor"]
     except KeyError:
         browserSearchInputBackgroundColor = "white"
 
     try:
-        browserSearchInputForegroundColor = config["browserSearchInputForegroundColor"]
+        browserSearchInputForegroundColor = config["styling"]["bottomBar"]["browserSearchInputForegroundColor"]
     except KeyError:
         browserSearchInputForegroundColor = "#2496dc"
    
     try:
-        infoButtonBorderColor = config["infoButtonBorderColor"]
+        infoButtonBorderColor = config["styling"]["general"]["buttonBorderColor"]
     except KeyError:
         infoButtonBorderColor = "#2496dc"
 
     try:
-        infoButtonBackgroundColor = config["infoButtonBackgroundColor"]
+        infoButtonBackgroundColor = config["styling"]["general"]["buttonBackgroundColor"]
     except KeyError:
         infoButtonBackgroundColor = "white"
 
     try:
-        infoButtonForegroundColor = config["infoButtonForegroundColor"]
+        infoButtonForegroundColor = config["styling"]["general"]["buttonForegroundColor"]
     except KeyError:
         infoButtonForegroundColor = "#2496dc"
+    try:
+        highlightBackgroundColor = config["styling"]["general"]["highlightBackgroundColor"]
+    except KeyError:
+        highlightBackgroundColor = "yellow"
+    try:
+        highlightForegroundColor = config["styling"]["general"]["highlightForegroundColor"]
+    except KeyError:
+        highlightForegroundColor = "black"
+    try:
+        rankingLabelBackgroundColor = config["styling"]["general"]["rankingLabelBackgroundColor"]
+    except KeyError:
+        rankingLabelBackgroundColor = "#2496dc"
+    try:
+        rankingLabelForegroundColor = config["styling"]["general"]["rankingLabelForegroundColor"]
+    except KeyError:
+        rankingLabelForegroundColor = "white"
+    try:
+        selectBackgroundColor = config["styling"]["bottomBar"]["selectBackgroundColor"]
+    except KeyError:
+        selectBackgroundColor = "white"
+    try:
+        selectForegroundColor = config["styling"]["bottomBar"]["selectForegroundColor"]
+    except KeyError:
+        selectForegroundColor = "black"
 
 
     try:
-        keywordColor = config["keywordColor"]
+        stripedTableBackgroundColor = config["styling"]["modal"]["stripedTableBackgroundColor"]
+    except KeyError:
+        stripedTableBackgroundColor = "#f2f2f2"
+    try:
+        modalBorderColor = config["styling"]["modal"]["modalBorderColor"]
+    except KeyError:
+        modalBorderColor = "#2496dc"
+    try:
+        keywordColor = config["styling"]["general"]["keywordColor"]
     except KeyError:
         keywordColor = "#2496dc"
+    try:
+        fieldSeparatorColor = config["styling"]["general"]["fieldSeparatorColor"]
+    except KeyError:
+        fieldSeparatorColor = "#2496dc"
+    try:
+        windowColumnSeparatorColor = config["styling"]["general"]["windowColumnSeparatorColor"]
+    except KeyError:
+        windowColumnSeparatorColor = "#2496dc"    
 
+
+    try:
+        timelineBoxBackgroundColor = config["styling"]["bottomBar"]["timelineBoxBackgroundColor"]
+    except KeyError:
+        timelineBoxBackgroundColor = "#595959"
+    try:
+        timelineBoxBorderColor = config["styling"]["bottomBar"]["timelineBoxBorderColor"]
+    except KeyError:
+        timelineBoxBorderColor = "#595959"
     try:
         imgMaxHeight = str(config["imageMaxHeight"]) + "px"
     except KeyError:
@@ -279,11 +333,13 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     css = css.replace("$deckSelectButtonForegroundColor$", deckSelectButtonForegroundColor)
     css = css.replace("$deckSelectButtonBackgroundColor$", deckSelectButtonBackgroundColor)
     css = css.replace("$deckSelectButtonBorderColor$", deckSelectButtonBorderColor)
+    css = css.replace("$deckSelectCheckmarkColor$", deckSelectCheckmarkColor)
 
     css = css.replace("$noteFontSize$", str(noteFontSize) + "px")
     css = css.replace("$noteForegroundColor$", noteForegroundColor)
     css = css.replace("$noteBackgroundColor$", noteBackgroundColor)
     css = css.replace("$noteBorderColor$", noteBorderColor)
+    css = css.replace("$noteHoverBorderColor$", noteHoverBorderColor)
     css = css.replace("$tagBackgroundColor$", tagBackgroundColor)
     css = css.replace("$tagForegroundColor$", tagForegroundColor)
     css = css.replace("$tagFontSize$", str(tagFontSize) + "px")
@@ -291,11 +347,12 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     css = css.replace("$modalBackgroundColor$", modalBackgroundColor)
     css = css.replace("$modalForegroundColor$", modalForegroundColor)
 
-    css = css.replace("$infoButtonBackgroundColor$", infoButtonBackgroundColor)
-    css = css.replace("$infoButtonBorderColor$", infoButtonBorderColor)
-    css = css.replace("$infoButtonForegroundColor$", infoButtonForegroundColor)
+    css = css.replace("$buttonBackgroundColor$", infoButtonBackgroundColor)
+    css = css.replace("$buttonBorderColor$", infoButtonBorderColor)
+    css = css.replace("$buttonForegroundColor$", infoButtonForegroundColor)
 
-
+    css = css.replace("$fieldSeparatorColor$", fieldSeparatorColor)
+    css = css.replace("$windowColumnSeparatorColor$", windowColumnSeparatorColor)
 
     css = css.replace("$browserSearchButtonBackgroundColor$", browserSearchButtonBackgroundColor)
     css = css.replace("$browserSearchButtonBorderColor$", browserSearchButtonBorderColor)
@@ -305,7 +362,22 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     css = css.replace("$browserSearchInputBorderColor$", browserSearchInputBorderColor)
     css = css.replace("$browserSearchInputForegroundColor$", browserSearchInputForegroundColor)
 
+    css = css.replace("$highlightBackgroundColor$", highlightBackgroundColor)
+    css = css.replace("$highlightForegroundColor$", highlightForegroundColor)
+
+    css = css.replace("$rankingLabelBackgroundColor$", rankingLabelBackgroundColor)
+    css = css.replace("$rankingLabelForegroundColor$", rankingLabelForegroundColor)
+
+    css = css.replace("$selectBackgroundColor$", selectBackgroundColor)
+    css = css.replace("$selectForegroundColor$", selectForegroundColor)
+
+    css = css.replace("$timelineBoxBackgroundColor$", timelineBoxBackgroundColor)
+    css = css.replace("$timelineBoxBorderColor$", timelineBoxBorderColor)
+
+
     css = css.replace("$keywordColor$", keywordColor)
+    css = css.replace("$stripedTableBackgroundColor$", stripedTableBackgroundColor)
+    css = css.replace("$modalBorderColor$", modalBorderColor)
 
     css = css.replace("$imgMaxHeight$", imgMaxHeight)
 
@@ -326,14 +398,28 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     return all % (css, script)
 
 
-
+def showSearchResultArea(editor=None, initializationTime=0):
+    """
+    Toggle between the loader and search result area when the index has finished building.
+    """
+    js = """
+        if (document.getElementById('searchResults')) {
+            document.getElementById('searchResults').style.display = 'block'; 
+        } 
+        if (document.getElementById('loader')) { 
+            document.getElementById('loader').style.display = 'none'; 
+        }"""
+    if checkIndex():
+        get_index().output.editor.web.eval(js)
+    elif editor is not None and editor.web is not None:
+        editor.web.eval(js)
 
 def rightSideHtml(config, searchIndexIsLoaded = False):
     """
     Returns the javascript call that inserts the html that is essentially the right side of the add card dialog.
     The right side html is only inserted if not already present, so it is safe to call this function on every note load.
     """
-    
+    config = mw.addonManager.getConfig(__name__)
     addToResultAreaHeight = int(config["addToResultAreaHeight"])
     leftSideWidth = config["leftSideWidthInPercent"]
     if not isinstance(leftSideWidth, int) or leftSideWidth <= 0 or leftSideWidth > 100:
@@ -349,7 +435,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
     
         $(`#fields`).wrap(`<div class='coll' id='leftSide' style='min-width: 200px; flex-grow: 1; width: %s%%;'></div>`);
         document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
-        $(`<div class='coll secondCol' style='width: %s%%; flex-grow: 1;  height: 100%%; border-left: 2px solid #2496dc; margin-top: 20px; padding: 20px; padding-bottom: 4px; margin-left: 30px; position: relative;' id='infoBox'>
+        $(`<div class='coll secondCol' style='width: %s%%; flex-grow: 1;  height: 100%%;' id='infoBox'>
 
             <div id="greyout"></div>
             <div id="a-modal" class="modal">
@@ -358,15 +444,12 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                     <div id="modalText"></div>
                     <div id="modal-subpage">
                         <button class='modal-close' onclick='hideModalSubpage()'>&#8592; Back</button>
-                        <div id="modal-subpage-inner">
-
-                        </div>
+                        <div id="modal-subpage-inner"></div>
                     </div>
                         <div style='text-align: right; margin-top:25px;'>
                             <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
                         </div>
                     </div>
-                    <div id='modal-loader'> <div class='signal'></div><br/>Computing...</div>
                 </div>
             </div>
                 <div class="flexContainer" id="topContainer">
@@ -375,13 +458,12 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                             <table id='deckSel'></table>
                         </div>
                         <div style='margin-top: 0px; margin-bottom: 10px; white-space: nowrap;'><button class='deck-list-button' onclick='selectAllDecks();'>All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Current</button><button class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</button></div>
-
                     </div>
                     <div class='flexCol right' style="position: relative;">
                         <table class=''>
                             <tr><td style='text-align: left; padding-bottom: 10px; white-space: nowrap;'><div id='indexInfo' class='siac-btn-small' onclick='pycmd("indexInfo");'>Info</div>
                             <div id='synonymsIcon' class='siac-btn-small' onclick='pycmd("synonyms");'>SynSets</div>
-                            <div id='stylingIcon' class='siac-btn-small' onclick='pycmd("styling");'>Styling</div>
+                            <div id='stylingIcon' class='siac-btn-small' onclick='pycmd("styling");'>Settings</div>
                            
                             </td></tr>
                             <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
@@ -396,7 +478,6 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                         </div>
                     </div>
                 </div>
-               <!--height: calc(var(--vh, 1vh) * 100 - %spx) --> 
                 <div id="resultsArea" style="height: 100px;  width: 100%%; border-top: 1px solid grey;">
                     <div style='position: absolute; top: 15px; right: 16px; width: 30px; z-index: 999999;'>
                         <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
@@ -482,11 +563,36 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
 """ % (
     leftSideWidth,
     rightSideWidth,
-    300 - addToResultAreaHeight,
     "display: none;" if searchIndexIsLoaded else "",
     "hidden" if hideSidebar else "",
     getCalendarHtml() if config["showTimeline"] else ""
-       )
+    )
+
+def printStartingInfo(editor):
+    if editor is None or editor.web is None:
+        return
+    config = mw.addonManager.getConfig(__name__)
+    searchIndex = get_index()
+    html = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  searchIndex.type if searchIndex is not None else "?"
+    if searchIndex is not None:
+        html += "Initalized in <b>%s</b> s." % searchIndex.initializationTime
+        if not searchIndex.creation_info["index_was_rebuilt"]:
+            html += " (No changes detected, the index was not rebuilt)"
+        html += "<br/>Index contains <b>%s</b> notes." % searchIndex.get_number_of_notes()
+        html += "<br/>Index is always rebuilt if smaller than <b>%s</b> notes." % config["alwaysRebuildIndexIfSmallerThan"]
+        html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
+        html += "<br/>Logging is turned <b>%s</b>. %s" % ("on" if searchIndex.logging else "off", "You should probably disable it if you don't have any problems." if searchIndex.logging else "")
+        html += "<br/>Results are rendered <b>%s</b>." % ("immediately" if config["renderImmediately"] else "with fade-in")
+        html += "<br/>Tag Info on hover is <b>%s</b>.%s" % ("shown" if config["showTagInfoOnHover"] else "not shown", (" Delay: [<b>%s</b> ms]" % config["tagHoverDelayInMiliSec"]) if config["showTagInfoOnHover"] else "")
+        html += "<br/>Image max height is <b>%s</b> px." % config["imageMaxHeight"]
+        html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
+        html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
+        html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
+
+    if searchIndex is None or searchIndex.output is None:
+        html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
+    editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
+
 
 
 def getCalendarHtml():
@@ -498,7 +604,7 @@ def getCalendarHtml():
     nid_now = int(time.time()* 1000)
     nid_minus_day_of_year = int(date_year_begin.timestamp() * 1000)
 
-    res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now)).fetchall()
+    res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now)).fetchall()
 
     counts = []
     c = 1
@@ -539,7 +645,7 @@ def getCalendarHtml():
         
 
 def stylingModal(config):
-    return """
+    html = """
             <fieldset>
             <span><mark>Important:</mark> Modify this value if the bottom bar (containing the predefined searches and the browser search) sits too low or too high. (Can be negative)</span> 
                 <table style="width: 100%%">
@@ -589,6 +695,20 @@ def stylingModal(config):
                 </table>
             </fieldset>
             <br/>
+            <fieldset>
+                <span>If not enabled, note fields that are excluded from the search through the <i>fieldsToExclude</i> config property are not printed in the output.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Show Excluded Fields</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling showExcludedFields ' + this.checked)" %s/></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <fieldset>
+                <span>If the number of notes that would go into the index (only notes from the included decks are counted) is lower than this value the index should always be rebuilt.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Always Rebuild Index If Smaller Than</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="100000" style='width: 60px;' onchange="pycmd('styling alwaysRebuildIndexIfSmallerThan ' + this.value)" value="%s"/></tr>
+                </table>
+            </fieldset>
+            <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
                         """ % (config["addToResultAreaHeight"], 
                         "checked='true'" if config["renderImmediately"] else "", 
@@ -596,7 +716,118 @@ def stylingModal(config):
                         "checked='true'" if config["hideSidebar"] else "",
                         "checked='true'" if config["showTimeline"] else "",
                         "checked='true'" if config["showTagInfoOnHover"] else "",
-                        config["tagHoverDelayInMiliSec"]
-
-                        
+                        config["tagHoverDelayInMiliSec"],
+                       "checked='true'" if config["showExcludedFields"] else "",
+                       config["alwaysRebuildIndexIfSmallerThan"]
                         )
+    html += """
+    <br/> <br/>
+    <mark>&nbsp;Important:&nbsp;</mark> At the moment, if you reset your config.json to default, your custom stopwords and synsets will be deleted. If you want to do that, I recommend saving them somewhere first.
+    <br/> <br/>
+    If you want to use the add-on with the <b>night mode</b> add-on, you have to adapt the styling section.
+    <br/> <br/>
+    <b>Sample night mode configuration (copy and replace the <i>styling</i> section in your config with it):</b><br/><br/>
+
+    "styling": {
+        "bottomBar": {
+            "browserSearchInputBackgroundColor": "#272828",
+            "browserSearchInputBorderColor": "grey",
+            "browserSearchInputForegroundColor": "beige",
+            "selectBackgroundColor": "#272828",
+            "selectForegroundColor": "white",
+            "timelineBoxBackgroundColor": "#2b2b30",
+            "timelineBoxBorderColor": "DarkOrange"
+        },
+        "general": {
+            "buttonBackgroundColor": "#272828",
+            "buttonBorderColor": "grey",
+            "buttonForegroundColor": "beige",
+            "fieldSeparatorColor": "white",
+            "highlightBackgroundColor": "SpringGreen",
+            "highlightForegroundColor": "Black",
+            "keywordColor": "SpringGreen",
+            "noteBackgroundColor": "#272828",
+            "noteBorderColor": "lightseagreen",
+            "noteFontSize": 12,
+            "noteForegroundColor": "beige",
+            "noteHoverBorderColor": "#62C9C3",
+            "rankingLabelBackgroundColor": "DarkOrange",
+            "rankingLabelForegroundColor": "Black",
+            "tagBackgroundColor": "DarkOrange",
+            "tagFontSize": 12,
+            "tagForegroundColor": "Black",
+            "windowColumnSeparatorColor": "DarkOrange"
+        },
+        "modal": {
+            "modalBackgroundColor": "#272828",
+            "modalBorderColor": "DarkOrange",
+            "modalForegroundColor": "beige",
+            "stripedTableBackgroundColor": "#2b2b30"
+        },
+        "topBar": {
+            "deckSelectBackgroundColor": "#272828",
+            "deckSelectButtonBackgroundColor": "#272828",
+            "deckSelectButtonBorderColor": "grey",
+            "deckSelectButtonForegroundColor": "beige",
+            "deckSelectCheckmarkColor": "LawnGreen",
+            "deckSelectFontSize": 11,
+            "deckSelectForegroundColor": "beige",
+            "deckSelectHoverBackgroundColor": "DarkOrange",
+            "deckSelectHoverForegroundColor": "Black"
+        }
+    },
+
+    <br/> <br/>
+    <b>Default configuration, to reset styling without resetting the whole config file:</b><br/><br/>
+
+    "styling": {
+        "modal" : {
+            "stripedTableBackgroundColor": "#f2f2f2",
+            "modalForegroundColor": "black",
+            "modalBackgroundColor": "white",
+            "modalBorderColor": "#2496dc"
+        },
+        "general" : {
+            "tagForegroundColor": "white",
+            "tagBackgroundColor": "#f0506e",
+            "tagFontSize" : 12,
+            "buttonBackgroundColor": "white",
+            "buttonForegroundColor": "#404040",
+            "buttonBorderColor":"#404040",
+            "keywordColor": "#2496dc",
+            "highlightBackgroundColor": "yellow",
+            "highlightForegroundColor": "black",
+            "fieldSeparatorColor" : "#2496dc",
+            "windowColumnSeparatorColor" : "#2496dc",
+            "rankingLabelBackgroundColor": "#2496dc",
+            "rankingLabelForegroundColor": "white",
+            "noteFontSize": 12,
+            "noteForegroundColor": "black",
+            "noteBackgroundColor": "white",
+            "noteBorderColor": "grey",
+            "noteHoverBorderColor": "#2496dc"
+        },
+        "topBar": {
+            "deckSelectFontSize": 11,
+            "deckSelectForegroundColor": "black",
+            "deckSelectBackgroundColor": "white",
+            "deckSelectHoverForegroundColor": "white",
+            "deckSelectHoverBackgroundColor": "#5f6468",
+            "deckSelectButtonForegroundColor": "grey",
+            "deckSelectButtonBorderColor": "grey",
+            "deckSelectButtonBackgroundColor": "white",
+            "deckSelectCheckmarkColor" : "green"
+        },
+        "bottomBar" : {
+            "browserSearchInputForegroundColor": "black",
+            "browserSearchInputBackgroundColor": "white",
+            "browserSearchInputBorderColor": "grey",
+            "selectForegroundColor" : "black",
+            "selectBackgroundColor": "white",
+            "timelineBoxBackgroundColor": "#595959",
+            "timelineBoxBorderColor": "#595959"
+        }
+    },
+    """
+
+    return html

@@ -36,15 +36,6 @@ body {
     font-size: 20px;
     color: #2496dc;
  }
- #modal-loader {
-    display: none;
-    position: absolute;
-    top: calc(50% - 45px);
-    left: calc(50% - 27px);
-    width: 80px;
-    font-size: 20px;
-    color: #2496dc;
- }
 
 #searchResults {
     display: none; 
@@ -80,39 +71,14 @@ body {
 }
 
 .cardR:hover {
-     border: 1px solid  #2496dc; 
-   
+     border: 1px solid $noteHoverBorderColor$; 
 }
 
-.score {
-     background:  #2496dc;
-     color: white;
-     border-radius: 2px;
-     padding: 0 3px 0 3px;
-     margin-bottom: 5px;
-      margin-right: 4px;
-}
 .smallMarginTop {
     margin-top: 5px;
 }
 .smallMarginBottom {
     margin-bottom: 4px;
-}
-.minorScore {
-     border: 1px solid  #2496dc;
-     color:  #2496dc;
-     border-radius: 2px;
-     padding: 0 3px 0 3px;
-     margin-right: 4px;
-}
-.statusBar {
-    float: right;
-    background: #2496dc;
-    color: white;
-    font-size: 14px;
-    padding: 0 5px 0 5px;
-    margin-right: 5px;
-    width: 200px;
 }
 
 .btnBar {
@@ -159,8 +125,15 @@ body {
     flex-wrap: nowrap;
 }
 
+mark {
+    background-color: $highlightBackgroundColor$;
+    color: $highlightForegroundColor$;
+}
 
-
+select {
+    background-color: $selectBackgroundColor$;
+    color: $selectForegroundColor$;
+}
 
 .tagLbl {
     position: relative;
@@ -201,8 +174,8 @@ body {
 }
 
 .rankingLbl {
-    background: #2496dc; 
-    color: white; 
+    background: $rankingLabelBackgroundColor$; 
+    color: $rankingLabelForegroundColor$; 
     padding: 2px 6px 2px 6px; 
     font-size: 11px;
     user-select: none;
@@ -340,30 +313,10 @@ body {
     width: 100%;
     min-width: 50px;
 }
-#searchBtn {
-    flex:  0 0 40px;
-    margin-left: 10px;
-    background: $browserSearchButtonBackgroundColor$;
-    color: $browserSearchButtonForegroundColor$;
-    border: 1px solid $browserSearchButtonBorderColor$;
-}
-
-#hvrBox {
-   position: absolute;
-   background: white;
-   border: 2px solid #2496dc;
-   padding: 3px;
-   font-size: 12px;
-   width: 220px;
-   z-index: 10000;
-   display: none;
-
-}
-
 
 
 .fldSep {
-  color: #2496dc;
+  color: $fieldSeparatorColor$;
   margin: 0 5px 0 5px;
 }
 
@@ -397,15 +350,6 @@ body {
    width: 90%;
 }
 
-.hvrLeftItem {
-    width: calc(100% - 10px);
-    padding: 3px 4px 3px 4px;
-}
-
-.hvrSelected {
-    background: #2496dc;
-    color: white;
-}
 
 #tagContainer {
     overflow-x: hidden;
@@ -567,12 +511,6 @@ body {
     white-space: nowrap;
     overflow: hidden;
 }
-
-.matched b {
-      font-weight: normal;
-      background: yellow;
-}
-
 #icns-small {
     display: none;
 }
@@ -746,7 +684,7 @@ body {
 }
 .check {
     float: right;
-    color: green;
+    color: $deckSelectCheckmarkColor$;
     display: none;
 }
 .deck-list-item.selected > .list-item-inner > .check {
@@ -807,7 +745,7 @@ table.striped {
 }
 
 table.striped tr:nth-child(even) {
-    background-color: #f2f2f2 !important;
+    background-color: $stripedTableBackgroundColor$ !important;
   }
 
 .exp:empty {
@@ -817,9 +755,9 @@ table.striped tr:nth-child(even) {
 .siac-btn-small {
     display: inline;
     padding: 1px 4px 1px 4px;
-    color: $infoButtonForegroundColor$;
-    background: $infoButtonBackgroundColor$;
-    border: 1px solid  $infoButtonBorderColor$;
+    color: $buttonForegroundColor$;
+    background: $buttonBackgroundColor$;
+    border: 1px solid  $buttonBorderColor$;
     cursor: pointer;
     user-select: none;
     font-size: 11px !important;
@@ -828,9 +766,9 @@ table.striped tr:nth-child(even) {
 .siac-btn-smaller {
     display: inline;
     padding: 1px 4px 1px 4px;
-    color: $infoButtonForegroundColor$;
-    background: $infoButtonBackgroundColor$;
-    border: 1px solid  $infoButtonBorderColor$;
+    color: $buttonForegroundColor$;
+    background: $buttonBackgroundColor$;
+    border: 1px solid  $buttonBorderColor$;
     cursor: pointer;
     user-select: none;
     font-size: 10px !important;
@@ -846,9 +784,9 @@ table.striped tr:nth-child(even) {
 }
 
 #lastAdded, #sortBtn {
-    color: $infoButtonForegroundColor$;
-    background: $infoButtonBackgroundColor$;
-    border: 1px solid $infoButtonBorderColor$;
+    color: $buttonForegroundColor$;
+    background: $buttonBackgroundColor$;
+    border: 1px solid $buttonBorderColor$;
     cursor: pointer;
     user-select: none;
     outline: none;
@@ -863,6 +801,14 @@ table.striped tr:nth-child(even) {
     max-width: 30px !important;
 }
 
+#infoBox {
+    border-left: 2px solid $windowColumnSeparatorColor$; 
+    margin-top: 20px; 
+    padding: 20px; 
+    padding-bottom: 4px; 
+    margin-left: 30px; 
+    position: relative;
+}
 
 fieldset {
   
@@ -904,9 +850,9 @@ select {
 #specialSearches {
     flex:  0 0 20px;
     margin-left: 10px; 
-    background: $browserSearchButtonBackgroundColor$;
-    color: $browserSearchButtonForegroundColor$;
-    border: 1px solid $browserSearchButtonBorderColor$;
+    background: $buttonBackgroundColor$;
+    color: $buttonForegroundColor$;
+    border: 1px solid $buttonBorderColor$;
 }
 
 /* Modal */
@@ -947,7 +893,7 @@ select {
     transform: translate(-50%, -50%);
     padding: 15px;
     width: 70%;
-    border: 2px solid #2496dc;
+    border: 2px solid $modalBorderColor$;
   }
 
 #modalText {
@@ -975,9 +921,9 @@ select {
 }
 .modal-close {
 
-    border: 1px solid #2496dc;
-    background: $modalBackgroundColor$;
-    color: #2496dc;
+    border: 1px solid $buttonBorderColor$;
+    background: $buttonBackgroundColor$;
+    color: $buttonForegroundColor$;
     cursor: pointer;
     user-select: none;
 }
@@ -1138,9 +1084,10 @@ span.tag-symbol {
     width: 300px;
     height: 250px;
     padding: 5px;
-    background:#595959;
+    background: $timelineBoxBackgroundColor$;
     color: white;
     border-radius: 3px;
+    border: 1px solid $timelineBoxBorderColor$;
 }
 
 
@@ -1152,7 +1099,7 @@ span.tag-symbol {
     margin-left: -8px;
     border-width: 8px;
     border-style: solid;
-    border-color: #595959 transparent transparent transparent;
+    border-color: $timelineBoxBorderColor$ transparent transparent transparent;
 }
 
   /*MAC*/
@@ -1238,6 +1185,9 @@ span.tag-symbol {
     user-select: text;
 }
 .siac-tag-info-box-left .editLbl {
+    border-right: 1px solid $noteBorderColor$;
+}
+#cal-info .editLbl {
     border-right: 1px solid $noteBorderColor$;
 }
 .siac-tag-info-box .flot-y-axis {

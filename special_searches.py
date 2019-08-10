@@ -12,7 +12,7 @@ def get_notes_added_on_day_of_year(day_of_year : int, limit: int):
     date_then = date_year_begin + datetime.timedelta(day_of_year)
     nid_midnight = int(date_then.timestamp() * 1000)
     nid_next_midnight = nid_midnight + 24 * 60 * 60 * 1000
-    res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" % (nid_midnight, nid_next_midnight)).fetchall()
+    res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" % (nid_midnight, nid_next_midnight)).fetchall()
     return to_print_list(res)
 
 
@@ -59,7 +59,7 @@ def getCreatedSameDay(searchIndex, editor, nid):
         nidMinusOneDay = nid - (24 * 60 * 60 * 1000)
         nidPlusOneDay = nid + (24 * 60 * 60 * 1000)
 
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid desc" %(nidMinusOneDay, nidPlusOneDay)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid desc" %(nidMinusOneDay, nidPlusOneDay)).fetchall()
 
         dayOfNote = int(time.strftime("%d", time.localtime(nid/1000)))
         rList = []
@@ -69,7 +69,7 @@ def getCreatedSameDay(searchIndex, editor, nid):
             if dayCreated != dayOfNote:
                 continue
             if not str(r[0]) in searchIndex.pinned:
-                rList.append((r[1], r[2], r[3], r[0]))
+                rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
                 c += 1
                 if c >= searchIndex.limit:
                     break
@@ -96,12 +96,12 @@ def getRandomNotes(searchIndex, decks):
 
     limit = searchIndex.limit
     if deckQ:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by random() limit %s" % (deckQ, limit)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s order by random() limit %s" % (deckQ, limit)).fetchall()
     else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by random() limit %s" % limit).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid order by random() limit %s" % limit).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0]))
+        rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
     return { "result" : rList, "stamp" : stamp }
 
 
@@ -118,14 +118,14 @@ def getCreatedNotesOrderedByDate(searchIndex, editor, decks, limit, sortOrder):
     else:
         deckQ = ""
     if len(deckQ) > 0:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by nid %s limit %s" %(deckQ, sortOrder, limit)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s order by nid %s limit %s" %(deckQ, sortOrder, limit)).fetchall()
     else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by nid %s limit %s" % (sortOrder, limit)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid order by nid %s limit %s" % (sortOrder, limit)).fetchall()
     rList = []
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in searchIndex.pinned:
-            rList.append((r[1], r[2], r[3], r[0]))
+            rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
 
     if editor.web is not None:
         if len(rList) > 0:
@@ -141,13 +141,13 @@ def getLastReviewed(decks, limit):
         deckQ = ""
 
     if deckQ:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid from notes join cr on notes.id = cr.nid where cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
     else:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid order by cr.rid desc limit %s" % limit
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid from notes join cr on notes.id = cr.nid order by cr.rid desc limit %s" % limit
     res = mw.col.db.execute(cmd).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0]))
+        rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
     return rList
 
 def getLastLapses(decks, limit):
@@ -157,13 +157,13 @@ def getLastLapses(decks, limit):
         deckQ = ""
 
     if deckQ:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
     else:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did from notes join cr on notes.id = cr.nid where cr.ease = 1 order by cr.rid desc limit %s" % limit
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid from notes join cr on notes.id = cr.nid where cr.ease = 1 order by cr.rid desc limit %s" % limit
     res = mw.col.db.execute(cmd).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0]))
+        rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
     return rList
 
 def getRandomUntagged(decks, limit):
@@ -172,12 +172,12 @@ def getRandomUntagged(decks, limit):
     else:
         deckQ = ""
     if deckQ:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s and (tags is null or tags = '') order by random() limit %s" % (deckQ, limit)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s and (tags is null or tags = '') order by random() limit %s" % (deckQ, limit)).fetchall()
     else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by random() limit %s" % limit).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by random() limit %s" % limit).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0]))
+        rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
     return rList
     
 
@@ -189,14 +189,14 @@ def findNotesWithLongestText(decks, limit, pinned):
     if pinned is None:
         pinned = []
     if len(deckQ) > 0:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where did in %s order by length(replace(trim(flds), '\u001f', '')) desc limit %s" %(deckQ, limit)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s order by length(replace(trim(flds), '\u001f', '')) desc limit %s" %(deckQ, limit)).fetchall()
     else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid order by length(replace(trim(flds), '\u001f', '')) desc limit %s" % (limit )).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid order by length(replace(trim(flds), '\u001f', '')) desc limit %s" % (limit )).fetchall()
     rList = []
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in pinned:
-            rList.append((r[1], r[2], r[3], r[0]))
+            rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
     return rList
 
 def getByTimeTaken(decks, limit, mode):
@@ -212,7 +212,7 @@ def getByTimeTaken(decks, limit, mode):
     res = mw.col.db.execute(cmd).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0]))
+        rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
     return rList
 
 def getLastModifiedNotes(searchIndex, editor, decks, limit):
@@ -225,13 +225,13 @@ def getLastModifiedNotes(searchIndex, editor, decks, limit):
     else:
         deckQ = ""
     if len(deckQ) > 0:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mod from notes left join cards on notes.id = cards.nid where did in %s order by notes.mod desc limit %s" %(deckQ, limit)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid, notes.mod from notes left join cards on notes.id = cards.nid where did in %s order by notes.mod desc limit %s" %(deckQ, limit)).fetchall()
     else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mod from notes left join cards on notes.id = cards.nid order by notes.mod desc limit %s" % (limit)).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid, notes.mod from notes left join cards on notes.id = cards.nid order by notes.mod desc limit %s" % (limit)).fetchall()
     rList = []
     for r in res:
         if not str(r[0]) in searchIndex.pinned:
-            rList.append((r[1], r[2], r[3], r[0]))
+            rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
 
     if editor.web is not None:
         if len(rList) > 0:

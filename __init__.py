@@ -7,7 +7,6 @@ from anki.hooks import runHook, addHook, wrap
 import aqt
 import aqt.webview
 from aqt.addcards import AddCards
-from anki.find import Finder
 import aqt.editor
 from aqt.editor import Editor, EditorWebView
 from aqt.browser import Browser
@@ -30,50 +29,32 @@ import sys
 import html
 sys.path.insert(0, os.path.dirname(__file__))
 
-config = mw.addonManager.getConfig(__name__)
-
-try:
-    loadWhoosh = not config['useFTS']  or config['disableNonNativeSearching'] 
-except KeyError:
-    loadWhoosh = True
-if loadWhoosh:
-    from .whoosh.index import create_in
-    from .whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD, ID
-    from .whoosh.support.charset import accent_map
-    from .whoosh.qparser import QueryParser
-    from .whoosh.analysis import StandardAnalyzer, CharsetFilter, StemmingAnalyzer
-    from .whoosh import classify, highlight, query, scoring, qparser, reading
-
+from .state import checkIndex, get_index, set_index, corpus_is_loaded, set_corpus, set_edit, get_edit, set_deck_map
+from .indexing import build_index, get_notes_in_collection
 from .logging import log
 from .web import *
 from .special_searches import *
-from .fts_index import FTSIndex
-from .whoosh_index import SearchIndex
+
 from .output import Output
 from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms, remove_fields
 from .editor import openEditor, EditDialog
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval, getTrueRetentionOverTime
 
-searchingDisabled = config['disableNonNativeSearching'] 
-delayWhileTyping = max(500, config['delayWhileTyping'])
+config = mw.addonManager.getConfig(__name__)
 
-contextEvt = None
-searchIndex = None
-corpus = None
-deckMap = None
-output = None
-edit = None
+
+delayWhileTyping = max(500, config['delayWhileTyping'])
+searchingDisabled = config["disableNonNativeSearching"]
 
 
 def initAddon():
-    global corpus, output
     global oldOnBridge, origAddNote, origTagKeypress, origSaveAndClose, origEditorContextMenuEvt
     
     oldOnBridge = Editor.onBridgeCmd
     Editor.onBridgeCmd = myOnBridgeCmd
     #todo: Find out if there is a better moment to start index creation
-    addHook("profileLoaded", buildIndex)
+    addHook("profileLoaded", build_index)
     origAddNote = AddCards.addNote
     origEditorContextMenuEvt = EditorWebView.contextMenuEvent
 
@@ -92,7 +73,7 @@ def initAddon():
 
 
     #main functions to search
-    if not searchingDisabled:
+    if not config["disableNonNativeSearching"]:
         aqt.editor._html += """
             <script>
             function sendContent(event) {
@@ -144,6 +125,7 @@ def initAddon():
 def editorSaveWithIndexUpdate(dialog):
     origSaveAndClose(dialog)
     # update index
+    searchIndex = get_index()
     if searchIndex is not None and dialog.editor is not None and dialog.editor.note is not None:
         searchIndex.updateNote(dialog.editor.note)
         # note should be rerendered
@@ -151,14 +133,14 @@ def editorSaveWithIndexUpdate(dialog):
          # keep track of edited notes (to display a little remark in the results)
         searchIndex.output.edited[str(dialog.editor.note.id)] = time.time()
  
-def checkIndex():
-    return searchIndex is not None and searchIndex.output is not None and searchIndex.output.editor is not None and searchIndex.output.editor.web is not None
+
    
 def myOnBridgeCmd(self, cmd):
     """
     Process the various commands coming from the ui - 
     this includes users clicks on option checkboxes, on rendered results, on special searches, etc.
     """
+    searchIndex = get_index()
     if searchIndex is not None and searchIndex.output.editor is None:
         searchIndex.output.editor = self
 
@@ -223,6 +205,19 @@ def myOnBridgeCmd(self, cmd):
             context_html = get_cal_info_context(int(cmd[8:]))
             res = get_notes_added_on_day_of_year(int(cmd[8:]), searchIndex.limit)
             searchIndex.output.print_timeline_info(context_html, res)
+
+    elif cmd == "siac_rebuild_index":
+        # we have to reset the ui because if the index is recreated, its values won't be in sync with the ui anymore
+        self.web.eval("""
+        $('#searchResults').html('').hide(); 
+        $('#searchInfo').html(''); 
+        $('#toggleTop').removeAttr('onclick').unbind("click");
+        $('#loader').show();""")
+        set_index(None)
+        set_corpus(None)
+        build_index(force_rebuild=True, execute_after_end=after_index_rebuilt)
+
+
 
     #
     #   Synonyms
@@ -350,6 +345,7 @@ def parseSortCommand(cmd):
     """
     Helper function to parse the various sort commands (newest/remove tagged/...)
     """
+    searchIndex = get_index()
     if cmd == "newest":
         searchIndex.output.sortByDate("desc")
     elif cmd == "oldest":
@@ -369,6 +365,7 @@ def parsePredefSearchCmd(cmd, editor):
     """
     if not checkIndex():
         return 
+    searchIndex = get_index()
     cmd = cmd[13:]
     searchtype = cmd.split(" ")[0]
     limit = int(cmd.split(" ")[1])
@@ -450,11 +447,9 @@ def onLoadNote(editor):
     Executed everytime a note is created/loaded in the add cards dialog.
     Wraps the normal editor html in a flex layout to render a second column for the searching ui.
     """
-    global corpus, output, edit
-
     #only display in add cards dialog or in the review edit dialog (if enabled)
     if editor.addMode or (config["useInEdit"] and isinstance(editor.parentWindow, EditCurrent)):
-        
+        searchIndex = get_index()
         if searchIndex is not None and searchIndex.logging:
             log("Trying to insert html in editor")
             log("Editor.addMode: %s" % editor.addMode)
@@ -494,20 +489,21 @@ def onLoadNote(editor):
 
         if searchIndex is None or not searchIndex.tagSelect:
             fillDeckSelect(editor)
-            if searchIndex is None or searchIndex.lastSearch is None:
+            if get_index() is None or searchIndex.lastSearch is None:
                 printStartingInfo(editor)
-        if corpus is None:
+        if not corpus_is_loaded():
             if searchIndex is not None and searchIndex.logging:
                 log("loading notes from anki db...")
             corpus = get_notes_in_collection()
+            set_corpus(corpus)
             if searchIndex is not None and searchIndex.logging:
                 log("loaded notes: len(corpus): " + str(len(corpus)))
 
         if searchIndex is not None and searchIndex.output is not None:
             searchIndex.output.editor = editor
             searchIndex.output._loadPlotJsIfNotLoaded()
-    if edit is None and editor is not None:
-        edit = editor
+    if get_edit() is None and editor is not None:
+        set_edit(editor)
 
 def setPinned(cmd):
     """
@@ -515,6 +511,7 @@ def setPinned(cmd):
     This is important because they should not be contained in the search results.
     """
     pinned = []
+    searchIndex = get_index()
     for id in cmd.split(" "):
         if len(id) > 0:
             pinned.append(id)
@@ -523,6 +520,23 @@ def setPinned(cmd):
         if searchIndex.logging:
             log("Updated pinned: " + str(searchIndex.pinned))
 
+
+def after_index_rebuilt():
+    search_index = get_index()
+    if search_index is not None and search_index.output is not None and search_index.output.editor is not None:
+        editor = search_index.output.editor
+        editor.web.eval("""
+        disableGridView();
+        $('.freeze-icon').removeClass('frozen');
+        isFrozen = false;
+        $('#selectionCb,#typingCb,#tagCb,#highlightCb').prop("checked", true);
+        searchOnSelection = true; 
+        searchOnTyping = true;
+        $('#toggleTop').click(function() { toggleTop(this); });
+        """)
+        fillDeckSelect(editor)
+   
+    
 
 def editorContextMenuEventWrapper(view, evt):
     global contextEvt
@@ -534,9 +548,11 @@ def editorContextMenuEventWrapper(view, evt):
 def determineClickTarget(pos):
     if not checkIndex():
         return
-    searchIndex.output.editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
+    get_index().output.editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
 
 def addOptionsToContextMenu(clickInfo):
+    searchIndex = get_index()
+    
     if clickInfo is not None and clickInfo.startswith("img "):
         try:
             src = clickInfo[4:]
@@ -573,6 +589,7 @@ def setStamp():
     The result of a search is not printed if it has a non-matching stamp.
     """
     if checkIndex():
+        searchIndex = get_index()
         stamp = searchIndex.output.getMiliSecStamp()
         searchIndex.output.latest = stamp
         return stamp
@@ -586,6 +603,7 @@ def openImgInBrowser(url):
 def appendNoteToField(content, key):
     if not checkIndex():
         return
+    searchIndex = get_index()
     note = searchIndex.output.editor.note
     note.fields[note._fieldOrd(key)] += content
     note.flush()
@@ -594,6 +612,7 @@ def appendNoteToField(content, key):
 def appendImgToField(src, key):
     if not checkIndex():
         return
+    searchIndex = get_index()
     note = searchIndex.output.editor.note
     note.fields[note._fieldOrd(key)] += "<img src='%s'/>" % src
     note.flush()
@@ -604,6 +623,8 @@ def tryRepeatLastSearch(editor = None):
     Sometimes it is useful if we can simply repeat the last search,
     e.g. the user has clicked another deck in the deck select.
     """
+    searchIndex = get_index()
+
     if searchIndex is not None and searchIndex.lastSearch is not None:
         if editor is None and searchIndex.output.editor is not None:
             editor = searchIndex.output.editor
@@ -624,34 +645,52 @@ def getIndexInfo():
     """
     Returns the html that is rendered in the popup that appears on clicking the "info" button
     """
+    searchIndex = get_index()
+
     if searchIndex is None:
         return ""
-    html = """<table class="striped" style='width: 100%%'>
+    excluded_fields = config["fieldsToExclude"]
+    field_c = 0
+    for k,v in excluded_fields.items():
+        field_c += len(v)
+
+    html = """
+            <table class="striped" style='width: 100%%; margin-bottom: 18px;'>
                <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
                <tr><td>Initialization:</td><td>  <b>%s s</b></td></tr>
-               <tr><td>Notes in Index:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Index Size:</td><td>  <b>%s</b> notes</td></tr>
+               <tr><td>Index is always rebuilt if smaller than:</td><td>  <b>%s</b> notes</td></tr>
                <tr><td>Stopwords:</td><td>  <b>%s</b></td></tr>
                <tr><td>Logging:</td><td>  <b>%s</b></td></tr>
                <tr><td>Render Immediately:</td><td>  <b>%s</b></td></tr>
                <tr><td>Tag Click:</td><td>  <b>%s</b></td></tr>
                <tr><td>Timeline:</td><td>  <b>%s</b></td></tr>
                <tr><td>Tag Info on Hover:</td><td>  <b>%s</b></td></tr>
-               <tr><td>Tag Hover Delay [ms]:</td><td>  <b>%s</b></td></tr>
+               <tr><td>Tag Hover Delay:</td><td>  <b>%s</b> ms</td></tr>
+               <tr><td>Image Max Height:</td><td>  <b>%s px</b></td></tr>
                <tr><td>Show Pass Rate in Results:</td><td>  <b>%s</b></td></tr>
                <tr><td>Window split:</td><td>  <b>%s</b></td></tr>
                <tr><td>Toggle Shortcut:</td><td>  <b>%s</b></td></tr>
+               <tr><td>&nbsp;</td><td>  <b></b></td></tr>
+               <tr><td>Fields Excluded:</td><td>  %s</td></tr>
+               <tr><td>Show Excluded Fields:</td><td>  <b>%s</b></td></tr>
              </table>
-            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.getNumberOfNotes(), len(searchIndex.stopWords), 
-            "On" if searchIndex.logging else "Off", 
-            "On" if config["renderImmediately"] else "Off", 
+            <div class='siac-btn-small' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>Rebuild Index</div>
+            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(searchIndex.stopWords), 
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if searchIndex.logging else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["renderImmediately"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
             "Search" if config["tagClickShouldSearch"] else "Add",
-            "On" if config["showTimeline"] else "Off", 
-            "On" if config["showTagInfoOnHover"] else "Off", 
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showTimeline"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showTagInfoOnHover"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
             config["tagHoverDelayInMiliSec"],
-            "On" if config["showRetentionScores"] else "Off", 
+            config["imageMaxHeight"],
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showRetentionScores"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
-            config["toggleShortcut"]
+            config["toggleShortcut"],
+            "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showExcludedFields"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>"
             )
+
     
     return html
 
@@ -659,6 +698,8 @@ def showTimingModal():
     """
     Builds the html and shows the modal which gives some info about the last executed search (timing, query after stopwords etc.)
     """
+    searchIndex = get_index()
+
     html = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % searchIndex.lastResDict["query"]
     html += "<h4>Execution time:</h4><table style='width: 100%'>"
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", searchIndex.lastResDict["time-stopwords"] if searchIndex.lastResDict["time-stopwords"] > 0 else "< 1") 
@@ -667,7 +708,6 @@ def showTimingModal():
     if searchIndex.type == "Whoosh":
         if searchIndex.lastResDict["highlighting"]:
             html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
-            
     
     elif searchIndex.type == "SQLite FTS5":
         if searchIndex.lastResDict["highlighting"]:
@@ -682,6 +722,8 @@ def showTimingModal():
 
 
 def updateStyling(cmd):
+    searchIndex = get_index()
+
     name = cmd.split()[0]
     if len(cmd.split()) < 2:
         return
@@ -735,6 +777,14 @@ def updateStyling(cmd):
         config[name] = int(value)
         if checkIndex():
             searchIndex.output.editor.web.eval("tagHoverTimeout = %s;" % value) 
+    
+    elif name == "alwaysRebuildIndexIfSmallerThan":
+        config[name] = int(value)
+    
+    elif name == "showExcludedFields":
+        config[name] = value == "true" or value == "on"
+        if checkIndex():
+            searchIndex.output.showExcludedFields = config[name]
 
 def _addToTagList(tmap, name):
     """
@@ -750,6 +800,8 @@ def _addToTagList(tmap, name):
     return tmap
 
 def writeConfig():
+    searchIndex = get_index()
+
     mw.addonManager.writeConfig(__name__, config)
     searchIndex.output.editor.web.eval("$('.modal-close').unbind('click')")
 
@@ -757,6 +809,8 @@ def writeConfig():
 def showStylingModal(editor):
     html = stylingModal(config)
     if checkIndex():
+        searchIndex = get_index()
+
         searchIndex.output.showInModal(html)
         searchIndex.output.editor.web.eval("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")
 
@@ -807,23 +861,30 @@ def fillTagSelect(editor = None) :
     if editor is not None:
         editor.web.eval(cmd)
     else:
-        searchIndex.output.editor.web.eval(cmd)
+        get_index().output.editor.web.eval(cmd)
 
-def fillDeckSelect(editor):
+def fillDeckSelect(editor = None):
     """
     Fill the selection with user's decks
     """
-    global deckMap
+    
     deckMap = dict()
     config = mw.addonManager.getConfig(__name__)
     deckList = config['decks']
+    searchIndex = get_index()
+    if editor is None:
+        if searchIndex is not None and searchIndex.output is not None and searchIndex.output.editor is not None:
+            editor = searchIndex.output.editor
+        else:
+            return
+
     for d in list(mw.col.decks.decks.values()):
        if d['name'] == 'Standard':
           continue
        if deckList is not None and len(deckList) > 0 and d['name'] not in deckList:
            continue
        deckMap[d['name']] = d['id'] 
-    
+    set_deck_map(deckMap)
     dmap = {}
     for name, id in deckMap.items():
         dmap = addToDecklist(dmap, id, name)
@@ -891,6 +952,8 @@ def tagEditKeypress(self, evt):
     # dont trigger keypress in edit dialogs opened within the add dialog
     if isinstance(win, EditDialog) or isinstance(win, Browser):
         return
+    searchIndex = get_index()
+
     if searchIndex is not None and searchIndex.tagSearch and len(self.text()) > 0:
         text = self.text()
         try: 
@@ -906,7 +969,7 @@ def setStats(nid, stats):
     Insert the statistics into the given card.
     """
     if checkIndex():
-        searchIndex.output.showStats(stats[0], stats[1], stats[2], stats[3])
+        get_index().output.showStats(stats[0], stats[1], stats[2], stats[3])
 
 
 
@@ -923,8 +986,8 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
     if "~" in content:
         for s in content[:content.index('~')].split(','):
             decks.append(s.strip())
+    searchIndex = get_index()
     if searchIndex is not None:
-    
         
         if searchDB:
             content = content[content.index('~ ') + 2:].strip()
@@ -956,8 +1019,9 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
        
 
 def rerenderNote(nid):
-    res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid).fetchone()
+    res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid).fetchone()
     if res is not None and len(res) > 0:
+        searchIndex = get_index()
         if searchIndex is not None and searchIndex.output is not None:
             searchIndex.output.updateSingle(res)
 
@@ -973,6 +1037,7 @@ def defaultSearchWithDecks(editor, textRaw, decks):
         if editor is not None and editor.web is not None:
             editor.web.eval("setSearchResults(``, 'Query was <b>too long</b>')")
         return
+    searchIndex = get_index()
     cleaned = searchIndex.clean(textRaw)
     if len(cleaned) == 0:
         if editor is not None and editor.web is not None:
@@ -990,24 +1055,10 @@ def addHideShowShortcut(shortcuts, editor):
 
 def toggleAddon():
     if checkIndex():
-        searchIndex.output.editor.web.eval("toggleAddon();")
+        get_index().output.editor.web.eval("toggleAddon();")
 
 
-def showSearchResultArea(editor=None, initializationTime=0):
-    """
-    Toggle between the loader and search result area when the index has finsihed building.
-    """
-    js = """
-        if (document.getElementById('searchResults')) {
-            document.getElementById('searchResults').style.display = 'block'; 
-        } 
-        if (document.getElementById('loader')) { 
-            document.getElementById('loader').style.display = 'none'; 
-        }"""
-    if checkIndex():
-        searchIndex.output.editor.web.eval(js)
-    elif editor is not None and editor.web is not None:
-        editor.web.eval(js)
+
         
 
 def setInfoboxHtml(html, editor):
@@ -1030,149 +1081,18 @@ def addNoteAndUpdateIndex(dialog, note):
     return res
 
 def addNoteToIndex(note):
+    searchIndex = get_index()
     if searchIndex is not None:
         searchIndex.addNote(note)
 
-def buildIndex():
-    global corpus
-
-    if searchIndex is None:
-        if corpus is None:
-            corpus = get_notes_in_collection()
-        #build index in background to prevent ui from freezing
-        p = ProcessRunnable(target=_buildIndex)
-        p.start()
 
 
-def _buildIndex():
-    
-    """
-    Builds the index. Result is stored in global var searchIndex.
-    The index.type is either "Whoosh"/"SQLite FTS3"/"SQLite FTS4"/"SQLite FTS5"
-    """
-    global searchIndex
-    start = time.time()
-
-    config = mw.addonManager.getConfig(__name__)
-
-    try:
-        useFTS = config['useFTS']    
-    except KeyError:
-        useFTS = False
-   
-
-    #fts4 based sqlite reversed index
-    if searchingDisabled or useFTS:
-        searchIndex = FTSIndex(corpus, searchingDisabled)
-        end = time.time()
-        initializationTime = round(end - start)
-    #whoosh index
-    else:
-        
-        try:
-            usersStopwords = config['stopwords']    
-        except KeyError:
-            usersStopwords = []
-
-        try:
-            fld_dict = config['fieldsToExclude']
-            fields_to_exclude = {}
-            for note_templ_name, fld_names in fld_dict.items():
-                model = mw.col.models.byName(note_templ_name)
-                if model is None:
-                    continue
-                fields_to_exclude[model['id']] = []
-                for fld in model['flds']:
-                    if fld['name'] in fld_names:
-                        fields_to_exclude[model['id']].append(fld['ord'])
-        except KeyError:
-            fields_to_exclude = {} 
-
-
-        myAnalyzer = StandardAnalyzer(stoplist= None, minsize=1) | CharsetFilter(accent_map)
-        #StandardAnalyzer(stoplist=usersStopwords)
-        schema = whoosh.fields.Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True), source=TEXT(stored=True))
-        
-        #index needs a folder to operate in
-        indexDir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/__init__.py", "") + "/index"
-        if not os.path.exists(indexDir):
-            os.makedirs(indexDir)
-        index = create_in(indexDir, schema)
-        #limitmb can be set down
-        writer = index.writer(limitmb=256)
-        #todo: check if there is some kind of batch insert
-        text = ""
-        for note in corpus:
-            #if the notes model id is in our filter dict, that means we want to exclude some field(s)
-            text = note[1]
-            if note[4] in fields_to_exclude:
-                text = remove_fields(text, fields_to_exclude[note[4]])
-            text = clean(text, usersStopwords)
-            writer.add_document(content=text, tags=note[2], did=str(note[3]), nid=str(note[0]), source=note[1])
-        writer.commit()
-        #todo: allow user to toggle between and / or queries
-        og = qparser.OrGroup.factory(0.9)
-        #used to parse the main query
-        queryparser = QueryParser("content", index.schema, group=og)
-        #used to construct a filter query, to limit the results to a set of decks
-        deckQueryparser = QueryParser("did", index.schema, group=qparser.OrGroup)
-        searchIndex = SearchIndex(index, queryparser, deckQueryparser)
-        searchIndex.stopWords = usersStopwords
-        searchIndex.fieldsToExclude = fields_to_exclude
-        searchIndex.type = "Whoosh"
-        end = time.time()
-        initializationTime = round(end - start)
-        
-
-    searchIndex.finder = Finder(mw.col)
-    searchIndex.output = Output()
-    searchIndex.output.stopwords = searchIndex.stopWords
-    searchIndex.selectedDecks = []
-    searchIndex.lastSearch = None
-    searchIndex.lastResDict = None
-    searchIndex.tagSearch = True
-    searchIndex.tagSelect = False
-    searchIndex.topToggled = True
-    searchIndex.output.edited = {}
-    searchIndex.initializationTime = initializationTime
-    searchIndex.synonyms = loadSynonyms()
-    searchIndex.logging = config["logging"]
-    try:
-        limit = config['numberOfResults']
-        if limit <= 0:
-            limit = 1
-        elif limit > 500:
-            limit = 500
-    except KeyError:
-        limit = 20
-    searchIndex.limit = limit
-
-    try:
-        showRetentionScores = config["showRetentionScores"]
-    except KeyError:
-        showRetentionScores = True
-    searchIndex.output.showRetentionScores = showRetentionScores
-    try:
-        hideSidebar = config["hideSidebar"]
-    except KeyError:
-        hideSidebar = False
-    searchIndex.output.hideSidebar = hideSidebar
-
-    if searchIndex.logging:
-        log("\n--------------------\nInitialized searchIndex:")
-        log("""Type: %s\n# Stopwords: %s \n# Synonyms: %s \nLimit: %s \n""" % (searchIndex.type, len(searchIndex.stopWords), len(searchIndex.synonyms), limit))
-
-    editor = aqt.mw.app.activeWindow().editor if hasattr(aqt.mw.app.activeWindow(), "editor") else None
-    if editor is not None and editor.addMode:
-        searchIndex.output.editor = editor
-    editor = editor if editor is not None else edit    
-    showSearchResultArea(editor, initializationTime=initializationTime)
-    printStartingInfo(editor)
 
 def addTag(tag):
     """
     Insert the given tag in the tag field at bottom if not already there.
     """
+    searchIndex = get_index()
     if tag == "" or searchIndex is None or searchIndex.output.editor is None:
         return
     tagsExisting = searchIndex.output.editor.tags.text()
@@ -1182,65 +1102,12 @@ def addTag(tag):
     searchIndex.output.editor.tags.setText(tagsExisting + " " + tag)
     searchIndex.output.editor.saveTags()
 
-def printStartingInfo(editor):
-    if editor is None or editor.web is None:
-        return
-    html = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  searchIndex.type if searchIndex is not None else "?"
-    if searchIndex is not None:
-        html += "Initalized in <b>%s</b> s." % searchIndex.initializationTime
-        html += "<br/>Index contains <b>%s</b> notes." % searchIndex.getNumberOfNotes()
-        html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
-        html += "<br/>Logging is turned <b>%s</b>. %s" % ("on" if searchIndex.logging else "off", "You should probably disable it if you don't have any problems." if searchIndex.logging else "")
-        html += "<br/>Results are rendered <b>%s</b>." % ("immediately" if config["renderImmediately"] else "with fade-in")
-        html += "<br/>Tag Info on hover is <b>%s</b>.%s" % ("shown" if config["showTagInfoOnHover"] else "not shown", (" Delay: [<b>%s</b> ms]" % config["tagHoverDelayInMiliSec"]) if config["showTagInfoOnHover"] else "")
-        html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
-        html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
-        html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
-
-    if searchIndex is None or searchIndex.output is None:
-        html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
-    editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
 
 
-def get_notes_in_collection():  
-    """
-    Reads the collection and builds a list of tuples (note id, note fields as string, note tags, deck id)
-    """
-    config = mw.addonManager.getConfig(__name__)
-    deckList = config['decks']
-    deckStr = ""
-    for d in list(mw.col.decks.decks.values()):
-        if d['name'] in deckList:
-           deckStr += str(d['id']) + ","
-    if len(deckStr) > 0:
-        deckStr = "(%s)" %(deckStr[:-1])
-    
-    if deckStr:
-        oList = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s" %(deckStr))
-    else:
-        oList = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid")
-    uList = list()
-    for id, flds, t, did, mid in oList:
-        uList.append((id, flds, t, did, mid))
-    return uList
+
+
     
 
-
-
-
-class ProcessRunnable(QRunnable):
-    """
-    Only used to build the index in background atm.
-    """
-    def __init__(self, target):
-        QRunnable.__init__(self)
-        self.t = target
-
-    def run(self):
-        self.t()
-
-    def start(self):
-        QThreadPool.globalInstance().start(self)
 
 
 

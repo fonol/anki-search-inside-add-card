@@ -3,7 +3,6 @@ var timeout;
 var isFrozen = false;
 var searchOnSelection = true;
 var searchOnTyping = true;
-var useInfoBox = false;
 var last = "";
 var lastHadResults = false;
 var loadingTimer;
@@ -117,7 +116,7 @@ function tagMouseEnter(elem) {
     if (!showTagInfoOnHover || !elem || !elem.parentElement) 
         return;
     setTimeout(function () {
-            if (elem && elem.parentElement.querySelector(':hover') === elem && !document.getElementById('siac-tag-info-box-' + $(elem).data('stamp'))) {
+            if (elem && elem.parentElement && elem.parentElement.querySelector(':hover') === elem && !document.getElementById('siac-tag-info-box-' + $(elem).data('stamp'))) {
                 pycmd("tagInfo " + $(elem).data("stamp") + " " + $(elem).data("name"));
             } 
     }, tagHoverTimeout);
@@ -520,8 +519,12 @@ function toggleGrid(elem) {
 }
 
 function activateGridView() {
-    $('#grid-icon').addClass('active');
+    $('.grid-icon').addClass('active');
     gridView = true;
+}
+function disableGridView() {
+    $('.grid-icon').removeClass('active');
+    gridView = false;
 }
 
 

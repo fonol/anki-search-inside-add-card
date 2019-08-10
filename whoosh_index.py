@@ -11,20 +11,29 @@ from aqt.main import AnkiQt
 import sqlite3
 import re
 import time
+from .logging import log, persist_index_info
 from .textutils import *
 from .fts_index import Worker, WorkerSignals
+from .output import Output
+config = mw.addonManager.getConfig(__name__)
+try:
+    loadWhoosh = not config['useFTS']  or config['disableNonNativeSearching'] 
+except KeyError:
+    loadWhoosh = True
+if loadWhoosh:
+    from .whoosh.index import create_in
+    from .whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD, ID
+    from .whoosh.support.charset import accent_map
+    from .whoosh.qparser import QueryParser
+    from .whoosh.analysis import StandardAnalyzer, CharsetFilter, StemmingAnalyzer
+    from .whoosh import classify, highlight, query, scoring, qparser, reading
 
-
-class SearchIndex:
+class WhooshSearchIndex:
     """
     Wraps the whoosh index object, provides method to query.
     """
-    def __init__(self, index, qParser, dQParser):
+    def __init__(self, corpus, searchingDisabled, index_up_to_date):
         self.initializationTime = 0
-        self.index = index
-        self.qParser = qParser
-        #used to construct deck filter
-        self.dQParser = dQParser
         #contains nids of items that are currently pinned, I.e. should be excluded from results
         self.pinned = []
         self.threadPool = QThreadPool()
@@ -35,6 +44,69 @@ class SearchIndex:
         self.TAG_RE = re.compile(r'<[^>]+>')
         self.SP_RE = re.compile(r'&nbsp;| {2,}')
         self.SEP_RE = re.compile(r'(\u001f){2,}')
+        self.output = Output()
+        self.creation_info = {}
+        
+        config = mw.addonManager.getConfig(__name__)
+
+        try:
+            fld_dict = config['fieldsToExclude']
+            self.creation_info["fields_to_exclude_original"] = fld_dict
+            self.fields_to_exclude = {}
+            for note_templ_name, fld_names in fld_dict.items():
+                model = mw.col.models.byName(note_templ_name)
+                if model is None:
+                    continue
+                self.fields_to_exclude[model['id']] = []
+                for fld in model['flds']:
+                    if fld['name'] in fld_names:
+                        self.fields_to_exclude[model['id']].append(fld['ord'])
+        except KeyError:
+            self.fields_to_exclude = {} 
+        self.output.fields_to_exclude = self.fields_to_exclude
+        
+        try:
+            self.stopWords = set(config['stopwords'])
+        except KeyError:
+            self.stopWords = []
+        self.creation_info["stopwords_size"] = len(self.stopWords)
+        self.creation_info["decks"] = config["decks"]
+        self.creation_info["index_was_rebuilt"] = not index_up_to_date
+
+        myAnalyzer = StandardAnalyzer(stoplist= None, minsize=1) | CharsetFilter(accent_map)
+        #StandardAnalyzer(stoplist=usersStopwords)
+        schema = Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True), source=TEXT(stored=True), mid=TEXT(stored=True))
+        
+        #index needs a folder to operate in
+        indexDir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/whoosh_index.py", "") + "/index"
+        if not os.path.exists(indexDir):
+            os.makedirs(indexDir)
+        self.index = create_in(indexDir, schema)
+        if not index_up_to_date:
+            
+            #limitmb can be set down
+            writer = self.index.writer(limitmb=256)
+            #todo: check if there is some kind of batch insert
+            text = ""
+            for note in corpus:
+                #if the notes model id is in our filter dict, that means we want to exclude some field(s)
+                text = note[1]
+                if note[4] in self.fields_to_exclude:
+                    text = remove_fields(text, self.fields_to_exclude[note[4]])
+                text = clean(text, self.stopWords)
+                writer.add_document(content=text, tags=note[2], did=str(note[3]), nid=str(note[0]), source=note[1], mid=str(note[4]))
+            writer.commit()
+        #todo: allow user to toggle between and / or queries
+        og = qparser.OrGroup.factory(0.9)
+        #used to parse the main query
+        self.qParser = QueryParser("content", self.index.schema, group=og)
+        #used to construct a filter query, to limit the results to a set of decks
+        self.dQParser = QueryParser("did", self.index.schema, group=qparser.OrGroup)
+        self.type = "Whoosh"
+        persist_index_info(self)
+
+
+
 
     def search(self, text, decks):
         """
@@ -90,12 +162,12 @@ class SearchIndex:
                 querySet = set(replaceAccentsWithVowels(s).lower() for s in text.split(" "))
                 for r in res:
                     if not r["nid"] in self.pinned:
-                        rList.append((self.output._markHighlights(r["source"], querySet), r["tags"], r["did"], r["nid"]))
+                        rList.append((self.output._markHighlights(r["source"], querySet), r["tags"], r["did"], r["nid"], 1, r["mid"]))
                 resDict["time-highlighting"] = int((time.time() - start) * 1000)
             else:
                 for r in res:
                     if not r["nid"] in self.pinned:
-                        rList.append((r["source"].replace('`', '\\`'), r["tags"], r["did"], r["nid"]))
+                        rList.append((r["source"].replace('`', '\\`'), r["tags"], r["did"], r["nid"], 1, r["mid"]))
 
                 
 
@@ -121,22 +193,17 @@ class SearchIndex:
             #query db with found ids
             foundQ = "(%s)" % ",".join([str(f) for f in found])
             if deckQ:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ)).fetchall()
+                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ)).fetchall()
             else:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ)).fetchall()
+                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ)).fetchall()
             rList = []
             for r in res:
                 #pinned items should not appear in the results
                 if not str(r[0]) in self.pinned:
                     #todo: implement highlighting
-                    rList.append((r[1].replace('`', '\\`'), r[2], r[3], r[0]))
+                    rList.append((r[1].replace('`', '\\`'), r[2], r[3], r[0], 1, r[4]))
             return { "result" : rList[:self.limit], "stamp" : stamp }
         return { "result" : [], "stamp" : stamp }
-
-
-    
-
-   
 
     def cleanHighlights(self, text):
         """
@@ -171,8 +238,9 @@ class SearchIndex:
             return
         did = did[0]
         writer = self.index.writer()
-        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content)
+        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid))
         writer.commit()
+        persist_index_info(self)
         return note
     
     def updateNote(self, note):
@@ -189,10 +257,11 @@ class SearchIndex:
             return
         did = did[0]
         #writer.update_document(content=clean(content, self.stopWords), tags=tags, did=did, nid=str(note.id), source=content)
-        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content)
+        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid))
+        persist_index_info(self)
         writer.commit()
    
 
-    def getNumberOfNotes(self):
+    def get_number_of_notes(self):
         res = self.index.searcher().doc_count_all()
         return res

@@ -17,6 +17,7 @@ class Output:
         self.SEP_END = re.compile(r'</div>\u001f$')
         self.SOUND_TAG = re.compile(r'sound[a-zA-Z0-9]*mp')
         self.IO_REPLACE = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>)?-[OA]|-(<mark>)?ao(</mark>)?-[OA])\.svg" ?/?>(</img>)?')
+        self.IMG_FLD =  re.compile('\\|</span> ?(<img[^>]+/?>)( ?<span class=\'fldSep\'>|$)')
         self.latest = -1
         self.wordToken = re.compile(u"[a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U)
         self.gridView = False
@@ -26,6 +27,7 @@ class Output:
         self.lastResults = None
         self.hideSidebar = False
         self.uiVisible = True
+        self.showExcludedFields = True
 
 
         self.noteTemplate = """<div class='cardWrapper %s' id='nWr-%s'> 
@@ -64,6 +66,12 @@ class Output:
         This is the html that gets rendered in the search results div.
         Args:
         searchResults - a list of tuples, see SearchIndex.search()
+        searchResults.0: highlighted note text
+        searchResults.1: tags
+        searchResults.2: did
+        searchResults.3: nid
+        searchResults.4: score (not used currently)
+        searchResults.5: mid
         """
         if stamp is not None:
             if stamp != self.latest:
@@ -107,12 +115,17 @@ class Output:
                 retInfo = ""
 
             lastNote = newNote
-            text = self._cleanFieldSeparators(res[0]).replace("\\", "\\\\")
+            text = res[0]
+            if not self.showExcludedFields and len(res) > 5 and int(res[5]) in self.fields_to_exclude:
+                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_exclude[int(res[5])]])
+            text = self._cleanFieldSeparators(text).replace("\\", "\\\\")
             text = self.tryHideImageOcclusion(text)
+            #try to put fields that consist of a single image in their own line
+            text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
             newNote = self.noteTemplate % ("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
                         "&nbsp;&#128336; " + timeDiffString,
                         "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
-                        retInfo, res[3],res[3],res[3],res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
+                        retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
                         text, 
                         res[3], self.buildTagString(res[1]), res[3])  
             if self.gridView:
@@ -378,9 +391,13 @@ class Output:
                 retInfo = ""
 
             lastNote = newNote
-            
-            text = self._cleanFieldSeparators(res[0]).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
+            text = res[0]
+            if not self.showExcludedFields and len(res) > 5 and int(res[5]) in self.fields_to_exclude:
+                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_exclude[int(res[5])]])
+            text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
             text = self.tryHideImageOcclusion(text)
+            #try to put fields that consist of a single image in their own line
+            text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
             newNote = self.noteTemplateSimple % ( counter + 1,
                         "&nbsp;&#128336; " + timeDiffString,
                         "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
@@ -590,7 +607,13 @@ class Output:
         tags = note[2]
         tagStr =  self.buildTagString(tags)  
         nid = note[0]
-        text = self._cleanFieldSeparators(note[1])
+        text = note[1]
+        if not self.showExcludedFields and len(note) > 4 and int(note[4]) in self.fields_to_exclude:
+            text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_exclude[int(note[4])]])
+        text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
+        text = self.tryHideImageOcclusion(text)
+        text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
+
         #find rendered note and replace text and tags
         self.editor.web.eval("""
             document.getElementById('%s').innerHTML = `%s`; 
@@ -625,7 +648,7 @@ class Output:
                     if currentWordNormalized in querySet:
                         #we check if the word before has been marked too, if so, we want to enclose both, the current word and 
                         # the word before in the same <mark></mark> tag (looks better)
-                        if lastIsMarked:
+                        if lastIsMarked and not "\u001f" in textMarked[textMarked.rfind("<mark>"):]:
                             textMarked = textMarked[0: textMarked.rfind("</mark>")] + textMarked[textMarked.rfind("</mark>") + 7 :]
                             textMarked += currentWord + "</mark>" + char
                         else:

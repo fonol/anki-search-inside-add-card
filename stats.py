@@ -17,7 +17,7 @@ def findNotesWithLowestPerformance(decks, limit, pinned, retOnly=False):
     c = 0
     for r in scores:
         if str(r[1][1][0]) not in pinned:
-            rList.append((r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][0]))
+            rList.append((r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][0], 1, r[1][1][5]))
             c += 1
             if c >= limit:
                 break
@@ -31,7 +31,7 @@ def findNotesWithHighestPerformance(decks, limit, pinned, retOnly=False):
     c = 0
     for r in scores:
         if str(r[1][1][0]) not in pinned:
-            rList.append((r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][0]))
+            rList.append((r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][0], 1, r[1][1][5]))
             c += 1
             if c >= limit:
                 break
@@ -44,15 +44,15 @@ def getSortedByInterval(decks, limit, pinned, sortOrder):
     else:
         deckQ = ""
     if deckQ:
-        res = mw.col.db.execute("select notes.id, flds, tags, did, cards.nid FROM cards left join notes on cards.nid = notes.id where did in %s and reps > 0 group by cards.nid order by ivl %s limit %s" % (
+        res = mw.col.db.execute("select notes.id, flds, tags, did, cards.nid, notes.mid FROM cards left join notes on cards.nid = notes.id where did in %s and reps > 0 group by cards.nid order by ivl %s limit %s" % (
             deckQ, sortOrder, limit)).fetchall()
     else:
-        res = mw.col.db.execute("select notes.id, flds, tags, did, cards.nid FROM cards left join notes on cards.nid = notes.id where reps > 0 group by cards.nid order by ivl %s limit %s" % (
+        res = mw.col.db.execute("select notes.id, flds, tags, did, cards.nid, notes.mid FROM cards left join notes on cards.nid = notes.id where reps > 0 group by cards.nid order by ivl %s limit %s" % (
             sortOrder, limit)).fetchall()
     rList = []
     for r in res:
         if not str(r[0]) in pinned:
-            rList.append((r[1], r[2], r[3], r[0]))
+            rList.append((r[1], r[2], r[3], r[0], 1, r[5]))
     return rList
 
 
@@ -63,10 +63,10 @@ def _calcScores(decks, limit, retOnly):
         deckQ = ""
     if deckQ:
         notes = mw.col.db.execute(
-            "select notes.id, cards.id, flds, tags, did from cards left join notes on cards.nid = notes.id where did in %s order by notes.id" % deckQ).fetchall()
+            "select notes.id, cards.id, flds, tags, did, notes.mid from cards left join notes on cards.nid = notes.id where did in %s order by notes.id" % deckQ).fetchall()
     else:
         notes = mw.col.db.execute(
-            "select notes.id, cards.id, flds, tags, did from cards left join notes on cards.nid = notes.id order by notes.id ").fetchall()
+            "select notes.id, cards.id, flds, tags, did, notes.mid from cards left join notes on cards.nid = notes.id order by notes.id ").fetchall()
     scores = dict()
     cardsByNotes = dict()
     for note in notes:
@@ -367,11 +367,11 @@ def calculateStats(nid, gridView):
             infoTable = {}
             label = ""
             if cardQueueById[k] == -1:
-                label = "<span style='background: orange;'>Suspended</span>"
+                label = "<span style='background: orange; color: black;'>Suspended</span>"
             elif cardQueueById[k] == 0:
-                label = "<span style='background: orange;'>NEW</span>"
+                label = "<span style='background: orange; color: black;'>NEW</span>"
             elif cardQueueById[k] == 1:
-                label = "<span style='background: orange;'>LEARNING</span>"
+                label = "<span style='background: orange; color: black;'>LEARNING</span>"
             infoTable["<b>%s</b>  &nbsp;(%s):" % (v, k)] = label
             if k in intervalsByCid:
                 infoTable[_get_revlog_graph(k)] = ""
