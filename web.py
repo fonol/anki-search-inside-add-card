@@ -5,7 +5,7 @@ import re
 import datetime
 import time
 from aqt import mw
-from .textutils import cleanSynonym
+from .textutils import cleanSynonym, trimIfLongerThan
 from .state import get_index, checkIndex
 
 #css + js 
@@ -447,7 +447,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                         <div id="modal-subpage-inner"></div>
                     </div>
                         <div style='text-align: right; margin-top:25px;'>
-                            <button class='modal-close' onclick='$("#a-modal").hide();'>Close</button>
+                            <button class='modal-close' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
                         </div>
                     </div>
                 </div>
@@ -489,11 +489,15 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                     </div>
                 </div>
                 <div id='bottomContainer' style='display: block;'>
+                    <div id='siac-pagination'>
+                        <div id='siac-pagination-status'></div>
+                        <div id='siac-pagination-wrapper'>&nbsp;</div>
+                    </div>
                     <div style='position: relative;' id='cal-wrapper'>
                         %s
                     </div>
                     <div class="flexContainer">
-                        <div class='flexCol' style='padding-left: 0px; '> 
+                        <div class='flexCol' style='padding-left: 0px; padding-top: 3px; '> 
                             <div class='flexContainer' style="flex-wrap: nowrap;">
                                 <fieldset id="sortCol" style="flex: 0 0 auto; font-size: 0.85em;">
                                     <legend>Sorting & Filtering</legend>
@@ -558,7 +562,8 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
         var $searchInfo = $('#searchInfo');
         onResize();
         window.addEventListener('resize', onResize, true);
-        $('.cal-block-outer').on('mouseenter', function() { calBlockMouseEnter(this);});
+        $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
+        $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
         $(`<div id='cal-info' onmouseleave='calMouseLeave()'></div>`).insertAfter('#outerWr');
 """ % (
     leftSideWidth,
@@ -577,7 +582,7 @@ def printStartingInfo(editor):
     if searchIndex is not None:
         html += "Initalized in <b>%s</b> s." % searchIndex.initializationTime
         if not searchIndex.creation_info["index_was_rebuilt"]:
-            html += " (No changes detected, the index was not rebuilt)"
+            html += " No changes detected, the index was not rebuilt."
         html += "<br/>Index contains <b>%s</b> notes." % searchIndex.get_number_of_notes()
         html += "<br/>Index is always rebuilt if smaller than <b>%s</b> notes." % config["alwaysRebuildIndexIfSmallerThan"]
         html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
@@ -643,9 +648,52 @@ def getCalendarHtml():
     html = html % html_content
     return html
         
+def display_model_dialog():
+    all_models = sorted(mw.col.models.all(), key=lambda m : m['name'])
+    index = get_index()
+    config = mw.addonManager.getConfig(__name__)
+
+    html = """
+    <div style='display: flex; flex-flow: column; height: 400px;'>
+    <p>Changes in <i>Show Field in Results</i> take effect immediately, changes in <i>Search in Field</i> need a rebuild of the index.</p>
+    <table style='width: 100%; margin: 10px 0 5px 0;'>
+        <tr>
+            <td style='width: 80%; font-weight: bold;'>Field Name</td>
+            <td style='width: 10%; font-weight: bold;'>Search in Field</td>
+            <td style='width: 10%; font-weight: bold;'>Show Field in Results</td>
+        </tr>
+    </table>
+    <div style='overflow-y: auto; flex-grow: 1; margin-top: 20px; width: 100%'>
+    """
+    for m in all_models:
+        html += "<div class='siac-model-name'>%s</div>" % trimIfLongerThan(m["name"], 40)
+        flds = "<table class='siac-model-table'>"
+        for f in m["flds"]:
+            flds += """<tr>
+                            <td style='width: 80%%' class='siac-model-field'>%s</td>
+                            <td style='width: 10%%; text-align: center;'><input type='checkbox' onchange='updateFieldToExclude(this, "%s", %s)' %s/></td>
+                            <td style='width: 10%%; text-align: center;'><input type='checkbox' onchange='updateFieldToHideInResult(this, "%s", %s)' %s/></td>
+                    </tr>""" % ( 
+                    f['name'], 
+                    m['id'],
+                    f['ord'],
+                    "checked" if str(m['id']) not in config["fieldsToExclude"] or f['ord'] not in config["fieldsToExclude"][str(m['id'])] else "",
+                    m['id'],
+                    f['ord'],
+                    "checked" if str(m['id']) not in config["fieldsToHideInResults"] or f['ord'] not in config["fieldsToHideInResults"][str(m['id'])] else "")
+        flds += "</table>"
+        html += "<div class='siac-model-fields'>%s</div>" % flds
+    html += "</div></div>"
+    index.output.show_in_modal_subpage(html)
+
 
 def stylingModal(config):
     html = """
+            <fieldset>
+                <span>Exclude note fields from search or display.</span> 
+                <button class='siac-btn-small' style='float: right;' onclick='pycmd("siac-model-dialog")'>Set Fields</button>
+            </fieldset>        
+            <br/>
             <fieldset>
             <span><mark>Important:</mark> Modify this value if the bottom bar (containing the predefined searches and the browser search) sits too low or too high. (Can be negative)</span> 
                 <table style="width: 100%%">
@@ -696,13 +744,6 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <fieldset>
-                <span>If not enabled, note fields that are excluded from the search through the <i>fieldsToExclude</i> config property are not printed in the output.</span> 
-                <table style="width: 100%%">
-                    <tr><td><b>Show Excluded Fields</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling showExcludedFields ' + this.checked)" %s/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
                 <span>If the number of notes that would go into the index (only notes from the included decks are counted) is lower than this value the index should always be rebuilt.</span> 
                 <table style="width: 100%%">
                     <tr><td><b>Always Rebuild Index If Smaller Than</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="100000" style='width: 60px;' onchange="pycmd('styling alwaysRebuildIndexIfSmallerThan ' + this.value)" value="%s"/></tr>
@@ -717,7 +758,6 @@ def stylingModal(config):
                         "checked='true'" if config["showTimeline"] else "",
                         "checked='true'" if config["showTagInfoOnHover"] else "",
                         config["tagHoverDelayInMiliSec"],
-                       "checked='true'" if config["showExcludedFields"] else "",
                        config["alwaysRebuildIndexIfSmallerThan"]
                         )
     html += """
@@ -727,7 +767,7 @@ def stylingModal(config):
     If you want to use the add-on with the <b>night mode</b> add-on, you have to adapt the styling section.
     <br/> <br/>
     <b>Sample night mode configuration (copy and replace the <i>styling</i> section in your config with it):</b><br/><br/>
-
+    <div style='width: 100%; overflow-y: auto; max-height: 130px;'>
     "styling": {
         "bottomBar": {
             "browserSearchInputBackgroundColor": "#272828",
@@ -776,10 +816,10 @@ def stylingModal(config):
             "deckSelectHoverForegroundColor": "Black"
         }
     },
-
+    </div>
     <br/> <br/>
-    <b>Default configuration, to reset styling without resetting the whole config file:</b><br/><br/>
-
+    <b>Default configuration, to reset the styling without resetting the whole config file:</b><br/><br/>
+    <div style='width: 100%; overflow-y: auto; max-height: 130px;'>
     "styling": {
         "modal" : {
             "stripedTableBackgroundColor": "#f2f2f2",
@@ -828,6 +868,8 @@ def stylingModal(config):
             "timelineBoxBorderColor": "#595959"
         }
     },
+    </div>
+
     """
 
     return html

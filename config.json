@@ -62,7 +62,7 @@
     }
 },
 
-"numberOfResults": 100,
+"numberOfResults": 1000,
 "useFTS": true,
 "disableNonNativeSearching" : false,
 "addToResultAreaHeight": 0,
@@ -80,7 +80,7 @@
 "showTimeline": true,
 "showTagInfoOnHover": true,
 "fieldsToExclude": {},
-"showExcludedFields": true,
+"fieldsToHideInResults" : {},
 "tagHoverDelayInMiliSec": 750,
 "alwaysRebuildIndexIfSmallerThan" : 1500
 

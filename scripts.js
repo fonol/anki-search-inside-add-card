@@ -266,12 +266,12 @@ function setTagSearch(elem) {
 }
 
 function tagClick(elem) {
-    if ($(elem).data('tags')) {
+    if ($(elem).data('tags') && $(elem).data('tags') == $(elem).data('name')) {
         $('#a-modal').show();
         pycmd('renderTags ' + $(elem).data('tags'));
         return;
     }
-    let name = $(elem).data('name');
+    let name = $(elem).data('target') || $(elem).data('name');
     $(".siac-tag-info-box").remove();
     $("#greyout").hide();
     pycmd('tagClicked ' + name);
@@ -307,6 +307,21 @@ function searchSynset(elem) {
 
 }
 
+function updateFieldToExclude(checkbox, mid, fldOrd) {
+    if ($(checkbox).is(':checked')) {
+        pycmd("siac-update-field-to-exclude " + mid + " " + fldOrd + " false");
+    } else {
+        pycmd("siac-update-field-to-exclude " + mid + " " + fldOrd + " true");
+    }
+}
+
+function updateFieldToHideInResult(checkbox, mid, fldOrd) {
+    if ($(checkbox).is(':checked')) {
+        pycmd("siac-update-field-to-hide-in-results " + mid + " " + fldOrd + " false");
+    } else {
+        pycmd("siac-update-field-to-hide-in-results " + mid + " " + fldOrd + " true");
+    }
+}
 
 
 function setSearchOnTyping(active) {
@@ -386,7 +401,7 @@ function updatePinned() {
     pycmd(pincmd);
 }
 
-function setSearchResults(html, infoStr, infoMap) {
+function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total = 50) {
     if (html.length > 0) {
         $('#searchResults .cardWrapper').not('.pinned').remove();
         $("#startInfo,.gridRow:empty").remove();
@@ -423,6 +438,7 @@ function setSearchResults(html, infoStr, infoMap) {
         document.getElementById("searchResults").style.overflowY = 'auto';
         document.getElementById("searchResults").style.paddingRight = '10px';
         $("#greyout").hide();
+        displayPagination(page, pageMax, total, html.length > 0);
     }
     else {
         time = gridView ? 100 : 130;
@@ -430,9 +446,9 @@ function setSearchResults(html, infoStr, infoMap) {
         function renderLoop() {
 
             if (gridView)
-                $("#nWr-" + c).fadeIn().css("display", "inline-block");
+                $("#nWr-" + (c + (50 * (page - 1)))).fadeIn().css("display", "inline-block");
             else
-                $("#nWr-" + c).fadeIn();
+                $("#nWr-" + (c + (50 * (page - 1)))).fadeIn();
             setTimeout(function () {
                 c++;
                 if (c < count) {
@@ -449,7 +465,39 @@ function setSearchResults(html, infoStr, infoMap) {
             }, time);
         }
         renderLoop();
+        displayPagination(page, pageMax, total, html.length > 0);
     }
+}
+
+function displayPagination(page, pageMax, total, resultsFound) {
+    let html = "";
+    if (pageMax === 0 || !resultsFound) { return; }
+    if (page === 1 && pageMax == 1) {
+        html = "";
+    } else {
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page 1")'>&#171;</div>`;
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.max(page - 1, 1)}")'>&#8249;</div>`;
+        let a = 0, b = 0;
+        if (page + 5 > pageMax) {
+            a = page + 5 - pageMax;
+        }
+        if (page - 5 <= 0) {
+            b = Math.abs(page - 5) + 1;
+        }
+        for (var i = Math.max(page - 5 - a, 1); i <= page + 5 + b; i++) {
+            if (i == page) {
+                html += `<div class='siac-pg-icn siac-pg-icn-active' onclick='pycmd("siac-page ${i}")'>${i}</div>`;
+            } else if (i <= pageMax){
+                    html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${i}")'>${i}</div>`;
+            }
+        }
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.min(page + 1, pageMax)}")'>&#8250;</div>`;
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${pageMax}")'>&#187;</div>`;
+       
+    }
+    document.getElementById("siac-pagination-status").innerHTML = `Showing ${50 * (page - 1) + 1} - ${Math.min(total, 50 * page)} of ${total}`;
+    document.getElementById("siac-pagination-wrapper").innerHTML = html;
+
 }
 
 function sendClickedInformation(x, y) {
@@ -670,27 +718,29 @@ function getOffset(el) {
     return { top: _y, left: _x };
 }
 
-function calBlockMouseEnter(elem) {
+function calBlockMouseEnter(event, elem) {
     calTimer = setTimeout(function () {
-        if ($('#cal-row').is(":hover")) {
-            let offset = getOffset(elem.children[0]);
-            let offsetLeft = offset.left - 153;
-            if (offsetLeft < 0) {
-                offsetLeft -= (offset.left - 153);
-                document.documentElement.style.setProperty('--tleft', (153 + offset.left - 153) + 'px')
-            } else {
-                document.documentElement.style.setProperty('--tleft', '50%%');
-            }
-
-            $('#cal-info').css("left", offsetLeft + "px").css("top", (offset.top - 275) + "px");
-            document.getElementById('cal-info').style.display = "block";
-            pycmd("calInfo " + $(elem.children[0]).data("index"));
+        if ($('#cal-row').is(":hover") && event.ctrlKey) {
+            displayCalInfo(elem);
             calTimer = null;
         }
     }, 100);
-
 }
 
+function displayCalInfo(elem) {
+    let offset = getOffset(elem.children[0]);
+    let offsetLeft = offset.left - 153;
+    if (offsetLeft < 0) {
+        offsetLeft -= (offset.left - 153);
+        document.documentElement.style.setProperty('--tleft', (153 + offset.left - 153) + 'px')
+    } else {
+        document.documentElement.style.setProperty('--tleft', '50%%');
+    }
+
+    $('#cal-info').css("left", offsetLeft + "px").css("top", (offset.top - 275) + "px");
+    document.getElementById('cal-info').style.display = "block";
+    pycmd("calInfo " + $(elem.children[0]).data("index"));
+}
 
 function calMouseLeave() {
     calTimer = setTimeout(function () {

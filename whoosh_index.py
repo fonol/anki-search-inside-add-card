@@ -50,17 +50,8 @@ class WhooshSearchIndex:
         config = mw.addonManager.getConfig(__name__)
 
         try:
-            fld_dict = config['fieldsToExclude']
-            self.creation_info["fields_to_exclude_original"] = fld_dict
-            self.fields_to_exclude = {}
-            for note_templ_name, fld_names in fld_dict.items():
-                model = mw.col.models.byName(note_templ_name)
-                if model is None:
-                    continue
-                self.fields_to_exclude[model['id']] = []
-                for fld in model['flds']:
-                    if fld['name'] in fld_names:
-                        self.fields_to_exclude[model['id']].append(fld['ord'])
+            self.fields_to_exclude = config['fieldsToExclude']
+            self.creation_info["fields_to_exclude_original"] = self.fields_to_exclude 
         except KeyError:
             self.fields_to_exclude = {} 
         self.output.fields_to_exclude = self.fields_to_exclude
@@ -157,17 +148,10 @@ class WhooshSearchIndex:
             rList = []
             resDict["time-query"] = int((time.time() - start) * 1000)
             resDict["highlighting"] = self.highlighting
-            if self.highlighting:
-                start = time.time()
-                querySet = set(replaceAccentsWithVowels(s).lower() for s in text.split(" "))
-                for r in res:
-                    if not r["nid"] in self.pinned:
-                        rList.append((self.output._markHighlights(r["source"], querySet), r["tags"], r["did"], r["nid"], 1, r["mid"]))
-                resDict["time-highlighting"] = int((time.time() - start) * 1000)
-            else:
-                for r in res:
-                    if not r["nid"] in self.pinned:
-                        rList.append((r["source"].replace('`', '\\`'), r["tags"], r["did"], r["nid"], 1, r["mid"]))
+          
+            for r in res:
+                if not r["nid"] in self.pinned:
+                    rList.append((r["source"].replace('`', '\\`'), r["tags"], r["did"], r["nid"], 1, r["mid"]))
 
                 
 
@@ -219,7 +203,10 @@ class WhooshSearchIndex:
 
     def printOutput(self, result, stamp):
         if result is not None:
-            self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True)
+            query_set = None
+            if self.highlighting:
+                query_set = set(replaceAccentsWithVowels(s).lower() for s in text.split(" "))
+            self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
 
     def removeTags(self, text):
         """
@@ -237,6 +224,8 @@ class WhooshSearchIndex:
         if did is None or len(did) == 0:
             return
         did = did[0]
+        if note.mid in self.fields_to_exclude:
+            content = remove_fields(content, self.fields_to_exclude[note.mid])
         writer = self.index.writer()
         writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid))
         writer.commit()
@@ -257,6 +246,8 @@ class WhooshSearchIndex:
             return
         did = did[0]
         #writer.update_document(content=clean(content, self.stopWords), tags=tags, did=did, nid=str(note.id), source=content)
+        if note.mid in self.fields_to_exclude:
+            content = remove_fields(content, self.fields_to_exclude[note.mid])
         writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid))
         persist_index_info(self)
         writer.commit()

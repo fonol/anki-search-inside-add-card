@@ -14,10 +14,10 @@ def findBySameTag(tagStr, limit, decks, pinned):
             t = t.replace("'", "''")
             if len(query) > 6:
                 query += " or "
-            query += "lower(tags) like '% " + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '%::" + t + " %' or lower(tags) like '% " + t + "::%'"
+            query += "lower(tags) like '% " + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '%::" + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '" + t + " %' or lower(tags) like '%::" + t + "::%'"
 
   
-    if not "-1" in decks:
+    if decks is not None and len(decks) > 0 and not "-1" in decks:
         deckQ =  "(%s)" % ",".join(decks)
     else:
         deckQ = ""
@@ -74,7 +74,7 @@ def display_tag_info(editor, stamp, tag, searchIndex):
         html = """
             <div style="display: flex; width: 100%%;">
             <div style='flex: 1 1; flex-basis: 50%%; padding: 5px; max-width: 50%%;'>
-                    <span>Newest notes for <b>%s</b></span>
+                    <span>Newest for <b>%s</b></span>
                     <div class='siac-tag-info-box-left' style='%s' id='siac-tag-info-box-left-%s'>
                         %s
                     </div>
@@ -127,9 +127,16 @@ def display_tag_info(editor, stamp, tag, searchIndex):
 
     if not should_hide_left_side:
         sorted_db_list = sorted(searchRes["result"], key=lambda x: x[3], reverse=True)
-        note_html = searchIndex.output.get_result_html_simple(sorted_db_list[:searchIndex.limit])
+        note_html = searchIndex.output.get_result_html_simple(sorted_db_list[:100])
         enlarge_note_area_height = "max-height: 320px" if total_length > 120 and tret is not None else ""
-        html = html % (trimIfLongerThan(tag, 20), enlarge_note_area_height, stamp, note_html, time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)
+        tag_name = tag
+        if " " in tag_name:
+            base = tag_name.split()[0]
+            tag_name = trimIfLongerThan(base, 25) + " (+%s)" % len(tag_name.split()[1:])
+        else:
+            tag_name = trimIfLongerThan(tag_name, 28)
+
+        html = html % (tag_name, enlarge_note_area_height, stamp, note_html, time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)
 
     else:
         html = html % (time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)

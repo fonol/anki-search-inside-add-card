@@ -2,13 +2,14 @@ import re
 import time
 import json
 import os
+import math
 from datetime import datetime
 from aqt import mw
 from aqt.utils import showInfo, tooltip
 from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar, get_stamp
 from .logging import log
 from .stats import getRetentions
-
+from .state import get_index
 class Output:
 
     def __init__(self):
@@ -28,6 +29,9 @@ class Output:
         self.hideSidebar = False
         self.uiVisible = True
         self.showExcludedFields = True
+        # saved to display the same time taken when clicking on a page other than 1
+        self.last_took = None
+        self.last_had_timing_info = False
 
 
         self.noteTemplate = """<div class='cardWrapper %s' id='nWr-%s'> 
@@ -60,10 +64,15 @@ class Output:
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
                         </div>"""
 
+    def show_page(self, editor, page):
+        if self.lastResults is not None:
+            self.printSearchResults(self.lastResults, None, editor, False, self.last_had_timing_info, page, query_set = self.last_query_set)
 
-    def printSearchResults(self, searchResults, stamp, editor=None, logging=False, printTimingInfo=False):
+
+    def printSearchResults(self, db_list, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None):
         """
         This is the html that gets rendered in the search results div.
+        This will always print the first page.
         Args:
         searchResults - a list of tuples, see SearchIndex.search()
         searchResults.0: highlighted note text
@@ -80,7 +89,7 @@ class Output:
                 return
         if logging:
             log("Entering printSearchResults")
-            log("Length (searchResults): " + str(len(searchResults)))
+            log("Length (searchResults): " + str(len(db_list)))
         html = ""
         allText = ""
         tags = []
@@ -88,15 +97,21 @@ class Output:
         timeDiffString = ""
         newNote = ""
         lastNote = "" 
-        nids = [r[3] for r in searchResults]
+        self.last_had_timing_info = printTimingInfo
 
-        if searchResults is not None and len(searchResults) > 0:
-            self.lastResults = searchResults
+        if db_list is not None and len(db_list) > 0:
+            self.lastResults = db_list
+            self.last_query_set = query_set
+        
+        searchResults = db_list[(page- 1) * 50: page * 50]
+        nids = [r[3] for r in searchResults]
 
         if self.showRetentionScores:
             retsByNid = getRetentions(nids)
         ret = 0
+        start = time.time()
         for counter, res in enumerate(searchResults):
+            counter += (page - 1)* 50
             try:
                 timeDiffString = self._getTimeDifferenceString(res[3], epochTime)
             except:
@@ -116,10 +131,21 @@ class Output:
 
             lastNote = newNote
             text = res[0]
-            if not self.showExcludedFields and len(res) > 5 and int(res[5]) in self.fields_to_exclude:
-                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_exclude[int(res[5])]])
+
+            #highlight
+            if query_set is not None:
+                text = self._markHighlights(text, query_set)
+
+            # hide fields that should not be shown 
+            if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
+                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res[5])]])
+           
+            #remove double fields separators
             text = self._cleanFieldSeparators(text).replace("\\", "\\\\")
+
+            #try to remove image occlusion fields
             text = self.tryHideImageOcclusion(text)
+
             #try to put fields that consist of a single image in their own line
             text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
             newNote = self.noteTemplate % ("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
@@ -136,20 +162,31 @@ class Output:
             else:
                 html += newNote
             tags = self._addToTags(tags, res[1])
-            if counter < 20:
+            if counter - (page - 1) * 50 < 20:
                 allText += " " + res[0]
         tags.sort()
         html = html.replace("`", "&#96;").replace("$", "&#36;")
+        pageMax = math.ceil(len(db_list) / 50.0)
+        if get_index().lastResDict is not None:
+            get_index().lastResDict["time-html"] = int((time.time() - start) * 1000)
+        if stamp is None and self.last_took is not None:
+            took = self.last_took
+        elif stamp is not None:
+            took = self.getMiliSecStamp() - stamp
+            self.last_took = took
+        else:
+            took = "?"
         if not self.hideSidebar:
             infoMap = {
-                "Took" :  "<b>%s</b> ms %s" % (str(self.getMiliSecStamp() - stamp) if stamp is not None else "?", "&nbsp;<b style='cursor: pointer' onclick='pycmd(`lastTiming`)'>&#9432;</b>" if printTimingInfo else ""),
-                "Found" :  "<b>%s</b> notes" % (len(searchResults) if len(searchResults) > 0 else "<span style='color: red;'>0</span>")
+                "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`lastTiming`)'>&#9432;</b>" if printTimingInfo else ""),
+                "Found" :  "<b>%s</b> notes" % (len(db_list) if len(db_list) > 0 else "<span style='color: red;'>0</span>")
             }
             info = self.buildInfoTable(infoMap, tags, allText) 
-            cmd = "setSearchResults(`" + html + "`, `" + info[0].replace("`", "&#96;") + "`, %s);" % json.dumps(info[1])
+            cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(db_list))
         else:
-            cmd = "setSearchResults(`" + html + "`, ``);"
+            cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s);" % (html, page, pageMax, len(db_list))
         cmd += "updateSwitchBtn(%s)" % len(searchResults)
+        
         if editor is None or editor.web is None:
             if self.editor is not None and self.editor.web is not None:
                 if logging:
@@ -166,7 +203,8 @@ class Output:
         Builds the html for the tags that are displayed at the bottom right of each rendered search result.
         """
         html = ""
-        tm = self.getTagMap(tags.split(' '))
+        tags_split = tags.split()
+        tm = self.getTagMap(tags_split)
         totalLength = sum([len(k) for k,v in tm.items()])
         if maxLength == -1:
             maxLength = 40 if not self.gridView else 30
@@ -177,8 +215,8 @@ class Output:
                 stamp = "siac-tg-" + get_stamp()
                 if len(s) > 0:
                     tagData = " ".join(self.iterateTagmap({t : s}, ""))
-                    if len(s) == 1 and tagData.count("::") < 2:
-                        html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", trimIfLongerThan(tagData.split(" ")[1], maxLength))
+                    if len(s) == 1 and tagData.count("::") < 2 and not t in tags_split:
+                        html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData.split()[1], "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", trimIfLongerThan(tagData.split(" ")[1], maxLength))
                     else:
                         html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
                 else:
@@ -315,8 +353,8 @@ class Output:
                     tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, key,trimIfLongerThan(key, 19))
                 else:
                     tagData = " ".join(self.iterateTagmap({key : value}, ""))
-                    if len(value) == 1 and tagData.count("::") < 2:
-                        tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, tagData, tagData, trimIfLongerThan(tagData.split()[1],16))
+                    if len(value) == 1 and tagData.count("::") < 2 and not key in tags:
+                        tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, tagData.split()[1], tagData, trimIfLongerThan(tagData.split()[1],16))
                     else:
                         tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s&nbsp; %s</span>" % (stamp, tagData, tagData, trimIfLongerThan(key,12), "(+%s)"% len(value))
 
@@ -392,8 +430,12 @@ class Output:
 
             lastNote = newNote
             text = res[0]
-            if not self.showExcludedFields and len(res) > 5 and int(res[5]) in self.fields_to_exclude:
-                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_exclude[int(res[5])]])
+
+            # hide fields that should not be shown 
+            if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
+                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res[5])]])
+
+
             text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
             text = self.tryHideImageOcclusion(text)
             #try to put fields that consist of a single image in their own line
@@ -437,8 +479,6 @@ class Output:
             self.plotjsLoaded = True
 
 
-
-    
 
     def showStats(self, text, reviewPlotData, ivlPlotData, timePlotData):
         
@@ -551,7 +591,7 @@ class Output:
 
     def buildTagHierarchy(self, tags):
         tmap = self.getTagMap(tags)
-
+        config = mw.addonManager.getConfig(__name__)
         def iterateMap(tmap, prefix, start=False):
             if start:
                 html = "<ul class='tag-list outer'>"
@@ -559,7 +599,13 @@ class Output:
                 html = "<ul class='tag-list'>"
             for key, value in tmap.items():
                 full = prefix + "::" + key if prefix else key
-                html += "<li class='tag-list-item'><span class='tag-btn'>%s %s</span><div class='tag-add' data-name=\"%s\" onclick='event.stopPropagation(); tagClick(this)'>+</div>%s</li>" % (trimIfLongerThan(key, 25), "[-]" if value else "" ,  deleteChars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]), iterateMap(value, full)) 
+                html += "<li class='tag-list-item'><span class='tag-btn'>%s %s</span><div class='tag-add' data-name=\"%s\" data-target='%s' onclick='event.stopPropagation(); tagClick(this)'>%s</div>%s</li>" % (
+                    trimIfLongerThan(key, 25), 
+                    "[-]" if value else "" ,  
+                    deleteChars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]), 
+                    key,
+                    "+" if not config["tagClickShouldSearch"] else "<div class='siac-btn-small'>Search</div>",
+                iterateMap(value, full)) 
             html += "</ul>"
             return html
 
@@ -608,8 +654,11 @@ class Output:
         tagStr =  self.buildTagString(tags)  
         nid = note[0]
         text = note[1]
-        if not self.showExcludedFields and len(note) > 4 and int(note[4]) in self.fields_to_exclude:
-            text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_exclude[int(note[4])]])
+        
+        # hide fields that should not be shown 
+        if len(note) > 4 and str(note[4]) in self.fields_to_hide_in_results:
+            text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(note[4])]])
+        
         text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
         text = self.tryHideImageOcclusion(text)
         text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)

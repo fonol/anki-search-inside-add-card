@@ -29,7 +29,7 @@ def get_notes_in_collection():
         oList = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid")
     uList = list()
     for id, flds, t, did, mid in oList:
-        uList.append((id, flds, t, did, mid))
+        uList.append((id, flds, t, did, str(mid)))
     return uList
 
 def build_index(force_rebuild = False, execute_after_end = None):
@@ -74,7 +74,7 @@ def _build_index(index_up_to_date):
 
     searchIndex.finder = Finder(mw.col)
     searchIndex.output.stopwords = searchIndex.stopWords
-    searchIndex.output.showExcludedFields = config["showExcludedFields"]
+    searchIndex.output.fields_to_hide_in_results = config["fieldsToHideInResults"]
     searchIndex.selectedDecks = []
     searchIndex.lastSearch = None
     searchIndex.lastResDict = None
@@ -89,10 +89,10 @@ def _build_index(index_up_to_date):
         limit = config['numberOfResults']
         if limit <= 0:
             limit = 1
-        elif limit > 500:
-            limit = 500
+        elif limit > 5000:
+            limit = 5000
     except KeyError:
-        limit = 20
+        limit = 500
     searchIndex.limit = limit
 
     try:

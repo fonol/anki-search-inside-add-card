@@ -53,7 +53,7 @@ body {
 
 .cardR {
   border: 1px solid $noteBorderColor$; 
-  padding: 10px 15px 25px 15px; 
+  padding: 10px 17px 25px 17px; 
   position: relative;
   font-size: $noteFontSize$ !important;
   color: $noteForegroundColor$;
@@ -222,7 +222,7 @@ select {
 }
 .pinLbl {
     background: $noteBackgroundColor$; 
-    color: $noteForegroundColor$;
+    color: black;
     z-index:9999;
     padding: 1px 5px 2px 5px; 
     cursor: pointer;
@@ -453,7 +453,7 @@ select {
 
 @media (min-height: 900px) {
     #tagContainer {
-        max-height: 400px !important;
+        max-height: 380px !important;
     }
     .searchInfoTagSep{
         margin-top: 20px !important;
@@ -918,6 +918,7 @@ select {
 #modal-subpage-inner {
     overflow-y: auto;
     width: 100%;
+    margin-top: 5px;
 }
 .modal-close {
 
@@ -1021,6 +1022,10 @@ span.tag-symbol {
     font-size: 11px !important;
     text-align: right;
   }
+#cal-row {
+    margin-bottom: 6px;
+}
+
 .cal-block-outer {
     height: 100%;
      padding-top: 5px;
@@ -1192,4 +1197,51 @@ span.tag-symbol {
 }
 .siac-tag-info-box .flot-y-axis {
     left: -15px !important;
+}
+
+#siac-pagination {
+    position: relative;
+    font-size: 13px !important;
+    margin: 4px 0 3px 5px;
+    white-space: nowrap;    
+    overflow: hidden;
+}
+#siac-pagination-wrapper {
+    text-align: left;
+    display: inline-block;
+    margin-left: 10px;
+    white-space: nowrap;    
+    overflow: hidden;
+}
+#siac-pagination-status {
+    margin-right: 12px;
+    display: inline-block;
+    user-select: none;
+    min-width: 160px;
+    white-space: nowrap;
+}
+.siac-pg-icn {
+    cursor: pointer;
+    margin-left: 3px;
+    margin-right: 3px;
+    display: inline-block;
+    width: 12px;
+    text-align: center;
+    user-select: none;
+}
+.siac-pg-icn-active {
+    font-weight: bold;
+}
+.siac-pg-icn:hover {
+    transform: scale(1.2);
+    color: #2496dc;
+}
+
+.siac-model-name {
+    font-weight: bold;
+    margin: 5px;
+}
+.siac-model-table {
+    margin-left: 15px;
+    width: calc(100% - 15px);
 }

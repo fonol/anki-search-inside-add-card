@@ -39,17 +39,8 @@ class FTSIndex:
         self.creation_info["decks"] = config["decks"]
         #exclude fields
         try:
-            fld_dict = config['fieldsToExclude']
-            self.creation_info["fields_to_exclude_original"] = fld_dict
-            self.fields_to_exclude = {}
-            for note_templ_name, fld_names in fld_dict.items():
-                model = mw.col.models.byName(note_templ_name)
-                if model is None:
-                    continue
-                self.fields_to_exclude[model['id']] = []
-                for fld in model['flds']:
-                    if fld['name'] in fld_names:
-                        self.fields_to_exclude[model['id']].append(fld['ord'])
+            self.fields_to_exclude = config['fieldsToExclude']
+            self.creation_info["fields_to_exclude_original"] = self.fields_to_exclude 
         except KeyError:
             self.fields_to_exclude = {} 
         self.output.fields_to_exclude = self.fields_to_exclude
@@ -196,61 +187,34 @@ class FTSIndex:
 
 
         resDict["highlighting"] = self.highlighting
-        if self.highlighting:
-            start = time.time()
-            querySet =  set(replaceAccentsWithVowels(s).lower() for s in text.split(" "))
-            resDict["time-highlighting"] = int((time.time() - start) * 1000)
-        
-           
-
-        if self.highlighting and self.type == "SQLite FTS5":
-            start = time.time()
-            for nid, text, tags, did, source, score, mid in res:
-                if not str(nid) in self.pinned and (allDecks or str(did) in decks):
-                    rList.append((self.output._markHighlights(source, querySet).replace('`', '\\`'), tags, did, nid, score, mid))
+        if self.type == "SQLite FTS5":
+            for r in res:
+                if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
+                    rList.append((r[4], r[2], r[3], r[0], r[5], r[6]))
                     c += 1
                     if c >= self.limit:
                         break
-            resDict["time-highlighting"] += int((time.time() - start) * 1000)
 
-        else:
+        elif self.type == "SQLite FTS4":
+            start = time.time()
+            for r in res:
+                if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
+                    rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0), r[6]))
+            resDict["time-ranking"] = int((time.time() - start) * 1000)
             
-            if self.type == "SQLite FTS5":
-                for r in res:
-                    if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                        rList.append((r[4], r[2], r[3], r[0], r[5], r[6]))
-                        c += 1
-                        if c >= self.limit:
-                            break
-
-            elif self.type == "SQLite FTS4":
-                start = time.time()
-                for r in res:
-                    if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                        rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0), r[6]))
-                resDict["time-ranking"] = int((time.time() - start) * 1000)
-                
-            else:
-                start = time.time()
-                for r in res:
-                    if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                        rList.append((r[4], r[2], r[3], r[0], self.simpleRank(r[5]), r[6]))
-                resDict["time-ranking"] = int((time.time() - start) * 1000)
+        else:
+            start = time.time()
+            for r in res:
+                if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
+                    rList.append((r[4], r[2], r[3], r[0], self.simpleRank(r[5]), r[6]))
+            resDict["time-ranking"] = int((time.time() - start) * 1000)
       
         conn.close()
 
         #if fts5 is not used, results are not sorted by score
         if not self.type == "SQLite FTS5":
             listSorted = sorted(rList, key=lambda x: x[4])
-            if self.highlighting:
-                start = time.time()
-                rList = []
-                for r in listSorted[:min(self.limit, len(listSorted))]:
-                    rList.append((self.output._markHighlights(r[0], querySet).replace('`', '\\`'), r[1], r[2], r[3], r[4], r[5]))
-                resDict["time-highlighting"] += int((time.time() - start) * 1000)
-                
-            else:
-                rList = listSorted
+            rList = listSorted
         if self.logging:
             log("Query was: " + query)
             log("Result length (after removing pinned and unselected decks): " + str(len(rList)))
@@ -259,12 +223,14 @@ class FTSIndex:
         return resDict
 
     def printOutput(self, result, stamp):
-
+        query_set = None
+        if self.highlighting:
+            query_set =  set(replaceAccentsWithVowels(s).lower() for s in self.lastResDict["query"].split(" "))
         if type(result) is str:
             #self.output.show_tooltip(result)
             pass
         elif result is not None:
-            self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True)
+            self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
     
     
             
@@ -405,6 +371,8 @@ class FTSIndex:
         if did is None or len(did) == 0:
             return
         did = did[0]
+        if str(note.mid) in self.fields_to_exclude:
+            content = remove_fields(content, self.fields_to_exclude[str(note.mid)])
         conn = sqlite3.connect(self.dir + "/search-data.db")
         conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid) VALUES (?, ?, ?, ?, ?, ?)", (note.id, clean(content, self.stopWords), tags, did, content, note.mid))
         conn.commit()

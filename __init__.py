@@ -145,11 +145,14 @@ def myOnBridgeCmd(self, cmd):
         searchIndex.output.editor = self
 
 
-    if (not searchingDisabled and cmd.startswith("fldChgd ")):
+    if not searchingDisabled and cmd.startswith("fldChgd "):
         rerenderInfo(self, cmd[8:])
-    elif (cmd.startswith("srchDB ")):
+    elif cmd.startswith("siac-page "):
+        if checkIndex():
+            searchIndex.output.show_page(self, int(cmd.split()[1]))
+    elif cmd.startswith("srchDB "):
         rerenderInfo(self, cmd[7:], searchDB = True)
-    elif (cmd.startswith("fldSlctd ") and not searchingDisabled and searchIndex is not None):
+    elif cmd.startswith("fldSlctd ") and not searchingDisabled and searchIndex is not None:
         if searchIndex.logging:
             log("Selected in field: " + cmd[9:])
         rerenderInfo(self, cmd[9:])
@@ -190,6 +193,8 @@ def myOnBridgeCmd(self, cmd):
         if checkIndex():
             parseSortCommand(cmd[6:])
     
+    elif cmd == "siac-model-dialog":
+        display_model_dialog()
         
     elif cmd.startswith("addedSameDay "):
         if checkIndex():
@@ -203,14 +208,14 @@ def myOnBridgeCmd(self, cmd):
     elif cmd.startswith("calInfo "):
         if checkIndex():
             context_html = get_cal_info_context(int(cmd[8:]))
-            res = get_notes_added_on_day_of_year(int(cmd[8:]), searchIndex.limit)
+            res = get_notes_added_on_day_of_year(int(cmd[8:]), min(searchIndex.limit, 100))
             searchIndex.output.print_timeline_info(context_html, res)
 
     elif cmd == "siac_rebuild_index":
         # we have to reset the ui because if the index is recreated, its values won't be in sync with the ui anymore
         self.web.eval("""
         $('#searchResults').html('').hide(); 
-        $('#searchInfo').html(''); 
+        $('#siac-pagination-wrapper,#siac-pagination-status,#searchInfo').html("");
         $('#toggleTop').removeAttr('onclick').unbind("click");
         $('#loader').show();""")
         set_index(None)
@@ -337,6 +342,18 @@ def myOnBridgeCmd(self, cmd):
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and searchIndex is not None:
             searchIndex.output.editor.web.eval("selectDeckWithId(%s);" % deckChooser.selectedId())
+    
+    elif cmd.startswith("siac-update-field-to-hide-in-results "):
+        if not checkIndex():
+            return
+        update_field_to_hide_in_results(cmd.split()[1], int(cmd.split()[2]), cmd.split()[3] == "true")
+
+    elif cmd.startswith("siac-update-field-to-exclude "):
+        if not checkIndex():
+            return
+        update_field_to_exclude(cmd.split()[1], int(cmd.split()[2]), cmd.split()[3] == "true")
+
+
     else:
         oldOnBridge(self, cmd)
 
@@ -583,6 +600,33 @@ def addOptionsToContextMenu(clickInfo):
         origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
 
 
+def update_field_to_hide_in_results(mid, fldOrd, value):
+    if not value:
+        config["fieldsToHideInResults"][mid].remove(fldOrd)  
+        if len(config["fieldsToHideInResults"][mid]) == 0:
+            del config["fieldsToHideInResults"][mid]
+    else:
+        if not mid in config["fieldsToHideInResults"]:
+            config["fieldsToHideInResults"][mid] = [fldOrd]
+        else:
+            config["fieldsToHideInResults"][mid].append(fldOrd)
+    if checkIndex():
+        get_index().output.fields_to_hide_in_results = config["fieldsToHideInResults"]
+    mw.addonManager.writeConfig(__name__, config)
+    
+
+def update_field_to_exclude(mid, fldOrd, value):
+    if not value:
+        config["fieldsToExclude"][mid].remove(fldOrd)  
+        if len(config["fieldsToExclude"][mid]) == 0:
+            del config["fieldsToExclude"][mid]
+    else:
+        if not mid in config["fieldsToExclude"]:
+            config["fieldsToExclude"][mid] = [fldOrd]
+        else:
+            config["fieldsToExclude"][mid].append(fldOrd)
+    mw.addonManager.writeConfig(__name__, config)
+
 def setStamp():
     """
     Generate a milisec stamp and give it to the index.
@@ -705,18 +749,11 @@ def showTimingModal():
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", searchIndex.lastResDict["time-stopwords"] if searchIndex.lastResDict["time-stopwords"] > 0 else "< 1") 
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", searchIndex.lastResDict["time-synonyms"] if searchIndex.lastResDict["time-synonyms"] > 0 else "< 1") 
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Executing Query", searchIndex.lastResDict["time-query"] if searchIndex.lastResDict["time-query"] > 0 else "< 1")
-    if searchIndex.type == "Whoosh":
-        if searchIndex.lastResDict["highlighting"]:
-            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
-    
-    elif searchIndex.type == "SQLite FTS5":
-        if searchIndex.lastResDict["highlighting"]:
-            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
-    else:
+    if searchIndex.type != "SQLite FTS5":
         html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Ranking", searchIndex.lastResDict["time-ranking"] if searchIndex.lastResDict["time-ranking"] > 0 else "< 1")
-        if searchIndex.lastResDict["highlighting"]:
-            html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Highlighting", searchIndex.lastResDict["time-highlighting"] if searchIndex.lastResDict["time-highlighting"] > 0 else "< 1")
-
+       
+    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML", searchIndex.lastResDict["time-html"] if searchIndex.lastResDict["time-html"] > 0 else "< 1")
+   
     html += "</table>"
     searchIndex.output.showInModal(html)
 
@@ -761,7 +798,8 @@ def updateStyling(cmd):
                 document.getElementById('cal-row').style.display = 'block';
             } else {
                 document.getElementById('bottomContainer').children[0].innerHTML = `%s`;
-                $('.cal-block-outer').on('mouseenter', function() { calBlockMouseEnter(this);});
+                $('.cal-block-outer').mouseenter(function(event) { calBlockMouseEnter(event, this);});
+                $('.cal-block-outer').click(function(event) { displayCalInfo(this);});
             }
             onResize();
             """ % getCalendarHtml())
@@ -781,10 +819,7 @@ def updateStyling(cmd):
     elif name == "alwaysRebuildIndexIfSmallerThan":
         config[name] = int(value)
     
-    elif name == "showExcludedFields":
-        config[name] = value == "true" or value == "on"
-        if checkIndex():
-            searchIndex.output.showExcludedFields = config[name]
+   
 
 def _addToTagList(tmap, name):
     """
