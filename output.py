@@ -28,7 +28,6 @@ class Output:
         self.lastResults = None
         self.hideSidebar = False
         self.uiVisible = True
-        self.showExcludedFields = True
         # saved to display the same time taken when clicking on a page other than 1
         self.last_took = None
         self.last_had_timing_info = False
@@ -224,7 +223,7 @@ class Output:
         else:
             stamp = "siac-tg-" + get_stamp()
             tagData = " ".join(self.iterateTagmap(tm, ""))
-            html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' onclick='tagClick(this);'>%s</div>" %(stamp, tagData, str(len(tm)) + " tags ...")
+            html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, str(len(tm)) + " tags ...")
         
         return html
 

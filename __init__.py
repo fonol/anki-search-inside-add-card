@@ -717,7 +717,6 @@ def getIndexInfo():
                <tr><td>Toggle Shortcut:</td><td>  <b>%s</b></td></tr>
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>Fields Excluded:</td><td>  %s</td></tr>
-               <tr><td>Show Excluded Fields:</td><td>  <b>%s</b></td></tr>
              </table>
             <div class='siac-btn-small' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>Rebuild Index</div>
             """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(searchIndex.stopWords), 
@@ -731,8 +730,7 @@ def getIndexInfo():
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showRetentionScores"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"],
-            "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showExcludedFields"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>"
+            "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields))
             )
 
     

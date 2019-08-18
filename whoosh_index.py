@@ -204,7 +204,7 @@ class WhooshSearchIndex:
     def printOutput(self, result, stamp):
         if result is not None:
             query_set = None
-            if self.highlighting:
+            if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
                 query_set = set(replaceAccentsWithVowels(s).lower() for s in text.split(" "))
             self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
 

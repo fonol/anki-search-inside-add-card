@@ -224,7 +224,7 @@ class FTSIndex:
 
     def printOutput(self, result, stamp):
         query_set = None
-        if self.highlighting:
+        if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
             query_set =  set(replaceAccentsWithVowels(s).lower() for s in self.lastResDict["query"].split(" "))
         if type(result) is str:
             #self.output.show_tooltip(result)

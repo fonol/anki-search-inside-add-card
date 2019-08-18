@@ -457,7 +457,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                         <div id='deckSelWrapper'> 
                             <table id='deckSel'></table>
                         </div>
-                        <div style='margin-top: 0px; margin-bottom: 10px; white-space: nowrap;'><button class='deck-list-button' onclick='selectAllDecks();'>All</button><button class='deck-list-button center' onclick='unselectAllDecks();'>None</button><button class='deck-list-button' onclick="pycmd('selectCurrent')">Current</button><button class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</button></div>
+                        <div style='margin-top: 0px; margin-bottom: 10px; white-space: nowrap;'><div class='deck-list-button' onclick='selectAllDecks();'>All</div><div class='deck-list-button center' onclick='unselectAllDecks();'>None</div><div class='deck-list-button' onclick="pycmd('selectCurrent')">Current</div><div class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</div></div>
                     </div>
                     <div class='flexCol right' style="position: relative;">
                         <table class=''>

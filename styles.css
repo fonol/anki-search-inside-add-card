@@ -701,6 +701,9 @@ color: $deckSelectButtonForegroundColor$;
 cursor: pointer;
 font-size: 11px !important;
 user-select: none;
+display: inline;
+padding: 1px 4px 1px 4px;
+outline: none;
 }
 .deck-list-button.center {
     border-left: none;
