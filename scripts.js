@@ -166,6 +166,7 @@ function showTagInfo(elem) {
     } else {
         document.getElementById(id).style.display = "block";
     }
+  
 }
 
 function tagMouseLeave(elem) {
@@ -217,6 +218,7 @@ function tagInfoBoxClicked(elem) {
     }
 
 }
+
 
 function getSelectionText() {
     if (!searchOnSelection || isFrozen)
@@ -439,6 +441,7 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
         document.getElementById("searchResults").style.paddingRight = '10px';
         $("#greyout").hide();
         displayPagination(page, pageMax, total, html.length > 0);
+        if (gridView && document.getElementsByClassName("pinned").length > 1) { reflowGrid(); }
     }
     else {
         time = gridView ? 100 : 130;
@@ -460,6 +463,7 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
                         $('.cardWrapper').show();
                     document.getElementById("searchResults").style.overflowY = 'auto';
                     document.getElementById("searchResults").style.paddingRight = '10px';
+                    if (gridView && document.getElementsByClassName("pinned").length > 1) { reflowGrid(); }
                     $("#greyout").hide();
                 }
             }, time);
