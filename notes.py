@@ -148,6 +148,20 @@ def get_note(id):
     conn.close()
     return res
 
+def update_note_text(id, text):
+    conn = _get_connection()
+    sql = """
+        update notes set text=?, modified=datetime('now', 'localtime') where id=?
+    """
+    conn.execute(sql, (text, id))
+    conn.commit()
+    note = conn.execute("select title, source, tags from notes where id=" + id).fetchone()
+    conn.close()
+    index = get_index()
+    if index is not None:
+        index.update_user_note((id, note[0], text, note[1], note[2], -1, ""))
+
+
 def update_note(id, title, text, source, tags, reminder):
 
     text = clean_user_note_text(text)
@@ -197,6 +211,11 @@ def find_by_tag(tag_str):
     output_list = _to_output_list(res, pinned)
     return output_list
 
+def find_by_text(text):
+    index = get_index()
+    index.search(text, [])
+
+
 def delete_note(id):
     conn = _get_connection()
     sql = """
@@ -210,6 +229,12 @@ def get_read_today_count():
     now = datetime.today().strftime('%Y-%m-%d')
     conn = _get_connection()
     c = conn.execute("select count(*) from notes where lastscheduled like '%s %'" % now).fetchone()
+    conn.close()
+    return c
+
+def get_queue_count():
+    conn = _get_connection()
+    c = conn.execute("select count(*) from notes where position is not null and position >= 0").fetchone()
     conn.close()
     return c
 
