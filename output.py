@@ -6,7 +6,7 @@ import math
 from datetime import datetime
 from aqt import mw
 from aqt.utils import showInfo, tooltip
-from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar, get_stamp
+from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar, get_stamp, remove_divs
 from .logging import log
 from .stats import getRetentions
 from .state import get_index
@@ -67,7 +67,7 @@ class Output:
         
         self.noteTemplateUserNote = """<div class='cardWrapper %s' id='nWr-%s'> 
                             <div class='topLeftWr'>
-                                <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
+                                <div id='cW-%s' class='rankingLbl'>%s &nbsp;SIAC<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
                                 %s
                             </div>
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
@@ -157,9 +157,8 @@ class Output:
                 text = self._markHighlights(text, query_set)
 
             #non-anki notes should be displayed differently, we distinguish between title, text and source here
-            if str(res[5]) == "-1":
+            if str(res[2]) == "-1":
                 text = self._build_non_anki_note_html(text)
-               
 
             # hide fields that should not be shown 
             if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
@@ -173,6 +172,10 @@ class Output:
 
             #try to put fields that consist of a single image in their own line
             text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
+
+            #remove <div> tags if set in config
+            if self.remove_divs:
+                text = remove_divs(text)
 
             # use either the template for addon's notes or the normal
             if str(res[2]) == "-1":
@@ -479,13 +482,17 @@ class Output:
             text = res[0]
 
             #non-anki notes should be displayed differently, we distinguish between title, text and source here
-            if str(res[5]) == "-1":
+            if str(res[2]) == "-1":
                 text = self._build_non_anki_note_html(text)
 
             # hide fields that should not be shown 
             if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
                 text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res[5])]])
-
+                
+                
+            #remove <div> tags if set in config
+            if self.remove_divs:
+                text = remove_divs(text)
 
             text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
             text = self.tryHideImageOcclusion(text)
@@ -541,11 +548,12 @@ class Output:
             self.plotjsLoaded = True
 
 
-    def show_search_modal(self, on_enter_attr):
+    def show_search_modal(self, on_enter_attr, header):
         self.editor.web.eval("""
         document.getElementById('siac-search-modal').style.display = 'block';
-         document.getElementById('siac-search-modal').setAttribute('onkeyup', %s);
-        """ % on_enter_attr)
+        document.getElementById('siac-search-modal-header').innerHTML = `%s`;
+        document.getElementById('siac-search-modal-inp').setAttribute('onkeyup', '%s');
+        """ % (header,on_enter_attr))
 
     def showStats(self, text, reviewPlotData, ivlPlotData, timePlotData):
         
