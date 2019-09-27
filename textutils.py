@@ -183,3 +183,7 @@ def build_user_note_text(title, text, source):
 
 def remove_fields(text, field_ords):
     return "\u001f".join([t for i,t in enumerate(text.split("\u001f")) if i not in field_ords])
+
+
+def remove_divs(html):
+    return re.sub("</?div ?[^>]*?>", "", html, flags=re.IGNORECASE)
