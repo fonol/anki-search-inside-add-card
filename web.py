@@ -837,6 +837,7 @@ def display_note_reading_modal(note_id):
                     {text}
                 </div>
                 <div style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding-top: 5px;'>
+                    WIP!
                     <span>{queue_info}</span>
                     <div class='siac-btn-small'>Start</div>
                     <div class='siac-btn-small'>1/3</div>
@@ -850,7 +851,7 @@ def display_note_reading_modal(note_id):
         is_contenteditable = "true" if len(text) < 50000 else "false"
         onkeyup = "onfocusout='readingModalTextKeyup(this, %s)'"  % (note_id) if is_contenteditable else ""
         save_on_close = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s)'"  % (note_id) if is_contenteditable else ""
-        queue_info = "Position in Queue: <b>%s</b> / <b>%s</b>" % (pos, queue_len) if pos is not None else "This Note is not in the Reading Queue"
+        queue_info = "Position in Queue: <b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "This Note is not in the Reading Queue"
 
         params = dict(title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, pos = pos , queue_len = queue_len, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
         html = html.format_map(params)
