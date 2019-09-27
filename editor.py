@@ -183,11 +183,12 @@ class CreateTab(QWidget):
         self.layout = QHBoxLayout()
         vbox_left = QVBoxLayout()
         vbox_left.addWidget(self.tree)
-        vbox_left.addWidget(self.note_tree)
-
         self.all_tags_cb = QCheckBox("Show All Tags")
         self.all_tags_cb.stateChanged.connect(self.tag_cb_changed)
         vbox_left.addWidget(self.all_tags_cb)
+        vbox_left.addWidget(self.note_tree)
+
+       
         self.layout.addLayout(vbox_left, 33)
 
         hbox = QHBoxLayout()
