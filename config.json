@@ -82,7 +82,10 @@
 "fieldsToExclude": {},
 "fieldsToHideInResults" : {},
 "tagHoverDelayInMiliSec": 750,
-"alwaysRebuildIndexIfSmallerThan" : 1500
+"alwaysRebuildIndexIfSmallerThan" : 1500,
+"searchOnTagEntry" : true,
+"userNotesPerDay": 5,
+"removeDivsFromOutput": false
 
 
 }
