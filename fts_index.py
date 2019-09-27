@@ -110,14 +110,14 @@ class FTSIndex:
         return ""
 
 
-    def search(self, text, decks):
+    def search(self, text, decks, only_user_notes = False):
         """
         Search for the given text.
         Args: 
         text - string to search, typically fields content
         decks - list of deck ids, if -1 is contained, all decks are searched
         """
-        worker = Worker(self.searchProc, text, decks) 
+        worker = Worker(self.searchProc, text, decks, only_user_notes) 
         worker.stamp = self.output.getMiliSecStamp()
         self.output.latest = worker.stamp
         worker.signals.result.connect(self.printOutput)
@@ -125,7 +125,7 @@ class FTSIndex:
         self.threadPool.start(worker)
 
 
-    def searchProc(self, text, decks):
+    def searchProc(self, text, decks, only_user_notes):
         resDict = {}
         start = time.time()
         orig = text
@@ -167,13 +167,14 @@ class FTSIndex:
         allDecks = "-1" in decks
         decks.append("-1")
         rList = list()
+        user_note_filter = "and mid = -1" if only_user_notes else ""
         conn = sqlite3.connect(self.dir + "/search-data.db")
         if self.type == "SQLite FTS5":
-            dbStr = "select nid, text, tags, did, source, bm25(notes), mid, refs from notes where notes match '%s' order by bm25(notes)" %(query)
+            dbStr = "select nid, text, tags, did, source, bm25(notes), mid, refs from notes where notes match '%s' order by bm25(notes) %s" %(query, user_note_filter)
         elif self.type == "SQLite FTS4":
-            dbStr = "select nid, text, tags, did, source, matchinfo(notes, 'pcnalx'), mid, refs from notes where text match '%s'" %(query)
+            dbStr = "select nid, text, tags, did, source, matchinfo(notes, 'pcnalx'), mid, refs from notes where text match '%s' %s" %(query, user_note_filter)
         else:
-            dbStr = "select nid, text, tags, did, source, matchinfo(notes), mid, refs from notes where text match '%s'" %(query)
+            dbStr = "select nid, text, tags, did, source, matchinfo(notes), mid, refs from notes where text match '%s' %s" %(query, user_note_filter)
 
         try:
             start = time.time()
@@ -381,6 +382,9 @@ class FTSIndex:
         """
         self.deleteNote(int(note[0]))
         self.add_user_note(note)
+
+
+
 
     def addNote(self, note):
         content = " \u001f ".join(note.fields)
