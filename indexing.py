@@ -39,7 +39,7 @@ def get_notes_in_collection():
             other_notes_id_map[nid].append(id)
         else:
             other_notes_id_map[nid] = [id]
-        text = title + "<br/>" + text
+        text = title + "\u001f" + text + "\u001f" + source
         index_notes.append((id, text, tags, -1, "-1", "")) 
 
     for id, flds, t, did, mid in oList:
@@ -92,6 +92,7 @@ def _build_index(index_up_to_date):
 
     searchIndex.finder = Finder(mw.col)
     searchIndex.output.stopwords = searchIndex.stopWords
+    searchIndex.output.remove_divs = config["removeDivsFromOutput"]
     searchIndex.output.fields_to_hide_in_results = config["fieldsToHideInResults"]
     searchIndex.selectedDecks = []
     searchIndex.lastSearch = None
