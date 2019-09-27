@@ -424,7 +424,7 @@ def myOnBridgeCmd(self, cmd):
 
 
     else:
-        oldOnBridge(self, cmd)
+        return oldOnBridge(self, cmd)
 
 
 def parseSortCommand(cmd):
