@@ -99,7 +99,7 @@ class WhooshSearchIndex:
 
 
 
-    def search(self, text, decks):
+    def search(self, text, decks, only_user_notes = False):
         """
         Search for the given text.
 
@@ -107,7 +107,7 @@ class WhooshSearchIndex:
         text - string to search, typically fields content
         decks - list of deck ids, if -1 is contained, all decks are searched
         """
-        worker = Worker(self.searchProc, text, decks) 
+        worker = Worker(self.searchProc, text, decks, only_user_notes) 
         worker.stamp = self.output.getMiliSecStamp()
         self.output.latest = worker.stamp
         worker.signals.result.connect(self.printOutput)
@@ -116,7 +116,7 @@ class WhooshSearchIndex:
 
 
         
-    def searchProc(self, text, decks):    
+    def searchProc(self, text, decks, only_user_notes = False):    
         resDict = {}
         start = time.time()
         orig = text
@@ -151,7 +151,7 @@ class WhooshSearchIndex:
             resDict["highlighting"] = self.highlighting
           
             for r in res:
-                if not r["nid"] in self.pinned:
+                if not r["nid"] in self.pinned and (not only_user_notes or r["did"] == "-1"):
                     rList.append((r["source"].replace('`', '\\`'), r["tags"], r["did"], r["nid"], 1, r["mid"], r["refs"]))
 
             self.lastResDict = resDict
