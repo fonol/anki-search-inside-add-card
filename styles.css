@@ -39,7 +39,7 @@ body {
 
 #searchResults {
     display: none; 
-    height: calc(100% - 20px); 
+    height: 100%; 
     overflow-y: auto; 
     padding-right: 10px;
     overflow-x: hidden;
@@ -59,6 +59,8 @@ body {
   color: $noteForegroundColor$;
   background: $noteBackgroundColor$;
   overflow-x: hidden;
+  overflow-y: hidden;
+  max-height: 650px;
   
 }
 .cardR img {
@@ -120,7 +122,7 @@ body {
 }
 
 #topContainer {
-    z-index: 999;
+    z-index: 1000;
     position: relative;
     flex-wrap: nowrap;
 }
@@ -190,44 +192,34 @@ select {
     border: 1px solid $noteBorderColor$;
     border-left: 0px solid  $noteBackgroundColor$; 
     color: $noteForegroundColor$;
-    background:  $noteBackgroundColor$; 
-    z-index:9999;
     padding: 2px 6px 2px 6px; 
-    cursor: pointer;
     flex: 1;
     font-size: 13px !important;
+}
+.srchLbl,.editLbl,.pinLbl,.remLbl,.floatLbl,.deleteLbl {
+    background:  $noteBackgroundColor$; 
     user-select: none;
+    cursor: pointer;
+    z-index:9999;
 }
 .srchLbl  {
-    background:  $noteBackgroundColor$; 
     color: $noteForegroundColor$;
-    z-index:9999;
     border: 1px solid $noteBorderColor$;
     border-right: 0px solid $noteBackgroundColor$; 
     padding: 3px 3px 3px 3px;
-    cursor: pointer;
     flex: 1;
-    user-select: none;
 }
-.editLbl {
-    background:  $noteBackgroundColor$; 
+.editLbl,.deleteLbl {
     color: $noteForegroundColor$;
-    z-index:99999;
     border: 1px solid $noteBorderColor$;
     border-right: 0px solid  $noteBackgroundColor$; 
     padding: 3px 5px 3px 5px;
-    cursor: pointer;
     flex: 1;
-    user-select: none;
 }
 .pinLbl {
-    background: $noteBackgroundColor$; 
     color: black;
-    z-index:9999;
     padding: 1px 5px 2px 5px; 
-    cursor: pointer;
-   flex: 1;
-   user-select: none;
+     flex: 1;
 }
 .pinLbl.unselected {
     border: 1px solid $noteBorderColor$;
@@ -248,7 +240,7 @@ select {
   user-select: none;
 }
 
-.editLbl:hover,.srchLbl:hover,.remLbl:hover,.floatLbl:hover {
+.editLbl:hover,.srchLbl:hover,.remLbl:hover,.floatLbl:hover,.deleteLbl:hover {
     color: #2496dc;
 }
 
@@ -329,13 +321,13 @@ select {
 
 
 #deckSelWrapper {
-    height: 130px;
+    height: 230px;
     margin-bottom: 0px !important;
     margin-right: 1px;
-    width: calc(100% - 1px);
-    border: 1px solid grey;
+    width: 100%;
     overflow-y: auto;
     background:  $deckSelectBackgroundColor$;
+    text-align: left;
 }
 
 #deckSel {
@@ -428,7 +420,7 @@ select {
    .icns-add {
         display: none !important;
     }
-    .grid-icon, .freeze-icon, .rnd-icon {
+    .freeze-icon, .rnd-icon, #toggleTop {
         font-size: 17px !important;
     }
 }
@@ -559,7 +551,7 @@ select {
 #icns-large, #icns-small {
     position: absolute;
     right: 5px;
-    bottom: 5px;
+    top: 5px;
     text-align: right;
 
 }
@@ -588,25 +580,11 @@ select {
 
 
 
-.freeze-icon:hover, .grid-icon:hover, .rnd-icon:hover {
+.freeze-icon:hover, .rnd-icon:hover {
     color:  #2496dc;
 }
 
 .freeze-icon.frozen {
-    color:  #2496dc !important;
-}
-.grid-icon {
-   float: right;
-    font-size: 13px !important;
-    cursor: pointer;
-    color: grey;
-    user-select: none;
-    white-space: nowrap;
-  overflow: hidden;
-  margin-right: 5px;
-
-}
-.grid-icon.active {
     color:  #2496dc !important;
 }
 
@@ -660,7 +638,7 @@ select {
 .deck-list-item {
     list-style-type: none;
     cursor: pointer;
-    margin: 0px;
+    margin: 0;
     padding: 0px;
     border-spacing: 0px;
     width: calc(100% - 8px);
@@ -682,6 +660,7 @@ select {
     background: $deckSelectHoverBackgroundColor$;
     color: $deckSelectHoverForegroundColor$;
 }
+
 .check {
     float: right;
     color: $deckSelectCheckmarkColor$;
@@ -695,13 +674,12 @@ select {
 }
 .deck-list-button {
 border: 1px solid $deckSelectButtonBorderColor$;
-border-top: 0px;
 background: $deckSelectBackgroundColor$;
 color: $deckSelectButtonForegroundColor$;
 cursor: pointer;
 font-size: 11px !important;
 user-select: none;
-display: inline;
+display: inline-block;
 padding: 1px 4px 1px 4px;
 outline: none;
 }
@@ -735,6 +713,7 @@ outline: none;
     margin-top: 0px;
     margin-left: 0px;
     padding-left: 0px;
+    
 }
 .exp {
     user-select: none;
@@ -777,12 +756,33 @@ table.striped tr:nth-child(even) {
     font-size: 10px !important;
     outline: none;
 }
-
-#indexInfo, #synonymsIcon, #stylingIcon {
+.siac-btn-small-dropdown {
+    display: none;
+    position: absolute;
+    color: $buttonForegroundColor$;
+    background-color: $buttonBackgroundColor$;
+    border: 1px solid  $buttonBorderColor$;
+    width: calc(100% - 8px);
+    margin-left: -5px;
+    padding: 1px 4px 1px 4px;
+    font-size: 11px !important;
+    z-index: 99999999;
+}
+.siac-btn-small:hover .siac-btn-small-dropdown {
+    display: block;
+  }
+  .siac-dropdown-item {
+      margin: 3px 0 2px 0;
+      text-align: left;
+  }
+.siac-btn-small-dropdown .siac-dropdown-item:hover {
+    color: #2496dc;
+}
+#indexInfo, #synonymsIcon, #stylingIcon, #siac-note-icn {
     margin-right: 5px;
 
 }
-#indexInfo:hover, #synonymsIcon:hover, #stylingIcon:hover {
+#indexInfo:hover, #synonymsIcon:hover, #stylingIcon:hover, #siac-note-icn:hover, #siac-timetable-icn:hover, #siac-settings-icn:hover {
     color: #2496dc;
 }
 
@@ -895,7 +895,8 @@ select {
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 15px;
-    width: 70%;
+    width: 80%;
+    max-height: 80%;
     border: 2px solid $modalBorderColor$;
   }
 
@@ -981,14 +982,16 @@ span.tag-symbol {
   }
 
   #toggleTop {
-    font-size: 19px;
+    float: right;
+    font-size: 13px !important;
     cursor: pointer;
     color: grey;
     user-select: none;
     font-weight: bold;
     text-align: center;
-    width: 100%;
-    z-index: 99999999;
+    vertical-align: top;
+    z-index: 999;
+    margin-left: 12px;
   }
   #toggleTop:hover {
       transform: scale(1.2);
@@ -1247,4 +1250,68 @@ span.tag-symbol {
 .siac-model-table {
     margin-left: 15px;
     width: calc(100% - 15px);
+}
+
+#siac-note-text-inp {
+    width: 100%;
+    min-height: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid $modalForegroundColor$;
+    margin-bottom: 10px;
+    padding-left: 2px;
+}
+
+#siac-reading-modal {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    margin-left: -4px;
+    background-color: darkslategrey;
+    color: white;
+    font-size: 12px;
+    /* border: 2px solid $modalBorderColor$;
+    border-left: 1px solid $modalBorderColor$; */
+    padding: 15px;
+    z-index: 99999999;  
+}
+
+#siac-search-modal {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    background-color: rgb(0,0,0); 
+    background-color: rgba(0,0,0,0.4); 
+    z-index: 99999999;  
+}
+#siac-search-modal-inp {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    margin: auto;
+    width: 200px;
+    height: 20px;
+}
+
+#siac-reading-modal a {
+    color: darkorange !important;
+}
+
+.reading-modal-close-icn {
+    position: absolute; 
+    top: 12px; right: 17px; 
+    cursor: pointer; 
+    font-size: 22px;
+}
+.reading-modal-close-icn:hover {
+    transform: scale(1.2);
+    color: #2496dc;   
 }

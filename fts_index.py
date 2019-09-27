@@ -57,13 +57,13 @@ class FTSIndex:
             conn = sqlite3.connect(self.dir + "/search-data.db")
             conn.execute("drop table if exists notes")
             if self.type == "SQLite FTS5":
-                conn.execute("create virtual table notes using fts5(nid, text, tags, did, source, mid)")
+                conn.execute("create virtual table notes using fts5(nid, text, tags, did, source, mid, refs)")
             elif self.type == "SQLite FTS4":
-                conn.execute("create virtual table notes using fts4(nid, text, tags, did, source, mid)")
+                conn.execute("create virtual table notes using fts4(nid, text, tags, did, source, mid, refs)")
             else:
-                conn.execute("create virtual table notes using fts3(nid, text, tags, did, source, mid)")
+                conn.execute("create virtual table notes using fts3(nid, text, tags, did, source, mid, refs)")
             
-            conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?,?)', cleaned)
+            conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?,?,?)', cleaned)
             conn.execute("INSERT INTO notes(notes) VALUES('optimize')")
             conn.commit()
             conn.close()
@@ -97,7 +97,7 @@ class FTSIndex:
             if row[4] in self.fields_to_exclude:
                 text = remove_fields(text, self.fields_to_exclude[row[4]])
             text = clean(text, self.stopWords)
-            filtered.append((row[0], text, row[2], row[3], row[1], row[4]))
+            filtered.append((row[0], text, row[2], row[3], row[1], row[4], row[5]))
         return filtered
 
     def removeStopwords(self, text):
@@ -163,15 +163,17 @@ class FTSIndex:
             return { "results" : [] }
 
         c = 0
+        resDict["decks"] = decks
         allDecks = "-1" in decks
+        decks.append("-1")
         rList = list()
         conn = sqlite3.connect(self.dir + "/search-data.db")
         if self.type == "SQLite FTS5":
-            dbStr = "select nid, text, tags, did, source, bm25(notes), mid from notes where notes match '%s' order by bm25(notes)" %(query)
+            dbStr = "select nid, text, tags, did, source, bm25(notes), mid, refs from notes where notes match '%s' order by bm25(notes)" %(query)
         elif self.type == "SQLite FTS4":
-            dbStr = "select nid, text, tags, did, source, matchinfo(notes, 'pcnalx'), mid from notes where text match '%s'" %(query)
+            dbStr = "select nid, text, tags, did, source, matchinfo(notes, 'pcnalx'), mid, refs from notes where text match '%s'" %(query)
         else:
-            dbStr = "select nid, text, tags, did, source, matchinfo(notes), mid from notes where text match '%s'" %(query)
+            dbStr = "select nid, text, tags, did, source, matchinfo(notes), mid, refs from notes where text match '%s'" %(query)
 
         try:
             start = time.time()
@@ -190,7 +192,7 @@ class FTSIndex:
         if self.type == "SQLite FTS5":
             for r in res:
                 if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                    rList.append((r[4], r[2], r[3], r[0], r[5], r[6]))
+                    rList.append((r[4], r[2], r[3], r[0], r[5], r[6], r[7]))
                     c += 1
                     if c >= self.limit:
                         break
@@ -199,14 +201,14 @@ class FTSIndex:
             start = time.time()
             for r in res:
                 if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                    rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0), r[6]))
+                    rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0), r[6], r[7]))
             resDict["time-ranking"] = int((time.time() - start) * 1000)
             
         else:
             start = time.time()
             for r in res:
                 if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                    rList.append((r[4], r[2], r[3], r[0], self.simpleRank(r[5]), r[6]))
+                    rList.append((r[4], r[2], r[3], r[0], self.simpleRank(r[5]), r[6], r[7]))
             resDict["time-ranking"] = int((time.time() - start) * 1000)
       
         conn.close()
@@ -249,7 +251,7 @@ class FTSIndex:
         
         if len (found) > 0:
             if not "-1" in decks:
-                deckQ =  "(%s)" % ",".join(decks)
+                deckQ =  "(-1, %s)" % ",".join(decks)
             else:
                 deckQ = ""
             #query db with found ids
@@ -263,7 +265,8 @@ class FTSIndex:
                 #pinned items should not appear in the results
                 if not str(r[0]) in self.pinned:
                     #todo: implement highlighting
-                    rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+                    #todo determine refs
+                    rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
             return { "result" : rList[:self.limit], "stamp" : stamp }
         return { "result" : [], "stamp" : stamp }
 
@@ -361,7 +364,23 @@ class FTSIndex:
         conn.commit()
         conn.close()
 
+    def add_user_note(self, note):
+        """
+        Add a non-anki note to the index.
+        """
+        text = build_user_note_text(title=note[1], text=note[2], source=note[3])
+        conn = sqlite3.connect(self.dir + "/search-data.db")
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note[0], clean(text, self.stopWords), note[4], -1, text, -1))
+        conn.commit()
+        conn.close()
+        persist_index_info(self)
 
+    def update_user_note(self, note):
+        """
+            Deletes and adds the given user note again with updated values.
+        """
+        self.deleteNote(int(note[0]))
+        self.add_user_note(note)
 
     def addNote(self, note):
         content = " \u001f ".join(note.fields)
@@ -374,7 +393,7 @@ class FTSIndex:
         if str(note.mid) in self.fields_to_exclude:
             content = remove_fields(content, self.fields_to_exclude[str(note.mid)])
         conn = sqlite3.connect(self.dir + "/search-data.db")
-        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid) VALUES (?, ?, ?, ?, ?, ?)", (note.id, clean(content, self.stopWords), tags, did, content, note.mid))
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note.id, clean(content, self.stopWords), tags, did, content, note.mid))
         conn.commit()
         conn.close()
         persist_index_info(self)

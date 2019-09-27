@@ -5,8 +5,9 @@ import re
 import datetime
 import time
 from aqt import mw
-from .textutils import cleanSynonym, trimIfLongerThan
+from .textutils import cleanSynonym, trimIfLongerThan, get_stamp
 from .state import get_index, checkIndex
+from .notes import get_note, _get_priority_list
 
 #css + js 
 all = """
@@ -436,7 +437,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
         $(`#fields`).wrap(`<div class='coll' id='leftSide' style='min-width: 200px; flex-grow: 1; width: %s%%;'></div>`);
         document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
         $(`<div class='coll secondCol' style='width: %s%%; flex-grow: 1;  height: 100%%;' id='infoBox'>
-
+            <div id='siac-second-col-wrapper'>
             <div id="greyout"></div>
             <div id="a-modal" class="modal">
                 <div class="modal-content">
@@ -452,38 +453,68 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                     </div>
                 </div>
             </div>
+            <div id='siac-search-modal'>
+                <input type='text' id='siac-search-modal-inp'/>
+            </div>
                 <div class="flexContainer" id="topContainer">
                     <div class='flexCol' style='margin-left: 0px; padding-left: 0px;'>
+                        <div class='siac-btn-small' style='display: inline-block; position: relative; min-width: 200px; width: calc(100%% - 1px); text-align: center;'>Decks & Tags
+                        <div class='siac-btn-small-dropdown'>
                         <div id='deckSelWrapper'> 
                             <table id='deckSel'></table>
                         </div>
-                        <div style='margin-top: 0px; margin-bottom: 10px; white-space: nowrap;'><div class='deck-list-button' onclick='selectAllDecks();'>All</div><div class='deck-list-button center' onclick='unselectAllDecks();'>None</div><div class='deck-list-button' onclick="pycmd('selectCurrent')">Current</div><div class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</div></div>
-                    </div>
-                    <div class='flexCol right' style="position: relative;">
-                        <table class=''>
-                            <tr><td style='text-align: left; padding-bottom: 10px; white-space: nowrap;'><div id='indexInfo' class='siac-btn-small' onclick='pycmd("indexInfo");'>Info</div>
-                            <div id='synonymsIcon' class='siac-btn-small' onclick='pycmd("synonyms");'>SynSets</div>
-                            <div id='stylingIcon' class='siac-btn-small' onclick='pycmd("styling");'>Settings</div>
-                           
-                            </td></tr>
-                            <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
-                            <tr><td class='tbLb'>Search on Typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
-                            <tr><td class='tbLb'>Search on Tag Entry</td><td><input id="tagCb" type='checkbox' checked onchange='setTagSearch(this)'/></td></tr>
-                            <tr><td class='tbLb'><mark>&nbsp;Highlighting&nbsp;</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
-                        </table>
-                        <div id="icns-large">
-                            <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
-                            <div class='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
-                            <div class='grid-icon' onclick='toggleGrid(this)'> <span class='icns-add'>Grid </span>&#9783; </div>
+                        <div style='margin-top: 3px; margin-bottom: 5px; white-space: nowrap; font-size: 0;'>
+                                <div class='deck-list-button' onclick='selectAllDecks();'>All</div>
+                                <div class='deck-list-button center' onclick='unselectAllDecks();'>None</div>
+                                <div class='deck-list-button' onclick="pycmd('selectCurrent')">Current</div>
+                                <div class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</div>
                         </div>
+                  </div>
+                  </div>
+                    </div>
+                    <div class='flexCol right' style="position: relative; min-height: 25px; white-space: nowrap;">
+                            <div id='siac-timetable-icn' class='siac-btn-small' style='position: relative; display:inline-block; margin-right: 6px;'>&nbsp; &#9998; Notes &nbsp;
+                                        <div class='siac-btn-small-dropdown'>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note");'>&nbsp;Create</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest");'>&nbsp;Newest</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-random");'>&nbsp;Random</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search");'>&nbsp;Search</div>
+                                                <hr>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue");'>&nbsp;<b>Queue</b></div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random");'>&nbsp;Random</div>
+
+                                </div>
+                            </div>
+                            <div id='siac-settings-icn' class='siac-btn-small' style='position: relative; display:inline-block; min-width: 140px; text-align: center; '>&nbsp; Settings & Info &nbsp;
+                                        <div class='siac-btn-small-dropdown'>
+                                                <table style='width: 100%%'>
+                                                    <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
+                                                    <tr><td class='tbLb'>Search on Typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
+                                                    <tr><td class='tbLb'><mark>&nbsp;Highlighting&nbsp;</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
+                                                    <tr><td class='tbLb'>Grid</td><td><input type='checkbox' id='gridCb' onchange='toggleGrid(this)'/></td></tr>
+                                                 </table>
+                                                 <br>
+                                                 <span>Menus</span>
+                                                 <hr>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("indexInfo");'>Info</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("synonyms");'>Synonyms</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("styling");'>Settings</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>Rebuild Index</div>
+
+                                         </div>
+                            </div>
                     </div>
                 </div>
-                <div id="resultsArea" style="height: 100px;  width: 100%%; border-top: 1px solid grey;">
-                    <div style='position: absolute; top: 15px; right: 16px; width: 30px; z-index: 999999;'>
-                        <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
-                    </div>
+                <div id="resultsArea" style="height: 100px;  width: 100%%; border-top: 1px solid grey; position: relative;">
+                    <div id="icns-large">
+                            <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
+                            <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
+                            <div class='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
+                        </div>
+                   
+                
                     <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
-                    <div style='height: 100%%; padding-bottom: 15px; padding-top: 15px; z-index: 100;' id='resultsWrapper'>
+                    <div style='height: calc(100%% - 28px); padding-top: 28px; z-index: 100;' id='resultsWrapper'>
                         <div id='searchInfo' class='%s'></div>
                         <div id='searchResults'></div>
                     </div>
@@ -549,6 +580,10 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                         </div>
                     </div>
 
+                </div>
+                </div>
+                <div id='siac-reading-modal'>
+                
                 </div>
                 </div>
                 `).insertAfter('#fields');
@@ -685,6 +720,151 @@ def display_model_dialog():
         html += "<div class='siac-model-fields'>%s</div>" % flds
     html += "</div></div>"
     index.output.show_in_modal_subpage(html)
+
+
+def note_edit_dialog(note_id = -1):
+    """
+        Returns the html for the note creation/edit dialog.
+        Returns just the content, excluding the dialog window, but including any buttons.
+        If a note_id is given, it will edit the selected note, else a new note will be created.
+    """
+
+    html = """
+        <div style='height: 10%;'>
+            <h3 style='margin-top: 5px;'>{header}</h3>
+        </div>
+        <div style='height: 80%; overflow-y: auto; width: 100%;'>
+            <span>Title</span>
+            <input id='siac-note-title-inp' style='width: 100%;' type='text' value='{title}'></input>
+            <br><br>
+            <span>Text</span>
+            <div id='siac-note-text-inp' contenteditable='true'>{text}</div>
+            <span>Source</span>
+            <input id='siac-note-source-inp' style='width: 100%;' type='text' value='{source}'></input>
+            <span>Tags</span>
+            <input id='siac-note-tag-inp' style='width: 100%;' type='text' value='{tags}'></input>
+        </div>
+        <div style='height: 30px; padding-top: 5px; width: 100%; text-align: right;'>
+            <div class='siac-btn-small'>Save</div>
+            <div class='siac-btn-small'>Close</div>
+        </div>
+    """
+
+    note = None
+    if note_id >= 0:
+        note = get_note(note_id)
+    
+    header = "Create a new Note" if note_id == -1 else "Edit Note"
+    title = note[1] if note is not None else ""
+    text = note[2] if note is not None else ""
+    source = note[3] if note is not None else ""
+    tags = note[4] if note is not None else ""
+    pos = ("Position in Reading Queue: <b>%s</b>" % note[10]) if note is not None else "This note is currently not in the reading queue."
+    params = dict(header = header, title = title, text = text, source = source, tags = tags, pos = pos)
+    html = html.format_map(params)
+    return html
+
+
+
+def display_note_reading_modal(note_id):
+    note = get_note(note_id)
+    index = get_index()
+
+    title = note[1]
+    text = note[2]
+    source = note[3]
+    tags = note[4]
+    created = note[6]
+    pos = note[10]
+    created_dt = datetime.datetime.strptime(created, '%Y-%m-%d %H:%M:%S')
+    now = datetime.datetime.now()
+    diff = now - created_dt
+
+    queue = _get_priority_list()
+    queue_len = len(queue)
+      
+    time_str = "Added %s %s ago."
+
+    if diff.total_seconds() / 60 < 2.0:
+        time_str = time_str % ("1", "minute")
+    elif diff.total_seconds() < 1.0:
+        time_str = time_str % (int(diff.total_seconds() / 3600), "minutes")
+    elif diff.total_seconds() / 86400 < 1.0:
+        time_str = time_str % (int(diff.total_seconds() / 3600), "hours")
+    elif diff.total_seconds() / 86400 >= 1.0 and diff.total_seconds() / 86400 < 2.0:
+        time_str = time_str % ("1", "day")
+    else:
+        time_str = time_str % (int(diff.total_seconds() / 86400), "days")
+
+    if checkIndex():
+        tag_str = ""
+        tags_split = tags.split()
+        tm = index.output.getTagMap(tags_split)
+        totalLength = sum([len(k) for k,v in tm.items()])
+        maxLength = 50
+        maxCount = 7 
+        if len(tm) <= maxCount or totalLength < maxLength:
+            for t, s in tm.items():
+                if len(s) > 0:
+                    tagData = " ".join(iterateTagmap({t : s}, ""))
+                    if len(s) == 1 and tagData.count("::") < 2 and not t in tags_split:
+                        tag_str += "<div class='tagLbl' style='float: left; margin: 0 5px 0 0;'>%s</div>" %(trimIfLongerThan(tagData.split(" ")[1], maxLength))
+                    else:
+                        tag_str += "<div class='tagLbl' style='float: left; margin: 0 5px 0 0;'>%s</div>" %(trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
+                else:
+                    tag_str += "<div class='tagLbl' style='float: left; margin: 0 5px 0 0;'>%s</div>" %(trimIfLongerThan(t, maxLength))
+        else:
+            tagData = " ".join(iterateTagmap(tm, ""))
+            tag_str += "<div class='tagLbl' style='float: left; margin: 0 5px 0 0;'>%s</div>" %(str(len(tm)) + " tags ...")
+
+        source = source if source is not None and len(source.strip()) > 0 else "Empty"
+        title = title if title is not None and len(title.strip()) > 0 else "Untitled"
+        title = trimIfLongerThan(title, 50)
+
+        html = """
+            <div>
+                <div style='height: 10%; width: 100%; border-bottom: 2px solid darkorange; margin-bottom: 5px;'>
+                    <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide();'>&times;</span>
+                    <h2 style='margin: 0 0 5px 0;'>{title}</h2>
+                    <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: <i>{source}</i></h4> 
+                    <h5 style='margin-top: 5px;'>{time_str}</h5> 
+                </div>
+                <div id='siac-reading-modal-text' style='overflow-y: auto; height: calc(90% - 140px); font-size: 13px; padding: 0 20px 0 20px;' contenteditable='{is_contenteditable}' {onkeyup}>
+                    {text}
+                </div>
+                <div style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding-top: 5px;'>
+                    <span>{queue_info}</span>
+                    <div class='siac-btn-small'>Start</div>
+                    <div class='siac-btn-small'>1/3</div>
+                    <div class='siac-btn-small'>2/3</div>
+                    <div class='siac-btn-small'>End</div>
+                    {tag_str}
+                </div>
+            </div>
+
+        """
+        is_contenteditable = "true" if len(text) < 50000 else "false"
+        onkeyup = "onkeyup='readingModalTextKeyup(event, this, %s)'"  % note_id if is_contenteditable else ""
+        queue_info = "Position in Queue: <b>%s</b> / <b>%s</b>" % (pos, queue_len) if pos is not None else "This Note is not in the Reading Queue"
+
+        params = dict(title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, pos = pos , queue_len = queue_len, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable)
+        html = html.format_map(params)
+        index.output.show_in_large_modal(html)
+
+def iterateTagmap(tmap, prefix):
+    if len(tmap) == 0:
+        return []
+    res = []
+    if prefix:
+        prefix = prefix + "::"
+    for key, value in tmap.items():
+        if type(value) is dict:
+            if len(value) > 0:
+                res.append(prefix + key)
+                res +=  iterateTagmap(value, prefix + key)
+            else:
+                res.append(prefix + key)
+    return res
 
 
 def stylingModal(config):

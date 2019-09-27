@@ -149,5 +149,37 @@ def get_stamp():
     return  str(random.randint(0, 999999999))
 
 
+def clean_user_note_text(text):
+    if text is None:
+        return ""
+    orig = text
+    try:
+        if text.startswith("<!DOCTYPE"):
+            starting_html_ix = text.lower().find("</head><body ")
+            text = text[starting_html_ix + 10:] 
+            text = text[text.find(">") +1:]
+            if text.lower().endswith("</body></html>"):
+                text = text[:-len("</body></html>")]
+        text = re.sub("</?script[^>]>", "", text)
+        text = re.sub("<canvas[^>]*>", "", text)
+        text = text.replace("`", "&#96;").replace("$", "&#36;")
+        text = text.replace("-qt-block-indent:0;", "")
+        text = re.sub("font-size:[^;];", "", text)
+        text = re.sub("font-family:[^;]{1,20};", "", text)
+        text = re.sub("; ?color:[^;]{1,15};", ";", text)
+        text = re.sub("\" ?color:[^;]{1,15};", "\"", text)
+        text = re.sub("; ?background(-color)?:[^;]{1,15};", ";", text)
+        text = re.sub("\" ?background(-color)?:[^;]{1,15};", "\"", text)
+        return text
+    except:
+        return orig
+    
+def build_user_note_text(title, text, source):
+    """
+    The index only has one field for the note content, so we have to collapse the note's fields
+    into one string, similar to how regular note fields are distinguished with "\u001f".
+    """
+    return title + "\u001f" + text + "\u001f" + source
+
 def remove_fields(text, field_ords):
     return "\u001f".join([t for i,t in enumerate(text.split("\u001f")) if i not in field_ords])

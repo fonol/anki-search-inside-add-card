@@ -66,7 +66,7 @@ class WhooshSearchIndex:
 
         myAnalyzer = StandardAnalyzer(stoplist= None, minsize=1) | CharsetFilter(accent_map)
         #StandardAnalyzer(stoplist=usersStopwords)
-        schema = Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True), source=TEXT(stored=True), mid=TEXT(stored=True))
+        schema = Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True), source=TEXT(stored=True), mid=TEXT(stored=True), refs=TEXT(stored=True))
         
         #index needs a folder to operate in
         indexDir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/whoosh_index.py", "") + "/index"
@@ -85,7 +85,7 @@ class WhooshSearchIndex:
                 if note[4] in self.fields_to_exclude:
                     text = remove_fields(text, self.fields_to_exclude[note[4]])
                 text = clean(text, self.stopWords)
-                writer.add_document(content=text, tags=note[2], did=str(note[3]), nid=str(note[0]), source=note[1], mid=str(note[4]))
+                writer.add_document(content=text, tags=note[2], did=str(note[3]), nid=str(note[0]), source=note[1], mid=str(note[4], refs=str(note[5])))
             writer.commit()
         #todo: allow user to toggle between and / or queries
         og = qparser.OrGroup.factory(0.9)
@@ -136,7 +136,8 @@ class WhooshSearchIndex:
         deckQ = ""
         for d in decks:
             deckQ += d + " "
-        deckQ = deckQ[:-1]
+        if len(deckQ) > 0:
+            deckQ += "-1"
         with self.index.searcher() as searcher:
             query = self.qParser.parse(text)
             dq = self.dQParser.parse(deckQ)
@@ -151,9 +152,7 @@ class WhooshSearchIndex:
           
             for r in res:
                 if not r["nid"] in self.pinned:
-                    rList.append((r["source"].replace('`', '\\`'), r["tags"], r["did"], r["nid"], 1, r["mid"]))
-
-                
+                    rList.append((r["source"].replace('`', '\\`'), r["tags"], r["did"], r["nid"], 1, r["mid"], r["refs"]))
 
             self.lastResDict = resDict
             
@@ -171,7 +170,7 @@ class WhooshSearchIndex:
         
         if len (found) > 0:
             if not "-1" in decks:
-                deckQ =  "(%s)" % ",".join(decks)
+                deckQ =  "(-1, %s)" % ",".join(decks)
             else:
                 deckQ = ""
             #query db with found ids
@@ -185,7 +184,7 @@ class WhooshSearchIndex:
                 #pinned items should not appear in the results
                 if not str(r[0]) in self.pinned:
                     #todo: implement highlighting
-                    rList.append((r[1].replace('`', '\\`'), r[2], r[3], r[0], 1, r[4]))
+                    rList.append((r[1].replace('`', '\\`'), r[2], r[3], r[0], 1, r[4], ""))
             return { "result" : rList[:self.limit], "stamp" : stamp }
         return { "result" : [], "stamp" : stamp }
 
@@ -227,11 +226,33 @@ class WhooshSearchIndex:
         if note.mid in self.fields_to_exclude:
             content = remove_fields(content, self.fields_to_exclude[note.mid])
         writer = self.index.writer()
-        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid))
+        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid), refs="")
         writer.commit()
         persist_index_info(self)
         return note
     
+    def add_user_note(self, note):
+        """
+        Add a non-anki note to the index.
+        """
+        text = note[1] + " \u001f " + note[2] + " \u001f " + note[3]
+        writer = self.index.writer()
+        writer.add_document(content=clean(text, self.stopWords), tags=note[4], did="-1", nid="", source=text, mid="-1", refs="")
+        writer.commit()
+        persist_index_info(self)
+
+    def update_user_note(self, note):
+        """
+            Deletes and adds the given user note again with updated values.
+        """
+        writer = self.index.writer()
+        c = writer.delete_by_term("nid", str(note[0]))
+        content = build_user_note_text(title=note[1], text=note[2], source=note[3])
+        tags = note[4]
+        writer.add_document(content=clean(content, self.stopWords), tags=tags, did="-1", nid=str(note[0]), source=content, mid="-1", refs="")
+        persist_index_info(self)
+        writer.commit()
+
     def updateNote(self, note):
         
         # not supported until I find out what is going wrong here
@@ -248,7 +269,7 @@ class WhooshSearchIndex:
         #writer.update_document(content=clean(content, self.stopWords), tags=tags, did=did, nid=str(note.id), source=content)
         if note.mid in self.fields_to_exclude:
             content = remove_fields(content, self.fields_to_exclude[note.mid])
-        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid))
+        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid), refs="")
         persist_index_info(self)
         writer.commit()
    

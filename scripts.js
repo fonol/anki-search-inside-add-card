@@ -219,6 +219,12 @@ function tagInfoBoxClicked(elem) {
 
 }
 
+function readingModalTextKeyup(event, elem, nid) {
+    if (event.which == 13 || event.keyCode == 13) {
+        let html = $(elem).html();
+        pycmd("siac-update-note-text " + nid + " " + html);
+    }
+}
 
 function getSelectionText() {
     if (!searchOnSelection || isFrozen)
@@ -232,9 +238,17 @@ function getSelectionText() {
     if (text.length > 0 && text != "&nbsp;") {
         showLoading("Selection");
         pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
-
     }
 }
+
+function searchForUserNote(elem) {
+    if (elem.value.length === 0) {
+       return; 
+    }
+    pycmd('siac-user-note-search-enter ' + elem.value);
+    elem.parentElement.style.display = 'none';
+}
+
 
 function specialSearch(mode) {
     document.getElementById("a-modal").style.display = 'none';
@@ -248,7 +262,7 @@ function onResize() {
     height -= ($('#topContainer').is(":hidden") ? -1 : $('#topContainer').outerHeight(true));
     height -= $('#topbutsOuter').outerHeight(true);
     height -= $('#bottomContainer').outerHeight(true);
-    height -= 20;
+    height -= 30;
     $("#resultsArea").css("height", (height - 9 + addToResultAreaHeight) + "px");
    
     if (!$('#switchBtn').is(":visible")) {
@@ -560,8 +574,7 @@ function toggleTop(elem) {
 
 function toggleGrid(elem) {
 
-    $(elem).toggleClass('active');
-    if ($(elem).hasClass('active')) {
+    if ($(elem).is(':checked')) {
         pycmd("toggleGrid on");
         gridView = true;
     } else {
@@ -571,11 +584,11 @@ function toggleGrid(elem) {
 }
 
 function activateGridView() {
-    $('.grid-icon').addClass('active');
     gridView = true;
+    $('#gridCb').prop("checked", true);
 }
 function disableGridView() {
-    $('.grid-icon').removeClass('active');
+    $('#gridCb').prop("checked", false);
     gridView = false;
 }
 

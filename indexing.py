@@ -9,6 +9,7 @@ from .logging import *
 from .web import loadSynonyms, showSearchResultArea, printStartingInfo
 from .fts_index import FTSIndex
 from .whoosh_index import WhooshSearchIndex
+from .notes import get_all_notes
 
 def get_notes_in_collection():  
     """
@@ -27,10 +28,27 @@ def get_notes_in_collection():
         oList = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s" %(deckStr))
     else:
         oList = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid")
-    uList = list()
+
+    index_notes = list()
+
+    #load addon notes
+    other_notes = get_all_notes()
+    other_notes_id_map = dict()
+    for (id, title, text, source, tags, nid, created, modified, reminder, _, _) in other_notes:
+        if nid in other_notes_id_map:
+            other_notes_id_map[nid].append(id)
+        else:
+            other_notes_id_map[nid] = [id]
+        text = title + "<br/>" + text
+        index_notes.append((id, text, tags, -1, "-1", "")) 
+
     for id, flds, t, did, mid in oList:
-        uList.append((id, flds, t, did, str(mid)))
-    return uList
+        referenced_notes = ""
+        if id in other_notes_id_map:
+            referenced_notes = " ".join(other_notes_id_map[id])
+        index_notes.append((id, flds, t, did, str(mid), referenced_notes))
+
+    return index_notes
 
 def build_index(force_rebuild = False, execute_after_end = None):
     config = mw.addonManager.getConfig(__name__)
@@ -84,6 +102,7 @@ def _build_index(index_up_to_date):
     searchIndex.output.edited = {}
     searchIndex.initializationTime = initializationTime
     searchIndex.synonyms = loadSynonyms()
+    searchIndex.tagSearch = config["searchOnTagEntry"]
     searchIndex.logging = config["logging"]
     try:
         limit = config['numberOfResults']

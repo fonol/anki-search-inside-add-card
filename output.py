@@ -10,6 +10,8 @@ from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isCh
 from .logging import log
 from .stats import getRetentions
 from .state import get_index
+from .utils import to_tag_hierarchy
+
 class Output:
 
     def __init__(self):
@@ -62,13 +64,31 @@ class Output:
                             <div style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
                         </div>"""
+        
+        self.noteTemplateUserNote = """<div class='cardWrapper %s' id='nWr-%s'> 
+                            <div class='topLeftWr'>
+                                <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
+                                %s
+                            </div>
+                            <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+                                <div class='deleteLbl' onclick='pycmd("siac-delete-user-note %s"); removeNote(%s);'>Del.</div>
+                                <div class='editLbl' onclick='pycmd("siac-edit-user-note %s")'>Edit</div> 
+                                <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
+                                <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
+                                <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div> 
+                                <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div> 
+                            </div>
+                            <div class='cardR' onmouseup='%s' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
+                            <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
+                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note %s")'>&nbsp;NOTE&nbsp;</div>     
+                        </div>"""
 
     def show_page(self, editor, page):
         if self.lastResults is not None:
             self.printSearchResults(self.lastResults, None, editor, False, self.last_had_timing_info, page, query_set = self.last_query_set)
 
 
-    def printSearchResults(self, db_list, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None):
+    def printSearchResults(self, db_list, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_queue=False):
         """
         This is the html that gets rendered in the search results div.
         This will always print the first page.
@@ -80,6 +100,7 @@ class Output:
         searchResults.3: nid
         searchResults.4: score (not used currently)
         searchResults.5: mid
+        searchResults.6: refs (not used currently)
         """
         if stamp is not None:
             if stamp != self.latest:
@@ -135,6 +156,11 @@ class Output:
             if query_set is not None:
                 text = self._markHighlights(text, query_set)
 
+            #non-anki notes should be displayed differently, we distinguish between title, text and source here
+            if str(res[5]) == "-1":
+                text = self._build_non_anki_note_html(text)
+               
+
             # hide fields that should not be shown 
             if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
                 text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res[5])]])
@@ -147,12 +173,22 @@ class Output:
 
             #try to put fields that consist of a single image in their own line
             text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
-            newNote = self.noteTemplate % ("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
-                        "&nbsp;&#128336; " + timeDiffString,
-                        "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
-                        retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
-                        text, 
-                        res[3], self.buildTagString(res[1]), res[3])  
+
+            # use either the template for addon's notes or the normal
+            if str(res[2]) == "-1":
+                newNote = self.noteTemplateUserNote % ("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
+                            "&nbsp;&#128336; " + timeDiffString,
+                            "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
+                        retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], "getSelectionText()" if not is_queue else "", res[3], res[3], res[3], res[3], 
+                            text, 
+                            res[3], self.buildTagString(res[1]), res[3])  
+            else:    
+                newNote = self.noteTemplate % ("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
+                            "&nbsp;&#128336; " + timeDiffString,
+                            "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
+                            retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
+                            text, 
+                            res[3], self.buildTagString(res[1]), res[3])  
             if self.gridView:
                 if counter % 2 == 1:
                     html += "<div class='gridRow'>%s</div>" % (lastNote + newNote)
@@ -298,6 +334,18 @@ class Output:
                 filtered.append(r)
         self.printSearchResults(filtered, stamp)
 
+    def _build_non_anki_note_html(self, text):
+        """
+        User's notes should be displayed in a way to visually distinguish between title, text and source.
+        """
+        title = text.split("\u001f")[0]
+        body = text.split("\u001f")[1]
+        src = text.split("\u001f")[2]
+        title = "<b>%s</b>%s" % (title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px;'>" if len(body.strip()) > 0 else "")
+        src = "<br/><hr><i>Source: %s</i>" % (src) if len(src) > 0 else ""
+        return title + body + src
+
+
     def _buildEditedInfo(self, timestamp):
         diffInSeconds = time.time() - timestamp
         if diffInSeconds < 60:
@@ -430,6 +478,10 @@ class Output:
             lastNote = newNote
             text = res[0]
 
+            #non-anki notes should be displayed differently, we distinguish between title, text and source here
+            if str(res[5]) == "-1":
+                text = self._build_non_anki_note_html(text)
+
             # hide fields that should not be shown 
             if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
                 text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res[5])]])
@@ -468,6 +520,17 @@ class Output:
         
         if self.editor is not None:
             self.editor.web.eval(cmd)
+
+
+    def show_in_large_modal(self, html):
+        js = """
+            document.getElementById('siac-reading-modal').innerHTML = `%s`;
+            document.getElementById('siac-reading-modal').style.display = 'flex';
+
+        """ % html.replace("`", "&#96;")
+        if self.editor is not None:
+            self.editor.web.eval(js)
+
         
     def _loadPlotJsIfNotLoaded(self):
         if not self.plotjsLoaded:
@@ -478,6 +541,11 @@ class Output:
             self.plotjsLoaded = True
 
 
+    def show_search_modal(self, on_enter_attr):
+        self.editor.web.eval("""
+        document.getElementById('siac-search-modal').style.display = 'block';
+         document.getElementById('siac-search-modal').setAttribute('onkeyup', %s);
+        """ % on_enter_attr)
 
     def showStats(self, text, reviewPlotData, ivlPlotData, timePlotData):
         
@@ -612,20 +680,9 @@ class Output:
         return html
 
     def getTagMap(self, tags):
-        tmap = {}
-        for name in tags:
-            tmap = self._addToTaglist(tmap, name)
-        return tmap
+        return to_tag_hierarchy(tags)
 
-    def _addToTaglist(self, tmap, name):
-        names = [s for s in name.split("::") if s != ""]
-        for c, d in enumerate(names):
-            found = tmap
-            for i in range(c):
-                found = found.setdefault(names[i], {})
-            if not d in found:
-                found.update({d : {}}) 
-        return tmap    
+   
 
     def iterateTagmap(self, tmap, prefix):
         if len(tmap) == 0:

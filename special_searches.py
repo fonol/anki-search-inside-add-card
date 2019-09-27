@@ -69,7 +69,7 @@ def getCreatedSameDay(searchIndex, editor, nid):
             if dayCreated != dayOfNote:
                 continue
             if not str(r[0]) in searchIndex.pinned:
-                rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+                rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
                 c += 1
                 if c >= searchIndex.limit:
                     break
@@ -101,7 +101,7 @@ def getRandomNotes(searchIndex, decks):
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid order by random() limit %s" % limit).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+        rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
     return { "result" : rList, "stamp" : stamp }
 
 
@@ -125,7 +125,8 @@ def getCreatedNotesOrderedByDate(searchIndex, editor, decks, limit, sortOrder):
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in searchIndex.pinned:
-            rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+            #todo get refs
+            rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
 
     if editor.web is not None:
         if len(rList) > 0:
@@ -147,7 +148,7 @@ def getLastReviewed(decks, limit):
     res = mw.col.db.execute(cmd).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+        rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
     return rList
 
 def getLastLapses(decks, limit):
@@ -163,7 +164,7 @@ def getLastLapses(decks, limit):
     res = mw.col.db.execute(cmd).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+        rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
     return rList
 
 def getRandomUntagged(decks, limit):
@@ -177,7 +178,7 @@ def getRandomUntagged(decks, limit):
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by random() limit %s" % limit).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+        rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
     return rList
     
 
@@ -196,7 +197,7 @@ def findNotesWithLongestText(decks, limit, pinned):
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in pinned:
-            rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+            rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
     return rList
 
 def getByTimeTaken(decks, limit, mode):
@@ -212,7 +213,7 @@ def getByTimeTaken(decks, limit, mode):
     res = mw.col.db.execute(cmd).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+        rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
     return rList
 
 def getLastModifiedNotes(searchIndex, editor, decks, limit):
@@ -231,7 +232,7 @@ def getLastModifiedNotes(searchIndex, editor, decks, limit):
     rList = []
     for r in res:
         if not str(r[0]) in searchIndex.pinned:
-            rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+            rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
 
     if editor.web is not None:
         if len(rList) > 0:

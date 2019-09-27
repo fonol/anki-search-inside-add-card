@@ -4,6 +4,7 @@ from aqt.utils import showInfo
 from .textutils import trimIfLongerThan, get_stamp
 from .stats import getAvgTrueRetention, getTrueRetentionOverTime, retention_stats_for_tag
 from .output import Output
+from .notes import find_by_tag
 import time
 
 def findBySameTag(tagStr, limit, decks, pinned):
@@ -26,10 +27,11 @@ def findBySameTag(tagStr, limit, decks, pinned):
     else:
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s" %(query)).fetchall()
     rList = []
+    rList.extend(find_by_tag(tagStr))
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in pinned:
-            rList.append((r[1], r[2], r[3], r[0], 1, r[4]))
+            rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
     return { "result" : rList[:limit]}
 
 def display_tag_info(editor, stamp, tag, searchIndex):

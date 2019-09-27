@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from aqt import mw
+from aqt import mw, dialogs
 from aqt.utils import showInfo
 from aqt.qt import *
 from anki.hooks import runHook, addHook, wrap
@@ -34,12 +34,13 @@ from .indexing import build_index, get_notes_in_collection
 from .logging import log
 from .web import *
 from .special_searches import *
-
+from .notes import delete_note, get_all_tags, get_priority_list, get_newest, get_random, get_queue_in_random_order
 from .output import Output
 from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms, remove_fields
-from .editor import openEditor, EditDialog
+from .editor import openEditor, EditDialog, NoteEditor
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval, getTrueRetentionOverTime
+from .utils import to_tag_hierarchy
 
 config = mw.addonManager.getConfig(__name__)
 
@@ -69,7 +70,8 @@ def initAddon():
     EditDialog.saveAndClose = editorSaveWithIndexUpdate
 
     addHook("setupEditorShortcuts", addHideShowShortcut)
-
+   
+    #dialogs._dialogs["UserNoteEditor"] = [NoteEditor, None]
 
 
     #main functions to search
@@ -121,7 +123,15 @@ def initAddon():
     aqt.editor._html += getScriptPlatformSpecific(config["addToResultAreaHeight"], delayWhileTyping)
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     addHook("loadNote", onLoadNote)
+
+
+def exception_hook(exctype, value, traceback):
+    print(exctype, value, traceback)
+    sys._excepthook(exctype, value, traceback) 
+    sys.exit(1) 
    
+
+
 def editorSaveWithIndexUpdate(dialog):
     origSaveAndClose(dialog)
     # update index
@@ -222,7 +232,59 @@ def myOnBridgeCmd(self, cmd):
         set_corpus(None)
         build_index(force_rebuild=True, execute_after_end=after_index_rebuilt)
 
+    #
+    # Notes 
+    #
+    
+    elif cmd == "siac-create-note":
+        NoteEditor(self.parentWindow)
+        #editor.user_note_edit = aqt.dialogs.open("UserNoteEditor", mw, None)
 
+    elif cmd.startswith("siac-edit-user-note "):
+        id = int(cmd.split()[1])
+        NoteEditor(self.parentWindow, id)
+        #editor.user_note_edit = aqt.dialogs.open("UserNoteEditor", mw, id)
+    elif cmd.startswith("siac-delete-user-note "):
+        id = int(cmd.split()[1])
+        delete_note(id)
+        if searchIndex is not None and searchIndex.type != "Whoosh":
+            searchIndex.deleteNote(id)
+
+    elif cmd.startswith("siac-read-user-note "):
+        id = int(cmd.split()[1])
+        display_note_reading_modal(id)
+
+    elif cmd == "siac-user-note-queue":
+        stamp = setStamp()
+        notes = get_priority_list()
+        if checkIndex():
+            searchIndex.output.printSearchResults(notes, stamp)
+
+    elif cmd == "siac-user-note-queue-random":
+        stamp = setStamp()
+        notes = get_queue_in_random_order()
+        if checkIndex():
+            searchIndex.output.printSearchResults(notes, stamp)
+
+    elif cmd == "siac-user-note-newest":
+        stamp = setStamp()
+        if checkIndex():
+            notes = get_newest(searchIndex.limit, searchIndex.pinned)
+            searchIndex.output.printSearchResults(notes, stamp)
+
+    elif cmd == "siac-user-note-random":
+        stamp = setStamp()
+        if checkIndex():
+            notes = get_random(searchIndex.limit, searchIndex.pinned)
+            searchIndex.output.printSearchResults(notes, stamp)
+
+    elif cmd == "siac-user-note-search":
+        if checkIndex():
+            searchIndex.output.show_search_modal("")
+    
+    elif cmd.startswith("siac-user-note-search-inp "):
+        x = 5
+        
 
     #
     #   Synonyms
@@ -293,9 +355,6 @@ def myOnBridgeCmd(self, cmd):
     elif (cmd.startswith("searchOnSelection ")):
         if checkIndex():
             searchIndex.searchOnSelection = cmd[18:] == "on"
-    elif (cmd.startswith("tagSearch ")):
-        if checkIndex():
-            searchIndex.tagSearch = cmd[10:] == "on"
     elif (cmd.startswith("deckSelection")):
         if not checkIndex():
             return
@@ -471,7 +530,11 @@ def onLoadNote(editor):
             log("Trying to insert html in editor")
             log("Editor.addMode: %s" % editor.addMode)
 
-        editor.web.eval("var addToResultAreaHeight = %s; var showTagInfoOnHover = %s; tagHoverTimeout = %s;" % (config["addToResultAreaHeight"], "true" if config["showTagInfoOnHover"] else "false", config["tagHoverDelayInMiliSec"]))
+        editor.web.eval("var addToResultAreaHeight = %s; var showTagInfoOnHover = %s; tagHoverTimeout = %s;" % (
+            config["addToResultAreaHeight"], 
+            "true" if config["showTagInfoOnHover"] else "false", 
+            config["tagHoverDelayInMiliSec"]
+            ))
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
@@ -675,9 +738,6 @@ def tryRepeatLastSearch(editor = None):
         
         if searchIndex.lastSearch[2] == "default":
             defaultSearchWithDecks(editor, searchIndex.lastSearch[0], searchIndex.selectedDecks)
-        # elif searchIndex.lastSearch[2] == "random":
-        #     res = getRandomNotes(searchIndex, searchIndex.selectedDecks)
-        #     searchIndex.output.printSearchResults(res["result"], res["stamp"])
         elif searchIndex.lastSearch[2] == "lastCreated":
             getCreatedNotesOrderedByDate(searchIndex, editor, searchIndex.selectedDecks, searchIndex.lastSearch[3], "desc")
         elif searchIndex.lastSearch[2] == "firstCreated":
@@ -718,7 +778,6 @@ def getIndexInfo():
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>Fields Excluded:</td><td>  %s</td></tr>
              </table>
-            <div class='siac-btn-small' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>Rebuild Index</div>
             """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(searchIndex.stopWords), 
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if searchIndex.logging else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["renderImmediately"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
@@ -743,6 +802,8 @@ def showTimingModal():
     searchIndex = get_index()
 
     html = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % searchIndex.lastResDict["query"]
+    if "decks" in searchIndex.lastResDict:
+        html += "<h4>Decks:</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % ", ".join([str(d) for d in searchIndex.lastResDict["decks"]])
     html += "<h4>Execution time:</h4><table style='width: 100%'>"
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", searchIndex.lastResDict["time-stopwords"] if searchIndex.lastResDict["time-stopwords"] > 0 else "< 1") 
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", searchIndex.lastResDict["time-synonyms"] if searchIndex.lastResDict["time-synonyms"] > 0 else "< 1") 
@@ -819,18 +880,7 @@ def updateStyling(cmd):
     
    
 
-def _addToTagList(tmap, name):
-    """
-    Helper function to build the tag hierarchy.
-    """
-    names = [s for s in name.split("::") if s != ""]
-    for c, d in enumerate(names):
-        found = tmap
-        for i in range(c):
-            found = found.setdefault(names[i], {})
-        if not d in found:
-            found.update({d : {}}) 
-    return tmap
+
 
 def writeConfig():
     searchIndex = get_index()
@@ -856,10 +906,11 @@ def fillTagSelect(editor = None) :
     Builds the html for the "browse tags" mode in the deck select.
     Also renders the html.
     """
-    tmap = {}
-    for t in sorted(mw.col.tags.all(), key=lambda t: t.lower()):
-        tmap = _addToTagList(tmap, t)
-    tmap = dict(sorted(tmap.items(), key=lambda item: item[0].lower()))
+    tags = mw.col.tags.all()
+    user_note_tags = get_all_tags()
+    tags.extend(user_note_tags)
+    tags = set(tags)
+    tmap = to_tag_hierarchy(tags)
     
   
     def iterateMap(tmap, prefix, start=False):
