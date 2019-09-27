@@ -10,6 +10,7 @@ var calTimer;
 var gridView = false;
 var renderImmediately = $renderImmediately$;
 var tagHoverTimeout = 750;
+var searchMaskTimer;
 
 
 function updateSelectedDecks(elem) {
@@ -219,11 +220,9 @@ function tagInfoBoxClicked(elem) {
 
 }
 
-function readingModalTextKeyup(event, elem, nid) {
-    if (event.which == 13 || event.keyCode == 13) {
+function readingModalTextKeyup(elem, nid) {
         let html = $(elem).html();
         pycmd("siac-update-note-text " + nid + " " + html);
-    }
 }
 
 function getSelectionText() {
@@ -235,18 +234,28 @@ function getSelectionText() {
     } else if (document.selection && document.selection.type != "Control") {
         text = document.selection.createRange().text;
     }
-    if (text.length > 0 && text != "&nbsp;") {
+    if (text.length > 0 && text != "&nbsp;") {this
         showLoading("Selection");
         pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
     }
 }
 
-function searchForUserNote(elem) {
-    if (elem.value.length === 0) {
+function searchForUserNote(event, elem) {
+    if (!elem || elem.value.length === 0) {
        return; 
     }
-    pycmd('siac-user-note-search-enter ' + elem.value);
-    elem.parentElement.style.display = 'none';
+    if (event.keyCode == 13) {
+        elem.parentElement.parentElement.style.display = 'none';
+        pycmd('siac-user-note-search-inp ' + elem.value);
+    } else if (event.key === "Escape" || event.key === "Esc") {
+        elem.parentElement.style.display = 'none';
+    } else { 
+        clearTimeout(searchMaskTimer);
+        searchMaskTimer = setTimeout(function() { 
+            pycmd('siac-user-note-search-inp ' + elem.value);
+        }, 800);
+    }
+
 }
 
 
