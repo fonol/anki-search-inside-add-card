@@ -454,7 +454,11 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                 </div>
             </div>
             <div id='siac-search-modal'>
-                <input type='text' id='siac-search-modal-inp'/>
+                <div id='siac-search-modal-wrapper'>
+                    <div id='siac-search-modal-header'></div>
+                    <input type='text' id='siac-search-modal-inp'/>
+                    <span id='siac-search-modal-close' onclick='document.getElementById("siac-search-modal").style.display = "none";'>&nbsp;Close &times;</span>
+                </div>
             </div>
                 <div class="flexContainer" id="topContainer">
                     <div class='flexCol' style='margin-left: 0px; padding-left: 0px;'>
@@ -473,14 +477,14 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                   </div>
                     </div>
                     <div class='flexCol right' style="position: relative; min-height: 25px; white-space: nowrap;">
-                            <div id='siac-timetable-icn' class='siac-btn-small' style='position: relative; display:inline-block; margin-right: 6px;'>&nbsp; &#9998; Notes &nbsp;
+                            <div id='siac-timetable-icn' class='siac-btn-small' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")'>&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;
                                         <div class='siac-btn-small-dropdown'>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note");'>&nbsp;Create</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note");'>&nbsp;<b>Create</b></div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest");'>&nbsp;Newest</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-random");'>&nbsp;Random</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search");'>&nbsp;Search</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search");'>&nbsp;Search ...</div>
                                                 <hr>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue");'>&nbsp;<b>Queue</b></div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue");' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random");'>&nbsp;Random</div>
 
                                 </div>
@@ -496,10 +500,10 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                                                  <br>
                                                  <span>Menus</span>
                                                  <hr>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("indexInfo");'>Info</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("synonyms");'>Synonyms</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("styling");'>Settings</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>Rebuild Index</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("indexInfo");'>&nbsp;Info</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("synonyms");'>&nbsp;Synonyms</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("styling");'>&nbsp;Settings</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
 
                                          </div>
                             </div>
@@ -822,9 +826,9 @@ def display_note_reading_modal(note_id):
         title = trimIfLongerThan(title, 50)
 
         html = """
-            <div>
+            <div style='width: 100%;'>
                 <div style='height: 10%; width: 100%; border-bottom: 2px solid darkorange; margin-bottom: 5px;'>
-                    <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide();'>&times;</span>
+                    <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide();{save_on_close}'>&times;</span>
                     <h2 style='margin: 0 0 5px 0;'>{title}</h2>
                     <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: <i>{source}</i></h4> 
                     <h5 style='margin-top: 5px;'>{time_str}</h5> 
@@ -844,10 +848,11 @@ def display_note_reading_modal(note_id):
 
         """
         is_contenteditable = "true" if len(text) < 50000 else "false"
-        onkeyup = "onkeyup='readingModalTextKeyup(event, this, %s)'"  % note_id if is_contenteditable else ""
+        onkeyup = "onfocusout='readingModalTextKeyup(this, %s)'"  % (note_id) if is_contenteditable else ""
+        save_on_close = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s)'"  % (note_id) if is_contenteditable else ""
         queue_info = "Position in Queue: <b>%s</b> / <b>%s</b>" % (pos, queue_len) if pos is not None else "This Note is not in the Reading Queue"
 
-        params = dict(title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, pos = pos , queue_len = queue_len, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable)
+        params = dict(title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, pos = pos , queue_len = queue_len, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
         html = html.format_map(params)
         index.output.show_in_large_modal(html)
 
@@ -930,6 +935,13 @@ def stylingModal(config):
                 </table>
             </fieldset>
             <br/>
+            <fieldset>
+                <span>If you have problems with the display of search results (e.g. notes nested into each other), most likely, your note's html contains at least one unmatched opening/closing &lt;div&gt; tag. If set to true, this setting will remove all div tags from the note html before displaying.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Remove &lt;div&gt; Tags from Output</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling removeDivsFromOutput ' + this.checked)" %s/></tr>
+                </table>
+            </fieldset>
+            <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
                         """ % (config["addToResultAreaHeight"], 
                         "checked='true'" if config["renderImmediately"] else "", 
@@ -938,7 +950,8 @@ def stylingModal(config):
                         "checked='true'" if config["showTimeline"] else "",
                         "checked='true'" if config["showTagInfoOnHover"] else "",
                         config["tagHoverDelayInMiliSec"],
-                       config["alwaysRebuildIndexIfSmallerThan"]
+                       config["alwaysRebuildIndexIfSmallerThan"],
+                       "checked='true'" if config["removeDivsFromOutput"] else ""
                         )
     html += """
     <br/> <br/>

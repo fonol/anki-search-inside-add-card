@@ -34,7 +34,7 @@ from .indexing import build_index, get_notes_in_collection
 from .logging import log
 from .web import *
 from .special_searches import *
-from .notes import delete_note, get_all_tags, get_priority_list, get_newest, get_random, get_queue_in_random_order
+from .notes import delete_note, get_all_tags, get_priority_list, get_newest, get_random, get_queue_in_random_order, get_queue_count, update_note_text
 from .output import Output
 from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms, remove_fields
 from .editor import openEditor, EditDialog, NoteEditor
@@ -278,13 +278,23 @@ def myOnBridgeCmd(self, cmd):
             notes = get_random(searchIndex.limit, searchIndex.pinned)
             searchIndex.output.printSearchResults(notes, stamp)
 
+    elif cmd == "siac-user-note-update-btns":
+        queue_count = get_queue_count()
+        self.web.eval("document.getElementById('siac-queue-btn').innerHTML = '&nbsp;<b>Queue [%s]</b>';" % queue_count)
+
     elif cmd == "siac-user-note-search":
         if checkIndex():
-            searchIndex.output.show_search_modal("")
+            searchIndex.output.show_search_modal("searchForUserNote(event, this);", "Search For User Notes")
     
     elif cmd.startswith("siac-user-note-search-inp "):
-        x = 5
-        
+        if checkIndex():
+            search_for_user_notes_only(self, " ".join(cmd.split()[1:]))
+
+    elif cmd.startswith("siac-update-note-text "):
+        id = cmd.split()[1]
+        text = " ".join(cmd.split(" ")[2:])
+        update_note_text(id, text)
+
 
     #
     #   Synonyms
@@ -840,6 +850,11 @@ def updateStyling(cmd):
         config["hideSidebar"] = m
         searchIndex.output.hideSidebar = m
         searchIndex.output.editor.web.eval("document.getElementById('searchInfo').classList.%s('hidden');"  % ("add" if m else "remove"))
+    
+    elif name == "removeDivsFromOutput":
+        m = value == "true" or value == "on"
+        config["removeDivsFromOutput"] = m
+        searchIndex.output.remove_divs = m
 
     elif name == "leftSideWidthInPercent":
         config[name] = int(value)
@@ -1129,7 +1144,23 @@ def defaultSearchWithDecks(editor, textRaw, decks):
         return
     searchIndex.lastSearch = (cleaned, decks, "default")
     searchRes = searchIndex.search(cleaned, decks)
-    
+
+def search_for_user_notes_only(editor, text):
+    """
+    Uses the searchIndex to clean the input and find user notes.
+    """
+    if len(text) > 2000:
+        if editor is not None and editor.web is not None:
+            editor.web.eval("setSearchResults(``, 'Query was <b>too long</b>')")
+        return
+    searchIndex = get_index()
+    cleaned = searchIndex.clean(text)
+    if len(cleaned) == 0:
+        if editor is not None and editor.web is not None:
+            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(text, 100))
+        return
+    searchIndex.lastSearch = (cleaned, [], "default")
+    searchRes = searchIndex.search(cleaned, [], only_user_notes = True)
 
 def addHideShowShortcut(shortcuts, editor):
     if not "toggleShortcut" in config:
@@ -1141,9 +1172,6 @@ def toggleAddon():
     if checkIndex():
         get_index().output.editor.web.eval("toggleAddon();")
 
-
-
-        
 
 def setInfoboxHtml(html, editor):
     """
