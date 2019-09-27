@@ -777,6 +777,7 @@ table.striped tr:nth-child(even) {
   }
 .siac-btn-small-dropdown .siac-dropdown-item:hover {
     color: #2496dc;
+    transform: scale(1.04);
 }
 #indexInfo, #synonymsIcon, #stylingIcon, #siac-note-icn {
     margin-right: 5px;
@@ -1290,15 +1291,35 @@ span.tag-symbol {
     background-color: rgba(0,0,0,0.4); 
     z-index: 99999999;  
 }
-#siac-search-modal-inp {
+#siac-search-modal-wrapper {
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
     right: 0;
     margin: auto;
-    width: 200px;
-    height: 20px;
+    width: 250px;
+    height: 70px;
+    padding: 5px;
+    background-color: rgb(0,0,0); 
+    background-color: rgba(0,0,0,0.5); 
+}
+
+#siac-search-modal-inp {
+    width: 100%;
+    padding-left: 4px;
+    margin-bottom: 6px;
+}
+#siac-search-modal-close {
+    cursor: pointer; 
+    font-weight: bold; 
+    color: white;
+}
+#siac-search-modal-header {
+    color: white;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 4px;
 }
 
 #siac-reading-modal a {
