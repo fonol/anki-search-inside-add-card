@@ -1300,9 +1300,7 @@ span.tag-symbol {
     margin: auto;
     width: 250px;
     height: 70px;
-    padding: 5px;
-    background-color: rgb(0,0,0); 
-    background-color: rgba(0,0,0,0.5); 
+   
 }
 
 #siac-search-modal-inp {
