@@ -258,6 +258,15 @@ function searchForUserNote(event, elem) {
 
 }
 
+function queueSchedBtnClicked(btn_el) {
+    $('.siac-queue-sched-btn').removeClass("active");
+    $(btn_el).addClass("active");
+}
+
+function afterRemovedFromQueue() {
+    $('.siac-queue-sched-btn').removeClass("active");
+    $('.siac-queue-sched-btn').first().addClass("active");
+}
 
 function specialSearch(mode) {
     document.getElementById("a-modal").style.display = 'none';

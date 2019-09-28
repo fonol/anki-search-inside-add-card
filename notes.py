@@ -3,6 +3,7 @@ import sqlite3
 from enum import Enum, unique
 from datetime import datetime, time
 from aqt import mw
+import random
 
 from .state import get_index
 from .textutils import clean_user_note_text, build_user_note_text, trimIfLongerThan
@@ -15,6 +16,7 @@ class QueueSchedule(Enum):
     FIRST_THIRD = 3
     SECOND_THIRD = 4
     END = 5
+    RANDOM = 6
 
 def create_db_file_if_not_exists():
     file_path = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/notes.py", "") + "/user_files/non-anki-notes.db"
@@ -88,6 +90,7 @@ def update_position(note_id, queue_schedule):
     """
     conn = _get_connection()
     existing = conn.execute("select id from notes where position is not null and id != %s order by position asc" % note_id).fetchall()
+    existing = [e[0] for e in existing]
 
     if queue_schedule == QueueSchedule.HEAD:
         existing.insert(0, note_id)
@@ -97,14 +100,18 @@ def update_position(note_id, queue_schedule):
         existing.insert(int(2 * len(existing) / 3.0), note_id)
     elif queue_schedule == QueueSchedule.END:
         existing.append(note_id)
+    elif queue_schedule == QueueSchedule.RANDOM:
+        existing.insert(random.randint(0, len(existing)), note_id)
 
-    pos_ids = [(ix, r[0]) for ix, r in enumerate(existing)]
+    pos_ids = [(ix, r) for ix, r in enumerate(existing)]
     conn.executemany("update notes set position = ? where id=?", pos_ids)
     conn.execute("update notes set lastscheduled = datetime('now', 'localtime') where id=%s" % note_id)
     if queue_schedule == queue_schedule.NOT_ADD:
         conn.execute("update notes set position = NULL where id=%s" % note_id)
     conn.commit()
     conn.close()
+    index = existing.index(note_id) if queue_schedule != QueueSchedule.NOT_ADD else -1
+    return (index, len(existing))
 
 
 def get_note_tree_data():
@@ -147,6 +154,14 @@ def get_note(id):
     res = conn.execute("select * from notes where id=" + str(id)).fetchone()
     conn.close()
     return res
+
+def get_random_id_from_queue():
+    conn = _get_connection()
+    res = conn.execute("select id from notes where position >= 0 order by random() limit 1").fetchone()
+    conn.close()
+    if len(res) == 0:
+        return -1
+    return res[0]
 
 def update_note_text(id, text):
     conn = _get_connection()

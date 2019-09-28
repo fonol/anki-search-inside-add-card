@@ -80,7 +80,7 @@ class Output:
                             </div>
                             <div class='cardR' onmouseup='%s' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
                             <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
-                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note %s")'>&nbsp;NOTE&nbsp;</div>     
+                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note %s")'>&nbsp;READ&nbsp;</div>     
                         </div>"""
 
     def show_page(self, editor, page):

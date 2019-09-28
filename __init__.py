@@ -34,7 +34,7 @@ from .indexing import build_index, get_notes_in_collection
 from .logging import log
 from .web import *
 from .special_searches import *
-from .notes import delete_note, get_all_tags, get_priority_list, get_newest, get_random, get_queue_in_random_order, get_queue_count, update_note_text
+from .notes import *
 from .output import Output
 from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms, remove_fields
 from .editor import openEditor, EditDialog, NoteEditor
@@ -295,6 +295,22 @@ def myOnBridgeCmd(self, cmd):
         text = " ".join(cmd.split(" ")[2:])
         update_note_text(id, text)
 
+    elif cmd.startswith("siac-requeue "):
+        nid = cmd.split()[1]
+        queue_sched = int(cmd.split()[2])
+        inserted_index = update_position(nid, QueueSchedule(queue_sched))
+        searchIndex.output.editor.web.eval("document.getElementById('siac-queue-lbl').innerHTML = 'Position in Queue: %s / %s'" % (inserted_index[0] + 1, inserted_index[1]))
+
+    elif cmd.startswith("siac-remove-from-queue "):
+        nid = cmd.split()[1]
+        update_position(nid, QueueSchedule.NOT_ADD)
+        searchIndex.output.editor.web.eval("afterRemovedFromQueue();")
+        searchIndex.output.editor.web.eval("document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue';")
+
+    elif cmd == "siac-user-note-queue-read-random":
+        rand_id = get_random_id_from_queue()
+        if rand_id >= 0:
+            display_note_reading_modal(rand_id)
 
     #
     #   Synonyms
@@ -912,9 +928,6 @@ def showStylingModal(editor):
         searchIndex.output.showInModal(html)
         searchIndex.output.editor.web.eval("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")
 
-    
-
-
 
 def fillTagSelect(editor = None) :
     """
@@ -1075,7 +1088,6 @@ def setStats(nid, stats):
 def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
     """
     Main function that is executed when a user has typed or manually entered a search.
-
     Args:
         content: string containing the decks selected (did) + ~ + all input fields content / search masks content
     """

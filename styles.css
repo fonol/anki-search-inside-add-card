@@ -1334,3 +1334,25 @@ span.tag-symbol {
     transform: scale(1.2);
     color: #2496dc;   
 }
+
+.siac-queue-sched-btn {
+    display: inline-block;
+    font-size: 13px;
+    padding: 2px;
+    border: 2px solid lightblue;
+    color: lightblue;
+    writing-mode: vertical-lr;
+    height: 90px;
+    user-select: none;
+    cursor: pointer;
+    text-align: center;
+}
+.siac-queue-sched-btn:hover {
+    color: white;
+    border-color: white;
+    transform: scale(1.04);
+}
+.siac-queue-sched-btn.active {
+    color: white;
+    border-color: darkorange;
+}

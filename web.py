@@ -485,7 +485,9 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search");'>&nbsp;Search ...</div>
                                                 <hr>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue");' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random");'>&nbsp;Random</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-head");'>&nbsp;<b>Read 1st</b></div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-random");'>&nbsp;Read [Rnd]</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random");'>&nbsp;List [Rnd]</div>
 
                                 </div>
                             </div>
@@ -831,19 +833,32 @@ def display_note_reading_modal(note_id):
                     <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide();{save_on_close}'>&times;</span>
                     <h2 style='margin: 0 0 5px 0;'>{title}</h2>
                     <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: <i>{source}</i></h4> 
-                    <h5 style='margin-top: 5px;'>{time_str}</h5> 
                 </div>
-                <div id='siac-reading-modal-text' style='overflow-y: auto; height: calc(90% - 140px); font-size: 13px; padding: 0 20px 0 20px;' contenteditable='{is_contenteditable}' {onkeyup}>
+                <div id='siac-reading-modal-text' style='overflow-y: auto; height: calc(90% - 140px); font-size: 13px; padding: 20px 20px 0 20px;' contenteditable='{is_contenteditable}' {onkeyup}>
                     {text}
                 </div>
-                <div style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding-top: 5px;'>
-                    WIP!
-                    <span>{queue_info}</span>
-                    <div class='siac-btn-small'>Start</div>
-                    <div class='siac-btn-small'>1/3</div>
-                    <div class='siac-btn-small'>2/3</div>
-                    <div class='siac-btn-small'>End</div>
-                    {tag_str}
+                <div style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 5px 0 0 5px;'>
+                    <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px;'>
+                       
+                        <div class='siac-queue-sched-btn active' onclick='queueSchedBtnClicked(this);'>Keep Position</div>
+                        <div style='display: inline-block; height: 90px; margin: 0 10px 0 10px; border: 0 0 0 2px solid lightgrey; border-style: dotted;'></div>
+                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>Start</div>
+                        <div style='display: inline-block; height: 50px; width: 20px; margin: 0 10px 0 10px; border-top: 2px solid lightgrey; border-style: dotted; border-width: 2px 0 0 0;'></div>
+                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>First 3rd</div>
+                        <div style='display: inline-block; height: 50px; width: 20px; margin: 0 10px 0 10px; border-top: 2px solid lightgrey; border-style: dotted; border-width: 2px 0 0 0;'></div>
+                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>Second 3rd</div>
+                        <div style='display: inline-block; height: 50px; width: 20px; margin: 0 10px 0 10px; border-top: 2px solid lightgrey; border-style: dotted; border-width: 2px 0 0 0;'></div>
+                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>End</div>
+                        <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
+                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>Random</div>
+                        <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
+                        <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px;'>
+                        <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
+                        <span style='margin-top: 5px;'>{time_str}</span> <br><br>
+                        {tag_str}
+                        </div>
+                    </div>
+                  
                 </div>
             </div>
 
@@ -853,7 +868,7 @@ def display_note_reading_modal(note_id):
         save_on_close = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s)'"  % (note_id) if is_contenteditable else ""
         queue_info = "Position in Queue: <b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "This Note is not in the Reading Queue"
 
-        params = dict(title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, pos = pos , queue_len = queue_len, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
+        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, pos = pos , queue_len = queue_len, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
         html = html.format_map(params)
         index.output.show_in_large_modal(html)
 
