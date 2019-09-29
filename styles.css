@@ -372,105 +372,6 @@ select {
 }
 
 
-@media (max-height: 640px) {
-    #tagContainer {
-        max-height: 100px !important;
-    }
-    .searchInfoTagSep{
-       margin-top: 5px !important;
-    }
-    .searchInfoTagSep.bottom {
-       margin-top: 8px !important;
-
-    }
-}
-
-
-@media (max-width: 1000px) , (max-height: 500px) {
-  .secondCol {
-        display: none;
-  }
-
-
-
-  #outerWr.onesided > .secondCol {
-        display: block;
-        width: 100% !important;
-        margin-left: 0px !important;
-        border-left: 0px solid white !important;
-        padding-left: 0px !important;
-  }
-  #switchBtn {
-      display: inline-block !important;
-  }
- 
-}
-@media (max-width: 1300px) {
-    #searchMaskCol {
-        display: none;
-    }
-   
-    #predefCol {
-        margin-left: 5px;
-    }
-}
-
-@media (max-width: 800px) {
-   
-   .icns-add {
-        display: none !important;
-    }
-    .freeze-icon, .rnd-icon, #toggleTop {
-        font-size: 17px !important;
-    }
-}
-
-@media (max-width: 1200px) {
-    .cardR, .tagLbl, .searchInfoTagLbl, .keyword {
-        font-size: 12px !important;
-    }
-    .minorScore, #searchInfo {
-        display: none;
-    }
-}
-@media (min-width: 650px) {
-    #outerWr.onesided #searchMaskCol {
-        display: flex;
-    }
-    #outerWr.onesided #searchInfo:not(.hidden) {
-        display: block;
-    }
-
-}
-
-@media (min-height: 900px) {
-    #tagContainer {
-        max-height: 380px !important;
-    }
-    .searchInfoTagSep{
-        margin-top: 20px !important;
-     }
-     #modalText {
-         max-height: 650px !important;
-     }
-}
-@media (max-width: 500px) {
-    #sortCol {
-        display: none;
-    }
-    .modal-content 
-    {
-        width: 80% !important;
-    }
-   
-  
-
-}
-@media (max-height: 600px) {
-    #modalText {
-        max-height: 350px !important;
-    }
-}
 
 .secondCol {
     max-height: 100vh;
@@ -1355,4 +1256,129 @@ span.tag-symbol {
 .siac-queue-sched-btn.active {
     color: white;
     border-color: darkorange;
+}
+
+.siac-queue-sched-hor-sep {
+    display: inline-block; 
+    height: 50px; 
+    width: 20px; 
+    margin: 0 10px 0 10px;
+    border-top: 2px solid lightgrey; 
+    border-style: dotted; 
+    border-width: 2px 0 0 0;
+}
+
+#outerWr.onesided .siac-queue-sched-hor-sep {
+    width: 10px;
+}
+#outerWr.onesided #siac-reading-modal {
+    padding-right: 35px;
+}
+#outerWr.onesided .reading-modal-close-icn {
+    right: 27px;
+}
+
+
+@media (max-height: 640px) {
+    #tagContainer {
+        max-height: 100px !important;
+    }
+    .searchInfoTagSep{
+       margin-top: 5px !important;
+    }
+    .searchInfoTagSep.bottom {
+       margin-top: 8px !important;
+
+    }
+}
+
+
+@media (max-width: 1000px) , (max-height: 500px) {
+  .secondCol {
+        display: none;
+  }
+
+
+
+  #outerWr.onesided > .secondCol {
+        display: block;
+        width: 100% !important;
+        margin-left: 0px !important;
+        border-left: 0px solid white !important;
+        padding-left: 0px !important;
+  }
+  #switchBtn {
+      display: inline-block !important;
+  }
+ 
+}
+@media (max-width: 1300px) {
+    #searchMaskCol {
+        display: none;
+    }
+   
+    #predefCol {
+        margin-left: 5px;
+    }
+}
+
+@media (max-width: 800px) {
+   
+   .icns-add {
+        display: none !important;
+    }
+    .freeze-icon, .rnd-icon, #toggleTop {
+        font-size: 17px !important;
+    }
+   
+}
+
+@media (max-width: 1200px) {
+    .cardR, .tagLbl, .searchInfoTagLbl, .keyword {
+        font-size: 12px !important;
+    }
+    .minorScore, #searchInfo {
+        display: none;
+    }
+    .siac-queue-sched-hor-sep {
+        width: 10px;
+    }
+}
+@media (min-width: 650px) {
+    #outerWr.onesided #searchMaskCol {
+        display: flex;
+    }
+    #outerWr.onesided #searchInfo:not(.hidden) {
+        display: block;
+    }
+
+}
+
+@media (min-height: 900px) {
+    #tagContainer {
+        max-height: 380px !important;
+    }
+    .searchInfoTagSep{
+        margin-top: 20px !important;
+    }
+    #modalText {
+         max-height: 650px !important;
+    }
+}
+@media (max-width: 500px) {
+    #sortCol {
+        display: none;
+    }
+    .modal-content 
+    {
+        width: 80% !important;
+    }
+   
+  
+
+}
+@media (max-height: 600px) {
+    #modalText {
+        max-height: 350px !important;
+    }
 }
