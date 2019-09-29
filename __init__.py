@@ -299,19 +299,22 @@ def myOnBridgeCmd(self, cmd):
         nid = cmd.split()[1]
         queue_sched = int(cmd.split()[2])
         inserted_index = update_position(nid, QueueSchedule(queue_sched))
-        searchIndex.output.editor.web.eval("document.getElementById('siac-queue-lbl').innerHTML = 'Position in Queue: %s / %s'" % (inserted_index[0] + 1, inserted_index[1]))
+        searchIndex.output.editor.web.eval("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Position in Queue: %s / %s'; $('#siac-queue-lbl').fadeIn();" % (inserted_index[0] + 1, inserted_index[1]))
 
     elif cmd.startswith("siac-remove-from-queue "):
         nid = cmd.split()[1]
         update_position(nid, QueueSchedule.NOT_ADD)
         searchIndex.output.editor.web.eval("afterRemovedFromQueue();")
-        searchIndex.output.editor.web.eval("document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue';")
+        searchIndex.output.editor.web.eval("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue'; $('#siac-queue-lbl').fadeIn();")
 
     elif cmd == "siac-user-note-queue-read-random":
         rand_id = get_random_id_from_queue()
         if rand_id >= 0:
             display_note_reading_modal(rand_id)
-
+    elif cmd == "siac-user-note-queue-read-head":
+        nid = get_head_of_queue()
+        if nid >= 0:
+            display_note_reading_modal(nid)
     #
     #   Synonyms
     #
