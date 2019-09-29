@@ -793,8 +793,8 @@ def display_note_reading_modal(note_id):
 
     if diff.total_seconds() / 60 < 2.0:
         time_str = time_str % ("1", "minute")
-    elif diff.total_seconds() < 1.0:
-        time_str = time_str % (int(diff.total_seconds() / 3600), "minutes")
+    elif diff.total_seconds() / 3600 < 1.0:
+        time_str = time_str % (int(diff.total_seconds() / 60), "minutes")
     elif diff.total_seconds() / 86400 < 1.0:
         time_str = time_str % (int(diff.total_seconds() / 3600), "hours")
     elif diff.total_seconds() / 86400 >= 1.0 and diff.total_seconds() / 86400 < 2.0:
@@ -838,27 +838,26 @@ def display_note_reading_modal(note_id):
                     {text}
                 </div>
                 <div style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 5px 0 0 5px;'>
-                    <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px;'>
+                    <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
                        
                         <div class='siac-queue-sched-btn active' onclick='queueSchedBtnClicked(this);'>Keep Position</div>
                         <div style='display: inline-block; height: 90px; margin: 0 10px 0 10px; border: 0 0 0 2px solid lightgrey; border-style: dotted;'></div>
                         <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>Start</div>
-                        <div style='display: inline-block; height: 50px; width: 20px; margin: 0 10px 0 10px; border-top: 2px solid lightgrey; border-style: dotted; border-width: 2px 0 0 0;'></div>
+                        <div class='siac-queue-sched-hor-sep'></div>
                         <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>First 3rd</div>
-                        <div style='display: inline-block; height: 50px; width: 20px; margin: 0 10px 0 10px; border-top: 2px solid lightgrey; border-style: dotted; border-width: 2px 0 0 0;'></div>
+                        <div class='siac-queue-sched-hor-sep'></div>
                         <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>Second 3rd</div>
-                        <div style='display: inline-block; height: 50px; width: 20px; margin: 0 10px 0 10px; border-top: 2px solid lightgrey; border-style: dotted; border-width: 2px 0 0 0;'></div>
+                        <div class='siac-queue-sched-hor-sep'></div>
                         <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>End</div>
                         <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
                         <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>Random</div>
                         <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
                         <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px;'>
-                        <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
-                        <span style='margin-top: 5px;'>{time_str}</span> <br><br>
-                        {tag_str}
+                            <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
+                            <span style='margin-top: 5px;'>{time_str}</span> <br><br>
+                            {tag_str}
                         </div>
                     </div>
-                  
                 </div>
             </div>
 
