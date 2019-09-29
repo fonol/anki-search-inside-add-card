@@ -344,8 +344,8 @@ class Output:
         title = text.split("\u001f")[0]
         body = text.split("\u001f")[1]
         src = text.split("\u001f")[2]
-        title = "<b>%s</b>%s" % (title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px;'>" if len(body.strip()) > 0 else "")
-        src = "<br/><hr><i>Source: %s</i>" % (src) if len(src) > 0 else ""
+        title = "<b>%s</b>%s" % (title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
+        src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src) if len(src) > 0 else ""
         return title + body + src
 
 
