@@ -2,6 +2,7 @@ from aqt.qt import *
 from aqt.utils import tooltip
 import aqt.editor
 import aqt
+import functools
 from aqt.utils import saveGeom, restoreGeom
 from anki.hooks import addHook, remHook
 from aqt.utils import showInfo
@@ -237,6 +238,7 @@ class CreateTab(QWidget):
         QPushButton:hover#q_3 { background-color: lightblue; }
         QPushButton:hover#q_4 { background-color: lightblue; }
         QPushButton:hover#q_5 { background-color: lightblue; }
+        QPushButton:hover#q_6 { background-color: lightblue; }
         """)
 
 
@@ -285,6 +287,13 @@ class CreateTab(QWidget):
         self.q_lbl_5.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
         self.q_lbl_5.clicked.connect(lambda: self.queue_selected(5))
         vbox.addWidget(self.q_lbl_5)
+
+        self.q_lbl_6 = QPushButton("Random")
+        self.q_lbl_6.setObjectName("q_6")
+        self.q_lbl_6.setFlat(True)
+        self.q_lbl_6.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_6.clicked.connect(lambda: self.queue_selected(6))
+        vbox.addWidget(self.q_lbl_6)
 
         vbox.addStretch(1)
 
@@ -348,9 +357,9 @@ class CreateTab(QWidget):
             self.tree.addTopLevelItem(ti)
 
     def queue_selected(self, queue_schedule):
-        for lbl in [self.q_lbl_1, self.q_lbl_2, self.q_lbl_3, self.q_lbl_4, self.q_lbl_5]:
+        for lbl in [self.q_lbl_1, self.q_lbl_2, self.q_lbl_3, self.q_lbl_4, self.q_lbl_5, self.q_lbl_6]:
             lbl.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey; font-weight: normal;")
-        [self.q_lbl_1, self.q_lbl_2, self.q_lbl_3, self.q_lbl_4, self.q_lbl_5][queue_schedule-1].setStyleSheet("border: 2px solid green; padding: 3px; font-weight: bold;")
+        [self.q_lbl_1, self.q_lbl_2, self.q_lbl_3, self.q_lbl_4, self.q_lbl_5, self.q_lbl_6][queue_schedule-1].setStyleSheet("border: 2px solid green; padding: 3px; font-weight: bold;")
         self.queue_schedule = queue_schedule
 
 class PriorityTab(QWidget):
@@ -393,7 +402,7 @@ class PriorityTab(QWidget):
             rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; margin: 0px; padding: 3px;")
             rem_btn.setCursor(Qt.PointingHandCursor)
             rem_btn.setMinimumHeight(18)
-            rem_btn.clicked.connect(lambda r=r: self.on_remove_clicked(priority_list[r][0]))
+            rem_btn.clicked.connect(functools.partial(self.on_remove_clicked, priority_list[r][0]))
          
 
             h_l = QHBoxLayout()
@@ -468,7 +477,7 @@ class PriorityListModel(QStandardItemModel):
             rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; margin: 0px; padding: 3px;")
             rem_btn.setCursor(Qt.PointingHandCursor)
             rem_btn.setMinimumHeight(18)
-            rem_btn.clicked.connect(lambda: self.parent.on_remove_clicked(self.item(row).data()))
+            rem_btn.clicked.connect(functools.partial(self.parent.on_remove_clicked, self.item(row).data()))
          
 
             h_l = QHBoxLayout()
