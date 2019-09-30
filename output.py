@@ -80,7 +80,7 @@ class Output:
                             </div>
                             <div class='cardR' onmouseup='%s' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
                             <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
-                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note %s")'>&nbsp;READ&nbsp;</div>     
+                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note %s")'>&nbsp;READ&nbsp;%s</div>     
                         </div>"""
 
     def show_page(self, editor, page):
@@ -101,6 +101,7 @@ class Output:
         searchResults.4: score (not used currently)
         searchResults.5: mid
         searchResults.6: refs (not used currently)
+        searchResults.7: position in queue (only present if in queue)
         """
         if stamp is not None:
             if stamp != self.latest:
@@ -184,7 +185,7 @@ class Output:
                             "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                         retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], "getSelectionText()" if not is_queue else "", res[3], res[3], res[3], res[3], 
                             text, 
-                            res[3], self.buildTagString(res[1]), res[3])  
+                            res[3], self.buildTagString(res[1]), res[3], ": Q-%s&nbsp;" % (res[7] + 1) if len(res) >= 8 and res[7] is not None else "")  
             else:    
                 newNote = self.noteTemplate % ("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
                             "&nbsp;&#128336; " + timeDiffString,
