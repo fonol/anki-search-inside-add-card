@@ -11,6 +11,8 @@ var gridView = false;
 var renderImmediately = $renderImmediately$;
 var tagHoverTimeout = 750;
 var searchMaskTimer;
+var remainingSeconds = 30 * 60;
+var readingTimer;
 
 
 function updateSelectedDecks(elem) {
@@ -234,7 +236,7 @@ function getSelectionText() {
     } else if (document.selection && document.selection.type != "Control") {
         text = document.selection.createRange().text;
     }
-    if (text.length > 0 && text != "&nbsp;") {this
+    if (text.length > 0 && text != "&nbsp;") {
         showLoading("Selection");
         pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
     }
@@ -259,12 +261,12 @@ function searchForUserNote(event, elem) {
 }
 
 function queueSchedBtnClicked(btn_el) {
-    $('.siac-queue-sched-btn').removeClass("active");
+    $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
     $(btn_el).addClass("active");
 }
 
 function afterRemovedFromQueue() {
-    $('.siac-queue-sched-btn').removeClass("active");
+    $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
     $('.siac-queue-sched-btn').first().addClass("active");
 }
 
@@ -272,6 +274,38 @@ function specialSearch(mode) {
     document.getElementById("a-modal").style.display = 'none';
     showLoading("Special Search");
     pycmd(mode + " " + selectedDecks.toString());
+}
+
+function startTimer(elementToUpdate) {
+    readingTimer = setInterval(function() {
+        remainingSeconds --;
+        elementToUpdate.innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds %% 60 < 10 ? "0" + remainingSeconds %% 60 : remainingSeconds %% 60);
+        if (remainingSeconds <= 0) {
+            clearInterval(readingTimer);
+        }
+    }, 1000);
+}
+
+function toggleTimer(timer) {
+    if ($(timer).hasClass('inactive')) {
+        $(timer).removeClass("inactive");
+        timer.innerHTML = "Pause";
+        let timerDisplay = document.getElementById("siac-reading-modal-timer");
+        startTimer(timerDisplay);
+    } else {
+        clearInterval(readingTimer);
+        $(timer).addClass("inactive");
+        timer.innerHTML = "Start";
+    }
+}
+function resetTimer(elem) {
+    clearInterval(readingTimer);
+    $('.siac-timer-btn').removeClass('active');
+    $(elem).addClass('active');
+    let seconds = Number(elem.innerHTML) * 60;
+    remainingSeconds = seconds;
+    document.getElementById("siac-reading-modal-timer").innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds %% 60 < 10 ? "0" + remainingSeconds %% 60 : remainingSeconds %% 60);
+    $('#siac-timer-play-btn').addClass("inactive").html("Start");
 }
 
 
