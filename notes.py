@@ -17,6 +17,9 @@ class QueueSchedule(Enum):
     SECOND_THIRD = 4
     END = 5
     RANDOM = 6
+    RANDOM_FIRST_THIRD = 7
+    RANDOM_SECOND_THIRD = 8
+    RANDOM_THIRD_THIRD = 9
 
 def create_db_file_if_not_exists():
     file_path = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/notes.py", "") + "/user_files/non-anki-notes.db"
@@ -69,6 +72,12 @@ def create_note(title, text, source, tags, nid, reminder, queue_schedule):
             pos = len(list)
         elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM:
             pos = random.randint(0, len(list))
+        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_FIRST_THIRD:
+            pos = random.randint(0, int(len(list) / 3.0))
+        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_SECOND_THIRD:
+            pos = random.randint(int(len(list) / 3.0), int(len(list) * 2 / 3.0))
+        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_THIRD_THIRD:
+            pos = random.randint(int(len(list) * 2 / 3.0), int(len(list) * 3 / 3.0))
         
     conn = _get_connection() 
     if pos is not None:
@@ -104,6 +113,13 @@ def update_position(note_id, queue_schedule):
         existing.append(note_id)
     elif queue_schedule == QueueSchedule.RANDOM:
         existing.insert(random.randint(0, len(existing)), note_id)
+    elif queue_schedule == QueueSchedule.RANDOM_FIRST_THIRD:
+        existing.insert(random.randint(0, int(len(existing) / 3.0)), note_id)
+    elif queue_schedule == QueueSchedule.RANDOM_SECOND_THIRD:
+        existing.insert(random.randint(int(len(existing) / 3.0), int(len(existing) * 2 / 3.0)), note_id)
+    elif queue_schedule == QueueSchedule.RANDOM_THIRD_THIRD:
+        existing.insert(random.randint(int(len(existing) * 2 / 3.0), int(len(existing) * 3 / 3.0)), note_id)
+    
 
     pos_ids = [(ix, r) for ix, r in enumerate(existing)]
     conn.executemany("update notes set position = ? where id=?", pos_ids)
@@ -242,6 +258,7 @@ def find_by_text(text):
 
 
 def delete_note(id):
+    update_position(id, QueueSchedule.NOT_ADD)
     conn = _get_connection()
     sql = """
         delete from notes where id=%s
@@ -344,7 +361,7 @@ def get_all_tags_as_hierarchy(include_anki_tags):
 
 def _to_output_list(db_list, pinned):
     output_list = list()
-    for (id, title, text, source, tags, nid, created, modified, reminder, _, _) in db_list:
+    for (id, title, text, source, tags, nid, created, modified, reminder, _, position) in db_list:
         if not str(id) in pinned:
-            output_list.append((build_user_note_text(title, text, source), tags, -1, id, 1, "-1", "")) 
+            output_list.append((build_user_note_text(title, text, source), tags, -1, id, 1, "-1", "", position)) 
     return output_list
