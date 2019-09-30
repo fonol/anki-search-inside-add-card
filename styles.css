@@ -1236,24 +1236,31 @@ span.tag-symbol {
     color: #2496dc;   
 }
 
-.siac-queue-sched-btn {
+.siac-queue-sched-btn, .siac-queue-sched-btn-hor {
     display: inline-block;
     font-size: 13px;
     padding: 2px;
     border: 2px solid lightblue;
     color: lightblue;
-    writing-mode: vertical-lr;
-    height: 90px;
     user-select: none;
     cursor: pointer;
     text-align: center;
 }
-.siac-queue-sched-btn:hover {
+.siac-queue-sched-btn {
+    writing-mode: vertical-lr;
+    height: 90px;
+}
+.siac-queue-sched-btn-hor {
+    vertical-align: top;
+    margin: 40px 5px 0px 5px;
+}
+
+.siac-queue-sched-btn:hover, .siac-queue-sched-btn-hor:hover {
     color: white;
     border-color: white;
     transform: scale(1.04);
 }
-.siac-queue-sched-btn.active {
+.siac-queue-sched-btn.active, .siac-queue-sched-btn-hor.active {
     color: white;
     border-color: darkorange;
 }
@@ -1268,6 +1275,16 @@ span.tag-symbol {
     border-width: 2px 0 0 0;
 }
 
+.siac-clickable-anchor {
+    cursor: pointer;
+    display: inline-block;
+}
+
+.siac-clickable-anchor:hover {
+    transform: scale(1.04);
+}
+
+
 #outerWr.onesided .siac-queue-sched-hor-sep {
     width: 10px;
 }
@@ -1278,6 +1295,34 @@ span.tag-symbol {
     right: 27px;
 }
 
+#siac-reading-modal-timer {
+    font-size: 30px;
+    user-select: none;
+    font-weight: bold;
+}
+.siac-timer-btn {
+    cursor: pointer;
+    margin-right: 8px;
+    font-size: 11px;
+    display: inline-block;
+}
+.siac-timer-btn:hover {
+    transform: scale(1.2);
+    user-select: none;
+}
+.siac-timer-btn.active {
+    color: darkorange;
+    font-weight: bold;
+}
+#siac-timer-play-btn {
+    font-size: 19px;
+    cursor: pointer;
+    user-select: none;
+    display: inline-block;
+}
+#siac-timer-play-btn:hover {
+    transform: scale(1.05);
+}
 
 @media (max-height: 640px) {
     #tagContainer {
