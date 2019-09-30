@@ -170,7 +170,7 @@ class FTSIndex:
         user_note_filter = "and mid = -1" if only_user_notes else ""
         conn = sqlite3.connect(self.dir + "/search-data.db")
         if self.type == "SQLite FTS5":
-            dbStr = "select nid, text, tags, did, source, bm25(notes), mid, refs from notes where notes match '%s' order by bm25(notes) %s" %(query, user_note_filter)
+            dbStr = "select nid, text, tags, did, source, bm25(notes), mid, refs from notes where notes match '%s' %s order by bm25(notes)" %(query, user_note_filter)
         elif self.type == "SQLite FTS4":
             dbStr = "select nid, text, tags, did, source, matchinfo(notes, 'pcnalx'), mid, refs from notes where text match '%s' %s" %(query, user_note_filter)
         else:
