@@ -177,7 +177,7 @@ def get_random_id_from_queue():
     conn = _get_connection()
     res = conn.execute("select id from notes where position >= 0 order by random() limit 1").fetchone()
     conn.close()
-    if len(res) == 0:
+    if res is None or len(res) == 0:
         return -1
     return res[0]
 
@@ -185,7 +185,7 @@ def get_head_of_queue():
     conn = _get_connection()
     res = conn.execute("select id from notes where position >= 0 order by position asc limit 1").fetchone()
     conn.close()
-    if len(res) == 0:
+    if res is None or len(res) == 0:
         return -1
     return res[0]
 
