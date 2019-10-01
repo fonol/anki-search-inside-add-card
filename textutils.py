@@ -160,16 +160,29 @@ def clean_user_note_text(text):
             text = text[text.find(">") +1:]
             if text.lower().endswith("</body></html>"):
                 text = text[:-len("</body></html>")]
+        # <script>
         text = re.sub("</?script[^>]>", "", text)
+        # <canvas>
         text = re.sub("<canvas[^>]*>", "", text)
+        # <a>
+        text = re.sub("(<a [^>]*?href=(\".+?\"|'.+?')[^>]*?>|</a>)", "", text)
+        text = re.sub("<a( [^>]*?)?>", "", text)
+
         text = text.replace("`", "&#96;").replace("$", "&#36;")
+
         text = text.replace("-qt-block-indent:0;", "")
-        text = re.sub("font-size:[^;];", "", text)
-        text = re.sub("font-family:[^;]{1,20};", "", text)
-        text = re.sub("; ?color:[^;]{1,15};", ";", text)
-        text = re.sub("\" ?color:[^;]{1,15};", "\"", text)
-        text = re.sub("; ?background(-color)?:[^;]{1,15};", ";", text)
-        text = re.sub("\" ?background(-color)?:[^;]{1,15};", "\"", text)
+        text = re.sub("<p style=\" ?margin-top:0px; margin-bottom:0px;", "<p style=\"", text) 
+
+
+        #delete fonts and font sizes 
+        text = re.sub("font-size:[^;\"']+?([;\"'])", "\1", text)
+        text = re.sub("font-family:[^;]{1,40};", "", text)
+
+        #delete colors
+        text = re.sub("(;|\"|') *color:[^;]{1,15};", "\1;", text)
+        text = re.sub("(;|\"|') *background(-color)?:[^;]{1,15};", "\1;", text)
+        text = re.sub(" bgcolor=\"[^\"]+\"", " ", text)
+        
         return text
     except:
         return orig
