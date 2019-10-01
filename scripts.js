@@ -21,8 +21,11 @@ function updateSelectedDecks(elem) {
     if (elem)
         $(elem).toggleClass("selected");
     $(".deck-list-item.selected").each(function () {
-        selectedDecks.push($(this).data('id'));
-        str += " " + $(this).data('id');
+        if ($(this).data('id')) {
+            selectedDecks.push($(this).data('id'));
+            str += " " + $(this).data('id');
+        }
+       
     });
     pycmd("deckSelection" + str);
 }
