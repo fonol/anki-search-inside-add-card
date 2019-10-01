@@ -321,7 +321,7 @@ select {
 
 
 #deckSelWrapper {
-    height: 230px;
+    max-height: 280px;
     margin-bottom: 0px !important;
     margin-right: 1px;
     width: 100%;
@@ -330,14 +330,17 @@ select {
     text-align: left;
 }
 
-#deckSel {
+#deckSel,#deckSelQuick {
     width: 100%;
     background: $deckSelectBackgroundColor$;
     color: $deckSelectForegroundColor$;
     font-size: 0;
 }
+#deckSelQuickWrapper {
+    display: none;
+}
 
-#deckSel tr>td {
+#deckSel tr>td,#deckSelQuick tr>td {
    text-align: left;
    width: 90%;
 }
@@ -588,9 +591,7 @@ outline: none;
     border-left: none;
     border-right: none; 
 }
-#toggleBrowseMode {
-    border-left: none;
-}
+
 .deck-list-button:hover {
     color: #2496dc;
 }
@@ -687,7 +688,9 @@ table.striped tr:nth-child(even) {
 #indexInfo:hover, #synonymsIcon:hover, #stylingIcon:hover, #siac-note-icn:hover, #siac-timetable-icn:hover, #siac-settings-icn:hover {
     color: #2496dc;
 }
-
+#siac-switch-deck-btn:hover {
+    color: #2496dc;
+}
 #lastAdded, #sortBtn {
     color: $buttonForegroundColor$;
     background: $buttonBackgroundColor$;
@@ -1324,6 +1327,26 @@ span.tag-symbol {
     transform: scale(1.05);
 }
 
+#siac-reading-modal-text img {
+    display: block;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+#siac-timer-popup {
+    z-index: 9999999;
+    background: $modalBackgroundColor$;
+    color: $modalForegroundColor$;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 15px;
+    width: 300px;
+    border: 2px solid $modalBorderColor$;
+    display: none;
+}
+
+
 @media (max-height: 640px) {
     #tagContainer {
         max-height: 100px !important;
@@ -1418,9 +1441,6 @@ span.tag-symbol {
     {
         width: 80% !important;
     }
-   
-  
-
 }
 @media (max-height: 600px) {
     #modalText {
