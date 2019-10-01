@@ -1190,8 +1190,8 @@ def search_for_user_notes_only(editor, text):
         if editor is not None and editor.web is not None:
             editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(text, 100))
         return
-    searchIndex.lastSearch = (cleaned, [], "user notes")
-    searchRes = searchIndex.search(cleaned, [], only_user_notes = True)
+    searchIndex.lastSearch = (cleaned, ["-1"], "user notes")
+    searchRes = searchIndex.search(cleaned, ["-1"], only_user_notes = True)
 
 def addHideShowShortcut(shortcuts, editor):
     if not "toggleShortcut" in config:

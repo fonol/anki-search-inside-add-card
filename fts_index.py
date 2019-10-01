@@ -167,7 +167,7 @@ class FTSIndex:
         allDecks = "-1" in decks
         decks.append("-1")
         rList = list()
-        user_note_filter = "and mid = -1" if only_user_notes else ""
+        user_note_filter = "AND mid='-1'" if only_user_notes else ""
         conn = sqlite3.connect(self.dir + "/search-data.db")
         if self.type == "SQLite FTS5":
             dbStr = "select nid, text, tags, did, source, bm25(notes), mid, refs from notes where notes match '%s' %s order by bm25(notes)" %(query, user_note_filter)
