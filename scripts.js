@@ -282,6 +282,8 @@ function startTimer(elementToUpdate) {
         elementToUpdate.innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds %% 60 < 10 ? "0" + remainingSeconds %% 60 : remainingSeconds %% 60);
         if (remainingSeconds <= 0) {
             clearInterval(readingTimer);
+            $('#siac-timer-play-btn').addClass("inactive").html("Finished");
+            $('#siac-timer-popup').show();
         }
     }, 1000);
 }
@@ -662,10 +664,11 @@ function sort() {
 }
 
 function addFloatingNote(nid) {
+    let onedit = $('#' + nid.toString()).hasClass('siac-user-note') ? `pycmd("siac-edit-user-note ${nid}")`  : `edit(${nid})`;
     let content = document.getElementById(nid).innerHTML;
     $('#cW-' + nid).parent().parent().remove();
     let btnBar = `<div class='floatingBtnBar'>
-        <div class="floatingBtnBarItem" onclick='edit(${nid})'>Edit</div>&nbsp;&#65372;
+        <div class="floatingBtnBarItem" onclick='${onedit}'>Edit</div>&nbsp;&#65372;
         <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>&nbsp;&#65372;
         <div class="floatingBtnBarItem" id='rem-${nid}' onclick='document.getElementById("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div> 
     </div>`;

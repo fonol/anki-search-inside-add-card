@@ -78,7 +78,7 @@ class Output:
                                 <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div> 
                                 <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div> 
                             </div>
-                            <div class='cardR' onmouseup='%s' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
+                            <div class='cardR siac-user-note' onmouseup='%s' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
                             <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
                             <div class='cardLeftBot' onclick='pycmd("siac-read-user-note %s")'>&nbsp;READ&nbsp;%s</div>     
                         </div>"""
