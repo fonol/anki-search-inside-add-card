@@ -20,7 +20,7 @@ import os
 import random
 import sqlite3
 import re
-import time
+import time as t
 import math
 import webbrowser
 import platform
@@ -38,7 +38,7 @@ from .notes import *
 from .output import Output
 from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms, remove_fields
 from .editor import openEditor, EditDialog, NoteEditor
-from .tag_find import findBySameTag, display_tag_info
+from .tag_find import findBySameTag, display_tag_info, get_most_active_tags
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval, getTrueRetentionOverTime
 from .utils import to_tag_hierarchy
 
@@ -141,7 +141,7 @@ def editorSaveWithIndexUpdate(dialog):
         # note should be rerendered
         rerenderNote(dialog.editor.note.id)
          # keep track of edited notes (to display a little remark in the results)
-        searchIndex.output.edited[str(dialog.editor.note.id)] = time.time()
+        searchIndex.output.edited[str(dialog.editor.note.id)] = t.time()
  
 
    
@@ -943,6 +943,14 @@ def fillTagSelect(editor = None) :
     tags = set(tags)
     tmap = to_tag_hierarchy(tags)
     
+    most_active = get_most_active_tags(5)
+    most_active_map = dict()
+    for t in most_active:
+        if t in tmap:
+            most_active_map[t] = tmap[t]
+        else:
+            most_active_map[t] = {}
+
   
     def iterateMap(tmap, prefix, start=False):
         if start:
@@ -955,9 +963,14 @@ def fillTagSelect(editor = None) :
         html += "</ul>"
         return html
 
+    most_active_html = iterateMap(most_active_map, "", True)
     html = iterateMap(tmap, "", True)
 
-    cmd = """document.getElementById('deckSel').innerHTML = `%s`; 
+    cmd = """
+    document.getElementById('deck-sel-info-lbl').style.display = 'none';
+    document.getElementById('deckSelQuickWrapper').style.display = '%s';
+    document.getElementById('deckSelQuick').innerHTML = `%s`; 
+    document.getElementById('deckSel').innerHTML = `%s`; 
     $('.exp').click(function(e) {
 		e.stopPropagation();
         let icn = $(this);
@@ -969,10 +982,10 @@ def fillTagSelect(editor = None) :
         }
         $(this).parent().parent().children('ul').toggle();
     });
-    $(".deck-list-button:not(#toggleBrowseMode)").prop("disabled", true);
-    $('#toggleBrowseMode').text('Back to Decks');
-    $('#toggleBrowseMode').click("pycmd('toggleTagSelect')");
-    """ % html
+    $("#siac-deck-sel-btn-wrapper").hide();
+    $('#siac-switch-deck-btn > span:first').html('<b>Tags</b> (Click to Switch to Decks)');
+    $('#siac-switch-deck-btn').click("pycmd('toggleTagSelect')");
+    """ % ("block" if len(most_active_map) > 0 else "none", most_active_html, html)
     if editor is not None:
         editor.web.eval(cmd)
     else:
@@ -1020,7 +1033,10 @@ def fillDeckSelect(editor = None):
 
     html = iterateMap(dmap, "", True)
 
-    cmd = """document.getElementById('deckSel').innerHTML = `%s`; 
+    cmd = """
+    document.getElementById('deck-sel-info-lbl').style.display = 'block';
+    document.getElementById('deckSelQuickWrapper').style.display = 'none';
+    document.getElementById('deckSel').innerHTML = `%s`; 
     $('.exp').click(function(e) {
 		e.stopPropagation();
         let icn = $(this);
@@ -1032,9 +1048,9 @@ def fillDeckSelect(editor = None):
         }
         $(this).parent().parent().children('ul').toggle();
     });
-    updateSelectedDecks();
-    $('#toggleBrowseMode').html('<span class="tag-symbol">&#9750;</span> Browse Tags');
-    $(".deck-list-button").prop("disabled", false);
+    $('#siac-switch-deck-btn > span:first').html('<b>Decks</b> (Click to Switch to Tags)');
+    $("#siac-deck-sel-btn-wrapper").show();
+     updateSelectedDecks();
 
     """ % html
     editor.web.eval(cmd)
