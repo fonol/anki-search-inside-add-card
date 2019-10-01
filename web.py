@@ -447,9 +447,9 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                         <button class='modal-close' onclick='hideModalSubpage()'>&#8592; Back</button>
                         <div id="modal-subpage-inner"></div>
                     </div>
-                        <div style='text-align: right; margin-top:25px;'>
-                            <button class='modal-close' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
-                        </div>
+                    <div style='text-align: right; margin-top:25px;'>
+                        <button class='modal-close' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -462,23 +462,31 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
             </div>
                 <div class="flexContainer" id="topContainer">
                     <div class='flexCol' style='margin-left: 0px; padding-left: 0px;'>
-                        <div class='siac-btn-small' style='display: inline-block; position: relative; min-width: 200px; width: calc(100%% - 1px); text-align: center;'>Decks & Tags
-                        <div class='siac-btn-small-dropdown'>
-                        <div id='deckSelWrapper'> 
-                            <table id='deckSel'></table>
+                        <div id='siac-switch-deck-btn' class='siac-btn-small' style='display: inline-block; position: relative; min-width: 200px; width: calc(100%% - 1px); text-align: center;' onclick="pycmd('toggleTagSelect')"><span><b>Decks</b> (Click to Switch to Tags)</span>
+                            <div class='siac-btn-small-dropdown'>
+                                <div id='deckSelWrapper'>
+                                    <div id='deck-sel-info-lbl' style='margin: 5px 0 4px 5px;'><i>Only selected decks are used when searching:</i></div>
+                                    <div id='deckSelQuickWrapper'>
+                                        <div style='font-weight: bold; margin: 4px 0 4px 4px;'>Recent:</div>
+                                        <table id='deckSelQuick'></table>
+                                        <hr style='margin: 5px 5px 5px 5px'/>
+                                    </div>
+                                    <table id='deckSel'></table>
+                                </div>
+                                <div id='siac-deck-sel-btn-wrapper' style='margin-top: 3px; margin-bottom: 5px; white-space: nowrap; font-size: 0;'>
+                                    <div class='deck-list-button' onclick='selectAllDecks(); event.stopPropagation();'>All</div>
+                                    <div class='deck-list-button center' onclick='unselectAllDecks(); event.stopPropagation();'>None</div>
+                                    <div class='deck-list-button' onclick="pycmd('selectCurrent'); event.stopPropagation();">Current</div>
+                                </div>
+                            </div>
                         </div>
-                        <div style='margin-top: 3px; margin-bottom: 5px; white-space: nowrap; font-size: 0;'>
-                                <div class='deck-list-button' onclick='selectAllDecks();'>All</div>
-                                <div class='deck-list-button center' onclick='unselectAllDecks();'>None</div>
-                                <div class='deck-list-button' onclick="pycmd('selectCurrent')">Current</div>
-                                <div class='deck-list-button' id='toggleBrowseMode' onclick="pycmd('toggleTagSelect')"><span class='tag-symbol'>&#9750;</span> Browse Tags</div>
-                        </div>
-                  </div>
-                  </div>
                     </div>
                     <div class='flexCol right' style="position: relative; min-height: 25px; white-space: nowrap;">
                             <div id='siac-timetable-icn' class='siac-btn-small' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")'>&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;
                                         <div class='siac-btn-small-dropdown'>
+                                                <div class='siac-dropdown-item' style='width: 100%%;'>&nbsp;<b>WIP!</b></div>
+
+
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note");'>&nbsp;<b>Create</b></div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest");'>&nbsp;Newest</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-random");'>&nbsp;Random</div>
@@ -829,17 +837,17 @@ def display_note_reading_modal(note_id):
 
         html = """
             <div style='width: 100%;'>
-                <div style='height: 10%; min-height: 90px; width: 100%; border-bottom: 2px solid darkorange; margin-bottom: 5px;'>
-                 <div style='display: inline-block; width: calc(100%-154px);'>   
-                    <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide();{save_on_close}'>&times;</span>
-                    <h2 style='margin: 0 0 5px 0;'>{title}</h2>
-                    <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: <i>{source}</i></h4> 
-                </div>
-                <div style='width: 150px; float: right;'>
-                    <span class='siac-timer-btn' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn active' onclick='resetTimer(this)'>30</span><br>
-                    <span id='siac-reading-modal-timer'>30 : 00</span><br>
-                   <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
-                </div>
+                <div style='height: 10%; min-height: 90px; width: 100%; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
+                    <div style='display: inline-block; width: calc(100%-154px);'>   
+                        <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide();{save_on_close}'>&times;</span>
+                        <h2 style='margin: 0 0 5px 0;'>{title}</h2>
+                        <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: <i>{source}</i></h4> 
+                    </div>
+                    <div style='width: 150px; float: right;'>
+                        <span class='siac-timer-btn' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn active' onclick='resetTimer(this)'>30</span><br>
+                        <span id='siac-reading-modal-timer'>30 : 00</span><br>
+                        <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
+                    </div>
                 </div>
                 <div id='siac-reading-modal-text' style='overflow-y: auto; height: calc(90% - 140px); max-height: calc(100% - 230px); font-size: 13px; padding: 20px 20px 0 20px;' contenteditable='{is_contenteditable}' {onkeyup}>
                     {text}
@@ -867,6 +875,10 @@ def display_note_reading_modal(note_id):
                             <a onclick='pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
                         </div>
                     </div>
+                </div>
+                <div id='siac-timer-popup'>
+                    <div style='text-align: center; vertical-align: middle; line-height: 90px; font-weight: bold; font-size: 20px;'>Time is up!</div>
+                    <div style='text-align: center;'><div class='siac-btn-small' onclick='this.parentNode.parentNode.style.display="none";'>&nbsp;Ok&nbsp;</div></div>
                 </div>
             </div>
 

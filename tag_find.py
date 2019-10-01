@@ -180,3 +180,34 @@ def _extract_tags(db_list, tag_searched):
             else:
                 tagsfound[s] = 1
     return tagsfound
+
+
+def get_most_active_tags(max_count):
+    """
+    Find the tags that have been used recently, e.g. a note with the tag has been created / edited.
+    Looks into the 100 last edited/created notes.
+    Returns an ordered list of max max_count items.
+    """
+    res = mw.col.db.execute("select tags from notes order by mod desc limit 100").fetchall()
+    if res is None or len(res) == 0:
+        return []
+    counts = dict()
+    tag = ""
+    for r in res:
+        spl = r[0].split()
+        for t in spl:
+            # we only count the top tag
+            if "::" in t:
+                tag = t.split("::")[0]
+            else:
+                tag = t
+            if tag in counts:
+                counts[tag] += 1
+            else:
+                counts[tag] = 1
+    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:max_count]
+    return ordered
+
+            
+            
+                
