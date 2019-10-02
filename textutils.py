@@ -168,6 +168,10 @@ def clean_user_note_text(text):
         text = re.sub("(<a [^>]*?href=(\".+?\"|'.+?')[^>]*?>|</a>)", "", text)
         text = re.sub("<a( [^>]*?)?>", "", text)
 
+        # don't allow too large headers
+        text = re.sub("<h[12]([> ])", "<h3 \1", text)
+        text = re.sub("</h[12]>", "</h3>", text)
+
         text = text.replace("`", "&#96;").replace("$", "&#36;")
 
         text = text.replace("-qt-block-indent:0;", "")
