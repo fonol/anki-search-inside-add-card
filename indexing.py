@@ -4,6 +4,7 @@ from anki.find import Finder
 import aqt
 import time
 import os
+import sqlite3
 from .state import checkIndex, get_index, set_index, set_corpus, get_corpus, corpus_is_loaded, get_edit
 from .logging import *
 from .web import loadSynonyms, showSearchResultArea, printStartingInfo
@@ -161,6 +162,14 @@ def _should_rebuild():
     if config["useFTS"]:
         file_path = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/indexing.py", "") + "/search-data.db"
         if not os.path.isfile(file_path):
+            return True
+        try:
+            conn = sqlite3.connect(file_path)
+            row = conn.cursor().execute("SELECT * FROM notes_content ORDER BY id ASC LIMIT 1").fetchone()
+            conn.close()
+            if row is not None and len(row) != 8:
+                return True
+        except:
             return True
     else:
         file_path = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/indexing.py", "") + "/index"
