@@ -115,7 +115,7 @@ class NoteEditor(QDialog):
         layout_main = QVBoxLayout()
         layout_main.addWidget(self.tabs)
         self.setLayout(layout_main)
-        self.resize(640, 700)
+        #self.resize(640, 700)
         
         self.exec_()
 
