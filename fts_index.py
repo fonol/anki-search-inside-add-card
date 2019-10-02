@@ -413,10 +413,13 @@ class FTSIndex:
         return row_id
 
     def get_number_of_notes(self):
-        conn = sqlite3.connect(self.dir + "/search-data.db")
-        res = conn.cursor().execute("select count(*) from notes_content").fetchone()[0]
-        conn.close()
-        return res
+        try:
+            conn = sqlite3.connect(self.dir + "/search-data.db")
+            res = conn.cursor().execute("select count(*) from notes_content").fetchone()[0]
+            conn.close()
+            return res
+        except:
+            return 0
 
 
 class Worker(QRunnable):
