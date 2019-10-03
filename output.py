@@ -6,7 +6,7 @@ import math
 from datetime import datetime
 from aqt import mw
 from aqt.utils import showInfo, tooltip
-from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar, get_stamp, remove_divs
+from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar, get_stamp, remove_divs, remove_tags
 from .logging import log
 from .stats import getRetentions
 from .state import get_index
@@ -153,13 +153,13 @@ class Output:
             lastNote = newNote
             text = res[0]
 
-            #highlight
-            if query_set is not None:
-                text = self._markHighlights(text, query_set)
-
             #non-anki notes should be displayed differently, we distinguish between title, text and source here
             if str(res[2]) == "-1":
                 text = self._build_non_anki_note_html(text)
+
+            #highlight
+            if query_set is not None:
+                text = self._markHighlights(text, query_set)
 
             # hide fields that should not be shown 
             if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
@@ -202,7 +202,7 @@ class Output:
                 html += newNote
             tags = self._addToTags(tags, res[1])
             if counter - (page - 1) * 50 < 20:
-                allText += " " + res[0]
+                allText += " " + res[0][:5000]
         tags.sort()
         html = html.replace("`", "&#96;").replace("$", "&#36;")
         pageMax = math.ceil(len(db_list) / 50.0)
@@ -341,10 +341,27 @@ class Output:
     def _build_non_anki_note_html(self, text):
         """
         User's notes should be displayed in a way to visually distinguish between title, text and source.
+        Also, text might need to be cut if is too long to reduce time needed for highlighting, extracting keywords, and rendering.
         """
-        title = text.split("\u001f")[0]
-        body = text.split("\u001f")[1]
-        src = text.split("\u001f")[2]
+        #trim very long texts:
+        if len(text) > 5000:
+            src_begin_index = text.rfind("\u001f")
+            src = text[src_begin_index + 1:] 
+            title = text[:text.find("\u001f")]
+            body = text[text.find("\u001f") +1:src_begin_index][:5000]
+            #there might be unclosed tags now, but parsing would be too much overhead, so simply remove div, a and span tags
+            #there might be still problems with <p style='...'> 
+            body = remove_tags(body, ["div", "span", "a"])
+            last_open_bracket = body.rfind("<")
+            if last_open_bracket >= len(body) - 100:
+                last_close_bracket = body.rfind(">")
+                if last_close_bracket < last_open_bracket:
+                    body = body[:last_open_bracket -1]
+            body += "<br><p style='text-align: center;'><b>(Text was cut - too long to display)</b></p>"
+        else:
+            title = text.split("\u001f")[0]
+            body = text.split("\u001f")[1]
+            src = text.split("\u001f")[2]
         title = "<b>%s</b>%s" % (title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
         src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src) if len(src) > 0 else ""
         return title + body + src
@@ -514,7 +531,7 @@ class Output:
         html = self.get_result_html_simple(db_list, tag_hover= False)
         
         if len(html) == 0:
-            html = "%s <div style='vertical-align:center; text-align: center; line-height: 200px;'>No notes added on that day.</div>" % (context_html)
+            html = "%s <div style='text-align: center; line-height: 100px;'>No notes added on that day.</div><div style='text-align: center;'> Tip: Hold Ctrl and hover over the timeline for faster navigation</div>" % (context_html)
         else:
             html = """
                 %s
