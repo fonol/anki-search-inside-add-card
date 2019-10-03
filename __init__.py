@@ -649,6 +649,10 @@ def after_index_rebuilt():
 
 def editorContextMenuEventWrapper(view, evt):
     global contextEvt
+    win = aqt.mw.app.activeWindow()
+    if isinstance(win, Browser):
+        origEditorContextMenuEvt(view, evt)
+        return
     contextEvt = evt
     pos = evt.pos()
     determineClickTarget(pos)
@@ -746,10 +750,11 @@ def appendNoteToField(content, key):
     searchIndex.output.editor.loadNote()
 
 def appendImgToField(src, key):
-    if not checkIndex():
+    if not checkIndex() or src is None or len(src) == 0:
         return
     searchIndex = get_index()
     note = searchIndex.output.editor.note
+    src = re.sub("https?://[0-9.]+:\\d+/", "", src)
     note.fields[note._fieldOrd(key)] += "<img src='%s'/>" % src
     note.flush()
     searchIndex.output.editor.loadNote()
