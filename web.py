@@ -482,20 +482,20 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                         </div>
                     </div>
                     <div class='flexCol right' style="position: relative; min-height: 25px; white-space: nowrap;">
-                            <div id='siac-timetable-icn' class='siac-btn-small' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")'>&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;
+                            <div id='siac-timetable-icn' class='siac-btn-small' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'>&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;
                                         <div class='siac-btn-small-dropdown'>
                                                 <div class='siac-dropdown-item' style='width: 100%%;'>&nbsp;<b>WIP!</b></div>
 
 
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note");'>&nbsp;<b>Create</b></div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest");'>&nbsp;Newest</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-random");'>&nbsp;Random</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search");'>&nbsp;Search ...</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search"); event.stopPropagation();'>&nbsp;Search ...</div>
                                                 <hr>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue");' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-head");'>&nbsp;<b>Read 1st</b></div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-random");'>&nbsp;Read [Rnd]</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random");'>&nbsp;List [Rnd]</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-head"); event.stopPropagation();'>&nbsp;<b>Read 1st</b></div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-random"); event.stopPropagation();'>&nbsp;Read [Rnd]</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]</div>
 
                                 </div>
                             </div>
