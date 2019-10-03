@@ -23,6 +23,9 @@ def clean(text, stopWords):
     text = spaceReg.sub(" ", text)
     stopWords = [s.lower() for s in stopWords]
     for token in tokenize(text):
+        #this will prevent indexing / searching for base64 data urls
+        if len(token) > 200:
+            continue
         if ignoreReg.match(token) is not None:
             continue
         cleaned = cleanWordReg.sub(r'\1', token.strip())
@@ -204,3 +207,27 @@ def remove_fields(text, field_ords):
 
 def remove_divs(html):
     return re.sub("</?div ?[^>]*?>", "", html, flags=re.IGNORECASE)
+
+def remove_tags(html, tags):
+    return re.sub("</?(%s) ?[^>]*?>" % "|".join(tags), "", html, flags=re.IGNORECASE)
+
+def remove_headers(html):
+    html = re.sub("</?h[123456]( [^>]*?)?>", "", html, flags=re.IGNORECASE)
+    html = re.sub("font-size: ?large;?", "", html, flags=re.IGNORECASE)
+    return html
+
+def remove_all_bold_formatting(html):
+    orig = html
+    #remove <b>
+    html = re.sub("</?b( [^>]*?)?>", "", html, flags=re.IGNORECASE)
+    #remove font-weight styles
+    html = re.sub("font-weight: ?(bold|600|700|800|900);?", "", html, flags=re.IGNORECASE)
+    if len(orig) > 50 and len(html) == 0:
+        return orig
+    return html
+
+def find_all_images(html):
+    """
+    Returns a list of all <img> tags contained in the html.
+    """
+    return re.findall("<img[^>]*?>", html, flags=re.IGNORECASE) 
