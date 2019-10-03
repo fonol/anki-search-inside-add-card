@@ -1,3 +1,6 @@
+import base64
+import requests
+
 
 def to_tag_hierarchy(tags):
     tmap = {}
@@ -18,3 +21,6 @@ def _add_to_tag_list(tmap, name):
         if not d in found:
             found.update({d : {}}) 
     return tmap
+
+def url_to_base64(url):
+    return base64.b64encode(requests.get(url).content).decode('ascii')
