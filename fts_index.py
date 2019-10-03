@@ -92,8 +92,8 @@ class FTSIndex:
         filtered = list()
         text = ""
         for row in corpus:
-            #if the notes model id is in our filter dict, that means we want to exclude some field(s)
             text = row[1]
+            #if the notes model id is in our filter dict, that means we want to exclude some field(s)
             if row[4] in self.fields_to_exclude:
                 text = remove_fields(text, self.fields_to_exclude[row[4]])
             text = clean(text, self.stopWords)
@@ -371,7 +371,7 @@ class FTSIndex:
         """
         text = build_user_note_text(title=note[1], text=note[2], source=note[3])
         conn = sqlite3.connect(self.dir + "/search-data.db")
-        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note[0], clean(text, self.stopWords), note[4], -1, text, -1))
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note[0], clean(text, self.stopWords), note[4], "-1", text, "-1"))
         conn.commit()
         conn.close()
         persist_index_info(self)
