@@ -280,6 +280,24 @@ def get_queue_count():
     conn.close()
     return c
 
+def get_recently_used_tags():
+    conn = _get_connection()
+    res = conn.execute("select distinct tags from notes where tags is not null order by id desc limit 10").fetchall()
+    if res is None or len(res) == 0:
+        return []
+    counts = dict()
+    for r in res:
+        spl = r[0].split()
+        for tag in spl:
+            if tag in counts:
+                counts[tag] += 1
+            else:
+                counts[tag] = 1
+    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:8]
+    return ordered
+
+    conn.close()
+
 def _get_priority_list():
     conn = _get_connection()
     sql = """
