@@ -1381,9 +1381,9 @@ span.tag-symbol {
  
 }
 @media (max-width: 1300px) {
-    #searchMaskCol {
+    /* #searchMaskCol {
         display: none;
-    }
+    } */
    
     #predefCol {
         margin-left: 5px;
