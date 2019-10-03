@@ -166,22 +166,91 @@ class CreateTab(QWidget):
         self.tree.setHeaderLabels(["Tags (Click to Add)"])
         self.build_tree(tmap)
         self.tree.itemClicked.connect(self.tree_item_clicked)
-
-        self.note_tree = QTreeWidget()
-        self.note_tree.setColumnCount(1)
-        self.note_tree.setHeaderLabels(["Recent"])
+        self.tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 
-        note_tree_data = get_note_tree_data()
-        for date_str, o_note_list in note_tree_data.items():
-            ti = QTreeWidgetItem([date_str])
-            for note in o_note_list:
-                title = note[1] if note[1] is not None and len(note[1].strip()) > 0 else "Untitled"
-                tc = QTreeWidgetItem([title])
-                tc.setData(0, 1, QVariant(note[0]))
-                ti.addChild(tc)
-            self.note_tree.addTopLevelItem(ti)
+        recently_used_tags = get_recently_used_tags()
+        self.recent_tree = QTreeWidget()
+        self.recent_tree.setColumnCount(1)
+        self.recent_tree.setHeaderLabels(["Recent (Click to Add)"])
+        self.recent_tree.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        for t in recently_used_tags:
+            ti = QTreeWidgetItem([t])
+            ti.setData(0, 1, QVariant(t))
+            self.recent_tree.addTopLevelItem(ti)
+        self.recent_tree.itemClicked.connect(self.tree_item_clicked)
+      
+        # self.note_tree = QTreeWidget()
+        # self.note_tree.setColumnCount(1)
+        # self.note_tree.setHeaderLabels(["Recent"])
 
+
+        # note_tree_data = get_note_tree_data()
+        # for date_str, o_note_list in note_tree_data.items():
+        #     ti = QTreeWidgetItem([date_str])
+        #     for note in o_note_list:
+        #         title = note[1] if note[1] is not None and len(note[1].strip()) > 0 else "Untitled"
+        #         tc = QTreeWidgetItem([title])
+        #         tc.setData(0, 1, QVariant(note[0]))
+        #         ti.addChild(tc)
+        #     self.note_tree.addTopLevelItem(ti)
+
+        self.queue_section = QGroupBox("Queue")
+        ex_v = QVBoxLayout()
+        queue_len = len(parent.priority_list)
+        queue_lbl = QLabel("Currently, your reading queue contains <b>%s</b> items" % queue_len)
+        ex_v.addWidget(queue_lbl)
+
+        self.q_lbl_1 = QPushButton("Don't Add to Queue")
+        self.q_lbl_1.setObjectName("q_1")
+        self.q_lbl_1.setFlat(True)
+        self.q_lbl_1.setStyleSheet("border: 2px solid green; padding: 3px; font-weight: bold;")
+        self.q_lbl_1.clicked.connect(lambda: self.queue_selected(1))
+        ex_v.addWidget(self.q_lbl_1)
+
+        ex_v.addSpacing(5)
+        line_sep = QFrame()
+        line_sep.setFrameShape(QFrame.HLine)
+        line_sep.setFrameShadow(QFrame.Sunken)
+        ex_v.addWidget(line_sep)
+        ex_v.addSpacing(5)
+
+        self.q_lbl_2 = QPushButton("Head")
+        self.q_lbl_2.setObjectName("q_2")
+        self.q_lbl_2.setFlat(True)
+        self.q_lbl_2.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_2.clicked.connect(lambda: self.queue_selected(2))
+        ex_v.addWidget(self.q_lbl_2)
+
+        self.q_lbl_3 = QPushButton("End of first 3rd")
+        self.q_lbl_3.setObjectName("q_3")
+        self.q_lbl_3.setFlat(True)
+        self.q_lbl_3.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_3.clicked.connect(lambda: self.queue_selected(3))
+        ex_v.addWidget(self.q_lbl_3)
+
+        self.q_lbl_4 = QPushButton("End of second 3rd")
+        self.q_lbl_4.setObjectName("q_4")
+        self.q_lbl_4.setFlat(True)
+        self.q_lbl_4.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_4.clicked.connect(lambda: self.queue_selected(4))
+        ex_v.addWidget(self.q_lbl_4)
+
+        self.q_lbl_5 = QPushButton("End")
+        self.q_lbl_5.setObjectName("q_5")
+        self.q_lbl_5.setFlat(True)
+        self.q_lbl_5.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_5.clicked.connect(lambda: self.queue_selected(5))
+        ex_v.addWidget(self.q_lbl_5)
+
+        self.q_lbl_6 = QPushButton("Random")
+        self.q_lbl_6.setObjectName("q_6")
+        self.q_lbl_6.setFlat(True)
+        self.q_lbl_6.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_6.clicked.connect(lambda: self.queue_selected(6))
+        ex_v.addWidget(self.q_lbl_6)
+
+        self.queue_section.setLayout(ex_v)
 
         self.layout = QHBoxLayout()
         vbox_left = QVBoxLayout()
@@ -189,7 +258,10 @@ class CreateTab(QWidget):
         self.all_tags_cb = QCheckBox("Show All Tags")
         self.all_tags_cb.stateChanged.connect(self.tag_cb_changed)
         vbox_left.addWidget(self.all_tags_cb)
-        vbox_left.addWidget(self.note_tree)
+        if len(recently_used_tags) > 0:
+            vbox_left.addWidget(self.recent_tree)
+
+        vbox_left.addWidget(self.queue_section)
 
        
         self.layout.addLayout(vbox_left, 27)
@@ -216,11 +288,16 @@ class CreateTab(QWidget):
         f = self.text.font()
         f.setPointSize(12)
         self.text.setFont(f)
-        self.text.setMinimumHeight(250)
+        self.text.setMinimumHeight(380)
+        self.text.setMinimumWidth(330)
         self.text.setSizePolicy(
             QSizePolicy.Expanding, 
             QSizePolicy.Expanding)
-        vbox.addWidget(text_lbl)
+        
+        
+        t_h = QHBoxLayout()
+        t_h.addWidget(text_lbl)
+
         self.tb = QToolBar("Format") 
         self.tb.setHidden(False)
         self.tb.setOrientation(Qt.Horizontal)
@@ -256,7 +333,8 @@ class CreateTab(QWidget):
         # normalize_size = self.tb.addAction("Normalize Size")
         # normalize_size.triggered.connect(self.on_normalize_size_clicked)
 
-        vbox.addWidget(self.tb)
+        t_h.addWidget(self.tb)
+        vbox.addLayout(t_h)
         vbox.addWidget(self.text, 2)
 
 
@@ -264,12 +342,13 @@ class CreateTab(QWidget):
         self.source = QLineEdit()
         vbox.addWidget(source_lbl)
         vbox.addWidget(self.source)
-        vbox.addSpacing(18)
+        # vbox.addSpacing(18)
 
-        line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
-        vbox.addWidget(line)
+        # line = QFrame()
+        # line.setFrameShape(QFrame.HLine)
+        # line.setFrameShadow(QFrame.Sunken)
+        # vbox.addWidget(line)
+
 
         self.setStyleSheet("""
         QPushButton:hover#q_1 { background-color: lightblue; }
@@ -281,60 +360,7 @@ class CreateTab(QWidget):
         """)
 
 
-        queue_len = len(parent.priority_list)
-        queue_lbl = QLabel("Currently, your reading queue contains <b>%s</b> items" % queue_len)
-        vbox.addWidget(queue_lbl)
-
-        self.q_lbl_1 = QPushButton("Don't Add to Queue")
-        self.q_lbl_1.setObjectName("q_1")
-        self.q_lbl_1.setFlat(True)
-        self.q_lbl_1.setStyleSheet("border: 2px solid green; padding: 3px; font-weight: bold;")
-        self.q_lbl_1.clicked.connect(lambda: self.queue_selected(1))
-        vbox.addWidget(self.q_lbl_1)
-
-        vbox.addSpacing(5)
-        line_sep = QFrame()
-        line_sep.setFrameShape(QFrame.HLine)
-        line_sep.setFrameShadow(QFrame.Sunken)
-        vbox.addWidget(line_sep)
-        vbox.addSpacing(5)
-
-        self.q_lbl_2 = QPushButton("Head")
-        self.q_lbl_2.setObjectName("q_2")
-        self.q_lbl_2.setFlat(True)
-        self.q_lbl_2.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
-        self.q_lbl_2.clicked.connect(lambda: self.queue_selected(2))
-        vbox.addWidget(self.q_lbl_2)
-
-        self.q_lbl_3 = QPushButton("End of first 3rd")
-        self.q_lbl_3.setObjectName("q_3")
-        self.q_lbl_3.setFlat(True)
-        self.q_lbl_3.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
-        self.q_lbl_3.clicked.connect(lambda: self.queue_selected(3))
-        vbox.addWidget(self.q_lbl_3)
-
-        self.q_lbl_4 = QPushButton("End of second 3rd")
-        self.q_lbl_4.setObjectName("q_4")
-        self.q_lbl_4.setFlat(True)
-        self.q_lbl_4.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
-        self.q_lbl_4.clicked.connect(lambda: self.queue_selected(4))
-        vbox.addWidget(self.q_lbl_4)
-
-        self.q_lbl_5 = QPushButton("End")
-        self.q_lbl_5.setObjectName("q_5")
-        self.q_lbl_5.setFlat(True)
-        self.q_lbl_5.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
-        self.q_lbl_5.clicked.connect(lambda: self.queue_selected(5))
-        vbox.addWidget(self.q_lbl_5)
-
-        self.q_lbl_6 = QPushButton("Random")
-        self.q_lbl_6.setObjectName("q_6")
-        self.q_lbl_6.setFlat(True)
-        self.q_lbl_6.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
-        self.q_lbl_6.clicked.connect(lambda: self.queue_selected(6))
-        vbox.addWidget(self.q_lbl_6)
-
-        vbox.addStretch(1)
+        # vbox.addStretch(1)
 
         tag_lbl = QLabel("Tags")
         self.tag = QLineEdit()
@@ -650,3 +676,64 @@ class HTMLDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         return QSize(self.doc.idealWidth(), self.doc.size().height())
+
+
+class ExpandableSection(QWidget):
+    def __init__(self, title="", parent=None):
+        super(ExpandableSection, self).__init__(parent)
+
+        self.toggle_button = QToolButton( text=title, checkable=True, checked=False)
+        self.toggle_button.setStyleSheet("QToolButton { border: none; }")
+        self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.toggle_button.setArrowType(Qt.RightArrow)
+        self.toggle_button.pressed.connect(self.on_pressed)
+
+        self.toggle_animation = QParallelAnimationGroup(self)
+
+        self.content_area = QScrollArea(maximumHeight=0, minimumHeight=0)
+        self.content_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.content_area.setFrameShape(QFrame.NoFrame)
+
+        lay = QVBoxLayout(self)
+        lay.setSpacing(0)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.toggle_button)
+        lay.addWidget(self.content_area)
+
+        self.toggle_animation.addAnimation( QPropertyAnimation(self, b"minimumHeight"))
+        self.toggle_animation.addAnimation( QPropertyAnimation(self, b"maximumHeight"))
+        self.toggle_animation.addAnimation( QPropertyAnimation(self.content_area, b"maximumHeight"))
+
+    @pyqtSlot()
+    def on_pressed(self):
+        checked = self.toggle_button.isChecked()
+        self.toggle_button.setArrowType(
+            Qt.DownArrow if not checked else Qt.RightArrow
+        )
+        self.toggle_animation.setDirection(
+            QAbstractAnimation.Forward
+            if not checked
+            else QAbstractAnimation.Backward
+        )
+        self.toggle_animation.start()
+
+    def setContentLayout(self, layout):
+        lay = self.content_area.layout()
+        del lay
+        self.content_area.setLayout(layout)
+        collapsed_height = (
+            self.sizeHint().height() - self.content_area.maximumHeight()
+        )
+        content_height = layout.sizeHint().height()
+        for i in range(self.toggle_animation.animationCount()):
+            animation = self.toggle_animation.animationAt(i)
+            animation.setDuration(500)
+            animation.setStartValue(collapsed_height)
+            animation.setEndValue(collapsed_height + content_height)
+
+        content_animation = self.toggle_animation.animationAt(
+            self.toggle_animation.animationCount() - 1
+        )
+        content_animation.setDuration(500)
+        content_animation.setStartValue(0)
+        content_animation.setEndValue(content_height)
