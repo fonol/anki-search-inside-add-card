@@ -353,7 +353,7 @@ class Output:
             #there might be still problems with <p style='...'> 
             body = remove_tags(body, ["div", "span", "a"])
             last_open_bracket = body.rfind("<")
-            if last_open_bracket >= len(body) - 100:
+            if last_open_bracket >= len(body) - 100 or body.rfind(" ") < len(body) - 100:
                 last_close_bracket = body.rfind(">")
                 if last_close_bracket < last_open_bracket:
                     body = body[:last_open_bracket -1]
@@ -571,6 +571,7 @@ class Output:
         document.getElementById('siac-search-modal').style.display = 'block';
         document.getElementById('siac-search-modal-header').innerHTML = `%s`;
         document.getElementById('siac-search-modal-inp').setAttribute('onkeyup', '%s');
+        document.getElementById('siac-search-modal-inp').focus();
         """ % (header,on_enter_attr))
 
     def showStats(self, text, reviewPlotData, ivlPlotData, timePlotData):
