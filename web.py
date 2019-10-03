@@ -883,9 +883,10 @@ def display_note_reading_modal(note_id):
             </div>
 
         """
-        is_contenteditable = "true" if len(text) < 50000 else "false"
-        onkeyup = "onfocusout='readingModalTextKeyup(this, %s)'"  % (note_id) if is_contenteditable else ""
-        save_on_close = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s)'"  % (note_id) if is_contenteditable else ""
+        editable = len(text) < 50000
+        is_contenteditable = "true" if editable else "false"
+        onkeyup = "onfocusout='readingModalTextKeyup(this, %s)'"  % (note_id) if len(text) < editable else ""
+        save_on_close = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s)'"  % (note_id) if editable else ""
         queue_info = "Position in Queue: <b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "Not in Queue."
 
         params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, pos = pos , queue_len = queue_len, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
