@@ -3,6 +3,7 @@ from aqt.utils import tooltip
 import aqt.editor
 import aqt
 import functools
+import re
 from aqt.utils import saveGeom, restoreGeom
 from anki.hooks import addHook, remHook
 from aqt.utils import showInfo
@@ -10,7 +11,8 @@ from anki.utils import isMac
 from anki.lang import _
 from .notes import *
 from .notes import _get_priority_list
-from .textutils import trimIfLongerThan
+from .textutils import trimIfLongerThan, remove_headers, remove_all_bold_formatting, find_all_images
+from .utils import url_to_base64
 
 def openEditor(mw, nid):
     note = mw.col.getNote(nid)
@@ -190,7 +192,7 @@ class CreateTab(QWidget):
         vbox_left.addWidget(self.note_tree)
 
        
-        self.layout.addLayout(vbox_left, 33)
+        self.layout.addLayout(vbox_left, 27)
 
         hbox = QHBoxLayout()
         hbox.addStretch(1)
@@ -212,14 +214,51 @@ class CreateTab(QWidget):
         text_lbl.setToolTip("Text may contain HTML (some tags and inline styles may be removed), \nimages in the HTML will only be visible when connected to the internet.")
         self.text = QTextEdit()
         f = self.text.font()
-        f.setPointSize(13)
+        f.setPointSize(12)
         self.text.setFont(f)
         self.text.setMinimumHeight(250)
         self.text.setSizePolicy(
             QSizePolicy.Expanding, 
             QSizePolicy.Expanding)
         vbox.addWidget(text_lbl)
+        self.tb = QToolBar("Format") 
+        self.tb.setHidden(False)
+        self.tb.setOrientation(Qt.Horizontal)
+        self.tb.setIconSize(QSize(48, 48))
+     
+        bold =  self.tb.addAction("b")
+        f = bold.font()
+        f.setBold(True)
+        bold.setFont(f)
+        bold.setCheckable(True)
+        bold.triggered.connect(self.on_bold_clicked)
+
+        italic = self.tb.addAction("i")
+        italic.setCheckable(True)
+        italic.triggered.connect(self.on_italic_clicked)
+        f = italic.font()
+        f.setItalic(True)
+        italic.setFont(f)
+
+        clean_btn = QToolButton()
+        clean_btn.setText("Clean Text  ")
+        clean_btn.setPopupMode(QToolButton.InstantPopup)
+        clean_menu = QMenu(clean_btn)
+        header_a = clean_menu.addAction("Remove Headers")
+        header_a.triggered.connect(self.on_remove_headers_clicked)
+        header_a1 = clean_menu.addAction("Remove All Bold Formatting")
+        header_a1.triggered.connect(self.on_remove_bold_clicked)
+        header_a2 = clean_menu.addAction("Convert Images to Base64")
+        header_a2.triggered.connect(self.on_convert_images_clicked)
+        clean_btn.setMenu(clean_menu)
+
+        self.tb.addWidget(clean_btn)
+        # normalize_size = self.tb.addAction("Normalize Size")
+        # normalize_size.triggered.connect(self.on_normalize_size_clicked)
+
+        vbox.addWidget(self.tb)
         vbox.addWidget(self.text, 2)
+
 
         source_lbl = QLabel("Source")
         self.source = QLineEdit()
@@ -304,7 +343,7 @@ class CreateTab(QWidget):
 
         vbox.setAlignment(Qt.AlignTop)
         vbox.addLayout(hbox)
-        self.layout.addLayout(vbox, 66)
+        self.layout.addLayout(vbox, 73)
         self.setLayout(self.layout)
         if parent.note_id is not None:
             n = get_note(parent.note_id)
@@ -361,6 +400,54 @@ class CreateTab(QWidget):
             lbl.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey; font-weight: normal;")
         [self.q_lbl_1, self.q_lbl_2, self.q_lbl_3, self.q_lbl_4, self.q_lbl_5, self.q_lbl_6][queue_schedule-1].setStyleSheet("border: 2px solid green; padding: 3px; font-weight: bold;")
         self.queue_schedule = queue_schedule
+
+    def on_italic_clicked(self):
+        self.text.setFontItalic(not self.text.fontItalic())
+    
+    def on_bold_clicked(self):
+        self.text.setFontWeight(QFont.Normal if self.text.fontWeight() > QFont.Normal else QFont.Bold)
+
+    def on_remove_headers_clicked(self):
+        html = self.text.toHtml()
+        html = remove_headers(html)
+        self.text.setHtml(html)
+    
+    def on_remove_bold_clicked(self):
+        html = self.text.toHtml()
+        html = remove_all_bold_formatting(html)
+        self.text.setHtml(html)
+
+    def on_convert_images_clicked(self):
+        html = self.text.toHtml()     
+        images_contained = find_all_images(html)
+        if images_contained is None:
+            return
+        for image_tag in images_contained:
+            #ignore images already in base64
+            if re.findall("src=['\"] *data:image/(png|jpe?g);[^;]{0,50};base64,", image_tag, flags=re.IGNORECASE):
+                continue
+            url = re.search("src=(\"[^\"]+\"|'[^']+')", image_tag, flags=re.IGNORECASE).group(1)[1:-1]
+            try: 
+                base64 = url_to_base64(url)
+                if base64 is None or len(base64) == 0:
+                    return
+                ending = ""
+                if url.lower().endswith("jpg") or url.lower().endswith("jpeg"):
+                    ending = "jpeg"
+                elif url.lower().endswith("png"):
+                    ending = "png"
+                elif "jpg" in url.lower() or "jpeg" in url.lower():
+                    ending = "jpeg"
+                elif "png" in url.lower():
+                    ending = "png"
+                else:
+                    ending = "jpeg"
+                html = html.replace(image_tag, "<img src=\"data:image/%s;base64,%s\">" % (ending,base64))
+            except:
+                continue
+        self.text.setHtml(html)
+
+        
 
 class PriorityTab(QWidget):
 
