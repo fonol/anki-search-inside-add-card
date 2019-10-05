@@ -275,8 +275,8 @@ function toggleQueue() {
 
 function queueSchedBtnClicked(btn_el) {
     $('#siac-queue-lbl').hide(); 
-    toggleQueue();
     $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
+    toggleQueue();
     $(btn_el).addClass("active");
 
 }
