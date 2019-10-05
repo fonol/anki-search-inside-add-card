@@ -299,7 +299,13 @@ def myOnBridgeCmd(self, cmd):
         nid = cmd.split()[1]
         queue_sched = int(cmd.split()[2])
         inserted_index = update_position(nid, QueueSchedule(queue_sched))
-        searchIndex.output.editor.web.eval("document.getElementById('siac-queue-lbl').innerHTML = 'Position in Queue: %s / %s'; $('#siac-queue-lbl').fadeIn('slow'); $('.siac-queue-sched-btn:first').html('%s / %s')" % (inserted_index[0] + 1, inserted_index[1], inserted_index[0] + 1, inserted_index[1]))
+        queue_readings_list = get_queue_head_display(nid)
+        searchIndex.output.editor.web.eval("""
+        document.getElementById('siac-queue-lbl').innerHTML = 'Position in Queue: %s / %s'; 
+        $('#siac-queue-lbl').fadeIn('slow'); 
+        $('.siac-queue-sched-btn:first').html('%s / %s');
+        $('#siac-queue-readings-list').replaceWith(`%s`);
+        """ % (inserted_index[0] + 1, inserted_index[1], inserted_index[0] + 1, inserted_index[1], queue_readings_list))
 
     elif cmd.startswith("siac-remove-from-queue "):
         nid = cmd.split()[1]

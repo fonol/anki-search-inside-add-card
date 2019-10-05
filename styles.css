@@ -1227,10 +1227,13 @@ span.tag-symbol {
 #siac-reading-modal a {
     color: darkorange !important;
 }
+#siac-reading-modal a.greyedout {
+    color: lightgray !important;
+}
 
 .reading-modal-close-icn {
     position: absolute; 
-    top: 12px; right: 17px; 
+    top: 7px; right: 17px; 
     cursor: pointer; 
     font-size: 22px;
 }

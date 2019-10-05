@@ -837,13 +837,13 @@ def display_note_reading_modal(note_id):
 
         html = """
             <div style='width: 100%;'>
-                <div style='height: 10%; min-height: 90px; width: 100%; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
-                    <div style='display: inline-block; width: calc(100%-154px);'>   
+                <div style='height: 10%; min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
+                    <div style='flex: 1 1; overflow: hidden;'>   
                         <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide();{save_on_close}'>&times;</span>
-                        <h2 style='margin: 0 0 5px 0;'>{title}</h2>
+                        <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden;'>{title}</h2>
                         <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: <i>{source}</i></h4> 
                     </div>
-                    <div style='width: 150px; float: right;'>
+                    <div style='flex: 0 0; min-width: 130px; padding: 0 20px 0 10px;'>
                         <span class='siac-timer-btn' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn active' onclick='resetTimer(this)'>30</span><br>
                         <span id='siac-reading-modal-timer'>30 : 00</span><br>
                         <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
@@ -852,7 +852,7 @@ def display_note_reading_modal(note_id):
                 <div id='siac-reading-modal-text' style='overflow-y: auto; height: calc(90% - 140px); max-height: calc(100% - 230px); font-size: 13px; padding: 20px 20px 0 20px;' contenteditable='{is_contenteditable}' {onkeyup}>
                     {text}
                 </div>
-                <div style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px;'>
+                <div style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden;'>
                     <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
                        
                         <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
@@ -869,13 +869,14 @@ def display_note_reading_modal(note_id):
                             <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
                             <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
                         </div>
-                        <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px;'>
+                        <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none;'>
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px;'>{time_str}</span> <br>
                             <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next:</div><br>
                             <a onclick='pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
                             <a onclick='pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
                         </div>
+                        {queue_readings_list}
                     </div>
                 </div>
                 <div id='siac-timer-popup'>
@@ -891,10 +892,41 @@ def display_note_reading_modal(note_id):
         save_on_close = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s)'"  % (note_id) if editable else ""
         queue_info = "Position in Queue: <b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "Not in Queue."
         queue_info_short = "<b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "Not in Queue"
-        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short , queue_len = queue_len, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
+
+        queue_readings_list = get_queue_head_display(note_id, queue)
+
+        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
         html = html.format_map(params)
         index.output.show_in_large_modal(html)
         index.output.editor.web.eval("clearInterval(readingTimer);")
+
+def get_queue_head_display(note_id, queue = None):
+    """
+    This returns the html for the little list at the bottom of the reading modal which shows the first 5 items in the queue.
+    """
+    if queue is None: 
+        queue = _get_priority_list()
+    if queue is None or len(queue) == 0:
+        return ""
+
+
+    queue_head_readings = ""
+    for ix, queue_item in enumerate(queue):
+        should_greyout = "greyedout" if queue_item[0] == int(note_id) else ""
+        qi_title = trimIfLongerThan(queue_item[1], 40) if queue_item[1] is not None and len(queue_item[1]) > 0 else "Untitled"
+        queue_head_readings +=  "<a onclick='pycmd(\"siac-read-user-note %s\")' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;'>%s. %s</a><br>" % (queue_item[0], should_greyout, queue_item[10] + 1, qi_title)
+        if ix > 3:
+            break
+
+    html = """
+     <div id='siac-queue-readings-list' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none;'>
+                            <div style='margin: 0px 0 3px 0; display: inline-block;'>Queue Head:</div><br>
+                            %s
+                        </div>
+    """ % queue_head_readings
+    return html
+
+
 
 def iterateTagmap(tmap, prefix):
     if len(tmap) == 0:

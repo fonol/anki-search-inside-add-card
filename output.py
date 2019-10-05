@@ -264,7 +264,7 @@ class Output:
             stamp = "siac-tg-" + get_stamp()
             tagData = " ".join(self.iterateTagmap(tm, ""))
             html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, str(len(tm)) + " tags ...")
-        
+            
         return html
 
 
