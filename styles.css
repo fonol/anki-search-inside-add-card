@@ -60,7 +60,7 @@ body {
   background: $noteBackgroundColor$;
   overflow-x: hidden;
   overflow-y: hidden;
-  max-height: 650px;
+  max-height: 950px;
   
 }
 .cardR img {
@@ -1239,6 +1239,12 @@ span.tag-symbol {
     color: #2496dc;   
 }
 
+#siac-queue-sched-wrapper {
+    width: 0px;
+    overflow: hidden;
+    display: inline-block;
+    transition: width 1.7s;
+}
 .siac-queue-sched-btn, .siac-queue-sched-btn-hor {
     display: inline-block;
     font-size: 13px;

@@ -299,7 +299,7 @@ def myOnBridgeCmd(self, cmd):
         nid = cmd.split()[1]
         queue_sched = int(cmd.split()[2])
         inserted_index = update_position(nid, QueueSchedule(queue_sched))
-        searchIndex.output.editor.web.eval("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Position in Queue: %s / %s'; $('#siac-queue-lbl').fadeIn();" % (inserted_index[0] + 1, inserted_index[1]))
+        searchIndex.output.editor.web.eval("document.getElementById('siac-queue-lbl').innerHTML = 'Position in Queue: %s / %s'; $('#siac-queue-lbl').fadeIn('slow'); $('.siac-queue-sched-btn:first').html('%s / %s')" % (inserted_index[0] + 1, inserted_index[1], inserted_index[0] + 1, inserted_index[1]))
 
     elif cmd.startswith("siac-remove-from-queue "):
         nid = cmd.split()[1]
@@ -857,7 +857,7 @@ def updateStyling(cmd):
     name = cmd.split()[0]
     if len(cmd.split()) < 2:
         return
-    value = cmd.split()[1]
+    value = " ".join(cmd.split()[1:])
 
     if name == "addToResultAreaHeight":
         if int(value) < 501 and int(value) > -501:
@@ -879,6 +879,13 @@ def updateStyling(cmd):
         m = value == "true" or value == "on"
         config["removeDivsFromOutput"] = m
         searchIndex.output.remove_divs = m
+
+    elif name == "addonNoteDBFolderPath":
+        if value is not None and len(value.strip()) > 0:
+            value = value.replace("\\", "/")
+            if not value.endswith("/"):
+                value += "/"
+        config["addonNoteDBFolderPath"] = value
 
     elif name == "leftSideWidthInPercent":
         config[name] = int(value)
@@ -964,7 +971,7 @@ def fillTagSelect(editor = None) :
             html = "<ul class='deck-sub-list'>"
         for key, value in tmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('searchTag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (key, "[+]" if value else "", trimIfLongerThan(key, 35), iterateMap(value, full, False)) 
+            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('searchTag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", trimIfLongerThan(key, 35), iterateMap(value, full, False)) 
         html += "</ul>"
         return html
 

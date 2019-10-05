@@ -262,15 +262,29 @@ function searchForUserNote(event, elem) {
     }
 
 }
+function toggleQueue() {
+    if ($("#siac-queue-sched-wrapper").hasClass('active')) {
+        $("#siac-queue-sched-wrapper").css("width", "0px").css("overflow", "hidden").css('padding', '0px');
+        $('.siac-queue-sched-btn:first').addClass("active");
+    } else {
+        $("#siac-queue-sched-wrapper").css("width", "auto").css("overflow", "visible").css('padding', '5px');
+        $('.siac-queue-sched-btn:first').removeClass("active");
+    }
+    $("#siac-queue-sched-wrapper").toggleClass('active');
+}
 
 function queueSchedBtnClicked(btn_el) {
+    $('#siac-queue-lbl').hide(); 
+    toggleQueue();
     $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
     $(btn_el).addClass("active");
+
 }
 
 function afterRemovedFromQueue() {
+    toggleQueue();
     $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
-    $('.siac-queue-sched-btn').first().addClass("active");
+    $('.siac-queue-sched-btn').first().addClass("active").html('Not In Queue');
 }
 
 function specialSearch(mode) {

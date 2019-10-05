@@ -852,21 +852,23 @@ def display_note_reading_modal(note_id):
                 <div id='siac-reading-modal-text' style='overflow-y: auto; height: calc(90% - 140px); max-height: calc(100% - 230px); font-size: 13px; padding: 20px 20px 0 20px;' contenteditable='{is_contenteditable}' {onkeyup}>
                     {text}
                 </div>
-                <div style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 5px 0 0 5px;'>
+                <div style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px;'>
                     <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
                        
-                        <div class='siac-queue-sched-btn active' onclick='queueSchedBtnClicked(this);'>Keep Position</div>
-                        <div style='display: inline-block; height: 90px; margin: 0 10px 0 10px; border: 0 0 0 2px solid lightgrey; border-style: dotted;'></div>
-                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>Start</div>
-                        <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 7")'>Rnd</div>
-                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>First 3rd</div>
-                        <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 8")'>Rnd</div>
-                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>Second 3rd</div>
-                        <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 9")'>Rnd</div>
-                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>End</div>
-                        <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
-                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
-                        <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
+                        <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
+                        <div id='siac-queue-sched-wrapper'>
+                          
+                            <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>Start</div>
+                            <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 7")'>Rnd</div>
+                            <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>First 3rd</div>
+                            <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 8")'>Rnd</div>
+                            <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>Second 3rd</div>
+                            <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 9")'>Rnd</div>
+                            <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>End</div>
+                            <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
+                            <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
+                            <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
+                        </div>
                         <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px;'>
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px;'>{time_str}</span> <br>
@@ -888,8 +890,8 @@ def display_note_reading_modal(note_id):
         onkeyup = "onfocusout='readingModalTextKeyup(this, %s)'"  % (note_id) if len(text) < editable else ""
         save_on_close = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s)'"  % (note_id) if editable else ""
         queue_info = "Position in Queue: <b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "Not in Queue."
-
-        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, pos = pos , queue_len = queue_len, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
+        queue_info_short = "<b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "Not in Queue"
+        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short , queue_len = queue_len, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
         html = html.format_map(params)
         index.output.show_in_large_modal(html)
         index.output.editor.web.eval("clearInterval(readingTimer);")
@@ -980,6 +982,13 @@ def stylingModal(config):
                 </table>
             </fieldset>
             <br/>
+            <fieldset>
+                <span>This is the absolute path to the folder where the addon should store its notes. If not present already, the addon will create a file named "siac-notes.db" in that folder. If empty, user_files will be used.</span> 
+                <table style="width: 100%%">
+                    <tr><td><b>Addon Note DB Folder Path</b></td><td style='text-align: right;'><input type="text" onfocusout="pycmd('styling addonNoteDBFolderPath ' + this.value)" value="%s"/></tr>
+                </table>
+            </fieldset>
+            <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
                         """ % (config["addToResultAreaHeight"], 
                         "checked='true'" if config["renderImmediately"] else "", 
@@ -989,7 +998,8 @@ def stylingModal(config):
                         "checked='true'" if config["showTagInfoOnHover"] else "",
                         config["tagHoverDelayInMiliSec"],
                        config["alwaysRebuildIndexIfSmallerThan"],
-                       "checked='true'" if config["removeDivsFromOutput"] else ""
+                       "checked='true'" if config["removeDivsFromOutput"] else "",
+                       config["addonNoteDBFolderPath"]
                         )
     html += """
     <br/> <br/>

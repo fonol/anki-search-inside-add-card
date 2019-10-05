@@ -85,7 +85,8 @@
 "alwaysRebuildIndexIfSmallerThan" : 1500,
 "searchOnTagEntry" : true,
 "userNotesPerDay": 5,
-"removeDivsFromOutput": false
+"removeDivsFromOutput": false,
+"addonNoteDBFolderPath": ""
 
 
 }

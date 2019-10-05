@@ -353,11 +353,11 @@ class Output:
             #there might be still problems with <p style='...'> 
             body = remove_tags(body, ["div", "span", "a"])
             last_open_bracket = body.rfind("<")
-            if last_open_bracket >= len(body) - 100 or body.rfind(" ") < len(body) - 100:
+            if last_open_bracket >= len(body) - 500 or body.rfind(" ") < len(body) - 500:
                 last_close_bracket = body.rfind(">")
                 if last_close_bracket < last_open_bracket:
-                    body = body[:last_open_bracket -1]
-            body += "<br><p style='text-align: center;'><b>(Text was cut - too long to display)</b></p>"
+                    body = body[:last_open_bracket]
+            body += "<br></p></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
         else:
             title = text.split("\u001f")[0]
             body = text.split("\u001f")[1]

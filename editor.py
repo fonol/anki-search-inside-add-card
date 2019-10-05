@@ -82,6 +82,8 @@ class NoteEditor(QDialog):
     """
     def __init__(self, parent, note_id = None):
         self.note_id = note_id
+        if self.note_id is not None:
+            self.note = get_note(note_id)
         QDialog.__init__(self, parent)
         self.mw = aqt.mw
         self.parent = parent
@@ -123,7 +125,10 @@ class NoteEditor(QDialog):
 
     def on_create_clicked(self):
         title = self.create_tab.title.text()
-        text = self.create_tab.text.toHtml()
+        if self.create_tab.plain_text_cb.checkState() == Qt.Checked:
+            text = self.create_tab.text.toPlainText()
+        else:
+            text = self.create_tab.text.toHtml()
         source = self.create_tab.source.text()
         tags = self.create_tab.tag.text()
         queue_schedule = self.create_tab.queue_schedule
@@ -139,10 +144,14 @@ class NoteEditor(QDialog):
 
     def on_update_clicked(self):
         title = self.create_tab.title.text()
-        text = self.create_tab.text.toHtml()
+        if self.create_tab.plain_text_cb.checkState() == Qt.Checked:
+            text = self.create_tab.text.toPlainText()
+        else:
+            text = self.create_tab.text.toHtml()
         source = self.create_tab.source.text()
         tags = self.create_tab.tag.text()
-        update_note(self.note_id, title, text, source, tags, "")
+        queue_schedule = self.create_tab.queue_schedule
+        update_note(self.note_id, title, text, source, tags, "", queue_schedule)
         #aqt.dialogs.close("UserNoteEditor")
         self.reject()
 
@@ -167,6 +176,7 @@ class CreateTab(QWidget):
         self.build_tree(tmap)
         self.tree.itemClicked.connect(self.tree_item_clicked)
         self.tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.tree.setMinimumHeight(150)
 
 
         recently_used_tags = get_recently_used_tags()
@@ -174,6 +184,7 @@ class CreateTab(QWidget):
         self.recent_tree.setColumnCount(1)
         self.recent_tree.setHeaderLabels(["Recent (Click to Add)"])
         self.recent_tree.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.recent_tree.setMaximumHeight(100)
         for t in recently_used_tags:
             ti = QTreeWidgetItem([t])
             ti.setData(0, 1, QVariant(t))
@@ -198,13 +209,31 @@ class CreateTab(QWidget):
         self.queue_section = QGroupBox("Queue")
         ex_v = QVBoxLayout()
         queue_len = len(parent.priority_list)
-        queue_lbl = QLabel("Currently, your reading queue contains <b>%s</b> items" % queue_len)
-        ex_v.addWidget(queue_lbl)
+        if parent.note_id is None:
+            queue_lbl = QLabel("Add to Queue? (<b>%s</b> items)" % queue_len)
+        else:    
+            #check if note has position (is in queue)
+            if parent.note[10] is None or parent.note[10] < 0:
+                queue_lbl = QLabel("<b>Not</b> in Queue (<b>%s</b> items)" % queue_len)
+            else:
+                queue_lbl = QLabel("Position: <b>%s</b> / <b>%s</b>" % (parent.note[10] + 1, queue_len))
 
-        self.q_lbl_1 = QPushButton("Don't Add to Queue")
+        queue_lbl.setAlignment(Qt.AlignCenter)
+        ex_v.addWidget(queue_lbl, Qt.AlignCenter)
+        ex_v.addSpacing(5)
+
+        if parent.note_id is None:
+            self.q_lbl_1 = QPushButton("Don't Add to Queue")
+        else:
+            if parent.note[10] is None or parent.note[10] < 0:
+                self.q_lbl_1 = QPushButton("Don't Add to Queue")
+            else:
+                self.q_lbl_1 = QPushButton("Keep Position in Queue")
+
+
         self.q_lbl_1.setObjectName("q_1")
         self.q_lbl_1.setFlat(True)
-        self.q_lbl_1.setStyleSheet("border: 2px solid green; padding: 3px; font-weight: bold;")
+        self.q_lbl_1.setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
         self.q_lbl_1.clicked.connect(lambda: self.queue_selected(1))
         ex_v.addWidget(self.q_lbl_1)
 
@@ -222,12 +251,29 @@ class CreateTab(QWidget):
         self.q_lbl_2.clicked.connect(lambda: self.queue_selected(2))
         ex_v.addWidget(self.q_lbl_2)
 
+        self.q_lbl_22 = QPushButton("[Rnd]")
+        self.q_lbl_22.setObjectName("q_22")
+        self.q_lbl_22.setFlat(True)
+        self.q_lbl_22.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_22.clicked.connect(lambda: self.queue_selected(7))
+        ex_v.addWidget(self.q_lbl_22)
+
+
         self.q_lbl_3 = QPushButton("End of first 3rd")
         self.q_lbl_3.setObjectName("q_3")
         self.q_lbl_3.setFlat(True)
         self.q_lbl_3.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
         self.q_lbl_3.clicked.connect(lambda: self.queue_selected(3))
         ex_v.addWidget(self.q_lbl_3)
+        
+        self.q_lbl_33 = QPushButton("[Rnd]")
+        self.q_lbl_33.setObjectName("q_33")
+        self.q_lbl_33.setFlat(True)
+        self.q_lbl_33.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_33.clicked.connect(lambda: self.queue_selected(8))
+        ex_v.addWidget(self.q_lbl_33)
+
+
 
         self.q_lbl_4 = QPushButton("End of second 3rd")
         self.q_lbl_4.setObjectName("q_4")
@@ -236,6 +282,13 @@ class CreateTab(QWidget):
         self.q_lbl_4.clicked.connect(lambda: self.queue_selected(4))
         ex_v.addWidget(self.q_lbl_4)
 
+        self.q_lbl_44 = QPushButton("[Rnd]")
+        self.q_lbl_44.setObjectName("q_44")
+        self.q_lbl_44.setFlat(True)
+        self.q_lbl_44.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_44.clicked.connect(lambda: self.queue_selected(9))
+        ex_v.addWidget(self.q_lbl_44)
+
         self.q_lbl_5 = QPushButton("End")
         self.q_lbl_5.setObjectName("q_5")
         self.q_lbl_5.setFlat(True)
@@ -243,7 +296,7 @@ class CreateTab(QWidget):
         self.q_lbl_5.clicked.connect(lambda: self.queue_selected(5))
         ex_v.addWidget(self.q_lbl_5)
 
-        self.q_lbl_6 = QPushButton("Random")
+        self.q_lbl_6 = QPushButton("\u2685 Random")
         self.q_lbl_6.setObjectName("q_6")
         self.q_lbl_6.setFlat(True)
         self.q_lbl_6.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
@@ -293,7 +346,7 @@ class CreateTab(QWidget):
         self.text.setSizePolicy(
             QSizePolicy.Expanding, 
             QSizePolicy.Expanding)
-        
+        self.text.cursorPositionChanged.connect(self.on_text_cursor_change)
         
         t_h = QHBoxLayout()
         t_h.addWidget(text_lbl)
@@ -317,6 +370,28 @@ class CreateTab(QWidget):
         f.setItalic(True)
         italic.setFont(f)
 
+        underline = self.tb.addAction("u")
+        underline.setCheckable(True)
+        underline.triggered.connect(self.on_underline_clicked)
+        f = underline.font()
+        f.setUnderline(True)
+        underline.setFont(f)
+
+        strike = self.tb.addAction("s")
+        strike.setCheckable(True)
+        strike.triggered.connect(self.on_strike_clicked)
+        f = strike.font()
+        f.setStrikeOut(True)
+        strike.setFont(f)
+
+        bullet_list = self.tb.addAction("BL")
+        bullet_list.setToolTip("Bullet List")
+        bullet_list.triggered.connect(self.on_bullet_list_clicked)
+
+        numbered_list = self.tb.addAction("NL")
+        numbered_list.setToolTip("Numbered List")
+        numbered_list.triggered.connect(self.on_numbered_list_clicked)
+
         clean_btn = QToolButton()
         clean_btn.setText("Clean Text  ")
         clean_btn.setPopupMode(QToolButton.InstantPopup)
@@ -337,6 +412,13 @@ class CreateTab(QWidget):
         vbox.addLayout(t_h)
         vbox.addWidget(self.text, 2)
 
+        self.plain_text_cb = QCheckBox("Save as Plain Text")
+        self.line_status = QLabel("Ln: 0, Col: 0")
+        p_hb = QHBoxLayout()
+        p_hb.addWidget(self.line_status)
+        p_hb.addStretch(1)
+        p_hb.addWidget(self.plain_text_cb)
+        vbox.addLayout(p_hb)
 
         source_lbl = QLabel("Source")
         self.source = QLineEdit()
@@ -351,12 +433,26 @@ class CreateTab(QWidget):
 
 
         self.setStyleSheet("""
-        QPushButton:hover#q_1 { background-color: lightblue; }
-        QPushButton:hover#q_2 { background-color: lightblue; }
-        QPushButton:hover#q_3 { background-color: lightblue; }
-        QPushButton:hover#q_4 { background-color: lightblue; }
-        QPushButton:hover#q_5 { background-color: lightblue; }
-        QPushButton:hover#q_6 { background-color: lightblue; }
+        QPushButton#q_1 { margin-left: 10px; margin-right: 10px; }
+        QPushButton#q_2 { margin-left: 10px; margin-right: 10px; }
+        QPushButton#q_22 { margin-left: 70px; margin-right: 70px; }
+        QPushButton#q_3 { margin-left: 30px; margin-right: 30px; }
+        QPushButton#q_33 { margin-left: 70px; margin-right: 70px; }
+        QPushButton#q_4 { margin-left: 30px; margin-right: 30px; }
+        QPushButton#q_44 { margin-left: 70px; margin-right: 70px; }
+        QPushButton#q_5 { margin-left: 10px; margin-right: 10px; }
+        QPushButton#q_6 { margin-left: 10px; margin-right: 10px; }
+
+
+        QPushButton:hover#q_1 { background-color: lightblue; margin-left: 7px; margin-right: 7px; }
+        QPushButton:hover#q_2 { background-color: lightblue; margin-left: 7px; margin-right: 7px; }
+        QPushButton:hover#q_22 { background-color: lightblue; margin-left: 67px; margin-right: 67px; }
+        QPushButton:hover#q_3 { background-color: lightblue; margin-left: 27px; margin-right: 27px; }
+        QPushButton:hover#q_33 { background-color: lightblue; margin-left: 67px; margin-right: 67px; }
+        QPushButton:hover#q_4 { background-color: lightblue; margin-left: 27px; margin-right: 27px; }
+        QPushButton:hover#q_44 { background-color: lightblue; margin-left: 67px; margin-right: 67px; }
+        QPushButton:hover#q_5 { background-color: lightblue; margin-left: 7px; margin-right: 7px; }
+        QPushButton:hover#q_6 { background-color: lightblue; margin-left: 7px; margin-right: 7px; }
         """)
 
 
@@ -422,9 +518,9 @@ class CreateTab(QWidget):
             self.tree.addTopLevelItem(ti)
 
     def queue_selected(self, queue_schedule):
-        for lbl in [self.q_lbl_1, self.q_lbl_2, self.q_lbl_3, self.q_lbl_4, self.q_lbl_5, self.q_lbl_6]:
+        for lbl in [self.q_lbl_1, self.q_lbl_2,  self.q_lbl_22,  self.q_lbl_3,  self.q_lbl_33,  self.q_lbl_4, self.q_lbl_44, self.q_lbl_5, self.q_lbl_6]:
             lbl.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey; font-weight: normal;")
-        [self.q_lbl_1, self.q_lbl_2, self.q_lbl_3, self.q_lbl_4, self.q_lbl_5, self.q_lbl_6][queue_schedule-1].setStyleSheet("border: 2px solid green; padding: 3px; font-weight: bold;")
+        [self.q_lbl_1, self.q_lbl_2,  self.q_lbl_3, self.q_lbl_4, self.q_lbl_5, self.q_lbl_6, self.q_lbl_22, self.q_lbl_33, self.q_lbl_44][queue_schedule-1].setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
         self.queue_schedule = queue_schedule
 
     def on_italic_clicked(self):
@@ -442,6 +538,31 @@ class CreateTab(QWidget):
         html = self.text.toHtml()
         html = remove_all_bold_formatting(html)
         self.text.setHtml(html)
+    
+    def on_bullet_list_clicked(self):
+        cursor = self.text.textCursor()
+        cursor.createList(QTextListFormat.ListDisc)
+    
+    def on_numbered_list_clicked(self):
+        cursor = self.text.textCursor()
+        cursor.createList(QTextListFormat.ListDecimal)
+
+    def on_underline_clicked(self):
+        state = self.text.fontUnderline()
+        self.text.setFontUnderline(not state)
+
+    def on_strike_clicked(self):
+        format = self.text.currentCharFormat()
+        format.setFontStrikeOut(not format.fontStrikeOut())
+        self.text.setCurrentCharFormat(format)
+
+
+    def on_text_cursor_change(self):
+        cursor = self.text.textCursor()
+        line = cursor.blockNumber() + 1
+        col = cursor.columnNumber()
+        self.line_status.setText("Ln: {}, Col: {}".format(line,col))
+        
 
     def on_convert_images_clicked(self):
         html = self.text.toHtml()     

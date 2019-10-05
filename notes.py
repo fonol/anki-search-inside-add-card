@@ -22,7 +22,7 @@ class QueueSchedule(Enum):
     RANDOM_THIRD_THIRD = 9
 
 def create_db_file_if_not_exists():
-    file_path = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/notes.py", "") + "/user_files/non-anki-notes.db"
+    file_path = _get_db_path()
     if os.path.isfile(file_path):
         return
     conn = sqlite3.connect(file_path)
@@ -203,7 +203,7 @@ def update_note_text(id, text):
         index.update_user_note((id, note[0], text, note[1], note[2], -1, ""))
 
 
-def update_note(id, title, text, source, tags, reminder):
+def update_note(id, title, text, source, tags, reminder, queue_schedule):
 
     text = clean_user_note_text(text)
     tags = " %s " % tags.strip()
@@ -211,7 +211,48 @@ def update_note(id, title, text, source, tags, reminder):
     sql = """
         update notes set title=?, text=?, source=?, tags=?, reminder=?, modified=datetime('now', 'localtime') where id=?
     """
+
+    pos = None
+    orig_prio_list = _get_priority_list()
+    note_had_position = False
+    list = []
+    for li in orig_prio_list:
+        if li[0] == id:
+            note_had_position = True
+        else: 
+            list.append(li)
+    if queue_schedule != 1:
+        if QueueSchedule(queue_schedule) == QueueSchedule.HEAD:
+            pos = 0
+        elif QueueSchedule(queue_schedule) == QueueSchedule.FIRST_THIRD:
+            pos = int(len(list) / 3.0)
+        elif QueueSchedule(queue_schedule) == QueueSchedule.SECOND_THIRD:
+            pos = int(2 * len(list) / 3.0)
+        elif QueueSchedule(queue_schedule) == QueueSchedule.END:
+            pos = len(list)
+        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM:
+            pos = random.randint(0, len(list))
+        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_FIRST_THIRD:
+            pos = random.randint(0, int(len(list) / 3.0))
+        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_SECOND_THIRD:
+            pos = random.randint(int(len(list) / 3.0), int(len(list) * 2 / 3.0))
+        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_THIRD_THIRD:
+            pos = random.randint(int(len(list) * 2 / 3.0), int(len(list) * 3 / 3.0))
+        sql = """
+            update notes set title=?, text=?, source=?, tags=?, reminder=?, position=%s, modified=datetime('now', 'localtime') where id=?
+        """ % pos
+    else:
+        if note_had_position:
+            sql = "update notes set title=?, text=?, source=?, tags=?, reminder=?, modified=datetime('now', 'localtime') where id=?"
+        else:
+            sql = "update notes set title=?, text=?, source=?, tags=?, reminder=?, position=null, modified=datetime('now', 'localtime') where id=?"
+
     conn.execute(sql, (title, text, source, tags, reminder, id))
+    
+    if pos is not None:
+        list.insert(pos, (id,))
+        pos_list = [(ix,r[0]) for ix, r in enumerate(list)]
+        conn.executemany("update notes set position = ? where id = ?", pos_list)
     conn.commit()
     conn.close()
     index = get_index()
@@ -293,16 +334,21 @@ def get_recently_used_tags():
                 counts[tag] += 1
             else:
                 counts[tag] = 1
-    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:8]
+    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:10]
     return ordered
 
     conn.close()
 
-def _get_priority_list():
+def _get_priority_list(nid_to_exclude = None):
     conn = _get_connection()
-    sql = """
-       select * from notes where position >= 0 order by position asc
-    """
+    if nid_to_exclude is not None:
+        sql = """
+            select * from notes where position >= 0 and id != %s order by position asc
+        """ % nid_to_exclude
+    else:
+        sql = """
+            select * from notes where position >= 0 order by position asc
+        """
     res = conn.execute(sql).fetchall()
     conn.close()
     return list(res)
@@ -359,8 +405,15 @@ def set_priority_list(ids):
     conn.commit()
     conn.close
 
+def _get_db_path():
+    file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
+    if file_path is None or len(file_path) == 0:
+        file_path = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/notes.py", "") + "/user_files/"
+    file_path += "siac-notes.db"
+    return file_path
+
 def _get_connection():
-    file_path = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/notes.py", "") + "/user_files/non-anki-notes.db"
+    file_path = _get_db_path()    
     if not os.path.isfile(file_path):
         create_db_file_if_not_exists()
     return sqlite3.connect(file_path)
