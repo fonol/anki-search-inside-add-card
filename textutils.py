@@ -3,17 +3,16 @@ from datetime import datetime
 import time
 import random
 
-cleanWordReg = re.compile(u"^[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*(\S+?)[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*$", re.U)    
-ignoreReg = re.compile(u"^[^a-zA-ZÀ-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+$", re.U)
-nonWordReg = re.compile(u"[^a-zA-ZÀ-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.U) 
+cleanWordReg = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*$", re.I |re.U)    
+ignoreReg = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+$", re.I | re.U)
+nonWordReg = re.compile(u"[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U) 
 tagReg = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
 spaceReg = re.compile('\s{2,}')
-normalChar = re.compile(u"[a-zöäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U) 
+normalChar = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U) 
 chineseChar = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.U)
 japaneseChar = re.compile("")
 
 def clean(text, stopWords):
-   
     filtered = ""
     text = text.replace("\r\n", " ").replace("\n", " ")
     text = text.replace("\t", " ")
@@ -186,8 +185,8 @@ def clean_user_note_text(text):
         text = re.sub("font-family:[^;]{1,40};", "", text)
 
         #delete colors
-        text = re.sub("(;|\"|') *color:[^;]{1,15};", "\1;", text)
-        text = re.sub("(;|\"|') *background(-color)?:[^;]{1,15};", "\1;", text)
+        text = re.sub("(;|\"|') *color:[^;]{1,25};", "\1;", text)
+        text = re.sub("(;|\"|') *background(-color)?:[^;]{1,25};", "\1;", text)
         text = re.sub(" bgcolor=\"[^\"]+\"", " ", text)
         
         return text
@@ -231,3 +230,8 @@ def find_all_images(html):
     Returns a list of all <img> tags contained in the html.
     """
     return re.findall("<img[^>]*?>", html, flags=re.IGNORECASE) 
+
+def escape_html(text):
+    text = text.replace("<", "&lt;")
+    text = text.replace(">", "&gt;")
+    return text
