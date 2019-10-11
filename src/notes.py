@@ -7,7 +7,7 @@ import random
 
 from .state import get_index
 from .textutils import clean_user_note_text, build_user_note_text, trimIfLongerThan
-from .utils import to_tag_hierarchy
+from .utils import to_tag_hierarchy, get_user_files_folder_path
 
 @unique
 class QueueSchedule(Enum):
@@ -100,8 +100,8 @@ def update_position(note_id, queue_schedule):
         Also sets the lastscheduled timestamp for the given note.
     """
     conn = _get_connection()
-    existing = conn.execute("select id from notes where position is not null and id != %s order by position asc" % note_id).fetchall()
-    existing = [e[0] for e in existing]
+    queue = conn.execute("select id from notes where position is not null and id != %s order by position asc" % note_id).fetchall()
+    existing = [e[0] for e in queue]
 
     if queue_schedule == QueueSchedule.HEAD:
         existing.insert(0, note_id)
@@ -194,6 +194,7 @@ def update_note_text(id, text):
     sql = """
         update notes set text=?, modified=datetime('now', 'localtime') where id=?
     """
+    text = clean_user_note_text(text)
     conn.execute(sql, (text, id))
     conn.commit()
     note = conn.execute("select title, source, tags from notes where id=" + id).fetchone()
@@ -322,10 +323,27 @@ def get_queue_count():
     return c
 
 def get_recently_used_tags():
+    """
+        Returns a [str] of max 10 tags, ordered by their usage desc.
+    """
+    counts = _get_recently_used_tags_counts(10)
+    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:10]
+    return ordered
+
+def get_recently_used_tags_with_counts():
+    """
+        Returns a {str, int} of max 10 tags, ordered by their usage desc.
+    """
+    counts = _get_recently_used_tags_counts(10)
+    ordered = dict(sorted(counts.items(), key=lambda item: item[1], reverse = True))
+    return ordered
+
+def _get_recently_used_tags_counts(limit):
     conn = _get_connection()
-    res = conn.execute("select distinct tags from notes where tags is not null order by id desc limit 10").fetchall()
+    res = conn.execute("select tags from notes where tags is not null order by id desc limit %s" % limit).fetchall()
+    conn.close()
     if res is None or len(res) == 0:
-        return []
+        return dict()
     counts = dict()
     for r in res:
         spl = r[0].split()
@@ -334,10 +352,8 @@ def get_recently_used_tags():
                 counts[tag] += 1
             else:
                 counts[tag] = 1
-    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:10]
-    return ordered
 
-    conn.close()
+    return counts
 
 def _get_priority_list(nid_to_exclude = None):
     conn = _get_connection()
@@ -408,7 +424,7 @@ def set_priority_list(ids):
 def _get_db_path():
     file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
     if file_path is None or len(file_path) == 0:
-        file_path = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/notes.py", "") + "/user_files/"
+        file_path = get_user_files_folder_path()
     file_path += "siac-notes.db"
     return file_path
 

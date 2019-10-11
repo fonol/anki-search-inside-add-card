@@ -5,12 +5,14 @@ import struct
 import re
 import time
 import math
+import collections
 from aqt import *
 from aqt.utils import showInfo, tooltip
+
 from .output import *
-import collections
 from .textutils import *
-from .logging import log, persist_index_info
+from .debug_logging import log, persist_index_info
+from .utils import get_user_files_folder_path
 
 class FTSIndex:
 
@@ -21,7 +23,7 @@ class FTSIndex:
         self.highlighting = True
         self.searchWhileTyping = True
         self.searchOnSelection = True
-        self.dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/db.py", "")
+        self.dir = get_user_files_folder_path()
         self.stopWords = []
         # mid : [fld_ord]
         self.fields_to_exclude = {}
@@ -51,10 +53,10 @@ class FTSIndex:
         if not searchingDisabled and not index_up_to_date:
             cleaned = self._cleanText(corpus)
             try:
-                os.remove(self.dir + "/search-data.db")
+                os.remove(self.dir + "search-data.db")
             except OSError:
                 pass
-            conn = sqlite3.connect(self.dir + "/search-data.db")
+            conn = sqlite3.connect(self.dir + "search-data.db")
             conn.execute("drop table if exists notes")
             if self.type == "SQLite FTS5":
                 conn.execute("create virtual table notes using fts5(nid, text, tags, did, source, mid, refs)")
@@ -168,7 +170,7 @@ class FTSIndex:
         decks.append("-1")
         rList = list()
         user_note_filter = "AND mid='-1'" if only_user_notes else ""
-        conn = sqlite3.connect(self.dir + "/search-data.db")
+        conn = sqlite3.connect(self.dir + "search-data.db")
         if self.type == "SQLite FTS5":
             dbStr = "select nid, text, tags, did, source, bm25(notes), mid, refs from notes where notes match '%s' %s order by bm25(notes)" %(query, user_note_filter)
         elif self.type == "SQLite FTS4":
@@ -360,7 +362,7 @@ class FTSIndex:
         return -score - cd * 20
 
     def deleteNote(self, nid):
-        conn = sqlite3.connect(self.dir + "/search-data.db")
+        conn = sqlite3.connect(self.dir + "search-data.db")
         conn.cursor().execute("DELETE FROM notes WHERE CAST(nid AS INTEGER) = %s;" % nid)
         conn.commit()
         conn.close()
@@ -370,7 +372,7 @@ class FTSIndex:
         Add a non-anki note to the index.
         """
         text = build_user_note_text(title=note[1], text=note[2], source=note[3])
-        conn = sqlite3.connect(self.dir + "/search-data.db")
+        conn = sqlite3.connect(self.dir + "search-data.db")
         conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note[0], clean(text, self.stopWords), note[4], "-1", text, "-1"))
         conn.commit()
         conn.close()
@@ -396,7 +398,7 @@ class FTSIndex:
         did = did[0]
         if str(note.mid) in self.fields_to_exclude:
             content = remove_fields(content, self.fields_to_exclude[str(note.mid)])
-        conn = sqlite3.connect(self.dir + "/search-data.db")
+        conn = sqlite3.connect(self.dir + "search-data.db")
         conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note.id, clean(content, self.stopWords), tags, did, content, note.mid))
         conn.commit()
         conn.close()
@@ -407,14 +409,14 @@ class FTSIndex:
         self.addNote(note)
 
     def get_last_inserted_id(self):
-        conn = sqlite3.connect(self.dir + "/search-data.db")
+        conn = sqlite3.connect(self.dir + "search-data.db")
         row_id = conn.cursor().execute("SELECT id FROM notes_content ORDER BY id DESC LIMIT 1").fetchone()[0]
         conn.close()
         return row_id
 
     def get_number_of_notes(self):
         try:
-            conn = sqlite3.connect(self.dir + "/search-data.db")
+            conn = sqlite3.connect(self.dir + "search-data.db")
             res = conn.cursor().execute("select count(*) from notes_content").fetchone()[0]
             conn.close()
             return res

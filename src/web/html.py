@@ -5,23 +5,17 @@ import re
 import datetime
 import time
 from aqt import mw
-from .textutils import cleanSynonym, trimIfLongerThan, get_stamp
-from .state import get_index, checkIndex
-from .notes import get_note, _get_priority_list
-
-#css + js 
-all = """
-<style>
-%s
-</style>
-
-<script>
-%s
-</script>
-"""
+from ..textutils import cleanSynonym, trimIfLongerThan, get_stamp
+from ..state import get_index, checkIndex
+from ..notes import get_note, _get_priority_list
+from ..utils import get_web_folder_path, iterateTagmap
 
 
-synonymEditor = """
+
+
+
+def getSynonymEditor():
+    synonymEditor = """
     <b>Sets (Click inside to edit)</b>
     <div style='max-height: 300px; overflow-y: auto; padding-right: 10px; margin-top: 4px;'>
         <table id='synTable' style='width: 100%%; border-collapse: collapse;' class='striped'>
@@ -32,10 +26,7 @@ synonymEditor = """
     <br/>
     <span>Input a set of terms, separated by ',' and hit enter.</span>
     <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
-"""
-
-
-def getSynonymEditor():
+    """
     synonyms = loadSynonyms()
     st = ""
     for c, sList in enumerate(synonyms):
@@ -59,10 +50,6 @@ def saveSynonyms(synonyms):
     filtered = []
     for sList in synonyms:
         filtered.append(sorted(sList))
-    
-    # dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/web.py", "")
-    # with open(dir + '/synonyms.json', 'w') as outfile:
-    #     json.dump(filtered, outfile)
     config["synonyms"] = filtered
     mw.addonManager.writeConfig(__name__, config)
 
@@ -121,299 +108,6 @@ def loadSynonyms():
         synonyms = []
     return synonyms
 
-
-def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
-    #get path 
-    dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/web.py", "")
-    config = mw.addonManager.getConfig(__name__)
-    
-    with open(dir + "/scripts.js") as f:
-        script = f.read()
-    with open(dir + "/styles.css") as f:
-        css = f.read().replace("%", "%%")
-    script = script.replace("$del$", str(delayWhileTyping))
-   
-    try:
-        deckSelectFontSize = config["styling"]["topBar"]["deckSelectFontSize"]
-    except KeyError:
-        deckSelectFontSize = 12
-    try:
-        noteFontSize = config["styling"]["general"]["noteFontSize"]
-    except KeyError:
-        noteFontSize = 12
-
-    try: 
-        noteForegroundColor = config["styling"]["general"]["noteForegroundColor"]
-    except KeyError:
-        noteForegroundColor = "black"
-
-    try:
-        noteBackgroundColor = config["styling"]["general"]["noteBackgroundColor"]
-    except KeyError:
-        noteBackgroundColor = "white"
-   
-    try:
-        noteBorderColor = config["styling"]["general"]["noteBorderColor"]
-    except KeyError:
-        noteBorderColor = "grey"
-    try:
-        noteHoverBorderColor = config["styling"]["general"]["noteHoverBorderColor"]
-    except KeyError:
-        noteHoverBorderColor = "#2496dc"
-    try:
-        tagBackgroundColor = config["styling"]["general"]["tagBackgroundColor"]
-    except KeyError:
-        tagBackgroundColor = "#f0506e"
-    
-    try:
-        tagForegroundColor = config["styling"]["general"]["tagForegroundColor"]
-    except KeyError:
-        tagForegroundColor = "white"
-    try:
-        tagFontSize = config["styling"]["general"]["tagFontSize"]
-    except KeyError:
-        tagFontSize = 12
-    try:
-        deckSelectForegroundColor = config["styling"]["topBar"]["deckSelectForegroundColor"]
-    except KeyError:
-        deckSelectForegroundColor = "black"
-    
-    try:
-        deckSelectBackgroundColor = config["styling"]["topBar"]["deckSelectBackgroundColor"]
-    except KeyError:
-        deckSelectBackgroundColor = "white"
-    try:
-        deckSelectHoverForegroundColor = config["styling"]["topBar"]["deckSelectHoverForegroundColor"]
-    except KeyError:
-        deckSelectHoverForegroundColor = "white"
-    
-    try:
-        deckSelectHoverBackgroundColor = config["styling"]["topBar"]["deckSelectHoverBackgroundColor"]
-    except KeyError:
-        deckSelectHoverBackgroundColor = "#5f6468"
-
-    try:
-        deckSelectButtonForegroundColor = config["styling"]["topBar"]["deckSelectButtonForegroundColor"]
-    except KeyError:
-        deckSelectButtonForegroundColor = "grey"
-    
-    try:
-        deckSelectButtonBackgroundColor = config["styling"]["topBar"]["deckSelectButtonBackgroundColor"]
-    except KeyError:
-        deckSelectButtonBackgroundColor = "white"
-
-    try:
-        deckSelectButtonBorderColor = config["styling"]["topBar"]["deckSelectButtonBorderColor"]
-    except KeyError:
-        deckSelectButtonBorderColor = "grey"
-    try:
-        deckSelectCheckmarkColor = config["styling"]["topBar"]["deckSelectCheckmarkColor"]
-    except KeyError:
-        deckSelectCheckmarkColor = "grey"
-
-    try:
-        modalBackgroundColor = config["styling"]["modal"]["modalBackgroundColor"]
-    except KeyError:
-        modalBackgroundColor = "white"
-
-    try:
-        modalForegroundColor = config["styling"]["modal"]["modalForegroundColor"]
-    except KeyError:
-        modalForegroundColor = "black"
-
-    try:
-        browserSearchButtonBorderColor = config["styling"]["bottomBar"]["browserSearchButtonBorderColor"]
-    except KeyError:
-        browserSearchButtonBorderColor = "#2496dc"
-
-    try:
-        browserSearchButtonBackgroundColor = config["styling"]["bottomBar"]["browserSearchButtonBackgroundColor"]
-    except KeyError:
-        browserSearchButtonBackgroundColor = "white"
-
-    try:
-        browserSearchButtonForegroundColor = config["styling"]["bottomBar"]["browserSearchButtonForegroundColor"]
-    except KeyError:
-        browserSearchButtonForegroundColor = "#2496dc"
-
-    try:
-        browserSearchInputBorderColor = config["styling"]["bottomBar"]["browserSearchInputBorderColor"]
-    except KeyError:
-        browserSearchInputBorderColor = "#2496dc"
-
-    try:
-        browserSearchInputBackgroundColor = config["styling"]["bottomBar"]["browserSearchInputBackgroundColor"]
-    except KeyError:
-        browserSearchInputBackgroundColor = "white"
-
-    try:
-        browserSearchInputForegroundColor = config["styling"]["bottomBar"]["browserSearchInputForegroundColor"]
-    except KeyError:
-        browserSearchInputForegroundColor = "#2496dc"
-   
-    try:
-        infoButtonBorderColor = config["styling"]["general"]["buttonBorderColor"]
-    except KeyError:
-        infoButtonBorderColor = "#2496dc"
-
-    try:
-        infoButtonBackgroundColor = config["styling"]["general"]["buttonBackgroundColor"]
-    except KeyError:
-        infoButtonBackgroundColor = "white"
-
-    try:
-        infoButtonForegroundColor = config["styling"]["general"]["buttonForegroundColor"]
-    except KeyError:
-        infoButtonForegroundColor = "#2496dc"
-    try:
-        highlightBackgroundColor = config["styling"]["general"]["highlightBackgroundColor"]
-    except KeyError:
-        highlightBackgroundColor = "yellow"
-    try:
-        highlightForegroundColor = config["styling"]["general"]["highlightForegroundColor"]
-    except KeyError:
-        highlightForegroundColor = "black"
-    try:
-        rankingLabelBackgroundColor = config["styling"]["general"]["rankingLabelBackgroundColor"]
-    except KeyError:
-        rankingLabelBackgroundColor = "#2496dc"
-    try:
-        rankingLabelForegroundColor = config["styling"]["general"]["rankingLabelForegroundColor"]
-    except KeyError:
-        rankingLabelForegroundColor = "white"
-    try:
-        selectBackgroundColor = config["styling"]["bottomBar"]["selectBackgroundColor"]
-    except KeyError:
-        selectBackgroundColor = "white"
-    try:
-        selectForegroundColor = config["styling"]["bottomBar"]["selectForegroundColor"]
-    except KeyError:
-        selectForegroundColor = "black"
-
-
-    try:
-        stripedTableBackgroundColor = config["styling"]["modal"]["stripedTableBackgroundColor"]
-    except KeyError:
-        stripedTableBackgroundColor = "#f2f2f2"
-    try:
-        modalBorderColor = config["styling"]["modal"]["modalBorderColor"]
-    except KeyError:
-        modalBorderColor = "#2496dc"
-    try:
-        keywordColor = config["styling"]["general"]["keywordColor"]
-    except KeyError:
-        keywordColor = "#2496dc"
-    try:
-        fieldSeparatorColor = config["styling"]["general"]["fieldSeparatorColor"]
-    except KeyError:
-        fieldSeparatorColor = "#2496dc"
-    try:
-        windowColumnSeparatorColor = config["styling"]["general"]["windowColumnSeparatorColor"]
-    except KeyError:
-        windowColumnSeparatorColor = "#2496dc"    
-
-
-    try:
-        timelineBoxBackgroundColor = config["styling"]["bottomBar"]["timelineBoxBackgroundColor"]
-    except KeyError:
-        timelineBoxBackgroundColor = "#595959"
-    try:
-        timelineBoxBorderColor = config["styling"]["bottomBar"]["timelineBoxBorderColor"]
-    except KeyError:
-        timelineBoxBorderColor = "#595959"
-    try:
-        imgMaxHeight = str(config["imageMaxHeight"]) + "px"
-    except KeyError:
-        imgMaxHeight = "300px"
-
-    css = css.replace("$deckSelectFontSize$", str(deckSelectFontSize) + "px")
-    css = css.replace("$deckSelectForegroundColor$", deckSelectForegroundColor)
-    css = css.replace("$deckSelectBackgroundColor$", deckSelectBackgroundColor)
-    css = css.replace("$deckSelectHoverForegroundColor$", deckSelectHoverForegroundColor)
-    css = css.replace("$deckSelectHoverBackgroundColor$", deckSelectHoverBackgroundColor)
-    css = css.replace("$deckSelectButtonForegroundColor$", deckSelectButtonForegroundColor)
-    css = css.replace("$deckSelectButtonBackgroundColor$", deckSelectButtonBackgroundColor)
-    css = css.replace("$deckSelectButtonBorderColor$", deckSelectButtonBorderColor)
-    css = css.replace("$deckSelectCheckmarkColor$", deckSelectCheckmarkColor)
-
-    css = css.replace("$noteFontSize$", str(noteFontSize) + "px")
-    css = css.replace("$noteForegroundColor$", noteForegroundColor)
-    css = css.replace("$noteBackgroundColor$", noteBackgroundColor)
-    css = css.replace("$noteBorderColor$", noteBorderColor)
-    css = css.replace("$noteHoverBorderColor$", noteHoverBorderColor)
-    css = css.replace("$tagBackgroundColor$", tagBackgroundColor)
-    css = css.replace("$tagForegroundColor$", tagForegroundColor)
-    css = css.replace("$tagFontSize$", str(tagFontSize) + "px")
-    
-    css = css.replace("$modalBackgroundColor$", modalBackgroundColor)
-    css = css.replace("$modalForegroundColor$", modalForegroundColor)
-
-    css = css.replace("$buttonBackgroundColor$", infoButtonBackgroundColor)
-    css = css.replace("$buttonBorderColor$", infoButtonBorderColor)
-    css = css.replace("$buttonForegroundColor$", infoButtonForegroundColor)
-
-    css = css.replace("$fieldSeparatorColor$", fieldSeparatorColor)
-    css = css.replace("$windowColumnSeparatorColor$", windowColumnSeparatorColor)
-
-    css = css.replace("$browserSearchButtonBackgroundColor$", browserSearchButtonBackgroundColor)
-    css = css.replace("$browserSearchButtonBorderColor$", browserSearchButtonBorderColor)
-    css = css.replace("$browserSearchButtonForegroundColor$", browserSearchButtonForegroundColor)
-
-    css = css.replace("$browserSearchInputBackgroundColor$", browserSearchInputBackgroundColor)
-    css = css.replace("$browserSearchInputBorderColor$", browserSearchInputBorderColor)
-    css = css.replace("$browserSearchInputForegroundColor$", browserSearchInputForegroundColor)
-
-    css = css.replace("$highlightBackgroundColor$", highlightBackgroundColor)
-    css = css.replace("$highlightForegroundColor$", highlightForegroundColor)
-
-    css = css.replace("$rankingLabelBackgroundColor$", rankingLabelBackgroundColor)
-    css = css.replace("$rankingLabelForegroundColor$", rankingLabelForegroundColor)
-
-    css = css.replace("$selectBackgroundColor$", selectBackgroundColor)
-    css = css.replace("$selectForegroundColor$", selectForegroundColor)
-
-    css = css.replace("$timelineBoxBackgroundColor$", timelineBoxBackgroundColor)
-    css = css.replace("$timelineBoxBorderColor$", timelineBoxBorderColor)
-
-
-    css = css.replace("$keywordColor$", keywordColor)
-    css = css.replace("$stripedTableBackgroundColor$", stripedTableBackgroundColor)
-    css = css.replace("$modalBorderColor$", modalBorderColor)
-
-    css = css.replace("$imgMaxHeight$", imgMaxHeight)
-
-    try:
-        renderImmediately = str(config["renderImmediately"]).lower()
-    except KeyError:
-        renderImmediately = "false"
-    script = script.replace("$renderImmediately$", renderImmediately)
-
-    #replace command key with meta key for mac
-    cplatform = platform.system().lower()
-    if cplatform == "darwin":
-        script = script.replace("event.ctrlKey", "event.metaKey")
-    else:
-        css = re.sub(r'/\*MAC\*/(.|\n|\r\n)*/\*ENDMAC\*/', "", css, re.S)
-
-
-    return all % (css, script)
-
-
-def showSearchResultArea(editor=None, initializationTime=0):
-    """
-    Toggle between the loader and search result area when the index has finished building.
-    """
-    js = """
-        if (document.getElementById('searchResults')) {
-            document.getElementById('searchResults').style.display = 'block'; 
-        } 
-        if (document.getElementById('loader')) { 
-            document.getElementById('loader').style.display = 'none'; 
-        }"""
-    if checkIndex():
-        get_index().output.editor.web.eval(js)
-    elif editor is not None and editor.web is not None:
-        editor.web.eval(js)
 
 def rightSideHtml(config, searchIndexIsLoaded = False):
     """
@@ -622,82 +316,8 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
     getCalendarHtml() if config["showTimeline"] else ""
     )
 
-def printStartingInfo(editor):
-    if editor is None or editor.web is None:
-        return
-    config = mw.addonManager.getConfig(__name__)
-    searchIndex = get_index()
-    html = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  searchIndex.type if searchIndex is not None else "?"
-    if searchIndex is not None:
-        html += "Initalized in <b>%s</b> s." % searchIndex.initializationTime
-        if not searchIndex.creation_info["index_was_rebuilt"]:
-            html += " No changes detected, the index was not rebuilt."
-        html += "<br/>Index contains <b>%s</b> notes." % searchIndex.get_number_of_notes()
-        html += "<br/>Index is always rebuilt if smaller than <b>%s</b> notes." % config["alwaysRebuildIndexIfSmallerThan"]
-        html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
-        html += "<br/>Logging is turned <b>%s</b>. %s" % ("on" if searchIndex.logging else "off", "You should probably disable it if you don't have any problems." if searchIndex.logging else "")
-        html += "<br/>Results are rendered <b>%s</b>." % ("immediately" if config["renderImmediately"] else "with fade-in")
-        html += "<br/>Tag Info on hover is <b>%s</b>.%s" % ("shown" if config["showTagInfoOnHover"] else "not shown", (" Delay: [<b>%s</b> ms]" % config["tagHoverDelayInMiliSec"]) if config["showTagInfoOnHover"] else "")
-        html += "<br/>Image max height is <b>%s</b> px." % config["imageMaxHeight"]
-        html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
-        html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
-        html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
 
-    if searchIndex is None or searchIndex.output is None:
-        html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
-    editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
-
-
-
-def getCalendarHtml():
-    html = """<div id='cal-row' style="width: 100%%; height: 8px;" onmouseleave='calMouseLeave()'>%s</div>
-            """
-    #get notes created since the beginning of the year
-    day_of_year = datetime.datetime.now().timetuple().tm_yday
-    date_year_begin = datetime.datetime(year=datetime.datetime.utcnow().year, month=1, day=1, hour=0 ,minute=0)  
-    nid_now = int(time.time()* 1000)
-    nid_minus_day_of_year = int(date_year_begin.timestamp() * 1000)
-
-    res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now)).fetchall()
-
-    counts = []
-    c = 1
-    notes_in_current_day = 0
-    for i, r in enumerate(res):
-        c_day_of_year = time.localtime(r[0]/1000).tm_yday
-        if c_day_of_year == c:
-            notes_in_current_day += 1
-            if i == len(res) - 1:
-                counts.append(notes_in_current_day)
-        else:
-            counts.append(notes_in_current_day)
-            notes_in_current_day = 1
-            for _ in range(0, c_day_of_year - c - 1):
-                counts.append(0)
-        
-        c = c_day_of_year
-    while len(counts) < day_of_year:
-        counts.append(0)
-
-    html_content = ""
-    added = 0
-    for i, notes_in_current_day in enumerate(counts):
-        if notes_in_current_day > 20:
-            color = "cal-three"
-        elif notes_in_current_day > 10:
-            color = "cal-two"
-        elif notes_in_current_day > 0:
-            color = "cal-one"
-        else: 
-            color = ""
-        
-        html_content += "<div class='cal-block-outer'><div class='cal-block %s %s' data-index='%s'></div></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
-        added += 1
-
-    html = html % html_content
-    return html
-        
-def display_model_dialog():
+def get_model_dialog_html():
     all_models = sorted(mw.col.models.all(), key=lambda m : m['name'])
     index = get_index()
     config = mw.addonManager.getConfig(__name__)
@@ -733,54 +353,9 @@ def display_model_dialog():
         flds += "</table>"
         html += "<div class='siac-model-fields'>%s</div>" % flds
     html += "</div></div>"
-    index.output.show_in_modal_subpage(html)
-
-
-def note_edit_dialog(note_id = -1):
-    """
-        Returns the html for the note creation/edit dialog.
-        Returns just the content, excluding the dialog window, but including any buttons.
-        If a note_id is given, it will edit the selected note, else a new note will be created.
-    """
-
-    html = """
-        <div style='height: 10%;'>
-            <h3 style='margin-top: 5px;'>{header}</h3>
-        </div>
-        <div style='height: 80%; overflow-y: auto; width: 100%;'>
-            <span>Title</span>
-            <input id='siac-note-title-inp' style='width: 100%;' type='text' value='{title}'></input>
-            <br><br>
-            <span>Text</span>
-            <div id='siac-note-text-inp' contenteditable='true'>{text}</div>
-            <span>Source</span>
-            <input id='siac-note-source-inp' style='width: 100%;' type='text' value='{source}'></input>
-            <span>Tags</span>
-            <input id='siac-note-tag-inp' style='width: 100%;' type='text' value='{tags}'></input>
-        </div>
-        <div style='height: 30px; padding-top: 5px; width: 100%; text-align: right;'>
-            <div class='siac-btn-small'>Save</div>
-            <div class='siac-btn-small'>Close</div>
-        </div>
-    """
-
-    note = None
-    if note_id >= 0:
-        note = get_note(note_id)
-    
-    header = "Create a new Note" if note_id == -1 else "Edit Note"
-    title = note[1] if note is not None else ""
-    text = note[2] if note is not None else ""
-    source = note[3] if note is not None else ""
-    tags = note[4] if note is not None else ""
-    pos = ("Position in Reading Queue: <b>%s</b>" % note[10]) if note is not None else "Not in Queue."
-    params = dict(header = header, title = title, text = text, source = source, tags = tags, pos = pos)
-    html = html.format_map(params)
     return html
 
-
-
-def display_note_reading_modal(note_id):
+def get_reading_modal_html(note_id):
     note = get_note(note_id)
     index = get_index()
 
@@ -897,8 +472,9 @@ def display_note_reading_modal(note_id):
 
         params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
         html = html.format_map(params)
-        index.output.show_in_large_modal(html)
-        index.output.editor.web.eval("clearInterval(readingTimer);")
+        return html
+    return ""
+
 
 def get_queue_head_display(note_id, queue = None):
     """
@@ -927,21 +503,71 @@ def get_queue_head_display(note_id, queue = None):
     return html
 
 
+def getCalendarHtml():
+    html = """<div id='cal-row' style="width: 100%%; height: 8px;" onmouseleave='calMouseLeave()'>%s</div>
+            """
+    #get notes created since the beginning of the year
+    day_of_year = datetime.datetime.now().timetuple().tm_yday
+    date_year_begin = datetime.datetime(year=datetime.datetime.utcnow().year, month=1, day=1, hour=0 ,minute=0)  
+    nid_now = int(time.time()* 1000)
+    nid_minus_day_of_year = int(date_year_begin.timestamp() * 1000)
 
-def iterateTagmap(tmap, prefix):
-    if len(tmap) == 0:
-        return []
-    res = []
-    if prefix:
-        prefix = prefix + "::"
-    for key, value in tmap.items():
-        if type(value) is dict:
-            if len(value) > 0:
-                res.append(prefix + key)
-                res +=  iterateTagmap(value, prefix + key)
-            else:
-                res.append(prefix + key)
-    return res
+    res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now)).fetchall()
+
+    counts = []
+    c = 1
+    notes_in_current_day = 0
+    for i, r in enumerate(res):
+        c_day_of_year = time.localtime(r[0]/1000).tm_yday
+        if c_day_of_year == c:
+            notes_in_current_day += 1
+            if i == len(res) - 1:
+                counts.append(notes_in_current_day)
+        else:
+            counts.append(notes_in_current_day)
+            notes_in_current_day = 1
+            for _ in range(0, c_day_of_year - c - 1):
+                counts.append(0)
+        
+        c = c_day_of_year
+    while len(counts) < day_of_year:
+        counts.append(0)
+
+    html_content = ""
+    added = 0
+    for i, notes_in_current_day in enumerate(counts):
+        if notes_in_current_day > 20:
+            color = "cal-three"
+        elif notes_in_current_day > 10:
+            color = "cal-two"
+        elif notes_in_current_day > 0:
+            color = "cal-one"
+        else: 
+            color = ""
+        
+        html_content += "<div class='cal-block-outer'><div class='cal-block %s %s' data-index='%s'></div></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
+        added += 1
+
+    html = html % html_content
+    return html
+
+def get_note_delete_confirm_modal_html(nid):
+    note = get_note(nid)
+    creation_date = note[6]
+    title = trimIfLongerThan(note[1], 100) if note[1] is not None and len(note[1]) > 0 else "Untitled Note"
+    return """
+       <div class='siac-modal-small'>
+            <p style='text-align: center;'><b>Delete the following note?</b></p>
+            <hr class='siac-modal-sep'/>
+            <br>
+            <div style='text-align: center; font-size: 14px;'>Title: <b>%s</b></div>
+            <div style='text-align: center; font-size: 14px;'><i>Created: %s</i></div>
+            <br><br>
+            <div style='text-align: center;'><div class='siac-btn-small' onclick='$(this.parentNode.parentNode).remove(); removeNote(%s); $("#greyout").hide(); pycmd("siac-delete-user-note %s");' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn-small' onclick='$(this.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
+       </div>
+
+
+    """ % (title, creation_date, nid, nid) 
 
 
 def stylingModal(config):
@@ -1144,5 +770,4 @@ def stylingModal(config):
     </div>
 
     """
-
     return html

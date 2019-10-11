@@ -10,7 +10,7 @@ tagReg = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
 spaceReg = re.compile('\s{2,}')
 normalChar = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U) 
 chineseChar = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.U)
-japaneseChar = re.compile("")
+non_weird_char = re.compile(u"[.;,-:_+*#?!\"'a-z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě]", re.I | re.U)
 
 def clean(text, stopWords):
     filtered = ""
@@ -94,23 +94,24 @@ def textTooSmall(text):
     return True
 
 def isChineseChar(char):
-    return chineseChar.search(char)
+    return chineseChar.match(char)
 
 
 def asciiFoldChar(char):
+    char = char.lower()
     if normalChar.match(char):
         return char
-    if char.lower() in "àáâãåāăǎ":
+    if char in "àáâãåāăǎ":
         return 'a'
-    if char.lower() in "ùúûūǔ":
+    if char in "ùúûūǔ":
         return 'u'
-    if char.lower() in "òóôōǒ":
+    if char in "òóôōǒ":
         return 'o'
-    if char.lower() in "èéêëēěę":
+    if char in "èéêëēěę":
         return 'e'
-    if char.lower() in "ìíîïīǐ":
+    if char in "ìíîïīǐ":
         return 'i'
-    if char.lower() in "ýỳÿȳ":
+    if char in "ýỳÿȳ":
         return 'y'
     return char
 
@@ -177,6 +178,7 @@ def clean_user_note_text(text):
         text = text.replace("`", "&#96;").replace("$", "&#36;")
 
         text = text.replace("-qt-block-indent:0;", "")
+        text = text.replace("-qt-paragraph-type:empty;", "")
         text = re.sub("<p style=\" ?margin-top:0px; margin-bottom:0px;", "<p style=\"", text) 
 
 
@@ -204,8 +206,8 @@ def remove_fields(text, field_ords):
     return "\u001f".join([t for i,t in enumerate(text.split("\u001f")) if i not in field_ords])
 
 
-def remove_divs(html):
-    return re.sub("</?div ?[^>]*?>", "", html, flags=re.IGNORECASE)
+def remove_divs(html, replacement = ""):
+    return re.sub("</?div ?[^>]*?>", replacement, html, flags=re.IGNORECASE)
 
 def remove_tags(html, tags):
     return re.sub("</?(%s) ?[^>]*?>" % "|".join(tags), "", html, flags=re.IGNORECASE)

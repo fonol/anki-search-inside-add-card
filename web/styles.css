@@ -2,7 +2,27 @@
 :root {
     --tleft : 50%;
 }
+.siac-trash-icn,.siac-search-icn { 
+    width:12px; height:12px; 
+    vertical-align: center;
+    display: inline-block;
+    background-size: 12px 12px;
+}
+.siac-trash-icn {
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cpath stroke='$noteForegroundColor$' transform='rotate(179.51019287109375 6.166921615600586,6.9911985397338885) ' id='svg_4' d='m2.799955,10.675048l1.262613,-7.3677l4.208709,0l1.262612,7.3677l-6.733934,0z' fill-opacity='null' stroke-opacity='null' stroke-width='1.5' fill='none'/%3E%3Crect stroke='$noteForegroundColor$' id='svg_7' height='0.638096' width='1.884984' y='0.823103' x='5.256614' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke='$noteForegroundColor$' transform='rotate(2.7647311687469482 6.056345462799075,1.717745661735527) ' stroke-linecap='null' stroke-linejoin='null' id='svg_9' y2='1.451854' x2='10.882708' y1='1.983638' x1='1.229983' fill-opacity='null' stroke-opacity='null' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+}
+.siac-trash-icn:hover {
+    background-image: url("data:image/svg+xml,%3Csvg width='11' height='11' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cpath stroke='%232496dc' transform='rotate(179.51019287109375 6.166921615600586,6.9911985397338885) ' id='svg_4' d='m2.799955,10.675048l1.262613,-7.3677l4.208709,0l1.262612,7.3677l-6.733934,0z' fill-opacity='null' stroke-opacity='null' stroke-width='1.5' fill='none'/%3E%3Crect stroke='%232496dc' id='svg_7' height='0.638096' width='1.884984' y='0.823103' x='5.256614' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke='%232496dc' transform='rotate(2.7647311687469482 6.056345462799075,1.717745661735527) ' stroke-linecap='null' stroke-linejoin='null' id='svg_9' y2='1.451854' x2='10.882708' y1='1.983638' x1='1.229983' fill-opacity='null' stroke-opacity='null' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+}
 
+.siac-search-icn {
+    margin-top: 2px;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='$noteForegroundColor$' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='$noteForegroundColor$' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+}
+.siac-search-icn:hover {
+    /* background-image: url("data:image/svg+xml,%3Csvg width='10' height='10' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='#2496dc' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='#2496dc' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3C/g%3E%3C/svg%3E"); */
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='%232496dc' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='%232496dc' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Crect stroke='%232496dc' id='svg_17' height='4.538088' width='2.852512' y='0.763472' x='7.636953' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke-linecap='null' stroke-linejoin='null' id='svg_20' y2='1.703505' x2='9.743922' y1='1.73592' x1='8.447325' fill-opacity='null' stroke-opacity='null' stroke-width='0.5' stroke='%232496dc' fill='none'/%3E%3Cline stroke-linecap='null' stroke-linejoin='null' id='svg_24' y2='2.740782' x2='9.743922' y1='2.773197' x1='8.447325' fill-opacity='null' stroke-opacity='null' stroke-width='0.5' stroke='%232496dc' fill='none'/%3E%3Cline stroke-linecap='null' stroke-linejoin='null' id='svg_25' y2='3.875304' x2='9.776337' y1='3.907719' x1='8.47974' fill-opacity='null' stroke-opacity='null' stroke-width='0.5' stroke='%232496dc' fill='none'/%3E%3Crect stroke='%232496dc' id='svg_26' height='4.538088' width='2.852512' y='6.760231' x='0.829821' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke-linecap='null' stroke-linejoin='null' id='svg_27' y2='7.797508' x2='2.93679' y1='7.829923' x1='1.640194' fill-opacity='null' stroke-opacity='null' stroke-width='0.5' stroke='%232496dc' fill='none'/%3E%3Cline stroke-linecap='null' stroke-linejoin='null' id='svg_28' y2='8.802371' x2='2.93679' y1='8.834786' x1='1.640194' fill-opacity='null' stroke-opacity='null' stroke-width='0.5' stroke='%232496dc' fill='none'/%3E%3Cline stroke-linecap='null' stroke-linejoin='null' id='svg_29' y2='9.936893' x2='2.969205' y1='9.969307' x1='1.672609' fill-opacity='null' stroke-opacity='null' stroke-width='0.5' stroke='%232496dc' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+}
 body {
     overflow-x: hidden;
     overflow: hidden;
@@ -61,6 +81,7 @@ body {
   overflow-x: hidden;
   overflow-y: hidden;
   max-height: 950px;
+  min-width: 85px;
   
 }
 .cardR img {
@@ -173,6 +194,7 @@ select {
     font-size: 9px;
     text-align: center;
     line-height: 17px;
+    user-select: none;
 }
 
 .rankingLbl {
@@ -202,19 +224,14 @@ select {
     cursor: pointer;
     z-index:9999;
 }
-.srchLbl  {
-    color: $noteForegroundColor$;
-    border: 1px solid $noteBorderColor$;
-    border-right: 0px solid $noteBackgroundColor$; 
-    padding: 3px 3px 3px 3px;
-    flex: 1;
-}
-.editLbl,.deleteLbl {
+
+.editLbl,.deleteLbl,.srchLbl {
     color: $noteForegroundColor$;
     border: 1px solid $noteBorderColor$;
     border-right: 0px solid  $noteBackgroundColor$; 
     padding: 3px 5px 3px 5px;
     flex: 1;
+    vertical-align: center;
 }
 .pinLbl {
     color: black;
@@ -262,15 +279,18 @@ select {
      display: none;
 }
 .cardWrapper.grid {
-    width: calc(50% - 29px);
+    /* width: calc(50% - 29px); */
+    max-width: calc(50% - 29px);
+    display: inline-block;
     vertical-align: top;
     margin-left: 5px;
 }
+.cardWrapper.grid-small {
+    max-width: calc(33% - 10px);
+}
 
-.gridRow {
-    width: 100%;
-    vertical-align: top;
-    padding: 0px !important;
+.cardWrapper.grid-large {
+    max-width: 100%;
 }
 
 .cardWrapper .tag-symbol {
@@ -746,23 +766,6 @@ select {
     word-wrap: break-word;
 }
 
-#deckInfoBox {
-    display: none;
-    background: $deckSelectHoverBackgroundColor$;
-    color: $deckSelectHoverForegroundColor$;
-    height: 100%;
-    width: 100%;
-}
-
-
-#specialSearches {
-    flex:  0 0 20px;
-    margin-left: 10px; 
-    background: $buttonBackgroundColor$;
-    color: $buttonForegroundColor$;
-    border: 1px solid $buttonBorderColor$;
-}
-
 /* Modal */
 
 #greyout {
@@ -1175,7 +1178,7 @@ span.tag-symbol {
     bottom: 0;
     right: 0;
     margin-left: -4px;
-    background-color: darkslategrey;
+    background-color: #094463;
     color: white;
     font-size: 12px;
     /* border: 2px solid $modalBorderColor$;
@@ -1354,7 +1357,21 @@ span.tag-symbol {
     border: 2px solid $modalBorderColor$;
     display: none;
 }
-
+.siac-modal-small {
+    z-index: 9999999;
+    background: $modalBackgroundColor$;
+    color: $modalForegroundColor$;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 15px;
+    width: 250px;
+    border: 2px solid $modalBorderColor$;
+}
+hr.siac-modal-sep {
+    border-color: $modalBorderColor$;
+}
 
 @media (max-height: 640px) {
     #tagContainer {

@@ -287,22 +287,17 @@ function afterRemovedFromQueue() {
     $('.siac-queue-sched-btn').first().addClass("active").html('Not In Queue');
 }
 
-function specialSearch(mode) {
-    document.getElementById("a-modal").style.display = 'none';
-    showLoading("Special Search");
-    pycmd(mode + " " + selectedDecks.toString());
-}
 
-function startTimer(elementToUpdate) {
+function startTimer(elementToUpdateId) {
     readingTimer = setInterval(function() {
         remainingSeconds --;
-        elementToUpdate.innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds %% 60 < 10 ? "0" + remainingSeconds %% 60 : remainingSeconds %% 60);
+        document.getElementById(elementToUpdateId).innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds %% 60 < 10 ? "0" + remainingSeconds %% 60 : remainingSeconds %% 60);
         if (remainingSeconds <= 0) {
             clearInterval(readingTimer);
             $('#siac-timer-play-btn').addClass("inactive").html("Finished");
             $('#siac-timer-popup').show();
         }
-    }, 1000);
+    }, 999);
 }
 
 function toggleTimer(timer) {
@@ -310,7 +305,7 @@ function toggleTimer(timer) {
         $(timer).removeClass("inactive");
         timer.innerHTML = "Pause";
         let timerDisplay = document.getElementById("siac-reading-modal-timer");
-        startTimer(timerDisplay);
+        startTimer(timerDisplay.id);
     } else {
         clearInterval(readingTimer);
         $(timer).addClass("inactive");
@@ -526,7 +521,7 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
         document.getElementById("searchResults").style.paddingRight = '10px';
         $("#greyout").hide();
         displayPagination(page, pageMax, total, html.length > 0);
-        if (gridView && document.getElementsByClassName("pinned").length > 1) { reflowGrid(); }
+       
     }
     else {
         time = gridView ? 100 : 130;
@@ -548,7 +543,6 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
                         $('.cardWrapper').show();
                     document.getElementById("searchResults").style.overflowY = 'auto';
                     document.getElementById("searchResults").style.paddingRight = '10px';
-                    if (gridView && document.getElementsByClassName("pinned").length > 1) { reflowGrid(); }
                     $("#greyout").hide();
                 }
             }, time);
@@ -702,8 +696,6 @@ function addFloatingNote(nid) {
         $('.field').last().after(floatingNote);
     dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
     updatePinned();
-    if (gridView)
-        reflowGrid();
 }
 
 function dragElement(elmnt, headerId) {
@@ -740,18 +732,6 @@ function dragElement(elmnt, headerId) {
     }
 }
 
-
-function reflowGrid() {
-    $('.gridRow').each(function () {
-        if ($(this).find(".cardWrapper").length == 1) {
-            if ($(this).next('.gridRow').length) {
-                if ($(this).next('.gridRow').find('.cardWrapper').length) {
-                    $(this).next('.gridRow').find('.cardWrapper').first().appendTo(this);
-                }
-            }
-        }
-    });
-}
 
 function toggleAddon() {
 
@@ -791,10 +771,6 @@ function updateSwitchBtn(count) {
 function removeNote(nid) {
     $(document.getElementById("cW-" + nid).parentElement.parentElement).remove();
     updatePinned();
-
-    if (gridView)
-        reflowGrid();
-
 }
 function getOffset(el) {
     var _x = 0;

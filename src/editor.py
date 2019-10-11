@@ -9,6 +9,8 @@ from anki.hooks import addHook, remHook
 from aqt.utils import showInfo
 from anki.utils import isMac
 from anki.lang import _
+
+
 from .notes import *
 from .notes import _get_priority_list
 from .textutils import trimIfLongerThan, remove_headers, remove_all_bold_formatting, find_all_images
@@ -483,7 +485,7 @@ class CreateTab(QWidget):
             ti.setData(0, 1, QVariant(prefix + t))
             prefix_c = prefix + t + "::"
             for c,m in children.items():
-                ti.addChildren(self._add_to_tree(children, prefix_c))
+                ti.addChildren(self._add_to_tree({c: m}, prefix_c))
             res.append(ti)
         return res
     

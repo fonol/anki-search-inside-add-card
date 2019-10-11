@@ -11,10 +11,13 @@ from aqt.main import AnkiQt
 import sqlite3
 import re
 import time
-from .logging import log, persist_index_info
+
+from .debug_logging import log, persist_index_info
 from .textutils import *
 from .fts_index import Worker, WorkerSignals
 from .output import Output
+from .utils import get_whoosh_index_folder_path
+
 config = mw.addonManager.getConfig(__name__)
 try:
     loadWhoosh = not config['useFTS']  or config['disableNonNativeSearching'] 
@@ -69,7 +72,7 @@ class WhooshSearchIndex:
         schema = Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True), source=TEXT(stored=True), mid=TEXT(stored=True), refs=TEXT(stored=True))
         
         #index needs a folder to operate in
-        indexDir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/whoosh_index.py", "") + "/index"
+        indexDir = get_whoosh_index_folder_path()
         if not os.path.exists(indexDir):
             os.makedirs(indexDir)
         self.index = create_in(indexDir, schema)

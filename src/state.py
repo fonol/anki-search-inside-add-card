@@ -7,7 +7,7 @@ deck_map = None
 output = None
 edit = None
 
-
+old_on_bridge = None
 
 def checkIndex():
     return search_index is not None and search_index.output is not None and search_index.output.editor is not None and search_index.output.editor.web is not None
@@ -39,3 +39,10 @@ def get_edit():
 def set_deck_map(dm):
     global deck_map
     deck_map = dm
+
+def set_old_on_bridge_cmd(fn):
+    global old_on_bridge
+    old_on_bridge = fn
+
+def get_old_on_bridge_cmd():
+    return old_on_bridge

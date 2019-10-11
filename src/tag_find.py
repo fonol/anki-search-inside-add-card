@@ -4,7 +4,7 @@ from aqt.utils import showInfo
 from .textutils import trimIfLongerThan, get_stamp
 from .stats import getAvgTrueRetention, getTrueRetentionOverTime, retention_stats_for_tag
 from .output import Output
-from .notes import find_by_tag
+from .notes import find_by_tag, get_recently_used_tags_with_counts
 import time
 
 def findBySameTag(tagStr, limit, decks, pinned):
@@ -205,6 +205,16 @@ def get_most_active_tags(max_count):
                 counts[tag] += 1
             else:
                 counts[tag] = 1
+    user_tags = get_recently_used_tags_with_counts() 
+    for t, c in user_tags.items():
+        if "::" in t:
+            tag = t.split("::")[0]
+        else:
+            tag = t
+        if tag in counts:
+            counts[tag] += c
+        else:
+            counts[tag] = c
     ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:max_count]
     return ordered
 

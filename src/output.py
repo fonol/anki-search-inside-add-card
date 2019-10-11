@@ -6,11 +6,11 @@ import math
 from datetime import datetime
 from aqt import mw
 from aqt.utils import showInfo, tooltip
-from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar, get_stamp, remove_divs, remove_tags
-from .logging import log
+from .debug_logging import log
 from .stats import getRetentions
 from .state import get_index
-from .utils import to_tag_hierarchy
+from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar, get_stamp, remove_divs, remove_tags
+from .utils import to_tag_hierarchy, get_web_folder_path
 
 class Output:
 
@@ -42,7 +42,7 @@ class Output:
                             </div>
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                                 <div class='editLbl' onclick='edit(%s)'>Edit</div> 
-                                <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
+                                <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div> 
                                 <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
                                 <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div> 
                                 <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div> 
@@ -71,9 +71,9 @@ class Output:
                                 %s
                             </div>
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='deleteLbl' onclick='pycmd("siac-delete-user-note %s"); removeNote(%s);'>Del.</div>
+                                <div class='deleteLbl' onclick='pycmd("siac-delete-user-note-modal %s"); '><div class='siac-trash-icn'></div></div>
                                 <div class='editLbl' onclick='pycmd("siac-edit-user-note %s")'>Edit</div> 
-                                <div class='srchLbl' onclick='searchCard(this)'>Search</div> 
+                                <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div> 
                                 <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
                                 <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div> 
                                 <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div> 
@@ -130,7 +130,18 @@ class Output:
         if self.showRetentionScores:
             retsByNid = getRetentions(nids)
         ret = 0
+        
+        # various time stamps to collect information about rendering performance
         start = time.time()
+        highlight_start = None
+        build_user_note_start = None
+
+        highlight_total = 0.0
+        build_user_note_total = 0.0
+
+        remaining_to_highlight = {}
+        highlight_boundary = 15 if self.gridView else 10
+
         for counter, res in enumerate(searchResults):
             counter += (page - 1)* 50
             try:
@@ -154,12 +165,10 @@ class Output:
             text = res[0]
 
             #non-anki notes should be displayed differently, we distinguish between title, text and source here
+            build_user_note_start = time.time()
             if str(res[2]) == "-1":
                 text = self._build_non_anki_note_html(text)
-
-            #highlight
-            if query_set is not None:
-                text = self._markHighlights(text, query_set)
+            build_user_note_total += time.time() - build_user_note_start
 
             # hide fields that should not be shown 
             if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
@@ -176,30 +185,48 @@ class Output:
 
             #remove <div> tags if set in config
             if self.remove_divs:
-                text = remove_divs(text)
+                text = remove_divs(text, " ")
+
+            #highlight
+            highlight_start = time.time()
+            if query_set is not None:
+                if counter - (page -1) * 50 < highlight_boundary:
+                    text = self._markHighlights(text, query_set)
+                else:
+                    remaining_to_highlight[res[3]] = ""
+            highlight_total += time.time() - highlight_start
+
+            if query_set is not None and counter - (page -1) * 50 >= highlight_boundary:
+                remaining_to_highlight[res[3]] = text
+
+            gridclass = "grid" if self.gridView else ""
+            if self.gridView and len(text) < 200:
+                gridclass = ' '.join((gridclass, "grid-small"))
+            elif self.gridView and len(text) > 700:
+                gridclass = ' '.join((gridclass, "grid-large"))
 
             # use either the template for addon's notes or the normal
             if str(res[2]) == "-1":
-                newNote = self.noteTemplateUserNote % ("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
+                newNote = self.noteTemplateUserNote % (gridclass, counter + 1, res[3], counter + 1, 
                             "&nbsp;&#128336; " + timeDiffString,
                             "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
-                        retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], "getSelectionText()" if not is_queue else "", res[3], res[3], res[3], res[3], 
+                        retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], "getSelectionText()" if not is_queue else "", res[3], res[3], res[3], res[3], 
                             text, 
                             res[3], self.buildTagString(res[1]), res[3], ": Q-%s&nbsp;" % (res[7] + 1) if len(res) >= 8 and res[7] is not None else "")  
             else:    
-                newNote = self.noteTemplate % ("" if not self.gridView else "grid", counter + 1, res[3], counter + 1, 
+                newNote = self.noteTemplate % (gridclass, counter + 1, res[3], counter + 1, 
                             "&nbsp;&#128336; " + timeDiffString,
                             "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                             retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
                             text, 
                             res[3], self.buildTagString(res[1]), res[3])  
-            if self.gridView:
-                if counter % 2 == 1:
-                    html += "<div class='gridRow'>%s</div>" % (lastNote + newNote)
-                elif counter == len(searchResults) - 1:
-                    html += "<div class='gridRow'>%s</div>" % (newNote)
-            else:
-                html += newNote
+            # if self.gridView:
+            #     if counter % 2 == 1:
+            #         html += "<div class='gridRow'>%s</div>" % (lastNote + newNote)
+            #     elif counter == len(searchResults) - 1:
+            #         html += "<div class='gridRow'>%s</div>" % (newNote)
+            # else:
+            html += newNote
             tags = self._addToTags(tags, res[1])
             if counter - (page - 1) * 50 < 20:
                 allText += " " + res[0][:5000]
@@ -208,6 +235,8 @@ class Output:
         pageMax = math.ceil(len(db_list) / 50.0)
         if get_index().lastResDict is not None:
             get_index().lastResDict["time-html"] = int((time.time() - start) * 1000)
+            get_index().lastResDict["time-html-highlighting"] = int(highlight_total * 1000)
+            get_index().lastResDict["time-html-build-user-note"] = int(build_user_note_total * 1000)
         if stamp is None and self.last_took is not None:
             took = self.last_took
         elif stamp is not None:
@@ -235,6 +264,18 @@ class Output:
             if logging:
                 log("printing the result html...")
             editor.web.eval(cmd)
+
+        if len(remaining_to_highlight) > 0:
+            cmd = ""
+            for nid,text in remaining_to_highlight.items():
+                cmd = ''.join((cmd, "document.getElementById('%s').innerHTML = `%s`;" % (nid, self._markHighlights(text, query_set))))
+            if editor is None or editor.web is None:
+                if self.editor is not None and self.editor.web is not None:
+                    self.editor.web.eval(cmd)
+            else:
+                editor.web.eval(cmd)
+
+            
 
 
     def buildTagString(self, tags, hover = True, maxLength = -1, maxCount = -1):
@@ -357,7 +398,7 @@ class Output:
                 last_close_bracket = body.rfind(">")
                 if last_close_bracket < last_open_bracket:
                     body = body[:last_open_bracket]
-            body += "<br></p></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
+            body += "<br></ul></b></i></em></span></p></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
         else:
             title = text.split("\u001f")[0]
             body = text.split("\u001f")[1]
@@ -453,7 +494,10 @@ class Output:
 
 
     def _mostCommonWords(self, text):
-        if len(text) == 0:
+        """
+        Returns the html that is displayed in the right sidebar containing the clickable keywords.
+        """
+        if text is None or len(text) == 0:
             return "No keywords for empty result."
         text = clean(text, self.stopwords)
         counts = {}
@@ -467,7 +511,9 @@ class Output:
         sortedCounts = sorted(counts.items(), key=lambda kv: kv[1][1], reverse=True)
         html = ""
         for entry in sortedCounts[:15]:
-            html += "<a class='keyword' href='#' onclick='event.preventDefault(); searchFor($(this).text())'>%s</a>, " % entry[1][0]
+            html = "%s<a class='keyword' href='#' onclick='event.preventDefault(); searchFor($(this).text())'>%s</a>, " % (html, entry[1][0])
+        if len(html) == 0:
+            return "No keywords for empty result."
         return html[:-2]
 
     def get_result_html_simple(self, db_list, tag_hover = True):
@@ -559,8 +605,7 @@ class Output:
         
     def _loadPlotJsIfNotLoaded(self):
         if not self.plotjsLoaded:
-            dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/output.py", "")
-            with open(dir + "/plot.js") as f:
+            with open(get_web_folder_path() + "plot.js") as f:
                 plotjs = f.read()
             self.editor.web.eval(plotjs)
             self.plotjsLoaded = True
@@ -762,41 +807,47 @@ class Output:
         currentWordNormalized = ""
         textMarked = ""
         lastIsMarked = False
+        # c = 0
         for char in text:
+            # c += 1
             if self.wordToken.match(char):
-                currentWordNormalized += asciiFoldChar(char).lower()
+                currentWordNormalized = ''.join((currentWordNormalized, asciiFoldChar(char).lower()))
+                # currentWordNormalized = ''.join((currentWordNormalized, char.lower()))
                 if isChineseChar(char) and str(char) in querySet:
-                    currentWord += "<mark>%s</mark>" % char
+                    currentWord = ''.join((currentWord, "<MARK>%s</MARK>" % char))
                 else:
-                    currentWord += char
+                    currentWord = ''.join((currentWord, char))
                 
             else:
                 #we have reached a word boundary
                 #check if word is empty
                 if currentWord == "":
-                    textMarked += char
+                    textMarked = ''.join((textMarked, char))
                 else:
                     #if the word before the word boundary is in the query, we want to highlight it
                     if currentWordNormalized in querySet:
                         #we check if the word before has been marked too, if so, we want to enclose both, the current word and 
                         # the word before in the same <mark></mark> tag (looks better)
-                        if lastIsMarked and not "\u001f" in textMarked[textMarked.rfind("<mark>"):]:
-                            textMarked = textMarked[0: textMarked.rfind("</mark>")] + textMarked[textMarked.rfind("</mark>") + 7 :]
-                            textMarked += currentWord + "</mark>" + char
+                        if lastIsMarked and not "\u001f" in textMarked[textMarked.rfind("<MARK>"):]:
+                        # if lastIsMarked:
+                            closing_index = textMarked.rfind("</MARK>")
+                            textMarked = ''.join((textMarked[0: closing_index], textMarked[closing_index + 7 :]))
+                            textMarked = ''.join((textMarked, currentWord, "</MARK>", char))
                         else:
-                            textMarked += "<mark>" + currentWord + "</mark>" + char
+                            textMarked = ''.join((textMarked, "<MARK>", currentWord, "</MARK>", char))
+                            # c += 13
                         lastIsMarked = True
                     #if the word is not in the query, we simply append it unhighlighted
                     else:
-                        textMarked += currentWord + char
+                        textMarked = ''.join((textMarked, currentWord, char))
                         lastIsMarked = False
                     currentWord = ""
                     currentWordNormalized = ""
         if currentWord != "":
-            if currentWordNormalized in querySet and currentWord != "mark":
-                textMarked += "<mark>" + currentWord + "</mark>"
+            if currentWord != "MARK" and currentWordNormalized in querySet:
+                textMarked = ''.join((textMarked, "<MARK>", currentWord, "</MARK>"))
             else:
-                textMarked += "%s" % currentWord
+                textMarked = ''.join((textMarked, currentWord)) 
         
         return textMarked
 

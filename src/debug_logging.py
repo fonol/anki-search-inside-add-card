@@ -6,11 +6,12 @@ from aqt import mw
 
 
 from .state import get_index
+from .utils import *
 
 def log(text):
-    dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/logging.py", "")
+    dir = get_addon_base_folder_path()
     try:
-        with open(dir + '/log.txt', 'a', encoding="utf-8") as out:
+        with open(dir + 'log.txt', 'a', encoding="utf-8") as out:
             out.write(text + '\n')
     except:
         pass
@@ -41,12 +42,12 @@ def get_index_info():
     return c_json["index"]
 
 def _get_data_file_content():
-    dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/logging.py", "")
-    with open(dir + "/user_files/data.json", "r") as json_file:
+    dir = get_user_files_folder_path()
+    with open(dir + "data.json", "r") as json_file:
         return json.load(json_file)
 
 def _write_to_data_file(c_json):
-    dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/").replace("/logging.py", "") + "/user_files/data.json"
+    dir = get_user_files_folder_path() + "data.json"
     with open(dir, "w") as json_file:
         json.dump(c_json, json_file)
         
