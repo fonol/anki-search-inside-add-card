@@ -34,6 +34,9 @@ class Output:
         self.last_took = None
         self.last_had_timing_info = False
 
+        #determines the zoom factor of rendered notes
+        self.scale = 1.0
+
 
         self.noteTemplate = """<div class='cardWrapper %s' id='nWr-%s'> 
                             <div class='topLeftWr'>
@@ -201,9 +204,18 @@ class Output:
 
             gridclass = "grid" if self.gridView else ""
             if self.gridView and len(text) < 200:
+                if self.scale < 0.8:
+                    gridclass = ' '.join((gridclass, "grid-smaller"))
+                else:
+                    gridclass = ' '.join((gridclass, "grid-small"))
+            elif self.gridView and self.scale < 0.8:
                 gridclass = ' '.join((gridclass, "grid-small"))
-            elif self.gridView and len(text) > 700:
+
+            elif self.gridView and len(text) > 700 and self.scale > 0.8:
                 gridclass = ' '.join((gridclass, "grid-large"))
+
+            if self.scale != 1.0:
+                gridclass = ' '.join([gridclass, "siac-sc-%s" % str(self.scale).replace(".", "-")])
 
             # use either the template for addon's notes or the normal
             if str(res[2]) == "-1":

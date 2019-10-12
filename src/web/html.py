@@ -201,6 +201,22 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                                                     <tr><td class='tbLb'><mark>&nbsp;Highlighting&nbsp;</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
                                                     <tr><td class='tbLb'>Grid</td><td><input type='checkbox' id='gridCb' onchange='toggleGrid(this)'/></td></tr>
                                                  </table>
+                                                 <span>Note Scale</span>
+                                                 <hr>
+                                                 <input type='range' min='0.5' max='1.5' step='0.1' value='%s' list='siac-scale-tickmarks' onfocusout='pycmd("siac-scale " + this.value)'/> 
+                                                 <datalist id="siac-scale-tickmarks">
+                                                    <option value="0.5" label="0.5"></option>
+                                                    <option value="0.6"></option>
+                                                    <option value="0.7"></option>
+                                                    <option value="0.8"></option>
+                                                    <option value="0.9"></option>
+                                                    <option value="1.0" label="1.0"></option>
+                                                    <option value="1.1"></option>
+                                                    <option value="1.2"></option>
+                                                    <option value="1.3"></option>
+                                                    <option value="1.4"></option>
+                                                    <option value="1.5" label="1.5"></option>
+                                                </datalist>
                                                  <br>
                                                  <span>Menus</span>
                                                  <hr>
@@ -311,6 +327,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
 """ % (
     leftSideWidth,
     rightSideWidth,
+    config["noteScale"],
     "display: none;" if searchIndexIsLoaded else "",
     "hidden" if hideSidebar else "",
     getCalendarHtml() if config["showTimeline"] else ""

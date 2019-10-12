@@ -86,7 +86,8 @@
 "searchOnTagEntry" : true,
 "userNotesPerDay": 5,
 "removeDivsFromOutput": false,
-"addonNoteDBFolderPath": ""
+"addonNoteDBFolderPath": "",
+"noteScale": 1.0
 
 
 }

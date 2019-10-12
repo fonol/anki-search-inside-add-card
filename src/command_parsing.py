@@ -224,6 +224,16 @@ def expanded_on_bridge_cmd(self, cmd):
         nid = get_head_of_queue()
         if nid >= 0:
             display_note_reading_modal(nid)
+
+
+    elif cmd.startswith("siac-scale "):
+        factor = float(cmd.split()[1])
+        config["noteScale"] = factor
+        writeConfig()
+        if checkIndex():
+            searchIndex.output.scale = factor
+
+
     #
     #   Synonyms
     #
