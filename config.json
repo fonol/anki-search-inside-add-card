@@ -87,7 +87,7 @@
 "userNotesPerDay": 5,
 "removeDivsFromOutput": false,
 "addonNoteDBFolderPath": "",
-"noteScale": 1.0
-
+"noteScale": 1.0,
+"gridView": false
 
 }
