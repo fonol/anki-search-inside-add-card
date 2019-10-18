@@ -147,6 +147,8 @@ def onLoadNote(editor):
     Executed everytime a note is created/loaded in the add cards dialog.
     Wraps the normal editor html in a flex layout to render a second column for the searching ui.
     """
+    config = mw.addonManager.getConfig(__name__)
+
     #only display in add cards dialog or in the review edit dialog (if enabled)
     if editor.addMode or (config["useInEdit"] and isinstance(editor.parentWindow, EditCurrent)):
         searchIndex = get_index()
@@ -156,7 +158,7 @@ def onLoadNote(editor):
 
         editor.web.eval("var addToResultAreaHeight = %s; var showTagInfoOnHover = %s; tagHoverTimeout = %s;" % (
             config["addToResultAreaHeight"], 
-            "true" if config["showTagInfoOnHover"] else "false", 
+            "true" if config["showTagInfoOnHover"] and config["noteScale"] == 1.0 else "false", 
             config["tagHoverDelayInMiliSec"]
             ))
 
@@ -182,7 +184,7 @@ def onLoadNote(editor):
                 editor.web.eval("hideTop();")
             if searchIndex.output is not None and not searchIndex.output.uiVisible:
                 editor.web.eval("$('#infoBox').addClass('addon-hidden')")
-            if searchIndex.output is not None and searchIndex.output.gridView:
+            if config["gridView"]:
                 editor.web.eval('activateGridView();')
             if searchIndex.output is not None:
                 #plot.js is already loaded if a note was just added, so this is a lazy solution for now

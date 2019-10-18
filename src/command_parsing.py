@@ -38,6 +38,7 @@ from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expand
 from .editor import openEditor, EditDialog, NoteEditor
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval, getTrueRetentionOverTime
+from .utils import get_user_files_folder_path
 
 config = mw.addonManager.getConfig(__name__)
    
@@ -232,6 +233,10 @@ def expanded_on_bridge_cmd(self, cmd):
         writeConfig()
         if checkIndex():
             searchIndex.output.scale = factor
+            if factor != 1.0:
+                searchIndex.output.editor.web.eval("showTagInfoOnHover = false;")
+            else:
+                searchIndex.output.editor.web.eval("showTagInfoOnHover = true;")
 
 
     #
@@ -329,14 +334,18 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd == "toggleGrid on":
         if not checkIndex():
             return
+        config["gridView"] = True
         searchIndex.output.gridView = True
         tryRepeatLastSearch(self)
+        mw.addonManager.writeConfig(__name__, config)
 
     elif cmd == "toggleGrid off":
         if not checkIndex():
             return
+        config["gridView"] = False
         searchIndex.output.gridView = False
         tryRepeatLastSearch(self)
+        mw.addonManager.writeConfig(__name__, config)
     
     elif cmd == "toggleAll on":
         if checkIndex():
@@ -713,7 +722,9 @@ def getIndexInfo():
                <tr><td>Toggle Shortcut:</td><td>  <b>%s</b></td></tr>
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>Fields Excluded:</td><td>  %s</td></tr>
+               <tr><td>Path to Note DB</td><td>  %s</td></tr>
              </table>
+             
             """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(searchIndex.stopWords), 
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if searchIndex.logging else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["renderImmediately"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
@@ -725,7 +736,8 @@ def getIndexInfo():
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showRetentionScores"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"],
-            "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields))
+            "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
+            ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else get_user_files_folder_path() + "siac-notes.db"
             )
 
     

@@ -312,7 +312,7 @@ select {
     max-width: calc(50% - 29px);
     display: inline-block;
     vertical-align: top;
-    margin-left: 5px;
+    margin-left: 5px !important;
 }
 .cardWrapper.grid-small {
     max-width: calc(33% - 12px);

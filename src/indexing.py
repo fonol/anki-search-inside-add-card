@@ -100,6 +100,7 @@ def _build_index(index_up_to_date):
     searchIndex.finder = Finder(mw.col)
     searchIndex.output.stopwords = searchIndex.stopWords
     searchIndex.output.remove_divs = config["removeDivsFromOutput"]
+    searchIndex.output.gridView = config["gridView"]
     searchIndex.output.scale = config["noteScale"]
     searchIndex.output.fields_to_hide_in_results = config["fieldsToHideInResults"]
     searchIndex.selectedDecks = []

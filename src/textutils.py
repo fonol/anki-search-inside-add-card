@@ -185,15 +185,17 @@ def clean_user_note_text(text):
         #delete fonts and font sizes 
         text = re.sub("font-size:[^;\"']+?([;\"'])", "\1", text)
         text = re.sub("font-family:[^;]{1,40};", "", text)
-
-        #delete colors
-        text = re.sub("(;|\"|') *color:[^;]{1,25};", "\1;", text)
-        text = re.sub("(;|\"|') *background(-color)?:[^;]{1,25};", "\1;", text)
-        text = re.sub(" bgcolor=\"[^\"]+\"", " ", text)
         
         return text
     except:
         return orig
+
+def remove_colors(text):
+    #delete colors
+    text = re.sub("(;|\"|') *color:[^;]{1,25};", "\1;", text)
+    text = re.sub("(;|\"|') *background(-color)?:[^;]{1,25};", "\1;", text)
+    text = re.sub(" bgcolor=\"[^\"]+\"", " ", text)
+    return text
     
 def build_user_note_text(title, text, source):
     """

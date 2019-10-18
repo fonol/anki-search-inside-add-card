@@ -407,7 +407,7 @@ def get_reading_modal_html(note_id):
         tags_split = tags.split()
         tm = index.output.getTagMap(tags_split)
         totalLength = sum([len(k) for k,v in tm.items()])
-        maxLength = 50
+        maxLength = 50  
         maxCount = 7 
         if len(tm) <= maxCount or totalLength < maxLength:
             for t, s in tm.items():
@@ -426,6 +426,7 @@ def get_reading_modal_html(note_id):
         source = source if source is not None and len(source.strip()) > 0 else "Empty"
         title = title if title is not None and len(title.strip()) > 0 else "Untitled"
         title = trimIfLongerThan(title, 50)
+        title = title.replace("<", "&lt;").replace(">", "&gt;")
 
         html = """
             <div style='width: 100%;'>
@@ -630,7 +631,7 @@ def stylingModal(config):
             </fieldset>
             <br/>
               <fieldset>
-                <span>This controls whether the small info box will be shown when a tag is hovered over with the mouse.</span> 
+                <span>This controls whether the small info box will be shown when a tag is hovered over with the mouse. Currently only works with the default scaling.</span> 
                 <table style="width: 100%%">
                     <tr><td><b>Show Tag Info on Hover</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling showTagInfoOnHover ' + this.checked)" %s/></tr>
                 </table>
