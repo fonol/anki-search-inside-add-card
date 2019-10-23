@@ -24,12 +24,12 @@ try:
 except KeyError:
     loadWhoosh = True
 if loadWhoosh:
-    from .whoosh.index import create_in
-    from .whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD, ID
-    from .whoosh.support.charset import accent_map
-    from .whoosh.qparser import QueryParser
-    from .whoosh.analysis import StandardAnalyzer, CharsetFilter, StemmingAnalyzer
-    from .whoosh import classify, highlight, query, scoring, qparser, reading
+    from ..whoosh.index import create_in
+    from ..whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD, ID
+    from ..whoosh.support.charset import accent_map
+    from ..whoosh.qparser import QueryParser
+    from ..whoosh.analysis import StandardAnalyzer, CharsetFilter, StemmingAnalyzer
+    from ..whoosh import classify, highlight, query, scoring, qparser, reading
 
 class WhooshSearchIndex:
     """
@@ -88,7 +88,7 @@ class WhooshSearchIndex:
                 if note[4] in self.fields_to_exclude:
                     text = remove_fields(text, self.fields_to_exclude[note[4]])
                 text = clean(text, self.stopWords)
-                writer.add_document(content=text, tags=note[2], did=str(note[3]), nid=str(note[0]), source=note[1], mid=str(note[4], refs=str(note[5])))
+                writer.add_document(content=text, tags=note[2], did=str(note[3]), nid=str(note[0]), source=note[1], mid=str(note[4]), refs=str(note[5]))
             writer.commit()
         #todo: allow user to toggle between and / or queries
         og = qparser.OrGroup.factory(0.9)
@@ -207,7 +207,7 @@ class WhooshSearchIndex:
         if result is not None:
             query_set = None
             if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
-                query_set = set(replaceAccentsWithVowels(s).lower() for s in text.split(" "))
+                query_set = set(replaceAccentsWithVowels(s).lower() for s in self.lastResDict["query"].split(" "))
             self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
 
     def removeTags(self, text):
