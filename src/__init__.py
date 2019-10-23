@@ -39,7 +39,7 @@ from .notes import *
 from .output import Output
 from .editor import EditDialog
 from .tag_find import findBySameTag, display_tag_info, get_most_active_tags
-from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, addNoteAndUpdateIndex, rerenderNote
+from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerenderInfo, addNoteToIndex
 
 config = mw.addonManager.getConfig(__name__)
 
@@ -88,7 +88,7 @@ def initAddon():
             }
             function sendSearchFieldContent() {
                 showLoading("Browser Search");
-                html = $('#searchMask').val() + "\u001f";
+                html = document.getElementById('siac-browser-search-inp').value + "\u001f";
                 pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
             }
 
@@ -97,8 +97,14 @@ def initAddon():
                 text += "\u001f";
                 pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + text);
             }
+
+         var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.min.js';
+            document.body.appendChild(script);
+
             </script>
-        """
+        """ 
     else:
         aqt.editor._html += """
             <script>
@@ -107,7 +113,7 @@ def initAddon():
             }
             function sendSearchFieldContent() {
                 showLoading("Note Search");
-                html = $('#searchMask').val() + "\u001f";
+                html = document.getElementById('siac-browser-search-inp').value + "\u001f";
                 pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
             }
 
@@ -128,7 +134,11 @@ def exception_hook(exctype, value, traceback):
     sys._excepthook(exctype, value, traceback) 
     sys.exit(1) 
    
-
+def addNoteAndUpdateIndex(dialog, note):
+    res = origAddNote(dialog, note)
+    addNoteToIndex(note)
+        
+    return res
 
 def editorSaveWithIndexUpdate(dialog):
     origSaveAndClose(dialog)

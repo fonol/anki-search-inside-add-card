@@ -141,7 +141,7 @@ class FTSIndex:
         self.lastSearch = (text, decks, "default")
         
         if len(text) == 0:
-            self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100))
+            self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100).replace("\u001f", ""))
             if mw.addonManager.getConfig(__name__)["hideSidebar"]:
                 return "Found 0 notes. Query was empty after cleaning."
             return

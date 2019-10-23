@@ -39,14 +39,15 @@ from .editor import openEditor, EditDialog, NoteEditor
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval, getTrueRetentionOverTime
 from .utils import get_user_files_folder_path
+from .queue_picker import QueuePicker
 
 config = mw.addonManager.getConfig(__name__)
-   
+
 original_on_bridge_cmd = None
 
 def expanded_on_bridge_cmd(self, cmd):
     """
-    Process the various commands coming from the ui - 
+    Process the various commands coming from the ui -
     this includes users clicks on option checkboxes, on rendered results, on special searches, etc.
     """
     searchIndex = get_index()
@@ -71,7 +72,7 @@ def expanded_on_bridge_cmd(self, cmd):
         if config["tagClickShouldSearch"]:
             if checkIndex():
                 rerenderInfo(self, cmd[11:].strip(), searchByTags=True)
-        else:    
+        else:
             addTag(cmd[11:])
     elif (cmd.startswith("editN ")):
         openEditor(mw, int(cmd[6:]))
@@ -82,13 +83,16 @@ def expanded_on_bridge_cmd(self, cmd):
     elif (cmd.startswith("randomNotes ") and checkIndex()):
         res = getRandomNotes(searchIndex, [s for s in cmd[11:].split(" ") if s != ""])
         searchIndex.output.printSearchResults(res["result"], res["stamp"])
-    elif cmd == "toggleTagSelect":
-        if checkIndex():
-            searchIndex.tagSelect = not searchIndex.tagSelect
-            if searchIndex.tagSelect:
-                fillTagSelect()
-            else:
-                fillDeckSelect(self)
+    elif cmd == "siac-fill-deck-select":
+        # if checkIndex():
+        #     searchIndex.tagSelect = not searchIndex.tagSelect
+        #     if searchIndex.tagSelect:
+        fillDeckSelect(self, expanded=True)
+            # else:
+            #     fillDeckSelect(self)
+    elif cmd == "siac-fill-tag-select":
+        fillTagSelect(expanded=True)
+        # if checkIndex():
     elif cmd.startswith("searchTag "):
         if checkIndex():
             rerenderInfo(self, cmd[10:].strip(), searchByTags=True)
@@ -97,18 +101,23 @@ def expanded_on_bridge_cmd(self, cmd):
         if checkIndex():
             #this renders the popup
             display_tag_info(self, cmd.split()[1], " ".join(cmd.split()[2:]), searchIndex)
-    
+
+    elif cmd.startswith("siac-show-loader "):
+        target = cmd.split()[1]
+        text = cmd.split()[2]
+        show_loader(target, text)
+
     elif cmd.startswith("pSort "):
         if checkIndex():
             parseSortCommand(cmd[6:])
-    
+
     elif cmd == "siac-model-dialog":
         display_model_dialog()
-        
+
     elif cmd.startswith("addedSameDay "):
         if checkIndex():
             getCreatedSameDay(searchIndex, self, int(cmd[13:]))
-    
+
     elif cmd == "lastTiming":
         if searchIndex is not None and searchIndex.lastResDict is not None:
             showTimingModal()
@@ -123,7 +132,7 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd == "siac_rebuild_index":
         # we have to reset the ui because if the index is recreated, its values won't be in sync with the ui anymore
         self.web.eval("""
-        $('#searchResults').html('').hide(); 
+        $('#searchResults').html('').hide();
         $('#siac-pagination-wrapper,#siac-pagination-status,#searchInfo').html("");
         $('#toggleTop').removeAttr('onclick').unbind("click");
         $('#loader').show();""")
@@ -132,22 +141,25 @@ def expanded_on_bridge_cmd(self, cmd):
         build_index(force_rebuild=True, execute_after_end=after_index_rebuilt)
 
     #
-    # Notes 
+    # Notes
     #
-    
+
     elif cmd == "siac-create-note":
         NoteEditor(self.parentWindow)
         #editor.user_note_edit = aqt.dialogs.open("UserNoteEditor", mw, None)
+
+    elif cmd == "siac-create-note-add-only":
+        NoteEditor(self.parentWindow, add_only=True)
 
     elif cmd.startswith("siac-edit-user-note "):
         id = int(cmd.split()[1])
         NoteEditor(self.parentWindow, id)
         #editor.user_note_edit = aqt.dialogs.open("UserNoteEditor", mw, id)
-    
+
     elif cmd.startswith("siac-delete-user-note-modal "):
         nid = int(cmd.split()[1])
         display_note_del_confirm_modal(self, nid)
-    
+
     elif cmd.startswith("siac-delete-user-note "):
         id = int(cmd.split()[1])
         delete_note(id)
@@ -182,6 +194,12 @@ def expanded_on_bridge_cmd(self, cmd):
             notes = get_random(searchIndex.limit, searchIndex.pinned)
             searchIndex.output.printSearchResults(notes, stamp)
 
+    elif cmd == "siac-user-note-queue-picker":
+        picker = QueuePicker(None)
+        if picker.exec_():
+            if picker.chosen_id is not None:
+                display_note_reading_modal(picker.chosen_id)
+
     elif cmd == "siac-user-note-update-btns":
         queue_count = get_queue_count()
         self.web.eval("document.getElementById('siac-queue-btn').innerHTML = '&nbsp;<b>Queue [%s]</b>';" % queue_count)
@@ -189,7 +207,7 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd == "siac-user-note-search":
         if checkIndex():
             searchIndex.output.show_search_modal("searchForUserNote(event, this);", "Search For User Notes")
-    
+
     elif cmd.startswith("siac-user-note-search-inp "):
         if checkIndex():
             search_for_user_notes_only(self, " ".join(cmd.split()[1:]))
@@ -205,8 +223,8 @@ def expanded_on_bridge_cmd(self, cmd):
         inserted_index = update_position(nid, QueueSchedule(queue_sched))
         queue_readings_list = get_queue_head_display(nid)
         searchIndex.output.editor.web.eval("""
-        document.getElementById('siac-queue-lbl').innerHTML = 'Position in Queue: %s / %s'; 
-        $('#siac-queue-lbl').fadeIn('slow'); 
+        document.getElementById('siac-queue-lbl').innerHTML = 'Position in Queue: %s / %s';
+        $('#siac-queue-lbl').fadeIn('slow');
         $('.siac-queue-sched-btn:first').html('%s / %s');
         $('#siac-queue-readings-list').replaceWith(`%s`);
         """ % (inserted_index[0] + 1, inserted_index[1], inserted_index[0] + 1, inserted_index[1], queue_readings_list))
@@ -214,8 +232,10 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd.startswith("siac-remove-from-queue "):
         nid = cmd.split()[1]
         update_position(nid, QueueSchedule.NOT_ADD)
+        queue_readings_list = get_queue_head_display(nid)
+
         searchIndex.output.editor.web.eval("afterRemovedFromQueue();")
-        searchIndex.output.editor.web.eval("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue'; $('#siac-queue-lbl').fadeIn();")
+        searchIndex.output.editor.web.eval("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)
 
     elif cmd == "siac-user-note-queue-read-random":
         rand_id = get_random_id_from_queue()
@@ -238,6 +258,15 @@ def expanded_on_bridge_cmd(self, cmd):
             else:
                 searchIndex.output.editor.web.eval("showTagInfoOnHover = true;")
 
+    elif cmd.startswith("siac-pdf-page-read"):
+        nid = cmd.split()[1]
+        page = cmd.split()[2]
+        mark_page_as_read(nid, page)
+
+    elif cmd.startswith("siac-pdf-page-unread"):
+        nid = cmd.split()[1]
+        page = cmd.split()[2]
+        mark_page_as_unread(nid, page)
 
     #
     #   Synonyms
@@ -261,8 +290,8 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd.startswith("siac-synset-search "):
         if checkIndex():
             searchIndex.output.hideModal()
-            defaultSearchWithDecks(editor, cmd.split()[1], ["-1"])
-            
+            defaultSearchWithDecks(self, cmd.split()[1], ["-1"])
+
 
     elif cmd == "styling":
         showStylingModal(self)
@@ -276,17 +305,17 @@ def expanded_on_bridge_cmd(self, cmd):
     #
     #  Index info modal
     #
-    
+
     elif cmd == "indexInfo":
         if checkIndex():
             searchIndex.output.showInModal(getIndexInfo())
-    
+
     #
     #   Special searches
     #
     elif cmd.startswith("predefSearch "):
         parsePredefSearchCmd(cmd, self)
-   
+
     elif cmd.startswith("similarForCard "):
         if checkIndex():
             cid = int(cmd.split()[1])
@@ -320,13 +349,13 @@ def expanded_on_bridge_cmd(self, cmd):
             searchIndex.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
         else:
             searchIndex.selectedDecks = []
-        #repeat last search if default 
+        #repeat last search if default
         tryRepeatLastSearch(self)
 
     elif cmd == "toggleTop on":
         if checkIndex():
             searchIndex.topToggled = True
-    
+
     elif cmd == "toggleTop off":
         if checkIndex():
             searchIndex.topToggled = False
@@ -346,7 +375,7 @@ def expanded_on_bridge_cmd(self, cmd):
         searchIndex.output.gridView = False
         tryRepeatLastSearch(self)
         mw.addonManager.writeConfig(__name__, config)
-    
+
     elif cmd == "toggleAll on":
         if checkIndex():
             searchIndex.output.uiVisible = True
@@ -358,7 +387,7 @@ def expanded_on_bridge_cmd(self, cmd):
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and searchIndex is not None:
             searchIndex.output.editor.web.eval("selectDeckWithId(%s);" % deckChooser.selectedId())
-    
+
     elif cmd.startswith("siac-update-field-to-hide-in-results "):
         if not checkIndex():
             return
@@ -390,14 +419,14 @@ def parseSortCommand(cmd):
     elif cmd == "remUnreviewed":
         searchIndex.output.removeUnreviewed()
     elif cmd == "remReviewed":
-        searchIndex.output.removeReviewed()    
+        searchIndex.output.removeReviewed()
 
 def parsePredefSearchCmd(cmd, editor):
     """
     Helper function to parse the various predefined searches (last added/longest text/...)
     """
     if not checkIndex():
-        return 
+        return
     searchIndex = get_index()
     cmd = cmd[13:]
     searchtype = cmd.split(" ")[0]
@@ -484,7 +513,7 @@ def setStamp():
     return None
 
 
-              
+
 
 
 def setStats(nid, stats):
@@ -510,14 +539,14 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
             decks.append(s.strip())
     searchIndex = get_index()
     if searchIndex is not None:
-        
+
         if searchDB:
             content = content[content.index('~ ') + 2:].strip()
             if len(content) == 0:
                 editor.web.eval("setSearchResults(``, 'No results found for empty string')")
                 return
             searchIndex.lastSearch = (content, decks, "db")
-            searchRes = searchIndex.searchDB(content, decks)  
+            searchRes = searchIndex.searchDB(content, decks)
 
         elif searchByTags:
             stamp = searchIndex.output.getMiliSecStamp()
@@ -531,14 +560,14 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
                 return
             content = content[content.index('~ ') + 2:]
             searchRes = searchIndex.search(content, decks)
-      
-      
+
+
         if (searchDB or searchByTags) and editor is not None and editor.web is not None:
             if searchRes is not None and len(searchRes["result"]) > 0:
                     searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor, searchIndex.logging)
             else:
                 editor.web.eval("setSearchResults(``, 'No results found.')")
-       
+
 
 def rerenderNote(nid):
     res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid).fetchone()
@@ -551,7 +580,7 @@ def rerenderNote(nid):
 def defaultSearchWithDecks(editor, textRaw, decks):
     """
     Uses the searchIndex to clean the input and find notes.
-    
+
     Args:
         decks: list of deck ids (string), if "-1" is contained, all decks are searched
     """
@@ -563,7 +592,7 @@ def defaultSearchWithDecks(editor, textRaw, decks):
     cleaned = searchIndex.clean(textRaw)
     if len(cleaned) == 0:
         if editor is not None and editor.web is not None:
-            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(textRaw, 100))
+            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(textRaw, 100).replace("\u001f", ""))
         return
     searchIndex.lastSearch = (cleaned, decks, "default")
     searchRes = searchIndex.search(cleaned, decks)
@@ -580,7 +609,7 @@ def search_for_user_notes_only(editor, text):
     cleaned = searchIndex.clean(text)
     if len(cleaned) == 0:
         if editor is not None and editor.web is not None:
-            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(text, 100))
+            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(text, 100).replace("\u001f", ""))
         return
     searchIndex.lastSearch = (cleaned, ["-1"], "user notes")
     searchRes = searchIndex.search(cleaned, ["-1"], only_user_notes = True)
@@ -597,11 +626,7 @@ def getCurrentContent(editor):
         text += f
     return text
 
-def addNoteAndUpdateIndex(dialog, note):
-    res = origAddNote(dialog, note)
-    addNoteToIndex(note)
-        
-    return res
+
 
 def addNoteToIndex(note):
     searchIndex = get_index()
@@ -621,7 +646,7 @@ def addTag(tag):
     tagsExisting = searchIndex.output.editor.tags.text()
     if (tag == tagsExisting or  " " +  tag + " " in tagsExisting or tagsExisting.startswith(tag + " ") or tagsExisting.endswith(" " + tag)):
         return
-    
+
     searchIndex.output.editor.tags.setText(tagsExisting + " " + tag)
     searchIndex.output.editor.saveTags()
 
@@ -645,7 +670,7 @@ def setPinned(cmd):
 
 def update_field_to_hide_in_results(mid, fldOrd, value):
     if not value:
-        config["fieldsToHideInResults"][mid].remove(fldOrd)  
+        config["fieldsToHideInResults"][mid].remove(fldOrd)
         if len(config["fieldsToHideInResults"][mid]) == 0:
             del config["fieldsToHideInResults"][mid]
     else:
@@ -656,11 +681,11 @@ def update_field_to_hide_in_results(mid, fldOrd, value):
     if checkIndex():
         get_index().output.fields_to_hide_in_results = config["fieldsToHideInResults"]
     mw.addonManager.writeConfig(__name__, config)
-    
+
 
 def update_field_to_exclude(mid, fldOrd, value):
     if not value:
-        config["fieldsToExclude"][mid].remove(fldOrd)  
+        config["fieldsToExclude"][mid].remove(fldOrd)
         if len(config["fieldsToExclude"][mid]) == 0:
             del config["fieldsToExclude"][mid]
     else:
@@ -680,7 +705,7 @@ def tryRepeatLastSearch(editor = None):
     if searchIndex is not None and searchIndex.lastSearch is not None:
         if editor is None and searchIndex.output.editor is not None:
             editor = searchIndex.output.editor
-        
+
         if searchIndex.lastSearch[2] == "default":
             defaultSearchWithDecks(editor, searchIndex.lastSearch[0], searchIndex.selectedDecks)
         elif searchIndex.lastSearch[2] == "lastCreated":
@@ -724,23 +749,23 @@ def getIndexInfo():
                <tr><td>Fields Excluded:</td><td>  %s</td></tr>
                <tr><td>Path to Note DB</td><td>  %s</td></tr>
              </table>
-             
-            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(searchIndex.stopWords), 
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if searchIndex.logging else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["renderImmediately"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
+
+            """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(searchIndex.stopWords),
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if searchIndex.logging else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["renderImmediately"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
             "Search" if config["tagClickShouldSearch"] else "Add",
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showTimeline"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showTagInfoOnHover"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showTimeline"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showTagInfoOnHover"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
             config["tagHoverDelayInMiliSec"],
             config["imageMaxHeight"],
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showRetentionScores"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>", 
+            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showRetentionScores"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"],
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
             ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else get_user_files_folder_path() + "siac-notes.db"
             )
 
-    
+
     return html
 
 def showTimingModal():
@@ -753,16 +778,16 @@ def showTimingModal():
     if "decks" in searchIndex.lastResDict:
         html += "<h4>Decks:</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % ", ".join([str(d) for d in searchIndex.lastResDict["decks"]])
     html += "<h4>Execution time:</h4><table style='width: 100%'>"
-    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", searchIndex.lastResDict["time-stopwords"] if searchIndex.lastResDict["time-stopwords"] > 0 else "< 1") 
-    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", searchIndex.lastResDict["time-synonyms"] if searchIndex.lastResDict["time-synonyms"] > 0 else "< 1") 
+    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", searchIndex.lastResDict["time-stopwords"] if searchIndex.lastResDict["time-stopwords"] > 0 else "< 1")
+    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", searchIndex.lastResDict["time-synonyms"] if searchIndex.lastResDict["time-synonyms"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Executing Query", searchIndex.lastResDict["time-query"] if searchIndex.lastResDict["time-query"] > 0 else "< 1")
     if searchIndex.type != "SQLite FTS5":
         html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Ranking", searchIndex.lastResDict["time-ranking"] if searchIndex.lastResDict["time-ranking"] > 0 else "< 1")
-       
+
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML", searchIndex.lastResDict["time-html"] if searchIndex.lastResDict["time-html"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Highlighting", searchIndex.lastResDict["time-html-highlighting"] if searchIndex.lastResDict["time-html-highlighting"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Formatting SIAC Notes", searchIndex.lastResDict["time-html-build-user-note"] if searchIndex.lastResDict["time-html-build-user-note"] > 0 else "< 1")
-   
+
     html += "</table>"
     searchIndex.output.showInModal(html)
 
@@ -779,7 +804,7 @@ def updateStyling(cmd):
         if int(value) < 501 and int(value) > -501:
             config[name] = int(value)
             searchIndex.output.editor.web.eval("addToResultAreaHeight = %s; onResize();" % value)
-    
+
     elif name == "renderImmediately":
         m = value == "true" or value == "on"
         config["renderImmediately"] = m
@@ -790,7 +815,7 @@ def updateStyling(cmd):
         config["hideSidebar"] = m
         searchIndex.output.hideSidebar = m
         searchIndex.output.editor.web.eval("document.getElementById('searchInfo').classList.%s('hidden');"  % ("add" if m else "remove"))
-    
+
     elif name == "removeDivsFromOutput":
         m = value == "true" or value == "on"
         config["removeDivsFromOutput"] = m
@@ -835,11 +860,11 @@ def updateStyling(cmd):
     elif name == "tagHoverDelayInMiliSec":
         config[name] = int(value)
         if checkIndex():
-            searchIndex.output.editor.web.eval("tagHoverTimeout = %s;" % value) 
-    
+            searchIndex.output.editor.web.eval("tagHoverTimeout = %s;" % value)
+
     elif name == "alwaysRebuildIndexIfSmallerThan":
         config[name] = int(value)
-    
+
 
 def writeConfig():
     searchIndex = get_index()
@@ -856,11 +881,10 @@ def after_index_rebuilt():
     if search_index is not None and search_index.output is not None and search_index.output.editor is not None:
         editor = search_index.output.editor
         editor.web.eval("""
-        disableGridView();
         $('.freeze-icon').removeClass('frozen');
         isFrozen = false;
         $('#selectionCb,#typingCb,#tagCb,#highlightCb').prop("checked", true);
-        searchOnSelection = true; 
+        searchOnSelection = true;
         searchOnTyping = true;
         $('#toggleTop').click(function() { toggleTop(this); });
         """)

@@ -13,7 +13,12 @@ var tagHoverTimeout = 750;
 var searchMaskTimer;
 var remainingSeconds = 30 * 60;
 var readingTimer;
-
+var pdfDisplayed;
+var pdfPageRendering = false;
+var pdfDisplayedCurrentPage;
+var pdfDisplayedScale = 2.0;
+var pageNumPending = null;
+var pagesRead = [];
 
 function updateSelectedDecks(elem) {
     selectedDecks = [];
@@ -25,7 +30,7 @@ function updateSelectedDecks(elem) {
             selectedDecks.push($(this).data('id'));
             str += " " + $(this).data('id');
         }
-       
+
     });
     pycmd("deckSelection" + str);
 }
@@ -104,6 +109,116 @@ function totalOffset(elem) {
     };
 }
 
+function rerenderPDFPage(num) {
+    if (!pdfDisplayed) {
+        return;
+    }
+        pdfDisplayed.getPage(num).then(function(page) {
+            pdfPageRendering = true;
+            var lPage = page;
+            var canvas = document.getElementById("siac-pdf-canvas");
+            var viewport = page.getViewport({scale : pdfDisplayedScale});
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            var renderTask = page.render({
+                canvasContext: canvas.getContext('2d'),
+                viewport: viewport
+            });
+            renderTask.promise.then(function () {
+                pdfPageRendering = false;
+                if (pageNumPending !== null) {
+                    rerenderPDFPage(pageNumPending);
+                     pageNumPending = null;
+                   
+                }
+                return lPage.getTextContent();
+               }).then(function(textContent) {
+                //    var pdf_canvas = $("#siac-pdf-canvas"); 
+                //    var canvas_offset = pdf_canvas.offset();
+                //    var canvas_height = pdf_canvas.get(0).height;
+                //    var canvas_width = pdf_canvas.get(0).width;
+                    
+                //    // Assign CSS to the text-layer element
+                //    $("#text-layer").css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas_height + 'px', width: canvas_width + 'px' });
+               
+                //    pdfjsLib.renderTextLayer({
+                //        textContent: textContent,
+                //        container: $("#text-layer").get(0),
+                //        viewport: viewport,
+                //        textDivs: []
+                //    });
+               });
+            canvas.parentElement.scrollTop = 0;
+	    if (pagesRead.indexOf(num) !== -1) {
+            document.getElementById('siac-pdf-overlay').style.display = 'block';
+            document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
+	    } else {
+            document.getElementById('siac-pdf-overlay').style.display = 'none';
+            document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
+	    }
+            document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
+        });
+}
+
+function queueRenderPage(num) {
+    if (pdfPageRendering) {
+      pageNumPending = num;
+    } else {
+      rerenderPDFPage(num);
+    }
+  }
+
+function togglePageRead(nid) {
+
+	if (pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
+        document.getElementById('siac-pdf-overlay').style.display = 'block';
+        document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
+		pycmd("siac-pdf-page-read " + nid + " " + pdfDisplayedCurrentPage);
+		if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
+	} else {
+        document.getElementById('siac-pdf-overlay').style.display = 'none';
+        document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
+		pycmd("siac-pdf-page-unread " + nid + " " + pdfDisplayedCurrentPage);
+		pagesRead.splice(pagesRead.indexOf(pdfDisplayedCurrentPage), 1);
+    }
+}
+function pdfJumpToPage(e, inp) {
+    if (e.keyCode !== 13) {
+        return;
+    }
+    let p = inp.value;
+    p = Math.min(pdfDisplayed.numPages, p);
+    pdfDisplayedCurrentPage = p;
+    queueRenderPage(pdfDisplayedCurrentPage);
+}
+function pdfScaleChange(mode) {
+    if (mode === "up") {
+        pdfDisplayedScale += 0.1;
+    } else {
+        pdfDisplayedScale -= 0.1;
+        pdfDisplayedScale = Math.max(0.1, pdfDisplayedScale);
+    }
+    queueRenderPage(pdfDisplayedCurrentPage);
+}
+
+function pdfPageRight() {
+    if (!pdfDisplayed) {
+        return;
+    }
+    if (pdfDisplayedCurrentPage < pdfDisplayed.numPages) {
+        pdfDisplayedCurrentPage++;
+    queueRenderPage(pdfDisplayedCurrentPage);
+    }
+}
+function pdfPageLeft() {
+    if (!pdfDisplayed) {
+        return;
+    }
+    if (pdfDisplayedCurrentPage > 1) {
+        pdfDisplayedCurrentPage--;
+        queueRenderPage(pdfDisplayedCurrentPage);
+    }
+}
 function cardMouseLeave(elem, nid, mode = "full") {
     setTimeout(function () {
         if (mode == "full") {
@@ -119,12 +234,12 @@ function cardMouseLeave(elem, nid, mode = "full") {
 }
 
 function tagMouseEnter(elem) {
-    if (!showTagInfoOnHover || !elem || !elem.parentElement) 
+    if (!showTagInfoOnHover || !elem || !elem.parentElement)
         return;
     setTimeout(function () {
             if (elem && elem.parentElement && elem.parentElement.querySelector(':hover') === elem && !document.getElementById('siac-tag-info-box-' + $(elem).data('stamp'))) {
                 pycmd("tagInfo " + $(elem).data("stamp") + " " + $(elem).data("name"));
-            } 
+            }
     }, tagHoverTimeout);
 }
 
@@ -150,7 +265,7 @@ function showTagInfo(elem) {
             offset.top -= document.getElementById("searchResults").scrollTop;
         }
     let id = 'siac-tag-info-box-' + stamp;
-   
+
     if (offset.left > window.outerWidth - offset.left) {
         offset.left -= $('#siac-tag-info-box-' + stamp).outerWidth();
         offset.left += $(elem).outerWidth() + 2;
@@ -172,7 +287,7 @@ function showTagInfo(elem) {
     } else {
         document.getElementById(id).style.display = "block";
     }
-  
+
 }
 
 function tagMouseLeave(elem) {
@@ -184,7 +299,7 @@ function tagMouseLeave(elem) {
     let elems_z = Number($(elem).css("z-index"));
 
     let hovered = $(".siac-tag-info-box:hover").first();
-    
+
     if (!hovered.length && !$(`.tagLbl[data-stamp]:hover`).length) {
         $('.siac-tag-info-box').remove();
         $('.tagLbl').css("z-index", "999");
@@ -207,8 +322,8 @@ function tagMouseLeave(elem) {
     $(`.tagLbl[data-stamp='${stamp}']`).first().css("z-index", "999");
     if (document.getElementById("siac-tag-info-box-"+ stamp))
         $('#siac-tag-info-box-' + stamp).remove();
-    if (!existing || existing.length < 1) { 
-         $("#greyout").hide(); 
+    if (!existing || existing.length < 1) {
+         $("#greyout").hide();
     }
 
 }
@@ -247,16 +362,16 @@ function getSelectionText() {
 
 function searchForUserNote(event, elem) {
     if (!elem || elem.value.length === 0) {
-       return; 
+       return;
     }
     if (event.keyCode == 13) {
         elem.parentElement.parentElement.style.display = 'none';
         pycmd('siac-user-note-search-inp ' + elem.value);
     } else if (event.key === "Escape" || event.key === "Esc") {
         elem.parentElement.style.display = 'none';
-    } else { 
+    } else {
         clearTimeout(searchMaskTimer);
-        searchMaskTimer = setTimeout(function() { 
+        searchMaskTimer = setTimeout(function() {
             pycmd('siac-user-note-search-inp ' + elem.value);
         }, 800);
     }
@@ -264,17 +379,17 @@ function searchForUserNote(event, elem) {
 }
 function toggleQueue() {
     if ($("#siac-queue-sched-wrapper").hasClass('active')) {
-        $("#siac-queue-sched-wrapper").css("width", "0px").css("overflow", "hidden").css('padding', '0px');
+        $("#siac-queue-sched-wrapper").css( { "max-width" : "0px" , "overflow": "hidden", 'padding' : '5px 0 5px 0'});
         $('.siac-queue-sched-btn:first').addClass("active");
     } else {
-        $("#siac-queue-sched-wrapper").css("width", "auto").css("overflow", "visible").css('padding', '5px');
+        $("#siac-queue-sched-wrapper").css({ "max-width": "500px", "overflow": "visible", 'padding': '5px'});
         $('.siac-queue-sched-btn:first').removeClass("active");
     }
     $("#siac-queue-sched-wrapper").toggleClass('active');
 }
 
 function queueSchedBtnClicked(btn_el) {
-    $('#siac-queue-lbl').hide(); 
+    $('#siac-queue-lbl').hide();
     $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
     toggleQueue();
     $(btn_el).addClass("active");
@@ -330,7 +445,7 @@ function onResize() {
     height -= $('#bottomContainer').outerHeight(true);
     height -= 30;
     $("#resultsArea").css("height", (height - 9 + addToResultAreaHeight) + "px");
-   
+
     if (!$('#switchBtn').is(":visible")) {
         $('#leftSide').show();
         $('#outerWr').css('display', 'flex').removeClass('onesided');
@@ -357,15 +472,6 @@ function tagClick(elem) {
     $(".siac-tag-info-box").remove();
     $("#greyout").hide();
     pycmd('tagClicked ' + name);
-}
-
-function fieldKeydown(event, elem) {
-    if ((event.which == 32 || event.keyCode == 32) && event.ctrlKey) {
-        event.preventDefault();
-        displaySearchInfoBox(event, elem);
-        return false;
-    }
-
 }
 
 function synInputKeyup(event, elem) {
@@ -404,8 +510,6 @@ function updateFieldToHideInResult(checkbox, mid, fldOrd) {
         pycmd("siac-update-field-to-hide-in-results " + mid + " " + fldOrd + " true");
     }
 }
-
-
 function setSearchOnTyping(active) {
     searchOnTyping = active;
     if (!active)
@@ -416,17 +520,14 @@ function setSearchOnTyping(active) {
     }
     sendSearchOnTyping();
 }
-
 function sendSearchOnTyping() {
-    let cmd = searchOnTyping ? "on" : "off";
-    pycmd("searchWhileTyping " + cmd);
+    pycmd("searchWhileTyping " + searchOnTyping ? "on" : "off");
 }
 function sendSearchOnSelection() {
-    let cmd = searchOnSelection ? "on" : "off";
-    pycmd("searchOnSelection " + cmd);
+    pycmd("searchOnSelection " + searchOnSelection ? "on" : "off");
 }
 function fieldKeypress(event) {
-    if (event.keyCode != 13 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
+    if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 32 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
         if (timeout) {
             clearTimeout(timeout);
             timeout = null;
@@ -436,14 +537,10 @@ function fieldKeypress(event) {
         }, $del$);
     }
 }
-
 function searchMaskKeypress(event) {
     if (event.keyCode === 13)
         sendSearchFieldContent();
 }
-
-
-
 function pinCard(elem, nid) {
     $('#cW-' + nid).css('padding', '3px 4px 5px 5px');
     $('#cW-' + nid).css('font-size', '9px');
@@ -521,7 +618,7 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
         document.getElementById("searchResults").style.paddingRight = '10px';
         $("#greyout").hide();
         displayPagination(page, pageMax, total, html.length > 0);
-       
+
     }
     else {
         time = gridView ? 100 : 130;
@@ -576,7 +673,7 @@ function displayPagination(page, pageMax, total, resultsFound) {
         }
             html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.min(page + 1, pageMax)}")'>&#8250;</div>`;
             html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${pageMax}")'>&#187;</div>`;
-       
+
     }
     document.getElementById("siac-pagination-status").innerHTML = `Showing ${50 * (page - 1) + 1} - ${Math.min(total, 50 * page)} of ${total}`;
     document.getElementById("siac-pagination-wrapper").innerHTML = html;
@@ -623,7 +720,7 @@ function toggleTop(elem) {
     $('#topContainer').toggle();
 
     let formerHeight = $("#resultsArea").outerHeight(true);
-    
+
     if ($('#topContainer').is(":hidden")) {
         $('#resultsArea').css('height', `${formerHeight + height}px`).css('border-top', '0px');
         $(elem).children().first().html('&#10097;');
@@ -657,6 +754,14 @@ function disableGridView() {
     gridView = false;
 }
 
+function toggleReadingModalBars() {
+    $('#siac-reading-modal-top-bar,#siac-reading-modal-bottom-bar').toggle();
+    if ($('#siac-reading-modal-top-bar').is(":hidden")) {
+        $('#siac-reading-modal-text').css('height', 'calc(100%% - 35px)').css('max-height', '').css('margin-top', '15px');
+    } else {
+        $('#siac-reading-modal-text').css('height', 'calc(90%% - 140px)').css('max-height', 'calc(100%% - 230px)').css('margin-top', '0px');
+    }
+}
 
 function predefSearch() {
     let e = document.getElementById("predefSearchSelect");
@@ -681,7 +786,7 @@ function addFloatingNote(nid) {
     let btnBar = `<div class='floatingBtnBar'>
         <div class="floatingBtnBarItem" onclick='${onedit}'>Edit</div>&nbsp;&#65372;
         <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>&nbsp;&#65372;
-        <div class="floatingBtnBarItem" id='rem-${nid}' onclick='document.getElementById("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div> 
+        <div class="floatingBtnBarItem" id='rem-${nid}' onclick='document.getElementById("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div>
     </div>`;
 
 
@@ -815,7 +920,6 @@ function calMouseLeave() {
     }, 300);
 }
 
-
 function showModalSubpage(html) {
     $('#modalText').hide();
     $('#modal-subpage-inner').html(html);
@@ -825,4 +929,13 @@ function hideModalSubpage() {
     $('#modal-subpage-inner').html('');
     $('#modal-subpage').hide();
     $('#modalText').show();
+}
+
+function showLoader(target, text, voffset) {
+    voffset = voffset ? voffset : 0;
+    $('#' + target).append(`
+    <div id='siac-loader-modal' class='siac-modal-small' contenteditable=false style='position: relative; text-align: center; margin-top: ${voffset}px;'>
+        <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/>${text}</div>
+    </div>
+    `);
 }

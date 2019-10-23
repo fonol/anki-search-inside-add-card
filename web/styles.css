@@ -2,8 +2,8 @@
 :root {
     --tleft : 50%;
 }
-.siac-trash-icn,.siac-search-icn { 
-    width:12px; height:12px; 
+.siac-trash-icn,.siac-search-icn {
+    width:12px; height:12px;
     vertical-align: center;
     display: inline-block;
     background-size: 12px 12px;
@@ -44,7 +44,7 @@ body {
     opacity: 0;
     margin-left: 24px;
     width: 30px;
- 
+
     animation: pulsate 1.5s ease-out;
     animation-iteration-count: infinite;
 }
@@ -58,9 +58,9 @@ body {
  }
 
 #searchResults {
-    display: none; 
-    height: 100%; 
-    overflow-y: auto; 
+    display: none;
+    height: 100%;
+    overflow-y: auto;
     padding-right: 10px;
     overflow-x: hidden;
     max-width: 100%;
@@ -72,8 +72,8 @@ body {
 }
 
 .cardR {
-  border: 1px solid $noteBorderColor$; 
-  padding: 10px 17px 25px 17px; 
+  border: 1px solid $noteBorderColor$;
+  padding: 10px 17px 25px 17px;
   position: relative;
   font-size: $noteFontSize$ !important;
   color: $noteForegroundColor$;
@@ -82,7 +82,7 @@ body {
   overflow-y: hidden;
   max-height: 950px;
   min-width: 85px;
-  
+
 }
 .cardR img {
     max-height: $imgMaxHeight$;
@@ -94,7 +94,7 @@ body {
 }
 
 .cardR:hover {
-     border: 1px solid $noteHoverBorderColor$; 
+     border: 1px solid $noteHoverBorderColor$;
 }
 
 .smallMarginTop {
@@ -114,10 +114,10 @@ body {
 .floatingBtnBar {
     display: inline;
     color: white;
-   
+
 }
 .floatingBtnBarItem {
-    display: inline; 
+    display: inline;
     cursor: pointer;
 }
 
@@ -139,7 +139,7 @@ body {
 
 .keyword {
     cursor: pointer;
-    color: $keywordColor$; 
+    color: $keywordColor$;
 }
 
 #topContainer {
@@ -160,12 +160,12 @@ select {
 
 .tagLbl {
     position: relative;
-    background: $tagBackgroundColor$; 
-    color: $tagForegroundColor$; 
-    padding: 2px 4px 2px 4px; 
-    border-radius: 2px; 
-    margin-left: 5px; 
-    float: right; 
+    background: $tagBackgroundColor$;
+    color: $tagForegroundColor$;
+    padding: 2px 4px 2px 4px;
+    border-radius: 2px;
+    margin-left: 5px;
+    float: right;
     font-size: $tagFontSize$ !important;
     cursor: pointer;
     z-index: 999;
@@ -175,14 +175,14 @@ select {
     float: left;
     margin-bottom: 5px;
     hyphens: manual;
-    margin-right: 7px; 
+    margin-right: 7px;
     margin-left: 0px;
 }
 
 .topLeftWr {
-    position: absolute; 
-    left: 0px; 
-    top: 0px; 
+    position: absolute;
+    left: 0px;
+    top: 0px;
     z-index:999;
     font-size: 0;
 }
@@ -198,9 +198,9 @@ select {
 }
 
 .rankingLbl {
-    background: $rankingLabelBackgroundColor$; 
-    color: $rankingLabelForegroundColor$; 
-    padding: 2px 6px 2px 6px; 
+    background: $rankingLabelBackgroundColor$;
+    color: $rankingLabelForegroundColor$;
+    padding: 2px 6px 2px 6px;
     font-size: 11px;
     user-select: none;
     cursor: pointer;
@@ -210,16 +210,16 @@ select {
     user-select: none;
 }
 .remLbl, .floatLbl {
-  
+
     border: 1px solid $noteBorderColor$;
-    border-left: 0px solid  $noteBackgroundColor$; 
+    border-left: 0px solid  $noteBackgroundColor$;
     color: $noteForegroundColor$;
-    padding: 2px 6px 2px 6px; 
+    padding: 2px 6px 2px 6px;
     flex: 1;
     font-size: 13px !important;
 }
 .srchLbl,.editLbl,.pinLbl,.remLbl,.floatLbl,.deleteLbl {
-    background:  $noteBackgroundColor$; 
+    background:  $noteBackgroundColor$;
     user-select: none;
     cursor: pointer;
     z-index:9999;
@@ -228,14 +228,14 @@ select {
 .editLbl,.deleteLbl,.srchLbl {
     color: $noteForegroundColor$;
     border: 1px solid $noteBorderColor$;
-    border-right: 0px solid  $noteBackgroundColor$; 
+    border-right: 0px solid  $noteBackgroundColor$;
     padding: 3px 5px 3px 5px;
     flex: 1;
     vertical-align: center;
 }
 .pinLbl {
     color: black;
-    padding: 1px 5px 2px 5px; 
+    padding: 1px 5px 2px 5px;
      flex: 1;
 }
 .pinLbl.unselected {
@@ -274,7 +274,7 @@ select {
 }
 .cardWrapper {
      padding: 9px;
-     margin-bottom: 10px; 
+     margin-bottom: 10px;
      position: relative;
      display: none;
 }
@@ -310,7 +310,6 @@ select {
 }
 .cardWrapper.grid {
     max-width: calc(50% - 29px);
-    display: inline-block;
     vertical-align: top;
     margin-left: 5px !important;
 }
@@ -326,14 +325,14 @@ select {
 }
 
 .cardWrapper .tag-symbol {
-    color: grey; 
+    color: grey;
 }
 
 .cardLeftBot {
-    position: absolute; 
-    bottom: 2px; 
-    left: 0px; 
-    z-index:999; 
+    position: absolute;
+    bottom: 2px;
+    left: 0px;
+    z-index:999;
     border: 1px solid  $noteBorderColor$;
     background:  $noteBackgroundColor$;
     color: $noteForegroundColor$;
@@ -350,12 +349,13 @@ select {
 #predefSearchNumberSel {
     margin-right: 5px;
 }
-#searchMask {
+#siac-browser-search-inp {
     background: $browserSearchInputBackgroundColor$;
     color: $browserSearchInputForegroundColor$;
     border: 1px solid $browserSearchInputBorderColor$;
     width: 100%;
     min-width: 50px;
+    padding-left: 3px;
 }
 
 
@@ -434,7 +434,7 @@ select {
     font-size: 12px !important;
     overflow-y: hidden;
 }
-  
+
 .hidden {
     display: none;
 }
@@ -445,7 +445,7 @@ select {
     min-width: 40px !important;
     margin-bottom: 0px !important;
 
-} 
+}
 .flexCol > table {
     width: 100%;
 }
@@ -483,7 +483,8 @@ select {
     border-bottom: 1px solid grey;
     margin-top: 13px;
     margin-bottom: 6px;
-    padding-bottom: 4px;    
+    padding-bottom: 4px;
+    user-select: none;
 }
 .searchInfoTagSep.bottom {
     margin-top: 10px;
@@ -512,19 +513,7 @@ select {
 
 }
 
-.rnd-icon {
-    float: right;
-    font-size: 13px !important;
-    cursor: pointer;
-    color: grey;
-    user-select: none;
-    white-space: nowrap;
-  overflow: hidden;
-  margin-right: 5px;
-}
-
-
-.freeze-icon {
+.rnd-icon,.flds-icon,.freeze-icon {
     float: right;
     font-size: 13px !important;
     cursor: pointer;
@@ -534,9 +523,12 @@ select {
   overflow: hidden;
 }
 
+.rnd-icon,.flds-icon {
+  margin-right: 7px;
+}
 
 
-.freeze-icon:hover, .rnd-icon:hover {
+.freeze-icon:hover, .rnd-icon:hover, .flds-icon:hover {
     color:  #2496dc;
 }
 
@@ -560,7 +552,7 @@ select {
     margin-right: 10px;
     outline: none;
   }
-  
+
   .tooltip .tooltiptext {
     visibility:  hidden;
     width: 300px;
@@ -582,12 +574,12 @@ select {
   .tooltiptext td {
       text-align: left;
   }
-  
+
 
   .tooltip:hover .tooltiptext {
     visibility: visible;
   }
-  
+
   /* deck list*/
 
 
@@ -606,9 +598,9 @@ select {
     width: 100%;
 }
 .deck-list-item > div {
-    display: inline-block; 
+    display: inline-block;
     overflow-x: hidden;
-     white-space:nowrap; 
+     white-space:nowrap;
      width: 100%;
      padding: 1px 4px 1px 4px;
 }
@@ -641,7 +633,7 @@ outline: none;
 }
 .deck-list-button.center {
     border-left: none;
-    border-right: none; 
+    border-right: none;
 }
 
 .deck-list-button:hover {
@@ -667,7 +659,7 @@ outline: none;
     margin-top: 0px;
     margin-left: 0px;
     padding-left: 0px;
-    
+
 }
 .exp {
     user-select: none;
@@ -687,10 +679,24 @@ table.striped tr:nth-child(even) {
 .exp:empty {
     display: none;
 }
+.siac-btn {
+    display: inline-block;
+    padding: 2px 5px 2px 5px;
+    color: $buttonForegroundColor$;
+    background: $buttonBackgroundColor$;
+    border: 1px solid  $buttonBorderColor$;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px !important;
+    outline: none;
+}
+.siac-btn:hover {
+    color: #2496dc;
+}
 
 .siac-btn-small {
     display: inline;
-    padding: 1px 4px 1px 4px;
+    padding: 0px 4px 1px 4px;
     color: $buttonForegroundColor$;
     background: $buttonBackgroundColor$;
     border: 1px solid  $buttonBorderColor$;
@@ -711,19 +717,25 @@ table.striped tr:nth-child(even) {
     outline: none;
 }
 .siac-btn-small-dropdown {
-    display: none;
+    overflow: hidden;
+    display: block;
+    max-height: 0px;
     position: absolute;
     color: $buttonForegroundColor$;
     background-color: $buttonBackgroundColor$;
-    border: 1px solid  $buttonBorderColor$;
     width: calc(100% - 8px);
     margin-left: -5px;
-    padding: 1px 4px 1px 4px;
+    padding: 0px 4px 0px 4px;
     font-size: 11px !important;
+    border: 1px solid  $buttonBorderColor$;
+    border-top: 0px solid white;    
     z-index: 99999999;
+    transition: max-height 0.3s;
+
 }
-.siac-btn-small:hover .siac-btn-small-dropdown {
-    display: block;
+.siac-btn-small:hover .siac-btn-small-dropdown.hover,.siac-btn-small.expanded .siac-btn-small-dropdown.click {
+    max-height: 310px;
+    border-top: 1px solid $buttonBorderColor$;
   }
   .siac-dropdown-item {
       margin: 3px 0 2px 0;
@@ -740,9 +752,25 @@ table.striped tr:nth-child(even) {
 #indexInfo:hover, #synonymsIcon:hover, #stylingIcon:hover, #siac-note-icn:hover, #siac-timetable-icn:hover, #siac-settings-icn:hover {
     color: #2496dc;
 }
-#siac-switch-deck-btn:hover {
-    color: #2496dc;
+#siac-switch-deck-btn {
+    padding-top: 0px;
 }
+#siac-switch-deck-btn.expanded .siac-btn-small-dropdown{
+    border-top: 1px solid $buttonBorderColor$;
+}
+.siac-switch-deck-btn-inner {
+width: 48%; display: inline-block; text-align: center;
+}
+.siac-switch-deck-btn-inner.right {
+  border-left:  1px solid  $buttonBorderColor$;
+}
+.siac-switch-deck-btn-inner:hover {
+    color:#2496dc;
+}
+.siac-switch-deck-btn-inner b:hover {
+    transform: scale(1.04);
+}
+
 #lastAdded, #sortBtn {
     color: $buttonForegroundColor$;
     background: $buttonBackgroundColor$;
@@ -756,22 +784,22 @@ table.striped tr:nth-child(even) {
     box-sizing: border-box !important;
     font-size: 8px !important;
     display: inline-block !important;
-    line-height: 1em !important;   
+    line-height: 1em !important;
     padding: 5px !important;
     max-width: 30px !important;
 }
 
 #infoBox {
-    border-left: 2px solid $windowColumnSeparatorColor$; 
-    margin-top: 20px; 
-    padding: 20px; 
-    padding-bottom: 4px; 
-    margin-left: 30px; 
+    border-left: 2px solid $windowColumnSeparatorColor$;
+    margin-top: 20px;
+    padding: 20px;
+    padding-bottom: 4px;
+    margin-left: 30px;
     position: relative;
 }
 
 fieldset {
-  
+
     padding: 0.7em;
 }
 
@@ -801,33 +829,33 @@ select {
 /* Modal */
 
 #greyout {
-    display: none; 
-    position: absolute; 
-    z-index: 9999; 
+    display: none;
+    position: absolute;
+    z-index: 9999;
     left: 0;
     top: 0;
-    width: 100%; 
-    height: 100%; 
+    width: 100%;
+    height: 100%;
     overflow: auto;
-    background-color: rgb(0,0,0); 
-    background-color: rgba(0,0,0,0.4); 
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
 }
 
 .modal {
-    display: none; 
-    position: absolute; 
-    z-index: 9999999999; 
+    display: none;
+    position: absolute;
+    z-index: 9999999999;
     left: 0;
     top: 0;
-    width: 100%; 
-    height: 100%; 
+    width: 100%;
+    height: 100%;
     overflow: auto;
-    background-color: rgb(0,0,0); 
-    background-color: rgba(0,0,0,0.4); 
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
   }
-  
+
   .modal-content {
-    z-index: 99999999999; 
+    z-index: 99999999999;
     background: $modalBackgroundColor$;
     color: $modalForegroundColor$;
     position: absolute;
@@ -841,7 +869,7 @@ select {
   }
 
 #modalText {
-    z-index: 99999999999; 
+    z-index: 99999999999;
     color: $modalForegroundColor$;
     max-height: 450px;
     overflow-y: auto;
@@ -855,7 +883,7 @@ select {
 }
 #modal-subpage {
     display:none;
-    z-index: 99999999999; 
+    z-index: 99999999999;
     color: $modalForegroundColor$;
     max-height: 450px;
 }
@@ -896,8 +924,8 @@ select {
 
 }
 .tag-btn {
-    background: $tagBackgroundColor$;  
-    color: $tagForegroundColor$; 
+    background: $tagBackgroundColor$;
+    color: $tagForegroundColor$;
     padding: 2px 5px 2px 5px;
     border-radius: 2px;
     cursor: pointer;
@@ -907,11 +935,11 @@ select {
 }
 
 .tag-add {
-    position: absolute; 
-    right: 5px; 
-    top: 0px; 
-    cursor: pointer; 
-    font-size: 16px; 
+    position: absolute;
+    right: 5px;
+    top: 0px;
+    cursor: pointer;
+    font-size: 16px;
     color:#2496dc;
     font-weight: bold;
 }
@@ -943,7 +971,7 @@ span.tag-symbol {
     border: 1px solid #2496dc;
     text-align: center;
   }
-  
+
 .noteFloatingContent {
     padding: 10px;
     min-width: 150px;
@@ -998,7 +1026,7 @@ span.tag-symbol {
     margin-right: 3px; margin-left: 3px;
     text-align: center;
     vertical-align: middle;
-    line-height: 17px; 
+    line-height: 17px;
     color: black;
     user-select: none;
 }
@@ -1008,7 +1036,7 @@ span.tag-symbol {
 .cal-lg {
     height: 24px;
     width: 24px;
-    line-height: 24px; 
+    line-height: 24px;
 }
 
   .cal-one {
@@ -1018,7 +1046,7 @@ span.tag-symbol {
     background: #7bc96f;
 }
 .cal-three {
-   background: #196127; 
+   background: #196127;
 }
 .cal-block-week.cal-three {
     color: white;
@@ -1045,7 +1073,7 @@ span.tag-symbol {
 #cal-info:after {
     content: " ";
     position: absolute;
-    top: 100%; 
+    top: 100%;
     left: var(--tleft);
     margin-left: -8px;
     border-width: 8px;
@@ -1081,8 +1109,8 @@ span.tag-symbol {
     display: inline-block;
     text-align: center;
     vertical-align: middle;
-    line-height: 15px; 
-    font-size: 8px;    
+    line-height: 15px;
+    font-size: 8px;
     margin: 0 2px 0 2px;
 }
 .revlog-block.larger {
@@ -1102,6 +1130,22 @@ span.tag-symbol {
 .revlog-block-4 {
     background: blue;
     color: white;
+}
+
+#siac-pdf-overlay {
+ display: none;
+ position: absolute;
+ bottom : 30px;
+ right: 0; left: 0;
+ z-index: 9999999;
+background-color: #43a047;
+border-radius: 5px;
+padding: 4px;
+width: 200px;
+text-align: center;
+color: white;
+margin-left: auto;
+margin-right: auto;
 }
 
 .siac-tag-info-box {
@@ -1149,14 +1193,14 @@ span.tag-symbol {
     position: relative;
     font-size: 13px !important;
     margin: 4px 0 3px 5px;
-    white-space: nowrap;    
+    white-space: nowrap;
     overflow: hidden;
 }
 #siac-pagination-wrapper {
     text-align: left;
     display: inline-block;
     margin-left: 10px;
-    white-space: nowrap;    
+    white-space: nowrap;
     overflow: hidden;
 }
 #siac-pagination-status {
@@ -1210,13 +1254,11 @@ span.tag-symbol {
     bottom: 0;
     right: 0;
     margin-left: -4px;
-    background-color: #094463;
+    background-color: #272828;
     color: white;
     font-size: 12px;
-    /* border: 2px solid $modalBorderColor$;
-    border-left: 1px solid $modalBorderColor$; */
     padding: 15px;
-    z-index: 99999999;  
+    z-index: 99999999;
 }
 
 #siac-search-modal {
@@ -1226,9 +1268,9 @@ span.tag-symbol {
     top: 0;
     bottom: 0;
     right: 0;
-    background-color: rgb(0,0,0); 
-    background-color: rgba(0,0,0,0.4); 
-    z-index: 99999999;  
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+    z-index: 99999999;
 }
 #siac-search-modal-wrapper {
     position: absolute;
@@ -1239,7 +1281,7 @@ span.tag-symbol {
     margin: auto;
     width: 250px;
     height: 70px;
-   
+
 }
 
 #siac-search-modal-inp {
@@ -1248,8 +1290,8 @@ span.tag-symbol {
     margin-bottom: 6px;
 }
 #siac-search-modal-close {
-    cursor: pointer; 
-    font-weight: bold; 
+    cursor: pointer;
+    font-weight: bold;
     color: white;
 }
 #siac-search-modal-header {
@@ -1266,22 +1308,43 @@ span.tag-symbol {
     color: lightgray !important;
 }
 
-.reading-modal-close-icn {
-    position: absolute; 
-    top: 7px; right: 17px; 
-    cursor: pointer; 
-    font-size: 22px;
-}
-.reading-modal-close-icn:hover {
-    transform: scale(1.2);
-    color: #2496dc;   
+#siac-reading-modal-top-btns {
+    position: absolute;
+    top: 7px; right: 35px;
+    text-align: center;
+    vertical-align: center;
 }
 
+.reading-modal-close-icn,.reading-modal-hide-icn {
+    display: inline-block;
+    vertical-align: top;
+    cursor: pointer;
+    font-size: 22px;
+    user-select: none;
+}
+.reading-modal-hide-icn {
+    font-size: 16px;
+    margin: 5px 8px 0 0;
+}
+
+.reading-modal-close-icn:hover,.reading-modal-hide-icn:hover {
+    transform: scale(1.2);
+    color: #2496dc;
+}
+
+.siac-queue-picker-icn {
+    margin-left: 25px; cursor: pointer; font-weight: bold; color: darkorange;
+    display: inline-block;
+}
+.siac-queue-picker-icn:hover {
+    transform: scale(1.4);
+}
 #siac-queue-sched-wrapper {
-    width: 0px;
+    padding: 5px 0 5px 0;
+    max-width: 0px;
     overflow: hidden;
     display: inline-block;
-    transition: width 1.7s;
+    transition: padding 0.6s, max-width 0.6s;
 }
 .siac-queue-sched-btn, .siac-queue-sched-btn-hor {
     display: inline-block;
@@ -1292,6 +1355,7 @@ span.tag-symbol {
     user-select: none;
     cursor: pointer;
     text-align: center;
+    border-radius: 4px;
 }
 .siac-queue-sched-btn {
     writing-mode: vertical-lr;
@@ -1313,12 +1377,12 @@ span.tag-symbol {
 }
 
 .siac-queue-sched-hor-sep {
-    display: inline-block; 
-    height: 50px; 
-    width: 20px; 
+    display: inline-block;
+    height: 50px;
+    width: 20px;
     margin: 0 10px 0 10px;
-    border-top: 2px solid lightgrey; 
-    border-style: dotted; 
+    border-top: 2px solid lightgrey;
+    border-style: dotted;
     border-width: 2px 0 0 0;
 }
 
@@ -1405,6 +1469,26 @@ hr.siac-modal-sep {
     border-color: $modalBorderColor$;
 }
 
+
+#text-layer { 
+    position: absolute;
+     left: 0;
+     top: 0;
+     right: 0;
+     bottom: 0;
+     overflow: hidden;
+     opacity: 0.2;
+     /* line-height: 1.0; */
+ }
+ 
+ #text-layer > div {
+     color: transparent;
+     position: absolute;
+     white-space: pre;
+     cursor: text;
+     transform-origin: 0% 0%;
+ }
+
 @media (max-height: 640px) {
     #tagContainer {
         max-height: 100px !important;
@@ -1436,27 +1520,30 @@ hr.siac-modal-sep {
   #switchBtn {
       display: inline-block !important;
   }
- 
+
 }
 @media (max-width: 1300px) {
     /* #searchMaskCol {
         display: none;
     } */
-   
+
     #predefCol {
         margin-left: 5px;
     }
 }
 
 @media (max-width: 800px) {
-   
+
    .icns-add {
         display: none !important;
     }
-    .freeze-icon, .rnd-icon, #toggleTop {
+    .freeze-icon, .rnd-icon, .flds-icon #toggleTop {
         font-size: 17px !important;
     }
-   
+    .flds-icon {
+        margin-top: 2px;
+    }
+
 }
 
 @media (max-width: 1200px) {
@@ -1495,7 +1582,7 @@ hr.siac-modal-sep {
     #sortCol {
         display: none;
     }
-    .modal-content 
+    .modal-content
     {
         width: 80% !important;
     }

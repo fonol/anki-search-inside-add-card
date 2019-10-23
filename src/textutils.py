@@ -159,17 +159,18 @@ def clean_user_note_text(text):
     try:
         if text.startswith("<!DOCTYPE"):
             starting_html_ix = text.lower().find("</head><body ")
-            text = text[starting_html_ix + 10:] 
-            text = text[text.find(">") +1:]
-            if text.lower().endswith("</body></html>"):
-                text = text[:-len("</body></html>")]
+            if starting_html_ix > 0 and starting_html_ix < 300:
+                text = text[starting_html_ix + 10:] 
+                text = text[text.find(">") +1:]
+                if text.lower().endswith("</body></html>"):
+                    text = text[:-len("</body></html>")]
         # <script>
-        text = re.sub("</?script[^>]>", "", text)
+        text = re.sub("</?script[^>]?>", "", text)
         # <canvas>
-        text = re.sub("<canvas[^>]*>", "", text)
+        text = re.sub("<canvas[^>]{1,20}?>", "", text)
         # <a>
         text = re.sub("(<a [^>]*?href=(\".+?\"|'.+?')[^>]*?>|</a>)", "", text)
-        text = re.sub("<a( [^>]*?)?>", "", text)
+        text = re.sub("<a( [^>]{0,100}?)?>", "", text)
 
         # don't allow too large headers
         text = re.sub("<h[12]([> ])", "<h3 \1", text)
@@ -181,11 +182,12 @@ def clean_user_note_text(text):
         text = text.replace("-qt-paragraph-type:empty;", "")
         text = re.sub("<p style=\" ?margin-top:0px; margin-bottom:0px;", "<p style=\"", text) 
 
-
         #delete fonts and font sizes 
-        text = re.sub("font-size:[^;\"']+?([;\"'])", "\1", text)
-        text = re.sub("font-family:[^;]{1,40};", "", text)
+        text = re.sub("font-size:[^;\"']{1,10}?([;\"'])", "\1", text)
+        text = re.sub("font-family:[^;]{1,40}?;", "", text)
         
+        if len(orig) > 200 and len(text) == 0:
+            return orig
         return text
     except:
         return orig

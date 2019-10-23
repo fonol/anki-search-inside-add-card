@@ -46,13 +46,15 @@ def create_db_file_if_not_exists():
     conn.execute(creation_sql)
     conn.commit()
     conn.close()
-    
 
 
 def create_note(title, text, source, tags, nid, reminder, queue_schedule):
 
     #clean the text
     text = clean_user_note_text(text)
+
+    if source is not None:
+        source = source.strip()
 
     if (len(text) + len(title)) == 0:
         return
@@ -78,14 +80,14 @@ def create_note(title, text, source, tags, nid, reminder, queue_schedule):
             pos = random.randint(int(len(list) / 3.0), int(len(list) * 2 / 3.0))
         elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_THIRD_THIRD:
             pos = random.randint(int(len(list) * 2 / 3.0), int(len(list) * 3 / 3.0))
-        
-    conn = _get_connection() 
+
+    conn = _get_connection()
     if pos is not None:
         pos_list = [(ix if ix < pos else ix + 1,r[0]) for ix, r in enumerate(list)]
         conn.executemany("update notes set position = ? where id = ?", pos_list)
 
-    id = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position) 
-                values (?,?,?,?,?,datetime('now', 'localtime'),"",?,"", ?)""", (title, text, source, tags, nid, "", pos)).lastrowid
+    id = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position)
+                values (?,?,?,?,?,datetime('now', 'localtime'),""," ","", ?)""", (title, text, source, tags, nid, pos)).lastrowid
     conn.commit()
     conn.close()
     index = get_index()
@@ -119,7 +121,7 @@ def update_position(note_id, queue_schedule):
         existing.insert(random.randint(int(len(existing) / 3.0), int(len(existing) * 2 / 3.0)), note_id)
     elif queue_schedule == QueueSchedule.RANDOM_THIRD_THIRD:
         existing.insert(random.randint(int(len(existing) * 2 / 3.0), int(len(existing) * 3 / 3.0)), note_id)
-    
+
 
     pos_ids = [(ix, r) for ix, r in enumerate(existing)]
     conn.executemany("update notes set position = ? where id=?", pos_ids)
@@ -130,6 +132,22 @@ def update_position(note_id, queue_schedule):
     conn.close()
     index = existing.index(note_id) if queue_schedule != QueueSchedule.NOT_ADD else -1
     return (index, len(existing))
+
+def mark_page_as_read(nid, page):
+    conn = _get_connection()
+    rem = conn.execute("select reminder from notes where id = " + nid).fetchone()[0]
+    if rem is None or rem == "":
+        conn.execute("update notes set reminder =  ' %s ' where id = %s" % (page, nid))
+    else:
+        conn.execute("update notes set reminder = reminder || '%s ' where id = %s and reminder not like '%% %s %%'" % (page, nid, page))
+    conn.commit()
+    conn.close()
+
+def mark_page_as_unread(nid, page):
+    conn = _get_connection()
+    conn.execute("update notes set reminder = replace(reminder, ' %s ', ' ') where id = %s" % (page, nid))
+    conn.commit()
+    conn.close()
 
 
 def get_note_tree_data():
@@ -142,7 +160,7 @@ def get_note_tree_data():
     n_map = {}
     now = datetime.now()
     seconds_since_midnight = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
-    
+
     for id, title, created in last_created:
         cr = datetime.strptime(created, '%Y-%m-%d %H:%M:%S')
         diff = (now - cr).total_seconds()
@@ -166,7 +184,7 @@ def get_all_notes():
     res = list(conn.execute("select * from notes"))
     conn.close()
     return res
-    
+
 def get_note(id):
     conn = _get_connection()
     res = conn.execute("select * from notes where id=" + str(id)).fetchone()
@@ -220,7 +238,7 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
     for li in orig_prio_list:
         if li[0] == id:
             note_had_position = True
-        else: 
+        else:
             list.append(li)
     if queue_schedule != 1:
         if QueueSchedule(queue_schedule) == QueueSchedule.HEAD:
@@ -249,7 +267,7 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
             sql = "update notes set title=?, text=?, source=?, tags=?, reminder=?, position=null, modified=datetime('now', 'localtime') where id=?"
 
     conn.execute(sql, (title, text, source, tags, reminder, id))
-    
+
     if pos is not None:
         list.insert(pos, (id,))
         pos_list = [(ix,r[0]) for ix, r in enumerate(list)]
@@ -280,7 +298,7 @@ def find_by_tag(tag_str):
     pinned = []
     if index is not None:
         pinned = index.pinned
-    
+
     query = "where "
     for t in tag_str.split(" "):
         if len(t) > 0:
@@ -391,7 +409,7 @@ def get_newest(limit, pinned):
     """
     conn = _get_connection()
     sql = """
-       select * from notes order by datetime(created) desc limit %s 
+       select * from notes order by datetime(created) desc limit %s
     """ % limit
     res = conn.execute(sql).fetchall()
     conn.close()
@@ -429,7 +447,7 @@ def _get_db_path():
     return file_path
 
 def _get_connection():
-    file_path = _get_db_path()    
+    file_path = _get_db_path()
     if not os.path.isfile(file_path):
         create_db_file_if_not_exists()
     return sqlite3.connect(file_path)
@@ -450,5 +468,5 @@ def _to_output_list(db_list, pinned):
     output_list = list()
     for (id, title, text, source, tags, nid, created, modified, reminder, _, position) in db_list:
         if not str(id) in pinned:
-            output_list.append((build_user_note_text(title, text, source), tags, -1, id, 1, "-1", "", position)) 
+            output_list.append((build_user_note_text(title, text, source), tags, -1, id, 1, "-1", "", position))
     return output_list

@@ -4,13 +4,14 @@ import json
 import re
 import datetime
 import time
+import sys
 from aqt import mw
 from ..textutils import cleanSynonym, trimIfLongerThan, get_stamp
 from ..tag_find import get_most_active_tags
 from ..state import get_index, checkIndex, set_deck_map
 from ..notes import get_note, _get_priority_list, get_all_tags
-from ..utils import get_web_folder_path, to_tag_hierarchy
-from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html
+from ..utils import get_web_folder_path, to_tag_hierarchy, pdf_to_base64, file_exists
+from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html
 
 
 def toggleAddon():
@@ -19,10 +20,10 @@ def toggleAddon():
 
 
 def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
-    #get path 
+    #get path
     dir = get_web_folder_path()
     config = mw.addonManager.getConfig(__name__)
-    #css + js 
+    #css + js
     all = """
     <style>
     %s
@@ -37,7 +38,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     with open(dir + "styles.css") as f:
         css = f.read().replace("%", "%%")
     script = script.replace("$del$", str(delayWhileTyping))
-   
+
     try:
         deckSelectFontSize = config["styling"]["topBar"]["deckSelectFontSize"]
     except KeyError:
@@ -47,7 +48,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     except KeyError:
         noteFontSize = 12
 
-    try: 
+    try:
         noteForegroundColor = config["styling"]["general"]["noteForegroundColor"]
     except KeyError:
         noteForegroundColor = "black"
@@ -56,7 +57,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
         noteBackgroundColor = config["styling"]["general"]["noteBackgroundColor"]
     except KeyError:
         noteBackgroundColor = "white"
-   
+
     try:
         noteBorderColor = config["styling"]["general"]["noteBorderColor"]
     except KeyError:
@@ -69,7 +70,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
         tagBackgroundColor = config["styling"]["general"]["tagBackgroundColor"]
     except KeyError:
         tagBackgroundColor = "#f0506e"
-    
+
     try:
         tagForegroundColor = config["styling"]["general"]["tagForegroundColor"]
     except KeyError:
@@ -82,7 +83,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
         deckSelectForegroundColor = config["styling"]["topBar"]["deckSelectForegroundColor"]
     except KeyError:
         deckSelectForegroundColor = "black"
-    
+
     try:
         deckSelectBackgroundColor = config["styling"]["topBar"]["deckSelectBackgroundColor"]
     except KeyError:
@@ -91,7 +92,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
         deckSelectHoverForegroundColor = config["styling"]["topBar"]["deckSelectHoverForegroundColor"]
     except KeyError:
         deckSelectHoverForegroundColor = "white"
-    
+
     try:
         deckSelectHoverBackgroundColor = config["styling"]["topBar"]["deckSelectHoverBackgroundColor"]
     except KeyError:
@@ -101,7 +102,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
         deckSelectButtonForegroundColor = config["styling"]["topBar"]["deckSelectButtonForegroundColor"]
     except KeyError:
         deckSelectButtonForegroundColor = "grey"
-    
+
     try:
         deckSelectButtonBackgroundColor = config["styling"]["topBar"]["deckSelectButtonBackgroundColor"]
     except KeyError:
@@ -155,7 +156,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
         browserSearchInputForegroundColor = config["styling"]["bottomBar"]["browserSearchInputForegroundColor"]
     except KeyError:
         browserSearchInputForegroundColor = "#2496dc"
-   
+
     try:
         infoButtonBorderColor = config["styling"]["general"]["buttonBorderColor"]
     except KeyError:
@@ -215,7 +216,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     try:
         windowColumnSeparatorColor = config["styling"]["general"]["windowColumnSeparatorColor"]
     except KeyError:
-        windowColumnSeparatorColor = "#2496dc"    
+        windowColumnSeparatorColor = "#2496dc"
 
 
     try:
@@ -249,7 +250,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     css = css.replace("$tagBackgroundColor$", tagBackgroundColor)
     css = css.replace("$tagForegroundColor$", tagForegroundColor)
     css = css.replace("$tagFontSize$", str(tagFontSize) + "px")
-    
+
     css = css.replace("$modalBackgroundColor$", modalBackgroundColor)
     css = css.replace("$modalForegroundColor$", modalForegroundColor)
 
@@ -310,10 +311,10 @@ def showSearchResultArea(editor=None, initializationTime=0):
     """
     js = """
         if (document.getElementById('searchResults')) {
-            document.getElementById('searchResults').style.display = 'block'; 
-        } 
-        if (document.getElementById('loader')) { 
-            document.getElementById('loader').style.display = 'none'; 
+            document.getElementById('searchResults').style.display = 'block';
+        }
+        if (document.getElementById('loader')) {
+            document.getElementById('loader').style.display = 'none';
         }"""
     if checkIndex():
         get_index().output.editor.web.eval(js)
@@ -347,7 +348,7 @@ def printStartingInfo(editor):
         html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
     editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
 
-        
+
 def display_model_dialog():
     if checkIndex():
         html = get_model_dialog_html()
@@ -357,9 +358,78 @@ def display_model_dialog():
 def display_note_reading_modal(note_id):
     if checkIndex():
         index = get_index()
-        html = get_reading_modal_html(note_id)
+        note = get_note(note_id)
+
+        html = get_reading_modal_html(note)
         index.output.show_in_large_modal(html)
-        #index.output.editor.web.eval("clearInterval(readingTimer);")
+
+        # if source is a pdf file path, try to display it
+        if note[3] is not None and note[3].strip().lower().endswith(".pdf") and file_exists(note[3]):
+            _display_pdf(note[3].strip(), note[8])
+
+
+
+def _display_pdf(full_path, pages_read):
+    index = get_index()
+    base64pdf = pdf_to_base64(full_path)
+    blen = len(base64pdf)
+    pages_read = "" if pages_read is None else ",".join([p for p in pages_read.split() if len(p) > 0])
+
+    init_code = """
+            var bstr = atob(b64);
+            var n = bstr.length;
+            var arr = new Uint8Array(n);
+            while(n--){
+                arr[n] = bstr.charCodeAt(n);
+            }
+        var file = new File([arr], "test.pdf", {type : "application/pdf" });
+        var fileReader = new FileReader();
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.worker.min.js';
+        // pdfjsLib.GlobalWorkerOptions.workerSrc = false;
+        pagesRead = [%s];
+        fileReader.onload = function() {
+            var typedarray = new Uint8Array(this.result);
+            pdfjsLib.getDocument(typedarray).then(function(pdf) {
+                pdfDisplayed = pdf;
+                pdfDisplayedCurrentPage = 1;
+                pdf.getPage(1).then(function(page) {
+                    var canvas = document.getElementById("siac-pdf-canvas");
+                    var viewport = page.getViewport({scale :1.0});
+                    var scale = (canvas.parentNode.clientWidth - 23) / viewport.width;
+                    viewport = page.getViewport({scale : scale});
+                    pdfDisplayedScale = scale;
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    page.render({
+                        canvasContext: canvas.getContext('2d'),
+                        viewport: viewport
+                    });
+                document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
+                $('#siac-loader-modal').remove();
+                if (pagesRead.indexOf(1) !== -1) {
+		            document.getElementById('siac-pdf-overlay').style.display = 'block';
+                    document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
+	            }
+                });
+            });
+        };
+        fileReader.readAsArrayBuffer(file);
+        b64 = ""; arr = null; bstr = null; file = null; fileReader = null;
+    """ % pages_read
+    #send large files in multiple packets
+    if blen > 10000000:
+        index.output.editor.web.page().runJavaScript("var b64 = `%s`;" % base64pdf[0: 10000000])
+        sent = 10000000
+        while sent < blen:
+            index.output.editor.web.page().runJavaScript("b64 += `%s`;" % base64pdf[sent: min(blen,sent + 10000000)])
+            sent += min(blen - sent, 10000000)
+        index.output.editor.web.page().runJavaScript(init_code)
+    else:
+        index.output.editor.web.page().runJavaScript("""
+            var b64 = `%s`;
+                %s
+        """ % (base64pdf, init_code))
+
 
 def showStylingModal(editor):
     config = mw.addonManager.getConfig(__name__)
@@ -381,7 +451,7 @@ def display_note_del_confirm_modal(editor, nid):
     html = get_note_delete_confirm_modal_html(nid)
     editor.web.eval("$('#greyout').show();$('#searchResults').append(`%s`);" % html)
 
-def fillTagSelect(editor = None) :
+def fillTagSelect(editor = None, expanded = False) :
     """
     Builds the html for the "browse tags" mode in the deck select.
     Also renders the html.
@@ -391,7 +461,7 @@ def fillTagSelect(editor = None) :
     tags.extend(user_note_tags)
     tags = set(tags)
     tmap = to_tag_hierarchy(tags)
-    
+
     most_active = get_most_active_tags(5)
     most_active_map = dict()
     for t in most_active:
@@ -400,7 +470,7 @@ def fillTagSelect(editor = None) :
         else:
             most_active_map[t] = {}
 
-  
+
     def iterateMap(tmap, prefix, start=False):
         if start:
             html = "<ul class='deck-sub-list outer'>"
@@ -408,18 +478,21 @@ def fillTagSelect(editor = None) :
             html = "<ul class='deck-sub-list'>"
         for key, value in tmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('searchTag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", trimIfLongerThan(key, 35), iterateMap(value, full, False)) 
+            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('searchTag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", trimIfLongerThan(key, 35), iterateMap(value, full, False))
         html += "</ul>"
         return html
 
     most_active_html = iterateMap(most_active_map, "", True)
     html = iterateMap(tmap, "", True)
 
+    # the dropdown should only be expanded on user click, not on initial render
+    expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
+
     cmd = """
     document.getElementById('deck-sel-info-lbl').style.display = 'none';
     document.getElementById('deckSelQuickWrapper').style.display = '%s';
-    document.getElementById('deckSelQuick').innerHTML = `%s`; 
-    document.getElementById('deckSel').innerHTML = `%s`; 
+    document.getElementById('deckSelQuick').innerHTML = `%s`;
+    document.getElementById('deckSel').innerHTML = `%s`;
     $('.exp').click(function(e) {
 		e.stopPropagation();
         let icn = $(this);
@@ -432,19 +505,18 @@ def fillTagSelect(editor = None) :
         $(this).parent().parent().children('ul').toggle();
     });
     $("#siac-deck-sel-btn-wrapper").hide();
-    $('#siac-switch-deck-btn > span:first').html('<b>Tags</b> (Click to Switch to Decks)');
-    $('#siac-switch-deck-btn').click("pycmd('toggleTagSelect')");
-    """ % ("block" if len(most_active_map) > 0 else "none", most_active_html, html)
+    %s
+    """ % ("block" if len(most_active_map) > 0 else "none", most_active_html, html, expanded_js)
     if editor is not None:
         editor.web.eval(cmd)
     else:
         get_index().output.editor.web.eval(cmd)
 
-def fillDeckSelect(editor = None):
+def fillDeckSelect(editor = None, expanded= False):
     """
     Fill the selection with user's decks
     """
-    
+
     deckMap = dict()
     config = mw.addonManager.getConfig(__name__)
     deckList = config['decks']
@@ -460,14 +532,13 @@ def fillDeckSelect(editor = None):
           continue
        if deckList is not None and len(deckList) > 0 and d['name'] not in deckList:
            continue
-       deckMap[d['name']] = d['id'] 
+       deckMap[d['name']] = d['id']
     set_deck_map(deckMap)
     dmap = {}
     for name, id in deckMap.items():
         dmap = addToDecklist(dmap, id, name)
 
     dmap = dict(sorted(dmap.items(), key=lambda item: item[0].lower()))
-
     def iterateMap(dmap, prefix, start=False):
         decks = searchIndex.selectedDecks if searchIndex is not None else []
         if start:
@@ -476,16 +547,17 @@ def fillDeckSelect(editor = None):
             html = "<ul class='deck-sub-list'>"
         for key, value in dmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( "selected" if str(deckMap[full]) in decks or decks == [] else "", deckMap[full],  "[+]" if value else "", trimIfLongerThan(key, 35), iterateMap(value, full, False)) 
+            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( "selected" if str(deckMap[full]) in decks or decks == [] else "", deckMap[full],  "[+]" if value else "", trimIfLongerThan(key, 35), iterateMap(value, full, False))
         html += "</ul>"
         return html
 
     html = iterateMap(dmap, "", True)
+    expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
 
     cmd = """
     document.getElementById('deck-sel-info-lbl').style.display = 'block';
     document.getElementById('deckSelQuickWrapper').style.display = 'none';
-    document.getElementById('deckSel').innerHTML = `%s`; 
+    document.getElementById('deckSel').innerHTML = `%s`;
     $('.exp').click(function(e) {
 		e.stopPropagation();
         let icn = $(this);
@@ -497,11 +569,11 @@ def fillDeckSelect(editor = None):
         }
         $(this).parent().parent().children('ul').toggle();
     });
-    $('#siac-switch-deck-btn > span:first').html('<b>Decks</b> (Click to Switch to Tags)');
+    %s
     $("#siac-deck-sel-btn-wrapper").show();
      updateSelectedDecks();
 
-    """ % html
+    """ % (html, expanded_js)
     editor.web.eval(cmd)
 
 def addToDecklist(dmap, id, name):
@@ -511,7 +583,18 @@ def addToDecklist(dmap, id, name):
         for i in range(c):
             found = found.setdefault(names[i], {})
         if not d in found:
-            found.update({d : {}}) 
+            found.update({d : {}})
 
-     
+
     return dmap
+
+
+def show_loader(target_div_id, text):
+    """
+    Renders a small loading modal (absolute positioned) inside the given div.
+    Does not deal with hiding the modal.
+    """
+
+    html = get_loader_html(text)
+    get_index().output.editor.web.eval("$('#%s').append(`%s`);" % (target_div_id, html))
+   
