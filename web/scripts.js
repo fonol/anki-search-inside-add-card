@@ -20,6 +20,81 @@ var pdfDisplayedScale = 2.0;
 var pageNumPending = null;
 var pagesRead = [];
 
+
+var pdfImgSel = { canvas : null, context : null, startX : null, endX : null, startY : null, endY : null, cvsOffLeft : null, cvsOffTop : null, mouseIsDown : false};
+
+function pdfImgMouseUp(event) {
+    if (pdfImgSel.mouseIsDown) {
+        pdfImgSel.mouseIsDown = false;
+        drawSquare();
+        var pdfC = document.getElementById("siac-pdf-canvas");
+        cropSelection(pdfC, pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY, insertImage);
+        $(pdfImgSel.canvas).remove();
+        $('#text-layer').show();
+    }
+}
+function cropSelection(canvasSrc, offsetX, offsetY, width, height, callback) {
+    let temp = document.createElement('canvas');
+    let tctx = temp.getContext('2d');
+    temp.width = width;
+    temp.height = height;
+    tctx.drawImage(canvasSrc, offsetX, offsetY, width, height, 0, 0, temp.width, temp.height);
+    callback(temp.toDataURL());
+}
+
+function insertImage(data) {
+   pycmd("siac-add-image 1 " + data.replace("image/png", ""));
+}
+function pdfImgMouseDown(event) {
+    pdfImgSel.mouseIsDown = true;
+    pdfImgSel.cvsOffLeft = $(pdfImgSel.canvas).offset().left;
+    pdfImgSel.cvsOffTop = $(pdfImgSel.canvas).offset().top;
+    pdfImgSel.startX = pdfImgSel.endX = event.clientX - pdfImgSel.cvsOffLeft;
+    pdfImgSel.startY = pdfImgSel.endY = event.clientY- pdfImgSel.cvsOffTop;
+    drawSquare();
+}
+
+function initImageSelection() {
+    if ($('#text-layer').is(":hidden")) {
+        $(pdfImgSel.canvas).remove();
+        $('#text-layer').show();
+        return;
+    }
+    $('#text-layer').hide();
+    pdfImgSel.canvas = document.getElementById("siac-pdf-canvas");
+    var lCanvasOverlay = document.createElement("canvas");
+    pdfImgSel.canvas.parentNode.insertBefore(lCanvasOverlay, pdfImgSel.canvas.nextSibling);
+    $(lCanvasOverlay).css({"width": pdfImgSel.canvas.width + "px", "height" : pdfImgSel.canvas.height + "px", "top": "0", "left": "0", "position" : "absolute", "z-index": 999999, "opacity": 0.3, "cursor": "crosshair"});
+    lCanvasOverlay.setAttribute('width', pdfImgSel.canvas.width);
+    lCanvasOverlay.setAttribute('height', pdfImgSel.canvas.height);
+    pdfImgSel.context = lCanvasOverlay.getContext("2d");
+    lCanvasOverlay.addEventListener("mousedown", function(e) {pdfImgMouseDown(e); }, false);
+    lCanvasOverlay.addEventListener("mouseup", function(e) {pdfImgMouseUp(e); }, false);
+    lCanvasOverlay.addEventListener("mousemove", function(e) {pdfImgMouseXY(e); }, false);
+    pdfImgSel.canvas = lCanvasOverlay;
+
+}
+
+function pdfImgMouseXY(event) {
+    if (pdfImgSel.mouseIsDown) {
+        pdfImgSel.endX = event.clientX - pdfImgSel.cvsOffLeft;
+        pdfImgSel.endY = event.clientY - pdfImgSel.cvsOffTop;
+        drawSquare();
+    }
+}
+
+function drawSquare() {
+    pdfImgSel.context.clearRect(0, 0, pdfImgSel.context.canvas.width, pdfImgSel.context.canvas.height);
+    pdfImgSel.context.fillRect(pdfImgSel.startX, pdfImgSel.startY, Math.abs(pdfImgSel.startX - pdfImgSel.endX), Math.abs(pdfImgSel.startY - pdfImgSel.endY));
+    pdfImgSel.context.fillStyle = "yellow";
+    pdfImgSel.context.fill();
+}
+
+function pdfFitToPage() {
+    rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
+}
+
+
 function updateSelectedDecks(elem) {
     selectedDecks = [];
     let str = "";
@@ -109,14 +184,19 @@ function totalOffset(elem) {
     };
 }
 
-function rerenderPDFPage(num) {
+function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
     if (!pdfDisplayed) {
         return;
     }
-        pdfDisplayed.getPage(num).then(function(page) {
+    pdfDisplayed.getPage(num)
+       .then(function(page) {
             pdfPageRendering = true;
             var lPage = page;
             var canvas = document.getElementById("siac-pdf-canvas");
+	    if (fitToPage) {
+                    var viewport = page.getViewport({scale :1.0});
+                    pdfDisplayedScale = (canvas.parentNode.clientWidth - 23) / viewport.width;
+	    }
             var viewport = page.getViewport({scale : pdfDisplayedScale});
             canvas.height = viewport.height;
             canvas.width = viewport.width;
@@ -127,28 +207,24 @@ function rerenderPDFPage(num) {
             renderTask.promise.then(function () {
                 pdfPageRendering = false;
                 if (pageNumPending !== null) {
-                    rerenderPDFPage(pageNumPending);
+                    rerenderPDFPage(pageNumPending, shouldScrollUp);
                      pageNumPending = null;
-                   
+
                 }
                 return lPage.getTextContent();
                }).then(function(textContent) {
-                //    var pdf_canvas = $("#siac-pdf-canvas"); 
-                //    var canvas_offset = pdf_canvas.offset();
-                //    var canvas_height = pdf_canvas.get(0).height;
-                //    var canvas_width = pdf_canvas.get(0).width;
-                    
-                //    // Assign CSS to the text-layer element
-                //    $("#text-layer").css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas_height + 'px', width: canvas_width + 'px' });
-               
-                //    pdfjsLib.renderTextLayer({
-                //        textContent: textContent,
-                //        container: $("#text-layer").get(0),
-                //        viewport: viewport,
-                //        textDivs: []
-                //    });
+                   $("#text-layer").css({ height: canvas.height + 'px', width: canvas.width + 'px' });
+		   document.getElementById("text-layer").innerHTML = "";
+                   pdfjsLib.renderTextLayer({
+                       textContent: textContent,
+                       container: document.getElementById("text-layer"),
+                       viewport: viewport,
+                       textDivs: []
+                   });
                });
-            canvas.parentElement.scrollTop = 0;
+           if (shouldScrollUp)  {
+               canvas.parentElement.scrollTop = 0;
+           }
 	    if (pagesRead.indexOf(num) !== -1) {
             document.getElementById('siac-pdf-overlay').style.display = 'block';
             document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
@@ -157,14 +233,16 @@ function rerenderPDFPage(num) {
             document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
 	    }
             document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
+
         });
+
 }
 
-function queueRenderPage(num) {
+function queueRenderPage(num, shouldScrollUp=true) {
     if (pdfPageRendering) {
       pageNumPending = num;
     } else {
-      rerenderPDFPage(num);
+      rerenderPDFPage(num, shouldScrollUp);
     }
   }
 
@@ -173,14 +251,27 @@ function togglePageRead(nid) {
 	if (pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
         document.getElementById('siac-pdf-overlay').style.display = 'block';
         document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
-		pycmd("siac-pdf-page-read " + nid + " " + pdfDisplayedCurrentPage);
+		pycmd("siac-pdf-page-read " + nid + " " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages);
 		if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
 	} else {
         document.getElementById('siac-pdf-overlay').style.display = 'none';
         document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
-		pycmd("siac-pdf-page-unread " + nid + " " + pdfDisplayedCurrentPage);
+		pycmd("siac-pdf-page-unread " + nid + " " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages);
 		pagesRead.splice(pagesRead.indexOf(pdfDisplayedCurrentPage), 1);
     }
+    updatePdfProgressBar();
+}
+function updatePdfProgressBar() {
+    let percs = Math.floor(pagesRead.length * 10 / pdfDisplayed.numPages);
+    let html = `<span style='margin-right: 10px;'>${Math.trunc(pagesRead.length * 100 / pdfDisplayed.numPages)} %%</span>`;
+    for (var c = 0; c < 10; c++) {
+        if (c < percs) {
+            html += `<div class='siac-prog-sq-filled'></div>`;
+        } else {
+            html += `<div class='siac-prog-sq'></div>`;
+        }
+    }
+    document.getElementById("siac-prog-bar-wr").innerHTML = html;
 }
 function pdfJumpToPage(e, inp) {
     if (e.keyCode !== 13) {
@@ -198,7 +289,7 @@ function pdfScaleChange(mode) {
         pdfDisplayedScale -= 0.1;
         pdfDisplayedScale = Math.max(0.1, pdfDisplayedScale);
     }
-    queueRenderPage(pdfDisplayedCurrentPage);
+    queueRenderPage(pdfDisplayedCurrentPage, shouldScrollUp=false);
 }
 
 function pdfPageRight() {
@@ -404,12 +495,17 @@ function afterRemovedFromQueue() {
 
 
 function startTimer(elementToUpdateId) {
+    if (readingTimer) {clearInterval(readingTimer); }
     readingTimer = setInterval(function() {
         remainingSeconds --;
         document.getElementById(elementToUpdateId).innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds %% 60 < 10 ? "0" + remainingSeconds %% 60 : remainingSeconds %% 60);
         if (remainingSeconds <= 0) {
             clearInterval(readingTimer);
-            $('#siac-timer-play-btn').addClass("inactive").html("Finished");
+            remainingSeconds = 1800;
+            $('#siac-timer-play-btn').html("Start").addClass("inactive");
+            $('.siac-timer-btn').removeClass('active');
+            $('.siac-timer-btn').eq(4).addClass('active');
+            document.getElementById(elementToUpdateId).innerHTML = "30 : 00";
             $('#siac-timer-popup').show();
         }
     }, 999);
@@ -419,24 +515,34 @@ function toggleTimer(timer) {
     if ($(timer).hasClass('inactive')) {
         $(timer).removeClass("inactive");
         timer.innerHTML = "Pause";
-        let timerDisplay = document.getElementById("siac-reading-modal-timer");
-        startTimer(timerDisplay.id);
+        startTimer("siac-reading-modal-timer");
     } else {
         clearInterval(readingTimer);
+        readingTimer = null;
         $(timer).addClass("inactive");
         timer.innerHTML = "Start";
     }
 }
 function resetTimer(elem) {
     clearInterval(readingTimer);
+    readingTimer = null;
     $('.siac-timer-btn').removeClass('active');
     $(elem).addClass('active');
-    let seconds = Number(elem.innerHTML) * 60;
-    remainingSeconds = seconds;
+    remainingSeconds =  Number(elem.innerHTML) * 60;
     document.getElementById("siac-reading-modal-timer").innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds %% 60 < 10 ? "0" + remainingSeconds %% 60 : remainingSeconds %% 60);
     $('#siac-timer-play-btn').addClass("inactive").html("Start");
 }
-
+function pdfMouseWheel(event)  {
+    if(!event.ctrlKey) { return; }
+    if (event.deltaY < 0)
+    {
+        pdfScaleChange("up");
+    }
+    else if (event.deltaY > 0)
+    {
+       pdfScaleChange("down");
+    }
+}
 
 function onResize() {
     let height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
@@ -939,3 +1045,35 @@ function showLoader(target, text, voffset) {
     </div>
     `);
 }
+
+function toggleSearchbarMode(elem) {
+	if (elem.innerHTML === "Mode: Browser") {
+	    elem.innerHTML = "Mode: Add-on";
+	    pycmd("siac-searchbar-mode Add-on");
+	} else {
+	    elem.innerHTML = "Mode: Browser";
+	    pycmd("siac-searchbar-mode Browser");
+	}
+}
+function swapReadingModal() {
+    let modal = document.getElementById("siac-reading-modal");
+    if (modal.parentNode.id === "infoBox")  {
+	document.getElementById("leftSide").appendChild(modal);
+    } else {
+	document.getElementById("infoBox").appendChild(modal);
+    }
+
+
+}
+
+
+function globalKeydown(e) {
+       if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode == 78) {
+                    e.preventDefault();
+	       	    if ($('#siac-rd-note-btn').length) {
+			$('#siac-rd-note-btn').trigger("click");
+		    } else {
+			pycmd('siac-create-note')
+		    }
+                }
+            }

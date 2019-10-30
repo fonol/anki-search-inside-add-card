@@ -2,6 +2,7 @@
 :root {
     --tleft : 50%;
 }
+
 .siac-trash-icn,.siac-search-icn {
     width:12px; height:12px;
     vertical-align: center;
@@ -26,6 +27,12 @@
 body {
     overflow-x: hidden;
     overflow: hidden;
+}
+#leftSide {
+    position: relative;
+}
+#topbutsOuter {
+ z-index: 1;
 }
 
 #fields {
@@ -357,7 +364,16 @@ select {
     min-width: 50px;
     padding-left: 3px;
 }
-
+#siac-search-inp-mode-lbl {
+    cursor: pointer;
+    color: #2496dc;
+    user-select: none;
+}
+#siac-search-inp-mode-lbl:hover {
+    transform: scale(1.04);
+    padding-right: 2px;
+    padding-left: 2px;
+}
 
 .fldSep {
   color: $fieldSeparatorColor$;
@@ -728,7 +744,7 @@ table.striped tr:nth-child(even) {
     padding: 0px 4px 0px 4px;
     font-size: 11px !important;
     border: 1px solid  $buttonBorderColor$;
-    border-top: 0px solid white;    
+    border-top: 0px solid white;
     z-index: 99999999;
     transition: max-height 0.3s;
 
@@ -1147,6 +1163,14 @@ color: white;
 margin-left: auto;
 margin-right: auto;
 }
+.siac-field-picker-opt {
+    cursor: pointer;
+    user-select: none;
+}
+.siac-field-picker-opt:hover {
+    color: #2496dc;
+    transform: scale(1.04);
+}
 
 .siac-tag-info-box {
     position: absolute;
@@ -1259,6 +1283,7 @@ margin-right: auto;
     font-size: 12px;
     padding: 15px;
     z-index: 99999999;
+    border-radius: 5px;
 }
 
 #siac-search-modal {
@@ -1315,7 +1340,7 @@ margin-right: auto;
     vertical-align: center;
 }
 
-.reading-modal-close-icn,.reading-modal-hide-icn {
+.reading-modal-close-icn,.reading-modal-hide-icn,.reading-modal-swap-icn {
     display: inline-block;
     vertical-align: top;
     cursor: pointer;
@@ -1323,11 +1348,14 @@ margin-right: auto;
     user-select: none;
 }
 .reading-modal-hide-icn {
-    font-size: 16px;
-    margin: 5px 8px 0 0;
+    font-size: 15px;
+    margin: 5px 4px 0 0;
+}
+.reading-modal-swap-icn {
+    margin-right: 3px;
 }
 
-.reading-modal-close-icn:hover,.reading-modal-hide-icn:hover {
+.reading-modal-close-icn:hover,.reading-modal-hide-icn:hover,.reading-modal-swap-icn:hover {
     transform: scale(1.2);
     color: #2496dc;
 }
@@ -1392,7 +1420,7 @@ margin-right: auto;
 }
 
 .siac-clickable-anchor:hover {
-    transform: scale(1.04);
+    transform: scale(1.02);
 }
 
 
@@ -1468,9 +1496,27 @@ margin-right: auto;
 hr.siac-modal-sep {
     border-color: $modalBorderColor$;
 }
+.siac-prog-sq-filled, .siac-prog-sq {
+    vertical-align: middle;
+    display: inline-block;
+    margin: 0 1px 0 1px;
+    height: 9px;
+    width: 6px;
+    border-radius: 2px;
+}
+.siac-prog-sq-filled {
+    background-color: #60ad5e;
+    border: 2px solid #005005;
+}
+.siac-prog-sq {
+   /* background-color: #616161; */
+    /* border: 2px solid #373737; */
+   
+     background-color: #747272; 
+     border: 2px solid #494949; 
+}
 
-
-#text-layer { 
+#text-layer {
     position: absolute;
      left: 0;
      top: 0;
@@ -1478,16 +1524,62 @@ hr.siac-modal-sep {
      bottom: 0;
      overflow: hidden;
      opacity: 0.2;
-     /* line-height: 1.0; */
+     line-height: 1.0;
  }
- 
- #text-layer > div {
-     color: transparent;
-     position: absolute;
-     white-space: pre;
-     cursor: text;
-     transform-origin: 0% 0%;
- }
+  .textLayer > span {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+  }
+
+  .textLayer .highlight {
+    margin: -1px;
+    padding: 1px;
+
+    background-color: rgb(180, 0, 170);
+    border-radius: 4px;
+  }
+
+  .textLayer .highlight.begin {
+    border-radius: 4px 0px 0px 4px;
+  }
+
+  .textLayer .highlight.end {
+    border-radius: 0px 4px 4px 0px;
+  }
+
+  .textLayer .highlight.middle {
+    border-radius: 0px;
+  }
+
+  .textLayer .highlight.selected {
+    background-color: rgb(0, 100, 0);
+  }
+
+  .textLayer ::-moz-selection { background: rgb(0,0,255); }
+
+  .textLayer ::selection { background: rgb(0,0,255); }
+
+  .textLayer .endOfContent {
+    display: block;
+    position: absolute;
+    left: 0px;
+    top: 100%;
+    right: 0px;
+    bottom: 0px;
+    z-index: -1;
+    cursor: default;
+    -webkit-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+  }
+
+  .textLayer .endOfContent.active {
+    top: 0px;
+  }
 
 @media (max-height: 640px) {
     #tagContainer {

@@ -1,5 +1,6 @@
 import base64
 import requests
+import random
 import os, sys
 from aqt import mw
 from .state import get_index
@@ -47,6 +48,19 @@ def file_exists(full_path):
         return False
     return os.path.isfile(full_path)
 
+def base64_to_file(b64):
+    """
+        b64 : b64 str
+        Save the image to a temp file in the user_files folder.
+    """
+    base_path = get_user_files_folder_path()
+    # ugly
+    fname = str(random.randint(10000000, 99999999))
+    with open(base_path + fname + ".png", "wb") as f:
+        f.write(base64.b64decode(b64))
+    return base_path + fname + ".png"
+
+    
 
 def url_to_base64(url):
     return base64.b64encode(requests.get(url).content).decode('ascii')

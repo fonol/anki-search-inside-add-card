@@ -11,6 +11,7 @@ from .stats import getRetentions
 from .state import get_index
 from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar, get_stamp, remove_divs, remove_tags
 from .utils import to_tag_hierarchy, get_web_folder_path
+from .notes import get_pdf_info
 
 class Output:
 
@@ -38,52 +39,52 @@ class Output:
         self.scale = 1.0
 
 
-        self.noteTemplate = """<div class='cardWrapper %s' id='nWr-%s'> 
+        self.noteTemplate = """<div class='cardWrapper %s' id='nWr-%s'>
                             <div class='topLeftWr'>
-                                <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
+                                <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
                                 %s
                             </div>
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='editLbl' onclick='edit(%s)'>Edit</div> 
-                                <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div> 
-                                <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
-                                <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div> 
-                                <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div> 
+                                <div class='editLbl' onclick='edit(%s)'>Edit</div>
+                                <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
+                                <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div>
+                                <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div>
+                                <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div>
                             </div>
-                            <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
-                            <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
-                            <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
+                            <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div>
+                            <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>
+                            <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>
                         </div>"""
 
-        self.noteTemplateSimple = """<div class='cardWrapper' style="display: block;"> 
+        self.noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
                             <div class='topLeftWr'>
-                                <div class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
+                                <div class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
                                 %s
                             </div>
                             <div class='btnBar' id='btnBarSmp-%s' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='editLbl' onclick='edit(%s)'>Edit</div> 
+                                <div class='editLbl' onclick='edit(%s)'>Edit</div>
                             </div>
-                            <div class='cardR' onmouseup='getSelectionText()'  onmouseenter='cardMouseEnter(this, %s, "simple")' onmouseleave='cardMouseLeave(this, %s, "simple")'>%s</div> 
-                            <div style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
-                            <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>     
+                            <div class='cardR' onmouseup='getSelectionText()'  onmouseenter='cardMouseEnter(this, %s, "simple")' onmouseleave='cardMouseLeave(this, %s, "simple")'>%s</div>
+                            <div style='position: absolute; bottom: 0px; right: 0px;'>%s</div>
+                            <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>
                         </div>"""
-        
-        self.noteTemplateUserNote = """<div class='cardWrapper %s' id='nWr-%s'> 
+
+        self.noteTemplateUserNote = """<div class='cardWrapper %s' id='nWr-%s'>
                             <div class='topLeftWr'>
-                                <div id='cW-%s' class='rankingLbl'>%s &nbsp;SIAC<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div> 
+                                <div id='cW-%s' class='rankingLbl'>%s &nbsp;SIAC<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
                                 %s
                             </div>
                             <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                                 <div class='deleteLbl' onclick='pycmd("siac-delete-user-note-modal %s"); '><div class='siac-trash-icn'></div></div>
-                                <div class='editLbl' onclick='pycmd("siac-edit-user-note %s")'>Edit</div> 
-                                <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div> 
-                                <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div> 
-                                <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div> 
-                                <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div> 
+                                <div class='editLbl' onclick='pycmd("siac-edit-user-note %s")'>Edit</div>
+                                <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
+                                <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div>
+                                <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div>
+                                <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div>
                             </div>
-                            <div class='cardR siac-user-note' onmouseup='%s' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div> 
-                            <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>     
-                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note %s")'>&nbsp;READ&nbsp;%s</div>     
+                            <div class='cardR siac-user-note' onmouseup='%s' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div>
+                            <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>
+                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note %s")'>&nbsp;READ&nbsp;%s</div>
                         </div>"""
 
     def show_page(self, editor, page):
@@ -120,20 +121,20 @@ class Output:
         epochTime = int(time.time() * 1000)
         timeDiffString = ""
         newNote = ""
-        lastNote = "" 
+        lastNote = ""
         self.last_had_timing_info = printTimingInfo
 
         if db_list is not None and len(db_list) > 0:
             self.lastResults = db_list
             self.last_query_set = query_set
-        
+
         searchResults = db_list[(page- 1) * 50: page * 50]
         nids = [r[3] for r in searchResults]
 
         if self.showRetentionScores:
             retsByNid = getRetentions(nids)
         ret = 0
-        
+
         # various time stamps to collect information about rendering performance
         start = time.time()
         highlight_start = None
@@ -144,6 +145,10 @@ class Output:
 
         remaining_to_highlight = {}
         highlight_boundary = 15 if self.gridView else 10
+
+        # for better performance, collect all notes that are .pdfs, and
+        # query their reading progress after they have been rendered
+        pdfs = []
 
         for counter, res in enumerate(searchResults):
             counter += (page - 1)* 50
@@ -156,7 +161,7 @@ class Output:
             ret = retsByNid[int(res[3])] if self.showRetentionScores and int(res[3]) in retsByNid else None
 
             if ret is not None:
-                retMark = "background: %s; color: black;" % (self._retToColor(ret)) 
+                retMark = "background: %s; color: black;" % (self._retToColor(ret))
                 if str(res[3]) in self.edited:
                     retMark += "max-width: 20px;"
                 retInfo = """<div class='retMark' style='%s'>%s</div>
@@ -170,13 +175,18 @@ class Output:
             #non-anki notes should be displayed differently, we distinguish between title, text and source here
             build_user_note_start = time.time()
             if str(res[2]) == "-1":
+                src = text.split("\u001f")[2]
                 text = self._build_non_anki_note_html(text)
+                if src.endswith(".pdf"):
+                    pdfs.append(res[3])
+
+
             build_user_note_total += time.time() - build_user_note_start
 
-            # hide fields that should not be shown 
+            # hide fields that should not be shown
             if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
                 text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res[5])]])
-           
+
             #remove double fields separators
             text = self._cleanFieldSeparators(text).replace("\\", "\\\\")
 
@@ -219,19 +229,19 @@ class Output:
 
             # use either the template for addon's notes or the normal
             if str(res[2]) == "-1":
-                newNote = self.noteTemplateUserNote % (gridclass, counter + 1, res[3], counter + 1, 
+                newNote = self.noteTemplateUserNote % (gridclass, counter + 1, res[3], counter + 1,
                             "&nbsp;&#128336; " + timeDiffString,
                             "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
-                        retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], "getSelectionText()" if not is_queue else "", res[3], res[3], res[3], res[3], 
-                            text, 
-                            res[3], self.buildTagString(res[1]), res[3], ": Q-%s&nbsp;" % (res[7] + 1) if len(res) >= 8 and res[7] is not None else "")  
-            else:    
-                newNote = self.noteTemplate % (gridclass, counter + 1, res[3], counter + 1, 
+                        retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], "getSelectionText()" if not is_queue else "", res[3], res[3], res[3], res[3],
+                            text,
+                            res[3], self.buildTagString(res[1]), res[3], ": Q-%s&nbsp;" % (res[7] + 1) if len(res) >= 8 and res[7] is not None else "")
+            else:
+                newNote = self.noteTemplate % (gridclass, counter + 1, res[3], counter + 1,
                             "&nbsp;&#128336; " + timeDiffString,
                             "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
-                            retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], 
-                            text, 
-                            res[3], self.buildTagString(res[1]), res[3])  
+                            retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3],
+                            text,
+                            res[3], self.buildTagString(res[1]), res[3])
             # if self.gridView:
             #     if counter % 2 == 1:
             #         html += "<div class='gridRow'>%s</div>" % (lastNote + newNote)
@@ -261,12 +271,12 @@ class Output:
                 "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`lastTiming`)'>&#9432;</b>" if printTimingInfo else ""),
                 "Found" :  "<b>%s</b> notes" % (len(db_list) if len(db_list) > 0 else "<span style='color: red;'>0</span>")
             }
-            info = self.buildInfoTable(infoMap, tags, allText) 
+            info = self.buildInfoTable(infoMap, tags, allText)
             cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(db_list))
         else:
             cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s);" % (html, page, pageMax, len(db_list))
         cmd += "updateSwitchBtn(%s)" % len(searchResults)
-        
+
         if editor is None or editor.web is None:
             if self.editor is not None and self.editor.web is not None:
                 if logging:
@@ -287,7 +297,28 @@ class Output:
             else:
                 editor.web.eval(cmd)
 
-            
+        if len(pdfs) > 0:
+            pdf_info_list = get_pdf_info(pdfs)
+            if pdf_info_list is not None and len(pdf_info_list) > 0:
+                cmd = ""
+                for i in pdf_info_list:
+                    perc = int(i[1] * 10.0 / i[2])
+                    prog_bar = ""
+                    for x in range(0, 10):
+                        if x < perc:
+                            prog_bar += "<div class='siac-prog-sq-filled'></div>"
+                        else:
+                            prog_bar += "<div class='siac-prog-sq'></div>"
+                    cmd = ''.join((cmd, "document.getElementById('%s').innerHTML += `<br><div style='margin-top: 5px;'>%s &nbsp;%s / %s</div>`;" % (i[0], prog_bar, i[1], i[2])))
+                if editor is None or editor.web is None:
+                    if self.editor is not None and self.editor.web is not None:
+                        self.editor.web.eval(cmd)
+                else:
+                    editor.web.eval(cmd)
+
+
+
+
 
 
     def buildTagString(self, tags, hover = True, maxLength = -1, maxCount = -1):
@@ -317,7 +348,7 @@ class Output:
             stamp = "siac-tg-" + get_stamp()
             tagData = " ".join(self.iterateTagmap(tm, ""))
             html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, str(len(tm)) + " tags ...")
-            
+
         return html
 
 
@@ -364,7 +395,7 @@ class Output:
             return
         stamp = self.getMiliSecStamp()
         self.latest = stamp
-        filtered = [] 
+        filtered = []
         nids = []
         for r in self.lastResults:
             nids.append(str(r[3]))
@@ -380,7 +411,7 @@ class Output:
             return
         stamp = self.getMiliSecStamp()
         self.latest = stamp
-        filtered = [] 
+        filtered = []
         nids = []
         for r in self.lastResults:
             nids.append(str(r[3]))
@@ -399,11 +430,11 @@ class Output:
         #trim very long texts:
         if len(text) > 5000:
             src_begin_index = text.rfind("\u001f")
-            src = text[src_begin_index + 1:] 
+            src = text[src_begin_index + 1:]
             title = text[:text.find("\u001f")]
             body = text[text.find("\u001f") +1:src_begin_index][:5000]
             #there might be unclosed tags now, but parsing would be too much overhead, so simply remove div, a and span tags
-            #there might be still problems with <p style='...'> 
+            #there might be still problems with <p style='...'>
             body = remove_tags(body, ["div", "span", "a"])
             last_open_bracket = body.rfind("<")
             if last_open_bracket >= len(body) - 500 or body.rfind(" ") < len(body) - 500:
@@ -416,7 +447,14 @@ class Output:
             body = text.split("\u001f")[1]
             src = text.split("\u001f")[2]
         title = "<b>%s</b>%s" % (title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
-        src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src) if len(src) > 0 else ""
+        if src is not None and len(src) > 0:
+            if src.lower().endswith(".pdf"):
+                src = "<br/><hr style='border-top: dotted 2px;'><i>Source: &#128462; %s</i>" % (src)
+            else:
+                src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src)
+        else:
+            src = ""
+
         return title + body + src
 
 
@@ -440,7 +478,7 @@ class Output:
             if diffInMinutes < 60:
                 return "Created %s minutes ago" % int(diffInMinutes)
             return "Created %s hours ago" % int(diffInMinutes / 60)
-            
+
 
         if diffInDays >= 1 and diffInDays < 2:
             return "Created yesterday"
@@ -453,9 +491,9 @@ class Output:
         if editor is not None:
             editor.web.eval('document.getElementById("searchInfo").innerHTML = `%s`;' % text)
             return
-        
-        if self.editor is None: 
-            return 
+
+        if self.editor is None:
+            return
         self.editor.web.eval('document.getElementById("searchInfo").innerHTML = `%s`;' % text)
 
     def buildInfoTable(self, infoMap, tags, allText):
@@ -533,7 +571,7 @@ class Output:
         epochTime = int(time.time() * 1000)
         timeDiffString = ""
         newNote = ""
-        lastNote = "" 
+        lastNote = ""
         nids = [r[3] for r in db_list]
         if self.showRetentionScores:
             retsByNid = getRetentions(nids)
@@ -546,7 +584,7 @@ class Output:
             ret = retsByNid[int(res[3])] if self.showRetentionScores and int(res[3]) in retsByNid else None
 
             if ret is not None:
-                retMark = "background: %s; color: black;" % (self._retToColor(ret)) 
+                retMark = "background: %s; color: black;" % (self._retToColor(ret))
                 if str(res[3]) in self.edited:
                     retMark += "max-width: 20px;"
                 retInfo = """<div class='retMark' style='%s'>%s</div>
@@ -561,11 +599,11 @@ class Output:
             if str(res[2]) == "-1":
                 text = self._build_non_anki_note_html(text)
 
-            # hide fields that should not be shown 
+            # hide fields that should not be shown
             if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
                 text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res[5])]])
-                
-                
+
+
             #remove <div> tags if set in config
             if self.remove_divs:
                 text = remove_divs(text)
@@ -578,29 +616,29 @@ class Output:
                         "&nbsp;&#128336; " + timeDiffString,
                         "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                         retInfo, res[3],res[3],res[3],res[3],
-                        text, 
-                        self.buildTagString(res[1], tag_hover, maxLength = 25, maxCount = 2), res[3]) 
-           
+                        text,
+                        self.buildTagString(res[1], tag_hover, maxLength = 25, maxCount = 2), res[3])
+
             html += newNote
         return html
 
 
     def print_timeline_info(self, context_html, db_list):
         html = self.get_result_html_simple(db_list, tag_hover= False)
-        
+
         if len(html) == 0:
             html = "%s <div style='text-align: center; line-height: 100px;'>No notes added on that day.</div><div style='text-align: center;'> Tip: Hold Ctrl and hover over the timeline for faster navigation</div>" % (context_html)
         else:
             html = """
                 %s
-                <div id='cal-info-notes' style='overflow-y: auto; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div> 
+                <div id='cal-info-notes' style='overflow-y: auto; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div>
             """ % (context_html, html)
         self.editor.web.eval("document.getElementById('cal-info').innerHTML = `%s`;" % html)
 
-   
+
     def showInModal(self, text):
         cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`;" % text
-        
+
         if self.editor is not None:
             self.editor.web.eval(cmd)
 
@@ -614,7 +652,7 @@ class Output:
         if self.editor is not None:
             self.editor.web.eval(js)
 
-        
+
     def _loadPlotJsIfNotLoaded(self):
         if not self.plotjsLoaded:
             with open(get_web_folder_path() + "plot.js") as f:
@@ -632,9 +670,9 @@ class Output:
         """ % (header,on_enter_attr))
 
     def showStats(self, text, reviewPlotData, ivlPlotData, timePlotData):
-        
+
         self._loadPlotJsIfNotLoaded()
-        
+
         cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`; document.getElementById('modalText').scrollTop = 0; " % (text)
         c = 0
         for k,v in reviewPlotData.items():
@@ -645,23 +683,23 @@ class Output:
                 if len(xlabels) > 30:
                     xlabels = xlabels[0::2]
                 options = """
-                    {  series: { 
-                            lines: { show: true, fillColor: "#2496dc" }, 
-                            points: { show: true, fillColor: "#2496dc" } 
-                    }, 
-                    label: "Ease", 
-                    yaxis: { max: 5, min: 0, ticks: [[0, ''], [1, 'Failed'], [2, 'Hard'], [3, 'Good'], [4, 'Easy']],    
+                    {  series: {
+                            lines: { show: true, fillColor: "#2496dc" },
+                            points: { show: true, fillColor: "#2496dc" }
+                    },
+                    label: "Ease",
+                    yaxis: { max: 5, min: 0, ticks: [[0, ''], [1, 'Failed'], [2, 'Hard'], [3, 'Good'], [4, 'Easy']],
                                 tickFormatter: function (v, axis) {
                                 if (v == 1) {
                                     $(this).css("color", "red");
                                 }
                                 return v;
                                 }
-                    } , 
+                    } ,
                     xaxis: { ticks : %s },
-                    colors: ["#2496dc"] 
+                    colors: ["#2496dc"]
                     }
-    
+
                 """ % json.dumps(xlabels)
             cmd += "$.plot($('#graph-%s'), [ %s ],  %s);" % (c, json.dumps(rawData), options)
         for k,v in ivlPlotData.items():
@@ -672,17 +710,17 @@ class Output:
                 if len(xlabels) > 30:
                     xlabels = xlabels[0::2]
                 options = """
-                    {  series: { 
-                            lines: { show: true, fillColor: "#2496dc" }, 
-                            points: { show: true, fillColor: "#2496dc" } 
-                    }, 
-                    label: "Interval", 
+                    {  series: {
+                            lines: { show: true, fillColor: "#2496dc" },
+                            points: { show: true, fillColor: "#2496dc" }
+                    },
+                    label: "Interval",
                     xaxis: { ticks : %s },
-                    colors: ["#2496dc"] 
+                    colors: ["#2496dc"]
                     }
-    
+
                 """ % json.dumps(xlabels)
-            cmd += "$.plot($('#graph-%s'), [ %s ],  %s);" % (c, json.dumps(rawData), options)            
+            cmd += "$.plot($('#graph-%s'), [ %s ],  %s);" % (c, json.dumps(rawData), options)
 
         for k,v in timePlotData.items():
             if v is not None and len(v) > 0:
@@ -692,17 +730,17 @@ class Output:
                 if len(xlabels) > 30:
                     xlabels = xlabels[0::2]
                 options = """
-                    {  series: { 
-                            lines: { show: true, fillColor: "#2496dc" }, 
-                            points: { show: true, fillColor: "#2496dc" } 
-                    }, 
-                    label: "Answer Time", 
+                    {  series: {
+                            lines: { show: true, fillColor: "#2496dc" },
+                            points: { show: true, fillColor: "#2496dc" }
+                    },
+                    label: "Answer Time",
                     xaxis: { ticks : %s },
-                    colors: ["#2496dc"] 
+                    colors: ["#2496dc"]
                     }
-    
+
                 """ % json.dumps(xlabels)
-            cmd += "$.plot($('#graph-%s'), [ %s ],  %s);" % (c, json.dumps(rawData), options)    
+            cmd += "$.plot($('#graph-%s'), [ %s ],  %s);" % (c, json.dumps(rawData), options)
 
         if self.editor is not None:
             self.editor.web.eval(cmd)
@@ -723,7 +761,7 @@ class Output:
         return tags
 
     def printTagHierarchy(self, tags):
-        cmd = """document.getElementById('modalText').innerHTML = `%s`; 
+        cmd = """document.getElementById('modalText').innerHTML = `%s`;
          $('.tag-list-item').click(function(e) {
 		e.stopPropagation();
         let icn = $(this).find('.tag-btn').first();
@@ -736,7 +774,7 @@ class Output:
         }
         $(this).children('ul').toggle();
          });
-    
+
         """ % self.buildTagHierarchy(tags)
         self.editor.web.eval(cmd)
 
@@ -751,12 +789,12 @@ class Output:
             for key, value in tmap.items():
                 full = prefix + "::" + key if prefix else key
                 html += "<li class='tag-list-item'><span class='tag-btn'>%s %s</span><div class='tag-add' data-name=\"%s\" data-target='%s' onclick='event.stopPropagation(); tagClick(this)'>%s</div>%s</li>" % (
-                    trimIfLongerThan(key, 25), 
-                    "[-]" if value else "" ,  
-                    deleteChars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]), 
+                    trimIfLongerThan(key, 25),
+                    "[-]" if value else "" ,
+                    deleteChars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]),
                     key,
                     "+" if not config["tagClickShouldSearch"] else "<div class='siac-btn-small'>Search</div>",
-                iterateMap(value, full)) 
+                iterateMap(value, full))
             html += "</ul>"
             return html
 
@@ -766,7 +804,7 @@ class Output:
     def getTagMap(self, tags):
         return to_tag_hierarchy(tags)
 
-   
+
 
     def iterateTagmap(self, tmap, prefix):
         if len(tmap) == 0:
@@ -782,30 +820,30 @@ class Output:
                 else:
                     res.append(prefix + key)
         return res
-    
+
     def updateSingle(self, note):
         """
         Used after note has been edited. The edited note should be rerendered.
-        To keep things simple, only note text and tags are replaced. 
+        To keep things simple, only note text and tags are replaced.
         """
         if self.editor is None or self.editor.web is None:
             return
         tags = note[2]
-        tagStr =  self.buildTagString(tags)  
+        tagStr =  self.buildTagString(tags)
         nid = note[0]
         text = note[1]
-        
-        # hide fields that should not be shown 
+
+        # hide fields that should not be shown
         if len(note) > 4 and str(note[4]) in self.fields_to_hide_in_results:
             text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(note[4])]])
-        
+
         text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
         text = self.tryHideImageOcclusion(text)
         text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
 
         #find rendered note and replace text and tags
         self.editor.web.eval("""
-            document.getElementById('%s').innerHTML = `%s`; 
+            document.getElementById('%s').innerHTML = `%s`;
             document.getElementById('tags-%s').innerHTML = `%s`;
         """ % (nid, text, nid, tagStr))
 
@@ -814,7 +852,7 @@ class Output:
         self.editor.web.eval("$('#cW-%s .editedStamp').html(`&nbsp;&#128336; Edited just now`).show();" % nid)
 
     def _markHighlights(self, text, querySet):
-     
+
         currentWord = ""
         currentWordNormalized = ""
         textMarked = ""
@@ -829,7 +867,7 @@ class Output:
                     currentWord = ''.join((currentWord, "<MARK>%s</MARK>" % char))
                 else:
                     currentWord = ''.join((currentWord, char))
-                
+
             else:
                 #we have reached a word boundary
                 #check if word is empty
@@ -838,7 +876,7 @@ class Output:
                 else:
                     #if the word before the word boundary is in the query, we want to highlight it
                     if currentWordNormalized in querySet:
-                        #we check if the word before has been marked too, if so, we want to enclose both, the current word and 
+                        #we check if the word before has been marked too, if so, we want to enclose both, the current word and
                         # the word before in the same <mark></mark> tag (looks better)
                         if lastIsMarked and not "\u001f" in textMarked[textMarked.rfind("<MARK>"):]:
                         # if lastIsMarked:
@@ -859,8 +897,8 @@ class Output:
             if currentWord != "MARK" and currentWordNormalized in querySet:
                 textMarked = ''.join((textMarked, "<MARK>", currentWord, "</MARK>"))
             else:
-                textMarked = ''.join((textMarked, currentWord)) 
-        
+                textMarked = ''.join((textMarked, currentWord))
+
         return textMarked
 
     def show_tooltip(self, text):

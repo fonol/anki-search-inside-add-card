@@ -1,32 +1,12 @@
-from aqt import mw, dialogs
-from aqt.utils import showInfo
+from aqt import mw
 from aqt.qt import *
-from anki.hooks import runHook, addHook, wrap
 import aqt
 import aqt.webview
-from aqt.addcards import AddCards
 import aqt.editor
-from aqt.editor import Editor, EditorWebView
-from aqt.browser import Browser
-from aqt.tagedit import TagEdit
-from aqt.editcurrent import EditCurrent
 import aqt.stats
-from aqt.main import AnkiQt
-from aqt.webview import AnkiWebPage
-from datetime import datetime
 import os
-import random
-import sqlite3
-import re
-import time as t
-import math
-import webbrowser
-import platform
-import functools
-import sys
-import html
 
-from .state import checkIndex, get_index, set_index, corpus_is_loaded, set_corpus, set_edit, get_edit, get_old_on_bridge_cmd
+from .state import checkIndex, get_index, set_index, set_corpus, get_old_on_bridge_cmd
 from .indexing import build_index, get_notes_in_collection
 from .debug_logging import log
 from .web.web import *
@@ -34,16 +14,17 @@ from .web.html import *
 from .special_searches import *
 from .notes import *
 from .output import Output
-from .textutils import clean, trimIfLongerThan, replaceAccentsWithVowels, expandBySynonyms, remove_fields
-from .editor import openEditor, EditDialog, NoteEditor
+from .textutils import trimIfLongerThan
+from .editor import openEditor, NoteEditor
 from .tag_find import findBySameTag, display_tag_info
-from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval, getTrueRetentionOverTime
-from .utils import get_user_files_folder_path
+from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
+from .utils import get_user_files_folder_path, base64_to_file
 from .queue_picker import QueuePicker
 
 config = mw.addonManager.getConfig(__name__)
 
 original_on_bridge_cmd = None
+
 
 def expanded_on_bridge_cmd(self, cmd):
     """
@@ -54,14 +35,16 @@ def expanded_on_bridge_cmd(self, cmd):
     if searchIndex is not None and searchIndex.output.editor is None:
         searchIndex.output.editor = self
 
-
     if not config["disableNonNativeSearching"] and cmd.startswith("fldChgd "):
         rerenderInfo(self, cmd[8:])
     elif cmd.startswith("siac-page "):
         if checkIndex():
             searchIndex.output.show_page(self, int(cmd.split()[1]))
     elif cmd.startswith("srchDB "):
-        rerenderInfo(self, cmd[7:], searchDB = True)
+        if checkIndex() and searchIndex.searchbar_mode == "Add-on":
+            rerenderInfo(self, cmd[7:])
+        else:
+            rerenderInfo(self, cmd[7:], searchDB = True)
     elif cmd.startswith("fldSlctd ") and not config["disableNonNativeSearching"] and searchIndex is not None:
         if searchIndex.logging:
             log("Selected in field: " + cmd[9:])
@@ -84,12 +67,7 @@ def expanded_on_bridge_cmd(self, cmd):
         res = getRandomNotes(searchIndex, [s for s in cmd[11:].split(" ") if s != ""])
         searchIndex.output.printSearchResults(res["result"], res["stamp"])
     elif cmd == "siac-fill-deck-select":
-        # if checkIndex():
-        #     searchIndex.tagSelect = not searchIndex.tagSelect
-        #     if searchIndex.tagSelect:
         fillDeckSelect(self, expanded=True)
-            # else:
-            #     fillDeckSelect(self)
     elif cmd == "siac-fill-tag-select":
         fillTagSelect(expanded=True)
         # if checkIndex():
@@ -107,6 +85,12 @@ def expanded_on_bridge_cmd(self, cmd):
         text = cmd.split()[2]
         show_loader(target, text)
 
+    elif cmd == "siac-show-pdfs":
+        if checkIndex():
+            stamp = setStamp()
+            notes = get_all_pdf_notes()
+            searchIndex.output.printSearchResults(notes, stamp)
+
     elif cmd.startswith("pSort "):
         if checkIndex():
             parseSortCommand(cmd[6:])
@@ -121,7 +105,6 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd == "lastTiming":
         if searchIndex is not None and searchIndex.lastResDict is not None:
             showTimingModal()
-
 
     elif cmd.startswith("calInfo "):
         if checkIndex():
@@ -140,21 +123,23 @@ def expanded_on_bridge_cmd(self, cmd):
         set_corpus(None)
         build_index(force_rebuild=True, execute_after_end=after_index_rebuilt)
 
+    elif cmd.startswith("siac-searchbar-mode"):
+        searchIndex.searchbar_mode = cmd.split()[1]
+
     #
     # Notes
     #
 
     elif cmd == "siac-create-note":
         NoteEditor(self.parentWindow)
-        #editor.user_note_edit = aqt.dialogs.open("UserNoteEditor", mw, None)
 
-    elif cmd == "siac-create-note-add-only":
-        NoteEditor(self.parentWindow, add_only=True)
+    elif cmd.startswith("siac-create-note-add-only "):
+        nid = int(cmd.split()[1])
+        NoteEditor(self.parentWindow, add_only=True, read_note_id=nid)
 
     elif cmd.startswith("siac-edit-user-note "):
         id = int(cmd.split()[1])
         NoteEditor(self.parentWindow, id)
-        #editor.user_note_edit = aqt.dialogs.open("UserNoteEditor", mw, id)
 
     elif cmd.startswith("siac-delete-user-note-modal "):
         nid = int(cmd.split()[1])
@@ -223,7 +208,7 @@ def expanded_on_bridge_cmd(self, cmd):
         inserted_index = update_position(nid, QueueSchedule(queue_sched))
         queue_readings_list = get_queue_head_display(nid)
         searchIndex.output.editor.web.eval("""
-        document.getElementById('siac-queue-lbl').innerHTML = 'Position in Queue: %s / %s';
+        document.getElementById('siac-queue-lbl').innerHTML = 'Position: %s / %s';
         $('#siac-queue-lbl').fadeIn('slow');
         $('.siac-queue-sched-btn:first').html('%s / %s');
         $('#siac-queue-readings-list').replaceWith(`%s`);
@@ -246,7 +231,6 @@ def expanded_on_bridge_cmd(self, cmd):
         if nid >= 0:
             display_note_reading_modal(nid)
 
-
     elif cmd.startswith("siac-scale "):
         factor = float(cmd.split()[1])
         config["noteScale"] = factor
@@ -261,7 +245,8 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd.startswith("siac-pdf-page-read"):
         nid = cmd.split()[1]
         page = cmd.split()[2]
-        mark_page_as_read(nid, page)
+        total = cmd.split()[3]
+        mark_page_as_read(nid, page, total)
 
     elif cmd.startswith("siac-pdf-page-unread"):
         nid = cmd.split()[1]
@@ -301,6 +286,25 @@ def expanded_on_bridge_cmd(self, cmd):
 
     elif cmd == "writeConfig":
         writeConfig()
+
+
+
+    elif cmd.startswith("siac-add-image "):
+        b64 = cmd.split()[2][13:]
+        image = base64_to_file(b64)
+        name = mw.col.media.addFile(image)
+        show_field_picker_modal(name)
+        os.remove(image)
+
+    # if the user clicked on cancel, the image is already added to the media folder, so we delete it
+    elif cmd.startswith("siac-remove-snap-image "):
+        name = " ".join(cmd.split()[1:])
+        media_dir = mw.col.media.dir()
+        try:
+            os.remove(os.path.join(media_dir, name))
+        except:
+            pass
+
 
     #
     #  Index info modal
@@ -451,12 +455,12 @@ def parsePredefSearchCmd(cmd, editor):
     elif searchtype == "lowestRet":
         stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "lowestRet")
-        res = findNotesWithLowestPerformance(decks, limit, searchIndex.pinned,  retOnly = True)
+        res = findNotesWithLowestPerformance(decks, limit, searchIndex.pinned, retOnly = True)
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "highestRet":
         stamp = setStamp()
         searchIndex.lastSearch = (None, decks, "highestRet")
-        res = findNotesWithHighestPerformance(decks, limit, searchIndex.pinned,  retOnly = True)
+        res = findNotesWithHighestPerformance(decks, limit, searchIndex.pinned, retOnly = True)
         searchIndex.output.printSearchResults(res, stamp)
     elif searchtype == "longestText":
         stamp = setStamp()

@@ -14,14 +14,13 @@ from anki.lang import _
 
 from .notes import *
 from .notes import _get_priority_list
-from .textutils import trimIfLongerThan, remove_headers, remove_all_bold_formatting, find_all_images, remove_colors
+from .textutils import remove_headers, remove_all_bold_formatting, find_all_images, remove_colors
 from .utils import url_to_base64, get_web_folder_path, dark_mode_is_used
+from .web.web import update_reading_bottom_bar
 
 def openEditor(mw, nid):
     note = mw.col.getNote(nid)
     dialog = EditDialog(mw, note)
-
-
 
 
 class EditDialog(QDialog):
@@ -36,7 +35,7 @@ class EditDialog(QDialog):
         self.setMinimumHeight(400)
         self.setMinimumWidth(500)
         self.resize(500, 700)
-        self.form.buttonBox.button(QDialogButtonBox.Close).setShortcut( QKeySequence("Ctrl+Return"))
+        self.form.buttonBox.button(QDialogButtonBox.Close).setShortcut(QKeySequence("Ctrl+Return"))
         self.editor = aqt.editor.Editor(self.mw, self.form.fieldsArea, self)
         self.editor.setNote(note, focusTo=0)
         addHook("reset", self.onReset)
@@ -56,10 +55,10 @@ class EditDialog(QDialog):
             return
         self.editor.setNote(n)
 
-    def reopen(self,mw):
+    def reopen(self, mw):
         tooltip("Please finish editing the existing card first.")
         self.onReset()
-        
+
     def reject(self):
         self.saveAndClose()
 
@@ -83,9 +82,15 @@ class NoteEditor(QDialog):
     The editor window for non-anki notes.
     Has a text field and a tag field.
     """
-    def __init__(self, parent, note_id = None, add_only = False):
+    def __init__(self, parent, note_id = None, add_only = False, read_note_id = None):
         self.note_id = note_id
         self.add_only = add_only
+        self.read_note_id = read_note_id
+        try:
+            self.dark_mode_used = dark_mode_is_used()
+        except:
+            self.dark_mode_used = False
+
         if self.note_id is not None:
             self.note = get_note(note_id)
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
@@ -105,7 +110,7 @@ class NoteEditor(QDialog):
             self.save.clicked.connect(self.on_update_clicked)
         else:
             self.save = QPushButton("\u2714 Create")
-            self.setWindowTitle('New Note')    
+            self.setWindowTitle('New Note')
             self.save.clicked.connect(self.on_create_clicked)
 
         self.cancel = QPushButton("Cancel")
@@ -124,7 +129,47 @@ class NoteEditor(QDialog):
         layout_main = QVBoxLayout()
         layout_main.addWidget(self.tabs)
         self.setLayout(layout_main)
-        
+
+        styles = ""
+        if self.dark_mode_used:
+            styles += """
+                QTabBar {
+                background: #222;
+                color: #666;
+                border-radius: 0;
+                border: 2px solid #222;
+                }
+                 QTabWidget::pane {
+                border-color: black;
+                color: #666;
+                border-radius: 0;
+                border: 2px solid #222;
+                }
+                QTabBar::tab:top {
+                margin: 1px 1px 0 0;
+                padding: 4px 8px;
+                border-bottom: 3px solid transparent;
+                }
+
+                QTabBar::tab:selected {
+                color: white;
+                border: 0;
+                }
+
+                QTabBar::tab:top:hover {
+                border-bottom: 3px solid #444;
+                }
+                QTabBar::tab:top:selected {
+                border-bottom: 3px solid #1086e2;
+                }
+
+                QTabBar::tab:hover,
+                QTabBar::tab:focus {
+
+                }
+            """
+        self.setStyleSheet(styles)
+
         self.exec_()
 
     def on_create_clicked(self):
@@ -132,7 +177,11 @@ class NoteEditor(QDialog):
         if self.create_tab.plain_text_cb.checkState() == Qt.Checked:
             text = self.create_tab.text.toPlainText()
         else:
-            text = self.create_tab.text.toHtml()
+            # if this check is missing, text is sometimes saved as an empty paragraph
+            if self.create_tab.text.document().isEmpty():
+                text = ""
+            else:
+                text = self.create_tab.text.toHtml()
 
         source = self.create_tab.source.text()
         tags = self.create_tab.tag.text()
@@ -146,21 +195,31 @@ class NoteEditor(QDialog):
         #aqt.dialogs.close("UserNoteEditor")
         self.reject()
 
+        # if reading modal is open, we might have to update the bottom bar
+        if self.read_note_id is not None:
+            update_reading_bottom_bar(self.read_note_id)
+
+
+
+
 
     def on_update_clicked(self):
         title = self.create_tab.title.text()
         if self.create_tab.plain_text_cb.checkState() == Qt.Checked:
             text = self.create_tab.text.toPlainText()
         else:
-            text = self.create_tab.text.toHtml()
+            # if this check is missing, text is sometimes saved as an empty paragraph
+            if self.create_tab.text.document().isEmpty():
+                text = ""
+            else:
+                text = self.create_tab.text.toHtml()
         source = self.create_tab.source.text()
         tags = self.create_tab.tag.text()
         queue_schedule = self.create_tab.queue_schedule
         update_note(self.note_id, title, text, source, tags, "", queue_schedule)
-        #aqt.dialogs.close("UserNoteEditor")
         self.reject()
 
-    
+
     def reject(self):
         if not self.add_only:
             self.priority_tab.t_view.setModel(None)
@@ -173,8 +232,9 @@ class NoteEditor(QDialog):
 class CreateTab(QWidget):
 
     def __init__(self, parent):
-        QWidget.__init__(self) 
+        QWidget.__init__(self)
         self.queue_schedule = 1
+        self.parent = parent
         tmap = get_all_tags_as_hierarchy(False)
         self.tree = QTreeWidget()
         self.tree.setColumnCount(1)
@@ -207,14 +267,14 @@ class CreateTab(QWidget):
             ti.setData(0, 1, QVariant(t))
             self.recent_tree.addTopLevelItem(ti)
         self.recent_tree.itemClicked.connect(self.tree_item_clicked)
-      
+
 
         self.queue_section = QGroupBox("Queue")
         ex_v = QVBoxLayout()
         queue_len = len(parent.priority_list)
         if parent.note_id is None:
             queue_lbl = QLabel("Add to Queue? (<b>%s</b> items)" % queue_len)
-        else:    
+        else:
             #check if note has position (is in queue)
             if parent.note[10] is None or parent.note[10] < 0:
                 queue_lbl = QLabel("<b>Not</b> in Queue (<b>%s</b> items)" % queue_len)
@@ -233,10 +293,17 @@ class CreateTab(QWidget):
             else:
                 self.q_lbl_1 = QPushButton("Keep Position in Queue")
 
+        if parent.dark_mode_used:
+            btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }"
+            btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: lightgrey; font-weight: bold; } QPushButton:hover { border: 2px solid #2496dc; color: black; }"
+        else:
+            btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: grey; }"
+            btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: black; font-weight: bold;}"
+
 
         self.q_lbl_1.setObjectName("q_1")
         self.q_lbl_1.setFlat(True)
-        self.q_lbl_1.setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
+        self.q_lbl_1.setStyleSheet(btn_style_active)
         self.q_lbl_1.clicked.connect(lambda: self.queue_selected(1))
         ex_v.addWidget(self.q_lbl_1)
 
@@ -250,14 +317,14 @@ class CreateTab(QWidget):
         self.q_lbl_2 = QPushButton("Head")
         self.q_lbl_2.setObjectName("q_2")
         self.q_lbl_2.setFlat(True)
-        self.q_lbl_2.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_2.setStyleSheet(btn_style)
         self.q_lbl_2.clicked.connect(lambda: self.queue_selected(2))
         ex_v.addWidget(self.q_lbl_2)
 
         self.q_lbl_22 = QPushButton("[Rnd]")
         self.q_lbl_22.setObjectName("q_22")
         self.q_lbl_22.setFlat(True)
-        self.q_lbl_22.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_22.setStyleSheet(btn_style)
         self.q_lbl_22.clicked.connect(lambda: self.queue_selected(7))
         ex_v.addWidget(self.q_lbl_22)
 
@@ -265,14 +332,14 @@ class CreateTab(QWidget):
         self.q_lbl_3 = QPushButton("End of first 3rd")
         self.q_lbl_3.setObjectName("q_3")
         self.q_lbl_3.setFlat(True)
-        self.q_lbl_3.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_3.setStyleSheet(btn_style)
         self.q_lbl_3.clicked.connect(lambda: self.queue_selected(3))
         ex_v.addWidget(self.q_lbl_3)
-        
+
         self.q_lbl_33 = QPushButton("[Rnd]")
         self.q_lbl_33.setObjectName("q_33")
         self.q_lbl_33.setFlat(True)
-        self.q_lbl_33.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_33.setStyleSheet(btn_style)
         self.q_lbl_33.clicked.connect(lambda: self.queue_selected(8))
         ex_v.addWidget(self.q_lbl_33)
 
@@ -281,28 +348,28 @@ class CreateTab(QWidget):
         self.q_lbl_4 = QPushButton("End of second 3rd")
         self.q_lbl_4.setObjectName("q_4")
         self.q_lbl_4.setFlat(True)
-        self.q_lbl_4.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_4.setStyleSheet(btn_style)
         self.q_lbl_4.clicked.connect(lambda: self.queue_selected(4))
         ex_v.addWidget(self.q_lbl_4)
 
         self.q_lbl_44 = QPushButton("[Rnd]")
         self.q_lbl_44.setObjectName("q_44")
         self.q_lbl_44.setFlat(True)
-        self.q_lbl_44.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_44.setStyleSheet(btn_style)
         self.q_lbl_44.clicked.connect(lambda: self.queue_selected(9))
         ex_v.addWidget(self.q_lbl_44)
 
         self.q_lbl_5 = QPushButton("End")
         self.q_lbl_5.setObjectName("q_5")
         self.q_lbl_5.setFlat(True)
-        self.q_lbl_5.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_5.setStyleSheet(btn_style)
         self.q_lbl_5.clicked.connect(lambda: self.queue_selected(5))
         ex_v.addWidget(self.q_lbl_5)
 
         self.q_lbl_6 = QPushButton("\u2685 Random")
         self.q_lbl_6.setObjectName("q_6")
         self.q_lbl_6.setFlat(True)
-        self.q_lbl_6.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey;")
+        self.q_lbl_6.setStyleSheet(btn_style)
         self.q_lbl_6.clicked.connect(lambda: self.queue_selected(6))
         ex_v.addWidget(self.q_lbl_6)
 
@@ -314,12 +381,12 @@ class CreateTab(QWidget):
         tag_lbl = QLabel()
         tag_icn = QPixmap(get_web_folder_path() + "tag-icon.png").scaled(14,14)
         tag_lbl.setPixmap(tag_icn);
-        
+
         tag_hb = QHBoxLayout()
         tag_hb.setAlignment(Qt.AlignLeft)
         tag_hb.addWidget(tag_lbl)
         tag_hb.addWidget(QLabel("Tags (Click to Add)"))
-        
+
         vbox_left.addLayout(tag_hb)
 
         vbox_left.addWidget(self.tree)
@@ -329,7 +396,7 @@ class CreateTab(QWidget):
         if len(recently_used_tags) > 0:
             tag_lbl1 = QLabel()
             tag_lbl1.setPixmap(tag_icn);
-            
+
             tag_hb1 = QHBoxLayout()
             tag_hb1.setAlignment(Qt.AlignLeft)
             tag_hb1.addWidget(tag_lbl1)
@@ -340,7 +407,7 @@ class CreateTab(QWidget):
 
         vbox_left.addWidget(self.queue_section)
 
-       
+
         self.layout.addLayout(vbox_left, 27)
 
         hbox = QHBoxLayout()
@@ -354,7 +421,7 @@ class CreateTab(QWidget):
         title_lbl = QLabel("Title")
         self.title = QLineEdit()
         f = self.title.font()
-        f.setPointSize(14) 
+        f.setPointSize(14)
         self.title.setFont(f)
         vbox.addWidget(title_lbl)
         vbox.addWidget(self.title)
@@ -368,16 +435,16 @@ class CreateTab(QWidget):
         self.text.setMinimumHeight(380)
         self.text.setMinimumWidth(330)
         self.text.setSizePolicy(
-            QSizePolicy.Expanding, 
+            QSizePolicy.Expanding,
             QSizePolicy.Expanding)
         self.text.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         self.text.setLineWidth(2)
         self.text.cursorPositionChanged.connect(self.on_text_cursor_change)
-        
+
         t_h = QHBoxLayout()
         t_h.addWidget(text_lbl)
 
-        self.tb = QToolBar("Format") 
+        self.tb = QToolBar("Format")
         self.tb.setHidden(False)
         self.tb.setOrientation(Qt.Horizontal)
         self.tb.setIconSize(QSize(12, 12))
@@ -385,7 +452,7 @@ class CreateTab(QWidget):
         self.vtb = QToolBar("Highlight")
         self.vtb.setOrientation(Qt.Vertical)
         self.vtb.setIconSize(QSize(16, 16))
-     
+
         self.orange_black = self.vtb.addAction(QIcon(get_web_folder_path() + "icon-orange-black.png"), "Highlight 1")
         self.orange_black.triggered.connect(self.on_highlight_ob_clicked)
 
@@ -456,8 +523,6 @@ class CreateTab(QWidget):
         clean_btn.setMenu(clean_menu)
 
         self.tb.addWidget(clean_btn)
-        # normalize_size = self.tb.addAction("Normalize Size")
-        # normalize_size.triggered.connect(self.on_normalize_size_clicked)
 
         t_h.addWidget(self.tb)
         vbox.addLayout(t_h)
@@ -486,45 +551,47 @@ class CreateTab(QWidget):
 
         vbox.addWidget(source_lbl)
         vbox.addLayout(source_hb)
-        # vbox.addSpacing(18)
 
-        # line = QFrame()
-        # line.setFrameShape(QFrame.HLine)
-        # line.setFrameShadow(QFrame.Sunken)
-        # vbox.addWidget(line)
-
-
-        self.setStyleSheet("""
-        QPushButton#q_1,QPushButton#q_2,QPushButton#q_22,QPushButton#q_3,QPushButton#q_33,QPushButton#q_4,QPushButton#q_44,QPushButton#q_5,QPushButton#q_6 { border-radius: 5px; }
-        QPushButton#q_1 { margin-left: 10px; margin-right: 10px; }
-        QPushButton#q_2 { margin-left: 10px; margin-right: 10px; }
-        QPushButton#q_22 { margin-left: 70px; margin-right: 70px; }
-        QPushButton#q_3 { margin-left: 30px; margin-right: 30px; }
-        QPushButton#q_33 { margin-left: 70px; margin-right: 70px; }
-        QPushButton#q_4 { margin-left: 30px; margin-right: 30px; }
-        QPushButton#q_44 { margin-left: 70px; margin-right: 70px; }
-        QPushButton#q_5 { margin-left: 10px; margin-right: 10px; }
-        QPushButton#q_6 { margin-left: 10px; margin-right: 10px; }
+        styles = """
+            QPushButton#q_1,QPushButton#q_2,QPushButton#q_22,QPushButton#q_3,QPushButton#q_33,QPushButton#q_4,QPushButton#q_44,QPushButton#q_5,QPushButton#q_6 { border-radius: 5px; }
+            QPushButton#q_1 { margin-left: 10px; margin-right: 10px; }
+            QPushButton#q_2 { margin-left: 10px; margin-right: 10px; }
+            QPushButton#q_22 { margin-left: 70px; margin-right: 70px; }
+            QPushButton#q_3 { margin-left: 30px; margin-right: 30px; }
+            QPushButton#q_33 { margin-left: 70px; margin-right: 70px; }
+            QPushButton#q_4 { margin-left: 30px; margin-right: 30px; }
+            QPushButton#q_44 { margin-left: 70px; margin-right: 70px; }
+            QPushButton#q_5 { margin-left: 10px; margin-right: 10px; }
+            QPushButton#q_6 { margin-left: 10px; margin-right: 10px; }
 
 
-        QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; margin-left: 7px; margin-right: 7px; }
-        QPushButton:hover#q_22,QPushButton:hover#q_33,QPushButton:hover#q_44 { background-color: lightblue; margin-left: 67px; margin-right: 67px; }
-        QPushButton:hover#q_3,QPushButton:hover#q_4 { background-color: lightblue; margin-left: 27px; margin-right: 27px; }
+            QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; margin-left: 7px; margin-right: 7px; }
+            QPushButton:hover#q_22,QPushButton:hover#q_33,QPushButton:hover#q_44 { background-color: lightblue; margin-left: 67px; margin-right: 67px; }
+            QPushButton:hover#q_3,QPushButton:hover#q_4 { background-color: lightblue; margin-left: 27px; margin-right: 27px; }
 
-        QTextEdit { border-radius: 5px; border: 1px solid #717378;  padding: 3px; }
-        QLineEdit { border-radius: 5px; border: 1px solid #717378;  padding: 2px;}
-        """)
+            QTextEdit { border-radius: 5px; border: 1px solid #717378;  padding: 3px; }
+            QLineEdit { border-radius: 5px; border: 1px solid #717378;  padding: 2px;}
 
+        """
+
+        # if parent.dark_mode_used:
+        #     styles += """
+        #         QPushButton#q_1,QPushButton#q_2,QPushButton#q_22,QPushButton#q_3,QPushButton#q_33,QPushButton#q_4,QPushButton#q_44,QPushButton#q_5,QPushButton#q_6 { color: beige; }
+        #         QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_22,QPushButton:hover#q_3,QPushButton:hover#q_33,QPushButton:hover#q_4,QPushButton:hover#q_44,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: grey; border-color: blue; color: white; }
+        #     """
+
+
+        self.setStyleSheet(styles)
 
         # vbox.addStretch(1)
         tag_lbl2 = QLabel()
         tag_lbl2.setPixmap(tag_icn)
-        
+
         tag_hb2 = QHBoxLayout()
         tag_hb2.setAlignment(Qt.AlignLeft)
         tag_hb2.addWidget(tag_lbl2)
         tag_hb2.addWidget(QLabel("Tags"))
-        
+
         vbox.addLayout(tag_hb2)
         self.tag = QLineEdit()
         vbox.addWidget(self.tag)
@@ -553,7 +620,7 @@ class CreateTab(QWidget):
                 ti.addChildren(self._add_to_tree({c: m}, prefix_c))
             res.append(ti)
         return res
-    
+
     def tree_item_clicked(self, item, col):
         tag = item.data(0, 1)
         self.add_tag(tag)
@@ -567,7 +634,7 @@ class CreateTab(QWidget):
         existing.append(tag)
         existing = sorted(existing)
         self.tag.setText(" ".join(existing))
-        
+
     def tag_cb_changed(self, state):
         self.tree.clear()
         tmap = None
@@ -586,20 +653,22 @@ class CreateTab(QWidget):
 
     def queue_selected(self, queue_schedule):
         for lbl in [self.q_lbl_1, self.q_lbl_2,  self.q_lbl_22,  self.q_lbl_3,  self.q_lbl_33,  self.q_lbl_4, self.q_lbl_44, self.q_lbl_5, self.q_lbl_6]:
-            lbl.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey; font-weight: normal;")
+            if self.parent.dark_mode_used:
+                lbl.setStyleSheet("QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }")
+            else:
+                lbl.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey; font-weight: normal;")
         [self.q_lbl_1, self.q_lbl_2,  self.q_lbl_3, self.q_lbl_4, self.q_lbl_5, self.q_lbl_6, self.q_lbl_22, self.q_lbl_33, self.q_lbl_44][queue_schedule-1].setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
         self.queue_schedule = queue_schedule
 
 
     def on_pdf_clicked(self):
-        fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', 
-   '',"PDF (*.pdf)")
+        fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"PDF (*.pdf)")
         if fname is not None:
             self.source.setText(fname[0])
 
     def on_italic_clicked(self):
         self.text.setFontItalic(not self.text.fontItalic())
-    
+
     def on_bold_clicked(self):
         self.text.setFontWeight(QFont.Normal if self.text.fontWeight() > QFont.Normal else QFont.Bold)
 
@@ -607,16 +676,16 @@ class CreateTab(QWidget):
         html = self.text.toHtml()
         html = remove_headers(html)
         self.text.setHtml(html)
-    
+
     def on_remove_bold_clicked(self):
         html = self.text.toHtml()
         html = remove_all_bold_formatting(html)
         self.text.setHtml(html)
-    
+
     def on_bullet_list_clicked(self):
         cursor = self.text.textCursor()
         cursor.createList(QTextListFormat.ListDisc)
-    
+
     def on_numbered_list_clicked(self):
         cursor = self.text.textCursor()
         cursor.createList(QTextListFormat.ListDecimal)
@@ -634,7 +703,7 @@ class CreateTab(QWidget):
         color = QColorDialog.getColor()
         self.text.setTextColor(color)
 
-   
+
     def highlight(self, type):
         self.save_original_bg_and_fg()
         if self.text.textCursor().selectedText() is not None and len(self.text.textCursor().selectedText()) > 0:
@@ -642,11 +711,6 @@ class CreateTab(QWidget):
             cursor = self.text.textCursor()
             fmt = QTextCharFormat()
             colors = self.highlight_map[type]
-            # print(c[0].name(QColor.NameFormat.HexRgb))
-            # print(self.original_fg.name(QColor.NameFormat.HexRgb))
-
-            # print(c[1].name(QColor.NameFormat.HexRgb))
-            # print(self.original_bg.name(QColor.NameFormat.HexRgb))
             if (c[0] == self.original_fg or (c[0] == QColor(0,0,0) and self.original_fg ==  QColor(255,255,255))) and (c[1] == self.original_bg or c[1] == QColor(0, 0, 0) or c[1] == QColor(255,255,255)):
                 fmt.setBackground(QBrush(QColor(colors[3], colors[4], colors[5])))
                 fmt.setForeground(QBrush(QColor(colors[0], colors[1], colors[2])))
@@ -657,19 +721,19 @@ class CreateTab(QWidget):
             cursor.clearSelection()
             self.text.setTextCursor(cursor)
             self.restore_original_bg_and_fg()
- 
+
     def on_highlight_ob_clicked(self):
         self.highlight("ob")
 
     def on_highlight_rw_clicked(self):
         self.highlight("rw")
-        
+
     def on_highlight_yb_clicked(self):
         self.highlight("yb")
 
     def on_highlight_bw_clicked(self):
         self.highlight("bw")
-    
+
     def on_highlight_gb_clicked(self):
         self.highlight("gb")
 
@@ -697,15 +761,15 @@ class CreateTab(QWidget):
         line = cursor.blockNumber() + 1
         col = cursor.columnNumber()
         self.line_status.setText("Ln: {}, Col: {}".format(line,col))
-        
+
 
     def on_remove_colors_clicked(self):
-        html = self.text.toHtml() 
+        html = self.text.toHtml()
         html = remove_colors(html)
         self.text.setHtml(html)
 
     def on_convert_images_clicked(self):
-        html = self.text.toHtml()     
+        html = self.text.toHtml()
         images_contained = find_all_images(html)
         if images_contained is None:
             return
@@ -714,7 +778,7 @@ class CreateTab(QWidget):
             if re.findall("src=['\"] *data:image/(png|jpe?g);[^;]{0,50};base64,", image_tag, flags=re.IGNORECASE):
                 continue
             url = re.search("src=(\"[^\"]+\"|'[^']+')", image_tag, flags=re.IGNORECASE).group(1)[1:-1]
-            try: 
+            try:
                 base64 = url_to_base64(url)
                 if base64 is None or len(base64) == 0:
                     return
@@ -734,7 +798,7 @@ class CreateTab(QWidget):
                 continue
         self.text.setHtml(html)
 
-        
+
 
 class PriorityTab(QWidget):
 
@@ -747,9 +811,9 @@ class PriorityTab(QWidget):
         self.t_view.setItemDelegateForColumn(0, html_delegate)
         self.t_view.setItemDelegateForColumn(1, html_delegate)
         self.t_view.setModel(model)
-        
+
         self.set_remove_btns(priority_list)
-     
+
 
         self.t_view.resizeColumnsToContents()
         self.t_view.setSelectionBehavior(QAbstractItemView.SelectRows);
@@ -768,12 +832,12 @@ class PriorityTab(QWidget):
 
         self.t_view.verticalHeader().setSectionsMovable(False)
         self.t_view.setSelectionMode(QAbstractItemView.SingleSelection);
-       
+
         self.vbox = QVBoxLayout()
         lbl = QLabel("Drag & Drop to reorder.\n'Remove' will only remove the item from the queue, not delete it.")
         self.vbox.addWidget(lbl)
         self.vbox.addWidget(self.t_view)
-        
+
         bottom_box = QHBoxLayout()
         self.shuffle_btn = QPushButton("Shuffle")
         self.shuffle_btn.clicked.connect(self.on_shuffle_btn_clicked)
@@ -783,15 +847,15 @@ class PriorityTab(QWidget):
 
 
         self.setLayout(self.vbox)
-        try:
-            if dark_mode_is_used():
-                self.setStyleSheet("""
-                QHeaderView::section { background-color: #424242; color: white; }
-                """)
+        if parent.dark_mode_used:
+            self.setStyleSheet("""
+            QHeaderView::section { background-color: #313233; color: white; }
+            QTableCornerButton::section {
+                background-color: #313233;
+}
+            """)
 
-        except:
-            pass
-      
+
     def on_remove_clicked(self, id):
         """
             Remove an item from the queue.
@@ -803,7 +867,7 @@ class PriorityTab(QWidget):
                 self.t_view.model().removeRow(r)
                 update_position(n_id, QueueSchedule.NOT_ADD)
                 break
-    
+
     def get_model(self, priority_list):
         model = PriorityListModel(self)
 
@@ -832,7 +896,7 @@ class PriorityTab(QWidget):
             oitem = QStandardItem()
             oitem.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDragEnabled)
             model.setItem(c, 2, oitem)
-       
+
         model.setHeaderData(0, Qt.Horizontal, "Title")
         model.setHeaderData(1, Qt.Horizontal, "Tags")
         model.setHeaderData(2, Qt.Horizontal, "Actions")
@@ -842,7 +906,10 @@ class PriorityTab(QWidget):
     def set_remove_btns(self, priority_list):
         for r in range(len(priority_list)):
             rem_btn = QPushButton("Remove")
-            rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; margin: 0px; padding: 3px;")
+            if self.parent.dark_mode_used:
+                rem_btn.setStyleSheet("border: 1px solid darkgrey; border-style: outset; font-size: 10px; background: #313233; color: white; margin: 0px; padding: 3px;")
+            else:
+                rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; margin: 0px; padding: 3px;")
             rem_btn.setCursor(Qt.PointingHandCursor)
             rem_btn.setMinimumHeight(18)
             rem_btn.clicked.connect(functools.partial(self.on_remove_clicked, priority_list[r][0]))
@@ -865,7 +932,7 @@ class PriorityTab(QWidget):
         set_priority_list(ids)
         self.t_view.setModel(model)
         self.set_remove_btns(priority_list)
-                
+
 
 class PriorityListModel(QStandardItemModel):
     def __init__(self, parent):
@@ -877,25 +944,28 @@ class PriorityListModel(QStandardItemModel):
             return False
         success =  super(PriorityListModel, self).dropMimeData(data, action, row, 0, parent)
         if success:
-            if row == -1 and parent is not None: 
+            if row == -1 and parent is not None:
                 row = parent.row()
             max_row = self.rowCount()
             ids = list()
             for i in range(0, max_row):
                 item = self.item(i)
-                data = item.data()  
+                data = item.data()
                 ids.append(data)
             id = ids[row]
             ids = [i for ix ,i in enumerate(ids) if i != id or ix == row]
             set_priority_list(ids)
-            
-            
+
+
             rem_btn = QPushButton("Remove")
-            rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; margin: 0px; padding: 3px;")
+            if self.parent.parent.dark_mode_used:
+                rem_btn.setStyleSheet("border: 1px solid darkgrey; border-style: outset; font-size: 10px; background: #313233; color: white; margin: 0px; padding: 3px;")
+            else:
+                rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; margin: 0px; padding: 3px;")
             rem_btn.setCursor(Qt.PointingHandCursor)
             rem_btn.setMinimumHeight(18)
             rem_btn.clicked.connect(functools.partial(self.parent.on_remove_clicked, self.item(row).data()))
-         
+
 
             h_l = QHBoxLayout()
             h_l.addWidget(rem_btn)
@@ -903,13 +973,13 @@ class PriorityListModel(QStandardItemModel):
             cell_widget.setLayout(h_l)
             self.parent.t_view.setIndexWidget(self.index(row,2), cell_widget)
         return success
-   
+
 
 class BrowseTab(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
-        
+
     def _add_to_tree(self, map):
         res = []
         for t, children in map.items():
@@ -918,11 +988,11 @@ class BrowseTab(QWidget):
                 ti.addChildren(self._add_to_tree(children))
             res.append(ti)
         return res
-    
+
     def tree_item_clicked(self, item, col):
         tag = item.text(0)
         pass
-         
+
 
 class HTMLDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):

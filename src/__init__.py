@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from aqt import mw, dialogs
-from aqt.utils import showInfo
+from aqt import mw
 from aqt.qt import *
-from anki.hooks import runHook, addHook, wrap
+from anki.hooks import addHook
 import aqt
 import aqt.webview
 from aqt.addcards import AddCards
@@ -13,32 +12,22 @@ from aqt.browser import Browser
 from aqt.tagedit import TagEdit
 from aqt.editcurrent import EditCurrent
 import aqt.stats
-from aqt.main import AnkiQt
-from aqt.webview import AnkiWebPage
-from datetime import datetime
 import os
-import random
-import sqlite3
 import re
 import time as t
-import math
 import webbrowser
-import platform
 import functools
 import sys
-import html
 sys.path.insert(0, os.path.dirname(__file__))
 
 
-from .state import checkIndex, get_index, set_index, corpus_is_loaded, set_corpus, set_edit, get_edit, set_old_on_bridge_cmd
+from .state import checkIndex, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit, set_old_on_bridge_cmd
 from .indexing import build_index, get_notes_in_collection
 from .debug_logging import log
 from .web.web import printStartingInfo, getScriptPlatformSpecific, showSearchResultArea, fillDeckSelect, fillTagSelect
 from .web.html import rightSideHtml
 from .notes import *
-from .output import Output
 from .editor import EditDialog
-from .tag_find import findBySameTag, display_tag_info, get_most_active_tags
 from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerenderInfo, addNoteToIndex
 
 config = mw.addonManager.getConfig(__name__)
@@ -49,10 +38,11 @@ delayWhileTyping = max(500, config['delayWhileTyping'])
 
 def initAddon():
     global oldOnBridge, origAddNote, origTagKeypress, origSaveAndClose, origEditorContextMenuEvt
-    
+
     set_old_on_bridge_cmd(Editor.onBridgeCmd)
     Editor.onBridgeCmd = expanded_on_bridge_cmd
     #todo: Find out if there is a better moment to start index creation
+    create_db_file_if_not_exists()
     addHook("profileLoaded", build_index)
     origAddNote = AddCards.addNote
     origEditorContextMenuEvt = EditorWebView.contextMenuEvent
@@ -60,7 +50,7 @@ def initAddon():
     AddCards.addNote = addNoteAndUpdateIndex
     origTagKeypress = TagEdit.keyPressEvent
     TagEdit.keyPressEvent = tagEditKeypress
-     
+
     setupTagEditTimer()
     EditorWebView.contextMenuEvent = editorContextMenuEventWrapper
 
@@ -68,7 +58,7 @@ def initAddon():
     EditDialog.saveAndClose = editorSaveWithIndexUpdate
 
     addHook("setupEditorShortcuts", addHideShowShortcut)
-   
+
     #dialogs._dialogs["UserNoteEditor"] = [NoteEditor, None]
 
 
@@ -77,7 +67,7 @@ def initAddon():
         aqt.editor._html += """
             <script>
             function sendContent(event) {
-                if ((event && event.repeat) || isFrozen)
+                if ((event && event.repeat) || pdfDisplayed != null || isFrozen)
                     return;
                 let html = "";
                 showLoading("Typing");
@@ -87,7 +77,7 @@ def initAddon():
                 pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
             }
             function sendSearchFieldContent() {
-                showLoading("Browser Search");
+                showLoading("Searchbar");
                 html = document.getElementById('siac-browser-search-inp').value + "\u001f";
                 pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
             }
@@ -104,7 +94,7 @@ def initAddon():
             document.body.appendChild(script);
 
             </script>
-        """ 
+        """
     else:
         aqt.editor._html += """
             <script>
@@ -122,6 +112,11 @@ def initAddon():
             }
             </script>
         """
+    # add shortcuts
+    aqt.editor._html += """
+    <script>
+            document.addEventListener("keydown", function (e) {globalKeydown(e); }, false);
+    </script>"""
 
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific(config["addToResultAreaHeight"], delayWhileTyping)
@@ -131,13 +126,13 @@ def initAddon():
 
 def exception_hook(exctype, value, traceback):
     print(exctype, value, traceback)
-    sys._excepthook(exctype, value, traceback) 
-    sys.exit(1) 
-   
+    sys._excepthook(exctype, value, traceback)
+    sys.exit(1)
+
 def addNoteAndUpdateIndex(dialog, note):
     res = origAddNote(dialog, note)
     addNoteToIndex(note)
-        
+
     return res
 
 def editorSaveWithIndexUpdate(dialog):
@@ -150,7 +145,7 @@ def editorSaveWithIndexUpdate(dialog):
         rerenderNote(dialog.editor.note.id)
          # keep track of edited notes (to display a little remark in the results)
         searchIndex.output.edited[str(dialog.editor.note.id)] = t.time()
- 
+
 
 def onLoadNote(editor):
     """
@@ -167,15 +162,14 @@ def onLoadNote(editor):
             log("Editor.addMode: %s" % editor.addMode)
 
         editor.web.eval("var addToResultAreaHeight = %s; var showTagInfoOnHover = %s; tagHoverTimeout = %s;" % (
-            config["addToResultAreaHeight"], 
-            "true" if config["showTagInfoOnHover"] and config["noteScale"] == 1.0 else "false", 
+            config["addToResultAreaHeight"],
+            "true" if config["showTagInfoOnHover"] and config["noteScale"] == 1.0 else "false",
             config["tagHoverDelayInMiliSec"]
             ))
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
         editor.web.eval(rightSideHtml(config, searchIndex is not None))
-
 
         if searchIndex is not None:
             showSearchResultArea(editor)
@@ -196,12 +190,13 @@ def onLoadNote(editor):
                 editor.web.eval("$('#infoBox').addClass('addon-hidden')")
             if config["gridView"]:
                 editor.web.eval('activateGridView();')
+            if searchIndex.searchbar_mode == "Browser":
+                editor.web.eval("toggleSearchbarMode(document.getElementById('siac-search-inp-mode-lbl'));")
             if searchIndex.output is not None:
                 #plot.js is already loaded if a note was just added, so this is a lazy solution for now
                 searchIndex.output.plotjsLoaded = False
-                
-        editor.web.eval("onResize()")
 
+        editor.web.eval("onResize()")
 
         if searchIndex is None or not searchIndex.tagSelect:
             fillDeckSelect(editor)
@@ -223,9 +218,6 @@ def onLoadNote(editor):
 
 
 
-   
-    
-
 def editorContextMenuEventWrapper(view, evt):
     global contextEvt
     win = aqt.mw.app.activeWindow()
@@ -242,9 +234,10 @@ def determineClickTarget(pos):
         return
     get_index().output.editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
 
+
 def addOptionsToContextMenu(clickInfo):
     searchIndex = get_index()
-    
+
     if clickInfo is not None and clickInfo.startswith("img "):
         try:
             src = clickInfo[4:]
@@ -267,11 +260,11 @@ def addOptionsToContextMenu(clickInfo):
             m.popup(QCursor.pos())
         except:
             origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
-            
+
     # elif clickInfo is not None and clickInfo.startswith("span "):
     #     content = clickInfo.split()[1]
-        
-    else: 
+
+    else:
         origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
 
 
@@ -301,10 +294,9 @@ def appendImgToField(src, key):
     searchIndex.output.editor.loadNote()
 
 
-       
 def setupTagEditTimer():
     global tagEditTimer
-    tagEditTimer = QTimer() 
+    tagEditTimer = QTimer()
     tagEditTimer.setSingleShot(True) # set up your QTimer
 
 
@@ -322,13 +314,11 @@ def tagEditKeypress(self, evt):
 
     if searchIndex is not None and searchIndex.tagSearch and len(self.text()) > 0:
         text = self.text()
-        try: 
-            tagEditTimer.timeout.disconnect() 
+        try:
+            tagEditTimer.timeout.disconnect()
         except Exception: pass
         tagEditTimer.timeout.connect(lambda: rerenderInfo(searchIndex.output.editor, text, searchByTags = True))  # connect it to your update function
-        tagEditTimer.start(1000)    
-
-
+        tagEditTimer.start(1000)
 
 
 initAddon()

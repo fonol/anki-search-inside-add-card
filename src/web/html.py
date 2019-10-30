@@ -122,7 +122,6 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
     rightSideWidth = 100 - leftSideWidth
     hideSidebar = config["hideSidebar"]
 
-
     return """
 
         //check if ui has been rendered already
@@ -234,6 +233,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                             <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
                             <div class='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
                             <div class='flds-icon' onclick='sendContent()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
+                            <div class='flds-icon' onclick='pycmd("siac-show-pdfs")'> <span class='icns-add'>PDFs </span>&#128462; </div>
                         </div>
 
 
@@ -268,7 +268,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                                 </fieldset>
 
                                 <fieldset id="searchMaskCol" style="flex: 1 1 auto; font-size: 0.85em;">
-                                    <legend>Browser Search</legend>
+                                    <legend id="siac-search-inp-mode-lbl" onclick='toggleSearchbarMode(this);'>Mode: Add-on</legend>
                                     <input id='siac-browser-search-inp' placeholder='' onkeyup='searchMaskKeypress(event)'></input>
                                 </fieldset>
 
@@ -425,6 +425,10 @@ def get_reading_modal_html(note):
             tag_str += "<div class='tagLbl' style='display: inline;margin: 0 5px 0 0;'>%s</div>" %(str(len(tm)) + " tags ...")
 
         source = source.strip() if source is not None and len(source.strip()) > 0 else "Empty"
+        if source.lower().endswith(".pdf"):
+            source_icn = "&#128462; "
+        else:
+            source_icn = ""
         title = title if title is not None and len(title.strip()) > 0 else "Untitled"
         title = trimIfLongerThan(title, 50)
         title = title.replace("<", "&lt;").replace(">", "&gt;")
@@ -432,16 +436,18 @@ def get_reading_modal_html(note):
         html = """
             <div style='width: 100%;'>
                 <div id='siac-reading-modal-top-btns'>
-                    <span class='reading-modal-hide-icn' onclick='toggleReadingModalBars();'>&#8691;</span>
-                    <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide(); pdfDisplayed ? pdfDisplayed.destroy() : pdfDisplayed = null; {save_on_close} $("#siac-reading-modal-text").html("");'>&times;</span>
+                    <span class='reading-modal-swap-icn' onclick='swapReadingModal();'>&#8644;</span>
+                    <span class='reading-modal-hide-icn' onclick='toggleReadingModalBars();'>&#8616;</span>
+                    <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide(); if (pdfDisplayed) {{ pdfDisplayed.destroy(); pdfDisplayed = null; }} {save_on_close} $("#siac-reading-modal-text").html("");'>&times;</span>
                 </div>
 
                 <div id='siac-reading-modal-top-bar' style='height: 10%; min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
                     <div style='flex: 1 1; overflow: hidden;'>
                         <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden;'>{title}</h2>
-                        <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: <i>{source}</i></h4>
+                        <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: {source_icn}<i>{source}</i></h4>
+                        <div id='siac-prog-bar-wr'></div>
                     </div>
-                    <div style='flex: 0 0; min-width: 130px; padding: 0 40px 0 10px;'>
+                    <div style='flex: 0 0; min-width: 130px; padding: 0 45px 0 10px;'>
                         <span class='siac-timer-btn' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn active' onclick='resetTimer(this)'>30</span><br>
                         <span id='siac-reading-modal-timer'>30 : 00</span><br>
                         <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
@@ -482,7 +488,13 @@ def get_reading_modal_html(note):
                     <div style='text-align: center;'><div class='siac-btn-small' onclick='this.parentNode.parentNode.style.display="none";'>&nbsp;Ok&nbsp;</div></div>
                 </div>
             </div>
+            <script>
+            if (readingTimer != null)  {{ $('#siac-timer-play-btn').html('Pause').removeClass('inactive');
 
+            }} else if (remainingSeconds !== 1800) {{
+                document.getElementById("siac-reading-modal-timer").innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds % 60 < 10 ? "0" + remainingSeconds % 60 : remainingSeconds % 60);
+            }}
+            </script>
         """
 
         #check if it is pdf
@@ -494,12 +506,12 @@ def get_reading_modal_html(note):
         is_contenteditable = "true" if editable else "false"
         onkeyup = "onfocusout='readingModalTextKeyup(this, %s)'"  % (note_id) if len(text) < editable else ""
         save_on_close = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s);"  % (note_id) if editable else ""
-        queue_info = "Position in Queue: <b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "Not in Queue."
+        queue_info = "Position: <b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "Not in Queue."
         queue_info_short = "<b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "Not in Queue"
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close)
+        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close, source_icn = source_icn)
         html = html.format_map(params)
         return html
     return ""
@@ -515,7 +527,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
         return "<div id='siac-queue-readings-list' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none;'></div>"
 
     if should_save:
-        save = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s);"  % (note_id) 
+        save = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s);"  % (note_id)
     else:
         save = ""
 
@@ -524,7 +536,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
         should_greyout = "greyedout" if queue_item[0] == int(note_id) else ""
         qi_title = trimIfLongerThan(queue_item[1], 40) if queue_item[1] is not None and len(queue_item[1]) > 0 else "Untitled"
         #if the note is a pdf, show a loader
-        should_show_loader = 'showLoader(\"siac-reading-modal-text\", \"Loading Note...\");' if queue_item[3] is not None and queue_item[3].strip().lower().endswith(".pdf") else ""
+        should_show_loader = 'document.getElementById("siac-reading-modal-text").innerHTML = ""; showLoader(\"siac-reading-modal-text\", \"Loading Note...\");' if queue_item[3] is not None and queue_item[3].strip().lower().endswith(".pdf") else ""
         queue_head_readings +=  "<a onclick='%s %s pdfDisplayed ? pdfDisplayed.destroy() : pdfDisplayed = null; pycmd(\"siac-read-user-note %s\")' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;'>%s. %s</a><br>" % (save, should_show_loader, queue_item[0], should_greyout, queue_item[10] + 1, qi_title)
         if ix > 3:
             break
@@ -543,16 +555,17 @@ def get_pdf_viewer_html(nid):
     html = """
             <div id='siac-pdf-overlay'>Page Read</div>
 
-        <div id='siac-pdf-top' style='width: 100%%; height: calc(100%% - 40px); position:relative; max-height: calc(100%% - 40px); overflow-y: auto; text-align: center;'>
-            <canvas id="siac-pdf-canvas" style=''></canvas>
-            <div id="text-layer"></div>
+        <div id='siac-pdf-top' style='width: 100%%; height: calc(100%% - 40px); position:relative; max-height: calc(100%% - 40px); overflow-y: auto;' onwheel='pdfMouseWheel(event);'>
+            <canvas id="siac-pdf-canvas" style='z-index: 99999;'></canvas>
+            <div id="text-layer" class="textLayer"></div>
         </div>
         <div style="width: 100%%; text-align: center; margin-top: 15px; position: relative;">
             <div style='position: absolute; left: 0;'>
                 <div class='siac-btn' style="width: 18px;" onclick='pdfScaleChange("down");'>-</div>
+                <div class='siac-btn' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
                 <div class='siac-btn' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
-
-                <div class='siac-btn' onclick='pycmd("siac-create-note-add-only")' style='margin-left: 15px;'><b>&#9998; Note</b></div>
+                <div class='siac-btn' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986; IMG</b></div>
+                <div class='siac-btn' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only %s")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
             </div>
             <div class='siac-btn' onclick='pdfPageLeft();'><b>&lt;</b></div>
             <span style='display: inline-block; text-align: center; width: 70px; user-select: none;' id='siac-pdf-page-lbl'>Loading...</span>
@@ -566,7 +579,7 @@ def get_pdf_viewer_html(nid):
         <script>
             showLoader('siac-pdf-top', 'Loading PDF...', -150);
         </script>
-    """ % nid
+    """ % (nid, nid)
     return html
 
 

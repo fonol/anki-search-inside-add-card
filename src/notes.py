@@ -23,27 +23,40 @@ class QueueSchedule(Enum):
 
 def create_db_file_if_not_exists():
     file_path = _get_db_path()
-    if os.path.isfile(file_path):
-        return
-    conn = sqlite3.connect(file_path)
+    if not os.path.isfile(file_path):
+        conn = sqlite3.connect(file_path)
 
-    creation_sql = """
-        create table if not exists notes
+        creation_sql = """
+            create table if not exists notes
+            (
+                id INTEGER PRIMARY KEY,
+                title TEXT,
+                text TEXT,
+                source TEXT,
+                tags TEXT,
+                nid INTEGER,
+                created TEXT,
+                modified TEXT,
+                reminder TEXT,
+                lastscheduled TEXT,
+                position INTEGER
+            )
+        """
+        conn.execute(creation_sql)
+    else:
+        conn = sqlite3.connect(file_path)
+    conn.execute("""
+        create table if not exists read
         (
-            id INTEGER PRIMARY KEY,
-            title TEXT,
-            text TEXT,
-            source TEXT,
-            tags TEXT,
+            page INTEGER,
             nid INTEGER,
+            pagestotal INTEGER,
             created TEXT,
-            modified TEXT,
-            reminder TEXT,
-            lastscheduled TEXT,
-            position INTEGER
+            FOREIGN KEY(nid) REFERENCES notes(id)
         )
-    """
-    conn.execute(creation_sql)
+    """)
+
+
     conn.commit()
     conn.close()
 
@@ -133,22 +146,28 @@ def update_position(note_id, queue_schedule):
     index = existing.index(note_id) if queue_schedule != QueueSchedule.NOT_ADD else -1
     return (index, len(existing))
 
-def mark_page_as_read(nid, page):
+def mark_page_as_read(nid, page, pages_total):
+    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
     conn = _get_connection()
-    rem = conn.execute("select reminder from notes where id = " + nid).fetchone()[0]
-    if rem is None or rem == "":
-        conn.execute("update notes set reminder =  ' %s ' where id = %s" % (page, nid))
-    else:
-        conn.execute("update notes set reminder = reminder || '%s ' where id = %s and reminder not like '%% %s %%'" % (page, nid, page))
+    conn.execute("insert or ignore into read (page, nid) values (%s, %s)" % (page, nid))
+    conn.execute("update read set created = '%s', pagestotal = %s where page = %s and nid = %s" % (now, pages_total, page, nid))
     conn.commit()
     conn.close()
+
 
 def mark_page_as_unread(nid, page):
     conn = _get_connection()
-    conn.execute("update notes set reminder = replace(reminder, ' %s ', ' ') where id = %s" % (page, nid))
+    conn.execute("delete from read where nid = %s and page = %s" % (nid, page))
     conn.commit()
     conn.close()
 
+def get_read_pages(nid):
+    conn = _get_connection()
+    res = conn.execute("select page from read where nid = %s order by created asc" % nid).fetchall()
+    conn.close()
+    if res is None:
+        return []
+    return [r[0] for r in res]
 
 def get_note_tree_data():
     """
@@ -228,7 +247,7 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
     tags = " %s " % tags.strip()
     conn = _get_connection()
     sql = """
-        update notes set title=?, text=?, source=?, tags=?, reminder=?, modified=datetime('now', 'localtime') where id=?
+        update notes set title=?, text=?, source=?, tags=?, modified=datetime('now', 'localtime') where id=?
     """
 
     pos = None
@@ -258,15 +277,15 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
         elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_THIRD_THIRD:
             pos = random.randint(int(len(list) * 2 / 3.0), int(len(list) * 3 / 3.0))
         sql = """
-            update notes set title=?, text=?, source=?, tags=?, reminder=?, position=%s, modified=datetime('now', 'localtime') where id=?
+            update notes set title=?, text=?, source=?, tags=?, position=%s, modified=datetime('now', 'localtime') where id=?
         """ % pos
     else:
         if note_had_position:
-            sql = "update notes set title=?, text=?, source=?, tags=?, reminder=?, modified=datetime('now', 'localtime') where id=?"
+            sql = "update notes set title=?, text=?, source=?, tags=?, modified=datetime('now', 'localtime') where id=?"
         else:
-            sql = "update notes set title=?, text=?, source=?, tags=?, reminder=?, position=null, modified=datetime('now', 'localtime') where id=?"
+            sql = "update notes set title=?, text=?, source=?, tags=?, position=null, modified=datetime('now', 'localtime') where id=?"
 
-    conn.execute(sql, (title, text, source, tags, reminder, id))
+    conn.execute(sql, (title, text, source, tags, id))
 
     if pos is not None:
         list.insert(pos, (id,))
@@ -320,6 +339,7 @@ def find_by_text(text):
 def delete_note(id):
     update_position(id, QueueSchedule.NOT_ADD)
     conn = _get_connection()
+    conn.execute("delete from read where nid =%s" % id)
     sql = """
         delete from notes where id=%s
     """ % id
@@ -330,7 +350,7 @@ def delete_note(id):
 def get_read_today_count():
     now = datetime.today().strftime('%Y-%m-%d')
     conn = _get_connection()
-    c = conn.execute("select count(*) from notes where lastscheduled like '%s %'" % now).fetchone()
+    c = conn.execute("select count(*) from read where created like '%s %'" % now).fetchone()
     conn.close()
     return c
 
@@ -344,7 +364,7 @@ def get_recently_used_tags():
     """
         Returns a [str] of max 10 tags, ordered by their usage desc.
     """
-    counts = _get_recently_used_tags_counts(10)
+    counts = _get_recently_used_tags_counts(20)
     ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:10]
     return ordered
 
@@ -448,8 +468,6 @@ def _get_db_path():
 
 def _get_connection():
     file_path = _get_db_path()
-    if not os.path.isfile(file_path):
-        create_db_file_if_not_exists()
     return sqlite3.connect(file_path)
 
 def get_all_tags_as_hierarchy(include_anki_tags):
@@ -462,6 +480,24 @@ def get_all_tags_as_hierarchy(include_anki_tags):
         tags = get_all_tags()
     return to_tag_hierarchy(tags)
 
+
+def get_all_pdf_notes():
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%.pdf'").fetchall()
+    conn.close()
+    output_list = _to_output_list(res, [])
+    return output_list
+
+
+def get_pdf_info(nids):
+    sql = "select nid, pagestotal, count(*) from read where nid in (%s) group by nid" % (",".join([str(n) for n in nids]))
+    conn = _get_connection()
+    res = conn.execute(sql).fetchall()
+    conn.close()
+    ilist = []
+    for r in res:
+        ilist.append([r[0], r[2], r[1]])
+    return ilist
 
 
 def _to_output_list(db_list, pinned):

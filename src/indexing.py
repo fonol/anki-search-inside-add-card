@@ -7,7 +7,7 @@ import os
 import sqlite3
 
 
-from .state import checkIndex, get_index, set_index, set_corpus, get_corpus, corpus_is_loaded, get_edit
+from .state import get_index, set_index, set_corpus, get_corpus, corpus_is_loaded, get_edit
 from .debug_logging import *
 from .web.web import showSearchResultArea, printStartingInfo
 from .web.html import loadSynonyms
@@ -17,7 +17,7 @@ from .notes import get_all_notes
 from .utils import get_user_files_folder_path, get_whoosh_index_folder_path
 
 
-def get_notes_in_collection():  
+def get_notes_in_collection():
     """
     Reads the collection and builds a list of tuples (note id, note fields as string, note tags, deck id, model id)
     """
@@ -26,10 +26,10 @@ def get_notes_in_collection():
     deckStr = ""
     for d in list(mw.col.decks.decks.values()):
         if d['name'] in deckList:
-           deckStr += str(d['id']) + ","
+            deckStr += str(d['id']) + ","
     if len(deckStr) > 0:
         deckStr = "(%s)" %(deckStr[:-1])
-    
+
     if deckStr:
         oList = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s" %(deckStr))
     else:
@@ -41,13 +41,13 @@ def get_notes_in_collection():
     other_notes = get_all_notes()
     other_notes_id_map = dict()
     for (id, title, text, source, tags, nid, created, modified, reminder, _, _) in other_notes:
-        
+
         if nid in other_notes_id_map:
             other_notes_id_map[nid].append(id)
         else:
             other_notes_id_map[nid] = [id]
         text = title + "\u001f" + text + "\u001f" + source
-        index_notes.append((id, text, tags, -1, "-1", "")) 
+        index_notes.append((id, text, tags, -1, "-1", ""))
 
     for id, flds, t, did, mid in oList:
         referenced_notes = ""
@@ -80,7 +80,7 @@ def _build_index(index_up_to_date):
     start = time.time()
     config = mw.addonManager.getConfig(__name__)
     try:
-        useFTS = config['useFTS']    
+        useFTS = config['useFTS']
     except KeyError:
         useFTS = False
     searchIndex = None
@@ -95,7 +95,7 @@ def _build_index(index_up_to_date):
         searchIndex = WhooshSearchIndex(corpus, config["disableNonNativeSearching"], index_up_to_date)
         end = time.time()
         initializationTime = round(end - start)
-        
+
 
     searchIndex.finder = Finder(mw.col)
     searchIndex.output.stopwords = searchIndex.stopWords
@@ -114,6 +114,7 @@ def _build_index(index_up_to_date):
     searchIndex.synonyms = loadSynonyms()
     searchIndex.tagSearch = config["searchOnTagEntry"]
     searchIndex.logging = config["logging"]
+    searchIndex.searchbar_mode = "Add-on"
     try:
         limit = config['numberOfResults']
         if limit <= 0:
@@ -143,10 +144,10 @@ def _build_index(index_up_to_date):
     if editor is not None and editor.addMode:
         searchIndex.output.editor = editor
     set_index(searchIndex)
-    editor = editor if editor is not None else get_edit()    
+    editor = editor if editor is not None else get_edit()
     showSearchResultArea(editor, initializationTime=initializationTime)
     printStartingInfo(editor)
-    
+
 
 def _should_rebuild():
     """
@@ -154,7 +155,7 @@ def _should_rebuild():
     """
 
     info = get_index_info()
-    corpus = get_corpus() 
+    corpus = get_corpus()
     config = mw.addonManager.getConfig(__name__)
 
     # if the index type changed, rebuild
@@ -187,11 +188,11 @@ def _should_rebuild():
     if info["size"] != len(corpus):
         return True
 
-   
 
-    
+
+
     if len(corpus) < config["alwaysRebuildIndexIfSmallerThan"]:
-        return True 
+        return True
 
     #if the decks used when building the index the last time differ from the decks used now, rebuild
     if len(config["decks"]) != len(info["decks"]):
@@ -200,7 +201,7 @@ def _should_rebuild():
     for d in config["decks"]:
         if d not in info["decks"]:
             return True
-    
+
 
     #if the excluded fields when building the index the last time differ from the excluded fields now, rebuild
     if len(config["fieldsToExclude"]) != len(info["fieldsToExclude"]):
@@ -214,7 +215,7 @@ def _should_rebuild():
             for field_name in field_list:
                 if field_name not in info["fieldsToExclude"][model_name]:
                     return True
-    
+
     if len(set(config["stopwords"])) != info["stopwordsSize"]:
         return True
 
@@ -238,4 +239,3 @@ class ProcessRunnable(QRunnable):
 
     def start(self):
         QThreadPool.globalInstance().start(self)
-

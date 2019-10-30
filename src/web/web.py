@@ -9,9 +9,9 @@ from aqt import mw
 from ..textutils import cleanSynonym, trimIfLongerThan, get_stamp
 from ..tag_find import get_most_active_tags
 from ..state import get_index, checkIndex, set_deck_map
-from ..notes import get_note, _get_priority_list, get_all_tags
+from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages
 from ..utils import get_web_folder_path, to_tag_hierarchy, pdf_to_base64, file_exists
-from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html
+from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display
 
 
 def toggleAddon():
@@ -365,15 +365,19 @@ def display_note_reading_modal(note_id):
 
         # if source is a pdf file path, try to display it
         if note[3] is not None and note[3].strip().lower().endswith(".pdf") and file_exists(note[3]):
-            _display_pdf(note[3].strip(), note[8])
+            _display_pdf(note[3].strip(), note_id)
 
 
 
-def _display_pdf(full_path, pages_read):
+
+def _display_pdf(full_path, note_id):
     index = get_index()
     base64pdf = pdf_to_base64(full_path)
     blen = len(base64pdf)
-    pages_read = "" if pages_read is None else ",".join([p for p in pages_read.split() if len(p) > 0])
+    pages_read = get_read_pages(note_id)
+    pages_read_js = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
+    # pages read are ordered by date, so take last
+    last_page_read = pages_read[-1] if len(pages_read) > 0 else 1
 
     init_code = """
             var bstr = atob(b64);
@@ -385,37 +389,50 @@ def _display_pdf(full_path, pages_read):
         var file = new File([arr], "test.pdf", {type : "application/pdf" });
         var fileReader = new FileReader();
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.worker.min.js';
-        // pdfjsLib.GlobalWorkerOptions.workerSrc = false;
         pagesRead = [%s];
         fileReader.onload = function() {
+            var canvas = document.getElementById("siac-pdf-canvas");
             var typedarray = new Uint8Array(this.result);
-            pdfjsLib.getDocument(typedarray).then(function(pdf) {
+            var loadingTask = pdfjsLib.getDocument(typedarray);
+            loadingTask.promise.then(function(pdf) {
                 pdfDisplayed = pdf;
-                pdfDisplayedCurrentPage = 1;
-                pdf.getPage(1).then(function(page) {
-                    var canvas = document.getElementById("siac-pdf-canvas");
+                pdfDisplayedCurrentPage = %s;
+                pdf.getPage(pdfDisplayedCurrentPage).then(function(page) {
                     var viewport = page.getViewport({scale :1.0});
                     var scale = (canvas.parentNode.clientWidth - 23) / viewport.width;
                     viewport = page.getViewport({scale : scale});
                     pdfDisplayedScale = scale;
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
-                    page.render({
+                    var renderTask = page.render({
                         canvasContext: canvas.getContext('2d'),
                         viewport: viewport
                     });
+                    renderTask.promise.then(function() {
+
+                        var textContent = page.getTextContent().then(function(textContent) {
+                            $("#text-layer").css({ height: canvas.height + 'px', width: canvas.width + 'px' });
+                            pdfjsLib.renderTextLayer({
+                                textContent: textContent,
+                                container: $("#text-layer").get(0),
+                                viewport,
+                                textDivs: []
+                            });
+                        });
+                    })
+               });
                 document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
+                updatePdfProgressBar();
                 $('#siac-loader-modal').remove();
                 if (pagesRead.indexOf(1) !== -1) {
 		            document.getElementById('siac-pdf-overlay').style.display = 'block';
                     document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
 	            }
-                });
             });
         };
         fileReader.readAsArrayBuffer(file);
         b64 = ""; arr = null; bstr = null; file = null; fileReader = null;
-    """ % pages_read
+    """ % (pages_read_js, last_page_read)
     #send large files in multiple packets
     if blen > 10000000:
         index.output.editor.web.page().runJavaScript("var b64 = `%s`;" % base64pdf[0: 10000000])
@@ -438,6 +455,45 @@ def showStylingModal(editor):
         searchIndex = get_index()
         searchIndex.output.showInModal(html)
         searchIndex.output.editor.web.eval("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")
+
+def show_field_picker_modal(img_src):
+    """
+        Called after an image has been selected from a PDF, should display all fields that are currently in the editor,
+        let the user pick one, and on picking, insert the img into the field.
+    """
+    if checkIndex():
+        index = get_index()
+        modal = """ <div class="siac-modal-small" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto;">%s</div><br><br><div class="siac-btn" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
+        flds = ""
+        for i, f in enumerate(index.output.editor.note.model()['flds']):
+            flds += """<span class="siac-field-picker-opt" onclick="$(`.field`).get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove();">%s</span><br>""" % (i, img_src, f["name"])
+        modal = modal % (flds, img_src)
+        index.output.editor.web.eval("$('#siac-reading-modal-text').append('%s');" % modal.replace("'", "\\'"))
+
+def update_reading_bottom_bar(nid):
+    queue = _get_priority_list()
+    pos_lbl = ""
+    if queue is not None and len(queue) > 0:
+        try:
+            pos = next(i for i,v in enumerate(queue) if v[0] == nid)
+            pos_lbl = "Position: %s / %s" % (pos + 1, len(queue))
+            pos_lbl_btn = "<b>%s</b> / <b>%s</b>" % (pos + 1, len(queue))
+        except:
+            pos_lbl = "Not in Queue"
+            pos_lbl_btn = "<b>Not in Queue</b>"
+
+    else:
+        pos_lbl = "Not in Queue"
+        pos_lbl_btn = "<b>Not in Queue</b>"
+
+    qd = get_queue_head_display(nid, queue)
+    get_index().output.editor.web.eval("""
+        document.getElementById('siac-queue-lbl').innerHTML = '%s';
+        $('#siac-queue-lbl').fadeIn('slow');
+        $('.siac-queue-sched-btn:first').html('%s');
+        $('#siac-queue-readings-list').replaceWith(`%s`);
+        """ % (pos_lbl, pos_lbl_btn, qd))
+
 
 
 def setInfoboxHtml(html, editor):
@@ -597,4 +653,3 @@ def show_loader(target_div_id, text):
 
     html = get_loader_html(text)
     get_index().output.editor.web.eval("$('#%s').append(`%s`);" % (target_div_id, html))
-   
