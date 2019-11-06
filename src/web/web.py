@@ -424,7 +424,7 @@ def _display_pdf(full_path, note_id):
                 document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
                 updatePdfProgressBar();
                 $('#siac-loader-modal').remove();
-                if (pagesRead.indexOf(1) !== -1) {
+                if (pagesRead.indexOf(pdfDisplayedCurrentPage) !== -1) {
 		            document.getElementById('siac-pdf-overlay').style.display = 'block';
                     document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
 	            }
