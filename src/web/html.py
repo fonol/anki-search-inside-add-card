@@ -441,6 +441,7 @@ def get_reading_modal_html(note):
                     <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide(); if (pdfDisplayed) {{ pdfDisplayed.destroy(); pdfDisplayed = null; }} {save_on_close} $("#siac-reading-modal-text").html("");'>&times;</span>
                 </div>
 
+                <div id='siac-pdf-tooltip' onclick='event.stopPropagation();'><div id='siac-pdf-tooltip-results-area'></div></div>
                 <div id='siac-reading-modal-top-bar' style='height: 10%; min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
                     <div style='flex: 1 1; overflow: hidden;'>
                         <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden;'>{title}</h2>
@@ -555,9 +556,9 @@ def get_pdf_viewer_html(nid):
     html = """
             <div id='siac-pdf-overlay'>Page Read</div>
 
-        <div id='siac-pdf-top' style='width: 100%%; height: calc(100%% - 40px); position:relative; max-height: calc(100%% - 40px); overflow-y: auto;' onwheel='pdfMouseWheel(event);'>
+        <div id='siac-pdf-top' style='width: 100%%; height: calc(100%% - 40px); position:relative; max-height: calc(100%% - 40px); overflow-y: auto; text-align: center;' onwheel='pdfMouseWheel(event);'>
             <canvas id="siac-pdf-canvas" style='z-index: 99999;'></canvas>
-            <div id="text-layer" class="textLayer"></div>
+            <div id="text-layer" onmouseup='pdfKeyup();' onclick='if (!window.getSelection().toString().length) {$("#siac-pdf-tooltip").hide();}' class="textLayer"></div>
         </div>
         <div style="width: 100%%; text-align: center; margin-top: 15px; position: relative;">
             <div style='position: absolute; left: 0;'>
@@ -859,4 +860,15 @@ def get_loader_html(text):
             <div> <div class='signal'></div><br/>%s</div>
         </div>
     """ % text
+    return html
+
+
+def get_pdf_list_first_card():
+    """
+        Returns the html for the body of a card that is displayed at first position when clicking on "PDFs".
+    """
+    html = """
+        <a class='keyword' onclick='pycmd("siac-pdf-last-read")'>Order by Last Read</a><br>
+        <a class='keyword' onclick='pycmd("siac-pdf-last-added")'>Order by Last Added</a>
+    """
     return html

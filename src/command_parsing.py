@@ -14,7 +14,7 @@ from .web.html import *
 from .special_searches import *
 from .notes import *
 from .output import Output
-from .textutils import trimIfLongerThan
+from .textutils import trimIfLongerThan, build_user_note_text
 from .editor import openEditor, NoteEditor
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
@@ -89,7 +89,30 @@ def expanded_on_bridge_cmd(self, cmd):
         if checkIndex():
             stamp = setStamp()
             notes = get_all_pdf_notes()
+            # add special note at front
+            sp_body = get_pdf_list_first_card()
+            notes.insert(0, (build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
             searchIndex.output.printSearchResults(notes, stamp)
+
+    elif cmd == "siac-pdf-last-read":
+        stamp = setStamp()
+        notes = get_pdf_notes_last_read_first()
+        sp_body = get_pdf_list_first_card()
+        notes.insert(0, (build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+        searchIndex.output.printSearchResults(notes, stamp)
+
+    elif cmd == "siac-pdf-last-added":
+        stamp = setStamp()
+        notes = get_pdf_notes_last_added_first()
+        sp_body = get_pdf_list_first_card()
+        notes.insert(0, (build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+        searchIndex.output.printSearchResults(notes, stamp)
+
+    elif cmd.startswith("siac-pdf-selection "):
+        stamp = setStamp()
+        if checkIndex():
+            searchIndex.search(cmd[19:], ["-1"], only_user_notes = False, print_mode = "pdf")
+
 
     elif cmd.startswith("pSort "):
         if checkIndex():
@@ -139,11 +162,13 @@ def expanded_on_bridge_cmd(self, cmd):
 
     elif cmd.startswith("siac-edit-user-note "):
         id = int(cmd.split()[1])
-        NoteEditor(self.parentWindow, id)
+        if id > -1:
+            NoteEditor(self.parentWindow, id)
 
     elif cmd.startswith("siac-delete-user-note-modal "):
         nid = int(cmd.split()[1])
-        display_note_del_confirm_modal(self, nid)
+        if nid > -1:
+            display_note_del_confirm_modal(self, nid)
 
     elif cmd.startswith("siac-delete-user-note "):
         id = int(cmd.split()[1])
@@ -153,7 +178,8 @@ def expanded_on_bridge_cmd(self, cmd):
 
     elif cmd.startswith("siac-read-user-note "):
         id = int(cmd.split()[1])
-        display_note_reading_modal(id)
+        if id >= 0:
+            display_note_reading_modal(id)
 
     elif cmd == "siac-user-note-queue":
         stamp = setStamp()
@@ -180,7 +206,7 @@ def expanded_on_bridge_cmd(self, cmd):
             searchIndex.output.printSearchResults(notes, stamp)
 
     elif cmd == "siac-user-note-queue-picker":
-        picker = QueuePicker(None)
+        picker = QueuePicker(self.parentWindow)
         if picker.exec_():
             if picker.chosen_id is not None:
                 display_note_reading_modal(picker.chosen_id)

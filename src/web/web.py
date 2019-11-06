@@ -411,7 +411,7 @@ def _display_pdf(full_path, note_id):
                     renderTask.promise.then(function() {
 
                         var textContent = page.getTextContent().then(function(textContent) {
-                            $("#text-layer").css({ height: canvas.height + 'px', width: canvas.width + 'px' });
+                            $("#text-layer").css({ height: canvas.height , width: canvas.width, left: canvas.offsetLeft});
                             pdfjsLib.renderTextLayer({
                                 textContent: textContent,
                                 container: $("#text-layer").get(0),

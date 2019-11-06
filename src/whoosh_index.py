@@ -102,7 +102,7 @@ class WhooshSearchIndex:
 
 
 
-    def search(self, text, decks, only_user_notes = False):
+    def search(self, text, decks, only_user_notes = False, print_mode = "default"):
         """
         Search for the given text.
 
@@ -110,16 +110,20 @@ class WhooshSearchIndex:
         text - string to search, typically fields content
         decks - list of deck ids, if -1 is contained, all decks are searched
         """
-        worker = Worker(self.searchProc, text, decks, only_user_notes) 
+        worker = Worker(self.searchProc, text, decks, only_user_notes, print_mode)
         worker.stamp = self.output.getMiliSecStamp()
         self.output.latest = worker.stamp
-        worker.signals.result.connect(self.printOutput)
-        #cs = self.searchProc(text, decks) 
+        if print_mode == "default":
+            worker.signals.result.connect(self.printOutput)
+        elif print_mode == "pdf":
+            worker.signals.result.connect(self.print_pdf)
+
+        worker.signals.tooltip.connect(self.output.show_tooltip)
         self.threadPool.start(worker)
 
 
         
-    def searchProc(self, text, decks, only_user_notes = False):    
+    def searchProc(self, text, decks, only_user_notes = False, print_mode = "default"):    
         resDict = {}
         start = time.time()
         orig = text
@@ -127,8 +131,12 @@ class WhooshSearchIndex:
         resDict["time-stopwords"] = int((time.time() - start) * 1000)
         self.lastSearch = (text, decks, "default")
         if len(text) == 0:
-            self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100).replace("\u001f", ""))
-            return
+            if print_mode == "default":
+                self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100).replace("\u001f", ""))
+                return None
+            elif print_mode == "pdf":
+                return None
+
         start = time.time()
         text = expandBySynonyms(text, self.synonyms)
         resDict["time-synonyms"] = int((time.time() - start) * 1000)
@@ -209,6 +217,16 @@ class WhooshSearchIndex:
             if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
                 query_set = set(replaceAccentsWithVowels(s).lower() for s in self.lastResDict["query"].split(" "))
             self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
+
+    def print_pdf(self, result, stamp):
+        query_set = None
+        if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
+            query_set =  set(replaceAccentsWithVowels(s).lower() for s in self.lastResDict["query"].split(" "))
+        if result is not None:
+            self.output.print_pdf_search_results(result["results"], stamp, query_set)
+        else:
+            self.output.print_pdf_search_results([], stamp, self.lastSearch[0])
+
 
     def removeTags(self, text):
         """

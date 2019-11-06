@@ -488,6 +488,21 @@ def get_all_pdf_notes():
     output_list = _to_output_list(res, [])
     return output_list
 
+def get_pdf_notes_last_added_first():
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%.pdf' order by id desc").fetchall()
+    conn.close()
+    output_list = _to_output_list(res, [])
+    return output_list
+
+def get_pdf_notes_last_read_first():
+    conn = _get_connection()
+    res = conn.execute("select notes.id,notes.title,notes.text,notes.source,notes.tags,notes.nid,notes.created,notes.modified,notes.reminder,notes.lastscheduled,notes.position from notes join read on notes.id == read.nid where lower(notes.source) like '%.pdf' group by notes.id order by max(read.created) desc").fetchall()
+    conn.close()
+    output_list = _to_output_list(res, [])
+    return output_list
+
+
 
 def get_pdf_info(nids):
     sql = "select nid, pagestotal, count(*) from read where nid in (%s) group by nid" % (",".join([str(n) for n in nids]))

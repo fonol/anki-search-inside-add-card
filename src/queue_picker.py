@@ -14,9 +14,8 @@ from anki.lang import _
 
 from .notes import *
 from .notes import _get_priority_list
-from .textutils import trimIfLongerThan, remove_headers, remove_all_bold_formatting, find_all_images, remove_colors
+from .textutils import trimIfLongerThan
 from .utils import file_exists
-from .editor import HTMLDelegate
 
 class QueuePicker(QDialog):
     """
@@ -34,10 +33,6 @@ class QueuePicker(QDialog):
 
         queue = _get_priority_list()
         self.t_view = QListWidget()
-        html_delegate = HTMLDelegate()
-        config = mw.addonManager.getConfig(__name__)
-        tag_bg = config["styling"]["general"]["tagBackgroundColor"]
-        tag_fg = config["styling"]["general"]["tagForegroundColor"]
 
         for ix, n in enumerate(queue):
             title = n[1] if n[1] is not None and len(n[1]) > 0 else "Untitled"

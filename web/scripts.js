@@ -188,6 +188,7 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
     if (!pdfDisplayed) {
         return;
     }
+    $("#siac-pdf-tooltip").hide();
     pdfDisplayed.getPage(num)
        .then(function(page) {
             pdfPageRendering = true;
@@ -213,8 +214,7 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
                 }
                 return lPage.getTextContent();
                }).then(function(textContent) {
-                   $("#text-layer").css({ height: canvas.height + 'px', width: canvas.width + 'px' });
-		   document.getElementById("text-layer").innerHTML = "";
+                   $("#text-layer").css({ height: canvas.height , width: canvas.width, left: canvas.offsetLeft  }).html('');
                    pdfjsLib.renderTextLayer({
                        textContent: textContent,
                        container: document.getElementById("text-layer"),
@@ -1066,6 +1066,40 @@ function swapReadingModal() {
 
 }
 
+function pdfKeyup() {
+	if (window.getSelection().toString().length) {
+		let s = window.getSelection();
+         let r = s.getRangeAt(0);
+        let text = s.toString();
+        if (r.startContainer.parentNode) {
+            text = joinTextLayerNodeTexts(r.startContainer.parentNode.innerHTML, text);
+        }
+		let rect = r.getBoundingClientRect();
+		let prect = document.getElementById("siac-reading-modal").getBoundingClientRect();
+		document.getElementById('siac-pdf-tooltip-results-area').innerHTML = 'Searching...';
+        $('#siac-pdf-tooltip').css({'top': (rect.top - prect.top + rect.height) + "px", 'left': (rect.left - prect.left) + "px" }).show();
+        pycmd("siac-pdf-selection " + text);
+
+	}
+}
+
+function joinTextLayerNodeTexts(first, text) {
+    if (first.length) {
+        if (text.startsWith(first) && first !== text) {
+            return text.substring(0, first.length) + " " + text.substring(first.length);
+        } else {
+            for (var i = 1; i< first.length; i++) {
+                if (text.startsWith(first.substring(i))) {
+                    return text.substring(0, first.length - i) + " " + text.substring(first.length - i);
+                }
+            }
+        }
+        return text;
+
+    } else {
+        return text;
+    }
+}
 
 function globalKeydown(e) {
        if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode == 78) {

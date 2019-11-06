@@ -42,9 +42,9 @@ class FTSIndex:
         #exclude fields
         try:
             self.fields_to_exclude = config['fieldsToExclude']
-            self.creation_info["fields_to_exclude_original"] = self.fields_to_exclude 
+            self.creation_info["fields_to_exclude_original"] = self.fields_to_exclude
         except KeyError:
-            self.fields_to_exclude = {} 
+            self.fields_to_exclude = {}
         self.output.fields_to_exclude = self.fields_to_exclude
 
         #if fts5 is compiled, use it
@@ -64,7 +64,7 @@ class FTSIndex:
                 conn.execute("create virtual table notes using fts4(nid, text, tags, did, source, mid, refs)")
             else:
                 conn.execute("create virtual table notes using fts3(nid, text, tags, did, source, mid, refs)")
-            
+
             conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?,?,?)', cleaned)
             conn.execute("INSERT INTO notes(notes) VALUES('optimize')")
             conn.commit()
@@ -88,7 +88,7 @@ class FTSIndex:
         if 'enable_fts3' in available_pragmas:
             return "SQLite FTS3"
         return "SQLite - No FTS detected (trying to use FTS3)"
-   
+
 
     def _cleanText(self, corpus):
         filtered = list()
@@ -112,22 +112,26 @@ class FTSIndex:
         return ""
 
 
-    def search(self, text, decks, only_user_notes = False):
+    def search(self, text, decks, only_user_notes = False, print_mode = "default"):
         """
         Search for the given text.
-        Args: 
+        Args:
         text - string to search, typically fields content
         decks - list of deck ids, if -1 is contained, all decks are searched
         """
-        worker = Worker(self.searchProc, text, decks, only_user_notes) 
+        worker = Worker(self.searchProc, text, decks, only_user_notes, print_mode)
         worker.stamp = self.output.getMiliSecStamp()
         self.output.latest = worker.stamp
-        worker.signals.result.connect(self.printOutput)
+        if print_mode == "default":
+            worker.signals.result.connect(self.printOutput)
+        elif print_mode == "pdf":
+            worker.signals.result.connect(self.print_pdf)
+
         worker.signals.tooltip.connect(self.output.show_tooltip)
         self.threadPool.start(worker)
 
 
-    def searchProc(self, text, decks, only_user_notes):
+    def searchProc(self, text, decks, only_user_notes, print_mode):
         resDict = {}
         start = time.time()
         orig = text
@@ -139,12 +143,16 @@ class FTSIndex:
             log("Self.pinned: " + str(self.pinned))
             log("Self.limit: " +str(self.limit))
         self.lastSearch = (text, decks, "default")
-        
+
         if len(text) == 0:
-            self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100).replace("\u001f", ""))
-            if mw.addonManager.getConfig(__name__)["hideSidebar"]:
-                return "Found 0 notes. Query was empty after cleaning."
-            return
+            if print_mode == "default":
+                self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100).replace("\u001f", ""))
+                if mw.addonManager.getConfig(__name__)["hideSidebar"]:
+                    return "Found 0 notes. Query was empty after cleaning."
+                return None
+            elif print_mode == "pdf":
+                return None
+
         start = time.time()
         text = expandBySynonyms(text, self.synonyms)
         resDict["time-synonyms"] = int((time.time() - start) * 1000)
@@ -156,9 +164,9 @@ class FTSIndex:
 
         query = u" OR ".join(["tags:" + s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ])
         if self.type == "SQLite FTS5":
-            query += " OR " + " OR ".join(["text:" + s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ]) 
+            query += " OR " + " OR ".join(["text:" + s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ])
         else:
-            query += " OR " + " OR ".join([s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ]) 
+            query += " OR " + " OR ".join([s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ])
         if query == " OR ":
             if self.logging:
                 log("Returning. Query was: " + query)
@@ -186,7 +194,7 @@ class FTSIndex:
             if self.logging:
                 log("Executing db query threw exception: " + e.message)
             res = []
-        if self.logging: 
+        if self.logging:
             log("dbStr was: " + dbStr)
             log("Result length of db query: " + str(len(res)))
 
@@ -206,14 +214,14 @@ class FTSIndex:
                 if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
                     rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0), r[6], r[7]))
             resDict["time-ranking"] = int((time.time() - start) * 1000)
-            
+
         else:
             start = time.time()
             for r in res:
                 if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
                     rList.append((r[4], r[2], r[3], r[0], self.simpleRank(r[5]), r[6], r[7]))
             resDict["time-ranking"] = int((time.time() - start) * 1000)
-      
+
         conn.close()
 
         #if fts5 is not used, results are not sorted by score
@@ -236,11 +244,16 @@ class FTSIndex:
             pass
         elif result is not None:
             self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
-    
-    
-            
-        
 
+
+    def print_pdf(self, result, stamp):
+        query_set = None
+        if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
+            query_set =  set(replaceAccentsWithVowels(s).lower() for s in self.lastResDict["query"].split(" "))
+        if result is not None:
+            self.output.print_pdf_search_results(result["results"], stamp, query_set)
+        else:
+            self.output.print_pdf_search_results([], stamp, self.lastSearch[0])
 
 
     def searchDB(self, text, decks):
@@ -251,7 +264,7 @@ class FTSIndex:
         stamp = self.output.getMiliSecStamp()
         self.output.latest = stamp
         found = self.finder.findNotes(text)
-        
+
         if len (found) > 0:
             if not "-1" in decks:
                 deckQ =  "(-1, %s)" % ",".join(decks)
@@ -282,7 +295,7 @@ class FTSIndex:
         return clean(text, self.stopWords)
 
 
-    
+
     def simpleRank(self, rawMatchInfo):
         """
         Based on https://github.com/saaj/sqlite-fts-python/blob/master/sqlitefts/ranking.py
@@ -299,7 +312,7 @@ class FTSIndex:
                     score += float(x1) / x2
         return -score
 
-    
+
 
     def bm25(self, rawMatchInfo, *args):
         match_info = self._parseMatchInfo(rawMatchInfo)
@@ -328,7 +341,7 @@ class FTSIndex:
             for j in range(col_count):
                 x = X_O + (3 * j * (i + 1))
                 if float(match_info[x]) != 0.0:
-                    cd += 1 
+                    cd += 1
 
         for i in range(term_count):
             for j in range(col_count):
@@ -358,7 +371,7 @@ class FTSIndex:
                 else:
                     rhs = (term_frequency * (K + 1)) / denom
 
-                score += (idf * rhs) * weight 
+                score += (idf * rhs) * weight
         return -score - cd * 20
 
     def deleteNote(self, nid):
@@ -425,7 +438,7 @@ class FTSIndex:
 
 
 class Worker(QRunnable):
- 
+
     def __init__(self, fn, *args):
         super(Worker, self).__init__()
         self.fn = fn
@@ -446,12 +459,12 @@ class Worker(QRunnable):
             self.signals.error.emit((exctype, value, traceback.format_exc()))
         else:
             #use stamp to track time
-            self.signals.result.emit(result, self.stamp)  
+            self.signals.result.emit(result, self.stamp)
         finally:
             self.signals.finished.emit()
 
 class WorkerSignals(QObject):
-   
+
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
     result = pyqtSignal(object, object)

@@ -1153,7 +1153,8 @@ span.tag-symbol {
  position: absolute;
  bottom : 30px;
  right: 0; left: 0;
- z-index: 9999999;
+ z-index: 2;
+ user-select: none;
 background-color: #43a047;
 border-radius: 5px;
 padding: 4px;
@@ -1162,6 +1163,27 @@ text-align: center;
 color: white;
 margin-left: auto;
 margin-right: auto;
+}
+
+#siac-pdf-tooltip {
+	position: absolute;
+	display: none;
+	z-index: 999;
+    	background-color: #272828;
+	color: white;
+	padding: 9px;
+	border-radius: 5px;
+	border: 2px solid darkorange;
+
+}
+
+#siac-pdf-tooltip-results-area {
+	overflow-y: auto;
+	overflow-x: hidden;
+	max-height: 200px;
+	max-width: 250px;
+	padding-right: 8px;
+	padding-left: 3px;
 }
 .siac-field-picker-opt {
     cursor: pointer;
@@ -1206,7 +1228,7 @@ margin-right: auto;
 .siac-tag-info-box-left .editLbl {
     border-right: 1px solid $noteBorderColor$;
 }
-#cal-info .editLbl {
+#cal-info .editLbl, #siac-pdf-tooltip-results-area .editLbl {
     border-right: 1px solid $noteBorderColor$;
 }
 .siac-tag-info-box .flot-y-axis {
@@ -1284,6 +1306,7 @@ margin-right: auto;
     padding: 15px;
     z-index: 99999999;
     border-radius: 5px;
+    overflow: hidden;
 }
 
 #siac-search-modal {
@@ -1366,6 +1389,7 @@ margin-right: auto;
 }
 .siac-queue-picker-icn:hover {
     transform: scale(1.4);
+    filter: brightness(140%);
 }
 #siac-queue-sched-wrapper {
     padding: 5px 0 5px 0;
@@ -1403,6 +1427,9 @@ margin-right: auto;
     color: white;
     border-color: darkorange;
 }
+.siac-queue-sched-btn.active:hover, .siac-queue-sched-btn-hor.active:hover {
+   filter: brightness(140%);
+}
 
 .siac-queue-sched-hor-sep {
     display: inline-block;
@@ -1421,6 +1448,7 @@ margin-right: auto;
 
 .siac-clickable-anchor:hover {
     transform: scale(1.02);
+    filter: brightness(140%);
 }
 
 
@@ -1511,9 +1539,9 @@ hr.siac-modal-sep {
 .siac-prog-sq {
    /* background-color: #616161; */
     /* border: 2px solid #373737; */
-   
-     background-color: #747272; 
-     border: 2px solid #494949; 
+
+     background-color: #747272;
+     border: 2px solid #494949;
 }
 
 #text-layer {

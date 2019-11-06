@@ -58,15 +58,28 @@ class Output:
 
         self.noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
                             <div class='topLeftWr'>
-                                <div class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
+                                <div class='rankingLbl'>%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
                                 %s
                             </div>
                             <div class='btnBar' id='btnBarSmp-%s' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                                 <div class='editLbl' onclick='edit(%s)'>Edit</div>
                             </div>
-                            <div class='cardR' onmouseup='getSelectionText()'  onmouseenter='cardMouseEnter(this, %s, "simple")' onmouseleave='cardMouseLeave(this, %s, "simple")'>%s</div>
+                            <div class='cardR' onmouseup='%s'  onmouseenter='cardMouseEnter(this, %s, "simple")' onmouseleave='cardMouseLeave(this, %s, "simple")'>%s</div>
                             <div style='position: absolute; bottom: 0px; right: 0px;'>%s</div>
                             <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>
+                        </div>"""
+
+        self.noteTemplateUserNoteSimple = """<div class='cardWrapper' style="display: block;">
+                            <div class='topLeftWr'>
+                                <div class='rankingLbl'>%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
+                                %s
+                            </div>
+                            <div class='btnBar' id='btnBarSmp-%s' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+                                <div class='editLbl' onclick='pycmd("siac-edit-user-note %s")'>Edit</div>
+                            </div>
+                            <div class='cardR' onmouseup='%s'  onmouseenter='cardMouseEnter(this, %s, "simple")' onmouseleave='cardMouseLeave(this, %s, "simple")'>%s</div>
+                            <div style='position: absolute; bottom: 0px; right: 0px;'>%s</div>
+                            <div class='cardLeftBot' style='display: none' onclick='%s'></div>
                         </div>"""
 
         self.noteTemplateUserNote = """<div class='cardWrapper %s' id='nWr-%s'>
@@ -566,7 +579,7 @@ class Output:
             return "No keywords for empty result."
         return html[:-2]
 
-    def get_result_html_simple(self, db_list, tag_hover = True):
+    def get_result_html_simple(self, db_list, tag_hover = True, search_on_selection = True):
         html = ""
         epochTime = int(time.time() * 1000)
         timeDiffString = ""
@@ -612,10 +625,11 @@ class Output:
             text = self.tryHideImageOcclusion(text)
             #try to put fields that consist of a single image in their own line
             text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
-            newNote = self.noteTemplateSimple % ( counter + 1,
+            template = self.noteTemplateSimple if str(res[2]) != "-1" else self.noteTemplateUserNoteSimple
+            newNote = template % ( counter + 1,
                         "&nbsp;&#128336; " + timeDiffString,
                         "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
-                        retInfo, res[3],res[3],res[3],res[3],
+                        retInfo, res[3],res[3],"getSelectionText()" if search_on_selection else "", res[3],res[3],
                         text,
                         self.buildTagString(res[1], tag_hover, maxLength = 25, maxCount = 2), res[3])
 
@@ -908,6 +922,16 @@ class Output:
     def show_in_modal_subpage(self, html):
         if self.editor is not None and self.editor.web is not None:
             self.editor.web.eval("showModalSubpage(`%s`);" % html)
+
+
+    def print_pdf_search_results(self, results, stamp, query_set):
+        if results is not None and len(results) > 0:
+            html = self.get_result_html_simple(results[:50], False, False)
+        else:
+            html = "Nothing found for query: <br/><br/><i>%s</i>" % (trimIfLongerThan(" ".join(query_set), 200))
+        self.editor.web.eval("document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`" % html);
+
+
 
     @staticmethod
     def _retToColor(retention):
