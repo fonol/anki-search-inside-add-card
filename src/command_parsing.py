@@ -205,17 +205,19 @@ def expanded_on_bridge_cmd(self, cmd):
             notes = get_random(searchIndex.limit, searchIndex.pinned)
             searchIndex.output.printSearchResults(notes, stamp)
 
-    elif cmd == "siac-user-note-queue-picker":
-        picker = QueuePicker(self.parentWindow, _get_priority_list())
+    elif cmd.startswith("siac-user-note-queue-picker "):
+        nid = int(cmd.split()[1])
+        picker = QueuePicker(self.parentWindow, _get_priority_list(), get_pdf_notes_not_in_queue())
         if picker.exec_():
-            if picker.chosen_id is not None:
+            if picker.chosen_id is not None and picker.chosen_id >= 0:
                 display_note_reading_modal(picker.chosen_id)
+            else:
+                display_note_reading_modal(nid)
+        else:
+            display_note_reading_modal(nid)
 
-    elif cmd == "siac-user-note-unqueued-picker":
-        picker = QueuePicker(self.parentWindow, get_pdfs_not_in_queue())
-        if picker.exec_():
-            if picker.chosen_id is not None:
-                display_note_reading_modal(picker.chosen_id)
+
+
 
     elif cmd == "siac-user-note-update-btns":
         queue_count = get_queue_count()

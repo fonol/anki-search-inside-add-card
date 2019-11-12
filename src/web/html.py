@@ -484,7 +484,7 @@ def get_reading_modal_html(note):
                         <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px;'>{time_str}</span> <br>
-                            <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker")'>\u2630</span></div><br>
+                            <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
                             <a onclick='pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
                             <a onclick='pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
                         </div>
@@ -568,17 +568,17 @@ def get_pdf_viewer_html(nid):
             <div id="text-layer" onmouseup='pdfKeyup();' onclick='if (!window.getSelection().toString().length) {$("#siac-pdf-tooltip").hide();}' class="textLayer"></div>
         </div>
         <div style="width: 100%%; text-align: center; margin-top: 15px; position: relative;">
-            <div style='position: absolute; left: 0;'>
+            <div style='position: absolute; left: 0; z-index: 1;'>
                 <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("down");'>-</div>
                 <div class='siac-btn siac-btn-dark' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
                 <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
                 <div class='siac-btn siac-btn-dark' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986; IMG</b></div>
                 <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only %s")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
             </div>
-            <div style='user-select:none; display: inline-block;'>
-            <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b>&lt;</b></div>
-            <span style='display: inline-block; text-align: center; width: 70px; user-select: none;' id='siac-pdf-page-lbl'>Loading...</span>
-            <div class='siac-btn siac-btn-dark' onclick='pdfPageRight();'><b>&gt;</b></div>
+            <div style='user-select:none; display: inline-block; position:relative; z-index: 2; padding: 0 5px 0 5px; background: #272828;'>
+                <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b>&lt;</b></div>
+                <span style='display: inline-block; text-align: center; width: 70px; user-select: none;' id='siac-pdf-page-lbl'>Loading...</span>
+                <div class='siac-btn siac-btn-dark' onclick='pdfPageRight();'><b>&gt;</b></div>
             </div>
 
             <div style='position: absolute; right: 0; display: inline-block;'>

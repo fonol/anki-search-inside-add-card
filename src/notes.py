@@ -396,7 +396,6 @@ def _get_recently_used_tags_counts(limit):
     return counts
 
 def _get_priority_list(nid_to_exclude = None):
-    conn = _get_connection()
     if nid_to_exclude is not None:
         sql = """
             select * from notes where position >= 0 and id != %s order by position asc
@@ -405,6 +404,7 @@ def _get_priority_list(nid_to_exclude = None):
         sql = """
             select * from notes where position >= 0 order by position asc
         """
+    conn = _get_connection()
     res = conn.execute(sql).fetchall()
     conn.close()
     return list(res)
@@ -504,6 +504,11 @@ def get_pdf_notes_last_read_first():
     output_list = _to_output_list(res, [])
     return output_list
 
+def get_pdf_notes_not_in_queue():
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%.pdf' and position is null order by id desc").fetchall()
+    conn.close()
+    return list(res)
 
 
 def get_pdf_info(nids):
