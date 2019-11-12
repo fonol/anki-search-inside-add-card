@@ -12,11 +12,11 @@ from anki.utils import isMac
 from anki.lang import _
 
 
-from .notes import *
-from .notes import _get_priority_list
-from .textutils import remove_headers, remove_all_bold_formatting, find_all_images, remove_colors
-from .utils import url_to_base64, get_web_folder_path, dark_mode_is_used
-from .web.web import update_reading_bottom_bar
+from ..notes import *
+from ..notes import _get_priority_list
+import utility.text
+import utility.misc
+from ..web.web import update_reading_bottom_bar
 
 def openEditor(mw, nid):
     note = mw.col.getNote(nid)
@@ -87,8 +87,8 @@ class NoteEditor(QDialog):
         self.add_only = add_only
         self.read_note_id = read_note_id
         try:
-            self.dark_mode_used = dark_mode_is_used()
-        except:
+            self.dark_mode_used = utility.misc.dark_mode_is_used(mw.addonManager.getConfig(__name__))
+        except Exception as err:
             self.dark_mode_used = False
 
         if self.note_id is not None:
@@ -110,7 +110,7 @@ class NoteEditor(QDialog):
             self.save.clicked.connect(self.on_update_clicked)
         else:
             self.save = QPushButton("\u2714 Create")
-            self.setWindowTitle('New Note')
+            self.setWindowTitle('New Note (Ctrl/Cmd + Shift + N)')
             self.save.clicked.connect(self.on_create_clicked)
 
         self.cancel = QPushButton("Cancel")
@@ -379,7 +379,7 @@ class CreateTab(QWidget):
         vbox_left = QVBoxLayout()
 
         tag_lbl = QLabel()
-        tag_icn = QPixmap(get_web_folder_path() + "tag-icon.png").scaled(14,14)
+        tag_icn = QPixmap(utility.misc.get_web_folder_path() + "tag-icon.png").scaled(14,14)
         tag_lbl.setPixmap(tag_icn);
 
         tag_hb = QHBoxLayout()
@@ -453,19 +453,19 @@ class CreateTab(QWidget):
         self.vtb.setOrientation(Qt.Vertical)
         self.vtb.setIconSize(QSize(16, 16))
 
-        self.orange_black = self.vtb.addAction(QIcon(get_web_folder_path() + "icon-orange-black.png"), "Highlight 1")
+        self.orange_black = self.vtb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-orange-black.png"), "Highlight 1")
         self.orange_black.triggered.connect(self.on_highlight_ob_clicked)
 
-        self.red_white = self.vtb.addAction(QIcon(get_web_folder_path() + "icon-red-white.png"), "Highlight 2")
+        self.red_white = self.vtb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-red-white.png"), "Highlight 2")
         self.red_white.triggered.connect(self.on_highlight_rw_clicked)
 
-        self.yellow_black = self.vtb.addAction(QIcon(get_web_folder_path() + "icon-yellow-black.png"), "Highlight 3")
+        self.yellow_black = self.vtb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-yellow-black.png"), "Highlight 3")
         self.yellow_black.triggered.connect(self.on_highlight_yb_clicked)
 
-        self.blue_white = self.vtb.addAction(QIcon(get_web_folder_path() + "icon-blue-white.png"), "Highlight 4")
+        self.blue_white = self.vtb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-blue-white.png"), "Highlight 4")
         self.blue_white.triggered.connect(self.on_highlight_bw_clicked)
 
-        self.green_black = self.vtb.addAction(QIcon(get_web_folder_path() + "icon-green-black.png"), "Highlight 5")
+        self.green_black = self.vtb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-green-black.png"), "Highlight 5")
         self.green_black.triggered.connect(self.on_highlight_gb_clicked)
 
 
@@ -497,7 +497,7 @@ class CreateTab(QWidget):
         f.setStrikeOut(True)
         strike.setFont(f)
 
-        color = self.tb.addAction(QIcon(get_web_folder_path() + "icon-color-change.png"), "Foreground Color")
+        color = self.tb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-color-change.png"), "Foreground Color")
         color.triggered.connect(self.on_color_clicked)
 
         bullet_list = self.tb.addAction("BL")
@@ -674,7 +674,7 @@ class CreateTab(QWidget):
 
     def on_remove_headers_clicked(self):
         html = self.text.toHtml()
-        html = remove_headers(html)
+        html = utility.text.remove_headers(html)
         self.text.setHtml(html)
 
     def on_remove_bold_clicked(self):
@@ -765,12 +765,12 @@ class CreateTab(QWidget):
 
     def on_remove_colors_clicked(self):
         html = self.text.toHtml()
-        html = remove_colors(html)
+        html = utility.text.remove_colors(html)
         self.text.setHtml(html)
 
     def on_convert_images_clicked(self):
         html = self.text.toHtml()
-        images_contained = find_all_images(html)
+        images_contained = utility.text.find_all_images(html)
         if images_contained is None:
             return
         for image_tag in images_contained:
@@ -779,7 +779,7 @@ class CreateTab(QWidget):
                 continue
             url = re.search("src=(\"[^\"]+\"|'[^']+')", image_tag, flags=re.IGNORECASE).group(1)[1:-1]
             try:
-                base64 = url_to_base64(url)
+                base64 = utility.misc.url_to_base64(url)
                 if base64 is None or len(base64) == 0:
                     return
                 ending = ""

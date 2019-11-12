@@ -7,14 +7,14 @@ import os
 import sqlite3
 
 
-from .state import get_index, set_index, set_corpus, get_corpus, corpus_is_loaded, get_edit
-from .debug_logging import *
-from .web.web import showSearchResultArea, printStartingInfo
-from .web.html import loadSynonyms
+from ..state import get_index, set_index, set_corpus, get_corpus, corpus_is_loaded, get_edit
+from ..debug_logging import *
+from ..web.web import showSearchResultArea, printStartingInfo
+from ..web.html import loadSynonyms
 from .fts_index import FTSIndex
 from .whoosh_index import WhooshSearchIndex
-from .notes import get_all_notes
-from .utils import get_user_files_folder_path, get_whoosh_index_folder_path
+from ..notes import get_all_notes
+import utility.misc
 
 
 def get_notes_in_collection():
@@ -169,7 +169,7 @@ def _should_rebuild():
 
     #if db file / index dir is not existing, rebuild
     if config["useFTS"]:
-        file_path = get_user_files_folder_path()  + "search-data.db"
+        file_path = utility.misc.get_user_files_folder_path()  + "search-data.db"
         if not os.path.isfile(file_path):
             return True
         try:
@@ -181,7 +181,7 @@ def _should_rebuild():
         except:
             return True
     else:
-        file_path = get_whoosh_index_folder_path()
+        file_path = utility.misc.get_whoosh_index_folder_path()
         if not os.path.exists(file_path):
             return True
 

@@ -7,19 +7,20 @@ import aqt.stats
 import os
 
 from .state import checkIndex, get_index, set_index, set_corpus, get_old_on_bridge_cmd
-from .indexing import build_index, get_notes_in_collection
+from .index.indexing import build_index, get_notes_in_collection
 from .debug_logging import log
 from .web.web import *
 from .web.html import *
 from .special_searches import *
 from .notes import *
+from .notes import _get_priority_list
 from .output import Output
-from .textutils import trimIfLongerThan, build_user_note_text
-from .editor import openEditor, NoteEditor
+from .dialogs.editor import openEditor, NoteEditor
+from .dialogs.queue_picker import QueuePicker
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
-from .utils import get_user_files_folder_path, base64_to_file
-from .queue_picker import QueuePicker
+import utility.misc
+import utility.text
 
 config = mw.addonManager.getConfig(__name__)
 
@@ -91,28 +92,27 @@ def expanded_on_bridge_cmd(self, cmd):
             notes = get_all_pdf_notes()
             # add special note at front
             sp_body = get_pdf_list_first_card()
-            notes.insert(0, (build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+            notes.insert(0, (utility.text.build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
             searchIndex.output.printSearchResults(notes, stamp)
 
     elif cmd == "siac-pdf-last-read":
         stamp = setStamp()
         notes = get_pdf_notes_last_read_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, (build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+        notes.insert(0, (utility.text.build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
         searchIndex.output.printSearchResults(notes, stamp)
 
     elif cmd == "siac-pdf-last-added":
         stamp = setStamp()
         notes = get_pdf_notes_last_added_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, (build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+        notes.insert(0, (utility.text.build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
         searchIndex.output.printSearchResults(notes, stamp)
 
     elif cmd.startswith("siac-pdf-selection "):
         stamp = setStamp()
         if checkIndex():
             searchIndex.search(cmd[19:], ["-1"], only_user_notes = False, print_mode = "pdf")
-
 
     elif cmd.startswith("pSort "):
         if checkIndex():
@@ -206,7 +206,13 @@ def expanded_on_bridge_cmd(self, cmd):
             searchIndex.output.printSearchResults(notes, stamp)
 
     elif cmd == "siac-user-note-queue-picker":
-        picker = QueuePicker(self.parentWindow)
+        picker = QueuePicker(self.parentWindow, _get_priority_list())
+        if picker.exec_():
+            if picker.chosen_id is not None:
+                display_note_reading_modal(picker.chosen_id)
+
+    elif cmd == "siac-user-note-unqueued-picker":
+        picker = QueuePicker(self.parentWindow, get_pdfs_not_in_queue())
         if picker.exec_():
             if picker.chosen_id is not None:
                 display_note_reading_modal(picker.chosen_id)
@@ -317,7 +323,7 @@ def expanded_on_bridge_cmd(self, cmd):
 
     elif cmd.startswith("siac-add-image "):
         b64 = cmd.split()[2][13:]
-        image = base64_to_file(b64)
+        image = utility.misc.base64_to_file(b64)
         name = mw.col.media.addFile(image)
         show_field_picker_modal(name)
         os.remove(image)
@@ -428,7 +434,6 @@ def expanded_on_bridge_cmd(self, cmd):
             return
         update_field_to_exclude(cmd.split()[1], int(cmd.split()[2]), cmd.split()[3] == "true")
 
-
     else:
         return get_old_on_bridge_cmd()(self, cmd)
 
@@ -537,14 +542,10 @@ def setStamp():
     """
     if checkIndex():
         searchIndex = get_index()
-        stamp = searchIndex.output.getMiliSecStamp()
+        stamp = utility.misc.get_milisec_stamp()
         searchIndex.output.latest = stamp
         return stamp
     return None
-
-
-
-
 
 def setStats(nid, stats):
     """
@@ -552,8 +553,6 @@ def setStats(nid, stats):
     """
     if checkIndex():
         get_index().output.showStats(stats[0], stats[1], stats[2], stats[3])
-
-
 
 def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
     """
@@ -579,7 +578,7 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
             searchRes = searchIndex.searchDB(content, decks)
 
         elif searchByTags:
-            stamp = searchIndex.output.getMiliSecStamp()
+            stamp = utility.misc.get_milisec_stamp()
             searchIndex.output.latest = stamp
             searchIndex.lastSearch = (content, ["-1"], "tags")
             searchRes = findBySameTag(content, searchIndex.limit, [], searchIndex.pinned)
@@ -622,7 +621,7 @@ def defaultSearchWithDecks(editor, textRaw, decks):
     cleaned = searchIndex.clean(textRaw)
     if len(cleaned) == 0:
         if editor is not None and editor.web is not None:
-            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(textRaw, 100).replace("\u001f", ""))
+            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % utility.text.trim_if_longer_than(textRaw, 100).replace("\u001f", ""))
         return
     searchIndex.lastSearch = (cleaned, decks, "default")
     searchRes = searchIndex.search(cleaned, decks)
@@ -639,7 +638,7 @@ def search_for_user_notes_only(editor, text):
     cleaned = searchIndex.clean(text)
     if len(cleaned) == 0:
         if editor is not None and editor.web is not None:
-            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(text, 100).replace("\u001f", ""))
+            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % utility.text.trim_if_longer_than(text, 100).replace("\u001f", ""))
         return
     searchIndex.lastSearch = (cleaned, ["-1"], "user notes")
     searchRes = searchIndex.search(cleaned, ["-1"], only_user_notes = True)
@@ -649,22 +648,16 @@ def addHideShowShortcut(shortcuts, editor):
         return
     QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
 
-
 def getCurrentContent(editor):
     text = ""
     for f in editor.note.fields:
         text += f
     return text
 
-
-
 def addNoteToIndex(note):
     searchIndex = get_index()
     if searchIndex is not None:
         searchIndex.addNote(note)
-
-
-
 
 def addTag(tag):
     """
@@ -792,7 +785,7 @@ def getIndexInfo():
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"],
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
-            ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else get_user_files_folder_path() + "siac-notes.db"
+            ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db"
             )
 
 
@@ -811,9 +804,6 @@ def showTimingModal():
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", searchIndex.lastResDict["time-stopwords"] if searchIndex.lastResDict["time-stopwords"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", searchIndex.lastResDict["time-synonyms"] if searchIndex.lastResDict["time-synonyms"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Executing Query", searchIndex.lastResDict["time-query"] if searchIndex.lastResDict["time-query"] > 0 else "< 1")
-    if searchIndex.type != "SQLite FTS5":
-        html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Ranking", searchIndex.lastResDict["time-ranking"] if searchIndex.lastResDict["time-ranking"] > 0 else "< 1")
-
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML", searchIndex.lastResDict["time-html"] if searchIndex.lastResDict["time-html"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Highlighting", searchIndex.lastResDict["time-html-highlighting"] if searchIndex.lastResDict["time-html-highlighting"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Formatting SIAC Notes", searchIndex.lastResDict["time-html-build-user-note"] if searchIndex.lastResDict["time-html-build-user-note"] > 0 else "< 1")
@@ -897,13 +887,8 @@ def updateStyling(cmd):
 
 
 def writeConfig():
-    searchIndex = get_index()
-
     mw.addonManager.writeConfig(__name__, config)
-    searchIndex.output.editor.web.eval("$('.modal-close').unbind('click')")
-
-
-
+    get_index().output.editor.web.eval("$('.modal-close').unbind('click')")
 
 
 def after_index_rebuilt():
@@ -911,11 +896,11 @@ def after_index_rebuilt():
     if search_index is not None and search_index.output is not None and search_index.output.editor is not None:
         editor = search_index.output.editor
         editor.web.eval("""
-        $('.freeze-icon').removeClass('frozen');
-        isFrozen = false;
-        $('#selectionCb,#typingCb,#tagCb,#highlightCb').prop("checked", true);
-        searchOnSelection = true;
-        searchOnTyping = true;
-        $('#toggleTop').click(function() { toggleTop(this); });
+            $('.freeze-icon').removeClass('frozen');
+            isFrozen = false;
+            $('#selectionCb,#typingCb,#tagCb,#highlightCb').prop("checked", true);
+            searchOnSelection = true;
+            searchOnTyping = true;
+            $('#toggleTop').click(function() { toggleTop(this); });
         """)
         fillDeckSelect(editor)

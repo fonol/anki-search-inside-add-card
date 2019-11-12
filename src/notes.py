@@ -6,8 +6,10 @@ from aqt import mw
 import random
 
 from .state import get_index
-from .textutils import clean_user_note_text, build_user_note_text, trimIfLongerThan
-from .utils import to_tag_hierarchy, get_user_files_folder_path
+import utility.misc
+import utility.tags
+import utility.text
+
 
 @unique
 class QueueSchedule(Enum):
@@ -64,7 +66,7 @@ def create_db_file_if_not_exists():
 def create_note(title, text, source, tags, nid, reminder, queue_schedule):
 
     #clean the text
-    text = clean_user_note_text(text)
+    text = utility.text.clean_user_note_text(text)
 
     if source is not None:
         source = source.strip()
@@ -186,16 +188,16 @@ def get_note_tree_data():
         if diff < seconds_since_midnight:
             if "Today" not in n_map:
                 n_map["Today"] = []
-            n_map["Today"].append((id, trimIfLongerThan(title, 100)))
+            n_map["Today"].append((id, utility.text.trim_if_longer_than(title, 100)))
         elif diff >= seconds_since_midnight and diff < (seconds_since_midnight + 86400):
             if "Yesterday" not in n_map:
                 n_map["Yesterday"] = []
-            n_map["Yesterday"].append((id, trimIfLongerThan(title, 100)))
+            n_map["Yesterday"].append((id, utility.text.trim_if_longer_than(title, 100)))
         else:
             diff_in_days = int((diff - seconds_since_midnight) / 86400.0) + 1
             if str(diff_in_days) + " days ago" not in n_map:
                 n_map[str(diff_in_days) + " days ago"] = []
-            n_map[str(diff_in_days) + " days ago"].append((id, trimIfLongerThan(title, 100)))
+            n_map[str(diff_in_days) + " days ago"].append((id, utility.text.trim_if_longer_than(title, 100)))
     return n_map
 
 def get_all_notes():
@@ -231,7 +233,7 @@ def update_note_text(id, text):
     sql = """
         update notes set text=?, modified=datetime('now', 'localtime') where id=?
     """
-    text = clean_user_note_text(text)
+    text = utility.text.clean_user_note_text(text)
     conn.execute(sql, (text, id))
     conn.commit()
     note = conn.execute("select title, source, tags from notes where id=" + id).fetchone()
@@ -243,7 +245,7 @@ def update_note_text(id, text):
 
 def update_note(id, title, text, source, tags, reminder, queue_schedule):
 
-    text = clean_user_note_text(text)
+    text = utility.text.clean_user_note_text(text)
     tags = " %s " % tags.strip()
     conn = _get_connection()
     sql = """
@@ -462,7 +464,7 @@ def set_priority_list(ids):
 def _get_db_path():
     file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
     if file_path is None or len(file_path) == 0:
-        file_path = get_user_files_folder_path()
+        file_path = utility.misc.get_user_files_folder_path()
     file_path += "siac-notes.db"
     return file_path
 
@@ -478,7 +480,7 @@ def get_all_tags_as_hierarchy(include_anki_tags):
         tags.extend(user_note_tags)
     else:
         tags = get_all_tags()
-    return to_tag_hierarchy(tags)
+    return utility.tags.to_tag_hierarchy(tags)
 
 
 def get_all_pdf_notes():
@@ -519,5 +521,5 @@ def _to_output_list(db_list, pinned):
     output_list = list()
     for (id, title, text, source, tags, nid, created, modified, reminder, _, position) in db_list:
         if not str(id) in pinned:
-            output_list.append((build_user_note_text(title, text, source), tags, -1, id, 1, "-1", "", position))
+            output_list.append((utility.text.build_user_note_text(title, text, source), tags, -1, id, 1, "-1", "", position))
     return output_list

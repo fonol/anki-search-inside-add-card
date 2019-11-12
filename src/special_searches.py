@@ -1,12 +1,11 @@
 import datetime
 import time
 from aqt import mw
+import utility.misc
 
 def get_notes_added_on_day_of_year(day_of_year : int, limit: int):
     
     day_now = datetime.datetime.now().timetuple().tm_yday
-    # nid_now = int(time.time()* 1000)
-    # nid_then = nid_now - (day_now - day_of_year) * (24 * 60 * 60 * 1000)
     date_now = datetime.datetime.utcnow() 
     date_year_begin = datetime.datetime(year=date_now.year, month=1, day=1, hour=0 ,minute=0)    
     date_then = date_year_begin + datetime.timedelta(day_of_year)
@@ -52,7 +51,7 @@ def get_cal_info_context(day_of_year : int):
 
 
 def getCreatedSameDay(searchIndex, editor, nid):
-    stamp = searchIndex.output.getMiliSecStamp()
+    stamp = utility.misc.get_milisec_stamp()
     searchIndex.output.latest = stamp
     searchIndex.lastSearch = (nid, None, "createdSameDay")
     try:
@@ -85,7 +84,7 @@ def getCreatedSameDay(searchIndex, editor, nid):
 def getRandomNotes(searchIndex, decks):
     if searchIndex is None:
         return
-    stamp = searchIndex.output.getMiliSecStamp()
+    stamp = utility.misc.get_milisec_stamp()
     searchIndex.output.latest = stamp
     searchIndex.lastSearch = (None, decks, "random")
 
@@ -106,7 +105,7 @@ def getRandomNotes(searchIndex, decks):
 
 
 def getCreatedNotesOrderedByDate(searchIndex, editor, decks, limit, sortOrder):
-    stamp = searchIndex.output.getMiliSecStamp()
+    stamp = utility.misc.get_milisec_stamp()
     searchIndex.output.latest = stamp
     if sortOrder == "desc":
         searchIndex.lastSearch = (None, decks, "lastCreated", limit)
@@ -217,7 +216,7 @@ def getByTimeTaken(decks, limit, mode):
     return rList
 
 def getLastModifiedNotes(searchIndex, editor, decks, limit):
-    stamp = searchIndex.output.getMiliSecStamp()
+    stamp = utility.misc.get_milisec_stamp()
     searchIndex.output.latest = stamp
     searchIndex.lastSearch = (None, decks, "lastModified")
 
@@ -444,22 +443,6 @@ def find_cards_with_similar_rep_history(cid : int):
 
         pass_rate_sum += s[6]
         avg_pass_rate_up_to_now = pass_rate_sum / (i + 1)
-
-    # successes = 0.0
-    # counts = 0.0
-    # for x in most_similar:
-    #     if x[2][2] != 1:
-    #         if x[0] > 0:
-    #             successes += (1 / x[0]) 
-    #         else:
-    #             successes += (1 / 0.1) 
-      
-    #     if x[0] > 0:
-    #         counts += (1 / x[0]) 
-    #     else:
-    #         counts += (1 / 0.1) 
-
-    # success_rate = round((successes / counts) * 100, 1)
 
     return [avg_similarity_steps_results] 
 

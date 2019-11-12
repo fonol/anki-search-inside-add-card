@@ -17,6 +17,7 @@ var pdfDisplayed;
 var pdfPageRendering = false;
 var pdfDisplayedCurrentPage;
 var pdfDisplayedScale = 2.0;
+var pdfColorMode = "Day";
 var pageNumPending = null;
 var pagesRead = [];
 
@@ -194,23 +195,29 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
             pdfPageRendering = true;
             var lPage = page;
             var canvas = document.getElementById("siac-pdf-canvas");
-	    if (fitToPage) {
+	        if (fitToPage) {
                     var viewport = page.getViewport({scale :1.0});
                     pdfDisplayedScale = (canvas.parentNode.clientWidth - 23) / viewport.width;
-	    }
+	        }
             var viewport = page.getViewport({scale : pdfDisplayedScale});
             canvas.height = viewport.height;
             canvas.width = viewport.width;
+            if (pdfColorMode !== "Day")
+                canvas.style.display = "none";
+            var ctx = canvas.getContext('2d');
             var renderTask = page.render({
-                canvasContext: canvas.getContext('2d'),
+                canvasContext: ctx,
                 viewport: viewport
             });
             renderTask.promise.then(function () {
                 pdfPageRendering = false;
                 if (pageNumPending !== null) {
                     rerenderPDFPage(pageNumPending, shouldScrollUp);
-                     pageNumPending = null;
-
+                    pageNumPending = null;
+                } else {
+                    if (pdfColorMode !== "Day") {
+                        invertCanvas(ctx);
+                    }
                 }
                 return lPage.getTextContent();
                }).then(function(textContent) {
@@ -238,13 +245,37 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
 
 }
 
+function invertCanvas(ctx) {
+    var imgData = ctx.getImageData(0,0, ctx.canvas.width, ctx.canvas.height);
+    var data = imgData.data;
+    var mapped;
+    if (pdfColorMode === "Sand") {
+        for (var i = 0; i < data.length; i += 4) {
+            mapped = pxToSandScheme(data[i], data[i + 1], data[i + 2]) ;
+            data[i]     = mapped.r;  
+            data[i + 1] = mapped.g;
+            data[i + 2] = mapped.b;
+        }
+    } else {
+        for (var i = 0; i < data.length; i += 4) {
+             data[i]     = 255 - data[i];  
+             data[i + 1] = 255 - data[i + 1];
+             data[i + 2] = 255 - data[i + 2];
+        }
+
+    }
+
+    ctx.putImageData(imgData, 0, 0);  
+    ctx.canvas.style.display = "inline-block";
+}
+
 function queueRenderPage(num, shouldScrollUp=true) {
     if (pdfPageRendering) {
-      pageNumPending = num;
+        pageNumPending = num;
     } else {
-      rerenderPDFPage(num, shouldScrollUp);
+        rerenderPDFPage(num, shouldScrollUp);
     }
-  }
+}
 
 function togglePageRead(nid) {
 
@@ -1066,48 +1097,104 @@ function swapReadingModal() {
 
 }
 
+function togglePDFNightMode(elem) {
+    if (pdfColorMode === "Day") {
+        pdfColorMode = "Night";
+
+    } else if (pdfColorMode === "Night") {
+        pdfColorMode = "Sand";
+    } else {
+        pdfColorMode = "Day";
+    }
+    elem.innerHTML = pdfColorMode;
+    rerenderPDFPage(pdfDisplayedCurrentPage, false);
+}
+
 function pdfKeyup() {
 	if (window.getSelection().toString().length) {
 		let s = window.getSelection();
-         let r = s.getRangeAt(0);
+        let r = s.getRangeAt(0);
         let text = s.toString();
-        if (r.startContainer.parentNode) {
-            text = joinTextLayerNodeTexts(r.startContainer.parentNode.innerHTML, text);
+        if (text === " ") { return; }
+        let nodesInSel = nodesInSelection(r);
+        if (nodesInSel.length > 1) {
+            text = joinTextLayerNodeTexts(nodesInSel, text);
         }
 		let rect = r.getBoundingClientRect();
 		let prect = document.getElementById("siac-reading-modal").getBoundingClientRect();
 		document.getElementById('siac-pdf-tooltip-results-area').innerHTML = 'Searching...';
         $('#siac-pdf-tooltip').css({'top': (rect.top - prect.top + rect.height) + "px", 'left': (rect.left - prect.left) + "px" }).show();
         pycmd("siac-pdf-selection " + text);
-
 	}
 }
 
-function joinTextLayerNodeTexts(first, text) {
-    if (first.length) {
-        if (text.startsWith(first) && first !== text) {
-            return text.substring(0, first.length) + " " + text.substring(first.length);
-        } else {
-            for (var i = 1; i< first.length; i++) {
-                if (text.startsWith(first.substring(i))) {
-                    return text.substring(0, first.length - i) + " " + text.substring(first.length - i);
-                }
+ function joinTextLayerNodeTexts(nodes, text) {
+     let total = "";
+    for (var i = 0; i <nodes.length; i++) {
+        if (nodes[i].innerHTML === text) {
+            return text;
+        }
+        total += nodes[i].innerHTML += " ";
+    }
+    total = total.replace("  ", " ");
+    let spl = total.split(" ");
+    total = "";
+    for (var i = 0; i < spl.length; i++) {
+        if (spl[i].length > 0 && text.indexOf(spl[i]) >= 0) {
+            total += spl[i] + " ";
+        }
+    }
+    return total.trim();
+}
+
+function nodesInSelection(range) {
+    var _iterator = document.createNodeIterator(
+        range.commonAncestorContainer,
+        NodeFilter.SHOW_ALL,
+        {
+            acceptNode: function (node) {
+                return NodeFilter.FILTER_ACCEPT;
             }
         }
-        return text;
+    );
+    var _nodes = [];
+    while (_iterator.nextNode()) {
+        if (_nodes.length === 0 && _iterator.referenceNode !== range.startContainer) continue;
+        _nodes.push(_iterator.referenceNode);
+        if (_iterator.referenceNode === range.endContainer) break;
+    }
+    return _nodes;
+}
 
-    } else {
-        return text;
+
+function globalKeydown(e) {
+    if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode == 78) {
+                e.preventDefault();
+            if ($('#siac-rd-note-btn').length) {
+        $('#siac-rd-note-btn').trigger("click");
+        } else {
+        pycmd('siac-create-note')
+        }
     }
 }
 
-function globalKeydown(e) {
-       if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode == 78) {
-                    e.preventDefault();
-	       	    if ($('#siac-rd-note-btn').length) {
-			$('#siac-rd-note-btn').trigger("click");
-		    } else {
-			pycmd('siac-create-note')
-		    }
-                }
-            }
+
+function pxToSandScheme(red, green, blue){
+    if (red > 210 && green > 210 && blue > 210) {return {r:241,g:206,b:147}; }
+    if (red <  35 && green < 35 && blue < 35) {return {r:0,g:0,b:0}; }
+    var p = [{r:241,g:206,b:147},{r:0,g:0,b:0},{r:146,g:146,b:146},{r:64,g:64,b:64},{r:129,g:125,b:113},{r:204,g:0,b:0},{r:0,g:102,b:151}]
+    var color, diffR, diffG, diffB, diff, chosen;
+    var distance= 25000;
+    for (var i=0; i < p.length; i++) {
+        color = p[i];
+        diffR = (color.r - red);
+        diffG = (color.g - green);
+        diffB = (color.b - blue);
+        diff = Math.sqrt(diffR * diffR + diffG * diffG + diffB * diffB);
+        if( diff < distance) { 
+            distance = diff; 
+            chosen = p[i]; 
+        }
+    }
+    return chosen;
+}

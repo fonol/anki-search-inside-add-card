@@ -12,29 +12,27 @@ from anki.utils import isMac
 from anki.lang import _
 
 
-from .notes import *
-from .notes import _get_priority_list
-from .textutils import trimIfLongerThan
-from .utils import file_exists
+from ..notes import *
+import utility.text
+import utility.misc
 
 class QueuePicker(QDialog):
     """
     Can be used to select a single note from the queue.
     """
-    def __init__(self, parent):
+    def __init__(self, parent, note_list):
         self.chosen_id = None 
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
         self.mw = aqt.mw
         self.parent = parent
-        self.setup_ui()
+        self.setup_ui(note_list)
         self.setWindowTitle("Choose a Note")
 
-    def setup_ui(self):
+    def setup_ui(self, note_list):
 
-        queue = _get_priority_list()
         self.t_view = QListWidget()
 
-        for ix, n in enumerate(queue):
+        for ix, n in enumerate(note_list):
             title = n[1] if n[1] is not None and len(n[1]) > 0 else "Untitled"
             title_i = QListWidgetItem(str(ix + 1) + ".  " + title)
             title_i.setData(Qt.UserRole, QVariant(n[0]))

@@ -6,11 +6,14 @@ import datetime
 import time
 import sys
 from aqt import mw
-from ..textutils import cleanSynonym, trimIfLongerThan, get_stamp
+
+import utility.tags
+import utility.text
+import utility.misc
+
 from ..tag_find import get_most_active_tags
 from ..state import get_index, checkIndex, set_deck_map
 from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages
-from ..utils import get_web_folder_path, to_tag_hierarchy, pdf_to_base64, file_exists
 from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display
 
 
@@ -21,7 +24,7 @@ def toggleAddon():
 
 def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     #get path
-    dir = get_web_folder_path()
+    dir = utility.misc.get_web_folder_path()
     config = mw.addonManager.getConfig(__name__)
     #css + js
     all = """
@@ -364,7 +367,7 @@ def display_note_reading_modal(note_id):
         index.output.show_in_large_modal(html)
 
         # if source is a pdf file path, try to display it
-        if note[3] is not None and note[3].strip().lower().endswith(".pdf") and file_exists(note[3]):
+        if note[3] is not None and note[3].strip().lower().endswith(".pdf") and utility.misc.file_exists(note[3]):
             _display_pdf(note[3].strip(), note_id)
 
 
@@ -372,7 +375,7 @@ def display_note_reading_modal(note_id):
 
 def _display_pdf(full_path, note_id):
     index = get_index()
-    base64pdf = pdf_to_base64(full_path)
+    base64pdf = utility.misc.pdf_to_base64(full_path)
     blen = len(base64pdf)
     pages_read = get_read_pages(note_id)
     pages_read_js = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
@@ -404,12 +407,17 @@ def _display_pdf(full_path, note_id):
                     pdfDisplayedScale = scale;
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
+                    if (pdfColorMode != "Day")
+                        canvas.style.display = "none";
+                    var ctx = canvas.getContext('2d');
                     var renderTask = page.render({
-                        canvasContext: canvas.getContext('2d'),
+                        canvasContext: ctx,
                         viewport: viewport
                     });
                     renderTask.promise.then(function() {
-
+                        if (pdfColorMode != "Day") {
+                            invertCanvas(ctx);
+                        }
                         var textContent = page.getTextContent().then(function(textContent) {
                             $("#text-layer").css({ height: canvas.height , width: canvas.width, left: canvas.offsetLeft});
                             pdfjsLib.renderTextLayer({
@@ -495,14 +503,6 @@ def update_reading_bottom_bar(nid):
         """ % (pos_lbl, pos_lbl_btn, qd))
 
 
-
-def setInfoboxHtml(html, editor):
-    """
-    Render the given html inside the hovering box.
-    """
-    cmd = "document.getElementById('infoBox').innerHTML += `" + html + "`;"
-    editor.web.eval(cmd)
-
 def display_note_del_confirm_modal(editor, nid):
     html = get_note_delete_confirm_modal_html(nid)
     editor.web.eval("$('#greyout').show();$('#searchResults').append(`%s`);" % html)
@@ -516,7 +516,7 @@ def fillTagSelect(editor = None, expanded = False) :
     user_note_tags = get_all_tags()
     tags.extend(user_note_tags)
     tags = set(tags)
-    tmap = to_tag_hierarchy(tags)
+    tmap = utility.tags.to_tag_hierarchy(tags)
 
     most_active = get_most_active_tags(5)
     most_active_map = dict()
@@ -534,7 +534,7 @@ def fillTagSelect(editor = None, expanded = False) :
             html = "<ul class='deck-sub-list'>"
         for key, value in tmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('searchTag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", trimIfLongerThan(key, 35), iterateMap(value, full, False))
+            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('searchTag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
         html += "</ul>"
         return html
 
@@ -603,7 +603,7 @@ def fillDeckSelect(editor = None, expanded= False):
             html = "<ul class='deck-sub-list'>"
         for key, value in dmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( "selected" if str(deckMap[full]) in decks or decks == [] else "", deckMap[full],  "[+]" if value else "", trimIfLongerThan(key, 35), iterateMap(value, full, False))
+            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( "selected" if str(deckMap[full]) in decks or decks == [] else "", deckMap[full],  "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
         html += "</ul>"
         return html
 

@@ -5,10 +5,12 @@ import re
 import datetime
 import time
 from aqt import mw
-from ..textutils import cleanSynonym, trimIfLongerThan, get_stamp
+
 from ..state import get_index, checkIndex
 from ..notes import get_note, _get_priority_list
-from ..utils import get_web_folder_path, iterateTagmap, file_exists
+import utility.misc
+import utility.tags
+import utility.text
 
 
 
@@ -55,7 +57,7 @@ def saveSynonyms(synonyms):
 
 def newSynonyms(sListStr):
     existing = loadSynonyms()
-    sList = [cleanSynonym(s) for s in sListStr.split(",") if len(cleanSynonym(s)) > 1]
+    sList = [utility.text.clean_synonym(s) for s in sListStr.split(",") if len(utility.text.clean_synonym(s)) > 1]
     if not sList:
         return
     found = []
@@ -83,7 +85,7 @@ def editSynonymSet(cmd):
     index = int(cmd.strip().split()[0])
     existing = loadSynonyms()
     existing.pop(index)
-    sList = [cleanSynonym(s) for s in cmd[len(cmd.strip().split()[0]):].split(",") if len(cleanSynonym(s)) > 1]
+    sList = [utility.text.clean_synonym(s) for s in cmd[len(cmd.strip().split()[0]):].split(",") if len(utility.text.clean_synonym(s)) > 1]
     if not sList:
         return
     found = []
@@ -233,7 +235,10 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                             <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
                             <div class='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
                             <div class='flds-icon' onclick='sendContent()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
-                            <div class='flds-icon' onclick='pycmd("siac-show-pdfs")'> <span class='icns-add'>PDFs </span>&#128462; </div>
+                           <!-- <div class='flds-icon' onclick='pycmd("siac-show-pdfs")'> <span class='icns-add'>PDFs </span>&#128462; </div>-->
+                            <div class='pdf-icon' onclick='pycmd("siac-show-pdfs")'>
+                                %s
+                            </div>
                         </div>
 
 
@@ -328,6 +333,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
     leftSideWidth,
     rightSideWidth,
     config["noteScale"],
+    pdf_svg(15, 18),
     "display: none;" if searchIndexIsLoaded else "",
     "hidden" if hideSidebar else "",
     getCalendarHtml() if config["showTimeline"] else ""
@@ -352,7 +358,7 @@ def get_model_dialog_html():
     <div style='overflow-y: auto; flex-grow: 1; margin-top: 20px; width: 100%'>
     """
     for m in all_models:
-        html += "<div class='siac-model-name'>%s</div>" % trimIfLongerThan(m["name"], 40)
+        html += "<div class='siac-model-name'>%s</div>" % utility.text.trim_if_longer_than(m["name"], 40)
         flds = "<table class='siac-model-table'>"
         for f in m["flds"]:
             flds += """<tr>
@@ -413,25 +419,26 @@ def get_reading_modal_html(note):
         if len(tm) <= maxCount or totalLength < maxLength:
             for t, s in tm.items():
                 if len(s) > 0:
-                    tagData = " ".join(iterateTagmap({t : s}, ""))
+                    tagData = " ".join(utility.tags.iterateTagmap({t : s}, ""))
                     if len(s) == 1 and tagData.count("::") < 2 and not t in tags_split:
-                        tag_str += "<div class='tagLbl' style='display: inline; margin: 0 5px 0 0;'>%s</div>" %(trimIfLongerThan(tagData.split(" ")[1], maxLength))
+                        tag_str += "<div class='tagLbl' style='display: inline; margin: 0 5px 0 0;'>%s</div>" %(utility.text.trim_if_longer_than(tagData.split(" ")[1], maxLength))
                     else:
-                        tag_str += "<div class='tagLbl' style='display: inline;margin: 0 5px 0 0;'>%s</div>" %(trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
+                        tag_str += "<div class='tagLbl' style='display: inline;margin: 0 5px 0 0;'>%s</div>" %(utility.text.trim_if_longer_than(t, maxLength) + " (+%s)"% len(s))
                 else:
-                    tag_str += "<div class='tagLbl' style='display: inline;margin: 0 5px 0 0;'>%s</div>" %(trimIfLongerThan(t, maxLength))
+                    tag_str += "<div class='tagLbl' style='display: inline;margin: 0 5px 0 0;'>%s</div>" %(utility.text.trim_if_longer_than(t, maxLength))
         else:
-            tagData = " ".join(iterateTagmap(tm, ""))
+            tagData = " ".join(utility.tags.iterateTagmap(tm, ""))
             tag_str += "<div class='tagLbl' style='display: inline;margin: 0 5px 0 0;'>%s</div>" %(str(len(tm)) + " tags ...")
 
-        source = source.strip() if source is not None and len(source.strip()) > 0 else "Empty"
-        if source.lower().endswith(".pdf"):
-            source_icn = "&#128462; "
-        else:
-            source_icn = ""
         title = title if title is not None and len(title.strip()) > 0 else "Untitled"
-        title = trimIfLongerThan(title, 50)
+        title = utility.text.trim_if_longer_than(title, 50)
         title = title.replace("<", "&lt;").replace(">", "&gt;")
+        source = source.strip() if source is not None and len(source.strip()) > 0 else "Empty"
+        # if source.lower().endswith(".pdf"):
+        #     source_icn = "&#128462; "
+        #     title = "%s &nbsp;" % (pdf_svg(16, 20)) + title
+        # else:
+        source_icn = ""
 
         html = """
             <div style='width: 100%;'>
@@ -441,10 +448,10 @@ def get_reading_modal_html(note):
                     <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide(); if (pdfDisplayed) {{ pdfDisplayed.destroy(); pdfDisplayed = null; }} {save_on_close} $("#siac-reading-modal-text").html("");'>&times;</span>
                 </div>
 
-                <div id='siac-pdf-tooltip' onclick='event.stopPropagation();'><div id='siac-pdf-tooltip-results-area'></div></div>
+                <div id='siac-pdf-tooltip' onclick='event.stopPropagation();'><div id='siac-pdf-tooltip-top'></div><div id='siac-pdf-tooltip-results-area'></div></div>
                 <div id='siac-reading-modal-top-bar' style='height: 10%; min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
                     <div style='flex: 1 1; overflow: hidden;'>
-                        <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden;'>{title}</h2>
+                        <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; vertical-align:middle;'>{title}</h2>
                         <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: {source_icn}<i>{source}</i></h4>
                         <div id='siac-prog-bar-wr'></div>
                     </div>
@@ -474,7 +481,7 @@ def get_reading_modal_html(note):
                             <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
                             <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
                         </div>
-                        <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none;'>
+                        <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px;'>{time_str}</span> <br>
                             <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker")'>\u2630</span></div><br>
@@ -499,7 +506,7 @@ def get_reading_modal_html(note):
         """
 
         #check if it is pdf
-        if source.lower().endswith(".pdf") and file_exists(source):
+        if source.lower().endswith(".pdf") and utility.misc.file_exists(source):
             editable = False
             text = get_pdf_viewer_html(note_id)
         else:
@@ -535,7 +542,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
     queue_head_readings = ""
     for ix, queue_item in enumerate(queue):
         should_greyout = "greyedout" if queue_item[0] == int(note_id) else ""
-        qi_title = trimIfLongerThan(queue_item[1], 40) if queue_item[1] is not None and len(queue_item[1]) > 0 else "Untitled"
+        qi_title = utility.text.trim_if_longer_than(queue_item[1], 40) if queue_item[1] is not None and len(queue_item[1]) > 0 else "Untitled"
         #if the note is a pdf, show a loader
         should_show_loader = 'document.getElementById("siac-reading-modal-text").innerHTML = ""; showLoader(\"siac-reading-modal-text\", \"Loading Note...\");' if queue_item[3] is not None and queue_item[3].strip().lower().endswith(".pdf") else ""
         queue_head_readings +=  "<a onclick='%s %s pdfDisplayed ? pdfDisplayed.destroy() : pdfDisplayed = null; pycmd(\"siac-read-user-note %s\")' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;'>%s. %s</a><br>" % (save, should_show_loader, queue_item[0], should_greyout, queue_item[10] + 1, qi_title)
@@ -552,33 +559,37 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
 
 
 def get_pdf_viewer_html(nid):
-    dir = get_web_folder_path()
+    dir = utility.misc.get_web_folder_path()
     html = """
-            <div id='siac-pdf-overlay'>Page Read</div>
+            <div id='siac-pdf-overlay'>PAGE READ</div>
 
         <div id='siac-pdf-top' style='width: 100%%; height: calc(100%% - 40px); position:relative; max-height: calc(100%% - 40px); overflow-y: auto; text-align: center;' onwheel='pdfMouseWheel(event);'>
-            <canvas id="siac-pdf-canvas" style='z-index: 99999;'></canvas>
+            <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
             <div id="text-layer" onmouseup='pdfKeyup();' onclick='if (!window.getSelection().toString().length) {$("#siac-pdf-tooltip").hide();}' class="textLayer"></div>
         </div>
         <div style="width: 100%%; text-align: center; margin-top: 15px; position: relative;">
             <div style='position: absolute; left: 0;'>
-                <div class='siac-btn' style="width: 18px;" onclick='pdfScaleChange("down");'>-</div>
-                <div class='siac-btn' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
-                <div class='siac-btn' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
-                <div class='siac-btn' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986; IMG</b></div>
-                <div class='siac-btn' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only %s")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
+                <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("down");'>-</div>
+                <div class='siac-btn siac-btn-dark' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
+                <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
+                <div class='siac-btn siac-btn-dark' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986; IMG</b></div>
+                <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only %s")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
             </div>
-            <div class='siac-btn' onclick='pdfPageLeft();'><b>&lt;</b></div>
+            <div style='user-select:none; display: inline-block;'>
+            <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b>&lt;</b></div>
             <span style='display: inline-block; text-align: center; width: 70px; user-select: none;' id='siac-pdf-page-lbl'>Loading...</span>
-            <div class='siac-btn' onclick='pdfPageRight();'><b>&gt;</b></div>
+            <div class='siac-btn siac-btn-dark' onclick='pdfPageRight();'><b>&gt;</b></div>
+            </div>
 
             <div style='position: absolute; right: 0; display: inline-block;'>
-                <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 15px; width: 70px;' onclick='togglePageRead(%s);'>\u2713&nbsp; Read</div>
+                <div id="siac-pdf-night-btn" class='siac-btn siac-btn-dark' style='margin-right: 15px; width: 65px;' onclick='togglePDFNightMode(this);'>Day</div>
+                <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 15px; width: 65px;' onclick='togglePageRead(%s);'>\u2713&nbsp; Read</div>
                 <input id="siac-pdf-page-inp" style="width: 50px;margin-right: 5px;" value="1" type="number" min="1" onkeyup="pdfJumpToPage(event, this);"></input>
             </div>
         </div>
         <script>
             showLoader('siac-pdf-top', 'Loading PDF...', -150);
+            document.getElementById('siac-pdf-night-btn').innerHTML = pdfColorMode;
         </script>
     """ % (nid, nid)
     return html
@@ -635,7 +646,7 @@ def getCalendarHtml():
 def get_note_delete_confirm_modal_html(nid):
     note = get_note(nid)
     creation_date = note[6]
-    title = trimIfLongerThan(note[1], 100) if note[1] is not None and len(note[1]) > 0 else "Untitled Note"
+    title = utility.text.trim_if_longer_than(note[1], 100) if note[1] is not None and len(note[1]) > 0 else "Untitled Note"
     return """
        <div class='siac-modal-small'>
             <p style='text-align: center;'><b>Delete the following note?</b></p>
@@ -872,3 +883,36 @@ def get_pdf_list_first_card():
         <a class='keyword' onclick='pycmd("siac-pdf-last-added")'>Order by Last Added</a>
     """
     return html
+
+
+def pdf_svg(w, h):
+    return """
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+ width="%spx" height="%spx" viewBox="0 0 225.000000 225.000000"
+ preserveAspectRatio="xMidYMid meet">
+<g transform="translate(0.000000,225.000000) scale(0.100000,-0.100000)"
+fill="currentColor" stroke="none">
+<path d="M690 2099 c-29 -12 -67 -45 -83 -74 -8 -14 -14 -134 -17 -380 l-5
+-360 -120 -5 c-107 -4 -125 -8 -166 -32 -59 -35 -96 -90 -110 -163 -14 -76 -7
+-389 10 -430 15 -37 75 -101 116 -123 21 -12 65 -18 150 -22 l120 -5 5 -125
+c3 -69 11 -136 17 -150 14 -32 51 -66 86 -79 19 -7 231 -11 639 -11 l610 0 40
+22 c21 12 49 38 61 58 l22 35 0 695 c0 578 -2 699 -14 720 -29 50 -363 409
+-396 424 -29 14 -92 16 -487 15 -276 0 -463 -4 -478 -10z m890 -268 c0 -226
+-15 -210 205 -213 l170 -3 3 -664 c2 -607 1 -666 -14 -683 -16 -17 -48 -18
+-619 -18 -548 0 -604 1 -616 17 -19 22 -26 208 -9 228 11 13 76 15 434 15
+l422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120
+133 l-51 24 -421 0 c-349 0 -424 2 -433 14 -18 22 -11 667 8 689 12 15 56 17
+442 17 l429 0 0 -169z m-906 -765 c51 -21 76 -60 76 -118 0 -43 -5 -55 -33
+-83 -19 -19 -46 -36 -60 -39 -15 -3 -38 -8 -52 -11 -23 -5 -25 -10 -25 -64 0
+-53 -2 -59 -23 -65 -12 -3 -33 -3 -45 1 -22 5 -22 8 -22 192 0 103 3 191 7
+194 12 13 143 7 177 -7z m400 -15 c96 -60 102 -247 11 -319 -55 -43 -198 -67
+-246 -42 -18 10 -19 23 -19 188 0 129 3 182 13 191 9 9 39 12 107 9 79 -3 102
+-8 134 -27z m366 14 c7 -8 10 -25 6 -39 -5 -22 -12 -25 -64 -28 l-57 -3 0 -35
+0 -35 52 -3 c47 -3 54 -6 59 -27 11 -43 -1 -54 -58 -57 l-53 -3 -3 -72 c-3
+-64 -5 -72 -25 -77 -13 -3 -33 -3 -45 1 -22 5 -22 8 -22 193 0 141 3 190 13
+193 6 3 51 6 98 6 65 1 90 -3 99 -14z"/>
+<path d="M928 994 c-5 -4 -8 -56 -8 -116 l0 -108 36 0 c26 0 43 8 66 30 28 29
+30 35 26 91 -3 42 -10 66 -24 80 -21 21 -84 36 -96 23z"/>
+</g>
+</svg>
+    """ % (w, h)

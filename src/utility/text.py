@@ -36,12 +36,12 @@ def clean(text, stopWords):
     return ""
 
 
-def trimIfLongerThan(text, n):
+def trim_if_longer_than(text, n):
     if len(text) <= n:
         return text
     return text[:n] + "..."
 
-def replaceVowelsWithAccentedRegex(text):
+def replace_vowels_with_accented_regex(text):
     text = text.replace("a", "[aàáâãåāăǎ]")
     text = text.replace("u", "[uùúûūǔ]")
     text = text.replace("o", "[oòóôōǒ]")
@@ -57,7 +57,7 @@ def replaceVowelsWithAccentedRegex(text):
     text = text.replace("Y", "[YÝỲŸȲ]")
     return text
 
-def replaceAccentsWithVowels(text):
+def replace_accents_with_vowels(text):
     text = re.sub(r"[àáâãåāăǎ]", "a", text)
     text = re.sub(r"[ùúûūǔ]", "u", text)
     text = re.sub(r"[òóôōǒ]", "o", text)
@@ -84,7 +84,7 @@ def tokenize(text):
             result.append(token)
     return result
 
-def textTooSmall(text):
+def text_too_small(text):
     if len(text) > 1:
         return False
     if len(text) == 0:
@@ -93,11 +93,11 @@ def textTooSmall(text):
         return False
     return True
 
-def isChineseChar(char):
+def is_chinese_char(char):
     return chineseChar.match(char)
 
 
-def asciiFoldChar(char):
+def ascii_fold_char(char):
     char = char.lower()
     if normalChar.match(char):
         return char
@@ -115,13 +115,13 @@ def asciiFoldChar(char):
         return 'y'
     return char
 
-def deleteChars(text, chars):
+def delete_chars(text, chars):
     for c in chars:
         text = text.replace(c, "")
     return text
 
 
-def cleanSynonym(text):
+def clean_synonym(text):
     text = text.replace("\r\n", " ").replace("\n", " ")
     text = text.replace("\t", " ")
     text = text.replace("-", " ")
@@ -132,7 +132,7 @@ def cleanSynonym(text):
     return text
 
 
-def expandBySynonyms(text, synonyms):
+def expand_by_synonyms(text, synonyms):
     if not synonyms:
         return text
     textLower = text.lower()

@@ -9,9 +9,10 @@ from aqt.utils import showInfo, tooltip
 from .debug_logging import log
 from .stats import getRetentions
 from .state import get_index
-from .textutils import clean, trimIfLongerThan, deleteChars, asciiFoldChar, isChineseChar, get_stamp, remove_divs, remove_tags
-from .utils import to_tag_hierarchy, get_web_folder_path
 from .notes import get_pdf_info
+import utility.tags
+import utility.text
+import utility.misc
 
 class Output:
 
@@ -178,7 +179,7 @@ class Output:
                 if str(res[3]) in self.edited:
                     retMark += "max-width: 20px;"
                 retInfo = """<div class='retMark' style='%s'>%s</div>
-                             """ % (retMark, int(ret))
+                                """ % (retMark, int(ret))
             else:
                 retInfo = ""
 
@@ -211,7 +212,7 @@ class Output:
 
             #remove <div> tags if set in config
             if self.remove_divs:
-                text = remove_divs(text, " ")
+                text = utility.text.remove_divs(text, " ")
 
             #highlight
             highlight_start = time.time()
@@ -275,7 +276,7 @@ class Output:
         if stamp is None and self.last_took is not None:
             took = self.last_took
         elif stamp is not None:
-            took = self.getMiliSecStamp() - stamp
+            took = utility.misc.get_milisec_stamp() - stamp
             self.last_took = took
         else:
             took = "?"
@@ -348,17 +349,17 @@ class Output:
             maxCount = 3 if not self.gridView else 2
         if len(tm) <= maxCount or totalLength < maxLength:
             for t, s in tm.items():
-                stamp = "siac-tg-" + get_stamp()
+                stamp = "siac-tg-" + utility.text.get_stamp()
                 if len(s) > 0:
                     tagData = " ".join(self.iterateTagmap({t : s}, ""))
                     if len(s) == 1 and tagData.count("::") < 2 and not t in tags_split:
-                        html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData.split()[1], "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", trimIfLongerThan(tagData.split(" ")[1], maxLength))
+                        html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData.split()[1], "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", utility.text.trim_if_longer_than(tagData.split(" ")[1], maxLength))
                     else:
-                        html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", trimIfLongerThan(t, maxLength) + " (+%s)"% len(s))
+                        html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", utility.text.trim_if_longer_than(t, maxLength) + " (+%s)"% len(s))
                 else:
-                    html += "<div class='tagLbl' data-stamp='%s' %s data-name='%s' onclick='tagClick(this);'>%s</div>" %(stamp, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", t, trimIfLongerThan(t, maxLength))
+                    html += "<div class='tagLbl' data-stamp='%s' %s data-name='%s' onclick='tagClick(this);'>%s</div>" %(stamp, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", t, utility.text.trim_if_longer_than(t, maxLength))
         else:
-            stamp = "siac-tg-" + get_stamp()
+            stamp = "siac-tg-" + utility.text.get_stamp()
             tagData = " ".join(self.iterateTagmap(tm, ""))
             html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, str(len(tm)) + " tags ...")
 
@@ -372,7 +373,7 @@ class Output:
         """
         if self.lastResults is None:
             return
-        stamp = self.getMiliSecStamp()
+        stamp = utility.misc.get_milisec_stamp()
         self.latest = stamp
         sortedByDate = list(sorted(self.lastResults, key=lambda x: x[3]))
         if mode == "desc":
@@ -383,7 +384,7 @@ class Output:
     def removeUntagged(self):
         if self.lastResults is None:
             return
-        stamp = self.getMiliSecStamp()
+        stamp = utility.misc.get_milisec_stamp()
         self.latest = stamp
         filtered = []
         for r in self.lastResults:
@@ -395,7 +396,7 @@ class Output:
     def removeTagged(self):
         if self.lastResults is None:
             return
-        stamp = self.getMiliSecStamp()
+        stamp = utility.misc.get_milisec_stamp()
         self.latest = stamp
         filtered = []
         for r in self.lastResults:
@@ -406,7 +407,7 @@ class Output:
     def removeUnreviewed(self):
         if self.lastResults is None:
             return
-        stamp = self.getMiliSecStamp()
+        stamp = utility.misc.get_milisec_stamp()
         self.latest = stamp
         filtered = []
         nids = []
@@ -422,7 +423,7 @@ class Output:
     def removeReviewed(self):
         if self.lastResults is None:
             return
-        stamp = self.getMiliSecStamp()
+        stamp = utility.misc.get_milisec_stamp()
         self.latest = stamp
         filtered = []
         nids = []
@@ -448,7 +449,7 @@ class Output:
             body = text[text.find("\u001f") +1:src_begin_index][:5000]
             #there might be unclosed tags now, but parsing would be too much overhead, so simply remove div, a and span tags
             #there might be still problems with <p style='...'>
-            body = remove_tags(body, ["div", "span", "a"])
+            body = utility.text.remove_tags(body, ["div", "span", "a"])
             last_open_bracket = body.rfind("<")
             if last_open_bracket >= len(body) - 500 or body.rfind(" ") < len(body) - 500:
                 last_close_bracket = body.rfind(">")
@@ -459,12 +460,10 @@ class Output:
             title = text.split("\u001f")[0]
             body = text.split("\u001f")[1]
             src = text.split("\u001f")[2]
-        title = "<b>%s</b>%s" % (title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
+        is_pdf = src is not None and src.lower().strip().endswith(".pdf")
+        title = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if is_pdf else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
         if src is not None and len(src) > 0:
-            if src.lower().endswith(".pdf"):
-                src = "<br/><hr style='border-top: dotted 2px;'><i>Source: &#128462; %s</i>" % (src)
-            else:
-                src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src)
+            src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src)
         else:
             src = ""
 
@@ -520,15 +519,15 @@ class Output:
             infoMap["Tags"] = "No tags in the results."
         else:
             for key, value in self.getTagMap(tags).items():
-                stamp = "siac-tg-" + get_stamp()
+                stamp = "siac-tg-" + utility.text.get_stamp()
                 if len(value)  == 0:
-                    tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, key,trimIfLongerThan(key, 19))
+                    tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, key,utility.text.trim_if_longer_than(key, 19))
                 else:
                     tagData = " ".join(self.iterateTagmap({key : value}, ""))
                     if len(value) == 1 and tagData.count("::") < 2 and not key in tags:
-                        tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, tagData.split()[1], tagData, trimIfLongerThan(tagData.split()[1],16))
+                        tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, tagData.split()[1], tagData, utility.text.trim_if_longer_than(tagData.split()[1],16))
                     else:
-                        tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s&nbsp; %s</span>" % (stamp, tagData, tagData, trimIfLongerThan(key,12), "(+%s)"% len(value))
+                        tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s&nbsp; %s</span>" % (stamp, tagData, tagData, utility.text.trim_if_longer_than(key,12), "(+%s)"% len(value))
 
             infoStr += tagStr
             infoMap["Tags"] = tagStr
@@ -562,7 +561,7 @@ class Output:
         """
         if text is None or len(text) == 0:
             return "No keywords for empty result."
-        text = clean(text, self.stopwords)
+        text = utility.text.clean(text, self.stopwords)
         counts = {}
         for token in text.split():
             if token == "" or len(token) == 1 or self.SOUND_TAG.match(token):
@@ -601,7 +600,7 @@ class Output:
                 if str(res[3]) in self.edited:
                     retMark += "max-width: 20px;"
                 retInfo = """<div class='retMark' style='%s'>%s</div>
-                             """ % (retMark, int(ret))
+                                """ % (retMark, int(ret))
             else:
                 retInfo = ""
 
@@ -619,7 +618,7 @@ class Output:
 
             #remove <div> tags if set in config
             if self.remove_divs:
-                text = remove_divs(text)
+                text = utility.text.remove_divs(text)
 
             text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
             text = self.tryHideImageOcclusion(text)
@@ -669,7 +668,7 @@ class Output:
 
     def _loadPlotJsIfNotLoaded(self):
         if not self.plotjsLoaded:
-            with open(get_web_folder_path() + "plot.js") as f:
+            with open(utility.misc.get_web_folder_path() + "plot.js") as f:
                 plotjs = f.read()
             self.editor.web.eval(plotjs)
             self.plotjsLoaded = True
@@ -776,18 +775,18 @@ class Output:
 
     def printTagHierarchy(self, tags):
         cmd = """document.getElementById('modalText').innerHTML = `%s`;
-         $('.tag-list-item').click(function(e) {
-		e.stopPropagation();
-        let icn = $(this).find('.tag-btn').first();
-        let text = icn.text();
-        if (text.endsWith(']')) {
-            if (text.endsWith('[+]'))
-                icn.text(text.substring(0, text.length - 3) + '[-]');
-            else
-                icn.text(text.substring(0, text.length - 3) + '[+]');
-        }
-        $(this).children('ul').toggle();
-         });
+        $('.tag-list-item').click(function(e) {
+            e.stopPropagation();
+            let icn = $(this).find('.tag-btn').first();
+            let text = icn.text();
+            if (text.endsWith(']')) {
+                if (text.endsWith('[+]'))
+                    icn.text(text.substring(0, text.length - 3) + '[-]');
+                else
+                    icn.text(text.substring(0, text.length - 3) + '[+]');
+            }
+            $(this).children('ul').toggle();
+        });
 
         """ % self.buildTagHierarchy(tags)
         self.editor.web.eval(cmd)
@@ -803,9 +802,9 @@ class Output:
             for key, value in tmap.items():
                 full = prefix + "::" + key if prefix else key
                 html += "<li class='tag-list-item'><span class='tag-btn'>%s %s</span><div class='tag-add' data-name=\"%s\" data-target='%s' onclick='event.stopPropagation(); tagClick(this)'>%s</div>%s</li>" % (
-                    trimIfLongerThan(key, 25),
+                    utility.text.trim_if_longer_than(key, 25),
                     "[-]" if value else "" ,
-                    deleteChars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]),
+                    utility.text.delete_chars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]),
                     key,
                     "+" if not config["tagClickShouldSearch"] else "<div class='siac-btn-small'>Search</div>",
                 iterateMap(value, full))
@@ -816,7 +815,7 @@ class Output:
         return html
 
     def getTagMap(self, tags):
-        return to_tag_hierarchy(tags)
+        return utility.tags.to_tag_hierarchy(tags)
 
 
 
@@ -875,9 +874,9 @@ class Output:
         for char in text:
             # c += 1
             if self.wordToken.match(char):
-                currentWordNormalized = ''.join((currentWordNormalized, asciiFoldChar(char).lower()))
+                currentWordNormalized = ''.join((currentWordNormalized, utility.text.ascii_fold_char(char).lower()))
                 # currentWordNormalized = ''.join((currentWordNormalized, char.lower()))
-                if isChineseChar(char) and str(char) in querySet:
+                if utility.text.is_chinese_char(char) and str(char) in querySet:
                     currentWord = ''.join((currentWord, "<MARK>%s</MARK>" % char))
                 else:
                     currentWord = ''.join((currentWord, char))
@@ -927,9 +926,24 @@ class Output:
     def print_pdf_search_results(self, results, stamp, query_set):
         if results is not None and len(results) > 0:
             html = self.get_result_html_simple(results[:50], False, False)
+            qhtml = """
+                <div style='width: 235px; margin-left: 5px; text-align: center; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
+                <i>%s</i>
+                </div>
+            """ % (" ".join(query_set))
+            self.editor.web.eval("""
+            document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
+            document.getElementById('siac-pdf-tooltip-top').innerHTML = `%s`
+            """ % (html, qhtml))
         else:
-            html = "Nothing found for query: <br/><br/><i>%s</i>" % (trimIfLongerThan(" ".join(query_set), 200))
-        self.editor.web.eval("document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`" % html);
+            if query_set is None or len(query_set)  == 0:
+                message = "Query was empty after cleaning."
+            else:
+                message = "Nothing found for query: <br/><br/><i>%s</i>" % (utility.text.trim_if_longer_than(" ".join(query_set), 200))
+            self.editor.web.eval("""
+                document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
+                document.getElementById('siac-pdf-tooltip-top').innerHTML = ``;
+            """ % message)
 
 
 
@@ -950,5 +964,3 @@ class Output:
         return "#32ff00"
 
 
-    def getMiliSecStamp(self):
-        return int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds() * 1000)

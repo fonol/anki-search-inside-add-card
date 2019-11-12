@@ -46,3 +46,4 @@ def set_old_on_bridge_cmd(fn):
 
 def get_old_on_bridge_cmd():
     return old_on_bridge
+    

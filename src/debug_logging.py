@@ -6,10 +6,10 @@ from aqt import mw
 
 
 from .state import get_index
-from .utils import *
+import utility.misc
 
 def log(text):
-    dir = get_addon_base_folder_path()
+    dir = utility.misc.get_addon_base_folder_path()
     try:
         with open(dir + 'log.txt', 'a', encoding="utf-8") as out:
             out.write(text + '\n')
@@ -42,12 +42,12 @@ def get_index_info():
     return c_json["index"]
 
 def _get_data_file_content():
-    dir = get_user_files_folder_path()
+    dir = utility.misc.get_user_files_folder_path()
     with open(dir + "data.json", "r") as json_file:
         return json.load(json_file)
 
 def _write_to_data_file(c_json):
-    dir = get_user_files_folder_path() + "data.json"
+    dir = utility.misc.get_user_files_folder_path() + "data.json"
     with open(dir, "w") as json_file:
         json.dump(c_json, json_file)
         

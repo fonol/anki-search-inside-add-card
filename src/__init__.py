@@ -20,14 +20,15 @@ import functools
 import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
+import utility.tags
 
 from .state import checkIndex, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit, set_old_on_bridge_cmd
-from .indexing import build_index, get_notes_in_collection
+from .index.indexing import build_index, get_notes_in_collection
 from .debug_logging import log
 from .web.web import printStartingInfo, getScriptPlatformSpecific, showSearchResultArea, fillDeckSelect, fillTagSelect
 from .web.html import rightSideHtml
 from .notes import *
-from .editor import EditDialog
+from .dialogs.editor import EditDialog
 from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerenderInfo, addNoteToIndex
 
 config = mw.addonManager.getConfig(__name__)
@@ -56,11 +57,8 @@ def initAddon():
 
     origSaveAndClose = EditDialog.saveAndClose
     EditDialog.saveAndClose = editorSaveWithIndexUpdate
-
-    addHook("setupEditorShortcuts", addHideShowShortcut)
-
-    #dialogs._dialogs["UserNoteEditor"] = [NoteEditor, None]
-
+    utility.tags.to_tag_hierarchy("")
+    addHook("setupEditorShortcuts", addHideShowShortcut) 
 
     #main functions to search
     if not config["disableNonNativeSearching"]:

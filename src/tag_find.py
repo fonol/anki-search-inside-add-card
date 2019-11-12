@@ -1,7 +1,6 @@
 
 from aqt import *
-from aqt.utils import showInfo
-from .textutils import trimIfLongerThan, get_stamp
+import utility.text
 from .stats import getAvgTrueRetention, getTrueRetentionOverTime, retention_stats_for_tag
 from .output import Output
 from .notes import find_by_tag, get_recently_used_tags_with_counts
@@ -58,7 +57,7 @@ def display_tag_info(editor, stamp, tag, searchIndex):
                 break
 
     sortedCounts = sorted(tagsfound.items(), key=lambda kv: kv[1], reverse=True)
-    time_stamp_for_graph = get_stamp()
+    time_stamp_for_graph = utility.text.get_stamp()
     
     window = mw.app.activeWindow()
     should_hide_left_side = window is not None and window.width() < 1000
@@ -110,10 +109,10 @@ def display_tag_info(editor, stamp, tag, searchIndex):
     total_length = 0
     for k in sortedCounts[:10]:
         if should_hide_left_side:
-            tags += "<div data-stamp='siac-tg-%s' class='tagLbl smallMarginBottom' data-name='%s' onclick='tagClick(this); event.stopPropagation();'>%s</div>" % (get_stamp(), k[0], trimIfLongerThan(k[0], 40))
+            tags += "<div data-stamp='siac-tg-%s' class='tagLbl smallMarginBottom' data-name='%s' onclick='tagClick(this); event.stopPropagation();'>%s</div>" % (utility.text.get_stamp(), k[0], utility.text.trim_if_longer_than(k[0], 40))
         else:
-            tags += "<div data-stamp='siac-tg-%s' class='tagLbl smallMarginBottom' data-name='%s' onmouseenter='tagMouseEnter(this)' onclick='tagClick(this); event.stopPropagation();' onmouseleave='tagMouseLeave(this)'>%s</div>" % (get_stamp(), k[0], trimIfLongerThan(k[0], 40))
-        total_length += len(trimIfLongerThan(k[0], 40))
+            tags += "<div data-stamp='siac-tg-%s' class='tagLbl smallMarginBottom' data-name='%s' onmouseenter='tagMouseEnter(this)' onclick='tagClick(this); event.stopPropagation();' onmouseleave='tagMouseLeave(this)'>%s</div>" % (utility.text.get_stamp(), k[0], utility.text.trim_if_longer_than(k[0], 40))
+        total_length += len(utility.text.trim_if_longer_than(k[0], 40))
         if total_length > 120:
             break
 
@@ -134,9 +133,9 @@ def display_tag_info(editor, stamp, tag, searchIndex):
         tag_name = tag
         if " " in tag_name:
             base = tag_name.split()[0]
-            tag_name = trimIfLongerThan(base, 25) + " (+%s)" % len(tag_name.split()[1:])
+            tag_name = utility.text.trim_if_longer_than(base, 25) + " (+%s)" % len(tag_name.split()[1:])
         else:
-            tag_name = trimIfLongerThan(tag_name, 28)
+            tag_name = utility.text.trim_if_longer_than(tag_name, 28)
 
         html = html % (tag_name, enlarge_note_area_height, stamp, note_html, time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)
 

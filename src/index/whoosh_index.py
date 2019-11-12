@@ -12,11 +12,11 @@ import sqlite3
 import re
 import time
 
-from .debug_logging import log, persist_index_info
-from .textutils import *
+from ..debug_logging import log, persist_index_info
 from .fts_index import Worker, WorkerSignals
-from .output import Output
-from .utils import get_whoosh_index_folder_path
+from ..output import Output
+import utility.misc
+import utility.text
 
 config = mw.addonManager.getConfig(__name__)
 try:
@@ -24,12 +24,12 @@ try:
 except KeyError:
     loadWhoosh = True
 if loadWhoosh:
-    from ..whoosh.index import create_in
-    from ..whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD, ID
-    from ..whoosh.support.charset import accent_map
-    from ..whoosh.qparser import QueryParser
-    from ..whoosh.analysis import StandardAnalyzer, CharsetFilter, StemmingAnalyzer
-    from ..whoosh import classify, highlight, query, scoring, qparser, reading
+    from ...whoosh.index import create_in
+    from ...whoosh.fields import Schema, TEXT, NUMERIC, KEYWORD, ID
+    from ...whoosh.support.charset import accent_map
+    from ...whoosh.qparser import QueryParser
+    from ...whoosh.analysis import StandardAnalyzer, CharsetFilter, StemmingAnalyzer
+    from ...whoosh import classify, highlight, query, scoring, qparser, reading
 
 class WhooshSearchIndex:
     """
@@ -72,7 +72,7 @@ class WhooshSearchIndex:
         schema = Schema(content=TEXT(stored=True, analyzer=myAnalyzer), tags=TEXT(stored=True), did=TEXT(stored=True), nid=TEXT(stored=True), source=TEXT(stored=True), mid=TEXT(stored=True), refs=TEXT(stored=True))
         
         #index needs a folder to operate in
-        indexDir = get_whoosh_index_folder_path()
+        indexDir = utility.misc.get_whoosh_index_folder_path()
         if not os.path.exists(indexDir):
             os.makedirs(indexDir)
         self.index = create_in(indexDir, schema)
@@ -86,8 +86,8 @@ class WhooshSearchIndex:
                 #if the notes model id is in our filter dict, that means we want to exclude some field(s)
                 text = note[1]
                 if note[4] in self.fields_to_exclude:
-                    text = remove_fields(text, self.fields_to_exclude[note[4]])
-                text = clean(text, self.stopWords)
+                    text = utility.text.remove_fields(text, self.fields_to_exclude[note[4]])
+                text = utility.text.clean(text, self.stopWords)
                 writer.add_document(content=text, tags=note[2], did=str(note[3]), nid=str(note[0]), source=note[1], mid=str(note[4]), refs=str(note[5]))
             writer.commit()
         #todo: allow user to toggle between and / or queries
@@ -111,7 +111,7 @@ class WhooshSearchIndex:
         decks - list of deck ids, if -1 is contained, all decks are searched
         """
         worker = Worker(self.searchProc, text, decks, only_user_notes, print_mode)
-        worker.stamp = self.output.getMiliSecStamp()
+        worker.stamp = utility.misc.get_milisec_stamp()
         self.output.latest = worker.stamp
         if print_mode == "default":
             worker.signals.result.connect(self.printOutput)
@@ -132,13 +132,13 @@ class WhooshSearchIndex:
         self.lastSearch = (text, decks, "default")
         if len(text) == 0:
             if print_mode == "default":
-                self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100).replace("\u001f", ""))
+                self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", ""))
                 return None
             elif print_mode == "pdf":
                 return None
 
         start = time.time()
-        text = expandBySynonyms(text, self.synonyms)
+        text = utility.text.expand_by_synonyms(text, self.synonyms)
         resDict["time-synonyms"] = int((time.time() - start) * 1000)
         resDict["query"] = text
 
@@ -174,7 +174,7 @@ class WhooshSearchIndex:
         WIP: this shall be used for searches in the search mask,
         doesn't use the index, instead use the traditional anki search (which is more powerful for single keywords)
         """
-        stamp = self.output.getMiliSecStamp()
+        stamp = utility.misc.get_milisec_stamp()
         self.output.latest = stamp
 
         found = self.finder.findNotes(text)
@@ -208,20 +208,20 @@ class WhooshSearchIndex:
         return text.strip()
 
     def clean(self, text):
-        return clean(text, self.stopWords)
+        return utility.clean(text, self.stopWords)
 
 
     def printOutput(self, result, stamp):
         if result is not None:
             query_set = None
             if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
-                query_set = set(replaceAccentsWithVowels(s).lower() for s in self.lastResDict["query"].split(" "))
+                query_set = set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
             self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
 
     def print_pdf(self, result, stamp):
         query_set = None
         if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
-            query_set =  set(replaceAccentsWithVowels(s).lower() for s in self.lastResDict["query"].split(" "))
+            query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
         if result is not None:
             self.output.print_pdf_search_results(result["results"], stamp, query_set)
         else:
@@ -245,9 +245,9 @@ class WhooshSearchIndex:
             return
         did = did[0]
         if note.mid in self.fields_to_exclude:
-            content = remove_fields(content, self.fields_to_exclude[note.mid])
+            content = utility.text.remove_fields(content, self.fields_to_exclude[note.mid])
         writer = self.index.writer()
-        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid), refs="")
+        writer.add_document(content=utility.text.clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid), refs="")
         writer.commit()
         persist_index_info(self)
         return note
@@ -258,7 +258,7 @@ class WhooshSearchIndex:
         """
         text = note[1] + " \u001f " + note[2] + " \u001f " + note[3]
         writer = self.index.writer()
-        writer.add_document(content=clean(text, self.stopWords), tags=note[4], did="-1", nid="", source=text, mid="-1", refs="")
+        writer.add_document(content=utility.text.clean(text, self.stopWords), tags=note[4], did="-1", nid="", source=text, mid="-1", refs="")
         writer.commit()
         persist_index_info(self)
 
@@ -268,9 +268,9 @@ class WhooshSearchIndex:
         """
         writer = self.index.writer()
         c = writer.delete_by_term("nid", str(note[0]))
-        content = build_user_note_text(title=note[1], text=note[2], source=note[3])
+        content = utility.text.build_user_note_text(title=note[1], text=note[2], source=note[3])
         tags = note[4]
-        writer.add_document(content=clean(content, self.stopWords), tags=tags, did="-1", nid=str(note[0]), source=content, mid="-1", refs="")
+        writer.add_document(content=utility.text.clean(content, self.stopWords), tags=tags, did="-1", nid=str(note[0]), source=content, mid="-1", refs="")
         persist_index_info(self)
         writer.commit()
 
@@ -287,10 +287,9 @@ class WhooshSearchIndex:
         if did is None or len(did) == 0:
             return
         did = did[0]
-        #writer.update_document(content=clean(content, self.stopWords), tags=tags, did=did, nid=str(note.id), source=content)
         if note.mid in self.fields_to_exclude:
-            content = remove_fields(content, self.fields_to_exclude[note.mid])
-        writer.add_document(content=clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid), refs="")
+            content = utility.text.remove_fields(content, self.fields_to_exclude[note.mid])
+        writer.add_document(content=utility.text.clean(content, self.stopWords), tags=tags, did=str(did), nid=str(note.id), source=content, mid=str(note.mid), refs="")
         persist_index_info(self)
         writer.commit()
    

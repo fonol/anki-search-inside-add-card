@@ -9,10 +9,10 @@ import collections
 from aqt import *
 from aqt.utils import showInfo, tooltip
 
-from .output import *
-from .textutils import *
-from .debug_logging import log, persist_index_info
-from .utils import get_user_files_folder_path
+from ..output import *
+from ..debug_logging import log, persist_index_info
+import utility.misc
+import utility.text
 
 class FTSIndex:
 
@@ -23,7 +23,7 @@ class FTSIndex:
         self.highlighting = True
         self.searchWhileTyping = True
         self.searchOnSelection = True
-        self.dir = get_user_files_folder_path()
+        self.dir = utility.misc.get_user_files_folder_path()
         self.stopWords = []
         # mid : [fld_ord]
         self.fields_to_exclude = {}
@@ -47,8 +47,6 @@ class FTSIndex:
             self.fields_to_exclude = {}
         self.output.fields_to_exclude = self.fields_to_exclude
 
-        #if fts5 is compiled, use it
-        self.type = self._checkIfFTS5Available(config["logging"])
         self.creation_info["index_was_rebuilt"] = not index_up_to_date
         if not searchingDisabled and not index_up_to_date:
             cleaned = self._cleanText(corpus)
@@ -58,22 +56,28 @@ class FTSIndex:
                 pass
             conn = sqlite3.connect(self.dir + "search-data.db")
             conn.execute("drop table if exists notes")
-            if self.type == "SQLite FTS5":
+            try:
                 conn.execute("create virtual table notes using fts5(nid, text, tags, did, source, mid, refs)")
-            elif self.type == "SQLite FTS4":
-                conn.execute("create virtual table notes using fts4(nid, text, tags, did, source, mid, refs)")
-            else:
-                conn.execute("create virtual table notes using fts3(nid, text, tags, did, source, mid, refs)")
+                self.type = "SQLite FTS5"
+            except:
+                try:
+                    conn.execute("create virtual table notes using fts4(nid, text, tags, did, source, mid, refs)")
+                    self.type = "SQLite FTS4"
+                except:
+                    conn.execute("create virtual table notes using fts3(nid, text, tags, did, source, mid, refs)")
+                    self.type = "SQlite FTS3"
 
             conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?,?,?)', cleaned)
             conn.execute("INSERT INTO notes(notes) VALUES('optimize')")
             conn.commit()
             conn.close()
+        else:
+            self.type = self._check_fts_version(config["logging"])
         if not index_up_to_date:
             persist_index_info(self)
 
 
-    def _checkIfFTS5Available(self, logging):
+    def _check_fts_version(self, logging):
         con = sqlite3.connect(':memory:')
         cur = con.cursor()
         cur.execute('pragma compile_options;')
@@ -83,11 +87,8 @@ class FTSIndex:
             log("\nSQlite compile options: " + str(available_pragmas))
         if 'enable_fts5' in available_pragmas:
             return "SQLite FTS5"
-        if 'enable_fts4' in available_pragmas:
-            return "SQLite FTS4"
-        if 'enable_fts3' in available_pragmas:
-            return "SQLite FTS3"
-        return "SQLite - No FTS detected (trying to use FTS3)"
+        return "SQLite FTS4"
+       
 
 
     def _cleanText(self, corpus):
@@ -97,8 +98,8 @@ class FTSIndex:
             text = row[1]
             #if the notes model id is in our filter dict, that means we want to exclude some field(s)
             if row[4] in self.fields_to_exclude:
-                text = remove_fields(text, self.fields_to_exclude[row[4]])
-            text = clean(text, self.stopWords)
+                text = utility.text.remove_fields(text, self.fields_to_exclude[row[4]])
+            text = utility.text.clean(text, self.stopWords)
             filtered.append((row[0], text, row[2], row[3], row[1], row[4], row[5]))
         return filtered
 
@@ -120,7 +121,7 @@ class FTSIndex:
         decks - list of deck ids, if -1 is contained, all decks are searched
         """
         worker = Worker(self.searchProc, text, decks, only_user_notes, print_mode)
-        worker.stamp = self.output.getMiliSecStamp()
+        worker.stamp = utility.misc.get_milisec_stamp()
         self.output.latest = worker.stamp
         if print_mode == "default":
             worker.signals.result.connect(self.printOutput)
@@ -146,7 +147,7 @@ class FTSIndex:
 
         if len(text) == 0:
             if print_mode == "default":
-                self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % trimIfLongerThan(orig, 100).replace("\u001f", ""))
+                self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", ""))
                 if mw.addonManager.getConfig(__name__)["hideSidebar"]:
                     return "Found 0 notes. Query was empty after cleaning."
                 return None
@@ -154,20 +155,23 @@ class FTSIndex:
                 return None
 
         start = time.time()
-        text = expandBySynonyms(text, self.synonyms)
+        text = utility.text.expand_by_synonyms(text, self.synonyms)
         resDict["time-synonyms"] = int((time.time() - start) * 1000)
         resDict["query"] = text
-        if textTooSmall(text):
+        if utility.text.text_too_small(text):
             if self.logging:
                 log("Returning - Text was < 2 chars: " + text)
             return { "results" : [] }
 
-        query = u" OR ".join(["tags:" + s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ])
+        tokens = text.split(" ")
+        if len(tokens) > 10:
+            tokens = set(tokens)
         if self.type == "SQLite FTS5":
-            query += " OR " + " OR ".join(["text:" + s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ])
+            query = u" OR ".join(["tags:" + s.strip().replace("OR", "or") for s in tokens if not utility.text.text_too_small(s) ])
+            query += " OR " + " OR ".join(["text:" + s.strip().replace("OR", "or") for s in tokens if not utility.text.text_too_small(s) ])
         else:
-            query += " OR " + " OR ".join([s.strip().replace("OR", "or") for s in text.split(" ") if not textTooSmall(s) ])
-        if query == " OR ":
+            query = " OR ".join([s.strip().replace("OR", "or") for s in tokens if not utility.text.text_too_small(s) ])
+        if len(query) == 0 or query == " OR ":
             if self.logging:
                 log("Returning. Query was: " + query)
             return { "results" : [] }
@@ -180,11 +184,16 @@ class FTSIndex:
         user_note_filter = "AND mid='-1'" if only_user_notes else ""
         conn = sqlite3.connect(self.dir + "search-data.db")
         if self.type == "SQLite FTS5":
-            dbStr = "select nid, text, tags, did, source, bm25(notes), mid, refs from notes where notes match '%s' %s order by bm25(notes)" %(query, user_note_filter)
-        elif self.type == "SQLite FTS4":
-            dbStr = "select nid, text, tags, did, source, matchinfo(notes, 'pcnalx'), mid, refs from notes where text match '%s' %s" %(query, user_note_filter)
+            dbStr = "select nid, text, tags, did, source, bm25(notes) as score, mid, refs from notes where notes match '%s' %s order by score" %(query, user_note_filter)
+
+        #bm25 results in really slow queries for some reason, so we use the simpler ranking for fts4
+
+        # elif self.type == "SQLite FTS4":
+        #     conn.create_function("bm25", 1, bm25)
+        #     dbStr = "select nid, text, tags, did, source, bm25(matchinfo(notes, 'pcnalx')) as score, mid, refs from notes where text match '%s' %s order by score desc" %(query, user_note_filter)
         else:
-            dbStr = "select nid, text, tags, did, source, matchinfo(notes), mid, refs from notes where text match '%s' %s" %(query, user_note_filter)
+            conn.create_function("simple_rank", 1, simple_rank)
+            dbStr = "select nid, text, tags, did, source, simple_rank(matchinfo(notes)) as score, mid, refs from notes where text match '%s' %s order by score desc" %(query, user_note_filter)
 
         try:
             start = time.time()
@@ -192,7 +201,7 @@ class FTSIndex:
             resDict["time-query"] = int((time.time() - start) * 1000)
         except Exception as e:
             if self.logging:
-                log("Executing db query threw exception: " + e.message)
+                log("Executing db query threw exception: " + str(e))
             res = []
         if self.logging:
             log("dbStr was: " + dbStr)
@@ -200,34 +209,34 @@ class FTSIndex:
 
 
         resDict["highlighting"] = self.highlighting
-        if self.type == "SQLite FTS5":
-            for r in res:
-                if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                    rList.append((r[4], r[2], r[3], r[0], r[5], r[6], r[7]))
-                    c += 1
-                    if c >= self.limit:
-                        break
+        # if self.type == "SQLite FTS5":
+        for r in res:
+            if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
+                rList.append((r[4], r[2], r[3], r[0], r[5], r[6], r[7]))
+                c += 1
+                if c >= self.limit:
+                    break
 
-        elif self.type == "SQLite FTS4":
-            start = time.time()
-            for r in res:
-                if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                    rList.append((r[4], r[2], r[3], r[0], self.bm25(r[5], 0, 1, 2, 0, 0), r[6], r[7]))
-            resDict["time-ranking"] = int((time.time() - start) * 1000)
+        # else:
+        #     start = time.time()
+        #     for r in res:
+        #         if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
+        #             rList.append((r[4], r[2], r[3], r[0], r[5], r[6], r[7]))
+        #     resDict["time-ranking"] = int((time.time() - start) * 1000)
 
-        else:
-            start = time.time()
-            for r in res:
-                if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                    rList.append((r[4], r[2], r[3], r[0], self.simpleRank(r[5]), r[6], r[7]))
-            resDict["time-ranking"] = int((time.time() - start) * 1000)
+        # else:
+        #     start = time.time()
+        #     for r in res:
+        #         if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
+        #             rList.append((r[4], r[2], r[3], r[0], r[5], r[6], r[7]))
+        #     resDict["time-ranking"] = int((time.time() - start) * 1000)
 
         conn.close()
 
         #if fts5 is not used, results are not sorted by score
-        if not self.type == "SQLite FTS5":
-            listSorted = sorted(rList, key=lambda x: x[4])
-            rList = listSorted
+        # if not self.type == "SQLite FTS5":
+        #     listSorted = sorted(rList, key=lambda x: x[4])
+        #     rList = listSorted
         if self.logging:
             log("Query was: " + query)
             log("Result length (after removing pinned and unselected decks): " + str(len(rList)))
@@ -238,7 +247,7 @@ class FTSIndex:
     def printOutput(self, result, stamp):
         query_set = None
         if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
-            query_set =  set(replaceAccentsWithVowels(s).lower() for s in self.lastResDict["query"].split(" "))
+            query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
         if type(result) is str:
             #self.output.show_tooltip(result)
             pass
@@ -249,7 +258,7 @@ class FTSIndex:
     def print_pdf(self, result, stamp):
         query_set = None
         if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
-            query_set =  set(replaceAccentsWithVowels(s).lower() for s in self.lastResDict["query"].split(" "))
+            query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
         if result is not None:
             self.output.print_pdf_search_results(result["results"], stamp, query_set)
         else:
@@ -261,7 +270,7 @@ class FTSIndex:
         Used for searches in the search mask,
         doesn't use the index, instead use the traditional anki search (which is more powerful for single keywords)
         """
-        stamp = self.output.getMiliSecStamp()
+        stamp = utility.misc.get_milisec_stamp()
         self.output.latest = stamp
         found = self.finder.findNotes(text)
 
@@ -286,94 +295,18 @@ class FTSIndex:
             return { "result" : rList[:self.limit], "stamp" : stamp }
         return { "result" : [], "stamp" : stamp }
 
-    def _parseMatchInfo(self, buf):
-        #something is off in the match info, sometimes tf for terms is > 0 when it should not be
-        bufsize = len(buf)
-        return [struct.unpack('@I', buf[i:i+4])[0] for i in range(0, bufsize, 4)]
+ 
 
     def clean(self, text):
-        return clean(text, self.stopWords)
+        return utility.text.clean(text, self.stopWords)
 
 
 
-    def simpleRank(self, rawMatchInfo):
-        """
-        Based on https://github.com/saaj/sqlite-fts-python/blob/master/sqlitefts/ranking.py
-        """
-        match_info = self._parseMatchInfo(rawMatchInfo)
-        score = 0.0
-        p, c = match_info[:2]
-        for phrase_num in range(p):
-            phrase_info_idx = 2 + (phrase_num * c * 3)
-            for col_num in range(c):
-                col_idx = phrase_info_idx + (col_num * 3)
-                x1, x2 = match_info[col_idx:col_idx + 2]
-                if x1 > 0:
-                    score += float(x1) / x2
-        return -score
 
 
 
-    def bm25(self, rawMatchInfo, *args):
-        match_info = self._parseMatchInfo(rawMatchInfo)
-        #increase?
-        K = 0.5
-        B = 0.75
-        score = 0.0
 
-        P_O, C_O, N_O, A_O = range(4)
-        term_count = match_info[P_O]
-        col_count = match_info[C_O]
-        total_docs = match_info[N_O]
-        L_O = A_O + col_count
-        X_O = L_O + col_count
-
-        if not args:
-            weights = [1] * col_count
-        else:
-            weights = [0] * col_count
-            for i, weight in enumerate(args):
-                weights[i] = weight
-
-        #collect number of different matched terms
-        cd = 0
-        for i in range(term_count):
-            for j in range(col_count):
-                x = X_O + (3 * j * (i + 1))
-                if float(match_info[x]) != 0.0:
-                    cd += 1
-
-        for i in range(term_count):
-            for j in range(col_count):
-                weight = weights[j]
-                if weight == 0:
-                    continue
-
-                avg_length = float(match_info[A_O + j])
-                doc_length = float(match_info[L_O + j])
-                if avg_length == 0:
-                    D = 0
-                else:
-                    D = 1 - B + (B * (doc_length / avg_length))
-
-                x = X_O + (3 * j * (i + 1))
-                term_frequency = float(match_info[x])
-                docs_with_term = float(match_info[x + 2])
-
-                idf = max(
-                    math.log(
-                        (total_docs - docs_with_term + 0.5) /
-                        (docs_with_term + 0.5)),
-                    0)
-                denom = term_frequency + (K * D)
-                if denom == 0:
-                    rhs = 0
-                else:
-                    rhs = (term_frequency * (K + 1)) / denom
-
-                score += (idf * rhs) * weight
-        return -score - cd * 20
-
+   
     def deleteNote(self, nid):
         conn = sqlite3.connect(self.dir + "search-data.db")
         conn.cursor().execute("DELETE FROM notes WHERE CAST(nid AS INTEGER) = %s;" % nid)
@@ -384,9 +317,9 @@ class FTSIndex:
         """
         Add a non-anki note to the index.
         """
-        text = build_user_note_text(title=note[1], text=note[2], source=note[3])
+        text = utility.text.build_user_note_text(title=note[1], text=note[2], source=note[3])
         conn = sqlite3.connect(self.dir + "search-data.db")
-        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note[0], clean(text, self.stopWords), note[4], "-1", text, "-1"))
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note[0], utility.text.clean(text, self.stopWords), note[4], "-1", text, "-1"))
         conn.commit()
         conn.close()
         persist_index_info(self)
@@ -410,9 +343,9 @@ class FTSIndex:
             return
         did = did[0]
         if str(note.mid) in self.fields_to_exclude:
-            content = remove_fields(content, self.fields_to_exclude[str(note.mid)])
+            content = utility.text.remove_fields(content, self.fields_to_exclude[str(note.mid)])
         conn = sqlite3.connect(self.dir + "search-data.db")
-        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note.id, clean(content, self.stopWords), tags, did, content, note.mid))
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note.id, utility.text.clean(content, self.stopWords), tags, did, content, note.mid))
         conn.commit()
         conn.close()
         persist_index_info(self)
@@ -435,6 +368,81 @@ class FTSIndex:
             return res
         except:
             return 0
+
+
+def _parseMatchInfo(buf):
+    bufsize = len(buf)
+    return [struct.unpack('@I', buf[i:i+4])[0] for i in range(0, bufsize, 4)]
+
+def simple_rank(rawMatchInfo):
+    """
+    Based on https://github.com/saaj/sqlite-fts-python/blob/master/sqlitefts/ranking.py
+    """
+    match_info = _parseMatchInfo(rawMatchInfo)
+    score = 0.0
+    p, c = match_info[:2]
+    for phrase_num in range(p):
+        phrase_info_idx = 2 + (phrase_num * c * 3)
+        for col_num in range(c):
+            col_idx = phrase_info_idx + (col_num * 3)
+            x1, x2 = match_info[col_idx:col_idx + 2]
+            if x1 > 0:
+                score += float(x1) / x2
+    return score
+
+
+def bm25(rawMatchInfo):
+    match_info = _parseMatchInfo(rawMatchInfo)
+    K = 0.5
+    B = 0.75
+    score = 0.0
+
+    P_O, C_O, N_O, A_O = range(4)
+    term_count = match_info[P_O]
+    col_count = match_info[C_O]
+    total_docs = match_info[N_O]
+    L_O = A_O + col_count
+    X_O = L_O + col_count
+
+    weights = [1] * col_count
+    #collect number of different matched terms
+    # cd = 0
+    # for i in range(term_count):
+    #     for j in range(col_count):
+    #         x = X_O + (3 * j * (i + 1))
+    #         if float(match_info[x]) != 0.0:
+    #             cd += 1
+
+    for i in range(term_count):
+        for j in range(col_count):
+            weight = weights[j]
+            if weight == 0:
+                continue
+
+            avg_length = float(match_info[A_O + j])
+            doc_length = float(match_info[L_O + j])
+            if avg_length == 0:
+                D = 0
+            else:
+                D = 1 - B + (B * (doc_length / avg_length))
+
+            x = X_O + (3 * j * (i + 1))
+            term_frequency = float(match_info[x])
+            docs_with_term = float(match_info[x + 2])
+
+            idf = max(
+                math.log(
+                    (total_docs - docs_with_term + 0.5) /
+                    (docs_with_term + 0.5)),
+                0)
+            denom = term_frequency + (K * D)
+            if denom == 0:
+                rhs = 0
+            else:
+                rhs = (term_frequency * (K + 1)) / denom
+
+            score += (idf * rhs) * weight
+    return score
 
 
 class Worker(QRunnable):
