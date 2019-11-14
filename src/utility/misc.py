@@ -85,6 +85,25 @@ def hex_to_rgb(h):
     h = h.lstrip('#')
     return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
 
+def date_diff_to_string(diff):
+    """
+    Takes a datetime obj representing a difference between two dates, returns e.g.
+    "5 minutes", "6 hours", ...
+    """
+    time_str = "%s %s"
+
+    if diff.total_seconds() / 60 < 2.0:
+        time_str = time_str % ("1", "minute")
+    elif diff.total_seconds() / 3600 < 1.0:
+        time_str = time_str % (int(diff.total_seconds() / 60), "minutes")
+    elif diff.total_seconds() / 86400 < 1.0:
+        time_str = time_str % (int(diff.total_seconds() / 3600), "hours")
+    elif diff.total_seconds() / 86400 >= 1.0 and diff.total_seconds() / 86400 < 2.0:
+        time_str = time_str % ("1", "day")
+    else:
+        time_str = time_str % (int(diff.total_seconds() / 86400), "days")
+    return time_str
+
 
 def get_milisec_stamp():
     return int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds() * 1000)

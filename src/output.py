@@ -927,6 +927,7 @@ class Output:
         if results is not None and len(results) > 0:
             html = self.get_result_html_simple(results[:50], False, False)
             qhtml = """
+                <div id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</div>
                 <div style='width: 235px; margin-left: 5px; text-align: center; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
                 <i>%s</i>
                 </div>
@@ -934,6 +935,13 @@ class Output:
             self.editor.web.eval("""
             document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
             document.getElementById('siac-pdf-tooltip-top').innerHTML = `%s`
+            document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
+            if ($('#siac-pdf-tooltip').data('sentences').length === 0) {
+                $('#siac-cloze-btn').hide();
+            } else {
+                $('#siac-cloze-btn').text(`Generate Clozes (${$('#siac-pdf-tooltip').data('sentences').length})`);
+            }
+
             """ % (html, qhtml))
         else:
             if query_set is None or len(query_set)  == 0:
@@ -942,7 +950,13 @@ class Output:
                 message = "Nothing found for query: <br/><br/><i>%s</i>" % (utility.text.trim_if_longer_than(" ".join(query_set), 200))
             self.editor.web.eval("""
                 document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
-                document.getElementById('siac-pdf-tooltip-top').innerHTML = ``;
+                document.getElementById('siac-pdf-tooltip-top').innerHTML = `<div id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</div>`;
+                document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
+                if ($('#siac-pdf-tooltip').data('sentences').length === 0) {
+                    $('#siac-cloze-btn').hide();
+                } else {
+                    $('#siac-cloze-btn').text(`Generate Clozes (${$('#siac-pdf-tooltip').data('sentences').length})`);
+                }
             """ % message)
 
 

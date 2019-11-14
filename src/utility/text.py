@@ -240,4 +240,40 @@ def find_all_images(html):
 def escape_html(text):
     text = text.replace("<", "&lt;")
     text = text.replace(">", "&gt;")
+    text = text.replace("`", "&#96;")
     return text
+
+
+def try_find_sentence(text, selection):
+    if not selection in text:
+        return None
+    selection = re.sub("  +", " ", selection).strip()
+    text = re.sub("  +", " ", text).strip()
+    last = text.rindex(selection)
+    pre = text[:last]
+    
+    def _try_find_closing(text):
+        found = False
+        for c in [".", "!", "?", "•", ":", "=", "#", "-", "§", "Ø"]:
+            try:
+                if text.rindex(c) >= 0 and text.rindex(c) < len(text) -1:
+                    text = text[text.rindex(c) + 1:]
+                    found = True
+                    break
+            except:
+                continue
+        if not found: 
+            return None
+        return text
+    
+    
+    pre = _try_find_closing(pre)
+    if pre is None:
+        return None
+    after = text[last:]
+    after = _try_find_closing(after[::-1])
+    if after is None: 
+        return None
+    return pre + after[::-1] + "."
+
+   

@@ -1115,8 +1115,9 @@ function pdfKeyup() {
 		let s = window.getSelection();
         let r = s.getRangeAt(0);
         let text = s.toString();
-        if (text === " ") { return; }
+        if (text === " " || text.length > 500) { return; }
         let nodesInSel = nodesInSelection(r);
+        let sentences = getSentencesAroundSelection(r, nodesInSel, text);
         if (nodesInSel.length > 1) {
             text = joinTextLayerNodeTexts(nodesInSel, text);
         }
@@ -1125,11 +1126,14 @@ function pdfKeyup() {
 		document.getElementById('siac-pdf-tooltip-results-area').innerHTML = 'Searching...';
         $('#siac-pdf-tooltip').css({'top': (rect.top - prect.top + rect.height) + "px", 'left': (rect.left - prect.left) + "px" }).show();
         pycmd("siac-pdf-selection " + text);
+        $('#siac-pdf-tooltip').data("sentences", sentences);
+        $('#siac-pdf-tooltip').data("selection", text);
+       
 	}
 }
 
  function joinTextLayerNodeTexts(nodes, text) {
-     let total = "";
+    let total = "";
     for (var i = 0; i <nodes.length; i++) {
         if (nodes[i].innerHTML === text) {
             return text;
@@ -1148,36 +1152,148 @@ function pdfKeyup() {
 }
 
 function nodesInSelection(range) {
-    var _iterator = document.createNodeIterator(
-        range.commonAncestorContainer,
-        NodeFilter.SHOW_ALL,
-        {
-            acceptNode: function (node) {
-                return NodeFilter.FILTER_ACCEPT;
-            }
+
+    var lAllChildren = document.getElementById("text-layer").children;
+    let nodes = [];
+    let inside = false;
+    let start = range.startContainer.nodeName === "#text" ? range.startContainer.parentNode : range.startContainer;
+    let end = range.endContainer.nodeName === "#text" ? range.endContainer.parentNode : range.endContainer;
+    for (var i = 0; i < lAllChildren.length; i++) {
+        if (lAllChildren[i] == start) {
+            inside = true;
         }
-    );
-    var _nodes = [];
-    while (_iterator.nextNode()) {
-        if (_nodes.length === 0 && _iterator.referenceNode !== range.startContainer) continue;
-        _nodes.push(_iterator.referenceNode);
-        if (_iterator.referenceNode === range.endContainer) break;
+        if (inside) {
+            nodes.push(lAllChildren[i]);
+        }
+        if (lAllChildren[i] == end) {
+            break;
+        }
     }
-    return _nodes;
+    return nodes;
 }
 
 
 function globalKeydown(e) {
     if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode == 78) {
-                e.preventDefault();
-            if ($('#siac-rd-note-btn').length) {
-        $('#siac-rd-note-btn').trigger("click");
+        e.preventDefault();
+        if ($('#siac-rd-note-btn').length) {
+            $('#siac-rd-note-btn').trigger("click");
         } else {
-        pycmd('siac-create-note')
+            pycmd('siac-create-note');
         }
     }
 }
 
+function getSentencesAroundSelection(range, nodesInSel, selection) {
+    if (!range.startContainer) {
+        return;
+    }
+    selection = selection.replace(/  +/g, " ").trim();
+    let currentNode = range.startContainer.parentElement.previousSibling;
+    let text = "";
+    let height = 0;
+    let lastOffsetTop = 0;
+    if (nodesInSel.length === 1) {
+        text = nodesInSel[0].innerHTML;
+        height = nodesInSel[0].clientHeight;
+    } else {
+        for (var i = 0; i< nodesInSel.length; i++) {
+            text += nodesInSel[i].innerHTML + " ";
+            height = nodesInSel[i].clientHeight;
+        }
+    }
+    lastOffsetTop = nodesInSel[0].offsetTop;
+    text = text.replace(/  +/g, " ").trim();
+    let extracted = [];
+    if (!currentNode) {
+        extracted.push(text);
+    }
+    while(currentNode) {
+        if (Math.abs(currentNode.clientHeight - height) > 1 || lastOffsetTop - currentNode.offsetTop > height * 1.5) {
+            extracted.push(text);
+            break;
+        } 
+        lastOffsetTop = currentNode.offsetTop;
+        text = (currentNode.innerHTML + " " + text).replace(/  +/g, " ").trim();        
+        let ext = extractPrev(text, extracted, selection);
+        extracted = ext[1];
+        if (ext[0]) {
+            break;
+        }
+        currentNode = currentNode.previousSibling; 
+        if (!currentNode) {
+            extracted.push(text);
+            break;
+        }
+    }
+    let extractedFinal = [];
+    for (var i = 0; i < extracted.length; i++) {
+        text = extracted[i];
+        currentNode = range.endContainer.parentElement.nextSibling;
+        if (!currentNode) {
+            extractedFinal.push(text);
+        }
+        while(currentNode) {
+            text = (text + " " + currentNode.innerHTML).replace(/  +/g, " ").trim();        
+            let ext = extractNext(text, extractedFinal, selection);
+            extractedFinal = ext[1];
+            if (ext[0]) {
+                break;
+            }
+            currentNode = currentNode.nextSibling; 
+            if (!currentNode) {
+                extractedFinal.push(text);
+                break;
+            }
+        }
+    }
+    return extractedFinal;
+}
+
+function sendClozes() {
+    let sentences = $('#siac-pdf-tooltip').data("sentences");
+    let selection = $('#siac-pdf-tooltip').data("selection");
+    pycmd("siac-show-cloze-modal " + selection + "$$$" + sentences.join("$$$"));
+
+}
+function generateClozes() {
+    let cmd = "";
+    $('.siac-cl-row').each(function(i, elem) {
+        if($(elem.children[1].children[0]).is(":checked")) {
+           cmd += "$$$" + $(elem.children[0].children[0]).text();
+        }
+    });
+    pycmd('siac-generate-clozes ' + cmd);
+    $('#siac-pdf-tooltip').hide();
+}
+
+function extractPrev(text, extracted, selection) {
+    text = text.substring(0, text.lastIndexOf(selection)+ selection.length) + text.substring(text.lastIndexOf(selection) + selection.length).replace(/\./g, "$DOT$");
+    let matches = text.match(/.*[^.\d][\.\u2022\u2023\u25E6\u2043\u2219]"? (.+)/);
+    if (!matches || matches[1].indexOf(selection) === -1 ) {
+        return [false, extracted];
+    }
+    let ext = matches[1].replace(/\$DOT\$/g, ".");
+    if (extracted.indexOf(ext) === -1) {
+        extracted.push(ext);
+    }
+    return [true, extracted];
+
+}
+function extractNext(text, extracted, selection) {
+    text = text.substring(0, text.indexOf(selection)).replace(/\./g, "$DOT$") + text.substring(text.indexOf(selection));
+
+    let matches = text.match(/(.+?(\.\.\.(?!,| [a-zöäü])|[^\.]\.(?!\.)|[!?\u2022\u2023\u25E6\u2043\u2219])).*/);
+    if (!matches || matches[1].indexOf(selection) === -1) {
+        return [false, extracted];
+    }
+    let ext = matches[1].replace(/\$DOT\$/g, ".");
+    if (extracted.indexOf(ext) === -1) {
+        extracted.push(ext);
+    }
+    return [true, extracted];
+
+}
 
 function pxToSandScheme(red, green, blue){
     if (red > 210 && green > 210 && blue > 210) {return {r:241,g:206,b:147}; }

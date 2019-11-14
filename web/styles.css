@@ -802,6 +802,18 @@ table.striped tr:nth-child(even) {
     color: #2496dc;
     transform: scale(1.04);
 }
+#siac-cloze-btn {
+    width: 100%;
+    margin-bottom: 7px;
+    text-align: center;
+    color:darkorange;
+    cursor:pointer;
+}
+#siac-cloze-btn:hover {
+    transform: scale(1.03);
+    filter: brightness(1.4);
+}
+
 #indexInfo, #synonymsIcon, #stylingIcon, #siac-note-icn {
     margin-right: 5px;
 
@@ -1240,6 +1252,9 @@ margin-right: auto;
 	max-width: 250px;
 	padding-right: 8px;
 	padding-left: 3px;
+}
+#siac-pdf-tooltip-bottom {
+    text-align: center;
 }
 
 #siac-pdf-page-inp {

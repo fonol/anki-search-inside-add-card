@@ -1,4 +1,8 @@
 __pycache__/
 index/*
 meta.json
-synonyms.json
+log.txt
+search-data.db
+addon-packed.zip
+build.bat
+.vscode/*

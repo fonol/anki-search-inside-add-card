@@ -390,54 +390,20 @@ def get_reading_modal_html(note):
     created = note[6]
     pos = note[10]
     created_dt = datetime.datetime.strptime(created, '%Y-%m-%d %H:%M:%S')
-    now = datetime.datetime.now()
-    diff = now - created_dt
+    diff = datetime.datetime.now() - created_dt
 
     queue = _get_priority_list()
     queue_len = len(queue)
 
-    time_str = "Added %s %s ago."
 
-    if diff.total_seconds() / 60 < 2.0:
-        time_str = time_str % ("1", "minute")
-    elif diff.total_seconds() / 3600 < 1.0:
-        time_str = time_str % (int(diff.total_seconds() / 60), "minutes")
-    elif diff.total_seconds() / 86400 < 1.0:
-        time_str = time_str % (int(diff.total_seconds() / 3600), "hours")
-    elif diff.total_seconds() / 86400 >= 1.0 and diff.total_seconds() / 86400 < 2.0:
-        time_str = time_str % ("1", "day")
-    else:
-        time_str = time_str % (int(diff.total_seconds() / 86400), "days")
-
+    time_str = "Added %s ago." % utility.misc.date_diff_to_string(diff)
+    
     if checkIndex():
-        tag_str = ""
-        tags_split = tags.split()
-        tm = index.output.getTagMap(tags_split)
-        totalLength = sum([len(k) for k,v in tm.items()])
-        maxLength = 50
-        maxCount = 7
-        if len(tm) <= maxCount or totalLength < maxLength:
-            for t, s in tm.items():
-                if len(s) > 0:
-                    tagData = " ".join(utility.tags.iterateTagmap({t : s}, ""))
-                    if len(s) == 1 and tagData.count("::") < 2 and not t in tags_split:
-                        tag_str += "<div class='tagLbl' style='display: inline; margin: 0 5px 0 0;'>%s</div>" %(utility.text.trim_if_longer_than(tagData.split(" ")[1], maxLength))
-                    else:
-                        tag_str += "<div class='tagLbl' style='display: inline;margin: 0 5px 0 0;'>%s</div>" %(utility.text.trim_if_longer_than(t, maxLength) + " (+%s)"% len(s))
-                else:
-                    tag_str += "<div class='tagLbl' style='display: inline;margin: 0 5px 0 0;'>%s</div>" %(utility.text.trim_if_longer_than(t, maxLength))
-        else:
-            tagData = " ".join(utility.tags.iterateTagmap(tm, ""))
-            tag_str += "<div class='tagLbl' style='display: inline;margin: 0 5px 0 0;'>%s</div>" %(str(len(tm)) + " tags ...")
 
         title = title if title is not None and len(title.strip()) > 0 else "Untitled"
         title = utility.text.trim_if_longer_than(title, 50)
         title = title.replace("<", "&lt;").replace(">", "&gt;")
         source = source.strip() if source is not None and len(source.strip()) > 0 else "Empty"
-        # if source.lower().endswith(".pdf"):
-        #     source_icn = "&#128462; "
-        #     title = "%s &nbsp;" % (pdf_svg(16, 20)) + title
-        # else:
         source_icn = ""
 
         html = """
@@ -448,7 +414,11 @@ def get_reading_modal_html(note):
                     <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide(); if (pdfDisplayed) {{ pdfDisplayed.destroy(); pdfDisplayed = null; }} {save_on_close} $("#siac-reading-modal-text").html("");'>&times;</span>
                 </div>
 
-                <div id='siac-pdf-tooltip' onclick='event.stopPropagation();'><div id='siac-pdf-tooltip-top'></div><div id='siac-pdf-tooltip-results-area'></div></div>
+                <div id='siac-pdf-tooltip' onclick='event.stopPropagation();' onkeyup='event.stopPropagation();'>
+                    <div id='siac-pdf-tooltip-top'></div>
+                    <div id='siac-pdf-tooltip-results-area'></div>
+                    <div id='siac-pdf-tooltip-bottom'></div>
+                </div>
                 <div id='siac-reading-modal-top-bar' style='height: 10%; min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
                     <div style='flex: 1 1; overflow: hidden;'>
                         <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; vertical-align:middle;'>{title}</h2>
@@ -497,8 +467,8 @@ def get_reading_modal_html(note):
                 </div>
             </div>
             <script>
-            if (readingTimer != null)  {{ $('#siac-timer-play-btn').html('Pause').removeClass('inactive');
-
+            if (readingTimer != null)  {{
+                 $('#siac-timer-play-btn').html('Pause').removeClass('inactive');
             }} else if (remainingSeconds !== 1800) {{
                 document.getElementById("siac-reading-modal-timer").innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds % 60 < 10 ? "0" + remainingSeconds % 60 : remainingSeconds % 60);
             }}
@@ -519,11 +489,67 @@ def get_reading_modal_html(note):
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, tag_str = tag_str, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close, source_icn = source_icn)
+        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close, source_icn = source_icn)
         html = html.format_map(params)
         return html
     return ""
 
+
+def get_reading_modal_bottom_bar(note):
+    """
+        Returns only the html for the bottom bar, useful if the currently displayed pdf should not be reloaded.
+    """
+    index = get_index()
+
+    note_id = note[0]
+    created = note[6]
+    pos = note[10]
+    source = note[3]
+    created_dt = datetime.datetime.strptime(created, '%Y-%m-%d %H:%M:%S')
+    diff = datetime.datetime.now() - created_dt
+    queue = _get_priority_list()
+    queue_len = len(queue)
+
+    time_str = "Added %s ago." % utility.misc.date_diff_to_string(diff)
+
+       
+    html = """
+            <div id='siac-reading-modal-bottom-bar' style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden;'>
+                <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
+
+                    <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
+                    <div id='siac-queue-sched-wrapper'>
+
+                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>Start</div>
+                        <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 7")'>Rnd</div>
+                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>First 3rd</div>
+                        <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 8")'>Rnd</div>
+                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>Second 3rd</div>
+                        <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 9")'>Rnd</div>
+                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>End</div>
+                        <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
+                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
+                        <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
+                    </div>
+                    <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
+                        <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
+                        <span style='margin-top: 5px;'>{time_str}</span> <br>
+                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                        <a onclick='pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
+                        <a onclick='pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
+                    </div>
+                    {queue_readings_list}
+                </div>
+            </div>
+    """
+    editable = not source.lower().endswith(".pdf") and len(text) < 50000
+    queue_info = "Position: <b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "Not in Queue."
+    queue_info_short = "<b>%s</b> / <b>%s</b>" % (pos + 1, queue_len) if pos is not None else "Not in Queue"
+    queue_readings_list = get_queue_head_display(note_id, queue, editable)
+
+    params = dict(note_id = note_id, time_str = time_str, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list )
+    html = html.format_map(params)
+    return html
 
 def get_queue_head_display(note_id, queue = None, should_save = False):
     """
@@ -543,6 +569,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
     for ix, queue_item in enumerate(queue):
         should_greyout = "greyedout" if queue_item[0] == int(note_id) else ""
         qi_title = utility.text.trim_if_longer_than(queue_item[1], 40) if queue_item[1] is not None and len(queue_item[1]) > 0 else "Untitled"
+        qi_title = utility.text.escape_html(qi_title)
         #if the note is a pdf, show a loader
         should_show_loader = 'document.getElementById("siac-reading-modal-text").innerHTML = ""; showLoader(\"siac-reading-modal-text\", \"Loading Note...\");' if queue_item[3] is not None and queue_item[3].strip().lower().endswith(".pdf") else ""
         queue_head_readings +=  "<a onclick='%s %s pdfDisplayed ? pdfDisplayed.destroy() : pdfDisplayed = null; pycmd(\"siac-read-user-note %s\")' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;'>%s. %s</a><br>" % (save, should_show_loader, queue_item[0], should_greyout, queue_item[10] + 1, qi_title)

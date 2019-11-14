@@ -4,6 +4,8 @@ import aqt
 import aqt.webview
 import aqt.editor
 import aqt.stats
+from anki.notes import Note
+from aqt.utils import tooltip
 import os
 
 from .state import checkIndex, get_index, set_index, set_corpus, get_old_on_bridge_cmd
@@ -113,6 +115,16 @@ def expanded_on_bridge_cmd(self, cmd):
         stamp = setStamp()
         if checkIndex():
             searchIndex.search(cmd[19:], ["-1"], only_user_notes = False, print_mode = "pdf")
+            
+    elif cmd.startswith("siac-show-cloze-modal "):
+        selection = " ".join(cmd.split()[1:]).split("$$$")[0]
+        sentences = cmd.split("$$$")[1:]
+        display_cloze_modal(self, selection, sentences)
+    
+    elif cmd.startswith("siac-generate-clozes "):
+        sentences = [s for s in cmd.split("$$$")[1:] if len(s) > 0]
+        generate_clozes(sentences)
+
 
     elif cmd.startswith("pSort "):
         if checkIndex():
@@ -212,9 +224,9 @@ def expanded_on_bridge_cmd(self, cmd):
             if picker.chosen_id is not None and picker.chosen_id >= 0:
                 display_note_reading_modal(picker.chosen_id)
             else:
-                display_note_reading_modal(nid)
+                reload_note_reading_modal_bottom_bar(nid)
         else:
-            display_note_reading_modal(nid)
+            reload_note_reading_modal_bottom_bar(nid)
 
 
 
@@ -738,7 +750,29 @@ def tryRepeatLastSearch(editor = None):
         elif searchIndex.lastSearch[2] == "firstCreated":
             getCreatedNotesOrderedByDate(searchIndex, editor, searchIndex.selectedDecks, searchIndex.lastSearch[3], "asc")
 
+def generate_clozes(sentences):
+    model = mw.col.models.byName('Cloze')
+    if model is None:
+        return
+    deck_chooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
+    if deck_chooser is None: 
+        return
+    did = deck_chooser.selectedId()
+    added = 0 
+    for sentence in sentences:
+        if not "{{c1::" in sentence or not "}}" in sentence:
+            continue
+        note = Note(mw.col, model)
+        note.model()['did'] = did
+        if not "Text" in note:
+            return
+        note["Text"] = sentence
+        a = mw.col.addNote(note)
+        if a > 0:
+            addNoteToIndex(note)
+        added += a
 
+    tooltip("Added %s Cloze(s)." % added, period=2000)
 
 def getIndexInfo():
     """

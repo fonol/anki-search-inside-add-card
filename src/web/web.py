@@ -14,7 +14,7 @@ import utility.misc
 from ..tag_find import get_most_active_tags
 from ..state import get_index, checkIndex, set_deck_map
 from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages
-from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display
+from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar
 
 
 def toggleAddon():
@@ -365,13 +365,17 @@ def display_note_reading_modal(note_id):
 
         html = get_reading_modal_html(note)
         index.output.show_in_large_modal(html)
-
         # if source is a pdf file path, try to display it
         if note[3] is not None and note[3].strip().lower().endswith(".pdf") and utility.misc.file_exists(note[3]):
             _display_pdf(note[3].strip(), note_id)
 
-
-
+def reload_note_reading_modal_bottom_bar(note_id):
+    """
+        Called after queue picker dialog has been closed without opening a new note.
+    """
+    note = get_note(note_id)
+    html = get_reading_modal_bottom_bar(note)
+    get_index().output.editor.web.eval("$('#siac-reading-modal-bottom-bar').replaceWith(`%s`);" % html)
 
 def _display_pdf(full_path, note_id):
     index = get_index()
@@ -501,6 +505,52 @@ def update_reading_bottom_bar(nid):
         $('.siac-queue-sched-btn:first').html('%s');
         $('#siac-queue-readings-list').replaceWith(`%s`);
         """ % (pos_lbl, pos_lbl_btn, qd))
+
+def display_cloze_modal(editor, selection, extracted):
+    s_html = "<table style='margin-top: 5px; font-size: 15px;'>"
+    sentences = [s for s in extracted if len(s) < 300 and len(s.strip()) > 0]
+    if len(sentences) == 0:
+        for s in extracted:
+            if len(s) >= 300:
+                f = utility.text.try_find_sentence(s, selection)
+                if f is not None and len(f) < 300:
+                    sentences.append(f)
+
+    if len(sentences) > 0 and sentences != [""]:
+        selection = re.sub("  +", " ", selection).strip()
+        for sentence in sentences:
+            sentence = re.sub("  +", " ", sentence).strip()
+            sentence = sentence.replace(selection, " <span style='color: lightblue;'>{{c1::%s}}</span> " % selection)
+            sentence = sentence.replace("  ", " ").replace("</span> ,", "</span>,")
+            sentence = re.sub(" ([\"“”\\[(]) <span", " \\1<span", sentence)
+            sentence = re.sub("</span> ([\"”\\]):])", "</span>\\1", sentence)
+            sentence = re.sub("</span> -([^ \\d])", "</span>-\\1", sentence)
+            sentence = re.sub(r"([^\\d ])- ([^\d])", r"\1\2", sentence)
+            sentence = re.sub(" [\"“”], [\"“”] ?", "\", \"", sentence)
+            sentence = re.sub(" [\"“”], ", "\", ", sentence)
+            sentence = re.sub(": [\"“”] ", ": \"", sentence)
+            sentence = sentence.replace("[ ", "[")
+            sentence = sentence.replace(" ]", "]")
+            sentence = re.sub(" ([,;:.]) ", r"\1 ", sentence)
+            sentence = re.sub(r"\( (.) \)", r"(\1)", sentence)
+            sentence = re.sub(" ([?!.])$", r"\1", sentence)
+
+            sentence = re.sub(" ([\"“”])([?!.])$", r"\1\2", sentence)
+            
+           
+            
+            s_html += "<tr class='siac-cl-row'><td><div contenteditable style='color: darkorange;'>%s</div></td><td><input type='checkbox' checked/></td></tr>" % (sentence.replace("`", "&#96;"))
+        s_html += "</table>"
+        btn_html = "document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `<div class='siac-btn siac-btn-dark' style='margin-top: 8px;' onclick='generateClozes();'>Generate</div>`;"
+    else:
+        s_html = "<br>Sorry, could not extract any sentences." 
+        btn_html = ""
+    
+    editor.web.eval("""
+            document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
+            document.getElementById('siac-pdf-tooltip-top').innerHTML = `Found <b>%s</b> sentence(s) around selection: <br/>(Click inside to edit)`
+            %s
+            """ % (s_html, len(sentences), btn_html))
 
 
 def display_note_del_confirm_modal(editor, nid):

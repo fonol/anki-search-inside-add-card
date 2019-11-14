@@ -198,7 +198,7 @@ def onLoadNote(editor):
 
         if searchIndex is None or not searchIndex.tagSelect:
             fillDeckSelect(editor)
-            if get_index() is None or searchIndex.lastSearch is None:
+            if get_index() is None or (searchIndex is not None and searchIndex.lastSearch is None):
                 printStartingInfo(editor)
         if not corpus_is_loaded():
             if searchIndex is not None and searchIndex.logging:
