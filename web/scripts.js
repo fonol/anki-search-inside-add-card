@@ -219,7 +219,7 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
                         invertCanvas(ctx);
                     }
                 }
-                return lPage.getTextContent();
+                return lPage.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: true});
                }).then(function(textContent) {
                    $("#text-layer").css({ height: canvas.height , width: canvas.width, left: canvas.offsetLeft  }).html('');
                    pdfjsLib.renderTextLayer({
@@ -1269,7 +1269,7 @@ function generateClozes() {
 
 function extractPrev(text, extracted, selection) {
     text = text.substring(0, text.lastIndexOf(selection)+ selection.length) + text.substring(text.lastIndexOf(selection) + selection.length).replace(/\./g, "$DOT$");
-    let matches = text.match(/.*[^.\d][\.\u2022\u2023\u25E6\u2043\u2219]"? (.+)/);
+    let matches = text.match(/.*[^.\d][.]"? (.+)/);
     if (!matches || matches[1].indexOf(selection) === -1 ) {
         return [false, extracted];
     }
@@ -1283,7 +1283,7 @@ function extractPrev(text, extracted, selection) {
 function extractNext(text, extracted, selection) {
     text = text.substring(0, text.indexOf(selection)).replace(/\./g, "$DOT$") + text.substring(text.indexOf(selection));
 
-    let matches = text.match(/(.+?(\.\.\.(?!,| [a-zöäü])|[^\.]\.(?!\.)|[!?\u2022\u2023\u25E6\u2043\u2219])).*/);
+    let matches = text.match(/(.+?(\.\.\.(?!,| [a-z])|[^.]\.(?!\.)|[!?])).*/);
     if (!matches || matches[1].indexOf(selection) === -1) {
         return [false, extracted];
     }
