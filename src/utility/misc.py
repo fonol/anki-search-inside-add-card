@@ -104,6 +104,34 @@ def date_diff_to_string(diff):
         time_str = time_str % (int(diff.total_seconds() / 86400), "days")
     return time_str
 
+def marks_to_js_map(marks):
+    """
+        Takes a list of pdf page marks, returns a str representation of a js dict,
+        that has pages as keys, and arrays of mark types as values.
+    """
+    d = dict()
+    table = dict()
+    for m in marks:
+        if not m[0] in d:
+            d[m[0]] = []
+        if not m[4] in table:
+            table[m[4]] = []
+        d[m[0]].append(str(m[4]))
+        table[m[4]].append(m[0])
+    s = ""
+    t = ""
+    for k,v in d.items():
+        s += ",%s:[%s]" % (k,",".join(v))
+    for k,v in table.items():
+        v.sort()
+        t += ",%s:[%s]" % (k,",".join([str(page) for page in v]))
+    s = s[1:] 
+    s = "{%s}" % s
+    t = t[1:] 
+    t = "{%s}" % t
+    return (s,t)
+        
+
 
 def get_milisec_stamp():
     return int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds() * 1000)

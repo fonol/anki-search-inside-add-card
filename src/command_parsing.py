@@ -115,12 +115,37 @@ def expanded_on_bridge_cmd(self, cmd):
         stamp = setStamp()
         if checkIndex():
             searchIndex.search(cmd[19:], ["-1"], only_user_notes = False, print_mode = "pdf")
+
+    elif cmd.startswith("siac-jump-last-read"):
+        jump_to_last_read_page(self, int(cmd.split()[1]))
+
+    elif cmd.startswith("siac-jump-first-unread"):
+        jump_to_first_unread_page(self, int(cmd.split()[1]))
+
+    elif cmd.startswith("siac-mark-read-up-to "):
+        mark_all_pages_as_read(int(cmd.split()[1]), int(cmd.split()[2]))
+
+    elif cmd.startswith("siac-mark-all-read "):
+        mark_all_pages_as_read(int(cmd.split()[1]), int(cmd.split()[2]))
+
+    elif cmd.startswith("siac-mark-all-unread "):
+        mark_all_pages_as_unread(int(cmd.split()[1]))
             
     elif cmd.startswith("siac-show-cloze-modal "):
         selection = " ".join(cmd.split()[1:]).split("$$$")[0]
         sentences = cmd.split("$$$")[1:]
         display_cloze_modal(self, selection, sentences)
     
+    elif cmd.startswith("siac-pdf-mark "):
+        mark_type = int(cmd.split()[1])
+        nid = int(cmd.split()[2])
+        page = int(cmd.split()[3])
+        pages_total = int(cmd.split()[4])
+        marks_updated = toggle_pdf_mark(nid, page, pages_total, mark_type)
+        js_maps = utility.misc.marks_to_js_map(marks_updated)
+        self.web.eval(""" pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s; updatePdfDisplayedMarks();""" % (js_maps[0], js_maps[1]))
+
+
     elif cmd.startswith("siac-generate-clozes "):
         sentences = [s for s in cmd.split("$$$")[1:] if len(s) > 0]
         generate_clozes(sentences)

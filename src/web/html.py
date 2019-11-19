@@ -180,17 +180,16 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                     </div>
                     <div class='flexCol right' style="position: relative; min-height: 25px; white-space: nowrap;">
                             <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")'  onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'>&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;
-                                        <div class='siac-btn-small-dropdown click'>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search"); event.stopPropagation();'>&nbsp;Search ...</div>
-                                                <hr>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-head"); event.stopPropagation();'>&nbsp;<b>Read Next</b></div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-random"); event.stopPropagation();'>&nbsp;Read [Rnd]</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]</div>
-
+                                <div class='siac-btn-small-dropdown click'>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search"); event.stopPropagation();'>&nbsp;Search ...</div>
+                                        <hr>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-head"); event.stopPropagation();'>&nbsp;<b>Read Next</b></div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-random"); event.stopPropagation();'>&nbsp;Read [Rnd]</div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]</div>
                                 </div>
                             </div>
                             <div id='siac-settings-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; min-width: 140px; text-align: center; '>&nbsp; Settings & Info &nbsp;
@@ -451,7 +450,7 @@ def get_reading_modal_html(note):
                             <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
                             <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
                         </div>
-                        <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
+                        <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px;'>{time_str}</span> <br>
                             <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
@@ -459,11 +458,13 @@ def get_reading_modal_html(note):
                             <a onclick='pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
                         </div>
                         {queue_readings_list}
+                        <div id='siac-marks-display' onclick='markClicked(event);'></div>
+
                     </div>
                 </div>
                 <div id='siac-timer-popup'>
                     <div style='text-align: center; vertical-align: middle; line-height: 90px; font-weight: bold; font-size: 20px;'>Time is up!</div>
-                    <div style='text-align: center;'><div class='siac-btn-small' onclick='this.parentNode.parentNode.style.display="none";'>&nbsp;Ok&nbsp;</div></div>
+                    <div style='text-align: center;'><div class='siac-btn siac-btn-dark' onclick='this.parentNode.parentNode.style.display="none";'>&nbsp;Ok&nbsp;</div></div>
                 </div>
             </div>
             <script>
@@ -531,7 +532,7 @@ def get_reading_modal_bottom_bar(note):
                         <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
                         <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
                     </div>
-                    <div style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
+                    <div  id='siac-queue-actions'  style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                         <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                         <span style='margin-top: 5px;'>{time_str}</span> <br>
                         <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
@@ -539,6 +540,7 @@ def get_reading_modal_bottom_bar(note):
                         <a onclick='pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
                     </div>
                     {queue_readings_list}
+                    <div id='siac-marks-display'  onclick='markClicked(event);'></div>
                 </div>
             </div>
     """
@@ -588,19 +590,31 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
 def get_pdf_viewer_html(nid):
     dir = utility.misc.get_web_folder_path()
     html = """
-            <div id='siac-pdf-overlay'>PAGE READ</div>
-
-        <div id='siac-pdf-top' style='width: 100%%; height: calc(100%% - 40px); position:relative; max-height: calc(100%% - 40px); overflow-y: auto; text-align: center;' onwheel='pdfMouseWheel(event);'>
-            <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
-            <div id="text-layer" onmouseup='pdfKeyup();' onclick='if (!window.getSelection().toString().length) {$("#siac-pdf-tooltip").hide();}' class="textLayer"></div>
+        <div id='siac-pdf-overlay'>PAGE READ</div>
+        <div id='siac-pdf-overlay-top'>
+            <div id='siac-pdf-mark-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>M
+                <div style='margin-left: 7px;'>
+                    <div class='siac-mark-btn-inner siac-mark-btn-inner-1' onclick='pycmd("siac-pdf-mark 1 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Revisit</div>
+                    <div class='siac-mark-btn-inner siac-mark-btn-inner-2' onclick='pycmd("siac-pdf-mark 2 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Hard</div>
+                    <div class='siac-mark-btn-inner siac-mark-btn-inner-3' onclick='pycmd("siac-pdf-mark 3 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>More Info</div>
+                    <div class='siac-mark-btn-inner siac-mark-btn-inner-4' onclick='pycmd("siac-pdf-mark 4 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>More Cards</div>
+                    <div class='siac-mark-btn-inner siac-mark-btn-inner-5' onclick='pycmd("siac-pdf-mark 5 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Bookmark</div>
+                </div> 
+            </div>
+            <div style='display: inline-block; vertical-align: top; margin-top: 3px;' id='siac-pdf-overlay-top-lbl-wrap'></div>
         </div>
-        <div style="width: 100%%; text-align: center; margin-top: 15px; position: relative;">
-            <div style='position: absolute; left: 0; z-index: 1;'>
+
+        <div id='siac-pdf-top' style='width: 100%; height: calc(100% - 40px); position:relative; max-height: calc(100% - 40px); overflow-y: auto; text-align: center;' onwheel='pdfMouseWheel(event);'>
+            <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
+            <div id="text-layer" onmouseup='pdfKeyup();' onclick='if (!window.getSelection().toString().length) {{$("#siac-pdf-tooltip").hide();}}' class="textLayer"></div>
+        </div>
+        <div style="width: 100%; text-align: center; margin-top: 15px; position: relative;">
+            <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
                 <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("down");'>-</div>
                 <div class='siac-btn siac-btn-dark' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
                 <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
                 <div class='siac-btn siac-btn-dark' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986; IMG</b></div>
-                <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only %s")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
+                <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
             </div>
             <div style='user-select:none; display: inline-block; position:relative; z-index: 2; padding: 0 5px 0 5px; background: #272828;'>
                 <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b>&lt;</b></div>
@@ -608,23 +622,37 @@ def get_pdf_viewer_html(nid):
                 <div class='siac-btn siac-btn-dark' onclick='pdfPageRight();'><b>&gt;</b></div>
             </div>
 
-            <div style='position: absolute; right: 0; display: inline-block;'>
-                <div id="siac-pdf-night-btn" class='siac-btn siac-btn-dark' style='margin-right: 15px; width: 65px;' onclick='togglePDFNightMode(this);'>Day</div>
-                <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 15px; width: 65px;' onclick='togglePageRead(%s);'>\u2713&nbsp; Read</div>
+            <div style='position: absolute; right: 0; display: inline-block; user-select: none;'>
+                <div id="siac-pdf-night-btn" class='siac-btn siac-btn-dark' style='margin-right: 10px; width: 55px;' onclick='togglePDFNightMode(this);'>Day</div>
+                <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 65px;' onclick='togglePageRead({nid});'>\u2713&nbsp; Read</div>
+                <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
+                    <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'  onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
+                        <div class='siac-btn-small-dropdown-inverted click'>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Jump to Last Read Page</b></div>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>Jump to First Unread Page</b></div>
+                            <hr>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage); pagesRead = Array.from(Array(pdfDisplayedCurrentPage).keys()).map(x => ++x); document.getElementById("siac-pdf-overlay").style.display = "block";document.getElementById("siac-pdf-read-btn").innerHTML = "&times; Unread";updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pagesRead = []; document.getElementById("siac-pdf-overlay").style.display = "none";document.getElementById("siac-pdf-read-btn").innerHTML = "\u2713&nbsp; Read";updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayed.numPages).keys()).map(x => ++x); document.getElementById("siac-pdf-overlay").style.display = "block";document.getElementById("siac-pdf-read-btn").innerHTML = "&times; Unread"; updatePdfProgressBar();event.stopPropagation();'>
+                                <b>Mark all as Read</b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <input id="siac-pdf-page-inp" style="width: 50px;margin-right: 5px;" value="1" type="number" min="1" onkeyup="pdfJumpToPage(event, this);"></input>
             </div>
         </div>
+       
         <script>
             showLoader('siac-pdf-top', 'Loading PDF...', -150);
             document.getElementById('siac-pdf-night-btn').innerHTML = pdfColorMode;
         </script>
-    """ % (nid, nid)
+    """.format_map(dict(nid = nid)) 
     return html
 
 
 def getCalendarHtml():
-    html = """<div id='cal-row' style="width: 100%%; height: 8px;" onmouseleave='calMouseLeave()'>%s</div>
-            """
+    html = """<div id='cal-row' style="width: 100%%; height: 8px;" onmouseleave='calMouseLeave()'>%s</div> """
     #get notes created since the beginning of the year
     day_of_year = datetime.datetime.now().timetuple().tm_yday
     date_year_begin = datetime.datetime(year=datetime.datetime.utcnow().year, month=1, day=1, hour=0 ,minute=0)

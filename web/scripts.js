@@ -20,15 +20,20 @@ var pdfDisplayedScale = 2.0;
 var pdfColorMode = "Day";
 var pageNumPending = null;
 var pagesRead = [];
+var pdfDisplayedMarks = null;
+var pdfDisplayedMarksTable = null;
+var timestamp;
 
 
-var pdfImgSel = { canvas : null, context : null, startX : null, endX : null, startY : null, endY : null, cvsOffLeft : null, cvsOffTop : null, mouseIsDown : false};
+var pdfImgSel = { canvas : null, context : null, startX : null, endX : null, startY : null, endY : null, cvsOffLeft : null, cvsOffTop : null, mouseIsDown : false, canvasDispl : null};
 
 function pdfImgMouseUp(event) {
     if (pdfImgSel.mouseIsDown) {
         pdfImgSel.mouseIsDown = false;
         drawSquare();
         var pdfC = document.getElementById("siac-pdf-canvas");
+        pdfImgSel.startX -= pdfImgSel.canvasDispl;
+        pdfImgSel.endX -= pdfImgSel.canvasDispl;
         cropSelection(pdfC, pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY, insertImage);
         $(pdfImgSel.canvas).remove();
         $('#text-layer').show();
@@ -47,6 +52,7 @@ function insertImage(data) {
    pycmd("siac-add-image 1 " + data.replace("image/png", ""));
 }
 function pdfImgMouseDown(event) {
+    pdfImgSel.canvasDispl = document.getElementById("siac-pdf-canvas").offsetLeft;
     pdfImgSel.mouseIsDown = true;
     pdfImgSel.cvsOffLeft = $(pdfImgSel.canvas).offset().left;
     pdfImgSel.cvsOffTop = $(pdfImgSel.canvas).offset().top;
@@ -192,6 +198,7 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
     $("#siac-pdf-tooltip").hide();
     pdfDisplayed.getPage(num)
        .then(function(page) {
+            updatePdfDisplayedMarks();
             pdfPageRendering = true;
             var lPage = page;
             var canvas = document.getElementById("siac-pdf-canvas");
@@ -205,9 +212,17 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
             if (pdfColorMode !== "Day")
                 canvas.style.display = "none";
             var ctx = canvas.getContext('2d');
+            var pageTimestamp = new Date().getTime();
+            timestamp = pageTimestamp;
             var renderTask = page.render({
                 canvasContext: ctx,
-                viewport: viewport
+                viewport: viewport,
+                continueCallback: function(cont) {
+                    if(timestamp != pageTimestamp) {
+                        return;
+                    }
+                    cont();
+                }
             });
             renderTask.promise.then(function () {
                 pdfPageRendering = false;
@@ -220,7 +235,7 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
                     }
                 }
                 return lPage.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: true});
-               }).then(function(textContent) {
+            }).then(function(textContent) {
                    $("#text-layer").css({ height: canvas.height , width: canvas.width, left: canvas.offsetLeft  }).html('');
                    pdfjsLib.renderTextLayer({
                        textContent: textContent,
@@ -538,6 +553,7 @@ function startTimer(elementToUpdateId) {
             $('.siac-timer-btn').eq(4).addClass('active');
             document.getElementById(elementToUpdateId).innerHTML = "30 : 00";
             $('#siac-timer-popup').show();
+            readingTimer = null;
         }
     }, 999);
 }
@@ -1313,4 +1329,57 @@ function pxToSandScheme(red, green, blue){
         }
     }
     return chosen;
+}
+
+function updatePdfDisplayedMarks() {
+    if (pdfDisplayedMarks == null) {
+        return;
+    }
+    let html = "";
+    $('.siac-mark-btn-inner').removeClass('active'); 
+    if (pdfDisplayedCurrentPage in pdfDisplayedMarks) {
+        for (var i = 0; i < pdfDisplayedMarks[pdfDisplayedCurrentPage].length; i++) {
+            switch(pdfDisplayedMarks[pdfDisplayedCurrentPage][i]) {
+                case 1: html += "<div class='siac-pdf-mark-lbl'>Revisit <b onclick='$(\".siac-mark-btn-inner-1\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-1').first().addClass('active'); break;
+                case 2: html += "<div class='siac-pdf-mark-lbl'>Hard <b onclick='$(\".siac-mark-btn-inner-2\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-2').first().addClass('active'); break;
+                case 3: html += "<div class='siac-pdf-mark-lbl'>More Info <b onclick='$(\".siac-mark-btn-inner-3\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-3').first().addClass('active'); break;
+                case 4: html += "<div class='siac-pdf-mark-lbl'>More Cards <b onclick='$(\".siac-mark-btn-inner-4\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-4').first().addClass('active');  break;
+                case 5: html += "<div class='siac-pdf-mark-lbl'>Bookmark <b onclick='$(\".siac-mark-btn-inner-5\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-5').first().addClass('active'); break;
+            }
+        }
+    }
+    let w1 = document.getElementById("siac-queue-readings-list").offsetWidth;
+    let w2 = document.getElementById("siac-queue-actions").offsetWidth;
+    let w = document.getElementById("siac-reading-modal-bottom-bar").clientWidth - w1 - w2 - 100;
+    var tableHtml = "";
+    Object.keys(pdfDisplayedMarksTable).forEach(function(key) {
+        let name = "";
+        switch(key) {
+            case "1": name = "Revisit"; break;
+            case "2": name = "Hard"; break;
+            case "3": name = "More Info"; break;
+            case "4": name = "More Cards"; break;
+            case "5": name = "Bookmark"; break;
+        } 
+        let pages = "";
+     
+        for (var i = 0; i < pdfDisplayedMarksTable[key].length; i++) {
+            pages += "<span class='siac-page-mark-link'>" + pdfDisplayedMarksTable[key][i] + "</span>, ";
+        }
+        pages = pages.length > 0 ? pages.substring(0, pages.length -2) : pages;
+        tableHtml += `<tr style='color: grey;'><td><b>${name}</b></td><td>${pages}</td></tr>`;
+    });
+    if (tableHtml.length) {
+        tableHtml = `<table style='user-select: none; table-layout: fixed; max-width: ${w}px;'>` + tableHtml + "</table>";
+    }
+   
+    document.getElementById("siac-pdf-overlay-top-lbl-wrap").innerHTML = html;
+    document.getElementById("siac-marks-display").innerHTML = tableHtml;
+
+}
+function markClicked(event) {
+    if (event.target.className === "siac-page-mark-link") {
+        pdfDisplayedCurrentPage = Number(event.target.innerHTML);
+        queueRenderPage(pdfDisplayedCurrentPage, true);
+    }
 }

@@ -788,16 +788,44 @@ table.striped tr:nth-child(even) {
     border-top: 0px solid white;
     z-index: 99999999;
     transition: max-height 0.3s;
-
+}
+.siac-btn-small-dropdown-inverted {
+    display: none;
+    position: absolute;
+    color: white;
+    background-color: #272828;
+    width: 200px;
+    padding: 0px 4px 0px 4px;
+    height: 115px;
+    top: -94px;
+    left: -181px;
+    border: 2px outset darkorange; 
+    z-index: 999;
+    transition: all 0.3s;
 }
 .siac-btn-small:hover .siac-btn-small-dropdown.hover,.siac-btn-small.expanded .siac-btn-small-dropdown.click {
     max-height: 310px;
     border-top: 1px solid $buttonBorderColor$;
   }
+  .siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {
+     display: block;
+  }
   .siac-dropdown-item {
       margin: 3px 0 2px 0;
       text-align: left;
   }
+.siac-dropdown-inverted-item {
+    margin: 3px 0 2px 0;
+    text-align: left;
+    width: 100%;
+    color: darkorange;
+    text-align: center;
+    height: 16px;
+    font-size: 13px !important;
+}
+.siac-dropdown-inverted-item:hover {
+    filter: brightness(1.4);
+}
 .siac-btn-small-dropdown .siac-dropdown-item:hover {
     color: #2496dc;
     transform: scale(1.04);
@@ -1220,6 +1248,67 @@ color: white;
 margin-left: auto;
 margin-right: auto;
 }
+#siac-pdf-mark-btn {
+    padding: 6px 6px 6px 6px;
+    z-index: 3;
+    border: 3px outset #2496dc;
+    border-radius: 3px;
+    margin-right: 14px;
+    display: inline-block;
+    max-width: 30px;
+    transition: all 0.4s;
+    overflow: hidden;
+    white-space: nowrap;
+}
+#siac-pdf-mark-btn:hover {
+    border-color: #67c3fc;
+}
+#siac-pdf-mark-btn > div {
+    display: none;
+}
+#siac-pdf-mark-btn.expanded > div{
+    display: inline-block;
+}
+#siac-pdf-mark-btn.expanded {
+    max-width: 400px;
+}
+.siac-mark-btn-inner {
+    display: inline-block;
+    border: 2px outset grey;
+    border-radius: 3px;
+    margin-left: 5px;
+    font-size: 11px !important;
+    padding: 1px 4px 1px 4px;
+    cursor: pointer;
+}
+.siac-mark-btn-inner.active {
+    border-color: #2496dc;
+}
+.siac-mark-btn-inner:hover {
+    border-color: #43b7ff;
+}
+.siac-pdf-mark-lbl {
+    display: inline-block;
+    margin-right: 10px;
+    font-size: 13px;
+    border: 3px outset #2496dc;
+    border-radius: 4px;
+    padding: 4px 6px 4px 6px;
+    background: #272828;
+    color: white;
+    user-select: none;
+}
+.siac-pdf-mark-lbl > b:hover {
+    color: darkorange;
+    cursor: pointer;
+}
+#siac-pdf-overlay-top {
+    position: absolute;
+    top: 4px;
+    left: 0px;
+    width: 100%;
+    z-index: 2;
+}
 
 #siac-pdf-tooltip {
 	position: absolute;
@@ -1231,19 +1320,22 @@ margin-right: auto;
 	border-radius: 5px;
     border: 4px outset darkorange;
     transition: all 0.5s;
-
 }
-#siac-pdf-read-btn {
+#siac-pdf-read-btn,#siac-pdf-more-btn {
     border-radius: 4px;
     border: 3px outset #43a047;
     padding: 1px 5px 1px 5px;
     background-color: #272828;
     color: beige;
 }
-#siac-pdf-read-btn:hover {
+#siac-pdf-read-btn:hover,#siac-pdf-more-btn:hover {
     color: white;
     border: 3px outset #69B36C;
     background-color: #2f3030;
+}
+#siac-pdf-night-btn {
+    padding-left: 4px;
+    padding-right: 4px;
 }
 #siac-pdf-tooltip-results-area {
 	overflow-y: auto;
@@ -1261,8 +1353,31 @@ margin-right: auto;
     background: #272828;
     color: beige;
 }
-#siac-pdf-top {
-    filter: invert();
+
+#siac-marks-display {
+    display: inline-block;
+    overflow: hidden;
+    margin-left: 10px;
+    vertical-align: top;
+    overflow-y: auto;
+    max-height: 100px;
+}
+#siac-marks-display::-webkit-scrollbar {
+    display: none;
+}
+#siac-marks-display td:nth-child(2) {
+    word-wrap: break-word; 
+    white-space: normal;
+    padding-left: 5px;
+}
+.siac-page-mark-link {
+    display: inline-block;
+    cursor: pointer;
+    color: darkorange;
+    font-weight: bold;
+}
+.siac-page-mark-link:hover {
+    filter: brightness(1.4);
 }
 .siac-field-picker-opt {
     cursor: pointer;
@@ -1577,8 +1692,8 @@ margin-right: auto;
 }
 #siac-timer-popup {
     z-index: 9999999;
-    background: $modalBackgroundColor$;
-    color: $modalForegroundColor$;
+    background: #272828;
+    color: white;
     position: absolute;
     top: 50%;
     left: 50%;

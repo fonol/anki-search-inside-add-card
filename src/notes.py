@@ -23,6 +23,14 @@ class QueueSchedule(Enum):
     RANDOM_SECOND_THIRD = 8
     RANDOM_THIRD_THIRD = 9
 
+@unique
+class PDFMark(Enum):
+    REVISIT = 1
+    HARD = 2
+    MORE_INFO = 3
+    MORE_CARDS = 4
+    BOOKMARK = 5
+
 def create_db_file_if_not_exists():
     file_path = _get_db_path()
     if not os.path.isfile(file_path):
@@ -55,9 +63,20 @@ def create_db_file_if_not_exists():
             pagestotal INTEGER,
             created TEXT,
             FOREIGN KEY(nid) REFERENCES notes(id)
-        )
+        );
+       
     """)
-
+    conn.execute("""
+        create table if not exists marks
+        (
+            page INTEGER,
+            nid INTEGER,
+            pagestotal INTEGER,
+            created TEXT,
+            marktype INTEGER,
+            FOREIGN KEY(nid) REFERENCES notes(id)
+        ); 
+    """)
 
     conn.commit()
     conn.close()
@@ -162,6 +181,39 @@ def mark_page_as_unread(nid, page):
     conn.execute("delete from read where nid = %s and page = %s" % (nid, page))
     conn.commit()
     conn.close()
+
+def create_pdf_mark(nid, page, pages_total, mark_type):
+    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    conn = _get_connection()
+    conn.execute("delete from marks where nid = %s and page = %s and marktype = %s" % (nid, page, mark_type))
+    conn.execute("insert into marks (page, nid, pagestotal, created, marktype) values (?, ?, ?, ?, ?)", (page, nid, pages_total, now, mark_type))
+    conn.commit()
+    conn.close()
+
+def toggle_pdf_mark(nid, page, pages_total, mark_type):
+    conn = _get_connection()
+    if conn.execute("select nid from marks where nid = %s and page = %s and marktype = %s" % (nid, page, mark_type)).fetchone() is not None:
+        conn.execute("delete from marks where nid = %s and page = %s and marktype = %s" % (nid, page, mark_type))
+    else:
+        now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+        conn.execute("insert into marks (page, nid, pagestotal, created, marktype) values (?, ?, ?, ?, ?)", (page, nid, pages_total, now, mark_type))
+    res = conn.execute("select * from marks where nid = %s" % nid).fetchall()
+    conn.commit()
+    conn.close()
+    return res 
+
+def delete_pdf_mark(nid, page, mark_type):
+    conn = _get_connection()
+    conn.execute("delete from marks where nid = %s and page %s and marktype = %s" (nid, page, mark_type))
+    conn.commit()
+    conn.close()
+
+def get_pdf_marks(nid):
+    conn = _get_connection()
+    res = conn.execute("select * from marks where nid = %s" % nid).fetchall()
+    conn.close()
+    return res
+
 
 def get_read_pages(nid):
     conn = _get_connection()
@@ -342,6 +394,7 @@ def delete_note(id):
     update_position(id, QueueSchedule.NOT_ADD)
     conn = _get_connection()
     conn.execute("delete from read where nid =%s" % id)
+    conn.execute("delete from marks where nid =%s" % id)
     sql = """
         delete from notes where id=%s
     """ % id
@@ -520,6 +573,21 @@ def get_pdf_info(nids):
     for r in res:
         ilist.append([r[0], r[2], r[1]])
     return ilist
+
+def mark_all_pages_as_read(nid, num_pages):
+    conn = _get_connection()
+    existing = [r[0] for r in conn.execute("select page from read where nid = %s" % nid).fetchall()]
+    to_insert = [(p, nid, num_pages) for p in range(1, num_pages +1) if p not in existing]
+    conn.executemany("insert into read (page, nid, pagestotal, created) values (?, ?, ?, datetime('now', 'localtime'))", to_insert)
+    conn.commit()
+    conn.close()
+
+def mark_all_pages_as_unread(nid):
+    conn = _get_connection()
+    conn.execute("delete from read where nid = %s" % nid)
+    conn.commit()
+    conn.close()
+
 
 
 def _to_output_list(db_list, pinned):

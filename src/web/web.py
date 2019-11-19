@@ -13,7 +13,7 @@ import utility.misc
 
 from ..tag_find import get_most_active_tags
 from ..state import get_index, checkIndex, set_deck_map
-from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages
+from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks
 from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar
 
 
@@ -383,6 +383,9 @@ def _display_pdf(full_path, note_id):
     blen = len(base64pdf)
     pages_read = get_read_pages(note_id)
     pages_read_js = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
+    marks = get_pdf_marks(note_id)
+    js_maps = utility.misc.marks_to_js_map(marks)
+    marks_js = "pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s;" % (js_maps[0], js_maps[1]) 
     # pages read are ordered by date, so take last
     last_page_read = pages_read[-1] if len(pages_read) > 0 else 1
 
@@ -397,10 +400,11 @@ def _display_pdf(full_path, note_id):
         var fileReader = new FileReader();
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.worker.min.js';
         pagesRead = [%s];
+        %s
         fileReader.onload = function() {
             var canvas = document.getElementById("siac-pdf-canvas");
             var typedarray = new Uint8Array(this.result);
-            var loadingTask = pdfjsLib.getDocument(typedarray);
+            var loadingTask = pdfjsLib.getDocument(typedarray, {nativeImageDecoderSupport: 'display'});
             loadingTask.promise.then(function(pdf) {
                 pdfDisplayed = pdf;
                 pdfDisplayedCurrentPage = %s;
@@ -422,6 +426,8 @@ def _display_pdf(full_path, note_id):
                         if (pdfColorMode != "Day") {
                             invertCanvas(ctx);
                         }
+                        updatePdfDisplayedMarks();
+
                         var textContent = page.getTextContent().then(function(textContent) {
                             $("#text-layer").css({ height: canvas.height , width: canvas.width, left: canvas.offsetLeft});
                             pdfjsLib.renderTextLayer({
@@ -444,7 +450,7 @@ def _display_pdf(full_path, note_id):
         };
         fileReader.readAsArrayBuffer(file);
         b64 = ""; arr = null; bstr = null; file = null; fileReader = null;
-    """ % (pages_read_js, last_page_read)
+    """ % (pages_read_js, marks_js, last_page_read)
     #send large files in multiple packets
     if blen > 10000000:
         index.output.editor.web.page().runJavaScript("var b64 = `%s`;" % base64pdf[0: 10000000])
@@ -557,6 +563,30 @@ def display_note_del_confirm_modal(editor, nid):
     html = get_note_delete_confirm_modal_html(nid)
     editor.web.eval("$('#greyout').show();$('#searchResults').append(`%s`);" % html)
 
+
+def jump_to_last_read_page(editor, nid):
+    editor.web.eval("""
+        if (pagesRead && pagesRead.length) {
+            pdfDisplayedCurrentPage = Math.max(...pagesRead);
+            rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
+        }
+    """)
+
+def jump_to_first_unread_page(editor, nid):
+    editor.web.eval("""
+        if (pdfDisplayed) {
+            for (var i = 1; i < pdfDisplayed.numPages + 1; i++) {
+               if (!pagesRead || pagesRead.indexOf(i) === -1) {
+                   pdfDisplayedCurrentPage = i;
+                   rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
+                   break;
+               } 
+            }
+        }
+    """)
+
+
+
 def fillTagSelect(editor = None, expanded = False) :
     """
     Builds the html for the "browse tags" mode in the deck select.
@@ -653,7 +683,7 @@ def fillDeckSelect(editor = None, expanded= False):
             html = "<ul class='deck-sub-list'>"
         for key, value in dmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( "selected" if str(deckMap[full]) in decks or decks == [] else "", deckMap[full],  "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( "selected" if str(deckMap[full]) in decks or decks == ["-1"] else "", deckMap[full],  "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
         html += "</ul>"
         return html
 
@@ -677,7 +707,7 @@ def fillDeckSelect(editor = None, expanded= False):
     });
     %s
     $("#siac-deck-sel-btn-wrapper").show();
-     updateSelectedDecks();
+    updateSelectedDecks();
 
     """ % (html, expanded_js)
     editor.web.eval(cmd)
