@@ -103,7 +103,7 @@ def _build_index(index_up_to_date):
     searchIndex.output.gridView = config["gridView"]
     searchIndex.output.scale = config["noteScale"]
     searchIndex.output.fields_to_hide_in_results = config["fieldsToHideInResults"]
-    searchIndex.selectedDecks = []
+    searchIndex.selectedDecks = ["-1"]
     searchIndex.lastSearch = None
     searchIndex.lastResDict = None
     searchIndex.tagSearch = True
