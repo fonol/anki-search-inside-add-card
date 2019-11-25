@@ -390,12 +390,13 @@ def _display_pdf(full_path, note_id):
     last_page_read = pages_read[-1] if len(pages_read) > 0 else 1
 
     init_code = """
-            var bstr = atob(b64);
-            var n = bstr.length;
-            var arr = new Uint8Array(n);
-            while(n--){
-                arr[n] = bstr.charCodeAt(n);
-            }
+        pdfLoading = true;
+        var bstr = atob(b64);
+        var n = bstr.length;
+        var arr = new Uint8Array(n);
+        while(n--){
+            arr[n] = bstr.charCodeAt(n);
+        }
         var file = new File([arr], "test.pdf", {type : "application/pdf" });
         var fileReader = new FileReader();
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.worker.min.js';
@@ -408,44 +409,8 @@ def _display_pdf(full_path, note_id):
             loadingTask.promise.then(function(pdf) {
                 pdfDisplayed = pdf;
                 pdfDisplayedCurrentPage = %s;
-                pdf.getPage(pdfDisplayedCurrentPage).then(function(page) {
-                    var viewport = page.getViewport({scale :1.0});
-                    var scale = (canvas.parentNode.clientWidth - 23) / viewport.width;
-                    viewport = page.getViewport({scale : scale});
-                    pdfDisplayedScale = scale;
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    if (pdfColorMode != "Day")
-                        canvas.style.display = "none";
-                    var ctx = canvas.getContext('2d');
-                    var renderTask = page.render({
-                        canvasContext: ctx,
-                        viewport: viewport
-                    });
-                    renderTask.promise.then(function() {
-                        if (pdfColorMode != "Day") {
-                            invertCanvas(ctx);
-                        }
-                        updatePdfDisplayedMarks();
-
-                        var textContent = page.getTextContent().then(function(textContent) {
-                            $("#text-layer").css({ height: canvas.height , width: canvas.width, left: canvas.offsetLeft});
-                            pdfjsLib.renderTextLayer({
-                                textContent: textContent,
-                                container: $("#text-layer").get(0),
-                                viewport,
-                                textDivs: []
-                            });
-                        });
-                    })
-               });
-                document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
-                updatePdfProgressBar();
                 $('#siac-loader-modal').remove();
-                if (pagesRead.indexOf(pdfDisplayedCurrentPage) !== -1) {
-		            document.getElementById('siac-pdf-overlay').style.display = 'block';
-                    document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
-	            }
+                queueRenderPage(pdfDisplayedCurrentPage, true, true);
             });
         };
         fileReader.readAsArrayBuffer(file);

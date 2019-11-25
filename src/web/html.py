@@ -189,6 +189,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-head"); event.stopPropagation();'>&nbsp;<b>Read Next</b></div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-random"); event.stopPropagation();'>&nbsp;Read [Rnd]</div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-url-dialog"); event.stopPropagation();'>&nbsp;Url to PDF</div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]</div>
                                 </div>
                             </div>
@@ -223,7 +224,6 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("synonyms");'>&nbsp;Synonyms</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("styling");'>&nbsp;Settings</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
-
                                          </div>
                             </div>
                     </div>
@@ -238,6 +238,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                             <div class='pdf-icon' onclick='pycmd("siac-show-pdfs")'>
                                 %s
                             </div>
+                            <div class='siac-read-icn' onclick='pycmd("siac-user-note-queue-read-head")'></div>
                         </div>
 
 
@@ -454,8 +455,8 @@ def get_reading_modal_html(note):
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px;'>{time_str}</span> <br>
                             <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
-                            <a onclick='pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
-                            <a onclick='pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
+                            <a onclick='if (!pdfLoading) {{pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
+                            <a onclick='if (!pdfLoading) {{pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
                         </div>
                         {queue_readings_list}
                         <div id='siac-marks-display' onclick='markClicked(event);'></div>
@@ -574,7 +575,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
         qi_title = utility.text.escape_html(qi_title)
         #if the note is a pdf, show a loader
         should_show_loader = 'document.getElementById("siac-reading-modal-text").innerHTML = ""; showLoader(\"siac-reading-modal-text\", \"Loading Note...\");' if queue_item[3] is not None and queue_item[3].strip().lower().endswith(".pdf") else ""
-        queue_head_readings +=  "<a onclick='%s %s pdfDisplayed ? pdfDisplayed.destroy() : pdfDisplayed = null; pycmd(\"siac-read-user-note %s\")' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;'>%s. %s</a><br>" % (save, should_show_loader, queue_item[0], should_greyout, queue_item[10] + 1, qi_title)
+        queue_head_readings +=  "<a onclick='if (!pdfLoading) {%s %s pdfDisplayed ? pdfDisplayed.destroy() : pdfDisplayed = null; pycmd(\"siac-read-user-note %s\");}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;'>%s. %s</a><br>" % (save, should_show_loader, queue_item[0], should_greyout, queue_item[10] + 1, qi_title)
         if ix > 3:
             break
 
@@ -794,6 +795,13 @@ def stylingModal(config):
                 </table>
             </fieldset>
             <br/>
+            <fieldset>
+                <span>This is the location where PDFs generated from URLs will be saved. This needs to be set for the URL import to work.</span>
+                <table style="width: 100%%">
+                    <tr><td><b>PDF Url-Import Save Path</b></td><td style='text-align: right;'><input type="text" onfocusout="pycmd('styling pdfUrlImportSavePath ' + this.value)" value="%s"/></tr>
+                </table>
+            </fieldset>
+            <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
                         """ % (config["addToResultAreaHeight"],
                         "checked='true'" if config["renderImmediately"] else "",
@@ -804,7 +812,8 @@ def stylingModal(config):
                         config["tagHoverDelayInMiliSec"],
                        config["alwaysRebuildIndexIfSmallerThan"],
                        "checked='true'" if config["removeDivsFromOutput"] else "",
-                       config["addonNoteDBFolderPath"]
+                       config["addonNoteDBFolderPath"],
+                       config["pdfUrlImportSavePath"]
                         )
     html += """
     <br/> <br/>
@@ -938,6 +947,8 @@ def get_pdf_list_first_card():
         <a class='keyword' onclick='pycmd("siac-pdf-last-added")'>Order by Last Added</a>
     """
     return html
+
+
 
 
 def pdf_svg(w, h):

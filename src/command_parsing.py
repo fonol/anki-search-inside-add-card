@@ -19,6 +19,7 @@ from .notes import _get_priority_list
 from .output import Output
 from .dialogs.editor import openEditor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
+from .dialogs.url_import import UrlImporter
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 import utility.misc
@@ -135,6 +136,31 @@ def expanded_on_bridge_cmd(self, cmd):
         selection = " ".join(cmd.split()[1:]).split("$$$")[0]
         sentences = cmd.split("$$$")[1:]
         display_cloze_modal(self, selection, sentences)
+
+    elif cmd == "siac-url-dialog":
+        dialog = UrlImporter(self.parentWindow)
+        if dialog.exec_():
+            if dialog.chosen_url is not None and len(dialog.chosen_url) >= 0:
+                sched = dialog.queue_schedule
+                name = dialog.get_name()
+                path = config["pdfUrlImportSavePath"]
+                if path is None or len(path) == 0:
+                    return
+                c = 0
+                while os.path.isfile(os.path.join(path, name + ".pdf")):
+                    name += "-" + str(c) 
+                    c += 1 
+                path = os.path.join(path, name + ".pdf")
+                utility.misc.url_to_pdf(dialog.chosen_url, path)
+                title = dialog._chosen_name
+                if title is None or len(title) == 0:
+                    title = name
+                create_note(title, "", path, "", "", "", sched)
+            else:
+                pass
+        else:
+            pass
+
     
     elif cmd.startswith("siac-pdf-mark "):
         mark_type = int(cmd.split()[1])
@@ -907,7 +933,7 @@ def updateStyling(cmd):
             value = value.replace("\\", "/")
             if not value.endswith("/"):
                 value += "/"
-        config["addonNoteDBFolderPath"] = value
+            config["addonNoteDBFolderPath"] = value
 
     elif name == "leftSideWidthInPercent":
         config[name] = int(value)
@@ -945,6 +971,13 @@ def updateStyling(cmd):
 
     elif name == "alwaysRebuildIndexIfSmallerThan":
         config[name] = int(value)
+
+    elif name == "pdfUrlImportSavePath":
+        if value is not None and len(value.strip()) > 0:
+            value = value.replace("\\", "/")
+            if not value.endswith("/"):
+                value += "/"
+            config["pdfUrlImportSavePath"] = value
 
 
 def writeConfig():

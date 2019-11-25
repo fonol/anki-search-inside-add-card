@@ -102,6 +102,7 @@ class NoteEditor(QDialog):
         self.setup_ui()
 
 
+
     def setup_ui(self):
 
         if self.note_id is not None:
@@ -112,7 +113,7 @@ class NoteEditor(QDialog):
             self.save = QPushButton("\u2714 Create")
             self.setWindowTitle('New Note (Ctrl/Cmd + Shift + N)')
             self.save.clicked.connect(self.on_create_clicked)
-
+        self.save.setShortcut("Ctrl+Return")
         self.cancel = QPushButton("Cancel")
         self.cancel.clicked.connect(self.reject)
         priority_list = _get_priority_list()
@@ -169,8 +170,11 @@ class NoteEditor(QDialog):
                 }
             """
         self.setStyleSheet(styles)
+        self.create_tab.title.setFocus()
 
         self.exec_()
+
+
 
     def on_create_clicked(self):
         title = self.create_tab.title.text()

@@ -4,6 +4,9 @@ import random
 from datetime import datetime
 import os
 from aqt import mw
+from aqt.qt import *
+from aqt.utils import tooltip
+from urllib.parse import urlparse
 
 
 def file_exists(full_path):
@@ -171,3 +174,30 @@ def get_web_folder_path():
     if not dir.endswith("/"):
         return dir + "/web/"
     return dir + "web/"
+
+
+def url_to_pdf(url, output_path):
+    """
+        Save the given site as pdf. 
+        output_path has to be the full path to the output file including name.
+    """
+    if url is None or len(url) == 0 or output_path is None or len(output_path) == 0:
+        return
+    valid = True
+    try:
+        x = urlparse(url)
+        valid = all([x.scheme, x.netloc, x.path])
+    except:
+        valid = False
+    if not valid:
+        tooltip("URL seems to be invalid", period=4000)
+        return
+    temp = QWebEngineView()
+    temp.setZoomFactor(1)
+    temp.page().pdfPrintingFinished.connect(lambda *args: tooltip("Generated PDF Note.", period=4000))
+    temp.load(QUrl(url))
+
+    def save_pdf(finished):
+        temp.page().printToPdf(output_path)
+
+    temp.loadFinished.connect(save_pdf)

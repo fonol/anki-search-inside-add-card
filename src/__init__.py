@@ -60,6 +60,9 @@ def initAddon():
     utility.tags.to_tag_hierarchy("")
     addHook("setupEditorShortcuts", addHideShowShortcut) 
 
+   
+    
+
     #main functions to search
     if not config["disableNonNativeSearching"]:
         aqt.editor._html += """

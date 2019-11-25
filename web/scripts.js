@@ -23,7 +23,7 @@ var pagesRead = [];
 var pdfDisplayedMarks = null;
 var pdfDisplayedMarksTable = null;
 var timestamp;
-
+var pdfLoading = false;
 
 var pdfImgSel = { canvas : null, context : null, startX : null, endX : null, startY : null, endY : null, cvsOffLeft : null, cvsOffTop : null, mouseIsDown : false, canvasDispl : null};
 
@@ -191,11 +191,13 @@ function totalOffset(elem) {
     };
 }
 
-function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
+function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false) {
     if (!pdfDisplayed) {
         return;
     }
     $("#siac-pdf-tooltip").hide();
+    document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
+    pdfLoading = true;
     pdfDisplayed.getPage(num)
        .then(function(page) {
             updatePdfDisplayedMarks();
@@ -243,6 +245,7 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
                        viewport: viewport,
                        textDivs: []
                    });
+                   pdfLoading = false;
                });
            if (shouldScrollUp)  {
                canvas.parentElement.scrollTop = 0;
@@ -254,7 +257,6 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage = false) {
             document.getElementById('siac-pdf-overlay').style.display = 'none';
             document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
 	    }
-            document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
 
         });
 
@@ -284,11 +286,11 @@ function invertCanvas(ctx) {
     ctx.canvas.style.display = "inline-block";
 }
 
-function queueRenderPage(num, shouldScrollUp=true) {
+function queueRenderPage(num, shouldScrollUp=true, fitToPage=false) {
     if (pdfPageRendering) {
         pageNumPending = num;
     } else {
-        rerenderPDFPage(num, shouldScrollUp);
+        rerenderPDFPage(num, shouldScrollUp, fitToPage);
     }
 }
 
@@ -1383,3 +1385,4 @@ function markClicked(event) {
         queueRenderPage(pdfDisplayedCurrentPage, true);
     }
 }
+
