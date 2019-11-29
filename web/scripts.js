@@ -47,7 +47,6 @@ function cropSelection(canvasSrc, offsetX, offsetY, width, height, callback) {
     tctx.drawImage(canvasSrc, offsetX, offsetY, width, height, 0, 0, temp.width, temp.height);
     callback(temp.toDataURL());
 }
-
 function insertImage(data) {
    pycmd("siac-add-image 1 " + data.replace("image/png", ""));
 }
@@ -60,7 +59,6 @@ function pdfImgMouseDown(event) {
     pdfImgSel.startY = pdfImgSel.endY = event.clientY- pdfImgSel.cvsOffTop;
     drawSquare();
 }
-
 function initImageSelection() {
     if ($('#text-layer').is(":hidden")) {
         $(pdfImgSel.canvas).remove();
@@ -79,9 +77,7 @@ function initImageSelection() {
     lCanvasOverlay.addEventListener("mouseup", function(e) {pdfImgMouseUp(e); }, false);
     lCanvasOverlay.addEventListener("mousemove", function(e) {pdfImgMouseXY(e); }, false);
     pdfImgSel.canvas = lCanvasOverlay;
-
 }
-
 function pdfImgMouseXY(event) {
     if (pdfImgSel.mouseIsDown) {
         pdfImgSel.endX = event.clientX - pdfImgSel.cvsOffLeft;
@@ -89,19 +85,15 @@ function pdfImgMouseXY(event) {
         drawSquare();
     }
 }
-
 function drawSquare() {
     pdfImgSel.context.clearRect(0, 0, pdfImgSel.context.canvas.width, pdfImgSel.context.canvas.height);
     pdfImgSel.context.fillRect(pdfImgSel.startX, pdfImgSel.startY, Math.abs(pdfImgSel.startX - pdfImgSel.endX), Math.abs(pdfImgSel.startY - pdfImgSel.endY));
     pdfImgSel.context.fillStyle = "yellow";
     pdfImgSel.context.fill();
 }
-
 function pdfFitToPage() {
     rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
 }
-
-
 function updateSelectedDecks(elem) {
     selectedDecks = [];
     let str = "";
@@ -112,11 +104,9 @@ function updateSelectedDecks(elem) {
             selectedDecks.push($(this).data('id'));
             str += " " + $(this).data('id');
         }
-
     });
     pycmd("deckSelection" + str);
 }
-
 function selectAllDecks() {
     $('.deck-list-item').addClass('selected');
     updateSelectedDecks();
@@ -125,7 +115,6 @@ function unselectAllDecks() {
     $('.deck-list-item').removeClass('selected');
     updateSelectedDecks();
 }
-
 function selectDeckWithId(did) {
     $('.deck-list-item').removeClass('selected');
     $(".deck-list-item").each(function () {
@@ -135,12 +124,10 @@ function selectDeckWithId(did) {
     });
     updateSelectedDecks();
 }
-
 function fixRetMarkWidth(elem) {
     if (elem.parentElement.getElementsByClassName("retMark").length > 0 && elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth.length == 0)
         elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth = elem.offsetWidth + "px";
 }
-
 function expandRankingLbl(elem) {
     fixRetMarkWidth(elem);
     if (elem.getElementsByClassName("rankingLblAddInfo")[0].offsetParent === null) {
@@ -151,19 +138,15 @@ function expandRankingLbl(elem) {
         elem.getElementsByClassName("editedStamp")[0].style.display = "inline";
     }
 }
-
-
 function expandCard(id, icn) {
     pycmd("nStats " + id);
 }
-
 function pinMouseLeave(elem) {
     $(elem).css('opacity', '0');
 }
 function pinMouseEnter(elem) {
     $(elem).css('opacity', '1');
 }
-
 function cardMouseEnter(elem, nid, mode = "full") {
     if (mode == "full") {
         $(`#btnBar-${nid}`).css('opacity', '1');
@@ -171,7 +154,6 @@ function cardMouseEnter(elem, nid, mode = "full") {
         $(`#btnBarSmp-${nid}`).css('opacity', '1');
     }
 }
-
 function showLoading(source) {
     loadingTimer = setTimeout(function () {
         document.getElementById('searchInfo').innerHTML = `<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>${source}</i></td></tr></table>`;
@@ -190,7 +172,6 @@ function totalOffset(elem) {
         left: left
     };
 }
-
 function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false) {
     if (!pdfDisplayed) {
         return;
@@ -257,11 +238,8 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false) {
             document.getElementById('siac-pdf-overlay').style.display = 'none';
             document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
 	    }
-
         });
-
 }
-
 function invertCanvas(ctx) {
     var imgData = ctx.getImageData(0,0, ctx.canvas.width, ctx.canvas.height);
     var data = imgData.data;
@@ -281,11 +259,9 @@ function invertCanvas(ctx) {
         }
 
     }
-
     ctx.putImageData(imgData, 0, 0);  
     ctx.canvas.style.display = "inline-block";
 }
-
 function queueRenderPage(num, shouldScrollUp=true, fitToPage=false) {
     if (pdfPageRendering) {
         pageNumPending = num;
@@ -293,7 +269,6 @@ function queueRenderPage(num, shouldScrollUp=true, fitToPage=false) {
         rerenderPDFPage(num, shouldScrollUp, fitToPage);
     }
 }
-
 function togglePageRead(nid) {
 
 	if (pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
@@ -371,7 +346,6 @@ function cardMouseLeave(elem, nid, mode = "full") {
         }
     }, 100);
 }
-
 function tagMouseEnter(elem) {
     if (!showTagInfoOnHover || !elem || !elem.parentElement)
         return;
@@ -381,9 +355,7 @@ function tagMouseEnter(elem) {
             }
     }, tagHoverTimeout);
 }
-
 function showTagInfo(elem) {
-
     let stamp = $(elem).data("stamp");
     $(elem).css("z-index", "9999");
     if (elem) {
@@ -426,7 +398,6 @@ function showTagInfo(elem) {
     } else {
         document.getElementById(id).style.display = "block";
     }
-
 }
 
 function tagMouseLeave(elem) {
@@ -436,9 +407,7 @@ function tagMouseLeave(elem) {
     }
     let existing = document.getElementsByClassName("siac-tag-info-box");
     let elems_z = Number($(elem).css("z-index"));
-
     let hovered = $(".siac-tag-info-box:hover").first();
-
     if (!hovered.length && !$(`.tagLbl[data-stamp]:hover`).length) {
         $('.siac-tag-info-box').remove();
         $('.tagLbl').css("z-index", "999");
@@ -455,7 +424,6 @@ function tagMouseLeave(elem) {
                 $(existing[i]).remove();
                 i--;
             }
-
         }
     }
     $(`.tagLbl[data-stamp='${stamp}']`).first().css("z-index", "999");
@@ -466,7 +434,6 @@ function tagMouseLeave(elem) {
     }
 
 }
-
 function tagInfoBoxClicked(elem) {
     let elems_z_index = Number($(elem).css("z-index"));
     let otherBoxes = document.getElementsByClassName("siac-tag-info-box");
@@ -478,12 +445,10 @@ function tagInfoBoxClicked(elem) {
     }
 
 }
-
 function readingModalTextKeyup(elem, nid) {
         let html = $(elem).html();
         pycmd("siac-update-note-text " + nid + " " + html);
 }
-
 function getSelectionText() {
     if (!searchOnSelection || isFrozen)
         return;
@@ -498,7 +463,6 @@ function getSelectionText() {
         pycmd('fldSlctd ' + selectedDecks.toString() + ' ~ ' + text);
     }
 }
-
 function searchForUserNote(event, elem) {
     if (!elem || elem.value.length === 0) {
        return;
@@ -526,7 +490,6 @@ function toggleQueue() {
     }
     $("#siac-queue-sched-wrapper").toggleClass('active');
 }
-
 function queueSchedBtnClicked(btn_el) {
     $('#siac-queue-lbl').hide();
     $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
@@ -534,14 +497,11 @@ function queueSchedBtnClicked(btn_el) {
     $(btn_el).addClass("active");
 
 }
-
 function afterRemovedFromQueue() {
     toggleQueue();
     $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
     $('.siac-queue-sched-btn').first().addClass("active").html('Not In Queue');
 }
-
-
 function startTimer(elementToUpdateId) {
     if (readingTimer) {clearInterval(readingTimer); }
     readingTimer = setInterval(function() {
@@ -559,7 +519,6 @@ function startTimer(elementToUpdateId) {
         }
     }, 999);
 }
-
 function toggleTimer(timer) {
     if ($(timer).hasClass('inactive')) {
         $(timer).removeClass("inactive");
@@ -592,7 +551,6 @@ function pdfMouseWheel(event)  {
        pdfScaleChange("down");
     }
 }
-
 function onResize() {
     let height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
     height -= ($('#topContainer').is(":hidden") ? -1 : $('#topContainer').outerHeight(true));
@@ -607,7 +565,6 @@ function onResize() {
         document.getElementById('switchBtn').innerHTML = "&#10149; Search";
     }
 }
-
 function setHighlighting(elem) {
     let highlight = $(elem).is(":checked") ? "on" : "off";
     pycmd("highlight " + highlight);
@@ -641,15 +598,12 @@ function synonymSetKeydown(event, elem, index) {
         $(elem).blur();
     }
 }
-
 function searchSynset(elem) {
     let set = elem.parentElement.parentElement.children[0].children[0].innerHTML;
     if (set) {
         pycmd("siac-synset-search " + set);
     }
-
 }
-
 function updateFieldToExclude(checkbox, mid, fldOrd) {
     if ($(checkbox).is(':checked')) {
         pycmd("siac-update-field-to-exclude " + mid + " " + fldOrd + " false");
@@ -657,7 +611,6 @@ function updateFieldToExclude(checkbox, mid, fldOrd) {
         pycmd("siac-update-field-to-exclude " + mid + " " + fldOrd + " true");
     }
 }
-
 function updateFieldToHideInResult(checkbox, mid, fldOrd) {
     if ($(checkbox).is(':checked')) {
         pycmd("siac-update-field-to-hide-in-results " + mid + " " + fldOrd + " false");
@@ -707,7 +660,6 @@ function pinCard(elem, nid) {
     $('#' + nid).parents().first().addClass('pinned');
     updatePinned();
 }
-
 function searchCard(elem) {
     let html = $(elem).parent().next().html();
     showLoading("Note Search");
@@ -718,12 +670,9 @@ function searchCardFromFloated(id) {
     showLoading("Note Search");
     pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
 }
-
-
 function edit(nid) {
     pycmd('editN ' + nid);
 }
-
 function updatePinned() {
     let pincmd = 'pinCrd';
     $('.pinned').each(function (index) {
@@ -734,7 +683,6 @@ function updatePinned() {
     });
     pycmd(pincmd);
 }
-
 function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total = 50, cacheSize = -1) {
     //if (html.length > 0) {
         $('#searchResults .cardWrapper').not('.pinned').remove();
@@ -803,7 +751,6 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
         displayPagination(page, pageMax, total, html.length > 0, cacheSize);
     }
 }
-
 function displayPagination(page, pageMax, total, resultsFound, cacheSize) {
     if (cacheSize !== -1) {
         let c_html = "";
@@ -841,8 +788,6 @@ function displayPagination(page, pageMax, total, resultsFound, cacheSize) {
             html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${pageMax}")'>&#187;</div>`;
 
     }
-  
-
     document.getElementById("siac-pagination-status").innerHTML = `Showing ${50 * (page - 1) + 1} - ${Math.min(total, 50 * page)} of ${total}`;
     document.getElementById("siac-pagination-wrapper").innerHTML = html;
 }
@@ -859,11 +804,9 @@ function sendClickedInformation(x, y) {
         return "note " + el.id + " " + el.innerHTML;
     }
 }
-
 function toggleTooltip(elem) {
     $(elem).children().first().toggle();
 }
-
 function toggleFreeze(elem) {
     isFrozen = !isFrozen;
     if ($(elem).hasClass('frozen')) {
@@ -872,7 +815,6 @@ function toggleFreeze(elem) {
         $(elem).addClass('frozen');
     }
 }
-
 function hideTop() {
     let height = $('#topContainer').outerHeight(true);
     let formerHeight =  $("#resultsArea").outerHeight(true);
@@ -900,7 +842,6 @@ function toggleTop(elem) {
         pycmd("toggleTop on");
     }
 }
-
 function toggleGrid(elem) {
 
     if ($(elem).is(':checked')) {
@@ -911,7 +852,6 @@ function toggleGrid(elem) {
         gridView = false;
     }
 }
-
 function activateGridView() {
     gridView = true;
     $('#gridCb').prop("checked", true);
@@ -920,7 +860,6 @@ function disableGridView() {
     $('#gridCb').prop("checked", false);
     gridView = false;
 }
-
 function toggleReadingModalBars() {
     $('#siac-reading-modal-top-bar,#siac-reading-modal-bottom-bar').toggle();
     if ($('#siac-reading-modal-top-bar').is(":hidden")) {
@@ -929,7 +868,6 @@ function toggleReadingModalBars() {
         $('#siac-reading-modal-text').css('height', 'calc(90%% - 140px)').css('max-height', 'calc(100%% - 230px)').css('margin-top', '0px');
     }
 }
-
 function predefSearch() {
     let e = document.getElementById("predefSearchSelect");
     let search = e.options[e.selectedIndex].value;
@@ -938,14 +876,12 @@ function predefSearch() {
     let decks = selectedDecks.toString();
     pycmd("predefSearch " + search + " " + count + " " + decks);
 }
-
 function sort() {
     let e = document.getElementById("sortSelect");
     let sort = e.options[e.selectedIndex].value;
     pycmd("pSort " + sort);
 
 }
-
 function addFloatingNote(nid) {
     let onedit = $('#' + nid.toString()).hasClass('siac-user-note') ? `pycmd("siac-edit-user-note ${nid}")`  : `edit(${nid})`;
     let content = document.getElementById(nid).innerHTML;
@@ -955,8 +891,6 @@ function addFloatingNote(nid) {
         <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>&nbsp;&#65372;
         <div class="floatingBtnBarItem" id='rem-${nid}' onclick='document.getElementById("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div>
     </div>`;
-
-
     let floatingNote = `<div id="nF-${nid}" class='noteFloating'>
             <div id="nFH-${nid}" class='noteFloatingHeader' onmousedown='dragElement(this.parentElement, "nFH-${nid}")'>&nbsp;${btnBar}</div>
             <div id="nFC-${nid}" class='noteFloatingContent'>${content}</div>
@@ -969,7 +903,6 @@ function addFloatingNote(nid) {
     dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
     updatePinned();
 }
-
 function dragElement(elmnt, headerId) {
     var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     if (document.getElementById(headerId)) {
@@ -977,7 +910,6 @@ function dragElement(elmnt, headerId) {
     } else {
         elmnt.onmousedown = dragMouseDown;
     }
-
     function dragMouseDown(e) {
         e = e || window.event;
         e.preventDefault();
@@ -986,7 +918,6 @@ function dragElement(elmnt, headerId) {
         document.onmouseup = closeDragElement;
         document.onmousemove = elementDrag;
     }
-
     function elementDrag(e) {
         e = e || window.event;
         e.preventDefault();
@@ -997,14 +928,11 @@ function dragElement(elmnt, headerId) {
         elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
         elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
     }
-
     function closeDragElement() {
         document.onmouseup = null;
         document.onmousemove = null;
     }
 }
-
-
 function toggleAddon() {
 
     if ($('#outerWr').hasClass("onesided")) {
@@ -1018,9 +946,7 @@ function toggleAddon() {
     }
     pycmd("toggleAll " + ($('#infoBox').hasClass("addon-hidden") ? "off" : "on"));
     onResize();
-
 }
-
 function showSearchPaneOnLeftSide() {
     if ($('#outerWr').hasClass("onesided")) {
         $('#leftSide').show();
@@ -1034,12 +960,10 @@ function showSearchPaneOnLeftSide() {
         onResize();
     }
 }
-
 function updateSwitchBtn(count) {
     if (!$('#outerWr').hasClass("onesided"))
         document.getElementById('switchBtn').innerHTML = `&#10149; Search (${count})`;
 }
-
 function removeNote(nid) {
     $(document.getElementById("cW-" + nid).parentElement.parentElement).remove();
     updatePinned();
@@ -1054,7 +978,6 @@ function getOffset(el) {
     }
     return { top: _y, left: _x };
 }
-
 function calBlockMouseEnter(event, elem) {
     calTimer = setTimeout(function () {
         if ($('#cal-row').is(":hover") && event.ctrlKey) {
@@ -1063,17 +986,20 @@ function calBlockMouseEnter(event, elem) {
         }
     }, 100);
 }
-
 function displayCalInfo(elem) {
     let offset = getOffset(elem.children[0]);
     let offsetLeft = offset.left - 153;
+    let offsetRight = document.getElementsByTagName("BODY")[0].clientWidth  - offset.left - 153;
     if (offsetLeft < 0) {
         offsetLeft -= (offset.left - 153);
-        document.documentElement.style.setProperty('--tleft', (153 + offset.left - 153) + 'px')
+        document.documentElement.style.setProperty('--tleft', (offset.left) + 'px')
     } else {
         document.documentElement.style.setProperty('--tleft', '50%%');
     }
-
+    if (offsetRight < 0) {
+        document.documentElement.style.setProperty('--tleft', (-offsetRight + 153) + 'px')
+        offsetLeft += offsetRight;
+    }
     $('#cal-info').css("left", offsetLeft + "px").css("top", (offset.top - 275) + "px");
     document.getElementById('cal-info').style.display = "block";
     pycmd("calInfo " + $(elem.children[0]).data("index"));
