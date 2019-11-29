@@ -759,6 +759,7 @@ table.striped tr:nth-child(even) {
     background-color: #272828;
     color: beige;
     border: 2px outset #b2b2a0;
+    border-radius: 3px;
 }
 .siac-btn:hover {
     color: #2496dc;
@@ -1247,6 +1248,18 @@ span.tag-symbol {
     color: white;
 }
 
+.siac-notification {
+    position: absolute;
+    right: 15px;
+    bottom: 15px;
+    padding: 20px;
+    background: #272828;
+    color: beige;
+    border: 3px outset darkorange;
+    border-radius: 4px;
+    z-index: 1000000000;
+}
+
 #siac-pdf-overlay {
  display: none;
  position: absolute;
@@ -1332,7 +1345,8 @@ margin-right: auto;
 	z-index: 999;
     background-color: #272828;
 	color: white;
-	padding: 9px;
+    padding: 9px;
+    max-width: $pdfTooltipMaxWidth$px;
 	border-radius: 5px;
     border: 4px outset darkorange;
     transition: all 0.5s;
@@ -1355,11 +1369,11 @@ margin-right: auto;
 }
 #siac-pdf-tooltip-results-area {
 	overflow-y: auto;
-	overflow-x: hidden;
-	max-height: 200px;
-	max-width: 250px;
+    overflow-x: hidden;
+    width: calc(100%-18px);
 	padding-right: 8px;
-	padding-left: 3px;
+    padding-left: 3px;
+    max-height: $pdfTooltipMaxHeight$px;
 }
 #siac-pdf-tooltip-bottom {
     text-align: center;
@@ -1479,6 +1493,18 @@ margin-right: auto;
     font-weight: bold;
 }
 .siac-pg-icn:hover {
+    transform: scale(1.2);
+    color: #2496dc;
+}
+#siac-cache-displ {
+    float: right;
+}
+#siac-cache-displ > span {
+    margin-right: 5px;
+    user-select: none;
+    cursor: pointer;
+}
+#siac-cache-displ > span:hover {
     transform: scale(1.2);
     color: #2496dc;
 }
@@ -1776,7 +1802,6 @@ hr.siac-modal-sep {
   .textLayer .highlight {
     margin: -1px;
     padding: 1px;
-
     background-color: rgb(180, 0, 170);
     border-radius: 4px;
   }

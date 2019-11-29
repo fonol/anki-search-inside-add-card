@@ -252,6 +252,7 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                     <div id='siac-pagination'>
                         <div id='siac-pagination-status'></div>
                         <div id='siac-pagination-wrapper'>&nbsp;</div>
+                        <div id='siac-cache-displ'></div>
                     </div>
                     <div style='position: relative;' id='cal-wrapper'>
                         %s
@@ -419,10 +420,10 @@ def get_reading_modal_html(note):
                     <div id='siac-pdf-tooltip-results-area'></div>
                     <div id='siac-pdf-tooltip-bottom'></div>
                 </div>
-                <div id='siac-reading-modal-top-bar' style='height: 10%; min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
+                <div id='siac-reading-modal-top-bar' style='min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
                     <div style='flex: 1 1; overflow: hidden;'>
                         <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; vertical-align:middle;'>{title}</h2>
-                        <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: {source_icn}<i>{source}</i></h4>
+                        <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: <i>{source}</i></h4>
                         <div id='siac-prog-bar-wr'></div>
                     </div>
                     <div style='flex: 0 0; min-width: 130px; padding: 0 45px 0 10px;'>
@@ -431,7 +432,7 @@ def get_reading_modal_html(note):
                         <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
                     </div>
                 </div>
-                <div id='siac-reading-modal-text' style='overflow-y: auto; height: calc(90% - 140px); max-height: calc(100% - 230px); font-size: 13px; padding: 20px 20px 0 20px; position: relative;' contenteditable='{is_contenteditable}' {onkeyup}>
+                <div id='siac-reading-modal-text' style='overflow-y: {overflow}; height: calc(90% - 140px); max-height: calc(100% - 230px); font-size: 13px; padding: 20px 20px 0 20px; position: relative;' contenteditable='{is_contenteditable}' {onkeyup}>
                     {text}
                 </div>
                 <div id='siac-reading-modal-bottom-bar' style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden;'>
@@ -478,8 +479,10 @@ def get_reading_modal_html(note):
         """
 
         #check if it is pdf
+        overflow = "auto"
         if source.lower().endswith(".pdf") and utility.misc.file_exists(source):
             editable = False
+            overflow = "hidden" 
             text = get_pdf_viewer_html(note_id)
         else:
             editable = len(text) < 50000
@@ -491,7 +494,7 @@ def get_reading_modal_html(note):
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close, source_icn = source_icn)
+        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, onkeyup = onkeyup, is_contenteditable = is_contenteditable, save_on_close = save_on_close, overflow=overflow)
         html = html.format_map(params)
         return html
     return ""

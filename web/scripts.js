@@ -205,9 +205,9 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false) {
             var lPage = page;
             var canvas = document.getElementById("siac-pdf-canvas");
 	        if (fitToPage) {
-                    var viewport = page.getViewport({scale :1.0});
-                    pdfDisplayedScale = (canvas.parentNode.clientWidth - 23) / viewport.width;
-	        }
+                var viewport = page.getViewport({scale : 1.0});
+                pdfDisplayedScale = (canvas.parentNode.clientWidth - 23) / viewport.width;
+            }
             var viewport = page.getViewport({scale : pdfDisplayedScale});
             canvas.height = viewport.height;
             canvas.width = viewport.width;
@@ -236,7 +236,7 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false) {
                         invertCanvas(ctx);
                     }
                 }
-                return lPage.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: true});
+                return lPage.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false});
             }).then(function(textContent) {
                    $("#text-layer").css({ height: canvas.height , width: canvas.width, left: canvas.offsetLeft  }).html('');
                    pdfjsLib.renderTextLayer({
@@ -735,11 +735,11 @@ function updatePinned() {
     pycmd(pincmd);
 }
 
-function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total = 50) {
-    if (html.length > 0) {
+function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total = 50, cacheSize = -1) {
+    //if (html.length > 0) {
         $('#searchResults .cardWrapper').not('.pinned').remove();
         $("#startInfo,.gridRow:empty").remove();
-    }
+    //}
     $("#greyout").hide();
     $('.siac-tag-info-box').remove();
     $('.tagLbl').css("z-index", "999");
@@ -772,7 +772,7 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
         document.getElementById("searchResults").style.overflowY = 'auto';
         document.getElementById("searchResults").style.paddingRight = '10px';
         $("#greyout").hide();
-        displayPagination(page, pageMax, total, html.length > 0);
+        displayPagination(page, pageMax, total, html.length > 0, cacheSize);
 
     }
     else {
@@ -800,11 +800,22 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
             }, time);
         }
         renderLoop();
-        displayPagination(page, pageMax, total, html.length > 0);
+        displayPagination(page, pageMax, total, html.length > 0, cacheSize);
     }
 }
 
-function displayPagination(page, pageMax, total, resultsFound) {
+function displayPagination(page, pageMax, total, resultsFound, cacheSize) {
+    if (cacheSize !== -1) {
+        let c_html = "";
+        if (cacheSize > 1) {
+            c_html += "<div style='display: inline;'>Last Results: &nbsp;</div>"
+            for (var i = 0; i < cacheSize - 1; i++) {
+                c_html += `<span onclick='pycmd("siac-rerender ${cacheSize - i - 2}")'>${i+1}</span>`;
+            }
+        }
+        document.getElementById("siac-cache-displ").innerHTML = c_html;
+    }
+
     let html = "";
     if (pageMax === 0 || !resultsFound) { return; }
     if (page === 1 && pageMax == 1) {
@@ -830,9 +841,10 @@ function displayPagination(page, pageMax, total, resultsFound) {
             html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${pageMax}")'>&#187;</div>`;
 
     }
+  
+
     document.getElementById("siac-pagination-status").innerHTML = `Showing ${50 * (page - 1) + 1} - ${Math.min(total, 50 * page)} of ${total}`;
     document.getElementById("siac-pagination-wrapper").innerHTML = html;
-
 }
 
 function sendClickedInformation(x, y) {
@@ -1141,8 +1153,12 @@ function pdfKeyup() {
         }
 		let rect = r.getBoundingClientRect();
 		let prect = document.getElementById("siac-reading-modal").getBoundingClientRect();
-		document.getElementById('siac-pdf-tooltip-results-area').innerHTML = 'Searching...';
-        $('#siac-pdf-tooltip').css({'top': (rect.top - prect.top + rect.height) + "px", 'left': (rect.left - prect.left) + "px" }).show();
+        document.getElementById('siac-pdf-tooltip-results-area').innerHTML = 'Searching...';
+        let left =  rect.left - prect.left;
+        if (prect.width - left < 250) {
+            left -= 200;
+        }
+        $('#siac-pdf-tooltip').css({'top': (rect.top - prect.top + rect.height) + "px", 'left':left + "px" }).show();
         pycmd("siac-pdf-selection " + text);
         $('#siac-pdf-tooltip').data("sentences", sentences);
         $('#siac-pdf-tooltip').data("selection", text);
@@ -1199,6 +1215,8 @@ function globalKeydown(e) {
         } else {
             pycmd('siac-create-note');
         }
+    } else if (pdfDisplayed) {
+        pdfViewerKeyup(e);
     }
 }
 
@@ -1385,4 +1403,11 @@ function markClicked(event) {
         queueRenderPage(pdfDisplayedCurrentPage, true);
     }
 }
+function pdfViewerKeyup(event) {
+    if (event.ctrlKey && (event.keyCode === 32 || event.keyCode === 39)) {
+        pdfPageRight();
+    } else if (event.ctrlKey && event.keyCode === 37) {
+        pdfPageLeft();
+    } 
 
+}

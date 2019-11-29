@@ -132,7 +132,7 @@ class WhooshSearchIndex:
         self.lastSearch = (text, decks, "default")
         if len(text) == 0:
             if print_mode == "default":
-                self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", ""))
+                self.output.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", ""))
                 return None
             elif print_mode == "pdf":
                 return None

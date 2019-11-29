@@ -39,6 +39,7 @@ class FTSIndex:
             self.stopWords = []
         self.creation_info["stopwords_size"] = len(self.stopWords)
         self.creation_info["decks"] = config["decks"]
+        self.porter = config["usePorterStemmer"]
         #exclude fields
         try:
             self.fields_to_exclude = config['fieldsToExclude']
@@ -49,6 +50,11 @@ class FTSIndex:
 
         self.creation_info["index_was_rebuilt"] = not index_up_to_date
         if not searchingDisabled and not index_up_to_date:
+            if self.porter:
+                sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs, tokenize=porter)"
+            else:
+                sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs)"
+
             cleaned = self._cleanText(corpus)
             try:
                 os.remove(self.dir + "search-data.db")
@@ -57,14 +63,14 @@ class FTSIndex:
             conn = sqlite3.connect(self.dir + "search-data.db")
             conn.execute("drop table if exists notes")
             try:
-                conn.execute("create virtual table notes using fts5(nid, text, tags, did, source, mid, refs)")
+                conn.execute(sql % 5)
                 self.type = "SQLite FTS5"
             except:
                 try:
-                    conn.execute("create virtual table notes using fts4(nid, text, tags, did, source, mid, refs)")
+                    conn.execute(sql % 4)
                     self.type = "SQLite FTS4"
                 except:
-                    conn.execute("create virtual table notes using fts3(nid, text, tags, did, source, mid, refs)")
+                    conn.execute(sql % 3)
                     self.type = "SQlite FTS3"
 
             conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?,?,?)', cleaned)
@@ -147,7 +153,7 @@ class FTSIndex:
 
         if len(text) == 0:
             if print_mode == "default":
-                self.output.editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", ""))
+                self.output.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", ""))
                 if mw.addonManager.getConfig(__name__)["hideSidebar"]:
                     return "Found 0 notes. Query was empty after cleaning."
                 return None

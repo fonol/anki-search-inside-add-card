@@ -39,6 +39,9 @@ class Output:
         #determines the zoom factor of rendered notes
         self.scale = 1.0
 
+        #cache previous calls
+        self.previous_calls = []
+
 
         self.noteTemplate = """<div class='cardWrapper %s' id='nWr-%s'>
                             <div class='topLeftWr'>
@@ -106,7 +109,7 @@ class Output:
             self.printSearchResults(self.lastResults, None, editor, False, self.last_had_timing_info, page, query_set = self.last_query_set)
 
 
-    def printSearchResults(self, db_list, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_queue=False):
+    def printSearchResults(self, db_list, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_queue=False, is_cached=False):
         """
         This is the html that gets rendered in the search results div.
         This will always print the first page.
@@ -121,14 +124,18 @@ class Output:
         searchResults.6: refs (not used currently)
         searchResults.7: position in queue (only present if in queue)
         """
-        if stamp is not None:
-            if stamp != self.latest:
-                if logging:
-                    log("PrintSearchResults: Aborting because stamp != latest")
-                return
         if logging:
             log("Entering printSearchResults")
             log("Length (searchResults): " + str(len(db_list)))
+        if stamp is not None:
+            if stamp != self.latest:
+                return
+        if not is_cached:
+            self.previous_calls.append([db_list, None, editor, logging, printTimingInfo, page, query_set, is_queue])
+            if len(self.previous_calls) > 11:
+                self.previous_calls.pop(0)
+         
+
         html = ""
         allText = ""
         tags = []
@@ -286,9 +293,9 @@ class Output:
                 "Found" :  "<b>%s</b> notes" % (len(db_list) if len(db_list) > 0 else "<span style='color: red;'>0</span>")
             }
             info = self.buildInfoTable(infoMap, tags, allText)
-            cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(db_list))
+            cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(db_list), len(self.previous_calls))
         else:
-            cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s);" % (html, page, pageMax, len(db_list))
+            cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s);" % (html, page, pageMax, len(db_list), len(self.previous_calls))
         cmd += "updateSwitchBtn(%s)" % len(searchResults)
 
         if editor is None or editor.web is None:
@@ -665,6 +672,10 @@ class Output:
         if self.editor is not None:
             self.editor.web.eval(js)
 
+    def empty_result(self, message):
+        if self.editor is None or self.editor.web is None:
+            return
+        self.editor.web.eval("setSearchResults('', `%s`, null, 1, 1, 50, %s)" % (message, len(self.previous_calls) + 1))
 
     def _loadPlotJsIfNotLoaded(self):
         if not self.plotjsLoaded:
@@ -928,7 +939,7 @@ class Output:
             html = self.get_result_html_simple(results[:50], False, False)
             qhtml = """
                 <div id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</div>
-                <div style='width: 235px; margin-left: 5px; text-align: center; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
+                <div style='width: 100%%; padding-left: 5px; padding-right: 5px; text-align: center; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
                 <i>%s</i>
                 </div>
             """ % (" ".join(query_set))

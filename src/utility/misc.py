@@ -192,6 +192,7 @@ def url_to_pdf(url, output_path):
     if not valid:
         tooltip("URL seems to be invalid", period=4000)
         return
+    tooltip("Starting Conversion, this might take some seconds...",period=4000)
     temp = QWebEngineView()
     temp.setZoomFactor(1)
     temp.page().pdfPrintingFinished.connect(lambda *args: tooltip("Generated PDF Note.", period=4000))
@@ -201,3 +202,4 @@ def url_to_pdf(url, output_path):
         temp.page().printToPdf(output_path)
 
     temp.loadFinished.connect(save_pdf)
+

@@ -74,7 +74,6 @@ def expanded_on_bridge_cmd(self, cmd):
         fillDeckSelect(self, expanded=True)
     elif cmd == "siac-fill-tag-select":
         fillTagSelect(expanded=True)
-        # if checkIndex():
     elif cmd.startswith("searchTag "):
         if checkIndex():
             rerenderInfo(self, cmd[10:].strip(), searchByTags=True)
@@ -83,6 +82,12 @@ def expanded_on_bridge_cmd(self, cmd):
         if checkIndex():
             #this renders the popup
             display_tag_info(self, cmd.split()[1], " ".join(cmd.split()[2:]), searchIndex)
+
+    elif cmd.startswith("siac-rerender "):
+        ix = int(cmd.split()[1])
+        if checkIndex() and ix < len(searchIndex.output.previous_calls):
+            searchIndex.output.printSearchResults(*searchIndex.output.previous_calls[ix] + [True])
+            
 
     elif cmd.startswith("siac-show-loader "):
         target = cmd.split()[1]
@@ -625,19 +630,19 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
     Args:
         content: string containing the decks selected (did) + ~ + all input fields content / search masks content
     """
+    searchIndex = get_index()
     if (len(content) < 1):
-        editor.web.eval("setSearchResults(``, 'No results found for empty string')")
+        searchIndex.output.empty_result("No results found for empty string")
     decks = list()
     if "~" in content:
         for s in content[:content.index('~')].split(','):
             decks.append(s.strip())
-    searchIndex = get_index()
     if searchIndex is not None:
 
         if searchDB:
             content = content[content.index('~ ') + 2:].strip()
             if len(content) == 0:
-                editor.web.eval("setSearchResults(``, 'No results found for empty string')")
+                searchIndex.output.empty_result("No results found for empty string")
                 return
             searchIndex.lastSearch = (content, decks, "db")
             searchRes = searchIndex.searchDB(content, decks)
@@ -650,7 +655,7 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
 
         else:
             if len(content[content.index('~ ') + 2:]) > 2000:
-                editor.web.eval("setSearchResults(``, 'Query was <b>too long</b>')")
+                searchIndex.output.empty_result("Query was <b>too long</b>")
                 return
             content = content[content.index('~ ') + 2:]
             searchRes = searchIndex.search(content, decks)
@@ -658,9 +663,9 @@ def rerenderInfo(editor, content="", searchDB = False, searchByTags = False):
 
         if (searchDB or searchByTags) and editor is not None and editor.web is not None:
             if searchRes is not None and len(searchRes["result"]) > 0:
-                    searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor, searchIndex.logging)
+                searchIndex.output.printSearchResults(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor, searchIndex.logging)
             else:
-                editor.web.eval("setSearchResults(``, 'No results found.')")
+                searchIndex.output.empty_result("No results found")
 
 
 def rerenderNote(nid):
@@ -678,15 +683,14 @@ def defaultSearchWithDecks(editor, textRaw, decks):
     Args:
         decks: list of deck ids (string), if "-1" is contained, all decks are searched
     """
+    searchIndex = get_index()
     if len(textRaw) > 2000:
         if editor is not None and editor.web is not None:
-            editor.web.eval("setSearchResults(``, 'Query was <b>too long</b>')")
+            searchIndex.output.empty_result("Query was <b>too long</b>")
         return
-    searchIndex = get_index()
     cleaned = searchIndex.clean(textRaw)
     if len(cleaned) == 0:
-        if editor is not None and editor.web is not None:
-            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % utility.text.trim_if_longer_than(textRaw, 100).replace("\u001f", ""))
+        searchIndex.output.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(textRaw, 100).replace("\u001f", ""))
         return
     searchIndex.lastSearch = (cleaned, decks, "default")
     searchRes = searchIndex.search(cleaned, decks)
@@ -695,15 +699,13 @@ def search_for_user_notes_only(editor, text):
     """
     Uses the searchIndex to clean the input and find user notes.
     """
-    if len(text) > 2000:
-        if editor is not None and editor.web is not None:
-            editor.web.eval("setSearchResults(``, 'Query was <b>too long</b>')")
-        return
     searchIndex = get_index()
+    if len(text) > 2000:
+        searchIndex.output.empty_result("Query was <b>too long</b>")
+        return
     cleaned = searchIndex.clean(text)
     if len(cleaned) == 0:
-        if editor is not None and editor.web is not None:
-            editor.web.eval("setSearchResults(``, 'Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>')" % utility.text.trim_if_longer_than(text, 100).replace("\u001f", ""))
+        searchIndex.output.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(textRaw, 100).replace("\u001f", ""))
         return
     searchIndex.lastSearch = (cleaned, ["-1"], "user notes")
     searchRes = searchIndex.search(cleaned, ["-1"], only_user_notes = True)
@@ -858,6 +860,13 @@ def getIndexInfo():
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>Fields Excluded:</td><td>  %s</td></tr>
                <tr><td>Path to Note DB</td><td>  %s</td></tr>
+
+               <tr><td>&nbsp;</td><td>  <b></b></td></tr>
+               <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Space / Ctrl+Right</b></td></tr>
+               <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left</b></td></tr>
+               <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
+               <tr><td>Confirm New Note</td><td>  <b>Ctrl+Enter</b></td></tr>
+
              </table>
 
             """ % (searchIndex.type, str(searchIndex.initializationTime), searchIndex.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(searchIndex.stopWords),

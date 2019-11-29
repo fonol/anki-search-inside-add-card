@@ -235,6 +235,14 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     except KeyError:
         imgMaxHeight = "300px"
 
+
+    try:
+        pdfTooltipMaxHeight = str(config["pdfTooltipMaxHeight"])
+        pdfTooltipMaxWidth = str(config["pdfTooltipMaxWidth"])
+    except KeyError:
+        pdfTooltipMaxHeight = "300"
+        pdfTooltipMaxWidth = "250"
+
     css = css.replace("$deckSelectFontSize$", str(deckSelectFontSize) + "px")
     css = css.replace("$deckSelectForegroundColor$", deckSelectForegroundColor)
     css = css.replace("$deckSelectBackgroundColor$", deckSelectBackgroundColor)
@@ -290,6 +298,8 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     css = css.replace("$modalBorderColor$", modalBorderColor)
 
     css = css.replace("$imgMaxHeight$", imgMaxHeight)
+    css = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
+    css = css.replace("$pdfTooltipMaxWidth$", pdfTooltipMaxWidth)
 
     try:
         renderImmediately = str(config["renderImmediately"]).lower()
@@ -411,6 +421,7 @@ def _display_pdf(full_path, note_id):
                 pdfDisplayedCurrentPage = %s;
                 $('#siac-loader-modal').remove();
                 queueRenderPage(pdfDisplayedCurrentPage, true, true);
+                updatePdfProgressBar();
             });
         };
         fileReader.readAsArrayBuffer(file);
@@ -698,3 +709,22 @@ def show_loader(target_div_id, text):
 
     html = get_loader_html(text)
     get_index().output.editor.web.eval("$('#%s').append(`%s`);" % (target_div_id, html))
+
+
+def show_notification(editor, html):
+
+    editor.web.eval("""
+        $('.siac-notification').remove();
+         $('#infoBox').append(`
+        <div class='siac-notification'>
+            %s
+        </div> 
+         `);
+
+        window.setTimeout(function() {
+            $('.siac-notification').fadeOut(5000);
+            $('.siac-notification').remove();
+         }, 5000);
+    
+    
+    """ % html)

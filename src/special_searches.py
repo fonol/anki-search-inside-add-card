@@ -2,6 +2,7 @@ import datetime
 import time
 from aqt import mw
 import utility.misc
+from .state import checkIndex
 
 def get_notes_added_on_day_of_year(day_of_year : int, limit: int):
     
@@ -72,14 +73,14 @@ def getCreatedSameDay(searchIndex, editor, nid):
                 c += 1
                 if c >= searchIndex.limit:
                     break
-        if editor.web is not None:
+        if checkIndex():
             if len(rList) > 0:
                 searchIndex.output.printSearchResults(rList, stamp, editor)
             else:
-                editor.web.eval("setSearchResults(``, 'No results found.')")
+                searchIndex.output.empty_result("No results found.")
     except:
-        if editor.web is not None:
-            editor.web.eval("setSearchResults('', 'Error in calculation.')")
+        if checkIndex():
+            searchIndex.output.empty_result("Error in calculation.")
 
 def getRandomNotes(searchIndex, decks):
     if searchIndex is None:
@@ -127,11 +128,11 @@ def getCreatedNotesOrderedByDate(searchIndex, editor, decks, limit, sortOrder):
             #todo get refs
             rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
 
-    if editor.web is not None:
+    if checkIndex():
         if len(rList) > 0:
             searchIndex.output.printSearchResults(rList, stamp, editor)
         else:
-            editor.web.eval("setSearchResults(``, 'No results found.')")
+            searchIndex.output.empty_result("No results found.")
 
 
 def getLastReviewed(decks, limit):
@@ -233,11 +234,11 @@ def getLastModifiedNotes(searchIndex, editor, decks, limit):
         if not str(r[0]) in searchIndex.pinned:
             rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
 
-    if editor.web is not None:
+    if checkIndex():
         if len(rList) > 0:
             searchIndex.output.printSearchResults(rList, stamp, editor)
         else:
-            editor.web.eval("setSearchResults(``, 'No results found.')")
+            searchIndex.output.empty_result("No results found.")
 
 
 def _find_cards_with_one_more_rep(cid: int):

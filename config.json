@@ -89,6 +89,9 @@
 "addonNoteDBFolderPath": "",
 "noteScale": 1.0,
 "gridView": false,
-"pdfUrlImportSavePath":  ""
+"pdfUrlImportSavePath":  "",
+"pdfTooltipMaxHeight": 300,
+"pdfTooltipMaxWidth": 350,
+"usePorterStemmer": false
 
 }

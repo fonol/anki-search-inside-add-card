@@ -9,7 +9,7 @@ import sqlite3
 
 from ..state import get_index, set_index, set_corpus, get_corpus, corpus_is_loaded, get_edit
 from ..debug_logging import *
-from ..web.web import showSearchResultArea, printStartingInfo
+from ..web.web import showSearchResultArea, printStartingInfo, fillDeckSelect
 from ..web.html import loadSynonyms
 from .fts_index import FTSIndex
 from .whoosh_index import WhooshSearchIndex
@@ -146,6 +146,7 @@ def _build_index(index_up_to_date):
     set_index(searchIndex)
     editor = editor if editor is not None else get_edit()
     showSearchResultArea(editor, initializationTime=initializationTime)
+    fillDeckSelect(editor)
     printStartingInfo(editor)
 
 

@@ -57,7 +57,6 @@ def initAddon():
 
     origSaveAndClose = EditDialog.saveAndClose
     EditDialog.saveAndClose = editorSaveWithIndexUpdate
-    utility.tags.to_tag_hierarchy("")
     addHook("setupEditorShortcuts", addHideShowShortcut) 
 
    

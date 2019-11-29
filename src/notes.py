@@ -405,9 +405,11 @@ def delete_note(id):
 def get_read_today_count():
     now = datetime.today().strftime('%Y-%m-%d')
     conn = _get_connection()
-    c = conn.execute("select count(*) from read where created like '%s %'" % now).fetchone()
+    c = conn.execute("select count(*) from read where created like '%s-%%'" % now).fetchone()
     conn.close()
-    return c
+    if c is None:
+        return 0
+    return c[0]
 
 def get_queue_count():
     conn = _get_connection()
