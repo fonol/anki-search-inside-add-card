@@ -1248,7 +1248,7 @@ function extractPrev(text, extracted, selection) {
 function extractNext(text, extracted, selection) {
     text = text.substring(0, text.indexOf(selection)).replace(/\./g, "$DOT$") + text.substring(text.indexOf(selection));
 
-    let matches = text.match(/(.+?(\.\.\.(?!,| [a-z])|[^.]\.(?!\.)|[!?])).*/);
+    let matches = text.match(/(.+?(\.\.\.(?!,| [a-z])|[^.]\.(?!(\.|[0-9]|[A-Z]{2,20}))|[!?]|[^0-9]\. [A-Z])).*/);
     if (!matches || matches[1].indexOf(selection) === -1) {
         return [false, extracted];
     }
