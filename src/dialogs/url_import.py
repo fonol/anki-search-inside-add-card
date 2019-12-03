@@ -195,7 +195,8 @@ class UrlImporter(QDialog):
             name = utility.text.strip_url(self.chosen_url)
             name = utility.text.clean_file_name(name) 
             return name
-        return self._chosen_name
+        name = utility.text.clean_file_name(self._chosen_name)
+        return name
 
 
 

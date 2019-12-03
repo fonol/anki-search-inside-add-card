@@ -939,7 +939,7 @@ class Output:
             html = self.get_result_html_simple(results[:50], False, False)
             qhtml = """
                 <div id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</div>
-                <div style='width: 100%%; padding-left: 5px; padding-right: 5px; text-align: center; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
+                <div style='width: 100%%; padding-left: 9px; padding-right: 9px; text-align: center; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
                 <i>%s</i>
                 </div>
             """ % (" ".join(query_set))

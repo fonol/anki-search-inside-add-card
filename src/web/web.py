@@ -404,7 +404,7 @@ def _display_pdf(full_path, note_id):
         var bstr = atob(b64);
         var n = bstr.length;
         var arr = new Uint8Array(n);
-        while(n--){
+        while(n--){ 
             arr[n] = bstr.charCodeAt(n);
         }
         var file = new File([arr], "test.pdf", {type : "application/pdf" });
@@ -457,7 +457,7 @@ def show_field_picker_modal(img_src):
     """
     if checkIndex():
         index = get_index()
-        modal = """ <div class="siac-modal-small" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto;">%s</div><br><br><div class="siac-btn" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
+        modal = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto;">%s</div><br><br><div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
         flds = ""
         for i, f in enumerate(index.output.editor.note.model()['flds']):
             flds += """<span class="siac-field-picker-opt" onclick="$(`.field`).get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove();">%s</span><br>""" % (i, img_src, f["name"])

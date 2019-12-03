@@ -92,6 +92,13 @@
 "pdfUrlImportSavePath":  "",
 "pdfTooltipMaxHeight": 300,
 "pdfTooltipMaxWidth": 350,
-"usePorterStemmer": false
+"usePorterStemmer": false,
+"pdf.clozegen.notetype": "",
+"pdf.clozegen.field.clozedtext": "",
+"pdf.clozegen.field.pdftitle": "",
+"pdf.clozegen.field.pdfpath": "",
+"pdf.clozegen.field.page": ""
+
+
 
 }

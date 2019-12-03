@@ -253,8 +253,7 @@ def calculateStats(nid, gridView):
     templates = mw.col.findTemplates(note)
 
     try:
-        infoTable["Created Date"] = time.strftime("%Y-%m-%d", time.localtime(int(
-            nid)/1000)) + " &nbsp;&nbsp;<a class='keyword' href='#' style='float: right;' onclick='pycmd(\"addedSameDay %s\"); $(\"#a-modal\").hide(); return false;'>Added Same Day</a>" % nid
+        infoTable["Created Date"] = time.strftime("%Y-%m-%d", time.localtime(int(nid)/1000)) + " &nbsp;&nbsp;<a class='keyword' href='#' style='float: right;' onclick='pycmd(\"addedSameDay %s\"); $(\"#a-modal\").hide(); return false;'>Added Same Day</a>" % nid
         infoTable["Last Modified"] = time.strftime(
             "%Y-%m-%d", time.localtime(note.mod))
     except:

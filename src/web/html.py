@@ -417,7 +417,7 @@ def get_reading_modal_html(note):
 
                 <div id='siac-pdf-tooltip' onclick='event.stopPropagation();' onkeyup='event.stopPropagation();'>
                     <div id='siac-pdf-tooltip-top'></div>
-                    <div id='siac-pdf-tooltip-results-area'></div>
+                    <div id='siac-pdf-tooltip-results-area' onkeyup="pdfTooltipClozeKeyup(event);"></div>
                     <div id='siac-pdf-tooltip-bottom'></div>
                 </div>
                 <div id='siac-reading-modal-top-bar' style='min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
@@ -483,7 +483,7 @@ def get_reading_modal_html(note):
         if source.lower().endswith(".pdf") and utility.misc.file_exists(source):
             editable = False
             overflow = "hidden" 
-            text = get_pdf_viewer_html(note_id)
+            text = get_pdf_viewer_html(note_id, source, note[1])
         else:
             editable = len(text) < 50000
         is_contenteditable = "true" if editable else "false"
@@ -591,7 +591,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
     return html
 
 
-def get_pdf_viewer_html(nid):
+def get_pdf_viewer_html(nid, source, title):
     dir = utility.misc.get_web_folder_path()
     html = """
         <div id='siac-pdf-overlay'>PAGE READ</div>
@@ -607,8 +607,7 @@ def get_pdf_viewer_html(nid):
             </div>
             <div style='display: inline-block; vertical-align: top; margin-top: 3px;' id='siac-pdf-overlay-top-lbl-wrap'></div>
         </div>
-
-        <div id='siac-pdf-top' style='width: 100%; height: calc(100% - 40px); position:relative; max-height: calc(100% - 40px); overflow-y: auto; text-align: center;' onwheel='pdfMouseWheel(event);'>
+        <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" onwheel='pdfMouseWheel(event);'>
             <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
             <div id="text-layer" onmouseup='pdfKeyup();' onclick='if (!window.getSelection().toString().length) {{$("#siac-pdf-tooltip").hide();}}' class="textLayer"></div>
         </div>
@@ -617,7 +616,8 @@ def get_pdf_viewer_html(nid):
                 <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("down");'>-</div>
                 <div class='siac-btn siac-btn-dark' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
                 <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
-                <div class='siac-btn siac-btn-dark' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986; IMG</b></div>
+                <div class='siac-btn siac-btn-dark' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986;</b></div>
+                <div class='siac-btn siac-btn-dark active' id='siac-pdf-tooltip-toggle' onclick='togglePDFSelect(this)' style='margin-left: 5px;'><div class='siac-search-icn-dark'></div></div>
                 <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
             </div>
             <div style='user-select:none; display: inline-block; position:relative; z-index: 2; padding: 0 5px 0 5px; background: #272828;'>
@@ -627,7 +627,7 @@ def get_pdf_viewer_html(nid):
             </div>
 
             <div style='position: absolute; right: 0; display: inline-block; user-select: none;'>
-                <div id="siac-pdf-night-btn" class='siac-btn siac-btn-dark' style='margin-right: 10px; width: 55px;' onclick='togglePDFNightMode(this);'>Day</div>
+                <div id="siac-pdf-night-btn" class='siac-btn siac-btn-dark' style='margin-right: 10px; width: 50px;' onclick='togglePDFNightMode(this);'>Day</div>
                 <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 65px;' onclick='togglePageRead({nid});'>\u2713&nbsp; Read</div>
                 <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
                     <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'  onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
@@ -650,8 +650,13 @@ def get_pdf_viewer_html(nid):
         <script>
             showLoader('siac-pdf-top', 'Loading PDF...', -150);
             document.getElementById('siac-pdf-night-btn').innerHTML = pdfColorMode;
+            if (pdfTooltipEnabled) {{
+                $('#siac-pdf-tooltip-toggle').addClass('active');
+            }} else {{
+                $('#siac-pdf-tooltip-toggle').removeClass('active');
+            }}
         </script>
-    """.format_map(dict(nid = nid)) 
+    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source)) 
     return html
 
 

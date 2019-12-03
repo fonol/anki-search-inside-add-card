@@ -178,8 +178,11 @@ def expanded_on_bridge_cmd(self, cmd):
 
 
     elif cmd.startswith("siac-generate-clozes "):
-        sentences = [s for s in cmd.split("$$$")[1:] if len(s) > 0]
-        generate_clozes(sentences)
+        pdf_title = cmd.split("$$$")[1]
+        pdf_path = cmd.split("$$$")[2]
+        page = cmd.split("$$$")[3]
+        sentences = [s for s in cmd.split("$$$")[4:] if len(s) > 0]
+        generate_clozes(sentences, pdf_path, pdf_title, page)
 
 
     elif cmd.startswith("pSort "):
@@ -803,29 +806,65 @@ def tryRepeatLastSearch(editor = None):
         elif searchIndex.lastSearch[2] == "firstCreated":
             getCreatedNotesOrderedByDate(searchIndex, editor, searchIndex.selectedDecks, searchIndex.lastSearch[3], "asc")
 
-def generate_clozes(sentences):
-    model = mw.col.models.byName('Cloze')
-    if model is None:
-        return
-    deck_chooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
-    if deck_chooser is None: 
-        return
-    did = deck_chooser.selectedId()
-    added = 0 
-    for sentence in sentences:
-        if not "{{c1::" in sentence or not "}}" in sentence:
-            continue
-        note = Note(mw.col, model)
-        note.model()['did'] = did
-        if not "Text" in note:
-            return
-        note["Text"] = sentence
-        a = mw.col.addNote(note)
-        if a > 0:
-            addNoteToIndex(note)
-        added += a
+def generate_clozes(sentences, pdf_path, pdf_title, page):
+    try:
+        # (optional) field that full path to pdf doc goes into
+        path_fld = config["pdf.clozegen.field.pdfpath"]
+        # (optional) field that title of pdf note goes into
+        note_title_fld = config["pdf.clozegen.field.pdftitle"]
+        # (optional) field that page of the pdf where the cloze was generated goes into
+        page_fld = config["pdf.clozegen.field.page"]
 
-    tooltip("Added %s Cloze(s)." % added, period=2000)
+        # name of cloze note type to use
+        model_name = config["pdf.clozegen.notetype"]
+        # name of field that clozed text has to go into
+        fld_name = config["pdf.clozegen.field.clozedtext"]
+
+        # default cloze note type and fld
+        if model_name is None or len(model_name) == 0:
+            model_name = "Cloze"
+        if fld_name is None or len(fld_name) == 0:
+            fld_name = "Text"
+        
+        model = mw.col.models.byName(model_name)
+        index = get_index()
+        if model is None:
+            return
+        deck_chooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
+        if deck_chooser is None: 
+            return
+        did = deck_chooser.selectedId()
+        if checkIndex():
+            tags = index.output.editor.tags.text()
+            tags = mw.col.tags.canonify(mw.col.tags.split(tags))
+        else:
+            tags = []
+        added = 0 
+        for sentence in sentences:
+            if not "{{c1::" in sentence or not "}}" in sentence:
+                continue
+            note = Note(mw.col, model)
+            note.model()['did'] = did
+            note.tags = tags
+            if not fld_name in note:
+                return
+            note[fld_name] = sentence
+            if path_fld is not None and len(path_fld) > 0:
+                note[path_fld] = pdf_path
+            if note_title_fld is not None and len(note_title_fld) > 0:
+                note[note_title_fld] = pdf_title
+            if page_fld is not None and len(page_fld) > 0:
+                note[page_fld] = page
+
+            a = mw.col.addNote(note)
+            if a > 0:
+                addNoteToIndex(note)
+            added += a
+
+        tooltip("Added %s Cloze(s)." % added, period=2000)
+    except:
+        tooltip("Something went wrong during Cloze generation.", period=2000)
+
 
 def getIndexInfo():
     """

@@ -24,6 +24,7 @@ var pdfDisplayedMarks = null;
 var pdfDisplayedMarksTable = null;
 var timestamp;
 var pdfLoading = false;
+var pdfTooltipEnabled = true;
 
 var pdfImgSel = { canvas : null, context : null, startX : null, endX : null, startY : null, endY : null, cvsOffLeft : null, cvsOffTop : null, mouseIsDown : false, canvasDispl : null};
 
@@ -1067,7 +1068,7 @@ function togglePDFNightMode(elem) {
 }
 
 function pdfKeyup() {
-	if (window.getSelection().toString().length) {
+	if (pdfTooltipEnabled && window.getSelection().toString().length) {
 		let s = window.getSelection();
         let r = s.getRangeAt(0);
         let text = s.toString();
@@ -1225,7 +1226,9 @@ function generateClozes() {
            cmd += "$$$" + $(elem.children[0].children[0]).text();
         }
     });
-    pycmd('siac-generate-clozes ' + cmd);
+    let pdfPath = $('#siac-pdf-top').data("pdfpath");
+    let pdfTitle = $('#siac-pdf-top').data("pdftitle");
+    pycmd('siac-generate-clozes $$$' + pdfTitle + "$$$" + pdfPath + "$$$" + pdfDisplayedCurrentPage + cmd);
     $('#siac-pdf-tooltip').hide();
 }
 
@@ -1335,5 +1338,28 @@ function pdfViewerKeyup(event) {
     } else if (event.ctrlKey && event.keyCode === 37) {
         pdfPageLeft();
     } 
-
+}
+function pdfTooltipClozeKeyup(event) {
+    if (event.ctrlKey && event.shiftKey && event.keyCode === 67) {
+        let text = window.getSelection().toString();
+        if (!text || text.length === 0) {
+            return;
+        }
+        let c_text = document.getElementById("siac-pdf-tooltip-results-area").innerHTML;
+        for (var i = 1; i < 20; i++) {
+            if (c_text.indexOf("{{c" + i + "::") === -1) {
+                c_text = c_text.split(text).join("<span style='color: lightblue;'>{{c"+ i + "::" + text + "}}</span>");
+                document.getElementById("siac-pdf-tooltip-results-area").innerHTML = c_text;
+                break;
+            }
+        }
+    }
+}
+function togglePDFSelect(elem) {
+    pdfTooltipEnabled = !pdfTooltipEnabled;
+    if (pdfTooltipEnabled) {
+        $(elem).addClass('active');
+    } else {
+        $(elem).removeClass('active');
+    }
 }
