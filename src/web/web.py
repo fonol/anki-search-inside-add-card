@@ -516,6 +516,7 @@ def display_cloze_modal(editor, selection, extracted):
             sentence = re.sub(" ([,;:.]) ", r"\1 ", sentence)
             sentence = re.sub(r"\( (.) \)", r"(\1)", sentence)
             sentence = re.sub(" ([?!.])$", r"\1", sentence)
+            sentence = re.sub("^: ", "", sentence)
 
             sentence = re.sub(" ([\"“”])([?!.])$", r"\1\2", sentence)
             
@@ -715,7 +716,7 @@ def show_notification(editor, html):
 
     editor.web.eval("""
         $('.siac-notification').remove();
-         $('#infoBox').append(`
+        $('#infoBox').append(`
         <div class='siac-notification'>
             %s
         </div> 
