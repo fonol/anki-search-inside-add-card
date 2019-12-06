@@ -935,25 +935,32 @@ class Output:
 
 
     def print_pdf_search_results(self, results, stamp, query_set):
+        clz_btn_js = """
+                if ($('#siac-pdf-tooltip').data('sentences').length === 0) {
+                    $('#siac-cloze-btn,#siac-tt-web-btn').hide();
+                } else {
+                    $('#siac-cloze-btn').text(`Generate Clozes (${$('#siac-pdf-tooltip').data('sentences').length})`);
+                }
+        """
         if results is not None and len(results) > 0:
             html = self.get_result_html_simple(results[:50], False, False)
             qhtml = """
-                <div id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</div>
-                <div style='width: calc(100%%- 18px); padding-left: 9px; padding-right: 9px; text-align: center; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
-                <i>%s</i>
+                <div id='siac-tooltip-center' onclick='centerTooltip();'></div>
+                <div class='siac-search-icn-dark' id='siac-tt-web-btn' onclick='pycmd("siac-show-web-search-tooltip " + $("#siac-pdf-tooltip").data("selection"));'></div>
+                    <span id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</span>
+                <div style='width: calc(100%%- 18px); padding-left: 9px; padding-right: 9px; text-align: center; margin: 8px 0 8px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
+                    <i>%s</i>
                 </div>
             """ % (" ".join(query_set))
             self.editor.web.eval("""
-            document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
-            document.getElementById('siac-pdf-tooltip-top').innerHTML = `%s`
-            document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
-            if ($('#siac-pdf-tooltip').data('sentences').length === 0) {
-                $('#siac-cloze-btn').hide();
-            } else {
-                $('#siac-cloze-btn').text(`Generate Clozes (${$('#siac-pdf-tooltip').data('sentences').length})`);
-            }
+                document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
+                document.getElementById('siac-pdf-tooltip-results-area').scrollTop = 0; 
+                document.getElementById('siac-pdf-tooltip-top').innerHTML = `%s`
+                document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
+                document.getElementById('siac-pdf-tooltip-searchbar').style.display = "inline-block";
 
-            """ % (html, qhtml))
+            %s
+            """ % (html, qhtml, clz_btn_js))
         else:
             if query_set is None or len(query_set)  == 0:
                 message = "Query was empty after cleaning."
@@ -961,14 +968,14 @@ class Output:
                 message = "Nothing found for query: <br/><br/><i>%s</i>" % (utility.text.trim_if_longer_than(" ".join(query_set), 200))
             self.editor.web.eval("""
                 document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
-                document.getElementById('siac-pdf-tooltip-top').innerHTML = `<div id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</div>`;
+                document.getElementById('siac-pdf-tooltip-top').innerHTML = `<div id='siac-tooltip-center' onclick='centerTooltip();'></div>
+                                                        <div class='siac-search-icn-dark' id='siac-tt-web-btn' onclick='pycmd("siac-show-web-search-tooltip " + $("#siac-pdf-tooltip").data("selection"));'></div>
+                                                            <span id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</span>
+                                                            <br><br>`;
                 document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
-                if ($('#siac-pdf-tooltip').data('sentences').length === 0) {
-                    $('#siac-cloze-btn').hide();
-                } else {
-                    $('#siac-cloze-btn').text(`Generate Clozes (${$('#siac-pdf-tooltip').data('sentences').length})`);
-                }
-            """ % message)
+                document.getElementById('siac-pdf-tooltip-searchbar').style.display = "inline-block";
+                %s
+            """ % (message, clz_btn_js))
 
 
 

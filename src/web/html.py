@@ -419,6 +419,7 @@ def get_reading_modal_html(note):
                     <div id='siac-pdf-tooltip-top'></div>
                     <div id='siac-pdf-tooltip-results-area' onkeyup="pdfTooltipClozeKeyup(event);"></div>
                     <div id='siac-pdf-tooltip-bottom'></div>
+                    <input id='siac-pdf-tooltip-searchbar' onkeyup='if (event.keyCode === 13) {{pycmd("siac-pdf-tooltip-search " + this.value);}}'></input>
                 </div>
                 <div id='siac-reading-modal-top-bar' style='min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
                     <div style='flex: 1 1; overflow: hidden;'>
@@ -475,6 +476,7 @@ def get_reading_modal_html(note):
             }} else if (remainingSeconds !== 1800) {{
                 document.getElementById("siac-reading-modal-timer").innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds % 60 < 10 ? "0" + remainingSeconds % 60 : remainingSeconds % 60);
             }}
+            iframeIsDisplayed = false;
             </script>
         """
 
@@ -564,7 +566,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
     if queue is None:
         queue = _get_priority_list()
     if queue is None or len(queue) == 0:
-        return "<div id='siac-queue-readings-list' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none;'></div>"
+        return "<div id='siac-queue-readings-list' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; user-select: none;'></div>"
 
     if should_save:
         save = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s);"  % (note_id)
@@ -583,7 +585,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
             break
 
     html = """
-     <div id='siac-queue-readings-list' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none;'>
+     <div id='siac-queue-readings-list' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; user-select: none;'>
                             <div style='margin: 0px 0 3px 0; display: inline-block;'>Queue Head:</div><br>
                             %s
                         </div>
@@ -593,6 +595,20 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
 
 def get_pdf_viewer_html(nid, source, title):
     dir = utility.misc.get_web_folder_path()
+
+
+    search_sources = ""
+    config = mw.addonManager.getConfig(__name__)
+    urls = config["searchUrls"]
+    if urls is not None and len(urls) > 0:
+        search_sources = "<table style='margin-top: 10px; cursor: pointer; box-sizing: border-box; width: 100%;' onclick='event.stopPropagation();'>"
+        ix = 0
+        for url in urls:
+            name = os.path.dirname(url)
+            search_sources += "<tr><td><label for='%s'>%s</label></td><td><input type='radio' name='url-radio' id='%s' data-url='%s' %s/></td></tr>" % ("url-rd-%d" % ix, name, "url-rd-%d" % ix, url, "checked" if ix == 0 else "")
+            ix += 1
+        search_sources += "</table>"
+
     html = """
         <div id='siac-pdf-overlay'>PAGE READ</div>
         <div id='siac-pdf-overlay-top'>
@@ -607,10 +623,20 @@ def get_pdf_viewer_html(nid, source, title):
             </div>
             <div style='display: inline-block; vertical-align: top; margin-top: 3px;' id='siac-pdf-overlay-top-lbl-wrap'></div>
         </div>
+        <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
+            <div style='margin-left: 25px; margin-top: 4px; color: darkorange;'>Please Note: Not all Websites allow Embedding!</div>
+            <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
+                <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
+                <br/>
+               {search_sources}
+            </div>
+        </div>
+         <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark' onclick='pycmd("siac-close-iframe")'>&times; &nbsp;Close Web</div>
         <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" onwheel='pdfMouseWheel(event);'>
             <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
             <div id="text-layer" onmouseup='pdfKeyup();' onclick='if (!window.getSelection().toString().length) {{$("#siac-pdf-tooltip").hide();}}' class="textLayer"></div>
         </div>
+        <iframe id='siac-iframe'></iframe>
         <div style="width: 100%; text-align: center; margin-top: 15px; position: relative;">
             <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
                 <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("down");'>-</div>
@@ -656,7 +682,7 @@ def get_pdf_viewer_html(nid, source, title):
                 $('#siac-pdf-tooltip-toggle').removeClass('active');
             }}
         </script>
-    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source)) 
+    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, search_sources=search_sources))
     return html
 
 

@@ -248,10 +248,15 @@ def strip_url(url):
     url = re.sub("https?://(www\\.)?", "", url, re.I)
     return url
 
+
+
 def clean_file_name(name):
     name = re.sub("[^a-zA-Z]", "-", name)
     return name
 
+def remove_special_chars(text):
+    text = re.sub("[.;,\"'?!:\\-=§$%&/()\\[\\]{}\n`#~+]", "", text)
+    return text
 
 def try_find_sentence(text, selection):
     if not selection in text:

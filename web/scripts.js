@@ -25,6 +25,7 @@ var pdfDisplayedMarksTable = null;
 var timestamp;
 var pdfLoading = false;
 var pdfTooltipEnabled = true;
+var iframeIsDisplayed = false;
 
 var pdfImgSel = { canvas : null, context : null, startX : null, endX : null, startY : null, endY : null, cvsOffLeft : null, cvsOffTop : null, mouseIsDown : false, canvasDispl : null};
 
@@ -93,7 +94,9 @@ function drawSquare() {
     pdfImgSel.context.fill();
 }
 function pdfFitToPage() {
-    rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
+    if (!iframeIsDisplayed) {
+        rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
+    }
 }
 function updateSelectedDecks(elem) {
     selectedDecks = [];
@@ -174,7 +177,7 @@ function totalOffset(elem) {
     };
 }
 function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false) {
-    if (!pdfDisplayed) {
+    if (!pdfDisplayed || iframeIsDisplayed) {
         return;
     }
     $("#siac-pdf-tooltip").hide();
@@ -317,7 +320,7 @@ function pdfScaleChange(mode) {
 }
 
 function pdfPageRight() {
-    if (!pdfDisplayed) {
+    if (!pdfDisplayed || iframeIsDisplayed) {
         return;
     }
     if (pdfDisplayedCurrentPage < pdfDisplayed.numPages) {
@@ -326,7 +329,7 @@ function pdfPageRight() {
     }
 }
 function pdfPageLeft() {
-    if (!pdfDisplayed) {
+    if (!pdfDisplayed || iframeIsDisplayed) {
         return;
     }
     if (pdfDisplayedCurrentPage > 1) {
@@ -449,6 +452,14 @@ function tagInfoBoxClicked(elem) {
 function readingModalTextKeyup(elem, nid) {
         let html = $(elem).html();
         pycmd("siac-update-note-text " + nid + " " + html);
+}
+
+function appendToField(fldIx, html) {
+    if ($(`.field:eq(${fldIx})`).text().length) { 
+        $(`.field:eq(${fldIx})`).append('<br/>' + html);
+    } else {
+        $(`.field:eq(${fldIx})`).html(html);
+    }
 }
 function getSelectionText() {
     if (!searchOnSelection || isFrozen)
@@ -904,8 +915,8 @@ function addFloatingNote(nid) {
     dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
     updatePinned();
 }
-function dragElement(elmnt, headerId) {
-    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+function dragElement(elmnt, headerId, inModal=false) {
+    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0, lMYSum = 0, lMXSum = 0;
     if (document.getElementById(headerId)) {
         document.getElementById(headerId).onmousedown = dragMouseDown;
     } else {
@@ -1081,6 +1092,7 @@ function pdfKeyup() {
 		let rect = r.getBoundingClientRect();
 		let prect = document.getElementById("siac-reading-modal").getBoundingClientRect();
         document.getElementById('siac-pdf-tooltip-results-area').innerHTML = 'Searching...';
+        document.getElementById('siac-pdf-tooltip-searchbar').value = "";
         let left =  rect.left - prect.left;
         if (prect.width - left < 250) {
             left -= 200;
@@ -1089,7 +1101,6 @@ function pdfKeyup() {
         pycmd("siac-pdf-selection " + text);
         $('#siac-pdf-tooltip').data("sentences", sentences);
         $('#siac-pdf-tooltip').data("selection", text);
-       
 	}
 }
 
@@ -1362,4 +1373,23 @@ function togglePDFSelect(elem) {
     } else {
         $(elem).removeClass('active');
     }
+}
+
+function centerTooltip() {
+    let w = $('#siac-pdf-top').width();
+    let h = $('#siac-pdf-top').height();
+    let $tt = $('#siac-pdf-tooltip');
+    $tt.css({ 'top': h / 2 - ($tt.height() / 2), 'left': w / 2 - ($tt.width() / 2) });
+}
+
+function pdfUrlSearch(input) {
+    if (!input.length) {return; }
+    let url = "";
+    $("#siac-iframe-btn tr").each(function () {
+        if ($(this.children[1].children[0]).is(":checked")) {
+            url = $(this.children[1].children[0]).data("url");
+        }
+    });
+    pycmd('siac-url-srch $$$' + input + '$$$' + url); 
+    $('#siac-iframe-btn').removeClass('expanded');
 }

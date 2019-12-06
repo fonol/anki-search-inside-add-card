@@ -450,19 +450,90 @@ def showStylingModal(editor):
         searchIndex.output.showInModal(html)
         searchIndex.output.editor.web.eval("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")
 
-def show_field_picker_modal(img_src):
+def show_img_field_picker_modal(img_src):
     """
         Called after an image has been selected from a PDF, should display all fields that are currently in the editor,
         let the user pick one, and on picking, insert the img into the field.
     """
     if checkIndex():
         index = get_index()
-        modal = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto;">%s</div><br><br><div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
+        modal = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br><div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
         flds = ""
         for i, f in enumerate(index.output.editor.note.model()['flds']):
             flds += """<span class="siac-field-picker-opt" onclick="$(`.field`).get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove();">%s</span><br>""" % (i, img_src, f["name"])
         modal = modal % (flds, img_src)
         index.output.editor.web.eval("$('#siac-reading-modal-text').append('%s');" % modal.replace("'", "\\'"))
+
+def show_cloze_field_picker_modal(cloze_text):
+    """
+       Shows a modal that lists all fields of the current note.
+       When a field is selected, the cloze text is appended to that field.
+    """
+    if checkIndex():
+        cloze_text = cloze_text.replace("`", "").replace("\n", "")
+        index = get_index()
+        modal = """ <div class="siac-modal-small dark" style="text-align:center;">
+                        <b>Append to:</b><br><br>
+                        <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br>
+                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
+                    </div> """
+        flds = ""
+        for i, f in enumerate(index.output.editor.note.model()['flds']):
+            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`);  $(this.parentNode.parentNode).remove();">{2}</span><br>""".format(i, cloze_text, f["name"])
+        modal = modal % (flds)
+        index.output.editor.web.eval("$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'"))
+
+
+def show_iframe_overlay(url=None):
+    js = """
+        document.getElementById('siac-pdf-top').style.display = "none";
+        document.getElementById('siac-iframe').style.display = "block";
+        document.getElementById('siac-close-iframe-btn').style.display = "block";
+        iframeIsDisplayed = true;
+    """
+    if url is not None:
+        js += """
+            document.getElementById('siac-iframe').src = `%s`;
+        """ % url
+    get_index().output.editor.web.eval(js)
+
+def hide_iframe_overlay():
+    js = """
+        document.getElementById('siac-iframe').style.display = "none";
+        document.getElementById('siac-close-iframe-btn').style.display = "none";
+        document.getElementById('siac-pdf-top').style.display = "block";
+        iframeIsDisplayed = false;
+    """
+    get_index().output.editor.web.eval(js)
+
+
+def show_web_search_tooltip(inp):
+    if checkIndex():
+        inp = utility.text.remove_special_chars(inp)
+        inp = inp.strip()
+        if len(inp) == 0:
+            return
+        search_sources = ""
+        config = mw.addonManager.getConfig(__name__)
+        urls = config["searchUrls"]
+        if urls is not None and len(urls) > 0:
+            for url in urls:
+                name = os.path.dirname(url)
+                search_sources += """<div class="siac-url-ch" onclick='pycmd("siac-url-srch $$$" + document.getElementById("siac-tt-ws-inp").value + "$$$%s"); $(this.parentNode.parentNode).remove();'>%s</div>""" % (url, name)
+
+        index = get_index()
+        modal = """ <div class="siac-modal-small dark" style="text-align:center;">
+                        <input style="width: 100%%; border-radius: 3px; padding-left: 4px; box-sizing: border-box; background: #272828; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input> 
+                        <br/>
+                        <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden; cursor: pointer; margin-top: 15px;">%s</div><br><br>
+                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
+                    </div> """% (inp, search_sources)
+     
+        index.output.editor.web.eval("""
+        $('#siac-iframe-btn').removeClass('expanded'); 
+        $('#siac-pdf-tooltip').hide(); 
+        $('#siac-reading-modal-text').append('%s');
+        """ % modal.replace("\n", "").replace("'", "\\'"))
 
 def update_reading_bottom_bar(nid):
     queue = _get_priority_list()
@@ -517,6 +588,7 @@ def display_cloze_modal(editor, selection, extracted):
             sentence = re.sub(r"\( (.) \)", r"(\1)", sentence)
             sentence = re.sub(" ([?!.])$", r"\1", sentence)
             sentence = re.sub("^: ", "", sentence)
+            sentence = re.sub("^\\d+ ?[:\\-.,;] ([A-ZÖÄÜ])", r"\1", sentence)
 
             sentence = re.sub(" ([\"“”])([?!.])$", r"\1\2", sentence)
             
@@ -524,14 +596,21 @@ def display_cloze_modal(editor, selection, extracted):
             
             s_html += "<tr class='siac-cl-row'><td><div contenteditable style='color: darkorange;'>%s</div></td><td><input type='checkbox' checked/></td></tr>" % (sentence.replace("`", "&#96;"))
         s_html += "</table>"
-        btn_html = "document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `<div class='siac-btn siac-btn-dark' style='margin-top: 8px;' onclick='generateClozes();'>Generate</div>`;"
+        btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
+                            <div style='margin-top: 8px;'>
+                              <div class='siac-btn siac-btn-dark' onclick='pycmd("siac-fld-cloze " +$(".siac-cl-row div").first().text());' style='margin-right: 15px;'>Send to Field</div>
+                              <div class='siac-btn siac-btn-dark' onclick='generateClozes();'>Generate</div>
+                            </div>
+                   `;"""
+
     else:
         s_html = "<br>Sorry, could not extract any sentences." 
         btn_html = ""
     
     editor.web.eval("""
-            document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
-            document.getElementById('siac-pdf-tooltip-top').innerHTML = `Found <b>%s</b> sentence(s) around selection: <br/>(Click inside to edit)`
+            document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`;
+            document.getElementById('siac-pdf-tooltip-top').innerHTML = `Found <b>%s</b> sentence(s) around selection: <br/>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)`;
+            document.getElementById('siac-pdf-tooltip-searchbar').style.display = "none";
             %s
             """ % (s_html, len(sentences), btn_html))
 

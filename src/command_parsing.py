@@ -7,6 +7,8 @@ import aqt.stats
 from anki.notes import Note
 from aqt.utils import tooltip
 import os
+import urllib.parse
+
 
 from .state import checkIndex, get_index, set_index, set_corpus, get_old_on_bridge_cmd
 from .index.indexing import build_index, get_notes_in_collection
@@ -121,6 +123,14 @@ def expanded_on_bridge_cmd(self, cmd):
         stamp = setStamp()
         if checkIndex():
             searchIndex.search(cmd[19:], ["-1"], only_user_notes = False, print_mode = "pdf")
+
+    elif cmd.startswith("siac-pdf-tooltip-search "):
+        inp = cmd[len("siac-pdf-tooltip-search "):]
+        if len(inp.strip()) > 0:
+            if checkIndex():
+                stamp = setStamp()
+                searchIndex.search(inp, ["-1"], only_user_notes = False, print_mode = "pdf")
+        
 
     elif cmd.startswith("siac-jump-last-read"):
         jump_to_last_read_page(self, int(cmd.split()[1]))
@@ -398,7 +408,7 @@ def expanded_on_bridge_cmd(self, cmd):
         b64 = cmd.split()[2][13:]
         image = utility.misc.base64_to_file(b64)
         name = mw.col.media.addFile(image)
-        show_field_picker_modal(name)
+        show_img_field_picker_modal(name)
         os.remove(image)
 
     # if the user clicked on cancel, the image is already added to the media folder, so we delete it
@@ -409,6 +419,31 @@ def expanded_on_bridge_cmd(self, cmd):
             os.remove(os.path.join(media_dir, name))
         except:
             pass
+
+    elif cmd.startswith("siac-fld-cloze "):
+        cloze_text = " ".join(cmd.split()[1:])
+        show_cloze_field_picker_modal(cloze_text)
+
+
+    elif cmd.startswith("siac-url-srch "):
+        search_term = cmd.split("$$$")[1]
+        url = cmd.split("$$$")[2]
+        if search_term == "":
+            return
+        if url is None or len(url) == 0:
+            return 
+        url_enc = urllib.parse.quote_plus(search_term)
+        
+        show_iframe_overlay(url=url.replace("[QUERY]", url_enc))
+
+    elif cmd == "siac-close-iframe":
+        hide_iframe_overlay()
+
+    elif cmd.startswith("siac-show-web-search-tooltip "):
+        inp = " ".join(cmd.split()[1:])
+        if inp == "":
+            return
+        show_web_search_tooltip(inp)
 
 
     #

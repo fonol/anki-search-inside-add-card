@@ -97,8 +97,7 @@
 "pdf.clozegen.field.clozedtext": "",
 "pdf.clozegen.field.pdftitle": "",
 "pdf.clozegen.field.pdfpath": "",
-"pdf.clozegen.field.page": ""
-
-
+"pdf.clozegen.field.page": "",
+"searchUrls": ["https://en.wikipedia.org/w/index.php?search=[QUERY]&title=Special%3ASearch&go=Go&ns0=1" ]
 
 }
