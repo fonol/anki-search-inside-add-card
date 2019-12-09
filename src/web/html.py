@@ -7,7 +7,7 @@ import time
 from aqt import mw
 
 from ..state import get_index, checkIndex
-from ..notes import get_note, _get_priority_list
+from ..notes import get_note, _get_priority_list, get_avg_pages_read
 import utility.misc
 import utility.tags
 import utility.text
@@ -195,11 +195,11 @@ def rightSideHtml(config, searchIndexIsLoaded = False):
                             </div>
                             <div id='siac-settings-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; min-width: 140px; text-align: center; '>&nbsp; Settings & Info &nbsp;
                                         <div class='siac-btn-small-dropdown click' onclick='event.stopPropagation();' >
-                                                <table style='width: 100%%'>
-                                                    <tr><td class='tbLb'>Search on Selection</td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
-                                                    <tr><td class='tbLb'>Search on Typing</td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
-                                                    <tr><td class='tbLb'><mark>&nbsp;Highlighting&nbsp;</mark></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
-                                                    <tr><td class='tbLb'>Grid</td><td><input type='checkbox' id='gridCb' onchange='toggleGrid(this)'/></td></tr>
+                                                <table style='width: 100%%;'>
+                                                    <tr><td class='tbLb'><label for='selectionCb'>Search on Selection</label></td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
+                                                    <tr><td class='tbLb'><label for='typingCb'>Search on Typing</label></td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
+                                                    <tr><td class='tbLb'><label for='highlightCb'><mark>&nbsp;Highlighting&nbsp;</mark></label></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
+                                                    <tr><td class='tbLb'><label for='gridCb'>Grid</label></td><td><input type='checkbox' id='gridCb' onchange='toggleGrid(this)'/></td></tr>
                                                  </table>
                                                  <span>Note Scale</span>
                                                  <hr>
@@ -601,13 +601,22 @@ def get_pdf_viewer_html(nid, source, title):
     config = mw.addonManager.getConfig(__name__)
     urls = config["searchUrls"]
     if urls is not None and len(urls) > 0:
-        search_sources = "<table style='margin-top: 10px; cursor: pointer; box-sizing: border-box; width: 100%;' onclick='event.stopPropagation();'>"
+        search_sources = "<table style='margin: 10px 0 10px 0; cursor: pointer; box-sizing: border-box; width: 100%;' onclick='event.stopPropagation();'>"
         ix = 0
+        direct_links = ""
         for url in urls:
             name = os.path.dirname(url)
-            search_sources += "<tr><td><label for='%s'>%s</label></td><td><input type='radio' name='url-radio' id='%s' data-url='%s' %s/></td></tr>" % ("url-rd-%d" % ix, name, "url-rd-%d" % ix, url, "checked" if ix == 0 else "")
-            ix += 1
+            if "[QUERY]" in url:
+                search_sources += "<tr><td><label for='%s'>%s</label></td><td><input type='radio' name='url-radio' id='%s' data-url='%s' %s/></td></tr>" % ("url-rd-%d" % ix, name, "url-rd-%d" % ix, url, "checked" if ix == 0 else "")
+                ix += 1
+            else:
+                direct_links += """<div class="siac-url-ch" onclick='event.stopPropagation(); $("#siac-iframe-btn").removeClass("expanded"); pycmd("siac-url-srch $$$dummy$$$%s");'>%s</div>""" % (url, name)
+
         search_sources += "</table>"
+        if len(direct_links) > 0:
+            search_sources += "<div style='margin-bottom: 5px;'>Direct Links:</div>"
+            search_sources += direct_links
+
 
     html = """
         <div id='siac-pdf-overlay'>PAGE READ</div>
@@ -624,7 +633,7 @@ def get_pdf_viewer_html(nid, source, title):
             <div style='display: inline-block; vertical-align: top; margin-top: 3px;' id='siac-pdf-overlay-top-lbl-wrap'></div>
         </div>
         <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
-            <div style='margin-left: 25px; margin-top: 4px; color: darkorange;'>Please Note: Not all Websites allow Embedding!</div>
+            <div style='margin-left: 5px; margin-top: 4px; color: darkorange; width: calc(100% - 40px); text-align: center;'>Note: Not all Websites allow Embedding!</div>
             <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
                 <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
                 <br/>
@@ -636,7 +645,7 @@ def get_pdf_viewer_html(nid, source, title):
             <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
             <div id="text-layer" onmouseup='pdfKeyup();' onclick='if (!window.getSelection().toString().length) {{$("#siac-pdf-tooltip").hide();}}' class="textLayer"></div>
         </div>
-        <iframe id='siac-iframe'></iframe>
+        <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
         <div style="width: 100%; text-align: center; margin-top: 15px; position: relative;">
             <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
                 <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("down");'>-</div>
@@ -977,9 +986,17 @@ def get_pdf_list_first_card():
         Returns the html for the body of a card that is displayed at first position when clicking on "PDFs".
     """
     html = """
-        <a class='keyword' onclick='pycmd("siac-pdf-last-read")'>Order by Last Read</a><br>
-        <a class='keyword' onclick='pycmd("siac-pdf-last-added")'>Order by Last Added</a>
-    """
+        <div style='width: calc(50%% - 30px); box-sizing: border-box; display: inline-block;'>
+            <a class='keyword' onclick='pycmd("siac-pdf-last-read")'>Order by Last Read</a><br>
+            <a class='keyword' onclick='pycmd("siac-pdf-last-added")'>Order by Last Added</a><br>
+            <a class='keyword' onclick='pycmd("siac-pdf-find-invalid")'>Find Invalid Paths</a>
+        </div>
+        <div style='width: calc(50%%- 30px); box-sizing: border-box; display: inline-block;'>
+            <p>
+            Avg. Pages Read (Last 7 Days): <b>%s</b>
+            </p>
+        </div>
+    """ % (get_avg_pages_read(7))
     return html
 
 

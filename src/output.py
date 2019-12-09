@@ -17,6 +17,7 @@ import utility.misc
 class Output:
 
     def __init__(self):
+        #todo: cleanup
         self.editor = None
         self.SEP_RE = re.compile(r'(\u001f){2,}|(\u001f[\s\r\n]+\u001f)')
         self.SEP_END = re.compile(r'</div>\u001f$')
@@ -105,6 +106,9 @@ class Output:
                         </div>"""
 
     def show_page(self, editor, page):
+        """
+            Results are paginated, this will display the results for the given page.
+        """
         if self.lastResults is not None:
             self.printSearchResults(self.lastResults, None, editor, False, self.last_had_timing_info, page, query_set = self.last_query_set)
 
@@ -338,7 +342,13 @@ class Output:
                     editor.web.eval(cmd)
 
 
-
+    def js(self, js):
+        """
+            Use webview's eval function to execute the given js.
+        """
+        if self.editor is None or self.editor.web is None:
+            return
+        self.editor.web.eval(js)
 
 
 
@@ -488,6 +498,9 @@ class Output:
         return "Edited today"
 
     def _getTimeDifferenceString(self, nid, now):
+        """
+            Helper function that builds the string that is displayed when clicking on the result number of a note.
+        """
         diffInMinutes = (now - int(nid)) / 1000 / 60
         diffInDays = diffInMinutes / 60 / 24
 
@@ -505,15 +518,6 @@ class Output:
             return "Created %s days ago" % int(diffInDays)
         return ""
 
-
-    def setSearchInfo(self, text, editor = None):
-        if editor is not None:
-            editor.web.eval('document.getElementById("searchInfo").innerHTML = `%s`;' % text)
-            return
-
-        if self.editor is None:
-            return
-        self.editor.web.eval('document.getElementById("searchInfo").innerHTML = `%s`;' % text)
 
     def buildInfoTable(self, infoMap, tags, allText):
         infoStr = "<table>"

@@ -100,7 +100,10 @@ def date_diff_to_string(diff):
     elif diff.total_seconds() / 3600 < 1.0:
         time_str = time_str % (int(diff.total_seconds() / 60), "minutes")
     elif diff.total_seconds() / 86400 < 1.0:
-        time_str = time_str % (int(diff.total_seconds() / 3600), "hours")
+        if int(diff.total_seconds() / 3600) == 1:
+            time_str = time_str % (int(diff.total_seconds() / 3600), "hour")
+        else:
+            time_str = time_str % (int(diff.total_seconds() / 3600), "hours")
     elif diff.total_seconds() / 86400 >= 1.0 and diff.total_seconds() / 86400 < 2.0:
         time_str = time_str % ("1", "day")
     else:

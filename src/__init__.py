@@ -29,7 +29,7 @@ from .web.web import printStartingInfo, getScriptPlatformSpecific, showSearchRes
 from .web.html import rightSideHtml
 from .notes import *
 from .dialogs.editor import EditDialog
-from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerenderInfo, addNoteToIndex
+from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerenderInfo, add_note_to_index
 
 config = mw.addonManager.getConfig(__name__)
 
@@ -131,7 +131,7 @@ def exception_hook(exctype, value, traceback):
 
 def addNoteAndUpdateIndex(dialog, note):
     res = origAddNote(dialog, note)
-    addNoteToIndex(note)
+    add_note_to_index(note)
 
     return res
 

@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from enum import Enum, unique
-from datetime import datetime, time
+from datetime import datetime, time, date, timedelta
 from aqt import mw
 import random
 
@@ -411,11 +411,36 @@ def get_read_today_count():
         return 0
     return c[0]
 
+def get_avg_pages_read(delta_days):
+    dt = date.today() - timedelta(delta_days)
+    stamp = dt.strftime('%Y-%m-%d')
+    conn = _get_connection()
+    c = conn.execute("select count(*) from read where created >= '%s'" % stamp).fetchone()
+    conn.close()
+    if c is None:
+        return 0
+    return float("{0:.1f}".format(c[0] / delta_days))
+
+
 def get_queue_count():
     conn = _get_connection()
     c = conn.execute("select count(*) from notes where position is not null and position >= 0").fetchone()
     conn.close()
     return c
+
+def get_invalid_pdfs():
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%.pdf'").fetchall()
+    conn.close()
+    filtered = list()
+    c = 0
+    for (_, _, _, source, _, _, _, _, _, _, _) in res:
+        if not utility.misc.file_exists(source.strip()):
+            filtered.append(res[c])
+        c += 1
+    return _to_output_list(filtered, []) 
+
+
 
 def get_recently_used_tags():
     """

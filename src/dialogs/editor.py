@@ -171,7 +171,6 @@ class NoteEditor(QDialog):
             """
         self.setStyleSheet(styles)
         self.create_tab.title.setFocus()
-
         self.exec_()
 
 
@@ -271,7 +270,6 @@ class CreateTab(QWidget):
             ti.setData(0, 1, QVariant(t))
             self.recent_tree.addTopLevelItem(ti)
         self.recent_tree.itemClicked.connect(self.tree_item_clicked)
-
 
         self.queue_section = QGroupBox("Queue")
         ex_v = QVBoxLayout()
@@ -437,7 +435,7 @@ class CreateTab(QWidget):
         f.setPointSize(12)
         self.text.setFont(f)
         self.text.setMinimumHeight(380)
-        self.text.setMinimumWidth(330)
+        self.text.setMinimumWidth(450)
         self.text.setSizePolicy(
             QSizePolicy.Expanding,
             QSizePolicy.Expanding)
@@ -515,6 +513,7 @@ class CreateTab(QWidget):
         clean_btn = QToolButton()
         clean_btn.setText("Clean Text  ")
         clean_btn.setPopupMode(QToolButton.InstantPopup)
+        clean_btn.setFocusPolicy(Qt.NoFocus)
         clean_menu = QMenu(clean_btn)
         header_a = clean_menu.addAction("Remove Headers")
         header_a.triggered.connect(self.on_remove_headers_clicked)

@@ -102,22 +102,30 @@ def expanded_on_bridge_cmd(self, cmd):
             notes = get_all_pdf_notes()
             # add special note at front
             sp_body = get_pdf_list_first_card()
-            notes.insert(0, (utility.text.build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+            notes.insert(0, (utility.text.build_user_note_text("PDF Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
             searchIndex.output.printSearchResults(notes, stamp)
 
     elif cmd == "siac-pdf-last-read":
         stamp = setStamp()
         notes = get_pdf_notes_last_read_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, (utility.text.build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+        notes.insert(0, (utility.text.build_user_note_text("PDF Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
         searchIndex.output.printSearchResults(notes, stamp)
 
     elif cmd == "siac-pdf-last-added":
         stamp = setStamp()
         notes = get_pdf_notes_last_added_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, (utility.text.build_user_note_text("Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+        notes.insert(0, (utility.text.build_user_note_text("PDF Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
         searchIndex.output.printSearchResults(notes, stamp)
+    
+    elif cmd == "siac-pdf-find-invalid":
+        stamp = setStamp()
+        notes = get_invalid_pdfs()
+        sp_body = get_pdf_list_first_card()
+        notes.insert(0, (utility.text.build_user_note_text("PDF Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+        searchIndex.output.printSearchResults(notes, stamp)
+
 
     elif cmd.startswith("siac-pdf-selection "):
         stamp = setStamp()
@@ -322,7 +330,7 @@ def expanded_on_bridge_cmd(self, cmd):
         queue_sched = int(cmd.split()[2])
         inserted_index = update_position(nid, QueueSchedule(queue_sched))
         queue_readings_list = get_queue_head_display(nid)
-        searchIndex.output.editor.web.eval("""
+        searchIndex.output.js("""
         document.getElementById('siac-queue-lbl').innerHTML = 'Position: %s / %s';
         $('#siac-queue-lbl').fadeIn('slow');
         $('.siac-queue-sched-btn:first').html('%s / %s');
@@ -334,8 +342,8 @@ def expanded_on_bridge_cmd(self, cmd):
         update_position(nid, QueueSchedule.NOT_ADD)
         queue_readings_list = get_queue_head_display(nid)
 
-        searchIndex.output.editor.web.eval("afterRemovedFromQueue();")
-        searchIndex.output.editor.web.eval("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)
+        searchIndex.output.js("afterRemovedFromQueue();")
+        searchIndex.output.js("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)
 
     elif cmd == "siac-user-note-queue-read-random":
         rand_id = get_random_id_from_queue()
@@ -353,9 +361,9 @@ def expanded_on_bridge_cmd(self, cmd):
         if checkIndex():
             searchIndex.output.scale = factor
             if factor != 1.0:
-                searchIndex.output.editor.web.eval("showTagInfoOnHover = false;")
+                searchIndex.output.js("showTagInfoOnHover = false;")
             else:
-                searchIndex.output.editor.web.eval("showTagInfoOnHover = true;")
+                searchIndex.output.js("showTagInfoOnHover = true;")
 
     elif cmd.startswith("siac-pdf-page-read"):
         nid = cmd.split()[1]
@@ -397,7 +405,7 @@ def expanded_on_bridge_cmd(self, cmd):
         showStylingModal(self)
 
     elif cmd.startswith("styling "):
-        updateStyling(cmd[8:])
+        update_styling(cmd[8:])
 
     elif cmd == "writeConfig":
         writeConfig()
@@ -458,7 +466,7 @@ def expanded_on_bridge_cmd(self, cmd):
     #   Special searches
     #
     elif cmd.startswith("predefSearch "):
-        parsePredefSearchCmd(cmd, self)
+        parse_predef_search_cmd(cmd, self)
 
     elif cmd.startswith("similarForCard "):
         if checkIndex():
@@ -530,7 +538,7 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd == "selectCurrent":
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and searchIndex is not None:
-            searchIndex.output.editor.web.eval("selectDeckWithId(%s);" % deckChooser.selectedId())
+            searchIndex.output.js("selectDeckWithId(%s);" % deckChooser.selectedId())
 
     elif cmd.startswith("siac-update-field-to-hide-in-results "):
         if not checkIndex():
@@ -564,7 +572,7 @@ def parseSortCommand(cmd):
     elif cmd == "remReviewed":
         searchIndex.output.removeReviewed()
 
-def parsePredefSearchCmd(cmd, editor):
+def parse_predef_search_cmd(cmd, editor):
     """
     Helper function to parse the various predefined searches (last added/longest text/...)
     """
@@ -759,10 +767,10 @@ def getCurrentContent(editor):
         text += f
     return text
 
-def addNoteToIndex(note):
-    searchIndex = get_index()
-    if searchIndex is not None:
-        searchIndex.addNote(note)
+def add_note_to_index(note):
+    ix = get_index()
+    if ix is not None:
+        ix.addNote(note)
 
 def addTag(tag):
     """
@@ -893,7 +901,7 @@ def generate_clozes(sentences, pdf_path, pdf_title, page):
 
             a = mw.col.addNote(note)
             if a > 0:
-                addNoteToIndex(note)
+                add_note_to_index(note)
             added += a
 
         tooltip("Added %s Cloze(s)." % added, period=2000)
@@ -982,7 +990,7 @@ def showTimingModal():
     searchIndex.output.showInModal(html)
 
 
-def updateStyling(cmd):
+def update_styling(cmd):
     searchIndex = get_index()
 
     name = cmd.split()[0]
@@ -993,18 +1001,18 @@ def updateStyling(cmd):
     if name == "addToResultAreaHeight":
         if int(value) < 501 and int(value) > -501:
             config[name] = int(value)
-            searchIndex.output.editor.web.eval("addToResultAreaHeight = %s; onResize();" % value)
+            searchIndex.output.js("addToResultAreaHeight = %s; onResize();" % value)
 
     elif name == "renderImmediately":
         m = value == "true" or value == "on"
         config["renderImmediately"] = m
-        searchIndex.output.editor.web.eval("renderImmediately = %s;" % ("true" if m else "false"))
+        searchIndex.output.js("renderImmediately = %s;" % ("true" if m else "false"))
 
     elif name == "hideSidebar":
         m = value == "true" or value == "on"
         config["hideSidebar"] = m
         searchIndex.output.hideSidebar = m
-        searchIndex.output.editor.web.eval("document.getElementById('searchInfo').classList.%s('hidden');"  % ("add" if m else "remove"))
+        searchIndex.output.js("document.getElementById('searchInfo').classList.%s('hidden');"  % ("add" if m else "remove"))
 
     elif name == "removeDivsFromOutput":
         m = value == "true" or value == "on"
@@ -1022,18 +1030,18 @@ def updateStyling(cmd):
         config[name] = int(value)
         right = 100 - int(value)
         if checkIndex():
-            searchIndex.output.editor.web.eval("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('infoBox').style.width = '%s%%';" % (value, right) )
+            searchIndex.output.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('infoBox').style.width = '%s%%';" % (value, right) )
 
     elif name == "showTimeline":
         config[name] = value == "true" or value == "on"
         if not config[name] and checkIndex():
-            searchIndex.output.editor.web.eval("document.getElementById('cal-row').style.display = 'none'; onResize();")
+            searchIndex.output.js("document.getElementById('cal-row').style.display = 'none'; onResize();")
         elif config[name] and checkIndex():
-            searchIndex.output.editor.web.eval("""
+            searchIndex.output.js("""
             if (document.getElementById('cal-row')) {
                 document.getElementById('cal-row').style.display = 'block';
             } else {
-                document.getElementById('bottomContainer').children[0].innerHTML = `%s`;
+                document.getElementById('bottomContainer').children[1].innerHTML = `%s`;
                 $('.cal-block-outer').mouseenter(function(event) { calBlockMouseEnter(event, this);});
                 $('.cal-block-outer').click(function(event) { displayCalInfo(this);});
             }
@@ -1043,14 +1051,14 @@ def updateStyling(cmd):
     elif name == "showTagInfoOnHover":
         config[name] = value == "true" or value == "on"
         if not config[name] and checkIndex():
-            searchIndex.output.editor.web.eval("showTagInfoOnHover = false;")
+            searchIndex.output.js("showTagInfoOnHover = false;")
         elif config[name] and checkIndex():
-            searchIndex.output.editor.web.eval("showTagInfoOnHover = true;")
+            searchIndex.output.js("showTagInfoOnHover = true;")
 
     elif name == "tagHoverDelayInMiliSec":
         config[name] = int(value)
         if checkIndex():
-            searchIndex.output.editor.web.eval("tagHoverTimeout = %s;" % value)
+            searchIndex.output.js("tagHoverTimeout = %s;" % value)
 
     elif name == "alwaysRebuildIndexIfSmallerThan":
         config[name] = int(value)
@@ -1065,7 +1073,7 @@ def updateStyling(cmd):
 
 def writeConfig():
     mw.addonManager.writeConfig(__name__, config)
-    get_index().output.editor.web.eval("$('.modal-close').unbind('click')")
+    get_index().output.js("$('.modal-close').unbind('click')")
 
 
 def after_index_rebuilt():

@@ -460,6 +460,7 @@ function appendToField(fldIx, html) {
     } else {
         $(`.field:eq(${fldIx})`).html(html);
     }
+    pycmd(`blur:${fldIx}:${currentNoteId}:${$(`.field:eq(${fldIx})`).html()}`);
 }
 function getSelectionText() {
     if (!searchOnSelection || isFrozen)

@@ -255,7 +255,7 @@ def clean_file_name(name):
     return name
 
 def remove_special_chars(text):
-    text = re.sub("[.;,\"'?!:\\-=§$%&/()\\[\\]{}\n`#~+]", "", text)
+    text = re.sub("[.;,\"'?!:\\-=§$%&/()\\[\\]{}\n`#~+|]", "", text)
     return text
 
 def try_find_sentence(text, selection):

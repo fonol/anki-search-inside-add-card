@@ -600,7 +600,6 @@ def _calcPerformanceScore(retention, time, goodAndEasy, hard):
 
 
 def retention_stats_for_tag(true_ret_over_time, graph_div_id, graph_div_lbl_id):
-        
     """
     Assumes that the tag info box ('#siac-tag-info-box') is already rendered.
     The box contains a div that is the placeholder for the retention graph.

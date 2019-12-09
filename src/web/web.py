@@ -19,7 +19,7 @@ from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, g
 
 def toggleAddon():
     if checkIndex():
-        get_index().output.editor.web.eval("toggleAddon();")
+        get_index().output.js("toggleAddon();")
 
 
 def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
@@ -330,7 +330,7 @@ def showSearchResultArea(editor=None, initializationTime=0):
             document.getElementById('loader').style.display = 'none';
         }"""
     if checkIndex():
-        get_index().output.editor.web.eval(js)
+        get_index().output.js(js)
     elif editor is not None and editor.web is not None:
         editor.web.eval(js)
 
@@ -385,7 +385,7 @@ def reload_note_reading_modal_bottom_bar(note_id):
     """
     note = get_note(note_id)
     html = get_reading_modal_bottom_bar(note)
-    get_index().output.editor.web.eval("$('#siac-reading-modal-bottom-bar').replaceWith(`%s`);" % html)
+    get_index().output.js("$('#siac-reading-modal-bottom-bar').replaceWith(`%s`);" % html)
 
 def _display_pdf(full_path, note_id):
     index = get_index()
@@ -448,7 +448,7 @@ def showStylingModal(editor):
     if checkIndex():
         searchIndex = get_index()
         searchIndex.output.showInModal(html)
-        searchIndex.output.editor.web.eval("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")
+        searchIndex.output.js("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")
 
 def show_img_field_picker_modal(img_src):
     """
@@ -460,9 +460,10 @@ def show_img_field_picker_modal(img_src):
         modal = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br><div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
         flds = ""
         for i, f in enumerate(index.output.editor.note.model()['flds']):
-            flds += """<span class="siac-field-picker-opt" onclick="$(`.field`).get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove();">%s</span><br>""" % (i, img_src, f["name"])
+            fld_update_js = "pycmd(`blur:%s:${currentNoteId}:${$(`.field:eq(%s)`).html()}`);" % (i,i)
+            flds += """<span class="siac-field-picker-opt" onclick="$(`.field`).get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s">%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
         modal = modal % (flds, img_src)
-        index.output.editor.web.eval("$('#siac-reading-modal-text').append('%s');" % modal.replace("'", "\\'"))
+        index.output.js("$('#siac-reading-modal-text').append('%s');" % modal.replace("'", "\\'"))
 
 def show_cloze_field_picker_modal(cloze_text):
     """
@@ -481,7 +482,7 @@ def show_cloze_field_picker_modal(cloze_text):
         for i, f in enumerate(index.output.editor.note.model()['flds']):
             flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`);  $(this.parentNode.parentNode).remove();">{2}</span><br>""".format(i, cloze_text, f["name"])
         modal = modal % (flds)
-        index.output.editor.web.eval("$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'"))
+        index.output.js("$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'"))
 
 
 def show_iframe_overlay(url=None):
@@ -495,16 +496,17 @@ def show_iframe_overlay(url=None):
         js += """
             document.getElementById('siac-iframe').src = `%s`;
         """ % url
-    get_index().output.editor.web.eval(js)
+    get_index().output.js(js)
 
 def hide_iframe_overlay():
     js = """
+        document.getElementById('siac-iframe').src = "";
         document.getElementById('siac-iframe').style.display = "none";
         document.getElementById('siac-close-iframe-btn').style.display = "none";
         document.getElementById('siac-pdf-top').style.display = "block";
         iframeIsDisplayed = false;
     """
-    get_index().output.editor.web.eval(js)
+    get_index().output.js(js)
 
 
 def show_web_search_tooltip(inp):
@@ -518,8 +520,9 @@ def show_web_search_tooltip(inp):
         urls = config["searchUrls"]
         if urls is not None and len(urls) > 0:
             for url in urls:
-                name = os.path.dirname(url)
-                search_sources += """<div class="siac-url-ch" onclick='pycmd("siac-url-srch $$$" + document.getElementById("siac-tt-ws-inp").value + "$$$%s"); $(this.parentNode.parentNode).remove();'>%s</div>""" % (url, name)
+                if "[QUERY]" in url:
+                    name = os.path.dirname(url)
+                    search_sources += """<div class="siac-url-ch" onclick='pycmd("siac-url-srch $$$" + document.getElementById("siac-tt-ws-inp").value + "$$$%s"); $(this.parentNode.parentNode).remove();'>%s</div>""" % (url, name)
 
         index = get_index()
         modal = """ <div class="siac-modal-small dark" style="text-align:center;">
@@ -529,7 +532,7 @@ def show_web_search_tooltip(inp):
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
                     </div> """% (inp, search_sources)
      
-        index.output.editor.web.eval("""
+        index.output.js("""
         $('#siac-iframe-btn').removeClass('expanded'); 
         $('#siac-pdf-tooltip').hide(); 
         $('#siac-reading-modal-text').append('%s');
@@ -552,7 +555,7 @@ def update_reading_bottom_bar(nid):
         pos_lbl_btn = "<b>Not in Queue</b>"
 
     qd = get_queue_head_display(nid, queue)
-    get_index().output.editor.web.eval("""
+    get_index().output.js("""
         document.getElementById('siac-queue-lbl').innerHTML = '%s';
         $('#siac-queue-lbl').fadeIn('slow');
         $('.siac-queue-sched-btn:first').html('%s');
@@ -574,6 +577,9 @@ def display_cloze_modal(editor, selection, extracted):
         for sentence in sentences:
             sentence = re.sub("  +", " ", sentence).strip()
             sentence = sentence.replace(selection, " <span style='color: lightblue;'>{{c1::%s}}</span> " % selection)
+
+            # needs cleaning
+
             sentence = sentence.replace("  ", " ").replace("</span> ,", "</span>,")
             sentence = re.sub(" ([\"“”\\[(]) <span", " \\1<span", sentence)
             sentence = re.sub("</span> ([\"”\\]):])", "</span>\\1", sentence)
@@ -702,7 +708,7 @@ def fillTagSelect(editor = None, expanded = False) :
     if editor is not None:
         editor.web.eval(cmd)
     else:
-        get_index().output.editor.web.eval(cmd)
+        get_index().output.js(cmd)
 
 def fillDeckSelect(editor = None, expanded= False):
     """
@@ -788,7 +794,7 @@ def show_loader(target_div_id, text):
     """
 
     html = get_loader_html(text)
-    get_index().output.editor.web.eval("$('#%s').append(`%s`);" % (target_div_id, html))
+    get_index().output.js("$('#%s').append(`%s`);" % (target_div_id, html))
 
 
 def show_notification(editor, html):
