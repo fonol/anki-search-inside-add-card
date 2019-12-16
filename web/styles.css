@@ -1,6 +1,7 @@
 
 :root {
     --tleft : 50%;
+    --ttop : 50%;
 }
 
 @font-face {
@@ -77,17 +78,14 @@ body {
 #topbutsOuter {
  z-index: 1;
 }
-
 #fields {
     overflow-y: auto;
     height: 90vh;
     padding-right: 8px;
 }
-
 #startInfo {
     padding-left: 20px;
 }
-
 .signal {
     border: 5px solid #2496dc;
     border-radius: 30px;
@@ -137,7 +135,6 @@ body {
     max-height: $imgMaxHeight$;
     max-width: 100%;
 }
-
 .cardWrapper.grid .cardR {
     word-wrap: break-word;
 }
@@ -145,14 +142,12 @@ body {
 .cardR:hover {
      border: 3px outset $noteHoverBorderColor$;
 }
-
-.smallMarginTop {
-    margin-top: 5px;
+.w-100 {
+    width: 100%;
 }
 .smallMarginBottom {
     margin-bottom: 4px;
 }
-
 .btnBar {
     display: flex;
     position: absolute;
@@ -227,7 +222,10 @@ select {
 .tagLbl:hover {
     filter: brightness(150%);
 }
-
+.siac-orange-hover:hover {
+    color: darkorange;
+    cursor: pointer;
+}
 
 #tagContainer .tagLbl {
     float: left;
@@ -1383,7 +1381,7 @@ margin-right: auto;
     z-index: 2;
     position: absolute;
     left: 0px;
-    top: 60px;
+    top: 55px;
 }
 #siac-close-iframe-btn {
     z-index: 4;
@@ -1704,7 +1702,6 @@ margin-right: auto;
     height: 70px;
 
 }
-
 #siac-search-modal-inp {
     width: 100%;
     padding-left: 4px;
@@ -1721,7 +1718,6 @@ margin-right: auto;
     text-align: center;
     margin-bottom: 4px;
 }
-
 #siac-reading-modal a {
     color: darkorange !important;
 }
@@ -1731,31 +1727,27 @@ margin-right: auto;
 
 #siac-reading-modal-top-btns {
     position: absolute;
-    top: 7px; right: 35px;
+    top: 7px; right: 25px;
     text-align: center;
     vertical-align: center;
 }
-
-.reading-modal-close-icn,.reading-modal-hide-icn,.reading-modal-swap-icn {
+#siac-reading-modal-top-btns div:hover {
+    color: white;
+}
+#siac-reading-modal-top-btns siac-btn {
+    line-height: 13px;
+}
+#siac-reading-modal-top-btns span {
+    border: 1px solid lightgrey; 
+    height: 11px; 
+    width: 4px;
+    margin: 0;
+    vertical-align: middle;
     display: inline-block;
-    vertical-align: top;
-    cursor: pointer;
-    font-size: 22px;
-    user-select: none;
 }
-.reading-modal-hide-icn {
-    font-size: 15px;
-    margin: 5px 4px 0 0;
+#siac-reading-modal-top-btns div:hover span {
+    border-color: white;
 }
-.reading-modal-swap-icn {
-    margin-right: 3px;
-}
-
-.reading-modal-close-icn:hover,.reading-modal-hide-icn:hover,.reading-modal-swap-icn:hover {
-    transform: scale(1.2);
-    color: #2496dc;
-}
-
 .siac-queue-picker-icn {
     margin-left: 25px; cursor: pointer; font-weight: bold; color: darkorange;
     display: inline-block;
@@ -1775,7 +1767,7 @@ margin-right: auto;
     display: inline-block;
     font-size: 13px;
     padding: 2px;
-    border: 2px solid lightblue;
+    border: 2px solid #2496dc;;
     color: lightblue;
     user-select: none;
     cursor: pointer;
@@ -1790,7 +1782,21 @@ margin-right: auto;
     vertical-align: top;
     margin: 40px 5px 0px 5px;
 }
-
+.siac-queue-sched-btn-tt {
+    font-size: 10px;
+    padding: 1px 3px 1px 3px;
+    border: 2px outset #2496dc;
+    color: lightgrey;
+    user-select: none;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 3px;
+    margin: 5px 0 5px 0;
+}
+.siac-queue-sched-btn-tt:hover {
+    border-color: white;
+    color: white;
+}
 .siac-queue-sched-btn:hover, .siac-queue-sched-btn-hor:hover {
     color: white;
     border-color: white;
@@ -1817,13 +1823,39 @@ margin-right: auto;
 .siac-clickable-anchor {
     cursor: pointer;
     display: inline-block;
+    border: 1px solid transparent;
 }
 
 .siac-clickable-anchor:hover {
     transform: scale(1.02);
     filter: brightness(140%);
 }
-
+#siac-queue-infobox-wrapper {
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    margin-left: 14px;
+}
+#siac-queue-infobox {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: none;
+    width: 300px;
+    height: 110px;
+    border: 3px outset darkorange;
+}
+#siac-queue-infobox:after {
+    content: " ";
+    position: absolute;
+    right: 100%;
+    top: var(--ttop);
+    margin-top: -11px;
+    border-width: 11px;
+    border-style: solid;
+    border-color: transparent darkorange transparent transparent;
+    transition: all ease 0.2s;
+}
 
 #outerWr.onesided .siac-queue-sched-hor-sep {
     width: 10px;
@@ -1896,7 +1928,7 @@ margin-right: auto;
     width: 250px;
     border: 2px solid $modalBorderColor$;
 }
-.siac-modal-small.dark {
+.siac-modal-small.dark, #siac-reading-modal .siac-modal-small {
     border: 3px outset darkorange;
     background: #272828;
     color: white;

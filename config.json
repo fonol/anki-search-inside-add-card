@@ -31,13 +31,13 @@
         "highlightBackgroundColor": "yellow",
         "highlightForegroundColor": "black",
         "fieldSeparatorColor" : "#2496dc",
-        "windowColumnSeparatorColor" : "#2496dc",
-        "rankingLabelBackgroundColor": "#2496dc",
+        "windowColumnSeparatorColor" : "lightseagreen",
+        "rankingLabelBackgroundColor": "lightseagreen",
         "rankingLabelForegroundColor": "white",
         "noteFontSize": 12,
         "noteForegroundColor": "black",
         "noteBackgroundColor": "white",
-        "noteBorderColor": "grey",
+        "noteBorderColor": "lightseagreen",
         "noteHoverBorderColor": "#2496dc"
     },
     "topBar": {
@@ -98,6 +98,7 @@
 "pdf.clozegen.field.pdftitle": "",
 "pdf.clozegen.field.pdfpath": "",
 "pdf.clozegen.field.page": "",
-"searchUrls": ["https://en.wikipedia.org/w/index.php?search=[QUERY]&title=Special%3ASearch&go=Go&ns0=1" ]
+"searchUrls": ["https://en.wikipedia.org/w/index.php?search=[QUERY]&title=Special%3ASearch&go=Go&ns0=1" ],
+"pdf.queue.hide": false
 
 }

@@ -13,7 +13,7 @@ import utility.misc
 
 from ..tag_find import get_most_active_tags
 from ..state import get_index, checkIndex, set_deck_map
-from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks
+from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total
 from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar
 
 
@@ -367,6 +367,26 @@ def display_model_dialog():
         html = get_model_dialog_html()
         get_index().output.show_in_modal_subpage(html)
 
+def show_width_picker():
+    html = """
+        <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 25")'><b>25 - 75</b></div>
+        <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 33")'><b>33 - 67</b></div>
+        <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 40")'><b>40 - 60</b></div>
+        <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 50")'><b>50 - 50</b></div>
+        <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 60")'><b>60 - 40</b></div>
+        <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 67")'><b>67 - 33</b></div>
+    """
+
+    modal = """
+        <div class="siac-modal-small dark" style="text-align:center;">
+            <b>Left Side - Right Side</b>
+                <br><br>
+            <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
+                <br><br>
+            <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Close</div>
+        </div> 
+    """ % html
+    get_index().output.js("$('#siac-reading-modal-text').append(`%s`)" % modal)
 
 def display_note_reading_modal(note_id):
     if checkIndex():
@@ -385,13 +405,13 @@ def reload_note_reading_modal_bottom_bar(note_id):
     """
     note = get_note(note_id)
     html = get_reading_modal_bottom_bar(note)
-    get_index().output.js("$('#siac-reading-modal-bottom-bar').replaceWith(`%s`);" % html)
+    get_index().output.js("$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks();" % html)
 
 def _display_pdf(full_path, note_id):
     index = get_index()
     base64pdf = utility.misc.pdf_to_base64(full_path)
     blen = len(base64pdf)
-    pages_read = get_read_pages(note_id)
+    pages_read = get_read_pages(note_id)        
     pages_read_js = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
     marks = get_pdf_marks(note_id)
     js_maps = utility.misc.marks_to_js_map(marks)
@@ -422,11 +442,12 @@ def _display_pdf(full_path, note_id):
                 $('#siac-loader-modal').remove();
                 queueRenderPage(pdfDisplayedCurrentPage, true, true);
                 updatePdfProgressBar();
+                if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + pdf.numPages); }
             });
         };
         fileReader.readAsArrayBuffer(file);
         b64 = ""; arr = null; bstr = null; file = null; fileReader = null;
-    """ % (pages_read_js, marks_js, last_page_read)
+    """ % (pages_read_js, marks_js, last_page_read, note_id)
     #send large files in multiple packets
     if blen > 10000000:
         index.output.editor.web.page().runJavaScript("var b64 = `%s`;" % base64pdf[0: 10000000])
@@ -584,6 +605,7 @@ def display_cloze_modal(editor, selection, extracted):
             sentence = re.sub(" ([\"“”\\[(]) <span", " \\1<span", sentence)
             sentence = re.sub("</span> ([\"”\\]):])", "</span>\\1", sentence)
             sentence = re.sub("</span> -([^ \\d])", "</span>-\\1", sentence)
+            sentence = re.sub("(\\S)- <span ", "\\1-<span ", sentence)
             sentence = re.sub(r"([^\\d ])- ([^\d])", r"\1\2", sentence)
             sentence = re.sub(" [\"“”], [\"“”] ?", "\", \"", sentence)
             sentence = re.sub(" [\"“”], ", "\", ", sentence)
@@ -593,7 +615,7 @@ def display_cloze_modal(editor, selection, extracted):
             sentence = re.sub(" ([,;:.]) ", r"\1 ", sentence)
             sentence = re.sub(r"\( (.) \)", r"(\1)", sentence)
             sentence = re.sub(" ([?!.])$", r"\1", sentence)
-            sentence = re.sub("^: ", "", sentence)
+            sentence = re.sub("^[:.?!,;)] ", "", sentence)
             sentence = re.sub("^\\d+ ?[:\\-.,;] ([A-ZÖÄÜ])", r"\1", sentence)
 
             sentence = re.sub(" ([\"“”])([?!.])$", r"\1\2", sentence)
@@ -610,12 +632,12 @@ def display_cloze_modal(editor, selection, extracted):
                    `;"""
 
     else:
-        s_html = "<br>Sorry, could not extract any sentences." 
+        s_html = "<br><center>Sorry, could not extract any sentences.</center>" 
         btn_html = ""
     
     editor.web.eval("""
             document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`;
-            document.getElementById('siac-pdf-tooltip-top').innerHTML = `Found <b>%s</b> sentence(s) around selection: <br/>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)`;
+            document.getElementById('siac-pdf-tooltip-top').innerHTML = `Found <b>%s</b> sentence(s) around selection: <br/><span style='color: lightgrey;'>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)</span>`;
             document.getElementById('siac-pdf-tooltip-searchbar').style.display = "none";
             %s
             """ % (s_html, len(sentences), btn_html))

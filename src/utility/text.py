@@ -268,7 +268,7 @@ def try_find_sentence(text, selection):
     
     def _try_find_closing(text):
         found = False
-        for c in [".", "!", "?", "•", ":", "=", "#", "-", "§", "Ø"]:
+        for c in [".", "!", "?", "•", ":", "=", "#", "-", "§", "Ø", "*"]:
             try:
                 if text.rindex(c) >= 0 and text.rindex(c) < len(text) -1:
                     text = text[text.rindex(c) + 1:]
@@ -277,6 +277,8 @@ def try_find_sentence(text, selection):
             except:
                 continue
         if not found: 
+            if len(text) < 50:
+                return text
             return None
         return text
     

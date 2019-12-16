@@ -126,6 +126,19 @@ def expanded_on_bridge_cmd(self, cmd):
         notes.insert(0, (utility.text.build_user_note_text("PDF Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
         searchIndex.output.printSearchResults(notes, stamp)
 
+    elif cmd.startswith("siac-queue-info "):
+        nid = int(cmd.split()[1])
+        note = get_note(nid)
+        read_stats = get_read_stats(nid)
+        searchIndex.output.js("""
+            if (pdfLoading || noteLoading) {
+                hideQueueInfobox();
+            } else {
+                $('#siac-marks-display').hide();
+                document.getElementById('siac-queue-infobox').style.display = "block";
+                document.getElementById('siac-queue-infobox').innerHTML =`%s`;
+            }
+        """ % get_queue_infobox(note, read_stats))
 
     elif cmd.startswith("siac-pdf-selection "):
         stamp = setStamp()
@@ -147,14 +160,17 @@ def expanded_on_bridge_cmd(self, cmd):
         jump_to_first_unread_page(self, int(cmd.split()[1]))
 
     elif cmd.startswith("siac-mark-read-up-to "):
-        mark_all_pages_as_read(int(cmd.split()[1]), int(cmd.split()[2]))
+        mark_as_read_up_to(int(cmd.split()[1]), int(cmd.split()[2]), int(cmd.split()[3]))
 
     elif cmd.startswith("siac-mark-all-read "):
         mark_all_pages_as_read(int(cmd.split()[1]), int(cmd.split()[2]))
 
     elif cmd.startswith("siac-mark-all-unread "):
         mark_all_pages_as_unread(int(cmd.split()[1]))
-            
+
+    elif cmd.startswith("siac-insert-pages-total "):
+        insert_pages_total(int(cmd.split()[1]), int(cmd.split()[2]))
+
     elif cmd.startswith("siac-show-cloze-modal "):
         selection = " ".join(cmd.split()[1:]).split("$$$")[0]
         sentences = cmd.split("$$$")[1:]
@@ -337,13 +353,69 @@ def expanded_on_bridge_cmd(self, cmd):
         $('#siac-queue-readings-list').replaceWith(`%s`);
         """ % (inserted_index[0] + 1, inserted_index[1], inserted_index[0] + 1, inserted_index[1], queue_readings_list))
 
+    elif cmd.startswith("siac-requeue-tt "):
+        nid = cmd.split()[1]
+        nid_displayed = cmd.split()[3]
+        queue_sched = int(cmd.split()[2])
+        inserted_index = update_position(nid, QueueSchedule(queue_sched))
+        queue_readings_list = get_queue_head_display(nid_displayed)
+        p_s = "Position: "
+        if nid_displayed != nid:
+            pos_displayed = get_position(nid_displayed)
+            if pos_displayed is None:
+                pos_html = "Not in Queue"
+                p_s = ""
+            else: 
+                pos_html = "%s / %s" % (pos_displayed + 1, inserted_index[1])
+        else:
+            pos_displayed = inserted_index[0]
+            pos_html = "%s / %s" % (pos_displayed + 1, inserted_index[1])
+
+        
+        searchIndex.output.js("""
+            document.getElementById('siac-queue-lbl').innerHTML = '%s%s';
+            $('#siac-queue-lbl').fadeIn('slow');
+            $('.siac-queue-sched-btn:first').html('%s');
+            $('#siac-queue-readings-list').replaceWith(`%s`);
+        """ % (p_s, pos_html, pos_html, queue_readings_list))
+
+
     elif cmd.startswith("siac-remove-from-queue "):
+        # called from the buttons on the left
         nid = cmd.split()[1]
         update_position(nid, QueueSchedule.NOT_ADD)
         queue_readings_list = get_queue_head_display(nid)
 
         searchIndex.output.js("afterRemovedFromQueue();")
         searchIndex.output.js("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)
+    
+    elif cmd.startswith("siac-remove-from-queue-tt "):
+        # called from the tooltip
+        nid = cmd.split()[1]
+        nid_displayed = cmd.split()[2]
+        ix = update_position(nid, QueueSchedule.NOT_ADD)
+        pos = get_position(nid_displayed)
+        queue_len = ix[1]
+        queue_readings_list = get_queue_head_display(nid)
+        if pos is None:
+            pos_js = """
+                document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue';
+                $('.siac-queue-sched-btn:first').html('Not in Queue');
+                """
+        else: 
+            pos_js = """
+                document.getElementById('siac-queue-lbl').innerHTML = 'Position: %s / %s';
+                $('.siac-queue-sched-btn:first').html('%s / %s');
+            """ % (pos + 1, queue_len, pos + 1, queue_len)
+        js = """
+        if ($('#siac-reading-modal-top-bar').data('nid') === '%s')  {
+            document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue';
+             $('.siac-queue-sched-btn:first').html('Not in Queue');
+        } else {
+            %s
+        }
+        $('#siac-queue-readings-list').replaceWith(`%s`)""" % (nid, pos_js, queue_readings_list)
+        searchIndex.output.js(js)
 
     elif cmd == "siac-user-note-queue-read-random":
         rand_id = get_random_id_from_queue()
@@ -375,6 +447,30 @@ def expanded_on_bridge_cmd(self, cmd):
         nid = cmd.split()[1]
         page = cmd.split()[2]
         mark_page_as_unread(nid, page)
+
+    elif cmd.startswith("siac-unhide-pdf-queue "):
+        nid = int(cmd.split()[1])
+        config["pdf.queue.hide"] = False
+        writeConfig()
+        update_reading_bottom_bar(nid)
+    
+    elif cmd.startswith("siac-hide-pdf-queue "):
+        nid = int(cmd.split()[1])
+        config["pdf.queue.hide"] = True
+        writeConfig()
+        update_reading_bottom_bar(nid)
+
+    elif cmd == "siac-left-side-width":
+        show_width_picker()
+
+    elif cmd.startswith("siac-left-side-width "):
+        value = int(cmd.split()[1])
+        config["leftSideWidthInPercent"] = value
+        right = 100 - value
+        if checkIndex():
+            searchIndex.output.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('infoBox').style.width = '%s%%';" % (value, right) )
+        writeConfig()
+
 
     #
     #   Synonyms

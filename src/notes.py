@@ -217,7 +217,7 @@ def get_pdf_marks(nid):
 
 def get_read_pages(nid):
     conn = _get_connection()
-    res = conn.execute("select page from read where nid = %s order by created asc" % nid).fetchall()
+    res = conn.execute("select page from read where nid = %s and page > -1 order by created asc" % nid).fetchall()
     conn.close()
     if res is None:
         return []
@@ -351,6 +351,18 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
     if index is not None:
         index.update_user_note((id, title, text, source, tags, -1, ""))
 
+def get_read_stats(nid):
+    conn = _get_connection()
+    res = conn.execute("select count(*), max(created), pagestotal from read where page > -1 and nid = %s" % nid).fetchall()
+    res = res[0]
+    if res[2] is None:
+        r = conn.execute("select pagestotal from read where page = -1 and nid = %s" % nid).fetchone()
+        if r is not None:
+            res = (0, "", r[0])
+    conn.close()
+    return res
+
+
 def get_all_tags():
     """
         Returns a set containing all tags (str) that appear in the user's notes.
@@ -389,6 +401,13 @@ def find_by_text(text):
     index = get_index()
     index.search(text, [])
 
+def get_position(nid):
+    conn = _get_connection()
+    res = conn.execute("select position from notes where id = %s" % nid).fetchone()
+    conn.close()
+    if res is None or res[0] is None:
+        return None 
+    return res[0]
 
 def delete_note(id):
     update_position(id, QueueSchedule.NOT_ADD)
@@ -405,7 +424,7 @@ def delete_note(id):
 def get_read_today_count():
     now = datetime.today().strftime('%Y-%m-%d')
     conn = _get_connection()
-    c = conn.execute("select count(*) from read where created like '%s-%%'" % now).fetchone()
+    c = conn.execute("select count(*) from read where page > -1 and created like '%s-%%'" % now).fetchone()
     conn.close()
     if c is None:
         return 0
@@ -415,7 +434,7 @@ def get_avg_pages_read(delta_days):
     dt = date.today() - timedelta(delta_days)
     stamp = dt.strftime('%Y-%m-%d')
     conn = _get_connection()
-    c = conn.execute("select count(*) from read where created >= '%s'" % stamp).fetchone()
+    c = conn.execute("select count(*) from read where page > -1 and created >= '%s'" % stamp).fetchone()
     conn.close()
     if c is None:
         return 0
@@ -592,7 +611,7 @@ def get_pdf_notes_not_in_queue():
 
 
 def get_pdf_info(nids):
-    sql = "select nid, pagestotal, count(*) from read where nid in (%s) group by nid" % (",".join([str(n) for n in nids]))
+    sql = "select nid, pagestotal, count(*) from read where nid in (%s) and page > -1 group by nid" % (",".join([str(n) for n in nids]))
     conn = _get_connection()
     res = conn.execute(sql).fetchall()
     conn.close()
@@ -603,19 +622,36 @@ def get_pdf_info(nids):
 
 def mark_all_pages_as_read(nid, num_pages):
     conn = _get_connection()
-    existing = [r[0] for r in conn.execute("select page from read where nid = %s" % nid).fetchall()]
+    existing = [r[0] for r in conn.execute("select page from read where page > -1 and nid = %s" % nid).fetchall()]
     to_insert = [(p, nid, num_pages) for p in range(1, num_pages +1) if p not in existing]
+    conn.executemany("insert into read (page, nid, pagestotal, created) values (?, ?, ?, datetime('now', 'localtime'))", to_insert)
+    conn.commit()
+    conn.close()
+
+def mark_as_read_up_to(nid, page, num_pages):
+    conn = _get_connection()
+    existing = [r[0] for r in conn.execute("select page from read where page > -1 and nid = %s" % nid).fetchall()]
+    to_insert = [(p, nid, num_pages) for p in range(1, page +1) if p not in existing]
     conn.executemany("insert into read (page, nid, pagestotal, created) values (?, ?, ?, datetime('now', 'localtime'))", to_insert)
     conn.commit()
     conn.close()
 
 def mark_all_pages_as_unread(nid):
     conn = _get_connection()
-    conn.execute("delete from read where nid = %s" % nid)
+    conn.execute("delete from read where nid = %s and page > -1" % nid)
     conn.commit()
     conn.close()
 
-
+def insert_pages_total(nid, pages_total):
+    """
+        Inserts a special page entry (page = -1), that is used, to save the number of pages even if no page has been read yet.
+    """
+    conn = _get_connection()
+    existing = conn.execute("select * from read where page == -1 and nid = %s" % nid).fetchone()
+    if existing is None or len(existing) == 0:
+        conn.execute("insert into read (page, nid, pagestotal, created) values (-1,%s,%s, datetime('now', 'localtime'))" % (nid, pages_total))
+    conn.commit()
+    conn.close()
 
 def _to_output_list(db_list, pinned):
     output_list = list()

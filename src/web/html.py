@@ -409,66 +409,68 @@ def get_reading_modal_html(note):
 
         html = """
             <div style='width: 100%;'>
-                <div id='siac-reading-modal-top-btns'>
-                    <span class='reading-modal-swap-icn' onclick='swapReadingModal();'>&#8644;</span>
-                    <span class='reading-modal-hide-icn' onclick='toggleReadingModalBars();'>&#8616;</span>
-                    <span class='reading-modal-close-icn' onclick='$("#siac-reading-modal").hide(); if (pdfDisplayed) {{ pdfDisplayed.destroy(); pdfDisplayed = null; }} {save_on_close} $("#siac-reading-modal-text").html("");'>&times;</span>
-                </div>
-
-                <div id='siac-pdf-tooltip' onclick='event.stopPropagation();' onkeyup='event.stopPropagation();'>
-                    <div id='siac-pdf-tooltip-top'></div>
-                    <div id='siac-pdf-tooltip-results-area' onkeyup="pdfTooltipClozeKeyup(event);"></div>
-                    <div id='siac-pdf-tooltip-bottom'></div>
-                    <input id='siac-pdf-tooltip-searchbar' onkeyup='if (event.keyCode === 13) {{pycmd("siac-pdf-tooltip-search " + this.value);}}'></input>
-                </div>
-                <div id='siac-reading-modal-top-bar' style='min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
-                    <div style='flex: 1 1; overflow: hidden;'>
-                        <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; vertical-align:middle;'>{title}</h2>
-                        <h4 style='whitespace: nowrap; margin-top: 5px;'>Source: <i>{source}</i></h4>
-                        <div id='siac-prog-bar-wr'></div>
+                    <div id='siac-reading-modal-top-btns'>
+                        <div class='siac-btn siac-btn-dark' style='font-size: 8px;' onclick='pycmd("siac-left-side-width");'> / </div>
+                        <div class='siac-btn siac-btn-dark' onclick='swapReadingModal();'>&#8644;</div>
+                        <div class='siac-btn siac-btn-dark' onclick='toggleReadingModalBars();'>&#x2195;</div>
+                        <div class='siac-btn siac-btn-dark' style='padding-left: 7px; padding-right: 7px;' onclick='$("#siac-reading-modal").hide(); if (pdfDisplayed) {{ pdfDisplayed.destroy(); pdfDisplayed = null; }} {save_on_close} $("#siac-reading-modal-text").html("");'>&times;</div>
                     </div>
-                    <div style='flex: 0 0; min-width: 130px; padding: 0 45px 0 10px;'>
-                        <span class='siac-timer-btn' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn active' onclick='resetTimer(this)'>30</span><br>
-                        <span id='siac-reading-modal-timer'>30 : 00</span><br>
-                        <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
+                    <div id='siac-pdf-tooltip' onclick='event.stopPropagation();' onkeyup='event.stopPropagation();'>
+                        <div id='siac-pdf-tooltip-top'></div>
+                        <div id='siac-pdf-tooltip-results-area' onkeyup="pdfTooltipClozeKeyup(event);"></div>
+                        <div id='siac-pdf-tooltip-bottom'></div>
+                        <input id='siac-pdf-tooltip-searchbar' onkeyup='if (event.keyCode === 13) {{pycmd("siac-pdf-tooltip-search " + this.value);}}'></input>
                     </div>
-                </div>
-                <div id='siac-reading-modal-text' style='overflow-y: {overflow}; height: calc(90% - 140px); max-height: calc(100% - 230px); font-size: 13px; padding: 20px 20px 0 20px; position: relative;' contenteditable='{is_contenteditable}' {onkeyup}>
-                    {text}
-                </div>
-                <div id='siac-reading-modal-bottom-bar' style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden;'>
-                    <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
-
-                        <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
-                        <div id='siac-queue-sched-wrapper'>
-
-                            <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>Start</div>
-                            <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 7")'>Rnd</div>
-                            <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>First 3rd</div>
-                            <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 8")'>Rnd</div>
-                            <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>Second 3rd</div>
-                            <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 9")'>Rnd</div>
-                            <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>End</div>
-                            <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
-                            <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
-                            <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
+                    <div id='siac-reading-modal-top-bar' data-nid='{note_id}' style='min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
+                        <div style='flex: 1 1; overflow: hidden;'>
+                            <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; vertical-align:middle;'>{title}</h2>
+                            <h4 style='whitespace: nowrap; margin-top: 5px; color: lightgrey;'>Source: <i>{source}</i></h4>
+                            <div id='siac-prog-bar-wr'></div>
                         </div>
-                        <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
-                            <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
-                            <span style='margin-top: 5px;'>{time_str}</span> <br>
-                            <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
-                            <a onclick='if (!pdfLoading) {{pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
-                            <a onclick='if (!pdfLoading) {{pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
+                        <div style='flex: 0 0; min-width: 130px; padding: 0 90px 0 10px;'>
+                            <span class='siac-timer-btn' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn active' onclick='resetTimer(this)'>30</span><br>
+                            <span id='siac-reading-modal-timer'>30 : 00</span><br>
+                            <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
                         </div>
-                        {queue_readings_list}
-                        <div id='siac-marks-display' onclick='markClicked(event);'></div>
-
                     </div>
-                </div>
-                <div id='siac-timer-popup'>
-                    <div style='text-align: center; vertical-align: middle; line-height: 90px; font-weight: bold; font-size: 20px;'>Time is up!</div>
-                    <div style='text-align: center;'><div class='siac-btn siac-btn-dark' onclick='this.parentNode.parentNode.style.display="none";'>&nbsp;Ok&nbsp;</div></div>
-                </div>
+                    <div id='siac-reading-modal-text' style='overflow-y: {overflow}; height: calc(90% - 145px); max-height: calc(100% - 235px); font-size: 13px; padding: 20px 20px 0 20px; position: relative;' contenteditable='{is_contenteditable}' {onkeyup}>
+                        {text}
+                    </div>
+                    <div id='siac-reading-modal-bottom-bar' style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden; position: relative;'>
+                        <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
+
+                            <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
+                            <div id='siac-queue-sched-wrapper'>
+
+                                <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>Start</div>
+                                <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 7")'>Rnd</div>
+                                <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>First 3rd</div>
+                                <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 8")'>Rnd</div>
+                                <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>Second 3rd</div>
+                                <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 9")'>Rnd</div>
+                                <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>End</div>
+                                <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
+                                <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
+                                <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
+                            </div>
+                            <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
+                                <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
+                                <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
+                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                                <a onclick='if (!pdfLoading) {{noteLoading = true;pdfDisplayed ? pdfDisplayed.destroy() : pdfDisplayed = null; pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
+                                <a onclick='if (!pdfLoading) {{noteLoading = true; pdfDisplayed ? pdfDisplayed.destroy() : pdfDisplayed = null; pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
+                            </div>
+                            {queue_readings_list}
+                            <div id='siac-marks-display' onclick='markClicked(event);'></div>
+                            <div id='siac-queue-infobox-wrapper'>
+                                <div id='siac-queue-infobox' onmouseleave='leaveQueueItem();'></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id='siac-timer-popup'>
+                        <div style='text-align: center; vertical-align: middle; line-height: 90px; font-weight: bold; font-size: 20px;'>Time is up!</div>
+                        <div style='text-align: center;'><div class='siac-btn siac-btn-dark' onclick='this.parentNode.parentNode.style.display="none";'>&nbsp;Ok&nbsp;</div></div>
+                    </div>
             </div>
             <script>
             if (readingTimer != null)  {{
@@ -477,6 +479,7 @@ def get_reading_modal_html(note):
                 document.getElementById("siac-reading-modal-timer").innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds % 60 < 10 ? "0" + remainingSeconds % 60 : remainingSeconds % 60);
             }}
             iframeIsDisplayed = false;
+            noteLoading = false;
             </script>
         """
 
@@ -522,7 +525,7 @@ def get_reading_modal_bottom_bar(note):
        
     html = """
             <div id='siac-reading-modal-bottom-bar' style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden;'>
-                <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
+                <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap; display: relative;'>
 
                     <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
                     <div id='siac-queue-sched-wrapper'>
@@ -540,13 +543,16 @@ def get_reading_modal_bottom_bar(note):
                     </div>
                     <div  id='siac-queue-actions'  style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                         <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
-                        <span style='margin-top: 5px;'>{time_str}</span> <br>
+                        <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
                         <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
-                        <a onclick='pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
-                        <a onclick='pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
+                        <a onclick='noteLoading = true;pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
+                        <a onclick='noteLoading = true;pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
                     </div>
                     {queue_readings_list}
                     <div id='siac-marks-display'  onclick='markClicked(event);'></div>
+                    <div id='siac-queue-infobox-wrapper'>
+                        <div id='siac-queue-infobox'  onmouseleave='leaveQueueItem();'></div>
+                    </div>
                 </div>
             </div>
     """
@@ -572,24 +578,34 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
         save = "readingModalTextKeyup(document.getElementById(`siac-reading-modal-text`), %s);"  % (note_id)
     else:
         save = ""
-
+    hide = config = mw.addonManager.getConfig(__name__)["pdf.queue.hide"]
     queue_head_readings = ""
     for ix, queue_item in enumerate(queue):
         should_greyout = "greyedout" if queue_item[0] == int(note_id) else ""
-        qi_title = utility.text.trim_if_longer_than(queue_item[1], 40) if queue_item[1] is not None and len(queue_item[1]) > 0 else "Untitled"
-        qi_title = utility.text.escape_html(qi_title)
+        if not hide or queue_item[0] == int(note_id) :
+            qi_title = utility.text.trim_if_longer_than(queue_item[1], 40) if queue_item[1] is not None and len(queue_item[1]) > 0 else "Untitled"
+            qi_title = utility.text.escape_html(qi_title)
+        else:
+            qi_title = "???????" if queue_item[1] is None or len(queue_item[1]) == 0 else re.sub("[^ ]", "?",queue_item[1])
+
+        hover_actions = "onmouseenter='showQueueInfobox(this, %s);' onmouseleave='leaveQueueItem(this);'" % (queue_item[0]) if not hide else ""
         #if the note is a pdf, show a loader
         should_show_loader = 'document.getElementById("siac-reading-modal-text").innerHTML = ""; showLoader(\"siac-reading-modal-text\", \"Loading Note...\");' if queue_item[3] is not None and queue_item[3].strip().lower().endswith(".pdf") else ""
-        queue_head_readings +=  "<a onclick='if (!pdfLoading) {%s %s pdfDisplayed ? pdfDisplayed.destroy() : pdfDisplayed = null; pycmd(\"siac-read-user-note %s\");}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;'>%s. %s</a><br>" % (save, should_show_loader, queue_item[0], should_greyout, queue_item[10] + 1, qi_title)
+
+        queue_head_readings +=  "<a onclick='if (!pdfLoading) {%s %s pdfDisplayed ? pdfDisplayed.destroy() : pdfDisplayed = null; noteLoading = true; pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s. %s</a><br>" % (save, should_show_loader, queue_item[0], should_greyout, hover_actions, queue_item[10] + 1, qi_title)
         if ix > 3:
             break
 
+    if hide:
+        hide_btn = """<div style='display: inline-block; margin-left: 12px;' class='siac-orange-hover' onclick='pycmd("siac-unhide-pdf-queue %s")'>Show Items</div>""" % note_id
+    else:
+        hide_btn = """<div style='display: inline-block; margin-left: 12px;' class='siac-orange-hover' onclick='pycmd("siac-hide-pdf-queue %s")'>Hide Items</div>""" % note_id
     html = """
      <div id='siac-queue-readings-list' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; user-select: none;'>
-                            <div style='margin: 0px 0 3px 0; display: inline-block;'>Queue Head:</div><br>
+                            <div style='margin: 0px 0 3px 0; display: inline-block; color: lightgrey;'>Queue Head:</div>%s<br>
                             %s
                         </div>
-    """ % queue_head_readings
+    """ % (hide_btn, queue_head_readings)
     return html
 
 
@@ -633,7 +649,7 @@ def get_pdf_viewer_html(nid, source, title):
             <div style='display: inline-block; vertical-align: top; margin-top: 3px;' id='siac-pdf-overlay-top-lbl-wrap'></div>
         </div>
         <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
-            <div style='margin-left: 5px; margin-top: 4px; color: darkorange; width: calc(100% - 40px); text-align: center;'>Note: Not all Websites allow Embedding!</div>
+            <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center;'>Note: Not all Websites allow Embedding!</div>
             <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
                 <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
                 <br/>
@@ -648,7 +664,8 @@ def get_pdf_viewer_html(nid, source, title):
         <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
         <div style="width: 100%; text-align: center; margin-top: 15px; position: relative;">
             <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
-                <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("down");'>-</div>
+                <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
+                <div class='siac-btn siac-btn-dark' style="margin-left: 2px; width: 18px;" onclick='pdfScaleChange("down");'>-</div>
                 <div class='siac-btn siac-btn-dark' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
                 <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
                 <div class='siac-btn siac-btn-dark' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986;</b></div>
@@ -670,7 +687,7 @@ def get_pdf_viewer_html(nid, source, title):
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Jump to Last Read Page</b></div>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>Jump to First Unread Page</b></div>
                             <hr>
-                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage); pagesRead = Array.from(Array(pdfDisplayedCurrentPage).keys()).map(x => ++x); document.getElementById("siac-pdf-overlay").style.display = "block";document.getElementById("siac-pdf-read-btn").innerHTML = "&times; Unread";updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayedCurrentPage).keys()).map(x => ++x); document.getElementById("siac-pdf-overlay").style.display = "block";document.getElementById("siac-pdf-read-btn").innerHTML = "&times; Unread";updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pagesRead = []; document.getElementById("siac-pdf-overlay").style.display = "none";document.getElementById("siac-pdf-read-btn").innerHTML = "\u2713&nbsp; Read";updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayed.numPages).keys()).map(x => ++x); document.getElementById("siac-pdf-overlay").style.display = "block";document.getElementById("siac-pdf-read-btn").innerHTML = "&times; Unread"; updatePdfProgressBar();event.stopPropagation();'>
                                 <b>Mark all as Read</b>
@@ -760,6 +777,48 @@ def get_note_delete_confirm_modal_html(nid):
 
     """ % (title, creation_date, nid, nid)
 
+def get_queue_infobox(note, read_stats):
+    """
+        Returns the html that is displayed in the tooltip which appears when hovering over an item in the queue head.
+    """
+    #(id, title, text, source, tags, nid, created, modified, reminder, _, position)
+    diff = datetime.datetime.now() - datetime.datetime.strptime(note[6], '%Y-%m-%d %H:%M:%S')
+    time_str = "Created %s ago." % utility.misc.date_diff_to_string(diff)
+    # pagestotal might be None (it is only available if at least one page has been read)
+    if read_stats[2] is not None:
+        perc = int(read_stats[0] * 10.0 / read_stats[2])
+        perc_100 =  int(read_stats[0] * 100.0 / read_stats[2])
+        prog_bar = str(perc_100) + " % &nbsp;"
+        pages_read = "<div style='width: 100%%; margin-top: 7px; font-weight: bold; text-align: center; font-size: 20px;'>%s / %s</div>" % (read_stats[0], read_stats[2])
+
+        for x in range(0, 10):
+            if x < perc:
+                prog_bar += "<div class='siac-prog-sq-filled'></div>"
+            else:
+                prog_bar += "<div class='siac-prog-sq'></div>"
+    else:
+        prog_bar = ""
+        pages_read = ""
+
+    html = """
+        <div style='width: calc(100% - 81px); height: 100%; padding: 10px; display: inline-block; position: relative; vertical-align: top;'>
+            <div style='width: calc(100%); text-align:center; white-space: nowrap; overflow: hidden; font-weight: bold; vertical-align: top; text-overflow: ellipsis;'>{title}</div>
+            <div style='width: calc(100%); text-align:center; white-space: nowrap; overflow: hidden; color: lightgrey;vertical-align: top;'>{time_str}</div>
+            {pages_read}
+            <div style='position: absolute; bottom: 20px; left: 0px; right: 0px; width: calc(100% - 20px); padding: 10px; text-align: center;'>
+                <div style='display: inline-block; vertical-align: bottom;'>
+                    {prog_bar}
+                </div>
+            </div>
+        </div>
+        <div style='width: 50px; height: 100%; padding: 5px 5px 5px 0; display: inline-block;'>
+            <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 2 "+ $("#siac-reading-modal-top-bar").data("nid"))'>Start</div>
+            <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 5 "+ $("#siac-reading-modal-top-bar").data("nid"))'>End</div>
+            <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 6 "+ $("#siac-reading-modal-top-bar").data("nid"))'>Random</div>
+            <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-remove-from-queue-tt {nid} " + $("#siac-reading-modal-top-bar").data("nid"))'>Remove</div>
+        </div>
+    """.format_map(dict(title = note[1], pages_read=pages_read, time_str= time_str, prog_bar= prog_bar, nid = note[0]))
+    return html
 
 def stylingModal(config):
     html = """
@@ -936,13 +995,13 @@ def stylingModal(config):
             "highlightBackgroundColor": "yellow",
             "highlightForegroundColor": "black",
             "fieldSeparatorColor" : "#2496dc",
-            "windowColumnSeparatorColor" : "#2496dc",
-            "rankingLabelBackgroundColor": "#2496dc",
+            "windowColumnSeparatorColor" : "lightseagreen",
+            "rankingLabelBackgroundColor": "lightseagreen",
             "rankingLabelForegroundColor": "white",
             "noteFontSize": 12,
             "noteForegroundColor": "black",
             "noteBackgroundColor": "white",
-            "noteBorderColor": "grey",
+            "noteBorderColor": "lightseagreen",
             "noteHoverBorderColor": "#2496dc"
         },
         "topBar": {
