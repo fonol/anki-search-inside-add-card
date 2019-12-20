@@ -13,7 +13,7 @@ import utility.misc
 
 from ..tag_find import get_most_active_tags
 from ..state import get_index, checkIndex, set_deck_map
-from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total
+from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
 from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar
 
 
@@ -23,6 +23,11 @@ def toggleAddon():
 
 
 def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
+    """
+        Returns the css and js used by the add-on in <style>/<script> tags. 
+        Some placeholders in the scripts.js file and in the styles.css file are replaced 
+        by config values.
+    """
     #get path
     dir = utility.misc.get_web_folder_path()
     config = mw.addonManager.getConfig(__name__)
@@ -32,7 +37,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     %s
     </style>
 
-    <script>
+    <script type='text/javascript'>
     %s
     </script>
     """
@@ -311,9 +316,6 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     cplatform = platform.system().lower()
     if cplatform == "darwin":
         script = script.replace("event.ctrlKey", "event.metaKey")
-    else:
-        css = re.sub(r'/\*MAC\*/(.|\n|\r\n)*/\*ENDMAC\*/', "", css, re.S)
-
 
     return all % (css, script)
 
@@ -378,7 +380,7 @@ def show_width_picker():
     """
 
     modal = """
-        <div class="siac-modal-small dark" style="text-align:center;">
+        <div class="siac-modal-small dark" contenteditable="false" style="text-align:center;">
             <b>Left Side - Right Side</b>
                 <br><br>
             <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
@@ -396,8 +398,12 @@ def display_note_reading_modal(note_id):
         html = get_reading_modal_html(note)
         index.output.show_in_large_modal(html)
         # if source is a pdf file path, try to display it
-        if note[3] is not None and note[3].strip().lower().endswith(".pdf") and utility.misc.file_exists(note[3]):
-            _display_pdf(note[3].strip(), note_id)
+        if note[3] is not None and note[3].strip().lower().endswith(".pdf"):
+            if utility.misc.file_exists(note[3]):
+                _display_pdf(note[3].strip(), note_id)
+            else:
+                message = "Could not load the given PDF.<br>Are you sure the path is correct?"
+                reading_modal_notification(message)
 
 def reload_note_reading_modal_bottom_bar(note_id):
     """
@@ -427,7 +433,7 @@ def _display_pdf(full_path, note_id):
         while(n--){ 
             arr[n] = bstr.charCodeAt(n);
         }
-        var file = new File([arr], "test.pdf", {type : "application/pdf" });
+        var file = new File([arr], "placeholder.pdf", {type : "application/pdf" });
         var fileReader = new FileReader();
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.worker.min.js';
         pagesRead = [%s];
@@ -508,7 +514,11 @@ def show_cloze_field_picker_modal(cloze_text):
 
 def show_iframe_overlay(url=None):
     js = """
-        document.getElementById('siac-pdf-top').style.display = "none";
+        if (pdfDisplayed) {
+            document.getElementById('siac-pdf-top').style.display = "none";
+        } else {
+            document.getElementById('siac-text-top').style.display = "none";
+        }
         document.getElementById('siac-iframe').style.display = "block";
         document.getElementById('siac-close-iframe-btn').style.display = "block";
         iframeIsDisplayed = true;
@@ -524,7 +534,11 @@ def hide_iframe_overlay():
         document.getElementById('siac-iframe').src = "";
         document.getElementById('siac-iframe').style.display = "none";
         document.getElementById('siac-close-iframe-btn').style.display = "none";
-        document.getElementById('siac-pdf-top').style.display = "block";
+        if (pdfDisplayed) {
+            document.getElementById('siac-pdf-top').style.display = "block";
+        } else {
+            document.getElementById('siac-text-top').style.display = "block";
+        }
         iframeIsDisplayed = false;
     """
     get_index().output.js(js)
@@ -641,6 +655,42 @@ def display_cloze_modal(editor, selection, extracted):
             document.getElementById('siac-pdf-tooltip-searchbar').style.display = "none";
             %s
             """ % (s_html, len(sentences), btn_html))
+
+
+def reading_modal_notification(html):
+    modal = """ <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
+                        %s
+                        <br/> <br/>
+                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Ok</div>
+                    </div> """ % html
+    get_index().output.js("$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'"))
+
+def show_timer_elapsed_popup(nid):
+    """
+        Shows the little popup that is displayed when the timer in the reading modal finished.
+    """
+    read_today_count = get_read_today_count()
+    added_today_count = utility.misc.count_cards_added_today()
+    html = """
+    <div style='margin: 0 0 10px 0;'>
+        <div style='text-align: center; vertical-align: middle; line-height: 50px; font-weight: bold; font-size: 40px; color: #2496dc;'>
+            &#10711;
+        </div>
+        <div style='text-align: center; vertical-align: middle; line-height: 50px; font-weight: bold; font-size: 20px;'>
+            Time is up!
+        </div>
+    </div>
+    <div style='margin: 10px 0 25px 0; text-align: center; color: lightgrey;'>
+        Read <b>%s</b> pages today.<br>
+        Added <b>%s</b> cards today.
+    </div>
+    <div style='text-align: center;'>
+        <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;5 min break&nbsp;</div>
+        <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none";'>&nbsp;&nbsp;Ok&nbsp;&nbsp;</div>
+        <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;15 min break&nbsp;</div>
+    </div>
+    """ % (read_today_count, added_today_count)
+    get_index().output.js("$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html)
 
 
 def display_note_del_confirm_modal(editor, nid):

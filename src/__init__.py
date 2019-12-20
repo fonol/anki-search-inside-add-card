@@ -26,20 +26,15 @@ from .state import checkIndex, get_index, corpus_is_loaded, set_corpus, set_edit
 from .index.indexing import build_index, get_notes_in_collection
 from .debug_logging import log
 from .web.web import printStartingInfo, getScriptPlatformSpecific, showSearchResultArea, fillDeckSelect, fillTagSelect
-from .web.html import rightSideHtml
+from .web.html import right_side_html
 from .notes import *
 from .dialogs.editor import EditDialog
 from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerenderInfo, add_note_to_index
 
 config = mw.addonManager.getConfig(__name__)
 
-
-delayWhileTyping = max(500, config['delayWhileTyping'])
-
-
-def initAddon():
+def init_addon():
     global oldOnBridge, origAddNote, origTagKeypress, origSaveAndClose, origEditorContextMenuEvt
-
     set_old_on_bridge_cmd(Editor.onBridgeCmd)
     Editor.onBridgeCmd = expanded_on_bridge_cmd
     #todo: Find out if there is a better moment to start index creation
@@ -50,7 +45,7 @@ def initAddon():
 
     AddCards.addNote = addNoteAndUpdateIndex
     origTagKeypress = TagEdit.keyPressEvent
-    TagEdit.keyPressEvent = tagEditKeypress
+    TagEdit.keyPressEvent = tag_edit_keypress
 
     setupTagEditTimer()
     EditorWebView.contextMenuEvent = editorContextMenuEventWrapper
@@ -59,7 +54,6 @@ def initAddon():
     EditDialog.saveAndClose = editorSaveWithIndexUpdate
     addHook("setupEditorShortcuts", addHideShowShortcut) 
 
-   
     
 
     #main functions to search
@@ -106,7 +100,6 @@ def initAddon():
                 html = document.getElementById('siac-browser-search-inp').value + "\u001f";
                 pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
             }
-
             function searchFor(text) {
                 return;
             }
@@ -118,21 +111,17 @@ def initAddon():
             document.addEventListener("keydown", function (e) {globalKeydown(e); }, false);
     </script>"""
 
+    
+    typing_delay = max(500, config['delayWhileTyping'])
     #this inserts all the javascript functions in scripts.js into the editor webview
-    aqt.editor._html += getScriptPlatformSpecific(config["addToResultAreaHeight"], delayWhileTyping)
+    aqt.editor._html += getScriptPlatformSpecific(config["addToResultAreaHeight"], typing_delay)
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
-    addHook("loadNote", onLoadNote)
+    addHook("loadNote", on_load_note)
 
-
-def exception_hook(exctype, value, traceback):
-    print(exctype, value, traceback)
-    sys._excepthook(exctype, value, traceback)
-    sys.exit(1)
 
 def addNoteAndUpdateIndex(dialog, note):
     res = origAddNote(dialog, note)
     add_note_to_index(note)
-
     return res
 
 def editorSaveWithIndexUpdate(dialog):
@@ -147,7 +136,7 @@ def editorSaveWithIndexUpdate(dialog):
         searchIndex.output.edited[str(dialog.editor.note.id)] = t.time()
 
 
-def onLoadNote(editor):
+def on_load_note(editor):
     """
     Executed everytime a note is created/loaded in the add cards dialog.
     Wraps the normal editor html in a flex layout to render a second column for the searching ui.
@@ -169,7 +158,7 @@ def onLoadNote(editor):
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
-        editor.web.eval(rightSideHtml(config, searchIndex is not None))
+        editor.web.eval(right_side_html(config, searchIndex is not None))
 
         if searchIndex is not None:
             showSearchResultArea(editor)
@@ -300,7 +289,7 @@ def setupTagEditTimer():
     tagEditTimer.setSingleShot(True) # set up your QTimer
 
 
-def tagEditKeypress(self, evt):
+def tag_edit_keypress(self, evt):
     """
     Used if "search on tag entry" is enabled.
     Triggers a search if the user has stopped typing in the tag field.
@@ -317,8 +306,8 @@ def tagEditKeypress(self, evt):
         try:
             tagEditTimer.timeout.disconnect()
         except Exception: pass
-        tagEditTimer.timeout.connect(lambda: rerenderInfo(searchIndex.output.editor, text, searchByTags = True))  # connect it to your update function
+        tagEditTimer.timeout.connect(lambda: rerenderInfo(searchIndex.output.editor, text, searchByTags = True)) 
         tagEditTimer.start(1000)
 
 
-initAddon()
+init_addon()

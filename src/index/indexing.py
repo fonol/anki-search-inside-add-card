@@ -28,7 +28,7 @@ def get_notes_in_collection():
         if d['name'] in deckList:
             deckStr += str(d['id']) + ","
     if len(deckStr) > 0:
-        deckStr = "(%s)" %(deckStr[:-1])
+        deckStr = "(%s)" % (deckStr[:-1])
 
     if deckStr:
         oList = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s" %(deckStr))

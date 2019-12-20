@@ -204,7 +204,7 @@ def toggle_pdf_mark(nid, page, pages_total, mark_type):
 
 def delete_pdf_mark(nid, page, mark_type):
     conn = _get_connection()
-    conn.execute("delete from marks where nid = %s and page %s and marktype = %s" (nid, page, mark_type))
+    conn.execute("delete from marks where nid = %s and page %s and marktype = %s" % (nid, page, mark_type))
     conn.commit()
     conn.close()
 

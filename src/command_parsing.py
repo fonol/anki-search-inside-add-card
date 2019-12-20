@@ -548,6 +548,10 @@ def expanded_on_bridge_cmd(self, cmd):
         if inp == "":
             return
         show_web_search_tooltip(inp)
+    
+    elif cmd.startswith("siac-timer-elapsed "):
+        nid = int(cmd.split()[1])
+        show_timer_elapsed_popup(nid)
 
 
     #
@@ -1041,6 +1045,7 @@ def getIndexInfo():
 
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Space / Ctrl+Right</b></td></tr>
+               <tr><td>PDF: Page Right + Mark Page as Read</td><td>  <b>Ctrl+Shift+Space</b></td></tr>
                <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left</b></td></tr>
                <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
                <tr><td>Confirm New Note</td><td>  <b>Ctrl+Enter</b></td></tr>

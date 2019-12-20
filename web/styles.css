@@ -145,6 +145,10 @@ body {
 .w-100 {
     width: 100%;
 }
+.blue-hover:hover {
+    cursor: pointer;
+    color: #2496dc !important;
+}
 .smallMarginBottom {
     margin-bottom: 4px;
 }
@@ -709,7 +713,6 @@ outline: none;
     border-left: none;
     border-right: none;
 }
-
 .deck-list-button:hover {
     color: #2496dc;
 }
@@ -741,15 +744,12 @@ outline: none;
 .full-width {
     width: 100%;
 }
-
 table.striped {
     border-collapse: collapse;
 }
-
 table.striped tr:nth-child(even) {
     background-color: $stripedTableBackgroundColor$ !important;
-  }
-
+}
 .exp:empty {
     display: none;
 }
@@ -780,7 +780,7 @@ table.striped tr:nth-child(even) {
 }
 .siac-btn-small {
     display: inline;
-    padding: 0px 4px 1px 4px;
+    padding: 1px 4px 2px 4px;
     color: $buttonForegroundColor$;
     background: $buttonBackgroundColor$;
     border: 1px solid  $buttonBorderColor$;
@@ -890,9 +890,7 @@ table.striped tr:nth-child(even) {
 #indexInfo:hover, #synonymsIcon:hover, #stylingIcon:hover, #siac-note-icn:hover, #siac-timetable-icn:hover, #siac-settings-icn:hover {
     color: #2496dc;
 }
-#siac-switch-deck-btn {
-    padding-top: 0px;
-}
+
 #siac-switch-deck-btn.expanded .siac-btn-small-dropdown{
     border-top: 1px solid $buttonBorderColor$;
 }
@@ -936,37 +934,28 @@ width: 48%; display: inline-block; text-align: center;
     position: relative;
     font-family: 'Open Sans', sans-serif;
 }
-
 fieldset {
-
     padding: 0.7em;
 }
-
-
 select {
     height: 20px;
     vertical-align: top;
 }
-
 #modal-content > fieldset {
     font-size: 1.9em;
 }
-
-
 #synonymInput {
     width: 97%;
     margin-top: 5px;
     background: $modalBackgroundColor$;
     color: $modalForegroundColor$;
 }
-
 #synTable tr td:first-child {
     max-width: 150px;
     word-wrap: break-word;
 }
 
 /* Modal */
-
 #greyout {
     display: none;
     position: absolute;
@@ -979,7 +968,6 @@ select {
     background-color: rgb(0,0,0);
     background-color: rgba(0,0,0,0.4);
 }
-
 .modal {
     display: none;
     position: absolute;
@@ -1007,8 +995,7 @@ select {
     border: 4px outset $modalBorderColor$;
     border-radius: 5px;
     overflow: hidden;
-  }
-
+}
 #modalText {
     z-index: 99999999999;
     color: $modalForegroundColor$;
@@ -1072,7 +1059,6 @@ select {
     cursor: pointer;
     user-select: none;
     font-size: $tagFontSize$ !important;
-
 }
 
 .tag-add {
@@ -1088,9 +1074,9 @@ select {
 span.tag-symbol {
     transform: rotate(90deg);
     display: inline-block;
-  }
+}
 
-  #toggleTop {
+#toggleTop {
     float: right;
     font-size: 13px !important;
     cursor: pointer;
@@ -1102,17 +1088,16 @@ span.tag-symbol {
     z-index: 999;
     margin-left: 12px;
   }
-  #toggleTop:hover {
+#toggleTop:hover {
       transform: scale(1.2);
       color: #2496dc;
-  }
-  .noteFloating {
+}
+.noteFloating {
     position: absolute;
     z-index: 9999999999;
     border: 1px solid #2496dc;
     text-align: center;
-  }
-
+}
 .noteFloatingContent {
     padding: 10px;
     min-width: 150px;
@@ -1220,12 +1205,6 @@ span.tag-symbol {
     border-width: 8px;
     border-style: solid;
     border-color: $timelineBoxBorderColor$ transparent transparent transparent;
-}
-
-
-  /*MAC*/
-.dCheck {
-    margin-right:   10px;
 }
 
 .flot-x-axis .flot-tick-label {
@@ -1364,13 +1343,20 @@ margin-right: auto;
     width: 100%;
     z-index: 2;
 }
-#siac-pdf-top {
+#siac-pdf-top,#siac-text-top {
     width: 100%; 
     height: calc(100% - 40px); 
     position:relative; 
     max-height: calc(100% - 40px); 
     overflow-y: auto; 
     text-align: center;
+}
+#siac-text-top {
+    width: calc(100% - 20px);  
+    height: calc(100% - 62px); 
+    max-height: calc(100% - 62px); 
+    text-align: left;
+    padding: 10px;
 }
 #siac-iframe {
     width: 100%;

@@ -35,6 +35,11 @@ def pdf_to_base64(path):
         encoded_string = base64.b64encode(pdf_file.read()).decode("ascii")
     return encoded_string
 
+
+def count_cards_added_today():
+    return len(mw.col.findCards("added:1"))
+
+
 def is_dark_color(r,g,b):
     """
     Used for guessing if a dark theme (e.g. nightmode) is active.

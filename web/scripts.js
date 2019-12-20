@@ -35,9 +35,8 @@ function pdfImgMouseUp(event) {
         pdfImgSel.mouseIsDown = false;
         drawSquare();
         var pdfC = document.getElementById("siac-pdf-canvas");
-        pdfImgSel.startX -= pdfImgSel.canvasDispl;
-        pdfImgSel.endX -= pdfImgSel.canvasDispl;
-        cropSelection(pdfC, pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY, insertImage);
+       
+        cropSelection(pdfC, pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX , pdfImgSel.endY - pdfImgSel.startY, insertImage);
         $(pdfImgSel.canvas).remove();
         $('#text-layer').show();
     }
@@ -67,12 +66,12 @@ function initImageSelection() {
         $(pdfImgSel.canvas).remove();
         $('#text-layer').show();
         return;
-    }
+    } 
     $('#text-layer').hide();
     pdfImgSel.canvas = document.getElementById("siac-pdf-canvas");
     var lCanvasOverlay = document.createElement("canvas");
     pdfImgSel.canvas.parentNode.insertBefore(lCanvasOverlay, pdfImgSel.canvas.nextSibling);
-    $(lCanvasOverlay).css({"width": pdfImgSel.canvas.width + "px", "height" : pdfImgSel.canvas.height + "px", "top": "0", "left": "0", "position" : "absolute", "z-index": 999999, "opacity": 0.3, "cursor": "crosshair"});
+    $(lCanvasOverlay).css({"width": pdfImgSel.canvas.width + "px", "height" : pdfImgSel.canvas.height + "px", "top": "0", "left": document.getElementById('text-layer').style.left, "position" : "absolute", "z-index": 999999, "opacity": 0.3, "cursor": "crosshair"});
     lCanvasOverlay.setAttribute('width', pdfImgSel.canvas.width);
     lCanvasOverlay.setAttribute('height', pdfImgSel.canvas.height);
     pdfImgSel.context = lCanvasOverlay.getContext("2d");
@@ -516,7 +515,7 @@ function afterRemovedFromQueue() {
     $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
     $('.siac-queue-sched-btn').first().addClass("active").html('Not In Queue');
 }
-function startTimer(elementToUpdateId) {
+function _startTimer(elementToUpdateId) {
     if (readingTimer) {clearInterval(readingTimer); }
     readingTimer = setInterval(function() {
         remainingSeconds --;
@@ -528,7 +527,7 @@ function startTimer(elementToUpdateId) {
             $('.siac-timer-btn').removeClass('active');
             $('.siac-timer-btn').eq(4).addClass('active');
             document.getElementById(elementToUpdateId).innerHTML = "30 : 00";
-            $('#siac-timer-popup').show();
+            pycmd('siac-timer-elapsed ' + $('#siac-reading-modal-top-bar').data('nid'));
             readingTimer = null;
         }
     }, 999);
@@ -537,7 +536,7 @@ function toggleTimer(timer) {
     if ($(timer).hasClass('inactive')) {
         $(timer).removeClass("inactive");
         timer.innerHTML = "Pause";
-        startTimer("siac-reading-modal-timer");
+        _startTimer("siac-reading-modal-timer");
     } else {
         clearInterval(readingTimer);
         readingTimer = null;
@@ -553,6 +552,14 @@ function resetTimer(elem) {
     remainingSeconds =  Number(elem.innerHTML) * 60;
     document.getElementById("siac-reading-modal-timer").innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds %% 60 < 10 ? "0" + remainingSeconds %% 60 : remainingSeconds %% 60);
     $('#siac-timer-play-btn').addClass("inactive").html("Start");
+}
+function startTimer(mins) {
+    $('.siac-timer-btn').each((i, e) => {
+        if (e.innerHTML === mins.toString()) {
+            resetTimer(e);
+            $('#siac-timer-play-btn').trigger('click');
+        }
+    });
 }
 function pdfMouseWheel(event)  {
     if(!event.ctrlKey) { return; }
@@ -867,12 +874,10 @@ function toggleGrid(elem) {
     }
 }
 function activateGridView() {
-    gridView = true;
-    $('#gridCb').prop("checked", true);
-}
-function disableGridView() {
-    $('#gridCb').prop("checked", false);
-    gridView = false;
+    window.setTimeout(function() {
+        gridView = true;
+        $('#gridCb').prop("checked", true);
+    }, 400);
 }
 function toggleReadingModalBars() {
     $('#siac-reading-modal-top-bar,#siac-reading-modal-bottom-bar').toggle();
@@ -1101,8 +1106,10 @@ function pdfKeyup() {
         $('#siac-pdf-tooltip').data("selection", text);
 	}
 }
+function nonPDFKeyup() {
 
- function joinTextLayerNodeTexts(nodes, text) {
+}
+function joinTextLayerNodeTexts(nodes, text) {
     let total = "";
     for (var i = 0; i <nodes.length; i++) {
         if (nodes[i].innerHTML === text) {
@@ -1342,6 +1349,10 @@ function markClicked(event) {
 }
 function pdfViewerKeyup(event) {
     if (event.ctrlKey && (event.keyCode === 32 || event.keyCode === 39)) {
+        if (event.shiftKey && pdfDisplayed && pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
+            pycmd("siac-pdf-page-read " + $('#siac-pdf-top').data("pdfid") + " " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages);
+            if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
+        }
         pdfPageRight();
     } else if (event.ctrlKey && event.keyCode === 37) {
         pdfPageLeft();
@@ -1378,7 +1389,12 @@ function centerTooltip() {
     let $tt = $('#siac-pdf-tooltip');
     $tt.css({ 'top': h / 2 - ($tt.height() / 2), 'left': w / 2 - ($tt.width() / 2) });
 }
-
+function destroyPDF() {
+    if (pdfDisplayed) {
+        pdfDisplayed.destroy();
+    }
+    pdfDisplayed = null;
+}
 function pdfUrlSearch(input) {
     if (!input.length) {return; }
     let url = "";

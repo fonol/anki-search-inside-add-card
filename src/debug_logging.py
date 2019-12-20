@@ -3,10 +3,12 @@ import sys
 import json
 from datetime import datetime
 from aqt import mw
+import time
 
 
 from .state import get_index
 import utility.misc
+
 
 def log(text):
     dir = utility.misc.get_addon_base_folder_path()
@@ -16,6 +18,11 @@ def log(text):
     except:
         pass
 
+def start_watch():
+    return time.time() * 1000
+
+def stop_watch(t_start):
+    return time.time() * 1000 - t_start
 
 def persist_index_info(search_index):
     if search_index is None:
