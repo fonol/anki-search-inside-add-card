@@ -22,70 +22,71 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 import utility.tags
 
-from .state import checkIndex, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit, set_old_on_bridge_cmd
+from .state import check_index, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit, set_old_on_bridge_cmd
 from .index.indexing import build_index, get_notes_in_collection
 from .debug_logging import log
-from .web.web import printStartingInfo, getScriptPlatformSpecific, showSearchResultArea, fillDeckSelect, fillTagSelect
+from .web.web import printStartingInfo, getScriptPlatformSpecific, showSearchResultArea, fillDeckSelect, fillTagSelect, reload_note_sidebar, display_notes_sidebar, setup_ui_after_index_built
 from .web.html import right_side_html
 from .notes import *
+from .hooks import add_hook
 from .dialogs.editor import EditDialog
-from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerenderInfo, add_note_to_index
+from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerender_info, add_note_to_index
 
 config = mw.addonManager.getConfig(__name__)
 
 def init_addon():
-    global oldOnBridge, origAddNote, origTagKeypress, origSaveAndClose, origEditorContextMenuEvt
+    global oldOnBridge, orig_add_note, orig_tag_keypress, orig_save_and_close, origEditorContextMenuEvt
     set_old_on_bridge_cmd(Editor.onBridgeCmd)
     Editor.onBridgeCmd = expanded_on_bridge_cmd
     #todo: Find out if there is a better moment to start index creation
     create_db_file_if_not_exists()
     addHook("profileLoaded", build_index)
-    origAddNote = AddCards.addNote
+    orig_add_note = AddCards.addNote
     origEditorContextMenuEvt = EditorWebView.contextMenuEvent
 
-    AddCards.addNote = addNoteAndUpdateIndex
-    origTagKeypress = TagEdit.keyPressEvent
+    AddCards.addNote = add_note_and_update_index
+    orig_tag_keypress = TagEdit.keyPressEvent
     TagEdit.keyPressEvent = tag_edit_keypress
 
-    setupTagEditTimer()
+    setup_tagedit_timer()
     EditorWebView.contextMenuEvent = editorContextMenuEventWrapper
 
-    origSaveAndClose = EditDialog.saveAndClose
+    orig_save_and_close = EditDialog.saveAndClose
     EditDialog.saveAndClose = editorSaveWithIndexUpdate
     addHook("setupEditorShortcuts", addHideShowShortcut) 
 
-    
+    setup_hooks()
 
     #main functions to search
     if not config["disableNonNativeSearching"]:
         aqt.editor._html += """
             <script>
             function sendContent(event) {
-                if ((event && event.repeat) || pdfDisplayed != null || isFrozen)
+                if ((event && event.repeat) || pdfDisplayed != null || siacState.isFrozen)
                     return;
                 let html = "";
                 showLoading("Typing");
                 $fields.each(function(index, elem) {
                     html += $(elem).html() + "\u001f";
                 });
-                pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + html);
+                pycmd('fldChgd ' + siacState.selectedDecks.toString() + ' ~ ' + html);
             }
             function sendSearchFieldContent() {
                 showLoading("Searchbar");
                 html = document.getElementById('siac-browser-search-inp').value + "\u001f";
-                pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
+                pycmd('srchDB ' + siacState.selectedDecks.toString() + ' ~ ' + html);
             }
 
             function searchFor(text) {
                 showLoading("Note Search");
                 text += "\u001f";
-                pycmd('fldChgd ' + selectedDecks.toString() + ' ~ ' + text);
+                pycmd('fldChgd ' + siacState.selectedDecks.toString() + ' ~ ' + text);
             }
 
-         var script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.min.js';
-            document.body.appendChild(script);
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.min.js';
+        document.body.appendChild(script);
 
             </script>
         """
@@ -98,7 +99,7 @@ def init_addon():
             function sendSearchFieldContent() {
                 showLoading("Note Search");
                 html = document.getElementById('siac-browser-search-inp').value + "\u001f";
-                pycmd('srchDB ' + selectedDecks.toString() + ' ~ ' + html);
+                pycmd('srchDB ' + siacState.selectedDecks.toString() + ' ~ ' + html);
             }
             function searchFor(text) {
                 return;
@@ -119,21 +120,21 @@ def init_addon():
     addHook("loadNote", on_load_note)
 
 
-def addNoteAndUpdateIndex(dialog, note):
-    res = origAddNote(dialog, note)
+def add_note_and_update_index(dialog, note):
+    res = orig_add_note(dialog, note)
     add_note_to_index(note)
     return res
 
 def editorSaveWithIndexUpdate(dialog):
-    origSaveAndClose(dialog)
+    orig_save_and_close(dialog)
     # update index
-    searchIndex = get_index()
-    if searchIndex is not None and dialog.editor is not None and dialog.editor.note is not None:
-        searchIndex.updateNote(dialog.editor.note)
+    index = get_index()
+    if index is not None and dialog.editor is not None and dialog.editor.note is not None:
+        index.updateNote(dialog.editor.note)
         # note should be rerendered
         rerenderNote(dialog.editor.note.id)
          # keep track of edited notes (to display a little remark in the results)
-        searchIndex.output.edited[str(dialog.editor.note.id)] = t.time()
+        index.output.edited[str(dialog.editor.note.id)] = t.time()
 
 
 def on_load_note(editor):
@@ -145,8 +146,8 @@ def on_load_note(editor):
 
     #only display in add cards dialog or in the review edit dialog (if enabled)
     if editor.addMode or (config["useInEdit"] and isinstance(editor.parentWindow, EditCurrent)):
-        searchIndex = get_index()
-        if searchIndex is not None and searchIndex.logging:
+        index = get_index()
+        if index is not None and index.logging:
             log("Trying to insert html in editor")
             log("Editor.addMode: %s" % editor.addMode)
 
@@ -158,53 +159,31 @@ def on_load_note(editor):
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
-        editor.web.eval(right_side_html(config, searchIndex is not None))
+        editor.web.eval(right_side_html(config, index is not None))
 
-        if searchIndex is not None:
-            showSearchResultArea(editor)
-            #restore previous settings
-            if not searchIndex.highlighting:
-                editor.web.eval("$('#highlightCb').prop('checked', false);")
-            if not searchIndex.searchWhileTyping:
-                editor.web.eval("$('#typingCb').prop('checked', false); setSearchOnTyping(false);")
-            if not searchIndex.searchOnSelection:
-                editor.web.eval("$('#selectionCb').prop('checked', false);")
-            if not searchIndex.tagSearch:
-                editor.web.eval("$('#tagCb').prop('checked', false);")
-            if searchIndex.tagSelect:
-                fillTagSelect(editor)
-            if not searchIndex.topToggled:
-                editor.web.eval("hideTop();")
-            if searchIndex.output is not None and not searchIndex.output.uiVisible:
-                editor.web.eval("$('#infoBox').addClass('addon-hidden')")
-            if config["gridView"]:
-                editor.web.eval('activateGridView();')
-            if searchIndex.searchbar_mode == "Browser":
-                editor.web.eval("toggleSearchbarMode(document.getElementById('siac-search-inp-mode-lbl'));")
-            if searchIndex.output is not None:
-                #plot.js is already loaded if a note was just added, so this is a lazy solution for now
-                searchIndex.output.plotjsLoaded = False
+        if index is not None:
+            setup_ui_after_index_built(editor, index)
 
         editor.web.eval("onResize()")
+        
 
-        if searchIndex is None or not searchIndex.tagSelect:
+        if index is None or not index.tagSelect:
             fillDeckSelect(editor)
-            if get_index() is None or (searchIndex is not None and searchIndex.lastSearch is None):
+            if get_index() is None or (index is not None and index.lastSearch is None):
                 printStartingInfo(editor)
         if not corpus_is_loaded():
-            if searchIndex is not None and searchIndex.logging:
+            if index is not None and index.logging:
                 log("loading notes from anki db...")
             corpus = get_notes_in_collection()
             set_corpus(corpus)
-            if searchIndex is not None and searchIndex.logging:
+            if index is not None and index.logging:
                 log("loaded notes: len(corpus): " + str(len(corpus)))
 
-        if searchIndex is not None and searchIndex.output is not None:
-            searchIndex.output.editor = editor
-            searchIndex.output._loadPlotJsIfNotLoaded()
+        if index is not None and index.output is not None:
+            index.output.editor = editor
+            index.output._loadPlotJsIfNotLoaded()
     if get_edit() is None and editor is not None:
         set_edit(editor)
-
 
 
 def editorContextMenuEventWrapper(view, evt):
@@ -219,71 +198,72 @@ def editorContextMenuEventWrapper(view, evt):
     #origEditorContextMenuEvt(view, evt)
 
 def determineClickTarget(pos):
-    if not checkIndex():
+    if not check_index():
         return
     get_index().output.editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
 
 
 def addOptionsToContextMenu(clickInfo):
-    searchIndex = get_index()
+    index = get_index()
 
     if clickInfo is not None and clickInfo.startswith("img "):
         try:
             src = clickInfo[4:]
-            m = QMenu(searchIndex.output.editor.web)
+            m = QMenu(index.output.editor.web)
             a = m.addAction("Open Image in Browser")
             a.triggered.connect(lambda: openImgInBrowser(src))
             cpSubMenu = m.addMenu("Copy Image To Field...")
-            for key in searchIndex.output.editor.note.keys():
+            for key in index.output.editor.note.keys():
                 cpSubMenu.addAction("Append to %s" % key).triggered.connect(functools.partial(appendImgToField, src, key))
             m.popup(QCursor.pos())
         except:
-            origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
+            origEditorContextMenuEvt(index.output.editor.web, contextEvt)
     elif clickInfo is not None and clickInfo.startswith("note "):
         try:
             content = " ".join(clickInfo.split()[2:])
             nid = int(clickInfo.split()[1])
-            m = QMenu(searchIndex.output.editor.web)
+            m = QMenu(index.output.editor.web)
             a = m.addAction("Find Notes Added On The Same Day")
-            a.triggered.connect(lambda: getCreatedSameDay(searchIndex, searchIndex.output.editor, nid))
+            a.triggered.connect(lambda: getCreatedSameDay(index, index.output.editor, nid))
             m.popup(QCursor.pos())
         except:
-            origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
+            origEditorContextMenuEvt(index.output.editor.web, contextEvt)
 
     # elif clickInfo is not None and clickInfo.startswith("span "):
     #     content = clickInfo.split()[1]
 
     else:
-        origEditorContextMenuEvt(searchIndex.output.editor.web, contextEvt)
+        origEditorContextMenuEvt(index.output.editor.web, contextEvt)
 
 
-
+def setup_hooks():
+    add_hook("user-note-created", reload_note_sidebar)
+    add_hook("user-note-deleted", reload_note_sidebar)
 
 def openImgInBrowser(url):
     if len(url) > 0:
         webbrowser.open(url)
 
 def appendNoteToField(content, key):
-    if not checkIndex():
+    if not check_index():
         return
-    searchIndex = get_index()
-    note = searchIndex.output.editor.note
+    index = get_index()
+    note = index.output.editor.note
     note.fields[note._fieldOrd(key)] += content
     note.flush()
-    searchIndex.output.editor.loadNote()
+    index.output.editor.loadNote()
 
 def appendImgToField(src, key):
-    if not checkIndex() or src is None or len(src) == 0:
+    if not check_index() or src is None or len(src) == 0:
         return
-    searchIndex = get_index()
-    note = searchIndex.output.editor.note
+    index = get_index()
+    note = index.output.editor.note
     src = re.sub("https?://[0-9.]+:\\d+/", "", src)
     note.fields[note._fieldOrd(key)] += "<img src='%s'/>" % src
     note.flush()
-    searchIndex.output.editor.loadNote()
+    index.output.editor.loadNote()
 
-
-def setupTagEditTimer():
+def setup_tagedit_timer():
     global tagEditTimer
     tagEditTimer = QTimer()
     tagEditTimer.setSingleShot(True) # set up your QTimer
@@ -294,19 +274,19 @@ def tag_edit_keypress(self, evt):
     Used if "search on tag entry" is enabled.
     Triggers a search if the user has stopped typing in the tag field.
     """
-    origTagKeypress(self, evt)
+    orig_tag_keypress(self, evt)
     win = aqt.mw.app.activeWindow()
     # dont trigger keypress in edit dialogs opened within the add dialog
     if isinstance(win, EditDialog) or isinstance(win, Browser):
         return
-    searchIndex = get_index()
+    index = get_index()
 
-    if searchIndex is not None and searchIndex.tagSearch and len(self.text()) > 0:
+    if index is not None and index.tagSearch and len(self.text()) > 0:
         text = self.text()
         try:
             tagEditTimer.timeout.disconnect()
         except Exception: pass
-        tagEditTimer.timeout.connect(lambda: rerenderInfo(searchIndex.output.editor, text, searchByTags = True)) 
+        tagEditTimer.timeout.connect(lambda: rerender_info(index.output.editor, text, searchByTags = True)) 
         tagEditTimer.start(1000)
 
 

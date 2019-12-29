@@ -12,13 +12,13 @@ import utility.text
 import utility.misc
 
 from ..tag_find import get_most_active_tags
-from ..state import get_index, checkIndex, set_deck_map
+from ..state import get_index, check_index, set_deck_map
 from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
-from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar
+from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar, get_notes_sidebar_html
 
 
 def toggleAddon():
-    if checkIndex():
+    if check_index():
         get_index().output.js("toggleAddon();")
 
 
@@ -319,6 +319,37 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
 
     return all % (css, script)
 
+def setup_ui_after_index_built(editor, index, init_time=None):
+    #editor is None if index building finishes while add dialog is not open
+    if editor is None:
+        return
+    config = mw.addonManager.getConfig(__name__)
+    showSearchResultArea(editor, init_time)
+    #restore previous settings
+    if not index.highlighting:
+        editor.web.eval("$('#highlightCb').prop('checked', false);")
+    if not index.searchWhileTyping:
+        editor.web.eval("$('#typingCb').prop('checked', false); setSearchOnTyping(false);")
+    if not index.searchOnSelection:
+        editor.web.eval("$('#selectionCb').prop('checked', false);")
+    if not index.tagSearch:
+        editor.web.eval("$('#tagCb').prop('checked', false);")
+    if index.tagSelect:
+        fillTagSelect(editor)
+    if not index.topToggled:
+        editor.web.eval("hideTop();")
+    if index.output is not None and not index.output.uiVisible:
+        editor.web.eval("$('#infoBox').addClass('addon-hidden')")
+    if config["gridView"]:
+        editor.web.eval('activateGridView();') 
+    if index.searchbar_mode == "Browser":
+        editor.web.eval("toggleSearchbarMode(document.getElementById('siac-search-inp-mode-lbl'));")
+    if index.output is not None:
+        #plot.js is already loaded if a note was just added, so this is a lazy solution for now
+        index.output.plotjsLoaded = False
+    if config["notes.sidebar.visible"]:
+        display_notes_sidebar(editor)
+        
 
 def showSearchResultArea(editor=None, initializationTime=0):
     """
@@ -331,7 +362,7 @@ def showSearchResultArea(editor=None, initializationTime=0):
         if (document.getElementById('loader')) {
             document.getElementById('loader').style.display = 'none';
         }"""
-    if checkIndex():
+    if check_index():
         get_index().output.js(js)
     elif editor is not None and editor.web is not None:
         editor.web.eval(js)
@@ -342,16 +373,16 @@ def printStartingInfo(editor):
     if editor is None or editor.web is None:
         return
     config = mw.addonManager.getConfig(__name__)
-    searchIndex = get_index()
-    html = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  searchIndex.type if searchIndex is not None else "?"
-    if searchIndex is not None:
-        html += "Initalized in <b>%s</b> s." % searchIndex.initializationTime
-        if not searchIndex.creation_info["index_was_rebuilt"]:
+    index = get_index()
+    html = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
+    if index is not None:
+        html += "Initalized in <b>%s</b> s." % index.initializationTime
+        if not index.creation_info["index_was_rebuilt"]:
             html += " (No changes detected, index was <b>not</b> rebuilt)"
-        html += "<br/>Index contains <b>%s</b> notes." % searchIndex.get_number_of_notes()
+        html += "<br/>Index contains <b>%s</b> notes." % index.get_number_of_notes()
         html += "<br/>Index is always rebuilt if smaller than <b>%s</b> notes." % config["alwaysRebuildIndexIfSmallerThan"]
         html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
-        html += "<br/>Logging is turned <b>%s</b>. %s" % ("on" if searchIndex.logging else "off", "You should probably disable it if you don't have any problems." if searchIndex.logging else "")
+        html += "<br/>Logging is turned <b>%s</b>. %s" % ("on" if index.logging else "off", "You should probably disable it if you don't have any problems." if index.logging else "")
         html += "<br/>Results are rendered <b>%s</b>." % ("immediately" if config["renderImmediately"] else "with fade-in")
         html += "<br/>Tag Info on hover is <b>%s</b>.%s" % ("shown" if config["showTagInfoOnHover"] else "not shown", (" Delay: [<b>%s</b> ms]" % config["tagHoverDelayInMiliSec"]) if config["showTagInfoOnHover"] else "")
         html += "<br/>Image max height is <b>%s</b> px." % config["imageMaxHeight"]
@@ -359,13 +390,13 @@ def printStartingInfo(editor):
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
         html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
 
-    if searchIndex is None or searchIndex.output is None:
+    if index is None or index.output is None:
         html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
     editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
 
 
 def display_model_dialog():
-    if checkIndex():
+    if check_index():
         html = get_model_dialog_html()
         get_index().output.show_in_modal_subpage(html)
 
@@ -391,7 +422,7 @@ def show_width_picker():
     get_index().output.js("$('#siac-reading-modal-text').append(`%s`)" % modal)
 
 def display_note_reading_modal(note_id):
-    if checkIndex():
+    if check_index():
         index = get_index()
         note = get_note(note_id)
 
@@ -472,17 +503,17 @@ def _display_pdf(full_path, note_id):
 def showStylingModal(editor):
     config = mw.addonManager.getConfig(__name__)
     html = stylingModal(config)
-    if checkIndex():
-        searchIndex = get_index()
-        searchIndex.output.showInModal(html)
-        searchIndex.output.js("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")
+    if check_index():
+        index = get_index()
+        index.output.showInModal(html)
+        index.output.js("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")
 
 def show_img_field_picker_modal(img_src):
     """
         Called after an image has been selected from a PDF, should display all fields that are currently in the editor,
         let the user pick one, and on picking, insert the img into the field.
     """
-    if checkIndex():
+    if check_index():
         index = get_index()
         modal = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br><div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
         flds = ""
@@ -497,7 +528,7 @@ def show_cloze_field_picker_modal(cloze_text):
        Shows a modal that lists all fields of the current note.
        When a field is selected, the cloze text is appended to that field.
     """
-    if checkIndex():
+    if check_index():
         cloze_text = cloze_text.replace("`", "").replace("\n", "")
         index = get_index()
         modal = """ <div class="siac-modal-small dark" style="text-align:center;">
@@ -545,7 +576,7 @@ def hide_iframe_overlay():
 
 
 def show_web_search_tooltip(inp):
-    if checkIndex():
+    if check_index():
         inp = utility.text.remove_special_chars(inp)
         inp = inp.strip()
         if len(inp) == 0:
@@ -719,7 +750,46 @@ def jump_to_first_unread_page(editor, nid):
         }
     """)
 
+def display_notes_sidebar(editor):
+    html = get_notes_sidebar_html()
+    editor.web.eval("""
+        document.getElementById('resultsWrapper').style.paddingLeft = "255px"; 
+        document.getElementById('resultsWrapper').innerHTML += `%s`; 
+        $('#siac-notes-sidebar .exp').click(function(e) {
+            e.stopPropagation();
+            let icn = $(this);
+            if (icn.text()) {
+                if (icn.text() === '[+]')
+                    icn.text('[-]');
+                else
+                    icn.text('[+]');
+            }
+            $(this).parent().parent().children('ul').toggle();
+        });
+    """ % html)
 
+def reload_note_sidebar():
+    html = get_notes_sidebar_html()
+    get_index().output.js("""
+        if (document.getElementById('siac-notes-sidebar')) {
+            $('#siac-notes-sidebar').remove();
+            document.getElementById('resultsWrapper').style.paddingLeft = "255px"; 
+            document.getElementById('resultsWrapper').innerHTML += `%s`; 
+            $('#siac-notes-sidebar .exp').click(function(e) {
+            e.stopPropagation();
+            let icn = $(this);
+            if (icn.text()) {
+                if (icn.text() === '[+]')
+                    icn.text('[-]');
+                else
+                    icn.text('[+]');
+            }
+            $(this).parent().parent().children('ul').toggle();
+            });
+        }
+    """ % html)
+    
+   
 
 def fillTagSelect(editor = None, expanded = False) :
     """
@@ -763,7 +833,7 @@ def fillTagSelect(editor = None, expanded = False) :
     document.getElementById('deckSelQuickWrapper').style.display = '%s';
     document.getElementById('deckSelQuick').innerHTML = `%s`;
     document.getElementById('deckSel').innerHTML = `%s`;
-    $('.exp').click(function(e) {
+    $('#deckSelWrapper .exp').click(function(e) {
 		e.stopPropagation();
         let icn = $(this);
         if (icn.text()) {
@@ -790,10 +860,10 @@ def fillDeckSelect(editor = None, expanded= False):
     deckMap = dict()
     config = mw.addonManager.getConfig(__name__)
     deckList = config['decks']
-    searchIndex = get_index()
+    index = get_index()
     if editor is None:
-        if searchIndex is not None and searchIndex.output is not None and searchIndex.output.editor is not None:
-            editor = searchIndex.output.editor
+        if index is not None and index.output is not None and index.output.editor is not None:
+            editor = index.output.editor
         else:
             return
 
@@ -810,7 +880,7 @@ def fillDeckSelect(editor = None, expanded= False):
 
     dmap = dict(sorted(dmap.items(), key=lambda item: item[0].lower()))
     def iterateMap(dmap, prefix, start=False):
-        decks = searchIndex.selectedDecks if searchIndex is not None else []
+        decks = index.selectedDecks if index is not None else []
         if start:
             html = "<ul class='deck-sub-list outer'>"
         else:
@@ -828,7 +898,7 @@ def fillDeckSelect(editor = None, expanded= False):
     document.getElementById('deck-sel-info-lbl').style.display = 'block';
     document.getElementById('deckSelQuickWrapper').style.display = 'none';
     document.getElementById('deckSel').innerHTML = `%s`;
-    $('.exp').click(function(e) {
+    $('#deckSelWrapper .exp').click(function(e) {
 		e.stopPropagation();
         let icn = $(this);
         if (icn.text()) {

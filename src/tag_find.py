@@ -33,8 +33,8 @@ def findBySameTag(tagStr, limit, decks, pinned):
             rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
     return { "result" : rList[:limit]}
 
-def display_tag_info(editor, stamp, tag, searchIndex):
-    synonyms = searchIndex.synonyms
+def display_tag_info(editor, stamp, tag, index):
+    synonyms = index.synonyms
 
     if " " in tag:
         tagsContained = tag.split(" ")
@@ -128,7 +128,7 @@ def display_tag_info(editor, stamp, tag, searchIndex):
 
     if not should_hide_left_side:
         sorted_db_list = sorted(searchRes["result"], key=lambda x: x[3], reverse=True)
-        note_html = searchIndex.output.get_result_html_simple(sorted_db_list[:100])
+        note_html = index.output.get_result_html_simple(sorted_db_list[:100])
         enlarge_note_area_height = "max-height: 320px" if total_length > 120 and tret is not None else ""
         tag_name = tag
         if " " in tag_name:
@@ -142,7 +142,7 @@ def display_tag_info(editor, stamp, tag, searchIndex):
     else:
         html = html % (time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)
 
-    searchIndex.output._loadPlotJsIfNotLoaded()
+    index.output._loadPlotJsIfNotLoaded()
 
     ret_data = getTrueRetentionOverTime(nids)
     graph_js = retention_stats_for_tag(ret_data, "siac-tag-graph-" + time_stamp_for_graph, "siac-tag-graph-lbl-" + time_stamp_for_graph)

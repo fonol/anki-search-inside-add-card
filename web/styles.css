@@ -149,6 +149,10 @@ body {
     cursor: pointer;
     color: #2496dc !important;
 }
+.blue-underline {
+    text-decoration: underline;
+    text-decoration-color: #2496dc;
+}
 .smallMarginBottom {
     margin-bottom: 4px;
 }
@@ -213,15 +217,15 @@ select {
     position: relative;
     background: $tagBackgroundColor$;
     color: $tagForegroundColor$;
-    padding: 0px 4px 0px 4px;
-    border-radius: 4px;
+    padding: 1px 4px 1px 4px;
+    border-radius: 2px;
     margin-left: 5px;
     float: right;
     font-size: $tagFontSize$ !important;
     cursor: pointer;
     z-index: 999;
     user-select: none;
-    border: 3px outset $tagBackgroundColor$;
+    border: 1px solid $tagBackgroundColor$;
 }
 .tagLbl:hover {
     filter: brightness(150%);
@@ -271,7 +275,7 @@ select {
 }
 .remLbl, .floatLbl {
 
-    border: 1px solid $noteBorderColor$;
+    border: 2px solid $noteBorderColor$;
     border-left: 0px solid  $noteBackgroundColor$;
     color: $noteForegroundColor$;
     padding: 2px 6px 2px 6px;
@@ -287,7 +291,7 @@ select {
 
 .editLbl,.deleteLbl,.srchLbl {
     color: $noteForegroundColor$;
-    border: 1px solid $noteBorderColor$;
+    border: 2px solid $noteBorderColor$;
     border-right: 0px solid  $noteBackgroundColor$;
     padding: 3px 5px 3px 5px;
     flex: 1;
@@ -299,7 +303,7 @@ select {
      flex: 1;
 }
 .pinLbl.unselected {
-    border: 1px solid $noteBorderColor$;
+    border: 2px solid $noteBorderColor$;
     background: $noteBackgroundColor$;
 }
 
@@ -675,6 +679,10 @@ select {
 .deck-list-item .deck-list-item {
     width: 100%;
 }
+.list-item-inner {
+    text-overflow: ellipsis;
+    position: relative;
+}
 .deck-list-item > div {
     display: inline-block;
     overflow-x: hidden;
@@ -682,15 +690,31 @@ select {
      width: 100%;
      padding: 1px 4px 1px 4px;
 }
-.list-item-inner:hover {
+.deck-list-item:hover >.list-item-inner {
     background: $deckSelectHoverBackgroundColor$;
     color: $deckSelectHoverForegroundColor$;
+    border-radius: 4px;
 }
-
 .check {
     float: right;
     color: $deckSelectCheckmarkColor$;
     display: none;
+}
+.siac-tl-plus {
+    position: absolute;
+    right: 3px;
+    z-index: 2;
+    padding-left: 2px;
+    background: $deckSelectHoverBackgroundColor$;
+    color: $deckSelectHoverForegroundColor$;
+    display: none;
+}
+.list-item-inner:hover .siac-tl-plus {
+    display: inline-block;
+}
+.siac-tl-plus:hover {
+    color: #2496dc;
+    transform: scale(1.07);
 }
 .deck-list-item.selected > .list-item-inner > .check {
     display: inline;
@@ -721,7 +745,7 @@ outline: none;
 }
 .deck-sub-list {
     display: none;
-    margin-top: 4px;
+    margin-top: 2px;
     margin-left: 12px;
     padding-left: 0px;
 }
@@ -740,6 +764,9 @@ outline: none;
 }
 .exp {
     user-select: none;
+}
+.exp:hover {
+    color: #2496dc;
 }
 .full-width {
     width: 100%;
@@ -1207,6 +1234,23 @@ span.tag-symbol {
     border-color: $timelineBoxBorderColor$ transparent transparent transparent;
 }
 
+#siac-notes-sidebar {
+    position: absolute;
+    left: 0;
+    top: 38px;
+    bottom: 0;
+    width: 250px;
+    border-right: 1px solid seagreen;
+}
+.siac-notes-sidebar-item {
+    font-weight: bold;
+    user-select: none;
+    margin-bottom: 5px;
+}
+#siac-sidebar-inp {
+    background: $browserSearchInputBackgroundColor$;
+    color: $browserSearchInputForegroundColor$;
+}
 .flot-x-axis .flot-tick-label {
     white-space: nowrap;
     transform: translate(-9px, 0) rotate(-60deg);
@@ -1569,10 +1613,10 @@ margin-right: auto;
     user-select: text;
 }
 .siac-tag-info-box-left .editLbl {
-    border-right: 1px solid $noteBorderColor$;
+    border-right: 2px solid $noteBorderColor$;
 }
 #cal-info .editLbl, #siac-pdf-tooltip-results-area .editLbl {
-    border-right: 1px solid $noteBorderColor$;
+    border-right: 2px solid $noteBorderColor$;
 }
 .siac-tag-info-box .flot-y-axis {
     left: -15px !important;
@@ -1686,7 +1730,6 @@ margin-right: auto;
     margin: auto;
     width: 250px;
     height: 70px;
-
 }
 #siac-search-modal-inp {
     width: 100%;
@@ -1747,7 +1790,8 @@ margin-right: auto;
     max-width: 0px;
     overflow: hidden;
     display: inline-block;
-    transition: padding 0.6s, max-width 0.6s;
+    transition: max-width 0.6s;
+    transform: translateZ(0);
 }
 .siac-queue-sched-btn, .siac-queue-sched-btn-hor {
     display: inline-block;
@@ -1941,7 +1985,21 @@ hr.siac-modal-sep {
      background-color: #747272;
      border: 2px solid #494949;
 }
-
+.siac-prog-tmp {
+    margin-top: 6px;
+}
+.siac-blue-outset {
+    border: 2px outset #2496dc; 
+    padding: 0 4px 0 4px; 
+    border-radius: 4px;
+}
+.siac-feed-item {
+    margin: 0 0 15px 5px;
+}
+.siac-ul-a {
+    font-weight: bold; 
+    text-decoration: none;
+}
 #text-layer {
     position: absolute;
      left: 0;

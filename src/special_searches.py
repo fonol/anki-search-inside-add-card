@@ -2,7 +2,10 @@ import datetime
 import time
 from aqt import mw
 import utility.misc
-from .state import checkIndex
+try:
+    from .state import check_index
+except:
+    from state import check_index
 
 def get_notes_added_on_day_of_year(day_of_year : int, limit: int):
     
@@ -51,10 +54,10 @@ def get_cal_info_context(day_of_year : int):
     return html
 
 
-def getCreatedSameDay(searchIndex, editor, nid):
+def getCreatedSameDay(index, editor, nid):
     stamp = utility.misc.get_milisec_stamp()
-    searchIndex.output.latest = stamp
-    searchIndex.lastSearch = (nid, None, "createdSameDay")
+    index.output.latest = stamp
+    index.lastSearch = (nid, None, "createdSameDay")
     try:
         nidMinusOneDay = nid - (24 * 60 * 60 * 1000)
         nidPlusOneDay = nid + (24 * 60 * 60 * 1000)
@@ -68,50 +71,54 @@ def getCreatedSameDay(searchIndex, editor, nid):
             dayCreated = int(time.strftime("%d", time.localtime(int(r[0])/1000)))
             if dayCreated != dayOfNote:
                 continue
-            if not str(r[0]) in searchIndex.pinned:
+            if not str(r[0]) in index.pinned:
                 rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
                 c += 1
-                if c >= searchIndex.limit:
+                if c >= index.limit:
                     break
-        if checkIndex():
+        if check_index():
             if len(rList) > 0:
-                searchIndex.output.printSearchResults(rList, stamp, editor)
+                index.output.print_search_results(rList, stamp, editor)
             else:
-                searchIndex.output.empty_result("No results found.")
+                index.output.empty_result("No results found.")
     except:
-        if checkIndex():
-            searchIndex.output.empty_result("Error in calculation.")
+        if check_index():
+            index.output.empty_result("Error in calculation.")
 
-def getRandomNotes(searchIndex, decks):
-    if searchIndex is None:
+def getRandomNotes(index, decks):
+    s = time.time() * 1000
+    if index is None:
         return
     stamp = utility.misc.get_milisec_stamp()
-    searchIndex.output.latest = stamp
-    searchIndex.lastSearch = (None, decks, "random")
+    index.output.latest = stamp
+    index.lastSearch = (None, decks, "random")
 
     if not "-1" in decks:
         deckQ =  "(%s)" % ",".join(decks)
     else:
         deckQ = ""
 
-    limit = searchIndex.limit
+    limit = index.limit
     if deckQ:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s order by random() limit %s" % (deckQ, limit)).fetchall()
+        #SELECT * FROM table WHERE id IN (SELECT id FROM table ORDER BY RANDOM() LIMIT x)
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s and notes.id in (select id from notes order by random() limit %s)" % (deckQ, limit)).fetchall()
     else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid order by random() limit %s" % limit).fetchall()
+        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id in (select id from notes order by random() limit %s)" % (limit)).fetchall()
+        #res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid order by random() limit %s" % limit).fetchall()
     rList = []
     for r in res:
         rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
+    e = time.time() * 1000 - s
     return { "result" : rList, "stamp" : stamp }
 
 
-def getCreatedNotesOrderedByDate(searchIndex, editor, decks, limit, sortOrder):
+def getCreatedNotesOrderedByDate(index, editor, decks, limit, sortOrder):
     stamp = utility.misc.get_milisec_stamp()
-    searchIndex.output.latest = stamp
+    index.output.latest = stamp
     if sortOrder == "desc":
-        searchIndex.lastSearch = (None, decks, "lastCreated", limit)
+        index.lastSearch = (None, decks, "lastCreated", limit)
     else:
-        searchIndex.lastSearch = (None, decks, "firstCreated", limit)
+        index.lastSearch = (None, decks, "firstCreated", limit)
 
     if not "-1" in decks and len(decks) > 0:
         deckQ =  "(%s)" % ",".join(decks)
@@ -124,15 +131,15 @@ def getCreatedNotesOrderedByDate(searchIndex, editor, decks, limit, sortOrder):
     rList = []
     for r in res:
         #pinned items should not appear in the results
-        if not str(r[0]) in searchIndex.pinned:
+        if not str(r[0]) in index.pinned:
             #todo get refs
             rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
 
-    if checkIndex():
+    if check_index():
         if len(rList) > 0:
-            searchIndex.output.printSearchResults(rList, stamp, editor)
+            index.output.print_search_results(rList, stamp, editor)
         else:
-            searchIndex.output.empty_result("No results found.")
+            index.output.empty_result("No results found.")
 
 
 def getLastReviewed(decks, limit):
@@ -216,10 +223,10 @@ def getByTimeTaken(decks, limit, mode):
         rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
     return rList
 
-def getLastModifiedNotes(searchIndex, editor, decks, limit):
+def getLastModifiedNotes(index, editor, decks, limit):
     stamp = utility.misc.get_milisec_stamp()
-    searchIndex.output.latest = stamp
-    searchIndex.lastSearch = (None, decks, "lastModified")
+    index.output.latest = stamp
+    index.lastSearch = (None, decks, "lastModified")
 
     if not "-1" in decks and len(decks) > 0:
         deckQ =  "(%s)" % ",".join(decks)
@@ -231,14 +238,14 @@ def getLastModifiedNotes(searchIndex, editor, decks, limit):
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid, notes.mod from notes left join cards on notes.id = cards.nid order by notes.mod desc limit %s" % (limit)).fetchall()
     rList = []
     for r in res:
-        if not str(r[0]) in searchIndex.pinned:
+        if not str(r[0]) in index.pinned:
             rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
 
-    if checkIndex():
+    if check_index():
         if len(rList) > 0:
-            searchIndex.output.printSearchResults(rList, stamp, editor)
+            index.output.print_search_results(rList, stamp, editor)
         else:
-            searchIndex.output.empty_result("No results found.")
+            index.output.empty_result("No results found.")
 
 
 def _find_cards_with_one_more_rep(cid: int):

@@ -6,8 +6,9 @@ import datetime
 import time
 from aqt import mw
 
-from ..state import get_index, checkIndex
-from ..notes import get_note, _get_priority_list, get_avg_pages_read
+from ..state import get_index, check_index
+from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags
+from ..feeds import read
 import utility.misc
 import utility.tags
 import utility.text
@@ -108,7 +109,7 @@ def loadSynonyms():
     return synonyms
 
 
-def right_side_html(config, searchIndexIsLoaded = False):
+def right_side_html(config, indexIsLoaded = False):
     """
     Returns the javascript call that inserts the html that is essentially the right side of the add card dialog.
     The right side html is only inserted if not already present, so it is safe to call this function on every note load.
@@ -193,7 +194,7 @@ def right_side_html(config, searchIndexIsLoaded = False):
                             <div id='siac-settings-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; min-width: 140px; text-align: center; '>&nbsp; Settings & Info &nbsp;
                                         <div class='siac-btn-small-dropdown click' onclick='event.stopPropagation();' >
                                                 <table style='width: 100%%;'>
-                                                    <tr><td class='tbLb'><label class='blue-hover' for='selectionCb'>Search on Selection</label></td><td><input type='checkbox' id='selectionCb' checked onchange='searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
+                                                    <tr><td class='tbLb'><label class='blue-hover' for='selectionCb'>Search on Selection</label></td><td><input type='checkbox' id='selectionCb' checked onchange='siacState.searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
                                                     <tr><td class='tbLb'><label class='blue-hover' for='typingCb'>Search on Typing</label></td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
                                                     <tr><td class='tbLb'><label for='highlightCb'><mark>&nbsp;Highlighting&nbsp;</mark></label></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
                                                     <tr><td class='tbLb'><label class='blue-hover' for='gridCb'>Grid</label></td><td><input type='checkbox' id='gridCb' onchange='toggleGrid(this)'/></td></tr>
@@ -229,15 +230,14 @@ def right_side_html(config, searchIndexIsLoaded = False):
                     <div id="icns-large">
                             <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                             <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
-                            <div class='rnd-icon' onclick='pycmd("randomNotes " + selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
+                            <div class='rnd-icon' onclick='pycmd("randomNotes " + siacState.selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
                             <div class='flds-icon' onclick='sendContent()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
                             <div class='pdf-icon' onclick='pycmd("siac-show-pdfs")'>
                                 %s
                             </div>
+                            <div class='rnd-icon' onclick='toggleNoteSidebar();'>NOTES</div>
                             <div class='siac-read-icn' onclick='pycmd("siac-user-note-queue-read-head")'></div>
                         </div>
-
-
                     <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
                     <div style='height: calc(100%% - 28px); padding-top: 28px; z-index: 100;' id='resultsWrapper'>
                         <div id='searchInfo' class='%s'></div>
@@ -331,10 +331,51 @@ def right_side_html(config, searchIndexIsLoaded = False):
     rightSideWidth,
     config["noteScale"],
     pdf_svg(15, 18),
-    "display: none;" if searchIndexIsLoaded else "",
+    "display: none;" if indexIsLoaded else "",
     "hidden" if hideSidebar else "",
     getCalendarHtml() if config["showTimeline"] else ""
     )
+
+def get_notes_sidebar_html():
+    """
+        Returns the html for the sidebar that is displayed when clicking on the notes button.
+    """
+    tags = get_all_tags()
+    tmap = utility.tags.to_tag_hierarchy(tags)
+
+    def iterateMap(tmap, prefix, start=False):
+        if start:
+            html = "<ul class='deck-sub-list outer'>"
+        else:
+            html = "<ul class='deck-sub-list'>"
+        for key, value in tmap.items():
+            full = prefix + "::" + key if prefix else key
+            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('searchTag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='siac-tl-plus' onclick='pycmd(\"siac-create-note-tag-prefill %s\") '><b>NEW</b></span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), full, iterateMap(value, full, False))
+        html += "</ul>"
+        return html
+
+    tag_html = iterateMap(tmap, "", True)
+    html = """
+        <div id='siac-notes-sidebar'>
+            <div style='display: flex; flex-direction: column; height: 100%%;'>
+                <div style='flex: 0 1 auto;'>
+                    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-newest");'>Newest</div>
+                    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs")'>PDFs</div>
+                    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-untagged")'>Untagged</div>
+                    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-random");'>Random</div>
+                    <input type='text' id='siac-sidebar-inp' style='width: calc(100%% - 15px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>
+                    <div class='w-100' style='margin-top: 20px;'><b>Tags (%s)</b></div>
+                    <hr style='margin-right: 15px;'/>
+                </div>
+                <div style='flex: 1 1 auto; padding-right: 5px; margin-right: 5px; overflow-y: auto;'>
+                    %s
+                </div>
+            </div>
+
+        </div>
+
+    """ % (len(tmap) if tmap is not None else 0, tag_html)
+    return html
 
 
 def get_model_dialog_html():
@@ -399,7 +440,7 @@ def get_reading_modal_html(note):
 
     time_str = "Added %s ago." % utility.misc.date_diff_to_string(diff)
     
-    if checkIndex():
+    if check_index():
 
         title = title if title is not None and len(title.strip()) > 0 else "Untitled"
         title = utility.text.trim_if_longer_than(title, 50)
@@ -436,7 +477,7 @@ def get_reading_modal_html(note):
                     <div id='siac-reading-modal-text' style='overflow-y: {overflow}; height: calc(90% - 145px); max-height: calc(100% - 235px); font-size: 13px; padding: 20px 20px 0 20px; position: relative;' >
                         {text}
                     </div>
-                    <div id='siac-reading-modal-bottom-bar' style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden; position: relative;'>
+                    <div id='siac-reading-modal-bottom-bar' style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden; position: absolute;'>
                         <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
 
                             <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
@@ -482,12 +523,15 @@ def get_reading_modal_html(note):
             </script>
         """
 
-        #check if it is a pdf
+        #check if it is a pdf or feed
         overflow = "auto"
         if source.lower().endswith(".pdf") and utility.misc.file_exists(source):
             editable = False
             overflow = "hidden" 
             text = get_pdf_viewer_html(note_id, source, note[1])
+        elif source.lower().startswith("feed:"):
+            text = get_feed_html(note_id, source)
+            editable = False
         else:
             editable = len(text) < 100000
             text = get_text_note_html(text, note_id, editable)
@@ -522,7 +566,7 @@ def get_text_note_html(text, nid, editable):
     onfocusout = "onfocusout='readingModalTextKeyup(this, %s)'"  % (nid) if editable else ""
     html = """
         <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
-            <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center;'>Note: Not all Websites allow Embedding!</div>
+            <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center; color: grey;'>Note: Not all sites allow embedding!</div>
             <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
                 <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
                 <br/>
@@ -551,6 +595,72 @@ def get_text_note_html(text, nid, editable):
         </script>
     """.format_map(dict(text = text, nid = nid, search_sources=search_sources, is_content_editable=is_content_editable, onfocusout=onfocusout, editable_notification=editable_notification))
     return html
+
+
+def get_feed_html(nid, source):
+    #extract feed url
+    try:
+        feed_url = source[source.index(":") +1:].strip()
+    except:
+        return "<center>Could not load feed. Please check the URL.</center>"
+    res = read(feed_url)
+    dir = utility.misc.get_web_folder_path()
+    search_sources = ""
+    config = mw.addonManager.getConfig(__name__)
+    urls = config["searchUrls"]
+    if urls is not None and len(urls) > 0:
+        search_sources = iframe_dialog(urls)
+    text = ""
+    templ = """
+        <div class='siac-feed-item' >
+            <div><span class='siac-blue-outset'>%s</span> &nbsp;<a href="%s" class='siac-ul-a'>%s</a></div>
+            <div><i>%s</i> <span style='margin-left: 15px;'>%s</span></div> 
+            <div style='margin: 15px;'>%s</div>
+        </div>
+    """
+    for ix, message in enumerate(res[:25]):
+        if len(message.categories) > 0:
+            if len(message.categories) == 1:
+                cats = f"<span class='blue-underline'>{message.categories[0]}</span>"
+            else:
+                cats = "<span class='blue-underline'>" + "</span> &nbsp;<span class='blue-underline'>".join(message.categories) + "</span>"
+        else:
+            cats = ""
+        text = ''.join((text, templ % (ix + 1, message.link, message.title, message.date, cats, message.text)))
+    html = """
+        <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
+            <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center; color: grey;'>Note: Not all sites allow embedding!</div>
+            <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
+                <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
+                <br/>
+               {search_sources}
+            </div>
+        </div>
+        <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark' onclick='pycmd("siac-close-iframe")'>&times; &nbsp;Close Web</div>
+        <div id='siac-text-top' contenteditable='false' onmouseup='nonPDFKeyup();' onclick='if (!window.getSelection().toString().length) {{$("#siac-pdf-tooltip").hide();}}'>
+            {text}
+        </div>
+        <iframe id='siac-iframe' sandbox='allow-scripts' style='height: calc(100% - 47px);'></iframe>
+        <div style="width: 100%; text-align: center; margin-top: 15px; position: relative;">
+            <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
+                <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
+                <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
+            </div>
+        </div>
+        <script>
+            if (pdfTooltipEnabled) {{
+                $('#siac-pdf-tooltip-toggle').addClass('active');
+            }} else {{
+                $('#siac-pdf-tooltip-toggle').removeClass('active');
+            }}
+        </script>
+    """.format_map(dict(text = text, nid = nid, search_sources=search_sources))
+    return html
+
+
+
+
+
 
 def get_reading_modal_bottom_bar(note):
     """
@@ -636,9 +746,9 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
             qi_title = "???????" if queue_item[1] is None or len(queue_item[1]) == 0 else re.sub("[^ ]", "?",queue_item[1])
 
         hover_actions = "onmouseenter='showQueueInfobox(this, %s);' onmouseleave='leaveQueueItem(this);'" % (queue_item[0]) if not hide else ""
-        #if the note is a pdf, show a loader
-        should_show_loader = 'document.getElementById("siac-reading-modal-text").innerHTML = ""; showLoader(\"siac-reading-modal-text\", \"Loading Note...\");' if queue_item[3] is not None and queue_item[3].strip().lower().endswith(".pdf") else ""
-
+        #if the note is a pdf or feed, show a loader
+        pdf_or_feed = queue_item[3] is not None and (queue_item[3].strip().lower().endswith(".pdf") or queue_item[3].strip().lower().startswith("feed:"))
+        should_show_loader = 'document.getElementById("siac-reading-modal-text").innerHTML = ""; showLoader(\"siac-reading-modal-text\", \"Loading Note...\");' if pdf_or_feed else ""
         queue_head_readings +=  "<a onclick='if (!pdfLoading) {%s %s  destroyPDF(); noteLoading = true; pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s. %s</a><br>" % (save, should_show_loader, queue_item[0], should_greyout, hover_actions, queue_item[10] + 1, qi_title)
         if ix > 3:
             break

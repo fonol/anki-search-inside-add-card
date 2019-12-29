@@ -9,7 +9,7 @@ edit = None
 
 old_on_bridge = None
 
-def checkIndex():
+def check_index():
     return search_index is not None and search_index.output is not None and search_index.output.editor is not None and search_index.output.editor.web is not None
 
 def set_index(index):

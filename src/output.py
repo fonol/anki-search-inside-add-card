@@ -6,10 +6,18 @@ import math
 from datetime import datetime
 from aqt import mw
 from aqt.utils import showInfo, tooltip
-from .debug_logging import log
-from .stats import getRetentions
-from .state import get_index
-from .notes import get_pdf_info
+# lazy solution for running output from test dir
+try:
+    from .debug_logging import log
+    from .stats import getRetentions
+    from .state import get_index
+    from .notes import get_pdf_info
+except:
+    from debug_logging import log
+    from stats import getRetentions
+    from state import get_index
+    from notes import get_pdf_info
+
 import utility.tags
 import utility.text
 import utility.misc
@@ -19,7 +27,7 @@ class Output:
     def __init__(self):
         #todo: cleanup
         self.editor = None
-        self.SEP_RE = re.compile(r'(\u001f){2,}|(\u001f[\s\r\n]+\u001f)')
+        self.SEP_RE = re.compile(r'(?:\u001f){2,}|(?:\u001f[\s\r\n]+\u001f)')
         self.SEP_END = re.compile(r'</div>\u001f$')
         self.SOUND_TAG = re.compile(r'sound[a-zA-Z0-9]*mp')
         self.IO_REPLACE = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>)?-[OA]|-(<mark>)?ao(</mark>)?-[OA])\.svg" ?/?>(</img>)?')
@@ -110,35 +118,34 @@ class Output:
             Results are paginated, this will display the results for the given page.
         """
         if self.lastResults is not None:
-            self.printSearchResults(self.lastResults, None, editor, False, self.last_had_timing_info, page, query_set = self.last_query_set)
+            self.print_search_results(self.lastResults, None, editor, False, self.last_had_timing_info, page, query_set = self.last_query_set)
 
 
-    def printSearchResults(self, db_list, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_queue=False, is_cached=False):
+    def print_search_results(self, db_list, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_queue=False, is_cached=False):
         """
         This is the html that gets rendered in the search results div.
         This will always print the first page.
         Args:
-        searchResults - a list of tuples, see SearchIndex.search()
-        searchResults.0: highlighted note text
-        searchResults.1: tags
-        searchResults.2: did
-        searchResults.3: nid
-        searchResults.4: score (not used currently)
-        searchResults.5: mid
-        searchResults.6: refs (not used currently)
-        searchResults.7: position in queue (only present if in queue)
+        db_list - a list of tuples, see SearchIndex.search()
+        db_list.0: highlighted note text
+        db_list.1: tags
+        db_list.2: did
+        db_list.3: nid
+        db_list.4: score (not used currently)
+        db_list.5: mid
+        db_list.6: refs (not used currently)
+        db_list.7: position in queue (only present if in queue)
         """
         if logging:
-            log("Entering printSearchResults")
+            log("Entering print_search_results")
             log("Length (searchResults): " + str(len(db_list)))
         if stamp is not None:
             if stamp != self.latest:
                 return
-        if not is_cached:
+        if not is_cached and not len(db_list) == 0:
             self.previous_calls.append([db_list, None, editor, logging, printTimingInfo, page, query_set, is_queue])
             if len(self.previous_calls) > 11:
                 self.previous_calls.pop(0)
-         
 
         html = ""
         allText = ""
@@ -188,9 +195,8 @@ class Output:
             if ret is not None:
                 retMark = "background: %s; color: black;" % (self._retToColor(ret))
                 if str(res[3]) in self.edited:
-                    retMark += "max-width: 20px;"
-                retInfo = """<div class='retMark' style='%s'>%s</div>
-                                """ % (retMark, int(ret))
+                    retMark = ''.join((retMark, "max-width: 20px;"))
+                retInfo = """<div class='retMark' style='%s'>%s</div>""" % (retMark, int(ret))
             else:
                 retInfo = ""
 
@@ -205,7 +211,6 @@ class Output:
                 if src.endswith(".pdf"):
                     pdfs.append(res[3])
 
-
             build_user_note_total += time.time() - build_user_note_start
 
             # hide fields that should not be shown
@@ -216,7 +221,7 @@ class Output:
             text = self._cleanFieldSeparators(text).replace("\\", "\\\\")
 
             #try to remove image occlusion fields
-            text = self.tryHideImageOcclusion(text)
+            text = self.try_hide_image_occlusion(text)
 
             #try to put fields that consist of a single image in their own line
             text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
@@ -229,7 +234,7 @@ class Output:
             highlight_start = time.time()
             if query_set is not None:
                 if counter - (page -1) * 50 < highlight_boundary:
-                    text = self._markHighlights(text, query_set)
+                    text = self._mark_highlights(text, query_set)
                 else:
                     remaining_to_highlight[res[3]] = ""
             highlight_total += time.time() - highlight_start
@@ -259,71 +264,63 @@ class Output:
                             "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                         retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], "getSelectionText()" if not is_queue else "", res[3], res[3], res[3], res[3],
                             text,
-                            res[3], self.buildTagString(res[1]), res[3], ": Q-%s&nbsp;" % (res[7] + 1) if len(res) >= 8 and res[7] is not None else "")
+                            res[3], self.build_tag_string(res[1]), res[3], ": Q-%s&nbsp;" % (res[7] + 1) if len(res) >= 8 and res[7] is not None else "")
             else:
                 newNote = self.noteTemplate % (gridclass, counter + 1, res[3], counter + 1,
                             "&nbsp;&#128336; " + timeDiffString,
                             "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                             retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3],
                             text,
-                            res[3], self.buildTagString(res[1]), res[3])
+                            res[3], self.build_tag_string(res[1]), res[3])
             # if self.gridView:
             #     if counter % 2 == 1:
             #         html += "<div class='gridRow'>%s</div>" % (lastNote + newNote)
             #     elif counter == len(searchResults) - 1:
             #         html += "<div class='gridRow'>%s</div>" % (newNote)
             # else:
-            html += newNote
+            html = f"{html}{newNote}"
             tags = self._addToTags(tags, res[1])
             if counter - (page - 1) * 50 < 20:
-                allText += " " + res[0][:5000]
+                allText = f"{allText} {res[0][:5000]}"
         tags.sort()
         html = html.replace("`", "&#96;").replace("$", "&#36;")
         pageMax = math.ceil(len(db_list) / 50.0)
-        if get_index().lastResDict is not None:
+        if get_index() is not None and get_index().lastResDict is not None:
             get_index().lastResDict["time-html"] = int((time.time() - start) * 1000)
             get_index().lastResDict["time-html-highlighting"] = int(highlight_total * 1000)
             get_index().lastResDict["time-html-build-user-note"] = int(build_user_note_total * 1000)
         if stamp is None and self.last_took is not None:
             took = self.last_took
+            stamp = -1
         elif stamp is not None:
             took = utility.misc.get_milisec_stamp() - stamp
             self.last_took = took
         else:
             took = "?"
+
         if not self.hideSidebar:
             infoMap = {
                 "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`lastTiming`)'>&#9432;</b>" if printTimingInfo else ""),
                 "Found" :  "<b>%s</b> notes" % (len(db_list) if len(db_list) > 0 else "<span style='color: red;'>0</span>")
             }
-            info = self.buildInfoTable(infoMap, tags, allText)
-            cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(db_list), len(self.previous_calls))
+            timing = "true" if printTimingInfo else "false"
+            info = self.build_info_table(infoMap, tags, allText)
+            cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(db_list), len(self.previous_calls), stamp, timing)
         else:
-            cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s);" % (html, page, pageMax, len(db_list), len(self.previous_calls))
-        cmd += "updateSwitchBtn(%s)" % len(searchResults)
+            cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, page, pageMax, len(db_list), len(self.previous_calls), stamp, timing)
+        cmd = f"{cmd}updateSwitchBtn({len(searchResults)});" 
 
-        if editor is None or editor.web is None:
-            if self.editor is not None and self.editor.web is not None:
-                if logging:
-                    log("printing the result html...")
-                self.editor.web.eval(cmd)
-        else:
-            if logging:
-                log("printing the result html...")
-            editor.web.eval(cmd)
+        self._js(cmd, editor)
 
         if len(remaining_to_highlight) > 0:
             cmd = ""
             for nid,text in remaining_to_highlight.items():
-                cmd = ''.join((cmd, "document.getElementById('%s').innerHTML = `%s`;" % (nid, self._markHighlights(text, query_set))))
-            if editor is None or editor.web is None:
-                if self.editor is not None and self.editor.web is not None:
-                    self.editor.web.eval(cmd)
-            else:
-                editor.web.eval(cmd)
+                cmd = ''.join((cmd, "document.getElementById('%s').innerHTML = `%s`;" % (nid, self._mark_highlights(text, query_set))))
+            self._js(cmd, editor)
 
         if len(pdfs) > 0:
             pdf_info_list = get_pdf_info(pdfs)
+
             if pdf_info_list is not None and len(pdf_info_list) > 0:
                 cmd = ""
                 for i in pdf_info_list:
@@ -331,15 +328,13 @@ class Output:
                     prog_bar = ""
                     for x in range(0, 10):
                         if x < perc:
-                            prog_bar += "<div class='siac-prog-sq-filled'></div>"
+                            prog_bar = ''.join((prog_bar, "<div class='siac-prog-sq-filled'></div>"))
                         else:
-                            prog_bar += "<div class='siac-prog-sq'></div>"
-                    cmd = ''.join((cmd, "document.getElementById('%s').innerHTML += `<br><div style='margin-top: 5px;'>%s &nbsp;%s / %s</div>`;" % (i[0], prog_bar, i[1], i[2])))
-                if editor is None or editor.web is None:
-                    if self.editor is not None and self.editor.web is not None:
-                        self.editor.web.eval(cmd)
-                else:
-                    editor.web.eval(cmd)
+                            prog_bar = ''.join((prog_bar, "<div class='siac-prog-sq'></div>"))
+                    cmd = ''.join((cmd, "document.querySelector('[id=\"%s\"] .siac-prog-tmp').innerHTML = `%s &nbsp;%s / %s`;" % (i[0], prog_bar, i[1], i[2])))
+                self._js(cmd, editor)
+            
+        return (highlight_total * 1000, build_user_note_total)
 
 
     def js(self, js):
@@ -350,9 +345,17 @@ class Output:
             return
         self.editor.web.eval(js)
 
+    def _js(self, js, editor):
+        """
+            Try to eval the given js, prefer if editor ref is given (through cmd parsing).
+        """
+        if editor is None or editor.web is None:
+            if self.editor is not None and self.editor.web is not None:
+                self.editor.web.eval(js)
+        else:
+            editor.web.eval(js)
 
-
-    def buildTagString(self, tags, hover = True, maxLength = -1, maxCount = -1):
+    def build_tag_string(self, tags, hover = True, maxLength = -1, maxCount = -1):
         """
         Builds the html for the tags that are displayed at the bottom right of each rendered search result.
         """
@@ -365,28 +368,28 @@ class Output:
         if maxCount == -1:
             maxCount = 3 if not self.gridView else 2
         if len(tm) <= maxCount or totalLength < maxLength:
+            hover = "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else ""
             for t, s in tm.items():
                 stamp = "siac-tg-" + utility.text.get_stamp()
                 if len(s) > 0:
                     tagData = " ".join(self.iterateTagmap({t : s}, ""))
                     if len(s) == 1 and tagData.count("::") < 2 and not t in tags_split:
-                        html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData.split()[1], "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", utility.text.trim_if_longer_than(tagData.split(" ")[1], maxLength))
+                        html = f"{html}<div class='tagLbl' data-stamp='{stamp}' data-tags='{tagData}' data-name='{tagData.split(' ')[1]}' {hover} onclick='tagClick(this);'>{utility.text.trim_if_longer_than(tagData.split(' ')[1], maxLength)}</div>"
                     else:
-                        html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' %s onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", utility.text.trim_if_longer_than(t, maxLength) + " (+%s)"% len(s))
+                        html = f"{html}<div class='tagLbl' data-stamp='{stamp}' data-tags='{tagData}' data-name='{tagData}' {hover} onclick='tagClick(this);'>{utility.text.trim_if_longer_than(t, maxLength)} (+{len(s)})</div>" 
                 else:
-                    html += "<div class='tagLbl' data-stamp='%s' %s data-name='%s' onclick='tagClick(this);'>%s</div>" %(stamp, "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else "", t, utility.text.trim_if_longer_than(t, maxLength))
+                    html = f"{html}<div class='tagLbl' data-stamp='{stamp}' {hover} data-name='{t}' onclick='tagClick(this);'>{utility.text.trim_if_longer_than(t, maxLength)}</div>"
         else:
             stamp = "siac-tg-" + utility.text.get_stamp()
             tagData = " ".join(self.iterateTagmap(tm, ""))
-            html += "<div class='tagLbl' data-stamp='%s' data-tags='%s' data-name='%s' onclick='tagClick(this);'>%s</div>" %(stamp, tagData, tagData, str(len(tm)) + " tags ...")
+            html = f"{html}<div class='tagLbl' data-stamp='{stamp}' data-tags='{tagData}' data-name='{tagData}' onclick='tagClick(this);'>{len(tm)} tags ...</div>" 
 
         return html
 
 
-
     def sortByDate(self, mode):
         """
-        Rerenders the last search results, but sorted by creation date.
+            Rerenders the last search results, but sorted by creation date.
         """
         if self.lastResults is None:
             return
@@ -395,7 +398,7 @@ class Output:
         sortedByDate = list(sorted(self.lastResults, key=lambda x: x[3]))
         if mode == "desc":
             sortedByDate = list(reversed(sortedByDate))
-        self.printSearchResults(sortedByDate, stamp)
+        self.print_search_results(sortedByDate, stamp)
 
 
     def removeUntagged(self):
@@ -408,7 +411,7 @@ class Output:
             if r[1] is None or len(r[1]) == 0:
                 continue
             filtered.append(r)
-        self.printSearchResults(filtered, stamp)
+        self.print_search_results(filtered, stamp)
 
     def removeTagged(self):
         if self.lastResults is None:
@@ -419,7 +422,7 @@ class Output:
         for r in self.lastResults:
             if r[1] is None or len(r[1]) == 0:
                 filtered.append(r)
-        self.printSearchResults(filtered, stamp)
+        self.print_search_results(filtered, stamp)
 
     def removeUnreviewed(self):
         if self.lastResults is None:
@@ -435,7 +438,7 @@ class Output:
         for r in self.lastResults:
             if int(r[3]) not in unreviewed:
                 filtered.append(r)
-        self.printSearchResults(filtered, stamp)
+        self.print_search_results(filtered, stamp)
 
     def removeReviewed(self):
         if self.lastResults is None:
@@ -451,7 +454,7 @@ class Output:
         for r in self.lastResults:
             if int(r[3]) not in reviewed:
                 filtered.append(r)
-        self.printSearchResults(filtered, stamp)
+        self.print_search_results(filtered, stamp)
 
     def _build_non_anki_note_html(self, text):
         """
@@ -483,8 +486,12 @@ class Output:
             src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src)
         else:
             src = ""
-
-        return title + body + src
+        if is_pdf:
+            p_html = "<div class='siac-prog-sq'></div>" * 10
+            prog_bar = f"<div class='siac-prog-tmp'>{p_html} &nbsp;0 / ?</div>"
+        else:
+            prog_bar = ""
+        return title + body + src + prog_bar
 
 
     def _buildEditedInfo(self, timestamp):
@@ -519,35 +526,36 @@ class Output:
         return ""
 
 
-    def buildInfoTable(self, infoMap, tags, allText):
+    def build_info_table(self, infoMap, tags, allText):
         infoStr = "<table>"
         for key, value in infoMap.items():
-            infoStr += "<tr><td>%s</td><td id='info-%s'>%s</td></tr>" %(key, key, value)
-        infoStr += "</table><div class='searchInfoTagSep'><span class='tag-symbol'>&#9750;</span>&nbsp;Tags:</div><div id='tagContainer' style='max-height: 180px; overflow-y: auto;'>"
+            infoStr =f"{infoStr}<tr><td>{key}</td><td id='info-{key}'>{value}</td></tr>"
+        infoStr = f"{infoStr}</table><div class='searchInfoTagSep'><span class='tag-symbol'>&#9750;</span>&nbsp;Tags:</div><div id='tagContainer' style='max-height: 180px; overflow-y: auto;'>"
         tagStr = ""
         if len(tags) == 0:
             infoStr += "No tags in the results."
             infoMap["Tags"] = "No tags in the results."
         else:
             for key, value in self.getTagMap(tags).items():
-                stamp = "siac-tg-" + utility.text.get_stamp()
+                stamp = f"siac-tg-{utility.text.get_stamp()}"
                 if len(value)  == 0:
-                    tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, key,utility.text.trim_if_longer_than(key, 19))
+                    tagStr = f"{tagStr}<span class='tagLbl' data-stamp='{stamp}' data-name='{key}' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>{utility.text.trim_if_longer_than(key, 19)}</span>"
                 else:
                     tagData = " ".join(self.iterateTagmap({key : value}, ""))
                     if len(value) == 1 and tagData.count("::") < 2 and not key in tags:
-                        tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s</span>" % (stamp, tagData.split()[1], tagData, utility.text.trim_if_longer_than(tagData.split()[1],16))
+                        tagStr = f"{tagStr}<span class='tagLbl' data-stamp='{stamp}' data-name='{tagData.split(' ')[1]}' data-tags='{tagData}' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>{utility.text.trim_if_longer_than(tagData.split()[1],16)}</span>"
                     else:
-                        tagStr += "<span class='tagLbl' data-stamp='%s' data-name='%s' data-tags='%s' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>%s&nbsp; %s</span>" % (stamp, tagData, tagData, utility.text.trim_if_longer_than(key,12), "(+%s)"% len(value))
+                        tagStr = f"<span class='tagLbl' data-stamp='{stamp}' data-name='{tagData}' data-tags='{tagData}' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>{utility.text.trim_if_longer_than(key,12)}&nbsp; (+{len(value)})</span>"
 
             infoStr += tagStr
             infoMap["Tags"] = tagStr
 
-        infoStr += "</div><div class='searchInfoTagSep bottom' >Keywords:</div><div id='keywordContainer'>"
-        mostCommonWords = self._mostCommonWords(allText)
-        infoStr += mostCommonWords + "</div>"
+        infoStr = f"{infoStr}</div><div class='searchInfoTagSep bottom' >Keywords:</div><div id='keywordContainer'>"
+        mostCommonWords = self._most_common_words(allText)
+        infoStr = f"{infoStr}{mostCommonWords}</div>"
         infoMap["Keywords"] = mostCommonWords
         return (infoStr, infoMap)
+    
 
     def _cleanFieldSeparators(self, text):
         text = self.SEP_RE.sub("\u001f", text)
@@ -556,7 +564,7 @@ class Output:
         text = text.replace("\u001f", "<span class='fldSep'>|</span>")
         return text
 
-    def tryHideImageOcclusion(self, text):
+    def try_hide_image_occlusion(self, text):
         """
         Image occlusion cards take up too much space, so we try to hide all images except for the first.
         """
@@ -566,7 +574,7 @@ class Output:
         return text
 
 
-    def _mostCommonWords(self, text):
+    def _most_common_words(self, text):
         """
         Returns the html that is displayed in the right sidebar containing the clickable keywords.
         """
@@ -632,7 +640,7 @@ class Output:
                 text = utility.text.remove_divs(text)
 
             text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
-            text = self.tryHideImageOcclusion(text)
+            text = self.try_hide_image_occlusion(text)
             #try to put fields that consist of a single image in their own line
             text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
             template = self.noteTemplateSimple if str(res[2]) != "-1" else self.noteTemplateUserNoteSimple
@@ -641,7 +649,7 @@ class Output:
                         "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
                         retInfo, res[3],res[3],"getSelectionText()" if search_on_selection else "", res[3],res[3],
                         text,
-                        self.buildTagString(res[1], tag_hover, maxLength = 25, maxCount = 2), res[3])
+                        self.build_tag_string(res[1], tag_hover, maxLength = 25, maxCount = 2), res[3])
 
             html += newNote
         return html
@@ -662,9 +670,7 @@ class Output:
 
     def showInModal(self, text):
         cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`;" % text
-
-        if self.editor is not None:
-            self.editor.web.eval(cmd)
+        self.js(cmd)
 
 
     def show_in_large_modal(self, html):
@@ -673,8 +679,7 @@ class Output:
             document.getElementById('siac-reading-modal').style.display = 'flex';
 
         """ % html.replace("`", "&#96;")
-        if self.editor is not None:
-            self.editor.web.eval(js)
+        self.js(js) 
 
     def empty_result(self, message):
         if self.editor is None or self.editor.web is None:
@@ -770,12 +775,10 @@ class Output:
                 """ % json.dumps(xlabels)
             cmd += "$.plot($('#graph-%s'), [ %s ],  %s);" % (c, json.dumps(rawData), options)
 
-        if self.editor is not None:
-            self.editor.web.eval(cmd)
+        self.js(cmd)
 
     def hideModal(self):
-        if self.editor is not None:
-            self.editor.web.eval("$('#a-modal').hide();")
+        self.js("$('#a-modal').hide();")
 
     def _addToTags(self, tags, tagStr):
         if tagStr == "":
@@ -804,7 +807,7 @@ class Output:
         });
 
         """ % self.buildTagHierarchy(tags)
-        self.editor.web.eval(cmd)
+        self.js(cmd)
 
     def buildTagHierarchy(self, tags):
         tmap = self.getTagMap(tags)
@@ -832,8 +835,6 @@ class Output:
     def getTagMap(self, tags):
         return utility.tags.to_tag_hierarchy(tags)
 
-
-
     def iterateTagmap(self, tmap, prefix):
         if len(tmap) == 0:
             return []
@@ -857,7 +858,7 @@ class Output:
         if self.editor is None or self.editor.web is None:
             return
         tags = note[2]
-        tagStr =  self.buildTagString(tags)
+        tagStr =  self.build_tag_string(tags)
         nid = note[0]
         text = note[1]
 
@@ -866,7 +867,7 @@ class Output:
             text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(note[4])]])
 
         text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
-        text = self.tryHideImageOcclusion(text)
+        text = self.try_hide_image_occlusion(text)
         text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
 
         #find rendered note and replace text and tags
@@ -879,7 +880,7 @@ class Output:
         self.editor.web.eval("fixRetMarkWidth(document.getElementById('cW-%s'));" % nid)
         self.editor.web.eval("$('#cW-%s .editedStamp').html(`&nbsp;&#128336; Edited just now`).show();" % nid)
 
-    def _markHighlights(self, text, querySet):
+    def _mark_highlights(self, text, querySet):
 
         currentWord = ""
         currentWordNormalized = ""
@@ -934,8 +935,7 @@ class Output:
             tooltip("Query was empty after cleaning.")
 
     def show_in_modal_subpage(self, html):
-        if self.editor is not None and self.editor.web is not None:
-            self.editor.web.eval("showModalSubpage(`%s`);" % html)
+        self.js("showModalSubpage(`%s`);" % html)
 
 
     def print_pdf_search_results(self, results, stamp, query_set):

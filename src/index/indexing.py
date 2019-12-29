@@ -9,7 +9,7 @@ import sqlite3
 
 from ..state import get_index, set_index, set_corpus, get_corpus, corpus_is_loaded, get_edit
 from ..debug_logging import *
-from ..web.web import showSearchResultArea, printStartingInfo, fillDeckSelect
+from ..web.web import showSearchResultArea, printStartingInfo, fillDeckSelect, setup_ui_after_index_built
 from ..web.html import loadSynonyms
 from .fts_index import FTSIndex
 from .whoosh_index import WhooshSearchIndex
@@ -74,7 +74,7 @@ def build_index(force_rebuild = False, execute_after_end = None):
 def _build_index(index_up_to_date):
 
     """
-    Builds the index. Result is stored in global var searchIndex.
+    Builds the index. Result is stored in global var index.
     The index.type is either "Whoosh"/"SQLite FTS3"/"SQLite FTS4"/"SQLite FTS5"
     """
     start = time.time()
@@ -83,38 +83,37 @@ def _build_index(index_up_to_date):
         useFTS = config['useFTS']
     except KeyError:
         useFTS = False
-    searchIndex = None
+    index = None
     corpus = get_corpus()
     #fts4 based sqlite reversed index
     if config["disableNonNativeSearching"] or useFTS:
-        searchIndex = FTSIndex(corpus, config["disableNonNativeSearching"], index_up_to_date)
+        index = FTSIndex(corpus, config["disableNonNativeSearching"], index_up_to_date)
         end = time.time()
         initializationTime = round(end - start)
     #whoosh index
     else:
-        searchIndex = WhooshSearchIndex(corpus, config["disableNonNativeSearching"], index_up_to_date)
+        index = WhooshSearchIndex(corpus, config["disableNonNativeSearching"], index_up_to_date)
         end = time.time()
         initializationTime = round(end - start)
 
-
-    searchIndex.finder = Finder(mw.col)
-    searchIndex.output.stopwords = searchIndex.stopWords
-    searchIndex.output.remove_divs = config["removeDivsFromOutput"]
-    searchIndex.output.gridView = config["gridView"]
-    searchIndex.output.scale = config["noteScale"]
-    searchIndex.output.fields_to_hide_in_results = config["fieldsToHideInResults"]
-    searchIndex.selectedDecks = ["-1"]
-    searchIndex.lastSearch = None
-    searchIndex.lastResDict = None
-    searchIndex.tagSearch = True
-    searchIndex.tagSelect = False
-    searchIndex.topToggled = True
-    searchIndex.output.edited = {}
-    searchIndex.initializationTime = initializationTime
-    searchIndex.synonyms = loadSynonyms()
-    searchIndex.tagSearch = config["searchOnTagEntry"]
-    searchIndex.logging = config["logging"]
-    searchIndex.searchbar_mode = "Add-on"
+    index.finder = Finder(mw.col)
+    index.output.stopwords = index.stopWords
+    index.output.remove_divs = config["removeDivsFromOutput"]
+    index.output.gridView = config["gridView"]
+    index.output.scale = config["noteScale"]
+    index.output.fields_to_hide_in_results = config["fieldsToHideInResults"]
+    index.selectedDecks = ["-1"]
+    index.lastSearch = None
+    index.lastResDict = None
+    index.tagSearch = True
+    index.tagSelect = False
+    index.topToggled = True
+    index.output.edited = {}
+    index.initializationTime = initializationTime
+    index.synonyms = loadSynonyms()
+    index.tagSearch = config["searchOnTagEntry"]
+    index.logging = config["logging"]
+    index.searchbar_mode = "Add-on"
     try:
         limit = config['numberOfResults']
         if limit <= 0:
@@ -123,29 +122,30 @@ def _build_index(index_up_to_date):
             limit = 5000
     except KeyError:
         limit = 500
-    searchIndex.limit = limit
+    index.limit = limit
 
     try:
         showRetentionScores = config["showRetentionScores"]
     except KeyError:
         showRetentionScores = True
-    searchIndex.output.showRetentionScores = showRetentionScores
+    index.output.showRetentionScores = showRetentionScores
     try:
         hideSidebar = config["hideSidebar"]
     except KeyError:
         hideSidebar = False
-    searchIndex.output.hideSidebar = hideSidebar
+    index.output.hideSidebar = hideSidebar
 
-    if searchIndex.logging:
-        log("\n--------------------\nInitialized searchIndex:")
-        log("""Type: %s\n# Stopwords: %s \n# Synonyms: %s \nLimit: %s \n""" % (searchIndex.type, len(searchIndex.stopWords), len(searchIndex.synonyms), limit))
+    if index.logging:
+        log("\n--------------------\nInitialized index:")
+        log("""Type: %s\n# Stopwords: %s \n# Synonyms: %s \nLimit: %s \n""" % (index.type, len(index.stopWords), len(index.synonyms), limit))
 
     editor = aqt.mw.app.activeWindow().editor if hasattr(aqt.mw.app.activeWindow(), "editor") else None
     if editor is not None and editor.addMode:
-        searchIndex.output.editor = editor
-    set_index(searchIndex)
+        index.output.editor = editor
+    set_index(index)
     editor = editor if editor is not None else get_edit()
-    showSearchResultArea(editor, initializationTime=initializationTime)
+    setup_ui_after_index_built(editor, index)
+    # showSearchResultArea(editor, initializationTime=initializationTime)
     fillDeckSelect(editor)
     printStartingInfo(editor)
 
@@ -189,9 +189,6 @@ def _should_rebuild():
     if info["size"] != len(corpus):
         return True
 
-
-
-
     if len(corpus) < config["alwaysRebuildIndexIfSmallerThan"]:
         return True
 
@@ -202,7 +199,6 @@ def _should_rebuild():
     for d in config["decks"]:
         if d not in info["decks"]:
             return True
-
 
     #if the excluded fields when building the index the last time differ from the excluded fields now, rebuild
     if len(config["fieldsToExclude"]) != len(info["fieldsToExclude"]):

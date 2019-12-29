@@ -6,7 +6,10 @@ from aqt import mw
 import time
 
 
-from .state import get_index
+try:
+    from .state import get_index
+except:
+    from state import get_index
 import utility.misc
 
 

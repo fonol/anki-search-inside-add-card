@@ -5,7 +5,10 @@ from datetime import datetime, time, date, timedelta
 from aqt import mw
 import random
 
-from .state import get_index
+try:
+    from .state import get_index
+except:
+    from state import get_index
 import utility.misc
 import utility.tags
 import utility.text
@@ -93,7 +96,10 @@ def create_note(title, text, source, tags, nid, reminder, queue_schedule):
     if (len(text) + len(title)) == 0:
         return
 
-    tags = " %s " % tags.strip()
+    if tags is not None and len(tags.strip()) > 0:
+        tags = " %s " % tags.strip()
+    else: 
+        tags = ""
 
     pos = None
     if queue_schedule != 1:
@@ -258,6 +264,12 @@ def get_all_notes():
     conn.close()
     return res
 
+def get_untagged_notes():
+    conn = _get_connection()
+    res = list(conn.execute("select * from notes where tags is null or trim(tags) = ''"))
+    conn.close()
+    return _to_output_list(res, [])
+
 def get_note(id):
     conn = _get_connection()
     res = conn.execute("select * from notes where id=" + str(id)).fetchone()
@@ -393,7 +405,7 @@ def find_by_tag(tag_str):
             query += "lower(tags) like '% " + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '%::" + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '" + t + " %' or lower(tags) like '%::" + t + "::%'"
     conn = _get_connection()
 
-    res = conn.execute("select * from notes %s" %(query)).fetchall()
+    res = conn.execute("select * from notes %s order by id desc" %(query)).fetchall()
     output_list = _to_output_list(res, pinned)
     return output_list
 
@@ -512,7 +524,7 @@ def _get_priority_list(nid_to_exclude = None):
 def get_priority_list():
     """
         Returns all notes that have a position set.
-        Result is in the form that Output.printSearchResults wants.
+        Result is in the form that Output.print_search_results wants.
     """
     conn = _get_connection()
     sql = """
@@ -526,7 +538,7 @@ def get_priority_list():
 def get_newest(limit, pinned):
     """
         Returns newest user notes ordered by created date desc.
-        Result is in the form that Output.printSearchResults wants.
+        Result is in the form that Output.print_search_results wants.
     """
     conn = _get_connection()
     sql = """

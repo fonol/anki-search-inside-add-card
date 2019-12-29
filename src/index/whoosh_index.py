@@ -216,7 +216,7 @@ class WhooshSearchIndex:
             query_set = None
             if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
                 query_set = set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
-            self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
+            self.output.print_search_results(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
 
     def print_pdf(self, result, stamp):
         query_set = None

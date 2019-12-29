@@ -99,6 +99,7 @@
 "pdf.clozegen.field.pdfpath": "",
 "pdf.clozegen.field.page": "",
 "searchUrls": ["https://en.wikipedia.org/w/index.php?search=[QUERY]&title=Special%3ASearch&go=Go&ns0=1" ],
-"pdf.queue.hide": false
+"pdf.queue.hide": false,
+"notes.sidebar.visible": false
 
 }

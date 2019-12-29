@@ -243,11 +243,17 @@ def escape_html(text):
     text = text.replace("`", "&#96;")
     return text
 
-
 def strip_url(url):
     url = re.sub("https?://(www\\.)?", "", url, re.I)
     return url
 
+def clean_user_note_title(title):
+    if title is None:
+        return ""
+    title = title.replace("\r\n", "")
+    title = title.replace("\n", "")
+    title = title.replace("\t", "")
+    return title
 
 
 def clean_file_name(name):

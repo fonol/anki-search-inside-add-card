@@ -258,7 +258,7 @@ class FTSIndex:
             #self.output.show_tooltip(result)
             pass
         elif result is not None:
-            self.output.printSearchResults(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
+            self.output.print_search_results(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
 
 
     def print_pdf(self, result, stamp):

@@ -14,6 +14,7 @@ from anki.lang import _
 
 from ..notes import *
 from ..notes import _get_priority_list
+from ..hooks import run_hooks
 import utility.text
 import utility.misc
 from ..web.web import update_reading_bottom_bar
@@ -82,10 +83,11 @@ class NoteEditor(QDialog):
     The editor window for non-anki notes.
     Has a text field and a tag field.
     """
-    def __init__(self, parent, note_id = None, add_only = False, read_note_id = None):
+    def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None):
         self.note_id = note_id
         self.add_only = add_only
         self.read_note_id = read_note_id
+        self.tag_prefill = tag_prefill
         try:
             self.dark_mode_used = utility.misc.dark_mode_is_used(mw.addonManager.getConfig(__name__))
         except Exception as err:
@@ -177,6 +179,7 @@ class NoteEditor(QDialog):
 
     def on_create_clicked(self):
         title = self.create_tab.title.text()
+        title = utility.text.clean_user_note_title(title) 
         if self.create_tab.plain_text_cb.checkState() == Qt.Checked:
             text = self.create_tab.text.toPlainText()
         else:
@@ -196,18 +199,16 @@ class NoteEditor(QDialog):
 
         create_note(title, text, source, tags, None, "", queue_schedule)
         #aqt.dialogs.close("UserNoteEditor")
+        run_hooks("user-note-created")
         self.reject()
 
         # if reading modal is open, we might have to update the bottom bar
         if self.read_note_id is not None:
             update_reading_bottom_bar(self.read_note_id)
 
-
-
-
-
     def on_update_clicked(self):
         title = self.create_tab.title.text()
+        title = utility.text.clean_user_note_title(title) 
         if self.create_tab.plain_text_cb.checkState() == Qt.Checked:
             text = self.create_tab.text.toPlainText()
         else:
@@ -220,6 +221,7 @@ class NoteEditor(QDialog):
         tags = self.create_tab.tag.text()
         queue_schedule = self.create_tab.queue_schedule
         update_note(self.note_id, title, text, source, tags, "", queue_schedule)
+        run_hooks("user-note-created")
         self.reject()
 
 
@@ -598,6 +600,8 @@ class CreateTab(QWidget):
         vbox.addLayout(tag_hb2)
         self.tag = QLineEdit()
         vbox.addWidget(self.tag)
+        if self.parent.tag_prefill is not None:
+            self.tag.setText(self.parent.tag_prefill)
 
         vbox.setAlignment(Qt.AlignTop)
         vbox.addLayout(hbox)

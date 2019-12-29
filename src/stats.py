@@ -2,8 +2,12 @@ from aqt import mw
 from aqt.qt import *
 import aqt
 
-from .special_searches import *
-from .special_searches import _to_day_ivl
+try:
+    from .special_searches import *
+    from .special_searches import _to_day_ivl
+except: 
+    from special_searches import *
+    from special_searches import _to_day_ivl
 
 import time
 import json
@@ -102,6 +106,9 @@ def getTrueRetentionOverTime(nids):
 
 
 def getRetentions(nids):
+    # for testing
+    if mw is None:
+        return dict()
     passedById = dict()
     failedById = dict()
     retsByNid = {}
