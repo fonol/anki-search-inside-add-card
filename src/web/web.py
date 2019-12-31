@@ -753,6 +753,7 @@ def jump_to_first_unread_page(editor, nid):
 def display_notes_sidebar(editor):
     html = get_notes_sidebar_html()
     editor.web.eval("""
+    if (!document.getElementById('siac-notes-sidebar')) {
         document.getElementById('resultsWrapper').style.paddingLeft = "255px"; 
         document.getElementById('resultsWrapper').innerHTML += `%s`; 
         $('#siac-notes-sidebar .exp').click(function(e) {
@@ -766,6 +767,7 @@ def display_notes_sidebar(editor):
             }
             $(this).parent().parent().children('ul').toggle();
         });
+    }
     """ % html)
 
 def reload_note_sidebar():

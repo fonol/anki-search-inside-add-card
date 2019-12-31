@@ -227,7 +227,7 @@ class Output:
             text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
 
             #remove <div> tags if set in config
-            if self.remove_divs:
+            if self.remove_divs and str(res[2]) != "-1":
                 text = utility.text.remove_divs(text, " ")
 
             #highlight
@@ -636,7 +636,7 @@ class Output:
 
 
             #remove <div> tags if set in config
-            if self.remove_divs:
+            if self.remove_divs and str(res[2]) != "-1":
                 text = utility.text.remove_divs(text)
 
             text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
