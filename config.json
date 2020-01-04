@@ -81,7 +81,7 @@
 "showTagInfoOnHover": true,
 "fieldsToExclude": {},
 "fieldsToHideInResults" : {},
-"tagHoverDelayInMiliSec": 750,
+"tagHoverDelayInMiliSec": 1000,
 "alwaysRebuildIndexIfSmallerThan" : 1500,
 "searchOnTagEntry" : true,
 "userNotesPerDay": 5,
