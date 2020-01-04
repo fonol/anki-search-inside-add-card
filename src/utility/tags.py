@@ -1,7 +1,7 @@
-def to_tag_hierarchy(tags):
+def to_tag_hierarchy(tags, sep="::"):
     tmap = {}
     for t in sorted(tags, key=lambda t: t.lower()):
-        tmap = _add_to_tag_list(tmap, t)
+        tmap = _add_to_tag_list(tmap, t, sep)
     tmap = dict(sorted(tmap.items(), key=lambda item: item[0].lower()))
     return tmap
 
@@ -22,11 +22,11 @@ def iterateTagmap(tmap, prefix):
     return res
 
 
-def _add_to_tag_list(tmap, name):
+def _add_to_tag_list(tmap, name, sep="::"):
     """
     Helper function to build the tag hierarchy.
     """
-    names = [s for s in name.split("::") if s != ""]
+    names = [s for s in name.split(sep) if s != ""]
     for c, d in enumerate(names):
         found = tmap
         for i in range(c):
