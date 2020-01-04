@@ -480,10 +480,9 @@ def _display_pdf(full_path, note_id):
                 pdfDisplayed = pdf;
                 pdfDisplayedCurrentPage = %s;
                 $('#siac-loader-modal').remove();
-                queueRenderPage(pdfDisplayedCurrentPage, true, true);
+                queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
                 updatePdfProgressBar();
                 if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + pdf.numPages); }
-                ungreyoutBottom();
             });
         };
         fileReader.readAsArrayBuffer(file);

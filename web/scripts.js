@@ -180,7 +180,7 @@ function totalOffset(elem) {
         left: left
     };
 }
-function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false) {
+function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false, isInitial=false) {
     if (!pdfDisplayed || iframeIsDisplayed) {
         return;
     }
@@ -235,6 +235,9 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false) {
                        textDivs: []
                    });
                    pdfLoading = false;
+                   if (isInitial) {
+                       ungreyoutBottom();
+                   }
                });
            if (shouldScrollUp)  {
                canvas.parentElement.scrollTop = 0;
@@ -270,11 +273,11 @@ function invertCanvas(ctx) {
     ctx.putImageData(imgData, 0, 0);  
     ctx.canvas.style.display = "inline-block";
 }
-function queueRenderPage(num, shouldScrollUp=true, fitToPage=false) {
+function queueRenderPage(num, shouldScrollUp=true, fitToPage=false, isInitial=false) {
     if (pdfPageRendering) {
         pageNumPending = num;
     } else {
-        rerenderPDFPage(num, shouldScrollUp, fitToPage);
+        rerenderPDFPage(num, shouldScrollUp, fitToPage, isInitial);
     }
 }
 function togglePageRead(nid) {
