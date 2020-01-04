@@ -220,6 +220,15 @@ def get_pdf_marks(nid):
     conn.close()
     return res
 
+def get_pdfs_by_sources(sources):
+    """
+    Takes a list of (full) paths, and gives back those for whom a pdf note exists with the given path.
+    """
+    src_str = "','".join([s.replace("'", "''") for s in sources])
+    conn = _get_connection()
+    res = conn.execute(f"select source from notes where source in ('{src_str}')").fetchall()
+    conn.close()
+    return [r[0] for r in res]
 
 def get_read_pages(nid):
     conn = _get_connection()
@@ -413,6 +422,44 @@ def find_by_text(text):
     index = get_index()
     index.search(text, [])
 
+def find_unqueued_pdf_notes(text):
+    q = ""
+    for token in text.lower().split():
+        if len(token) > 0:
+            q = f"{q} or lower(title) like '%{token}%'"
+
+    q = q[4:] if len(q) > 0 else "" 
+    if len(q) == 0:
+        return
+    conn = _get_connection()
+    res = conn.execute(f"select * from notes where ({q}) and lower(source) like '%.pdf' and (position is null or position < 0) order by id desc").fetchall()
+    conn.close()
+    return res
+
+def find_unqueued_non_pdf_notes(text):
+    q = ""
+    for token in text.lower().split():
+        if len(token) > 0:
+            q = f"{q} or lower(title) like '%{token}%'"
+
+    q = q[4:] if len(q) > 0 else "" 
+    if len(q) == 0:
+        return
+    conn = _get_connection()
+    res = conn.execute(f"select * from notes where ({q}) and not lower(source) like '%.pdf' and (position is null or position < 0) order by id desc").fetchall()
+    conn.close()
+    return res
+
+def get_most_used_pdf_folders():
+    sql = """
+        select replace(source, replace(source, rtrim(source, replace(source, '/', '')), ''), '') from notes where lower(source) like '%.pdf' 
+        group by replace(source, replace(source, rtrim(source, replace(source, '/', '')), ''), '') order by count(*) desc limit 50
+    """
+    conn = _get_connection()
+    res = conn.execute(sql).fetchall()
+    conn.close()
+    return [r[0] for r in res]
+
 def get_position(nid):
     conn = _get_connection()
     res = conn.execute("select position from notes where id = %s" % nid).fetchone()
@@ -470,8 +517,6 @@ def get_invalid_pdfs():
             filtered.append(res[c])
         c += 1
     return _to_output_list(filtered, []) 
-
-
 
 def get_recently_used_tags():
     """
@@ -621,6 +666,12 @@ def get_pdf_notes_not_in_queue():
     conn.close()
     return list(res)
 
+def get_non_pdf_notes_not_in_queue():
+    conn = _get_connection()
+    res = conn.execute("select * from notes where not lower(source) like '%.pdf' and position is null order by id desc").fetchall()
+    conn.close()
+    return res
+
 
 def get_pdf_info(nids):
     sql = "select nid, pagestotal, count(*) from read where nid in (%s) and page > -1 group by nid" % (",".join([str(n) for n in nids]))
@@ -656,7 +707,7 @@ def mark_all_pages_as_unread(nid):
 
 def insert_pages_total(nid, pages_total):
     """
-        Inserts a special page entry (page = -1), that is used, to save the number of pages even if no page has been read yet.
+        Inserts a special page entry (page = -1), that is used to save the number of pages even if no page has been read yet.
     """
     conn = _get_connection()
     existing = conn.execute("select * from read where page == -1 and nid = %s" % nid).fetchone()
