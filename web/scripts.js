@@ -12,6 +12,7 @@ var loadingTimer;
 var calTimer;
 var gridView = false;
 var renderImmediately = $renderImmediately$;
+var tagHoverCB;
 var tagHoverTimeout = 750;
 var searchMaskTimer;
 var remainingSeconds = 30 * 60;
@@ -356,7 +357,7 @@ function cardMouseLeave(elem, nid, mode = "full") {
 function tagMouseEnter(elem) {
     if (!showTagInfoOnHover || !elem || !elem.parentElement)
         return;
-    setTimeout(function () {
+    tagHoverCB = setTimeout(function () {
             if (elem && elem.parentElement && elem.parentElement.querySelector(':hover') === elem && !document.getElementById('siac-tag-info-box-' + $(elem).data('stamp'))) {
                 pycmd("tagInfo " + $(elem).data("stamp") + " " + $(elem).data("name"));
             }
