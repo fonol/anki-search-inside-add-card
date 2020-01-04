@@ -1,6 +1,7 @@
 import base64
 import requests
 import random
+from glob import glob  
 from datetime import datetime
 import os
 from aqt import mw
@@ -211,3 +212,13 @@ def url_to_pdf(url, output_path):
 
     temp.loadFinished.connect(save_pdf)
 
+
+def find_pdf_files_in_dir(dir):
+    try:
+        if not os.path.exists(dir):
+            return []
+        res = glob(os.path.join(dir, "*.pdf"))
+        res = [r[max(r.rindex("\\"),r.rindex("/"))+1:] for r in res]
+        return res
+    except:
+        return []
