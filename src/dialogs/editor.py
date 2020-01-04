@@ -7,11 +7,7 @@ import re
 import random
 from aqt.utils import saveGeom, restoreGeom
 from anki.hooks import addHook, remHook
-from aqt.utils import showInfo
-from anki.utils import isMac
 from anki.lang import _
-
-
 from ..notes import *
 from ..notes import _get_priority_list
 from ..hooks import run_hooks
@@ -83,11 +79,12 @@ class NoteEditor(QDialog):
     The editor window for non-anki notes.
     Has a text field and a tag field.
     """
-    def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None):
+    def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None):
         self.note_id = note_id
         self.add_only = add_only
         self.read_note_id = read_note_id
         self.tag_prefill = tag_prefill
+        self.source_prefill = source_prefill
         try:
             self.dark_mode_used = utility.misc.dark_mode_is_used(mw.addonManager.getConfig(__name__))
         except Exception as err:
@@ -550,6 +547,8 @@ class CreateTab(QWidget):
         self.source = QLineEdit()
         source_hb = QHBoxLayout()
         source_hb.addWidget(self.source)
+        if self.parent.source_prefill is not None:
+            self.source.setText(self.parent.source_prefill.replace("\\", "/"))
         pdf_btn = QPushButton("PDF")
         pdf_btn.clicked.connect(self.on_pdf_clicked)
         source_hb.addWidget(pdf_btn)
