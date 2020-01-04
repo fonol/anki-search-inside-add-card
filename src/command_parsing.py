@@ -16,6 +16,7 @@ from .debug_logging import log
 from .web.web import *
 from .web.html import *
 from .special_searches import *
+from .internals import requires_index_loaded, js, perf_time
 from .notes import *
 from .notes import _get_priority_list
 from .hooks import run_hooks
@@ -32,7 +33,6 @@ config = mw.addonManager.getConfig(__name__)
 
 original_on_bridge_cmd = None
 
-
 def expanded_on_bridge_cmd(self, cmd):
     """
     Process the various commands coming from the ui -
@@ -42,16 +42,16 @@ def expanded_on_bridge_cmd(self, cmd):
     if index is not None and index.output.editor is None:
         index.output.editor = self
 
-    if not config["disableNonNativeSearching"] and cmd.startswith("fldChgd "):
+    if not config["disableNonNativeSearching"] and cmd.startswith("siac-fld "):
         rerender_info(self, cmd[8:])
     elif cmd.startswith("siac-page "):
         if check_index():
             index.output.show_page(self, int(cmd.split()[1]))
-    elif cmd.startswith("srchDB "):
+    elif cmd.startswith("siac-srch-db "):
         if check_index() and index.searchbar_mode == "Add-on":
-            rerender_info(self, cmd[7:])
+            rerender_info(self, cmd[13:])
         else:
-            rerender_info(self, cmd[7:], searchDB = True)
+            rerender_info(self, cmd[13:], searchDB = True)
     elif cmd.startswith("fldSlctd ") and not config["disableNonNativeSearching"] and index is not None:
         if index.logging:
             log("Selected in field: " + cmd[9:])
@@ -64,14 +64,14 @@ def expanded_on_bridge_cmd(self, cmd):
                 rerender_info(self, cmd[11:].strip(), searchByTags=True)
         else:
             add_tag(cmd[11:])
-    elif (cmd.startswith("editN ")):
-        openEditor(mw, int(cmd[6:]))
-    elif (cmd.startswith("pinCrd")):
-        set_pinned(cmd[6:])
-    elif (cmd.startswith("renderTags")):
+    elif cmd.startswith("siac-edit-note "):
+        openEditor(mw, int(cmd[15:]))
+    elif (cmd.startswith("siac-pin")):
+        set_pinned(cmd[9:])
+    elif (cmd.startswith("siac-render-tags")):
         index.output.printTagHierarchy(cmd[11:].split(" "))
-    elif (cmd.startswith("randomNotes ") and check_index()):
-        res = getRandomNotes(index, [s for s in cmd[11:].split(" ") if s != ""])
+    elif (cmd.startswith("siac-random-notes ") and check_index()):
+        res = getRandomNotes(index, [s for s in cmd[17:].split(" ") if s != ""])
         index.output.print_search_results(res["result"], res["stamp"])
     elif cmd == "siac-fill-deck-select":
         fillDeckSelect(self, expanded=True)
@@ -337,8 +337,6 @@ def expanded_on_bridge_cmd(self, cmd):
             reload_note_reading_modal_bottom_bar(nid)
 
 
-
-
     elif cmd == "siac-user-note-update-btns":
         queue_count = get_queue_count()
         self.web.eval("document.getElementById('siac-queue-btn').innerHTML = '&nbsp;<b>Queue [%s]</b>';" % queue_count)
@@ -444,7 +442,7 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd.startswith("siac-scale "):
         factor = float(cmd.split()[1])
         config["noteScale"] = factor
-        writeConfig()
+        write_config()
         if check_index():
             index.output.scale = factor
             if factor != 1.0:
@@ -466,13 +464,13 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd.startswith("siac-unhide-pdf-queue "):
         nid = int(cmd.split()[1])
         config["pdf.queue.hide"] = False
-        writeConfig()
+        write_config()
         update_reading_bottom_bar(nid)
     
     elif cmd.startswith("siac-hide-pdf-queue "):
         nid = int(cmd.split()[1])
         config["pdf.queue.hide"] = True
-        writeConfig()
+        write_config()
         update_reading_bottom_bar(nid)
 
     elif cmd == "siac-left-side-width":
@@ -484,7 +482,7 @@ def expanded_on_bridge_cmd(self, cmd):
         right = 100 - value
         if check_index():
             index.output.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('infoBox').style.width = '%s%%';" % (value, right) )
-        writeConfig()
+        write_config()
 
 
     #
@@ -511,7 +509,6 @@ def expanded_on_bridge_cmd(self, cmd):
             index.output.hideModal()
             default_search_with_decks(self, cmd.split()[1], ["-1"])
 
-
     elif cmd == "styling":
         showStylingModal(self)
 
@@ -519,9 +516,7 @@ def expanded_on_bridge_cmd(self, cmd):
         update_styling(cmd[8:])
 
     elif cmd == "writeConfig":
-        writeConfig()
-
-
+        write_config()
 
     elif cmd.startswith("siac-add-image "):
         b64 = cmd.split()[2][13:]
@@ -844,7 +839,7 @@ def rerenderNote(nid):
         if index is not None and index.output is not None:
             index.output.updateSingle(res)
 
-
+@requires_index_loaded
 def default_search_with_decks(editor, textRaw, decks):
     """
     Uses the index to clean the input and find notes.
@@ -866,6 +861,7 @@ def default_search_with_decks(editor, textRaw, decks):
     index.lastSearch = (cleaned, decks, "default")
     searchRes = index.search(cleaned, decks)
 
+@requires_index_loaded
 def search_for_user_notes_only(editor, text):
     """
     Uses the index to clean the input and find user notes.
@@ -894,11 +890,11 @@ def getCurrentContent(editor):
         text += f
     return text
 
+@requires_index_loaded
 def add_note_to_index(note):
-    ix = get_index()
-    if ix is not None:
-        ix.addNote(note)
+    get_index().addNote(note)
 
+@requires_index_loaded
 def add_tag(tag):
     """
     Insert the given tag in the tag field at bottom if not already there.
@@ -913,7 +909,7 @@ def add_tag(tag):
     index.output.editor.tags.setText(tagsExisting + " " + tag)
     index.output.editor.saveTags()
 
-
+@requires_index_loaded
 def set_pinned(cmd):
     """
     Update the pinned search results.
@@ -924,10 +920,9 @@ def set_pinned(cmd):
     for id in cmd.split(" "):
         if len(id) > 0:
             pinned.append(id)
-    if index is not None:
-        index.pinned = pinned
-        if index.logging:
-            log("Updated pinned: " + str(index.pinned))
+    index.pinned = pinned
+    if index.logging:
+        log("Updated pinned: " + str(index.pinned))
 
 
 
@@ -958,6 +953,7 @@ def update_field_to_exclude(mid, fldOrd, value):
             config["fieldsToExclude"][mid].append(fldOrd)
     mw.addonManager.writeConfig(__name__, config)
 
+@requires_index_loaded
 def try_repeat_last_search(editor = None):
     """
     Sometimes it is useful if we can simply repeat the last search,
@@ -965,7 +961,7 @@ def try_repeat_last_search(editor = None):
     """
     index = get_index()
 
-    if index is not None and index.lastSearch is not None:
+    if index.lastSearch is not None:
         if editor is None and index.output.editor is not None:
             editor = index.output.editor
 
@@ -1035,15 +1031,12 @@ def generate_clozes(sentences, pdf_path, pdf_title, page):
     except:
         tooltip("Something went wrong during Cloze generation.", period=2000)
 
-
+@requires_index_loaded
 def get_index_info():
     """
     Returns the html that is rendered in the popup that appears on clicking the "info" button
     """
     index = get_index()
-
-    if index is None:
-        return ""
     excluded_fields = config["fieldsToExclude"]
     field_c = 0
     for k,v in excluded_fields.items():
@@ -1097,12 +1090,12 @@ def get_index_info():
 
     return html
 
+@requires_index_loaded
 def show_timing_modal(render_time = None):
     """
     Builds the html and shows the modal which gives some info about the last executed search (timing, query after stopwords etc.)
     """
     index = get_index()
-
     html = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % index.lastResDict["query"]
     if "decks" in index.lastResDict:
         html += "<h4>Decks:</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % ", ".join([str(d) for d in index.lastResDict["decks"]])
@@ -1115,15 +1108,12 @@ def show_timing_modal(render_time = None):
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Formatting SIAC Notes", index.lastResDict["time-html-build-user-note"] if index.lastResDict["time-html-build-user-note"] > 0 else "< 1")
     if render_time is not None:
         html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Rendering", render_time)
-
-
     html += "</table>"
     index.output.showInModal(html)
 
-
+@requires_index_loaded
 def update_styling(cmd):
     index = get_index()
-
     name = cmd.split()[0]
     if len(cmd.split()) < 2:
         return
@@ -1202,21 +1192,22 @@ def update_styling(cmd):
             config["pdfUrlImportSavePath"] = value
 
 
-def writeConfig():
+@js
+def write_config():
     mw.addonManager.writeConfig(__name__, config)
-    get_index().output.js("$('.modal-close').unbind('click')")
+    return "$('.modal-close').unbind('click')"
 
 
+@requires_index_loaded
 def after_index_rebuilt():
     search_index = get_index()
-    if search_index is not None and search_index.output is not None and search_index.output.editor is not None:
-        editor = search_index.output.editor
-        editor.web.eval("""
-            $('.freeze-icon').removeClass('frozen');
-            siacState.isFrozen = false;
-            $('#selectionCb,#typingCb,#tagCb,#highlightCb').prop("checked", true);
-            siacState.searchOnSelection = true;
-            siacState.searchOnTyping = true;
-            $('#toggleTop').click(function() { toggleTop(this); });
-        """)
-        fillDeckSelect(editor)
+    editor = search_index.output.editor
+    editor.web.eval("""
+        $('.freeze-icon').removeClass('frozen');
+        siacState.isFrozen = false;
+        $('#selectionCb,#typingCb,#tagCb,#highlightCb').prop("checked", true);
+        siacState.searchOnSelection = true;
+        siacState.searchOnTyping = true;
+        $('#toggleTop').click(function() { toggleTop(this); });
+    """)
+    fillDeckSelect(editor)

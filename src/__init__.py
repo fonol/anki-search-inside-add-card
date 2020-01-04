@@ -30,6 +30,7 @@ from .web.html import right_side_html
 from .notes import *
 from .hooks import add_hook
 from .dialogs.editor import EditDialog
+from .internals import requires_index_loaded
 from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerender_info, add_note_to_index
 
 config = mw.addonManager.getConfig(__name__)
@@ -57,6 +58,7 @@ def init_addon():
 
     setup_hooks()
 
+
     #main functions to search
     if not config["disableNonNativeSearching"]:
         aqt.editor._html += """
@@ -69,18 +71,18 @@ def init_addon():
                 $fields.each(function(index, elem) {
                     html += $(elem).html() + "\u001f";
                 });
-                pycmd('fldChgd ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+                pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
             }
             function sendSearchFieldContent() {
                 showLoading("Searchbar");
                 html = document.getElementById('siac-browser-search-inp').value + "\u001f";
-                pycmd('srchDB ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+                pycmd('siac-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
             }
 
             function searchFor(text) {
                 showLoading("Note Search");
                 text += "\u001f";
-                pycmd('fldChgd ' + siacState.selectedDecks.toString() + ' ~ ' + text);
+                pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
             }
 
         var script = document.createElement('script');
@@ -99,7 +101,7 @@ def init_addon():
             function sendSearchFieldContent() {
                 showLoading("Note Search");
                 html = document.getElementById('siac-browser-search-inp').value + "\u001f";
-                pycmd('srchDB ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+                pycmd('siac-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
             }
             function searchFor(text) {
                 return;
@@ -197,9 +199,8 @@ def editorContextMenuEventWrapper(view, evt):
     determineClickTarget(pos)
     #origEditorContextMenuEvt(view, evt)
 
+@requires_index_loaded
 def determineClickTarget(pos):
-    if not check_index():
-        return
     get_index().output.editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
 
 
@@ -253,8 +254,9 @@ def appendNoteToField(content, key):
     note.flush()
     index.output.editor.loadNote()
 
+@requires_index_loaded
 def appendImgToField(src, key):
-    if not check_index() or src is None or len(src) == 0:
+    if src is None or len(src) == 0:
         return
     index = get_index()
     note = index.output.editor.note
@@ -267,7 +269,6 @@ def setup_tagedit_timer():
     global tagEditTimer
     tagEditTimer = QTimer()
     tagEditTimer.setSingleShot(True) # set up your QTimer
-
 
 def tag_edit_keypress(self, evt):
     """

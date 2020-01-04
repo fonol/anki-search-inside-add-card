@@ -15,11 +15,11 @@ from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
 from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
 from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar, get_notes_sidebar_html
+from ..internals import js, requires_index_loaded
 
-
+@js
 def toggleAddon():
-    if check_index():
-        get_index().output.js("toggleAddon();")
+    return "toggleAddon();"
 
 
 def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
@@ -400,6 +400,7 @@ def display_model_dialog():
         html = get_model_dialog_html()
         get_index().output.show_in_modal_subpage(html)
 
+@js
 def show_width_picker():
     html = """
         <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 25")'><b>25 - 75</b></div>
@@ -419,30 +420,32 @@ def show_width_picker():
             <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Close</div>
         </div> 
     """ % html
-    get_index().output.js("$('#siac-reading-modal-text').append(`%s`)" % modal)
+    return "$('#siac-reading-modal-text').append(`%s`)" % modal
 
+@requires_index_loaded
 def display_note_reading_modal(note_id):
-    if check_index():
-        index = get_index()
-        note = get_note(note_id)
+    index = get_index()
+    note = get_note(note_id)
 
-        html = get_reading_modal_html(note)
-        index.output.show_in_large_modal(html)
-        # if source is a pdf file path, try to display it
-        if note[3] is not None and note[3].strip().lower().endswith(".pdf"):
-            if utility.misc.file_exists(note[3]):
-                _display_pdf(note[3].strip(), note_id)
-            else:
-                message = "Could not load the given PDF.<br>Are you sure the path is correct?"
-                reading_modal_notification(message)
+    html = get_reading_modal_html(note)
+    index.output.show_in_large_modal(html)
+    # if source is a pdf file path, try to display it
+    if note[3] is not None and note[3].strip().lower().endswith(".pdf"):
+        if utility.misc.file_exists(note[3]):
+            _display_pdf(note[3].strip(), note_id)
+        else:
+            message = "Could not load the given PDF.<br>Are you sure the path is correct?"
+            reading_modal_notification(message)
 
+@js
 def reload_note_reading_modal_bottom_bar(note_id):
     """
         Called after queue picker dialog has been closed without opening a new note.
     """
     note = get_note(note_id)
     html = get_reading_modal_bottom_bar(note)
-    get_index().output.js("$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks();" % html)
+    html = html.replace("`", "\\`")
+    return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks();" % html
 
 def _display_pdf(full_path, note_id):
     index = get_index()
@@ -480,6 +483,7 @@ def _display_pdf(full_path, note_id):
                 queueRenderPage(pdfDisplayedCurrentPage, true, true);
                 updatePdfProgressBar();
                 if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + pdf.numPages); }
+                ungreyoutBottom();
             });
         };
         fileReader.readAsArrayBuffer(file);
@@ -500,49 +504,49 @@ def _display_pdf(full_path, note_id):
         """ % (base64pdf, init_code))
 
 
+@js
 def showStylingModal(editor):
     config = mw.addonManager.getConfig(__name__)
     html = stylingModal(config)
-    if check_index():
-        index = get_index()
-        index.output.showInModal(html)
-        index.output.js("$('.modal-close').on('click', function() {pycmd(`writeConfig`) })")
+    index = get_index()
+    index.output.showInModal(html)
+    return "$('.modal-close').on('click', function() {pycmd(`writeConfig`) })"
 
+@js
 def show_img_field_picker_modal(img_src):
     """
         Called after an image has been selected from a PDF, should display all fields that are currently in the editor,
         let the user pick one, and on picking, insert the img into the field.
     """
-    if check_index():
-        index = get_index()
-        modal = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br><div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
-        flds = ""
-        for i, f in enumerate(index.output.editor.note.model()['flds']):
-            fld_update_js = "pycmd(`blur:%s:${currentNoteId}:${$(`.field:eq(%s)`).html()}`);" % (i,i)
-            flds += """<span class="siac-field-picker-opt" onclick="$(`.field`).get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s">%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
-        modal = modal % (flds, img_src)
-        index.output.js("$('#siac-reading-modal-text').append('%s');" % modal.replace("'", "\\'"))
+    index = get_index()
+    modal = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br><div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
+    flds = ""
+    for i, f in enumerate(index.output.editor.note.model()['flds']):
+        fld_update_js = "pycmd(`blur:%s:${currentNoteId}:${$(`.field:eq(%s)`).html()}`);" % (i,i)
+        flds += """<span class="siac-field-picker-opt" onclick="$(`.field`).get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s">%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
+    modal = modal % (flds, img_src)
+    return "$('#siac-reading-modal-text').append('%s');" % modal.replace("'", "\\'")
 
+@js
 def show_cloze_field_picker_modal(cloze_text):
     """
        Shows a modal that lists all fields of the current note.
        When a field is selected, the cloze text is appended to that field.
     """
-    if check_index():
-        cloze_text = cloze_text.replace("`", "").replace("\n", "")
-        index = get_index()
-        modal = """ <div class="siac-modal-small dark" style="text-align:center;">
-                        <b>Append to:</b><br><br>
-                        <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br>
-                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
-                    </div> """
-        flds = ""
-        for i, f in enumerate(index.output.editor.note.model()['flds']):
-            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`);  $(this.parentNode.parentNode).remove();">{2}</span><br>""".format(i, cloze_text, f["name"])
-        modal = modal % (flds)
-        index.output.js("$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'"))
+    index = get_index()
+    cloze_text = cloze_text.replace("`", "").replace("\n", "")
+    modal = """ <div class="siac-modal-small dark" style="text-align:center;">
+                    <b>Append to:</b><br><br>
+                    <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br>
+                    <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
+                </div> """
+    flds = ""
+    for i, f in enumerate(index.output.editor.note.model()['flds']):
+        flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`);  $(this.parentNode.parentNode).remove();">{2}</span><br>""".format(i, cloze_text, f["name"])
+    modal = modal % (flds)
+    return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
-
+@js
 def show_iframe_overlay(url=None):
     js = """
         if (pdfDisplayed) {
@@ -558,8 +562,9 @@ def show_iframe_overlay(url=None):
         js += """
             document.getElementById('siac-iframe').src = `%s`;
         """ % url
-    get_index().output.js(js)
+    return js
 
+@js
 def hide_iframe_overlay():
     js = """
         document.getElementById('siac-iframe').src = "";
@@ -572,38 +577,38 @@ def hide_iframe_overlay():
         }
         iframeIsDisplayed = false;
     """
-    get_index().output.js(js)
+    return js
 
-
+@js
 def show_web_search_tooltip(inp):
-    if check_index():
-        inp = utility.text.remove_special_chars(inp)
-        inp = inp.strip()
-        if len(inp) == 0:
-            return
-        search_sources = ""
-        config = mw.addonManager.getConfig(__name__)
-        urls = config["searchUrls"]
-        if urls is not None and len(urls) > 0:
-            for url in urls:
-                if "[QUERY]" in url:
-                    name = os.path.dirname(url)
-                    search_sources += """<div class="siac-url-ch" onclick='pycmd("siac-url-srch $$$" + document.getElementById("siac-tt-ws-inp").value + "$$$%s"); $(this.parentNode.parentNode).remove();'>%s</div>""" % (url, name)
+    inp = utility.text.remove_special_chars(inp)
+    inp = inp.strip()
+    if len(inp) == 0:
+        return
+    search_sources = ""
+    config = mw.addonManager.getConfig(__name__)
+    urls = config["searchUrls"]
+    if urls is not None and len(urls) > 0:
+        for url in urls:
+            if "[QUERY]" in url:
+                name = os.path.dirname(url)
+                search_sources += """<div class="siac-url-ch" onclick='pycmd("siac-url-srch $$$" + document.getElementById("siac-tt-ws-inp").value + "$$$%s"); $(this.parentNode.parentNode).remove();'>%s</div>""" % (url, name)
 
-        index = get_index()
-        modal = """ <div class="siac-modal-small dark" style="text-align:center;">
-                        <input style="width: 100%%; border-radius: 3px; padding-left: 4px; box-sizing: border-box; background: #272828; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input> 
-                        <br/>
-                        <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden; cursor: pointer; margin-top: 15px;">%s</div><br><br>
-                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
-                    </div> """% (inp, search_sources)
-     
-        index.output.js("""
-        $('#siac-iframe-btn').removeClass('expanded'); 
-        $('#siac-pdf-tooltip').hide(); 
-        $('#siac-reading-modal-text').append('%s');
-        """ % modal.replace("\n", "").replace("'", "\\'"))
+    modal = """ <div class="siac-modal-small dark" style="text-align:center;">
+                    <input style="width: 100%%; border-radius: 3px; padding-left: 4px; box-sizing: border-box; background: #272828; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input> 
+                    <br/>
+                    <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden; cursor: pointer; margin-top: 15px;">%s</div><br><br>
+                    <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
+                </div> """% (inp, search_sources)
+    
+    js = """
+    $('#siac-iframe-btn').removeClass('expanded'); 
+    $('#siac-pdf-tooltip').hide(); 
+    $('#siac-reading-modal-text').append('%s');
+    """ % modal.replace("\n", "").replace("'", "\\'")
+    return js
 
+@js
 def update_reading_bottom_bar(nid):
     queue = _get_priority_list()
     pos_lbl = ""
@@ -621,13 +626,14 @@ def update_reading_bottom_bar(nid):
         pos_lbl_btn = "<b>Not in Queue</b>"
 
     qd = get_queue_head_display(nid, queue)
-    get_index().output.js("""
+    return """
         document.getElementById('siac-queue-lbl').innerHTML = '%s';
         $('#siac-queue-lbl').fadeIn('slow');
         $('.siac-queue-sched-btn:first').html('%s');
         $('#siac-queue-readings-list').replaceWith(`%s`);
-        """ % (pos_lbl, pos_lbl_btn, qd))
+        """ % (pos_lbl, pos_lbl_btn, qd)
 
+@js
 def display_cloze_modal(editor, selection, extracted):
     s_html = "<table style='margin-top: 5px; font-size: 15px;'>"
     sentences = [s for s in extracted if len(s) < 300 and len(s.strip()) > 0]
@@ -680,22 +686,23 @@ def display_cloze_modal(editor, selection, extracted):
         s_html = "<br><center>Sorry, could not extract any sentences.</center>" 
         btn_html = ""
     
-    editor.web.eval("""
+    return """
             document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`;
             document.getElementById('siac-pdf-tooltip-top').innerHTML = `Found <b>%s</b> sentence(s) around selection: <br/><span style='color: lightgrey;'>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)</span>`;
             document.getElementById('siac-pdf-tooltip-searchbar').style.display = "none";
             %s
-            """ % (s_html, len(sentences), btn_html))
+            """ % (s_html, len(sentences), btn_html)
 
-
+@js
 def reading_modal_notification(html):
     modal = """ <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
                         %s
                         <br/> <br/>
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Ok</div>
                     </div> """ % html
-    get_index().output.js("$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'"))
+    return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
+@js
 def show_timer_elapsed_popup(nid):
     """
         Shows the little popup that is displayed when the timer in the reading modal finished.
@@ -721,24 +728,24 @@ def show_timer_elapsed_popup(nid):
         <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;15 min break&nbsp;</div>
     </div>
     """ % (read_today_count, added_today_count)
-    get_index().output.js("$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html)
+    return "$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html
 
-
+@js
 def display_note_del_confirm_modal(editor, nid):
     html = get_note_delete_confirm_modal_html(nid)
-    editor.web.eval("$('#greyout').show();$('#searchResults').append(`%s`);" % html)
+    return "$('#greyout').show();$('#searchResults').append(`%s`);" % html
 
-
+@js
 def jump_to_last_read_page(editor, nid):
-    editor.web.eval("""
+    return """
         if (pagesRead && pagesRead.length) {
             pdfDisplayedCurrentPage = Math.max(...pagesRead);
             rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
         }
-    """)
-
+    """
+@js
 def jump_to_first_unread_page(editor, nid):
-    editor.web.eval("""
+    return """
         if (pdfDisplayed) {
             for (var i = 1; i < pdfDisplayed.numPages + 1; i++) {
                if (!pagesRead || pagesRead.indexOf(i) === -1) {
@@ -748,13 +755,14 @@ def jump_to_first_unread_page(editor, nid):
                } 
             }
         }
-    """)
+    """
 
+@js
 def display_notes_sidebar(editor):
     html = get_notes_sidebar_html()
-    editor.web.eval("""
+    return """
     if (!document.getElementById('siac-notes-sidebar')) {
-        document.getElementById('resultsWrapper').style.paddingLeft = "255px"; 
+        document.getElementById('resultsWrapper').style.paddingLeft = "265px"; 
         document.getElementById('resultsWrapper').innerHTML += `%s`; 
         $('#siac-notes-sidebar .exp').click(function(e) {
             e.stopPropagation();
@@ -768,14 +776,15 @@ def display_notes_sidebar(editor):
             $(this).parent().parent().children('ul').toggle();
         });
     }
-    """ % html)
+    """ % html
 
+@js
 def reload_note_sidebar():
     html = get_notes_sidebar_html()
-    get_index().output.js("""
+    return """
         if (document.getElementById('siac-notes-sidebar')) {
             $('#siac-notes-sidebar').remove();
-            document.getElementById('resultsWrapper').style.paddingLeft = "255px"; 
+            document.getElementById('resultsWrapper').style.paddingLeft = "265px"; 
             document.getElementById('resultsWrapper').innerHTML += `%s`; 
             $('#siac-notes-sidebar .exp').click(function(e) {
             e.stopPropagation();
@@ -789,7 +798,7 @@ def reload_note_sidebar():
             $(this).parent().parent().children('ul').toggle();
             });
         }
-    """ % html)
+    """ % html
     
    
 
@@ -926,11 +935,9 @@ def addToDecklist(dmap, id, name):
             found = found.setdefault(names[i], {})
         if not d in found:
             found.update({d : {}})
-
-
     return dmap
 
-
+@js
 def show_loader(target_div_id, text):
     """
     Renders a small loading modal (absolute positioned) inside the given div.
@@ -938,12 +945,12 @@ def show_loader(target_div_id, text):
     """
 
     html = get_loader_html(text)
-    get_index().output.js("$('#%s').append(`%s`);" % (target_div_id, html))
+    return "$('#%s').append(`%s`);" % (target_div_id, html)
 
-
+@js
 def show_notification(editor, html):
 
-    editor.web.eval("""
+    return """
         $('.siac-notification').remove();
         $('#infoBox').append(`
         <div class='siac-notification'>
@@ -957,4 +964,4 @@ def show_notification(editor, html):
          }, 5000);
     
     
-    """ % html)
+    """ % html
