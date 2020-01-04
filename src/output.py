@@ -95,7 +95,7 @@ class Output:
                             <div class='cardLeftBot' style='display: none' onclick='%s'></div>
                         </div>"""
 
-        self.noteTemplateUserNote = """<div class='cardWrapper %s' id='nWr-%s'>
+        self.noteTemplateUserNote = """<div class='cardWrapper siac-user-note %s' id='nWr-%s'>
                             <div class='topLeftWr'>
                                 <div id='cW-%s' class='rankingLbl'>%s &nbsp;SIAC<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
                                 %s
