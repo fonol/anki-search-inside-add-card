@@ -603,7 +603,7 @@ function setTagSearch(elem) {
 function tagClick(elem) {
     if ($(elem).data('tags') && $(elem).data('tags') == $(elem).data('name')) {
         $('#a-modal').show();
-        pycmd('renderTags ' + $(elem).data('tags'));
+        pycmd('siac-render-tags ' + $(elem).data('tags'));
         return;
     }
     let name = $(elem).data('target') || $(elem).data('name');
@@ -689,18 +689,18 @@ function pinCard(elem, nid) {
 function searchCard(elem) {
     let html = $(elem).parent().next().html();
     showLoading("Note Search");
-    pycmd('fldChgd ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+    pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 function searchCardFromFloated(id) {
     let html = document.getElementById(id).innerHTML;
     showLoading("Note Search");
-    pycmd('fldChgd ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+    pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 function edit(nid) {
-    pycmd('editN ' + nid);
+    pycmd('siac-edit-note ' + nid);
 }
 function updatePinned() {
-    let pincmd = 'pinCrd';
+    let pincmd = 'siac-pin';
     $('.pinned').each(function (index) {
         pincmd += " " + $(this).children().first().children().first().attr('id').substring(3);
     });
@@ -1456,4 +1456,10 @@ function toggleNoteSidebar(){
     } else {
         pycmd("siac-show-note-sidebar");
     }
+}
+function greyoutBottom() {
+    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor').addClass("siac-disabled");
+}
+function ungreyoutBottom() {
+    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor').removeClass("siac-disabled");
 }
