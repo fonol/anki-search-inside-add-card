@@ -1462,8 +1462,8 @@ function toggleNoteSidebar(){
     }
 }
 function greyoutBottom() {
-    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor').addClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover').addClass("siac-disabled");
 }
 function ungreyoutBottom() {
-    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor').removeClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover').removeClass("siac-disabled");
 }

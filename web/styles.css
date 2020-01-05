@@ -613,17 +613,15 @@ select {
     position: relative !important;
     display: inline-block;
 }
-
-  .tooltip-blue {
+.tooltip-blue {
     color: $browserSearchButtonForegroundColor$;
     background: $browserSearchButtonBackgroundColor$;
     border: 1px solid  $browserSearchButtonBorderColor$;
     cursor: pointer;
     margin-right: 10px;
     outline: none;
-  }
-
-  .tooltip .tooltiptext {
+}
+.tooltip .tooltiptext {
     visibility:  hidden;
     width: 300px;
     background-color: $modalBackgroundColor$;
@@ -639,20 +637,14 @@ select {
     margin-left: -12px;
     margin-top: -5px;
     user-select: none;
-  }
-
-  .tooltiptext td {
+}
+.tooltiptext td {
       text-align: left;
-  }
-
-
-  .tooltip:hover .tooltiptext {
+}
+.tooltip:hover .tooltiptext {
     visibility: visible;
-  }
-
+}
   /* deck list*/
-
-
 .deck-list-item {
     list-style-type: none;
     cursor: pointer;
@@ -742,13 +734,11 @@ outline: none;
    color: white;
    padding: 0 4px 0 4px;
 }
-
 .deck-sub-list.outer {
     display: block;
     margin-top: 0px;
     margin-left: 0px;
     padding-left: 0px;
-
 }
 .exp {
     user-select: none;
@@ -848,14 +838,14 @@ table.striped tr:nth-child(even) {
 .siac-btn-small:hover .siac-btn-small-dropdown.hover,.siac-btn-small.expanded .siac-btn-small-dropdown.click {
     max-height: 310px;
     border-top: 1px solid $buttonBorderColor$;
-  }
-  .siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {
-     display: block;
-  }
-  .siac-dropdown-item {
-      margin: 3px 0 2px 0;
-      text-align: left;
-  }
+}
+.siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {
+    display: block;
+}
+.siac-dropdown-item {
+    margin: 3px 0 2px 0;
+    text-align: left;
+}
 .siac-dropdown-inverted-item {
     margin: 3px 0 2px 0;
     text-align: left;
@@ -900,7 +890,6 @@ table.striped tr:nth-child(even) {
 }
 #indexInfo, #synonymsIcon, #stylingIcon, #siac-note-icn {
     margin-right: 5px;
-
 }
 #indexInfo:hover, #synonymsIcon:hover, #stylingIcon:hover, #siac-note-icn:hover, #siac-timetable-icn:hover, #siac-settings-icn:hover {
     color: #2496dc;
@@ -921,7 +910,6 @@ width: 48%; display: inline-block; text-align: center;
 .siac-switch-deck-btn-inner b:hover {
     transform: scale(1.04);
 }
-
 #lastAdded, #sortBtn {
     color: $buttonForegroundColor$;
     background: $buttonBackgroundColor$;
@@ -939,7 +927,6 @@ width: 48%; display: inline-block; text-align: center;
     padding: 5px !important;
     max-width: 30px !important;
 }
-
 #infoBox {
     border-left: 2px solid $windowColumnSeparatorColor$;
     margin-top: 20px;
@@ -1036,20 +1023,16 @@ select {
     margin-top: 5px;
 }
 .modal-close {
-
     border: 1px solid $buttonBorderColor$;
     background: $buttonBackgroundColor$;
     color: $buttonForegroundColor$;
     cursor: pointer;
     user-select: none;
 }
-
 /*  tag list */
-
 .tag-list {
     margin-left: 10px;
 }
-
 .tag-list.outer {
     margin-left: 0px;
     padding-left: 0px;
@@ -1102,10 +1085,10 @@ span.tag-symbol {
     vertical-align: top;
     z-index: 999;
     margin-left: 12px;
-  }
+}
 #toggleTop:hover {
-      transform: scale(1.2);
-      color: #2496dc;
+    transform: scale(1.2);
+    color: #2496dc;
 }
 .noteFloating {
     position: absolute;
@@ -1125,7 +1108,7 @@ span.tag-symbol {
     text-align: left;
 }
 
-  .noteFloatingHeader {
+.noteFloatingHeader {
     height: 15px;
     padding-top: 2px;
     padding-bottom: 2px;
@@ -1136,29 +1119,28 @@ span.tag-symbol {
     user-select: none;
     font-size: 11px !important;
     text-align: right;
-  }
+}
 #cal-row {
     margin-bottom: 6px;
 }
 
 .cal-block-outer {
     height: 100%;
-     padding-top: 5px;
-     padding-bottom: 5px;
-      cursor:pointer;
-      display: inline-block;
-      width: calc(100% / 365);
+    padding-top: 5px;
+    padding-bottom: 5px;
+    cursor:pointer;
+    display: inline-block;
+    width: calc(100% / 365);
 }
 .cal-block-outer:hover > .cal-block, .cal-block-outer:hover > .cal-block {
     background-color: $tagBackgroundColor$;
 }
-
-  .cal-block {
-      position: relative;
-      height: 100%;
-      width: 100%;
-  }
-  .cal-block-week {
+.cal-block {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+.cal-block-week {
     display: inline-block;
     cursor:pointer;
     width: 17px;
@@ -1179,11 +1161,10 @@ span.tag-symbol {
     width: 24px;
     line-height: 24px;
 }
-
-  .cal-one {
-      background: #c6e48b;
-  }
-  .cal-two {
+.cal-one {
+    background: #c6e48b;
+}
+.cal-two {
     background: #7bc96f;
 }
 .cal-three {
@@ -1195,7 +1176,6 @@ span.tag-symbol {
 .cal-today {
     background: #2496dc;
 }
-
 #cal-info {
     position:absolute;
     left: 0px;
@@ -1209,8 +1189,6 @@ span.tag-symbol {
     border-radius: 3px;
     border: 1px solid $timelineBoxBorderColor$;
 }
-
-
 #cal-info:after {
     content: " ";
     position: absolute;
@@ -1221,7 +1199,6 @@ span.tag-symbol {
     border-style: solid;
     border-color: $timelineBoxBorderColor$ transparent transparent transparent;
 }
-
 #siac-notes-sidebar {
     position: absolute;
     left: 0;
@@ -1250,9 +1227,7 @@ span.tag-symbol {
     text-indent: -100%;
     transform-origin: top right;
     text-align: right !important;
-
 }
-
 .sa-blue-hover:hover {
     background: #2496dc !important;
     color: white;
@@ -1260,7 +1235,6 @@ span.tag-symbol {
 .sa-cursor-pointer {
     cursor: pointer;
 }
-
 .revlog-block {
     height: 15px;
     width: 15px;
@@ -1303,21 +1277,21 @@ span.tag-symbol {
 }
 
 #siac-pdf-overlay {
- display: none;
- position: absolute;
- bottom : 30px;
- right: 0; left: 0;
- z-index: 2;
- user-select: none;
-background-color: #43a047;
-border-radius: 5px;
-border: 4px outset green;
-padding: 2px 4px 4px 4px;
-width: 200px;
-text-align: center;
-color: white;
-margin-left: auto;
-margin-right: auto;
+    display: none;
+    position: absolute;
+    bottom : 30px;
+    right: 0; left: 0;
+    z-index: 2;
+    user-select: none;
+    background-color: #43a047;
+    border-radius: 7px;
+    border: 4px outset green;
+    padding: 2px 4px 4px 4px;
+    width: 200px;
+    text-align: center;
+    color: white;
+    margin-left: auto;
+    margin-right: auto;
 }
 #siac-pdf-mark-btn {
     padding: 6px 6px 6px 6px;
@@ -1423,7 +1397,6 @@ margin-right: auto;
 #siac-close-iframe-btn:hover {
     border-color: #67c3fc;
 }
-
 #siac-iframe-btn:hover {
     border-color: #67c3fc;
 }
@@ -1530,12 +1503,10 @@ margin-right: auto;
 #siac-pdf-tooltip-searchbar:focus {
     outline: none;
 }
-
 #siac-pdf-page-inp {
     background: #272828;
     color: beige;
 }
-
 #siac-marks-display {
     display: inline-block;
     overflow: hidden;
@@ -1573,7 +1544,6 @@ margin-right: auto;
     filter: brightness(1.4);
     transform: scale(1.04);
 }
-
 .siac-tag-info-box {
     position: absolute;
     z-index: 9999;
@@ -1592,7 +1562,6 @@ margin-right: auto;
 .siac-tag-info-box-small {
     width: 300px;
 }
-
 .siac-tag-info-box-left {
     overflow-y: auto;
     max-height: 250px;
@@ -1616,7 +1585,6 @@ margin-right: auto;
 .siac-tag-info-box .flot-y-axis {
     left: -15px !important;
 }
-
 #siac-pagination {
     position: relative;
     font-size: 13px !important;
@@ -1668,7 +1636,6 @@ margin-right: auto;
     transform: scale(1.2);
     color: #2496dc;
 }
-
 .siac-model-name {
     font-weight: bold;
     margin: 5px;
@@ -1677,7 +1644,6 @@ margin-right: auto;
     margin-left: 15px;
     width: calc(100% - 15px);
 }
-
 #siac-note-text-inp {
     width: 100%;
     min-height: 200px;
@@ -1687,7 +1653,6 @@ margin-right: auto;
     margin-bottom: 10px;
     padding-left: 2px;
 }
-
 #siac-reading-modal {
     display: none;
     position: absolute;
@@ -1704,7 +1669,6 @@ margin-right: auto;
     border-radius: 5px;
     overflow: hidden;
 }
-
 #siac-search-modal {
     display: none;
     position: absolute;
@@ -1776,7 +1740,7 @@ margin-right: auto;
     margin-left: 25px; cursor: pointer; font-weight: bold; color: darkorange;
     display: inline-block;
 }
-.siac-queue-picker-icn:hover {
+.siac-queue-picker-icn:not(.siac-disabled):hover {
     transform: scale(1.4);
     filter: brightness(140%);
 }
@@ -1834,7 +1798,6 @@ margin-right: auto;
 .siac-queue-sched-btn.active:hover, .siac-queue-sched-btn-hor.active:hover {
    filter: brightness(140%);
 }
-
 .siac-queue-sched-hor-sep {
     display: inline-block;
     height: 50px;
@@ -1844,17 +1807,15 @@ margin-right: auto;
     border-style: dotted;
     border-width: 2px 0 0 0;
 }
-
 .siac-clickable-anchor {
     cursor: pointer;
     background-color: inherit !important;
     display: inline-block;
     border: 1px solid transparent;
 }
-.siac-clickable-anchor.siac-disabled {
+.siac-clickable-anchor.siac-disabled,.siac-queue-picker-icn.siac-disabled {
     color: grey !important;
 }
-
 .siac-clickable-anchor:not(.siac-disabled):hover {
     transform: scale(1.02);
     filter: brightness(140%);
@@ -1885,7 +1846,6 @@ margin-right: auto;
     border-color: transparent darkorange transparent transparent;
     transition: all ease 0.2s;
 }
-
 #outerWr.onesided .siac-queue-sched-hor-sep {
     width: 10px;
 }
@@ -1895,7 +1855,6 @@ margin-right: auto;
 #outerWr.onesided .reading-modal-close-icn {
     right: 27px;
 }
-
 #siac-reading-modal-timer {
     font-size: 30px;
     user-select: none;
@@ -1945,6 +1904,20 @@ margin-right: auto;
     border-radius: 5px;
     display: none;
 }
+#siac-pdf-top::-webkit-scrollbar{
+    width: 10px !important;
+}
+#siac-pdf-top::-webkit-scrollbar:horizontal {
+    height: 10px !important;
+}
+#siac-pdf-top::-webkit-scrollbar-track {
+    background: #313d45 !important;
+    border-radius: 4px !important;
+}
+#siac-pdf-top::-webkit-scrollbar-thumb {
+    background: #515d71 !important;
+    border-radius: 4px !important;
+}
 .siac-modal-small {
     z-index: 9999999;
     background: $modalBackgroundColor$;
@@ -1971,11 +1944,13 @@ hr.siac-modal-sep {
     margin: 0 1px 0 1px;
     height: 9px;
     width: 6px;
-    border-radius: 2px;
+    border-radius: 3px;
 }
 .siac-prog-sq-filled {
-    background-color: #60ad5e;
-    border: 2px solid #005005;
+    /* background-color: #60ad5e; */
+    /* border: 2px solid #005005; */
+    background-color: #67c3fc;
+    border: 2px solid #1773ac;
 }
 .siac-prog-sq {
    /* background-color: #616161; */
@@ -2059,56 +2034,43 @@ hr.siac-modal-sep {
             user-select: none;
   }
 
-  .textLayer .endOfContent.active {
-    top: 0px;
-  }
+.textLayer .endOfContent.active {
+      top: 0px;
+}
 
 @media (max-height: 640px) {
     #tagContainer {
         max-height: 100px !important;
     }
     .searchInfoTagSep{
-       margin-top: 5px !important;
+        margin-top: 5px !important;
     }
     .searchInfoTagSep.bottom {
-       margin-top: 8px !important;
-
+        margin-top: 8px !important;
     }
 }
-
-
 @media (max-width: 1000px) , (max-height: 500px) {
-  .secondCol {
+    .secondCol {
         display: none;
-  }
-
-
-
-  #outerWr.onesided > .secondCol {
+    }
+    #outerWr.onesided > .secondCol {
         display: block;
         width: 100% !important;
         margin-left: 0px !important;
         border-left: 0px solid white !important;
         padding-left: 0px !important;
-  }
-  #switchBtn {
-      display: inline-block !important;
-  }
-
+    }
+    #switchBtn {
+        display: inline-block !important;
+    }
 }
 @media (max-width: 1300px) {
-    /* #searchMaskCol {
-        display: none;
-    } */
-
     #predefCol {
         margin-left: 5px;
     }
 }
-
 @media (max-width: 800px) {
-
-   .icns-add {
+    .icns-add {
         display: none !important;
     }
     .freeze-icon, .rnd-icon, .flds-icon #toggleTop {
@@ -2117,9 +2079,7 @@ hr.siac-modal-sep {
     .flds-icon {
         margin-top: 2px;
     }
-
 }
-
 @media (max-width: 1200px) {
     .cardR, .tagLbl, .searchInfoTagLbl, .keyword {
         font-size: 12px !important;
@@ -2138,9 +2098,7 @@ hr.siac-modal-sep {
     #outerWr.onesided #searchInfo:not(.hidden) {
         display: block;
     }
-
 }
-
 @media (min-height: 900px) {
     #tagContainer {
         max-height: 380px !important;
@@ -2156,8 +2114,7 @@ hr.siac-modal-sep {
     #sortCol {
         display: none;
     }
-    .modal-content
-    {
+    .modal-content {
         width: 80% !important;
     }
 }

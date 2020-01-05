@@ -10,7 +10,7 @@ def perf_time(fn):
     def _perf_wrapper(*args, **kwargs):
         start = time.time() * 1000
         res = fn(*args, **kwargs)
-        print(time.time() * 1000 - start)
+        print(f"{fn.__name__}: {time.time() * 1000 - start}")
         return res
     return _perf_wrapper
 

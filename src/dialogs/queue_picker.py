@@ -5,6 +5,7 @@ import os
 from .editor import NoteEditor
 from ..notes import *
 from ..notes import _get_priority_list
+from ..internals import perf_time
 import utility.text
 import utility.misc
 import utility.tags
@@ -18,8 +19,13 @@ class QueuePicker(QDialog):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
         self.mw = aqt.mw
         self.parent = parent
+        try:
+            self.dark_mode_used = utility.misc.dark_mode_is_used(aqt.mw.addonManager.getConfig(__name__))
+        except:
+            self.dark_mode_used = False
         self.setup_ui(note_list, note_list_right)
         self.setWindowTitle("Pick a note to open")
+       
 
     def setup_ui(self, note_list, note_list_right):
 
@@ -86,6 +92,45 @@ class QueuePicker(QDialog):
         self.setLayout(self.vbox)
         self.resize(700, 420)
 
+        if self.dark_mode_used:
+            styles = """
+                QTabBar {
+                background: #222;
+                color: #666;
+                border-radius: 0;
+                border: 2px solid #222;
+                }
+                 QTabWidget::pane {
+                border-color: black;
+                color: #666;
+                border-radius: 0;
+                border: 2px solid #222;
+                }
+                QTabBar::tab:top {
+                margin: 1px 1px 0 0;
+                padding: 4px 8px;
+                border-bottom: 3px solid transparent;
+                }
+
+                QTabBar::tab:selected {
+                color: white;
+                border: 0;
+                }
+
+                QTabBar::tab:top:hover {
+                border-bottom: 3px solid #444;
+                }
+                QTabBar::tab:top:selected {
+                border-bottom: 3px solid #1086e2;
+                }
+
+                QTabBar::tab:hover,
+                QTabBar::tab:focus {
+
+                }
+            """
+            self.setStyleSheet(styles)
+
     def tabs_changed(self, ix):
         if ix == 2:
             self.folders_tab.fill_tree(get_most_used_pdf_folders())
@@ -105,7 +150,7 @@ class QueuePicker(QDialog):
             title_i = QListWidgetItem(i, title)
             title_i.setData(Qt.UserRole, QVariant(n[0]))
             t_view.insertItem(ix, title_i)
-
+        
     def item_clicked(self, item):
         self.clear_selection("right")
         self.set_chosen(item.data(Qt.UserRole), item.text()[item.text().index(".") + 2:])

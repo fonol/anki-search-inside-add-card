@@ -496,7 +496,7 @@ def get_reading_modal_html(note):
                             <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                                 <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                 <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
                                 <a onclick='if (!pdfLoading) {{noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
                                 <a onclick='if (!pdfLoading) {{noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
                             </div>
@@ -513,6 +513,7 @@ def get_reading_modal_html(note):
                     </div>
             </div>
             <script>
+            destroyPDF();
             if (readingTimer != null)  {{
                  $('#siac-timer-play-btn').html('Pause').removeClass('inactive');
             }} else if (remainingSeconds !== 1800) {{
@@ -702,7 +703,7 @@ def get_reading_modal_bottom_bar(note):
                     <div  id='siac-queue-actions'  style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                         <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                         <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
                         <a onclick='noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
                         <a onclick='noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
                     </div>
@@ -755,9 +756,9 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
             break
 
     if hide:
-        hide_btn = """<div style='display: inline-block; margin-left: 12px; color: grey;' class='blue-hover' onclick='pycmd("siac-unhide-pdf-queue %s")'>(Show Items)</div>""" % note_id
+        hide_btn = """<div style='display: inline-block; margin-left: 12px; color: grey;' class='blue-hover' onclick='if(pdfLoading||noteLoading){return;}pycmd("siac-unhide-pdf-queue %s")'>(Show Items)</div>""" % note_id
     else:
-        hide_btn = """<div style='display: inline-block; margin-left: 12px; color: grey;' class='blue-hover' onclick='pycmd("siac-hide-pdf-queue %s")'>(Hide Items)</div>""" % note_id
+        hide_btn = """<div style='display: inline-block; margin-left: 12px; color: grey;' class='blue-hover' onclick='if(pdfLoading||noteLoading){return;}pycmd("siac-hide-pdf-queue %s")'>(Hide Items)</div>""" % note_id
     html = """
      <div id='siac-queue-readings-list' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; user-select: none;'>
                             <div style='margin: 0px 0 3px 0; display: inline-block; color: lightgrey;'>Queue Head:</div>%s<br>
@@ -921,6 +922,21 @@ def getCalendarHtml():
     html = html % html_content
     return html
 
+
+def pdf_prog_bar(read, read_total):
+    if read is not None and read_total is not None:
+        perc = int(read * 10.0 / read_total)
+        perc_100 =  int(read * 100.0 / read_total)
+        prog_bar = str(perc_100) + " % &nbsp;"
+        for x in range(0, 10):
+            if x < perc:
+                prog_bar = f"{prog_bar}<div class='siac-prog-sq-filled'></div>"
+            else:
+                prog_bar = f"{prog_bar}<div class='siac-prog-sq'></div>"
+        return prog_bar
+    else:
+        return ""
+
 def get_note_delete_confirm_modal_html(nid):
     note = get_note(nid)
     creation_date = note[6]
@@ -943,21 +959,12 @@ def get_queue_infobox(note, read_stats):
     """
         Returns the html that is displayed in the tooltip which appears when hovering over an item in the queue head.
     """
-    #(id, title, text, source, tags, nid, created, modified, reminder, _, position)
     diff = datetime.datetime.now() - datetime.datetime.strptime(note[6], '%Y-%m-%d %H:%M:%S')
     time_str = "Created %s ago." % utility.misc.date_diff_to_string(diff)
     # pagestotal might be None (it is only available if at least one page has been read)
     if read_stats[2] is not None:
-        perc = int(read_stats[0] * 10.0 / read_stats[2])
-        perc_100 =  int(read_stats[0] * 100.0 / read_stats[2])
-        prog_bar = str(perc_100) + " % &nbsp;"
+        prog_bar = pdf_prog_bar(read_stats[0], read_stats[2])
         pages_read = "<div style='width: 100%%; margin-top: 7px; font-weight: bold; text-align: center; font-size: 20px;'>%s / %s</div>" % (read_stats[0], read_stats[2])
-
-        for x in range(0, 10):
-            if x < perc:
-                prog_bar += "<div class='siac-prog-sq-filled'></div>"
-            else:
-                prog_bar += "<div class='siac-prog-sq'></div>"
     else:
         prog_bar = ""
         pages_read = ""
