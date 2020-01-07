@@ -1079,7 +1079,7 @@ function showLoader(target, text, voffset) {
     voffset = voffset ? voffset : 0;
     $('#' + target).append(`
     <div id='siac-loader-modal' class='siac-modal-small' contenteditable=false style='position: relative; text-align: center; margin-top: ${voffset}px;'>
-        <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/>${text}</div>
+        <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>${text}</div></div>
     </div>
     `);
 }
