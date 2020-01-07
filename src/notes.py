@@ -483,7 +483,7 @@ def delete_note(id):
 def get_read_today_count():
     now = datetime.today().strftime('%Y-%m-%d')
     conn = _get_connection()
-    c = conn.execute("select count(*) from read where page > -1 and created like '%s-%%'" % now).fetchone()
+    c = conn.execute("select count(*) from read where page > -1 and created like '%s%%'" % now).fetchone()
     conn.close()
     if c is None:
         return 0
@@ -722,3 +722,7 @@ def _to_output_list(db_list, pinned):
         if not str(id) in pinned:
             output_list.append((utility.text.build_user_note_text(title, text, source), tags, -1, id, 1, "-1", "", position))
     return output_list
+
+
+
+
