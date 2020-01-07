@@ -685,7 +685,7 @@ class CreateTab(QWidget):
 
     def on_remove_bold_clicked(self):
         html = self.text.toHtml()
-        html = remove_all_bold_formatting(html)
+        html = utility.text.remove_all_bold_formatting(html)
         self.text.setHtml(html)
 
     def on_bullet_list_clicked(self):
