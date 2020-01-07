@@ -469,24 +469,53 @@ def _display_pdf(full_path, note_id):
         }
         var file = new File([arr], "placeholder.pdf", {type : "application/pdf" });
         var fileReader = new FileReader();
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.worker.min.js';
         pagesRead = [%s];
         %s
-        fileReader.onload = function() {
-            var canvas = document.getElementById("siac-pdf-canvas");
-            var typedarray = new Uint8Array(this.result);
-            var loadingTask = pdfjsLib.getDocument(typedarray, {nativeImageDecoderSupport: 'display'});
-            loadingTask.promise.then(function(pdf) {
-                pdfDisplayed = pdf;
-                pdfDisplayedCurrentPage = %s;
+        var loadFn = function(retry) {
+            if (retry > 4) {
                 $('#siac-loader-modal').remove();
-                queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
-                updatePdfProgressBar();
-                if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + pdf.numPages); }
+                $('#siac-timer-popup').html(`<br><center>PDF.js could not be loaded from CDN.</center><br>`).show();
+                pdfDisplayed = null;
+                ungreyoutBottom();
+                fileReader = null;
+                pdfLoading = false;
+                noteLoading = false;
+                return;
+            }
+            if (typeof(pdfjsLib) === 'undefined') {
+                window.setTimeout(() => { loadFn(retry + 1);}, 800);
+                document.getElementById('siac-loader-text').innerHTML = `PDF.js was not loaded. Retrying (${retry+1} / 5)`;
+                return;
+            }
+            if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.worker.min.js';
+            }
+            var canvas = document.getElementById("siac-pdf-canvas");
+            var typedarray = new Uint8Array(fileReader.result);
+            var loadingTask = pdfjsLib.getDocument(typedarray, {nativeImageDecoderSupport: 'display'});
+            loadingTask.promise.catch(function(error) {
+                    $('#siac-loader-modal').remove();
+                    $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
+                    pdfDisplayed = null;
+                    ungreyoutBottom();
+                    fileReader = null;
+                    pdfLoading = false;
+                    noteLoading = false;
+            });
+            loadingTask.promise.then(function(pdf) {
+                    pdfDisplayed = pdf;
+                    pdfDisplayedCurrentPage = %s;
+                    $('#siac-loader-modal').remove();
+                    queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
+                    updatePdfProgressBar();
+                    if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + pdf.numPages); }
+                    fileReader = null;
             });
         };
+        fileReader.onload = (e) => { loadFn(0); };
+
         fileReader.readAsArrayBuffer(file);
-        b64 = ""; arr = null; bstr = null; file = null; fileReader = null;
+        b64 = ""; arr = null; bstr = null; file = null;
     """ % (pages_read_js, marks_js, last_page_read, note_id)
     #send large files in multiple packets
     if blen > 10000000:
@@ -722,9 +751,9 @@ def show_timer_elapsed_popup(nid):
         Added <b>%s</b> cards today.
     </div>
     <div style='text-align: center;'>
-        <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;5 min break&nbsp;</div>
+        <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;Start 5m&nbsp;</div>
         <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none";'>&nbsp;&nbsp;Ok&nbsp;&nbsp;</div>
-        <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;15 min break&nbsp;</div>
+        <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;Start 15m&nbsp;</div>
     </div>
     """ % (read_today_count, added_today_count)
     return "$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html
