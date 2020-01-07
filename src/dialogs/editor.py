@@ -476,6 +476,7 @@ class CreateTab(QWidget):
         bold.setFont(f)
         bold.setCheckable(True)
         bold.triggered.connect(self.on_bold_clicked)
+        bold.setShortcut(QKeySequence("Ctrl+b"))
 
         italic = self.tb.addAction("i")
         italic.setCheckable(True)
@@ -483,6 +484,7 @@ class CreateTab(QWidget):
         f = italic.font()
         f.setItalic(True)
         italic.setFont(f)
+        italic.setShortcut(QKeySequence("Ctrl+i"))
 
         underline = self.tb.addAction("u")
         underline.setCheckable(True)
@@ -490,6 +492,7 @@ class CreateTab(QWidget):
         f = underline.font()
         f.setUnderline(True)
         underline.setFont(f)
+        underline.setShortcut(QKeySequence("Ctrl+u"))
 
         strike = self.tb.addAction("s")
         strike.setCheckable(True)
