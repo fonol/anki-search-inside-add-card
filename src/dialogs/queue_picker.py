@@ -25,8 +25,15 @@ class QueuePicker(QDialog):
             self.dark_mode_used = False
         self.setup_ui(note_list, note_list_right)
         self.setWindowTitle("Pick a note to open")
-       
+        
+        # self.refresh_queue_list()
+        queue = _get_priority_list()
+        self.fill_list(self.t_view_left, queue, with_nums = True, with_icons = True)
+        self.notes_tab.fill_list(get_non_pdf_notes_not_in_queue())
+        self.pdfs_tab.fill_list(get_pdf_notes_not_in_queue())
 
+
+       
     def setup_ui(self, note_list, note_list_right):
 
         self.vbox_left = QVBoxLayout()
@@ -35,13 +42,13 @@ class QueuePicker(QDialog):
         self.vbox_left.addWidget(l_lbl)
         self.t_view_left = QListWidget()
     
-        self.fill_list(self.t_view_left, note_list, with_nums = True)
+        #self.fill_list(self.t_view_left, note_list, with_nums = True)
 
         self.tabs = QTabWidget()
         self.pdfs_tab = PDFsTab(self)
-        self.pdfs_tab.fill_list(note_list_right)
+        #self.pdfs_tab.fill_list(note_list_right)
         self.notes_tab = TextNotesTab(self)
-        self.notes_tab.fill_list(get_non_pdf_notes_not_in_queue())
+       # self.notes_tab.fill_list(get_non_pdf_notes_not_in_queue())
         self.folders_tab = FoldersTab(self)
         self.tabs.currentChanged.connect(self.tabs_changed)
         self.tabs.addTab(self.pdfs_tab, "PDFs, Unqueued")
@@ -51,6 +58,7 @@ class QueuePicker(QDialog):
 
         self.t_view_left.setSelectionMode(QAbstractItemView.SingleSelection)
         self.t_view_left.setMaximumWidth(370)
+        self.t_view_left.setUniformItemSizes(True)
         self.t_view_left.itemClicked.connect(self.item_clicked)
         self.vbox_left.addWidget(self.t_view_left)
 
@@ -135,7 +143,7 @@ class QueuePicker(QDialog):
         if ix == 2:
             self.folders_tab.fill_tree(get_most_used_pdf_folders())
 
-    def fill_list(self, t_view, db_res, with_nums = False):
+    def fill_list(self, t_view, db_res, with_nums = False, with_icons = True):
         t_view.clear()
         icon_provider = QFileIconProvider()
         pdf_icon = None
@@ -147,7 +155,10 @@ class QueuePicker(QDialog):
             if pdf_icon is None and n[3].endswith(".pdf"):
                 pdf_icon = icon_provider.icon(QFileInfo(n[3]))
             i = pdf_icon if n[3].endswith(".pdf") else icon
-            title_i = QListWidgetItem(i, title)
+            if with_icons:
+                title_i = QListWidgetItem(i, title)
+            else:
+                title_i = QListWidgetItem(title)
             title_i.setData(Qt.UserRole, QVariant(n[0]))
             t_view.insertItem(ix, title_i)
         
@@ -447,8 +458,6 @@ class FoldersTab(QWidget):
         res_f = [r[r.rindex("/")+1:] if "/" in r else r for r in res]
         self.fill_list(path, res_f)
         self.path_displayed = path
-
-
 
     def fill_list(self, path, names):
         self.list.clear()
