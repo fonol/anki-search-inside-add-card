@@ -522,7 +522,7 @@ def get_recently_used_tags():
     """
         Returns a [str] of max 10 tags, ordered by their usage desc.
     """
-    counts = _get_recently_used_tags_counts(20)
+    counts = _get_recently_used_tags_counts(30)
     ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:10]
     return ordered
 
@@ -671,7 +671,6 @@ def get_non_pdf_notes_not_in_queue():
     res = conn.execute("select * from notes where not lower(source) like '%.pdf' and position is null order by id desc").fetchall()
     conn.close()
     return res
-
 
 def get_pdf_info(nids):
     sql = "select nid, pagestotal, count(*) from read where nid in (%s) and page > -1 group by nid" % (",".join([str(n) for n in nids]))
