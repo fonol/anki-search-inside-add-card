@@ -3,6 +3,7 @@ from aqt.utils import tooltip
 import aqt.editor
 import aqt
 import functools
+import math
 import re
 import random
 from aqt.utils import saveGeom, restoreGeom
@@ -31,7 +32,7 @@ class EditDialog(QDialog):
         self.setWindowTitle(_("Edit Note"))
         self.setMinimumHeight(400)
         self.setMinimumWidth(500)
-        self.resize(500, 700)
+        self.resize(500, 850)
         self.form.buttonBox.button(QDialogButtonBox.Close).setShortcut(QKeySequence("Ctrl+Return"))
         self.editor = aqt.editor.Editor(self.mw, self.form.fieldsArea, self)
         self.editor.setNote(note, focusTo=0)
@@ -99,8 +100,6 @@ class NoteEditor(QDialog):
         #self.setWindowModality(Qt.WindowModal)
         #self.setAttribute(Qt.WA_DeleteOnClose)
         self.setup_ui()
-
-
 
     def setup_ui(self):
 
@@ -240,10 +239,12 @@ class CreateTab(QWidget):
         tmap = get_all_tags_as_hierarchy(False)
         self.tree = QTreeWidget()
         self.tree.setColumnCount(1)
+        self.tree.setIconSize(QSize(0,0))
         self.build_tree(tmap)
         self.tree.itemClicked.connect(self.tree_item_clicked)
         self.tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.tree.setMinimumHeight(150)
+        self.tree.setMinimumWidth(220)
         self.tree.setHeaderHidden(True)
         self.original_bg = None
         self.original_fg = None
@@ -256,19 +257,29 @@ class CreateTab(QWidget):
             "gb": [255,255,255,34,177,76]
         }
 
-
         recently_used_tags = get_recently_used_tags()
-        self.recent_tree = QTreeWidget()
-        self.recent_tree.setColumnCount(1)
-        self.recent_tree.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        self.recent_tree.setMaximumHeight(100)
-        self.recent_tree.setHeaderHidden(True)
+        config = mw.addonManager.getConfig(__name__)
+        tag_bg = config["styling"]["general"]["tagBackgroundColor"]
+        tag_fg = config["styling"]["general"]["tagForegroundColor"]
 
-        for t in recently_used_tags:
-            ti = QTreeWidgetItem([t])
-            ti.setData(0, 1, QVariant(t))
-            self.recent_tree.addTopLevelItem(ti)
-        self.recent_tree.itemClicked.connect(self.tree_item_clicked)
+        self.recent_tbl = QWidget()
+        self.recent_tbl.setObjectName("recentDisp")
+        self.recent_tbl.setStyleSheet("background-color: transparent;")
+        bs = f"""
+            background-color: {tag_bg};
+            color: {tag_fg};
+            padding: 2px 3px 2px 3px;
+            border-radius: 5px;
+        """
+        lo = FlowLayout()
+        self.recent_tbl.setLayout(lo)
+        for ix, t in enumerate(recently_used_tags):
+            btn = QPushButton(t)
+            btn.setStyleSheet(bs)
+            btn.clicked.connect(functools.partial(self.add_tag, t))
+            lo.addWidget(btn)
+        self.recent_tbl.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.recent_tbl.setMaximumHeight(100)
 
         self.queue_section = QGroupBox("Queue")
         ex_v = QVBoxLayout()
@@ -396,15 +407,22 @@ class CreateTab(QWidget):
         vbox_left.addWidget(self.all_tags_cb)
         if len(recently_used_tags) > 0:
             tag_lbl1 = QLabel()
-            tag_lbl1.setPixmap(tag_icn);
+            tag_lbl1.setPixmap(tag_icn)
 
             tag_hb1 = QHBoxLayout()
             tag_hb1.setAlignment(Qt.AlignLeft)
             tag_hb1.addWidget(tag_lbl1)
             tag_hb1.addWidget(QLabel("Recent (Click to Add)"))
             vbox_left.addLayout(tag_hb1)
-
-            vbox_left.addWidget(self.recent_tree)
+            qs = QScrollArea()
+            qs.setStyleSheet("""
+                QScrollArea { background-color: transparent; } 
+            """)
+            qs.setFrameShape(QFrame.NoFrame)
+            qs.setWidgetResizable(True)
+           
+            qs.setWidget(self.recent_tbl)
+            vbox_left.addWidget(qs)
 
         vbox_left.addWidget(self.queue_section)
 
@@ -579,6 +597,8 @@ class CreateTab(QWidget):
             QTextEdit { border-radius: 5px; border: 1px solid #717378;  padding: 3px; }
             QLineEdit { border-radius: 5px; border: 1px solid #717378;  padding: 2px;}
 
+            #recentDisp { margin: 5px; }
+
         """
 
         # if parent.dark_mode_used:
@@ -632,6 +652,10 @@ class CreateTab(QWidget):
 
     def tree_item_clicked(self, item, col):
         tag = item.data(0, 1)
+        self.add_tag(tag)
+
+    def recent_item_clicked(self, item):
+        tag = item.data(Qt.UserRole)
         self.add_tag(tag)
 
     def add_tag(self, tag):
@@ -861,7 +885,7 @@ class PriorityTab(QWidget):
             QHeaderView::section { background-color: #313233; color: white; }
             QTableCornerButton::section {
                 background-color: #313233;
-}
+            }
             """)
 
 
@@ -965,7 +989,6 @@ class PriorityListModel(QStandardItemModel):
             ids = [i for ix ,i in enumerate(ids) if i != id or ix == row]
             set_priority_list(ids)
 
-
             rem_btn = QPushButton("Remove")
             if self.parent.parent.dark_mode_used:
                 rem_btn.setStyleSheet("border: 1px solid darkgrey; border-style: outset; font-size: 10px; background: #313233; color: white; margin: 0px; padding: 3px;")
@@ -974,7 +997,6 @@ class PriorityListModel(QStandardItemModel):
             rem_btn.setCursor(Qt.PointingHandCursor)
             rem_btn.setMinimumHeight(18)
             rem_btn.clicked.connect(functools.partial(self.parent.on_remove_clicked, self.item(row).data()))
-
 
             h_l = QHBoxLayout()
             h_l.addWidget(rem_btn)
@@ -1103,3 +1125,89 @@ class ExpandableSection(QWidget):
         content_animation.setDuration(500)
         content_animation.setStartValue(0)
         content_animation.setEndValue(content_height)
+
+class FlowLayout(QLayout):
+    def __init__(self, parent=None, margin=0, spacing=-1):
+        super(FlowLayout, self).__init__(parent)
+
+        if parent is not None:
+            self.setContentsMargins(margin, margin, margin, margin)
+
+        self.setSpacing(spacing)
+
+        self.itemList = []
+
+    def __del__(self):
+        item = self.takeAt(0)
+        while item:
+            item = self.takeAt(0)
+
+    def addItem(self, item):
+        self.itemList.append(item)
+
+    def count(self):
+        return len(self.itemList)
+
+    def itemAt(self, index):
+        if index >= 0 and index < len(self.itemList):
+            return self.itemList[index]
+
+        return None
+
+    def takeAt(self, index):
+        if index >= 0 and index < len(self.itemList):
+            return self.itemList.pop(index)
+
+        return None
+
+    def expandingDirections(self):
+        return Qt.Orientations(Qt.Orientation(0))
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        height = self.doLayout(QRect(0, 0, width, 0), True)
+        return height
+
+    def setGeometry(self, rect):
+        super(FlowLayout, self).setGeometry(rect)
+        self.doLayout(rect, False)
+
+    def sizeHint(self):
+        return self.minimumSize()
+
+    def minimumSize(self):
+        size = QSize()
+
+        for item in self.itemList:
+            size = size.expandedTo(item.minimumSize())
+
+        margin, _, _, _ = self.getContentsMargins()
+
+        size += QSize(2 * margin, 2 * margin)
+        return size
+
+    def doLayout(self, rect, testOnly):
+        x = rect.x()
+        y = rect.y()
+        lineHeight = 0
+
+        for item in self.itemList:
+            wid = item.widget()
+            spaceX = self.spacing() + wid.style().layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal)
+            spaceY = self.spacing() + wid.style().layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical)
+            nextX = x + item.sizeHint().width() + spaceX
+            if nextX - spaceX > rect.right() and lineHeight > 0:
+                x = rect.x()
+                y = y + lineHeight + spaceY
+                nextX = x + item.sizeHint().width() + spaceX
+                lineHeight = 0
+
+            if not testOnly:
+                item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
+
+            x = nextX
+            lineHeight = max(lineHeight, item.sizeHint().height())
+
+        return y + lineHeight - rect.y()
