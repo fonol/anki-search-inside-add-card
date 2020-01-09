@@ -327,7 +327,8 @@ def expanded_on_bridge_cmd(self, cmd):
 
     elif cmd.startswith("siac-user-note-queue-picker "):
         nid = int(cmd.split()[1])
-        picker = QueuePicker(self.parentWindow, _get_priority_list(), get_pdf_notes_not_in_queue())
+        #picker = QueuePicker(self.parentWindow, _get_priority_list(), get_pdf_notes_not_in_queue())
+        picker = QueuePicker(self.parentWindow, [], [])
         if picker.exec_():
             if picker.chosen_id is not None and picker.chosen_id >= 0:
                 display_note_reading_modal(picker.chosen_id)
