@@ -9,6 +9,7 @@ from aqt import mw
 from ..state import get_index, check_index
 from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags
 from ..feeds import read
+from ..internals import perf_time
 import utility.misc
 import utility.tags
 import utility.text
@@ -137,11 +138,11 @@ def right_side_html(config, indexIsLoaded = False):
                     <div id='modal-visible'>
                     <div id="modalText"></div>
                     <div id="modal-subpage">
-                        <button class='modal-close' onclick='hideModalSubpage()'>&#8592; Back</button>
+                        <button class='modal-close siac-btn' onclick='hideModalSubpage()'>&#8592; Back</button>
                         <div id="modal-subpage-inner"></div>
                     </div>
                     <div style='text-align: right; margin-top:25px;'>
-                        <button class='modal-close' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
+                        <button class='modal-close siac-btn' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
                     </div>
                     </div>
                 </div>
@@ -363,7 +364,7 @@ def get_notes_sidebar_html():
                     <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs")'>PDFs</div>
                     <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-untagged")'>Untagged</div>
                     <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-random");'>Random</div>
-                    <input type='text' id='siac-sidebar-inp' style='width: calc(100%% - 15px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>
+                    <input type='text' class='siac-sidebar-inp' style='width: calc(100%% - 15px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>
                     <div class='w-100' style='margin-top: 20px;'><b>Tags (%s)</b></div>
                     <hr style='margin-right: 15px;'/>
                 </div>
@@ -993,7 +994,7 @@ def stylingModal(config):
     html = """
             <fieldset>
                 <span>Exclude note fields from search or display.</span>
-                <button class='siac-btn-small' style='float: right;' onclick='pycmd("siac-model-dialog")'>Set Fields</button>
+                <button class='siac-btn siac-btn-small' style='float: right;' onclick='pycmd("siac-model-dialog")'>Set Fields</button>
             </fieldset>
             <br/>
             <fieldset>
