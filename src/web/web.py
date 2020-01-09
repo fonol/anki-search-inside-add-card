@@ -15,7 +15,7 @@ from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
 from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
 from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar, get_notes_sidebar_html
-from ..internals import js, requires_index_loaded
+from ..internals import js, requires_index_loaded, perf_time
 
 @js
 def toggleAddon():
@@ -518,18 +518,21 @@ def _display_pdf(full_path, note_id):
         b64 = ""; arr = null; bstr = null; file = null;
     """ % (pages_read_js, marks_js, last_page_read, note_id)
     #send large files in multiple packets
-    if blen > 10000000:
-        index.output.editor.web.page().runJavaScript("var b64 = `%s`;" % base64pdf[0: 10000000])
-        sent = 10000000
+    page = index.output.editor.web.page()
+    chunk_size = 10000000
+    if blen > chunk_size:
+        page.runJavaScript(f"var b64 = `{base64pdf[0: chunk_size]}`;")
+        sent = chunk_size
         while sent < blen:
-            index.output.editor.web.page().runJavaScript("b64 += `%s`;" % base64pdf[sent: min(blen,sent + 10000000)])
-            sent += min(blen - sent, 10000000)
-        index.output.editor.web.page().runJavaScript(init_code)
+            page.runJavaScript(f"b64 += `{base64pdf[sent: min(blen,sent + chunk_size)]}`;")
+            sent += min(blen - sent, chunk_size)
+        page.runJavaScript(init_code)
     else:
-        index.output.editor.web.page().runJavaScript("""
+        page.runJavaScript("""
             var b64 = `%s`;
                 %s
         """ % (base64pdf, init_code))
+
 
 
 @js
