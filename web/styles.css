@@ -1217,7 +1217,7 @@ span.tag-symbol {
     padding-left: 5px;
     transform: scale(1.05);
 }
-#siac-sidebar-inp {
+.siac-sidebar-inp {
     background: $browserSearchInputBackgroundColor$;
     color: $browserSearchInputForegroundColor$;
 }
@@ -1929,6 +1929,7 @@ span.tag-symbol {
     padding: 15px;
     width: 250px;
     border: 2px solid $modalBorderColor$;
+    text-align: center;
 }
 .siac-modal-small.dark, #siac-reading-modal .siac-modal-small {
     border: 3px outset darkorange;
