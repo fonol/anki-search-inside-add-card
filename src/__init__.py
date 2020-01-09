@@ -254,7 +254,6 @@ def appendNoteToField(content, key):
     note.flush()
     index.output.editor.loadNote()
 
-@requires_index_loaded
 def appendImgToField(src, key):
     if src is None or len(src) == 0:
         return
@@ -268,7 +267,7 @@ def appendImgToField(src, key):
 def setup_tagedit_timer():
     global tagEditTimer
     tagEditTimer = QTimer()
-    tagEditTimer.setSingleShot(True) # set up your QTimer
+    tagEditTimer.setSingleShot(True) 
 
 def tag_edit_keypress(self, evt):
     """
