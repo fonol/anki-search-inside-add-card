@@ -16,6 +16,7 @@ from ..state import get_index, check_index, set_deck_map
 from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
 from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar, get_notes_sidebar_html
 from ..internals import js, requires_index_loaded, perf_time
+from ..config import get_config_value_or_default
 
 @js
 def toggleAddon():
@@ -30,7 +31,6 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     """
     #get path
     dir = utility.misc.get_web_folder_path()
-    config = mw.addonManager.getConfig(__name__)
     #css + js
     all = """
     <style>
@@ -47,206 +47,50 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
         css = f.read().replace("%", "%%")
     script = script.replace("$del$", str(delayWhileTyping))
 
-    try:
-        deckSelectFontSize = config["styling"]["topBar"]["deckSelectFontSize"]
-    except KeyError:
-        deckSelectFontSize = 12
-    try:
-        noteFontSize = config["styling"]["general"]["noteFontSize"]
-    except KeyError:
-        noteFontSize = 12
-
-    try:
-        noteForegroundColor = config["styling"]["general"]["noteForegroundColor"]
-    except KeyError:
-        noteForegroundColor = "black"
-
-    try:
-        noteBackgroundColor = config["styling"]["general"]["noteBackgroundColor"]
-    except KeyError:
-        noteBackgroundColor = "white"
-
-    try:
-        noteBorderColor = config["styling"]["general"]["noteBorderColor"]
-    except KeyError:
-        noteBorderColor = "grey"
-    try:
-        noteHoverBorderColor = config["styling"]["general"]["noteHoverBorderColor"]
-    except KeyError:
-        noteHoverBorderColor = "#2496dc"
-    try:
-        tagBackgroundColor = config["styling"]["general"]["tagBackgroundColor"]
-    except KeyError:
-        tagBackgroundColor = "#f0506e"
-
-    try:
-        tagForegroundColor = config["styling"]["general"]["tagForegroundColor"]
-    except KeyError:
-        tagForegroundColor = "white"
-    try:
-        tagFontSize = config["styling"]["general"]["tagFontSize"]
-    except KeyError:
-        tagFontSize = 12
-    try:
-        deckSelectForegroundColor = config["styling"]["topBar"]["deckSelectForegroundColor"]
-    except KeyError:
-        deckSelectForegroundColor = "black"
-
-    try:
-        deckSelectBackgroundColor = config["styling"]["topBar"]["deckSelectBackgroundColor"]
-    except KeyError:
-        deckSelectBackgroundColor = "white"
-    try:
-        deckSelectHoverForegroundColor = config["styling"]["topBar"]["deckSelectHoverForegroundColor"]
-    except KeyError:
-        deckSelectHoverForegroundColor = "white"
-
-    try:
-        deckSelectHoverBackgroundColor = config["styling"]["topBar"]["deckSelectHoverBackgroundColor"]
-    except KeyError:
-        deckSelectHoverBackgroundColor = "#5f6468"
-
-    try:
-        deckSelectButtonForegroundColor = config["styling"]["topBar"]["deckSelectButtonForegroundColor"]
-    except KeyError:
-        deckSelectButtonForegroundColor = "grey"
-
-    try:
-        deckSelectButtonBackgroundColor = config["styling"]["topBar"]["deckSelectButtonBackgroundColor"]
-    except KeyError:
-        deckSelectButtonBackgroundColor = "white"
-
-    try:
-        deckSelectButtonBorderColor = config["styling"]["topBar"]["deckSelectButtonBorderColor"]
-    except KeyError:
-        deckSelectButtonBorderColor = "grey"
-    try:
-        deckSelectCheckmarkColor = config["styling"]["topBar"]["deckSelectCheckmarkColor"]
-    except KeyError:
-        deckSelectCheckmarkColor = "grey"
-
-    try:
-        modalBackgroundColor = config["styling"]["modal"]["modalBackgroundColor"]
-    except KeyError:
-        modalBackgroundColor = "white"
-
-    try:
-        modalForegroundColor = config["styling"]["modal"]["modalForegroundColor"]
-    except KeyError:
-        modalForegroundColor = "black"
-
-    try:
-        browserSearchButtonBorderColor = config["styling"]["bottomBar"]["browserSearchButtonBorderColor"]
-    except KeyError:
-        browserSearchButtonBorderColor = "#2496dc"
-
-    try:
-        browserSearchButtonBackgroundColor = config["styling"]["bottomBar"]["browserSearchButtonBackgroundColor"]
-    except KeyError:
-        browserSearchButtonBackgroundColor = "white"
-
-    try:
-        browserSearchButtonForegroundColor = config["styling"]["bottomBar"]["browserSearchButtonForegroundColor"]
-    except KeyError:
-        browserSearchButtonForegroundColor = "#2496dc"
-
-    try:
-        browserSearchInputBorderColor = config["styling"]["bottomBar"]["browserSearchInputBorderColor"]
-    except KeyError:
-        browserSearchInputBorderColor = "#2496dc"
-
-    try:
-        browserSearchInputBackgroundColor = config["styling"]["bottomBar"]["browserSearchInputBackgroundColor"]
-    except KeyError:
-        browserSearchInputBackgroundColor = "white"
-
-    try:
-        browserSearchInputForegroundColor = config["styling"]["bottomBar"]["browserSearchInputForegroundColor"]
-    except KeyError:
-        browserSearchInputForegroundColor = "#2496dc"
-
-    try:
-        infoButtonBorderColor = config["styling"]["general"]["buttonBorderColor"]
-    except KeyError:
-        infoButtonBorderColor = "#2496dc"
-
-    try:
-        infoButtonBackgroundColor = config["styling"]["general"]["buttonBackgroundColor"]
-    except KeyError:
-        infoButtonBackgroundColor = "white"
-
-    try:
-        infoButtonForegroundColor = config["styling"]["general"]["buttonForegroundColor"]
-    except KeyError:
-        infoButtonForegroundColor = "#2496dc"
-    try:
-        highlightBackgroundColor = config["styling"]["general"]["highlightBackgroundColor"]
-    except KeyError:
-        highlightBackgroundColor = "yellow"
-    try:
-        highlightForegroundColor = config["styling"]["general"]["highlightForegroundColor"]
-    except KeyError:
-        highlightForegroundColor = "black"
-    try:
-        rankingLabelBackgroundColor = config["styling"]["general"]["rankingLabelBackgroundColor"]
-    except KeyError:
-        rankingLabelBackgroundColor = "#2496dc"
-    try:
-        rankingLabelForegroundColor = config["styling"]["general"]["rankingLabelForegroundColor"]
-    except KeyError:
-        rankingLabelForegroundColor = "white"
-    try:
-        selectBackgroundColor = config["styling"]["bottomBar"]["selectBackgroundColor"]
-    except KeyError:
-        selectBackgroundColor = "white"
-    try:
-        selectForegroundColor = config["styling"]["bottomBar"]["selectForegroundColor"]
-    except KeyError:
-        selectForegroundColor = "black"
-
-
-    try:
-        stripedTableBackgroundColor = config["styling"]["modal"]["stripedTableBackgroundColor"]
-    except KeyError:
-        stripedTableBackgroundColor = "#f2f2f2"
-    try:
-        modalBorderColor = config["styling"]["modal"]["modalBorderColor"]
-    except KeyError:
-        modalBorderColor = "#2496dc"
-    try:
-        keywordColor = config["styling"]["general"]["keywordColor"]
-    except KeyError:
-        keywordColor = "#2496dc"
-    try:
-        fieldSeparatorColor = config["styling"]["general"]["fieldSeparatorColor"]
-    except KeyError:
-        fieldSeparatorColor = "#2496dc"
-    try:
-        windowColumnSeparatorColor = config["styling"]["general"]["windowColumnSeparatorColor"]
-    except KeyError:
-        windowColumnSeparatorColor = "#2496dc"
-
-
-    try:
-        timelineBoxBackgroundColor = config["styling"]["bottomBar"]["timelineBoxBackgroundColor"]
-    except KeyError:
-        timelineBoxBackgroundColor = "#595959"
-    try:
-        timelineBoxBorderColor = config["styling"]["bottomBar"]["timelineBoxBorderColor"]
-    except KeyError:
-        timelineBoxBorderColor = "#595959"
-    try:
-        imgMaxHeight = str(config["imageMaxHeight"]) + "px"
-    except KeyError:
-        imgMaxHeight = "300px"
-
-
-    try:
-        pdfTooltipMaxHeight = str(config["pdfTooltipMaxHeight"])
-        pdfTooltipMaxWidth = str(config["pdfTooltipMaxWidth"])
-    except KeyError:
-        pdfTooltipMaxHeight = "300"
-        pdfTooltipMaxWidth = "250"
+    deckSelectFontSize = get_config_value_or_default(["styling", "topBar", "deckSelectFontSize"], 11)
+    noteFontSize = get_config_value_or_default(["styling", "general", "noteFontSize"], 12)
+    noteForegroundColor = get_config_value_or_default(["styling", "general", "noteForegroundColor"], "black")
+    noteBackgroundColor = get_config_value_or_default(["styling", "general", "noteBackgroundColor"], "white")
+    noteBorderColor = get_config_value_or_default(["styling", "general", "noteBorderColor"], "grey")
+    noteHoverBorderColor = get_config_value_or_default(["styling", "general", "noteHoverBorderColor"], "#2496dc")
+    tagBackgroundColor = get_config_value_or_default(["styling", "general", "tagBackgroundColor"], "#f0506e")
+    tagForegroundColor = get_config_value_or_default(["styling", "general", "tagForegroundColor"], "white")
+    tagFontSize = get_config_value_or_default(["styling", "general", "tagFontSize"], 12)
+    deckSelectForegroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectForegroundColor"], "black")
+    deckSelectBackgroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectBackgroundColor"], "white")
+    deckSelectHoverForegroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectHoverForegroundColor"], "white")
+    deckSelectHoverBackgroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectHoverBackgroundColor"], "#5f6468")
+    deckSelectButtonForegroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectButtonForegroundColor"], "grey")
+    deckSelectButtonBackgroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectButtonBackgroundColor"], "white")
+    deckSelectButtonBorderColor = get_config_value_or_default(["styling", "topBar", "deckSelectButtonBorderColor"], "grey")
+    deckSelectCheckmarkColor = get_config_value_or_default(["styling", "topBar", "deckSelectCheckmarkColor"], "grey")
+    modalBackgroundColor = get_config_value_or_default(["styling", "modal", "modalBackgroundColor"], "white")
+    modalForegroundColor = get_config_value_or_default(["styling", "modal", "modalForegroundColor"], "black")
+    browserSearchButtonBorderColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchButtonBorderColor"], "#2496dc")
+    browserSearchButtonBackgroundColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchButtonBackgroundColor"], "white")
+    browserSearchButtonForegroundColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchButtonForegroundColor"], "#2496dc")
+    browserSearchInputBorderColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchInputBorderColor"], "#2496dc")
+    browserSearchInputBackgroundColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchInputBackgroundColor"], "white")
+    browserSearchInputForegroundColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchInputForegroundColor"], "#2496dc")
+    infoButtonBorderColor = get_config_value_or_default(["styling", "general", "buttonBorderColor"], "#2496dc")
+    infoButtonBackgroundColor = get_config_value_or_default(["styling", "general", "buttonBackgroundColor"], "white")
+    infoButtonForegroundColor = get_config_value_or_default(["styling", "general", "buttonForegroundColor"], "#2496dc")
+    highlightBackgroundColor = get_config_value_or_default(["styling", "general", "highlightBackgroundColor"], "yellow")
+    highlightForegroundColor = get_config_value_or_default(["styling", "general", "highlightForegroundColor"], "black")
+    rankingLabelBackgroundColor = get_config_value_or_default(["styling", "general", "rankingLabelBackgroundColor"], "#2496dc")
+    rankingLabelForegroundColor = get_config_value_or_default(["styling", "general", "rankingLabelForegroundColor"], "white")
+    selectBackgroundColor = get_config_value_or_default(["styling", "bottomBar", "selectBackgroundColor"], "white")
+    selectForegroundColor = get_config_value_or_default(["styling", "bottomBar", "selectForegroundColor"], "black")
+    stripedTableBackgroundColor = get_config_value_or_default(["styling", "modal", "stripedTableBackgroundColor"], "#f2f2f2")
+    modalBorderColor = get_config_value_or_default(["styling", "modal", "modalBorderColor"], "#2496dc")
+    keywordColor = get_config_value_or_default(["styling", "general", "keywordColor"], "#2496dc")
+    fieldSeparatorColor = get_config_value_or_default(["styling", "general", "fieldSeparatorColor"], "#2496dc")
+    windowColumnSeparatorColor = get_config_value_or_default(["styling", "general", "windowColumnSeparatorColor"], "#2496dc")
+    timelineBoxBackgroundColor = get_config_value_or_default(["styling", "bottomBar", "timelineBoxBackgroundColor"], "#595959")
+    timelineBoxBorderColor = get_config_value_or_default(["styling", "bottomBar", "timelineBoxBorderColor"], "#595959")
+    imgMaxHeight = str(get_config_value_or_default("imageMaxHeight", 300)) + "px"
+    pdfTooltipMaxHeight = str(get_config_value_or_default("pdfTooltipMaxHeight", 300))
+    pdfTooltipMaxWidth = str(get_config_value_or_default("pdfTooltipMaxWidth", 250))
 
     css = css.replace("$deckSelectFontSize$", str(deckSelectFontSize) + "px")
     css = css.replace("$deckSelectForegroundColor$", deckSelectForegroundColor)
@@ -306,10 +150,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     css = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
     css = css.replace("$pdfTooltipMaxWidth$", pdfTooltipMaxWidth)
 
-    try:
-        renderImmediately = str(config["renderImmediately"]).lower()
-    except KeyError:
-        renderImmediately = "false"
+    renderImmediately = str(get_config_value_or_default("renderImmediately", False)).lower()
     script = script.replace("$renderImmediately$", renderImmediately)
 
     #replace command key with meta key for mac
