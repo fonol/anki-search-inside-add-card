@@ -69,7 +69,7 @@ def expanded_on_bridge_cmd(self, cmd):
     elif (cmd.startswith("siac-pin")):
         set_pinned(cmd[9:])
     elif (cmd.startswith("siac-render-tags")):
-        index.output.printTagHierarchy(cmd[11:].split(" "))
+        index.output.printTagHierarchy(cmd[16:].split(" "))
     elif (cmd.startswith("siac-random-notes ") and check_index()):
         res = getRandomNotes(index, [s for s in cmd[17:].split(" ") if s != ""])
         index.output.print_search_results(res["result"], res["stamp"])
