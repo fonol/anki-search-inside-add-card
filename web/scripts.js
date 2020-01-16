@@ -39,7 +39,6 @@ function pdfImgMouseUp(event) {
         pdfImgSel.mouseIsDown = false;
         drawSquare();
         var pdfC = document.getElementById("siac-pdf-canvas");
-       
         cropSelection(pdfC, pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX , pdfImgSel.endY - pdfImgSel.startY, insertImage);
         $(pdfImgSel.canvas).remove();
         $('#text-layer').show();
@@ -586,9 +585,9 @@ function onResize() {
     height -= ($('#topContainer').is(":hidden") ? -1 : $('#topContainer').outerHeight(true));
     height -= $('#topbutsOuter').outerHeight(true);
     height -= $('#bottomContainer').outerHeight(true);
-    height -= 30;
-    $("#resultsArea").css("height", (height - 9 + addToResultAreaHeight) + "px");
-
+    height -= 39;
+    height += addToResultAreaHeight;
+    $("#resultsArea").css("height", height + "px");
     if (!$('#switchBtn').is(":visible")) {
         $('#leftSide').show();
         $('#outerWr').css('display', 'flex').removeClass('onesided');
