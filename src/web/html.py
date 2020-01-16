@@ -130,35 +130,36 @@ def right_side_html(config, indexIsLoaded = False):
 
         $(`#fields`).wrap(`<div class='coll' id='leftSide' style='min-width: 200px; flex-grow: 1; width: %s%%;'></div>`);
         document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
-        $(`<div class='coll secondCol' style='width: %s%%; flex-grow: 1;  height: 100%%;' id='infoBox'>
+        $(`
+        <div class='coll secondCol' style='width: %s%%; flex-grow: 1;  height: 100%%;' id='infoBox'>
             <div id='siac-second-col-wrapper'>
-            <div id="greyout"></div>
-            <div id="a-modal" class="modal">
-                <div class="modal-content">
-                    <div id='modal-visible'>
-                    <div id="modalText"></div>
-                    <div id="modal-subpage">
-                        <button class='modal-close siac-btn' onclick='hideModalSubpage()'>&#8592; Back</button>
-                        <div id="modal-subpage-inner"></div>
-                    </div>
-                    <div style='text-align: right; margin-top:25px;'>
-                        <button class='modal-close siac-btn' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
-                    </div>
+                <div id="greyout"></div>
+                <div id="a-modal" class="modal">
+                    <div class="modal-content">
+                        <div id='modal-visible'>
+                        <div id="modalText"></div>
+                        <div id="modal-subpage">
+                            <button class='modal-close siac-btn' onclick='hideModalSubpage()'>&#8592; Back</button>
+                            <div id="modal-subpage-inner"></div>
+                        </div>
+                        <div style='text-align: right; margin-top:25px;'>
+                            <button class='modal-close siac-btn' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
+                        </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div id='siac-search-modal'>
-                <div id='siac-search-modal-wrapper'>
-                    <div id='siac-search-modal-header'></div>
-                    <input type='text' id='siac-search-modal-inp'/>
-                    <span id='siac-search-modal-close' onclick='document.getElementById("siac-search-modal").style.display = "none";'>&nbsp;Close &times;</span>
+                <div id='siac-search-modal'>
+                    <div id='siac-search-modal-wrapper'>
+                        <div id='siac-search-modal-header'></div>
+                        <input type='text' id='siac-search-modal-inp'/>
+                        <span id='siac-search-modal-close' onclick='document.getElementById("siac-search-modal").style.display = "none";'>&nbsp;Close &times;</span>
+                    </div>
                 </div>
-            </div>
                 <div class="flexContainer" id="topContainer">
                     <div class='flexCol' style='margin-left: 0px; padding-left: 0px;'>
                         <div id='siac-switch-deck-btn' class='siac-btn-small'  onmouseleave='$(this).removeClass("expanded")' style='display: inline-block; position: relative; min-width: 200px; width: calc(100%% - 1px); text-align: center;' >
-                           <div class='siac-switch-deck-btn-inner' onclick="pycmd('siac-fill-deck-select')"><b>Decks</b></div>
-                           <div class='siac-switch-deck-btn-inner right' onclick="pycmd('siac-fill-tag-select')"><b>Tags</b></div>
+                        <div class='siac-switch-deck-btn-inner' onclick="pycmd('siac-fill-deck-select')"><b>Decks</b></div>
+                        <div class='siac-switch-deck-btn-inner right' onclick="pycmd('siac-fill-tag-select')"><b>Tags</b></div>
                             <div class='siac-btn-small-dropdown click'>
                                 <div id='deckSelWrapper'>
                                     <div id='deck-sel-info-lbl' style='margin: 5px 0 4px 5px;'><i>Only selected decks are used when searching:</i></div>
@@ -199,11 +200,11 @@ def right_side_html(config, indexIsLoaded = False):
                                                     <tr><td class='tbLb'><label class='blue-hover' for='typingCb'>Search on Typing</label></td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
                                                     <tr><td class='tbLb'><label for='highlightCb'><mark>&nbsp;Highlighting&nbsp;</mark></label></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
                                                     <tr><td class='tbLb'><label class='blue-hover' for='gridCb'>Grid</label></td><td><input type='checkbox' id='gridCb' onchange='toggleGrid(this)'/></td></tr>
-                                                 </table>
-                                                 <span>Note Scale</span>
-                                                 <hr>
-                                                 <input type='range' min='0.5' max='1.5' step='0.1' value='%s' list='siac-scale-tickmarks' onfocusout='pycmd("siac-scale " + this.value)'/>
-                                                 <datalist id="siac-scale-tickmarks">
+                                                </table>
+                                                <span>Note Scale</span>
+                                                <hr>
+                                                <input type='range' min='0.5' max='1.5' step='0.1' value='%s' list='siac-scale-tickmarks' onfocusout='pycmd("siac-scale " + this.value)'/>
+                                                <datalist id="siac-scale-tickmarks">
                                                     <option value="0.5" label="0.5"></option>
                                                     <option value="0.6"></option>
                                                     <option value="0.7"></option>
@@ -216,14 +217,14 @@ def right_side_html(config, indexIsLoaded = False):
                                                     <option value="1.4"></option>
                                                     <option value="1.5" label="1.5"></option>
                                                 </datalist>
-                                                 <br>
-                                                 <span>Menus</span>
-                                                 <hr>
+                                                <br>
+                                                <span>Menus</span>
+                                                <hr>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("indexInfo");'>&nbsp;Info</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("synonyms");'>&nbsp;Synonyms</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("styling");'>&nbsp;Settings</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
-                                         </div>
+                                        </div>
                             </div>
                     </div>
                 </div>
@@ -259,15 +260,21 @@ def right_side_html(config, indexIsLoaded = False):
                             <div class='flexContainer' style="flex-wrap: nowrap;">
                                 <fieldset id="sortCol" style="flex: 0 0 auto; font-size: 0.85em;">
                                     <legend>Sorting & Filtering</legend>
-                                    <select id='sortSelect'>
-                                        <option value='newest' selected='true'>Sort By Newest</option>
-                                        <option value='oldest' selected='true'>Sort By Oldest</option>
-                                        <option value='remUntagged'>Remove Untagged</option>
-                                        <option value='remTagged'>Remove Tagged</option>
-                                        <option value='remUnreviewed'>Remove Unreviewed</option>
-                                        <option value='remReviewed'>Remove Reviewed</option>
-                                    </select>
-                                    <div id='sortBtn' onclick='sort();'>GO</div>
+                                    <div class='siac-table-container' style='height: 20px;'>
+                                        <div class='siac-table-cell'>
+                                            <select id='sortSelect' class='h-100'>
+                                                <option value='newest' selected='true'>Sort By Newest</option>
+                                                <option value='oldest' selected='true'>Sort By Oldest</option>
+                                                <option value='remUntagged'>Remove Untagged</option>
+                                                <option value='remTagged'>Remove Tagged</option>
+                                                <option value='remUnreviewed'>Remove Unreviewed</option>
+                                                <option value='remReviewed'>Remove Reviewed</option>
+                                            </select>
+                                        </div>
+                                        <div class='siac-table-cell'>
+                                            <div class='siac-table-cell-btn' style='margin-left: 5px;' onclick='sort();'>GO</div>
+                                        </div>
+                                    </div>
                                 </fieldset>
 
                                 <fieldset id="searchMaskCol" style="flex: 1 1 auto; font-size: 0.85em;">
@@ -277,45 +284,49 @@ def right_side_html(config, indexIsLoaded = False):
 
                                 <fieldset id="predefCol" style="flex: 0 0 auto; font-size: 0.85em;">
                                     <legend>Predefined Searches</legend>
-                                    <select id='predefSearchSelect'>
-                                        <option value='lastAdded' selected='true'>Last Added</option>
-                                        <option value='firstAdded'>First Added</option>
-                                        <option value='lastModified'>Last Modified</option>
-                                        <option value='lastReviewed'>Last Reviewed</option>
-                                        <option value='lastLapses'>Last Lapses</option>
-                                        <option value='highestPerf'>Performance (desc.)</option>
-                                        <option value='lowestPerf'>Performance (asc.)</option>
-                                        <option value='highestRet'>Pass Rate (desc.)</option>
-                                        <option value='lowestRet'>Pass Rate (asc.)</option>
-                                        <option value='longestTime'>Time Taken (desc.)</option>
-                                        <option value='shortestTime'>Time Taken (asc.)</option>
-                                        <option value='highestInterval'>Interval (desc.)</option>
-                                        <option value='lowestInterval'>Interval (asc.)</option>
-                                        <option value='longestText'>Longest Text</option>
-                                        <option value='randomUntagged'>Random Untagged</option>
-                                    </select>
-                                    <select id='predefSearchNumberSel'>
-                                        <option value='10'>10</option>
-                                        <option value='50' selected='true'>50</option>
-                                        <option value='100'>100</option>
-                                        <option value='200'>200</option>
-                                        <option value='500'>500</option>
-                                    </select>
-                                    <div id='lastAdded' onclick='predefSearch();'>GO</div>
+                                    <div class='siac-table-container' style='height: 20px;'>
+                                        <div class='siac-table-cell'>
+                                            <select id='predefSearchSelect' class='h-100'>
+                                                <option value='lastAdded' selected='true'>Last Added</option>
+                                                <option value='firstAdded'>First Added</option>
+                                                <option value='lastModified'>Last Modified</option>
+                                                <option value='lastReviewed'>Last Reviewed</option>
+                                                <option value='lastLapses'>Last Lapses</option>
+                                                <option value='highestPerf'>Performance (desc.)</option>
+                                                <option value='lowestPerf'>Performance (asc.)</option>
+                                                <option value='highestRet'>Pass Rate (desc.)</option>
+                                                <option value='lowestRet'>Pass Rate (asc.)</option>
+                                                <option value='longestTime'>Time Taken (desc.)</option>
+                                                <option value='shortestTime'>Time Taken (asc.)</option>
+                                                <option value='highestInterval'>Interval (desc.)</option>
+                                                <option value='lowestInterval'>Interval (asc.)</option>
+                                                <option value='longestText'>Longest Text</option>
+                                                <option value='randomUntagged'>Random Untagged</option>
+                                            </select>
+                                        </div>
+                                        <div class='siac-table-cell'>
+                                            <select id='predefSearchNumberSel' class='h-100'>
+                                                <option value='10'>10</option>
+                                                <option value='50' selected='true'>50</option>
+                                                <option value='100'>100</option>
+                                                <option value='200'>200</option>
+                                                <option value='500'>500</option>
+                                            </select>
+                                        </div>
+                                        <div class='siac-table-cell'>
+                                            <div class='siac-table-cell-btn' onclick='predefSearch();'>GO</div>
+                                        </div>
+                                    </div>
                                 </fieldset>
                             </div>
                         </div>
                     </div>
-
                 </div>
-                </div>
-                <div id='siac-reading-modal'>
-
-                </div>
-                </div>
-                `).insertAfter('#fields');
+                <div id='siac-reading-modal'></div>
+            </div>
+        </div>
+        `).insertAfter('#fields');
         $(`.coll`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow-x: hidden; height: 100%%;"></div>');
-
         updatePinned();
         }
         $('.field').on('keyup', fieldKeypress);
@@ -1005,6 +1016,13 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <fieldset>
+            <span><mark>Important:</mark> Modify this value to scale the whole search pane. Useful e.g. when working on a small screen. If this is not 1.0, the <i>Add To Result Area Height</i> option needs to be modified too.</span>
+                <table style="width: 100%%">
+                    <tr><td><b>Zoom</b></td><td style='text-align: right;'><input placeholder="" type="number" step="0.1" style='width: 60px;' onchange="pycmd('styling searchpane.zoom ' + this.value)" value="%s"/></td></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <fieldset>
                 <span>Controls whether the results are faded in or not.</span>
                 <table style="width: 100%%">
                     <tr><td><b>Render Immediately</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling renderImmediately ' + this.checked)" %s/></td></tr>
@@ -1076,6 +1094,7 @@ def stylingModal(config):
             <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
                         """ % (config["addToResultAreaHeight"],
+                        config["searchpane.zoom"],
                         "checked='true'" if config["renderImmediately"] else "",
                         config["leftSideWidthInPercent"],
                         "checked='true'" if config["hideSidebar"] else "",
