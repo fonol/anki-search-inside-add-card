@@ -55,8 +55,6 @@
 .siac-read-icn:hover {
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAvklEQVRYR+1XWw6AIAyTu3A6D+TpuIuGD5Jl2aMMk/3MT3FbaaUp7Up+WvL8qwCIDPRnvFyacfctttAeKgA6kDfTwFjfzTWpDgJA2ZB2RtctcCEAa6BUvLN2xADdtSSNJhd/H2JAon814gx4jIQAeE0nQESekiDMQElQp2AyUEaEmo33v4ScsCSwQqtlUrwu7IRpAJBMiNi0l5agoKllPS0PrKFIkIUA/JEJNSm3AVhnPXLLOgIQGchrCkA6Ax9/Zogwjgs9bwAAAABJRU5ErkJgggAA');
 }
-
-
 .pdf-icon {
     cursor:pointer;
     display: inline-block;
@@ -145,6 +143,9 @@ body {
 }
 .w-100 {
     width: 100%;
+}
+.h-100 {
+    height: 100% !important;
 }
 .blue-hover:hover {
     cursor: pointer;
@@ -260,6 +261,7 @@ select {
     text-align: center;
     line-height: 17px;
     user-select: none;
+    border-radius: 4px;
 }
 .rankingLbl {
     background: $rankingLabelBackgroundColor$;
@@ -268,6 +270,7 @@ select {
     font-size: 11px;
     user-select: none;
     cursor: pointer;
+    border-radius: 4px;
 }
 .rankingLblAddInfo {
     display: none;
@@ -431,11 +434,14 @@ select {
     width: 100%;
     min-width: 50px;
     padding-left: 3px;
+    height: 25px;
 }
 #siac-search-inp-mode-lbl {
     cursor: pointer;
     color: $keywordColor$;
     user-select: none;
+    overflow: hidden; 
+    white-space: nowrap;
 }
 #siac-search-inp-mode-lbl:hover {
     transform: scale(1.04);
@@ -507,7 +513,7 @@ select {
     display: none !important;
 }
 .secondCol {
-    max-height: 100vh;
+    /* max-height: 100vh; */
     position: relative;
     font-size: 12px !important;
     overflow-y: hidden;
@@ -910,22 +916,25 @@ width: 48%; display: inline-block; text-align: center;
 .siac-switch-deck-btn-inner b:hover {
     transform: scale(1.04);
 }
-#lastAdded, #sortBtn {
+.siac-table-container {
+    display: table;
+    overflow: hidden;
+}
+.siac-table-cell {
+    display: table-cell;
+    height: 100%;
+    vertical-align: top;
+}
+.siac-table-cell-btn {
     color: $buttonForegroundColor$;
     background: $buttonBackgroundColor$;
     border: 1px solid $buttonBorderColor$;
     cursor: pointer;
     user-select: none;
     outline: none;
-    vertical-align: middle !important;
     text-align: center !important;
-    height: 20px !important;
-    box-sizing: border-box !important;
-    font-size: 8px !important;
-    display: inline-block !important;
-    line-height: 1em !important;
     padding: 5px !important;
-    max-width: 30px !important;
+    overflow: hidden;
 }
 #infoBox {
     border-left: 2px solid $windowColumnSeparatorColor$;
@@ -935,6 +944,7 @@ width: 48%; display: inline-block; text-align: center;
     margin-left: 8px;
     position: relative;
     font-family: 'Open Sans', sans-serif;
+    zoom: $zoom$;
 }
 fieldset {
     padding: 0.7em;
