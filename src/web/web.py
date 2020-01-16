@@ -150,6 +150,7 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
     css = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
     css = css.replace("$pdfTooltipMaxWidth$", pdfTooltipMaxWidth)
 
+    css = css.replace("$zoom$", str(get_config_value_or_default("searchpane.zoom", 1.0)))
     renderImmediately = str(get_config_value_or_default("renderImmediately", False)).lower()
     script = script.replace("$renderImmediately$", renderImmediately)
 
