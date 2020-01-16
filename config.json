@@ -100,6 +100,7 @@
 "pdf.clozegen.field.page": "",
 "searchUrls": ["https://en.wikipedia.org/w/index.php?search=[QUERY]&title=Special%3ASearch&go=Go&ns0=1" ],
 "pdf.queue.hide": false,
-"notes.sidebar.visible": false
+"notes.sidebar.visible": false,
+"searchpane.zoom" : 1.0
 
 }
