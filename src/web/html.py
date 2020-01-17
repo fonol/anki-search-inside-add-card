@@ -10,6 +10,7 @@ from ..state import get_index, check_index
 from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags
 from ..feeds import read
 from ..internals import perf_time
+from ..config import get_config_value_or_default as conf_or_def
 import utility.misc
 import utility.tags
 import utility.text
@@ -110,18 +111,17 @@ def loadSynonyms():
     return synonyms
 
 
-def right_side_html(config, indexIsLoaded = False):
+def right_side_html(indexIsLoaded = False):
     """
     Returns the javascript call that inserts the html that is essentially the right side of the add card dialog.
     The right side html is only inserted if not already present, so it is safe to call this function on every note load.
     """
-    config = mw.addonManager.getConfig(__name__)
-    addToResultAreaHeight = int(config["addToResultAreaHeight"])
-    leftSideWidth = config["leftSideWidthInPercent"]
+    addToResultAreaHeight = int(conf_or_def("addToResultAreaHeight", 0))
+    leftSideWidth = conf_or_def("leftSideWidthInPercent", 40)
     if not isinstance(leftSideWidth, int) or leftSideWidth <= 0 or leftSideWidth > 100:
         leftSideWidth = 50
     rightSideWidth = 100 - leftSideWidth
-    hideSidebar = config["hideSidebar"]
+    hideSidebar = conf_or_def("hideSidebar", False)
 
     return """
 
@@ -131,7 +131,7 @@ def right_side_html(config, indexIsLoaded = False):
         $(`#fields`).wrap(`<div class='coll' id='leftSide' style='min-width: 200px; flex-grow: 1; width: %s%%;'></div>`);
         document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
         $(`
-        <div class='coll secondCol' style='width: %s%%; flex-grow: 1;  height: 100%%;' id='infoBox'>
+        <div class='coll secondCol' style='width: %s%%; flex-grow: 1;  height: 100%%; zoom: %s' id='infoBox'>
             <div id='siac-second-col-wrapper'>
                 <div id="greyout"></div>
                 <div id="a-modal" class="modal">
@@ -341,11 +341,12 @@ def right_side_html(config, indexIsLoaded = False):
 """ % (
     leftSideWidth,
     rightSideWidth,
-    config["noteScale"],
+    conf_or_def("searchpane.zoom", 1.0),
+    conf_or_def("noteScale", 1.0),
     pdf_svg(15, 18),
     "display: none;" if indexIsLoaded else "",
     "hidden" if hideSidebar else "",
-    getCalendarHtml() if config["showTimeline"] else ""
+    getCalendarHtml() if conf_or_def("showTimeline", True) else ""
     )
 
 def get_notes_sidebar_html():

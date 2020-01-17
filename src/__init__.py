@@ -31,6 +31,7 @@ from .notes import *
 from .hooks import add_hook
 from .dialogs.editor import EditDialog
 from .internals import requires_index_loaded
+from .config import get_config_value_or_default
 from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerender_info, add_note_to_index
 
 config = mw.addonManager.getConfig(__name__)
@@ -144,24 +145,23 @@ def on_load_note(editor):
     Executed everytime a note is created/loaded in the add cards dialog.
     Wraps the normal editor html in a flex layout to render a second column for the searching ui.
     """
-    config = mw.addonManager.getConfig(__name__)
 
     #only display in add cards dialog or in the review edit dialog (if enabled)
-    if editor.addMode or (config["useInEdit"] and isinstance(editor.parentWindow, EditCurrent)):
+    if editor.addMode or (get_config_value_or_default("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
         index = get_index()
         if index is not None and index.logging:
             log("Trying to insert html in editor")
             log("Editor.addMode: %s" % editor.addMode)
-
-        editor.web.eval("var addToResultAreaHeight = %s; var showTagInfoOnHover = %s; tagHoverTimeout = %s;" % (
-            config["addToResultAreaHeight"],
-            "true" if config["showTagInfoOnHover"] and config["noteScale"] == 1.0 else "false",
-            config["tagHoverDelayInMiliSec"]
-            ))
-
+        zoom = get_config_value_or_default("searchpane.zoom", 1.0)
+        show_tag_info_on_hover = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
+        editor.web.eval(f"""
+        var addToResultAreaHeight = {get_config_value_or_default("addToResultAreaHeight", 0)}; 
+        var showTagInfoOnHover = {show_tag_info_on_hover}; 
+        tagHoverTimeout = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
+        """)
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
-        editor.web.eval(right_side_html(config, index is not None))
+        editor.web.eval(right_side_html(index is not None))
 
         if index is not None:
             setup_ui_after_index_built(editor, index)
