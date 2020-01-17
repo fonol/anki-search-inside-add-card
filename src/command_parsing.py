@@ -1126,7 +1126,7 @@ def update_styling(cmd):
             index.output.js("addToResultAreaHeight = %s; onResize();" % value)
     elif name == "searchpane.zoom":
         config[name] = float(value)
-        index.output.js("document.getElementById('infoBox').style.zoom = '%s'" % value)
+        index.output.js("document.getElementById('infoBox').style.zoom = '%s'; showTagInfoOnHover = %s;" % (value, "false" if float(value) != 1.0 else "true"))
     elif name == "renderImmediately":
         m = value == "true" or value == "on"
         config["renderImmediately"] = m
