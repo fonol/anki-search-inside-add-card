@@ -79,10 +79,14 @@ def _build_index(index_up_to_date):
     """
     start = time.time()
     config = mw.addonManager.getConfig(__name__)
-    try:
-        useFTS = config['useFTS']
-    except KeyError:
-        useFTS = False
+    
+    # Whoosh support removed for now
+    # try:
+    #     useFTS = config['useFTS']
+    # except KeyError:
+    #     useFTS = True
+    useFTS = True
+
     index = None
     corpus = get_corpus()
     #fts4 based sqlite reversed index
@@ -160,7 +164,10 @@ def _should_rebuild():
     config = mw.addonManager.getConfig(__name__)
 
     # if the index type changed, rebuild
-    if (info["type"] == "Whoosh" and config["useFTS"]) or (info["type"] != "Whoosh" and not config["useFTS"]):
+    # 23-01-19: Whoosh support removed 
+    #useFTS = config["useFTS"]
+    useFTS = True
+    if (info["type"] == "Whoosh" and useFTS) or (info["type"] != "Whoosh" and not useFTS):
          return True
 
     # not used atm, so always false
@@ -169,7 +176,7 @@ def _should_rebuild():
         return True
 
     #if db file / index dir is not existing, rebuild
-    if config["useFTS"]:
+    if useFTS:
         file_path = utility.misc.get_user_files_folder_path()  + "search-data.db"
         if not os.path.isfile(file_path):
             return True

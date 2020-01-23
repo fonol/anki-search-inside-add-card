@@ -311,12 +311,6 @@ class FTSIndex:
     def clean(self, text):
         return utility.text.clean(text, self.stopWords)
 
-
-
-
-
-
-
    
     def deleteNote(self, nid):
         conn = sqlite3.connect(self.dir + "search-data.db")
@@ -341,8 +335,6 @@ class FTSIndex:
         """
         self.deleteNote(int(note[0]))
         self.add_user_note(note)
-
-
 
 
     def addNote(self, note):

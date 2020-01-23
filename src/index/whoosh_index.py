@@ -163,7 +163,7 @@ class WhooshSearchIndex:
           
             for r in res:
                 if not r["nid"] in self.pinned and (not only_user_notes or r["did"] == "-1"):
-                    rList.append((r["source"].replace('`', '\\`'), r["tags"], r["did"], r["nid"], 1, r["mid"], r["refs"]))
+                    rList.append(IndexNote((r["nid"], r["source"].replace('`', '\\`'), r["tags"], r["did"], r["source"], -1, r["mid"], "")))
 
             self.lastResDict = resDict
             
@@ -195,7 +195,7 @@ class WhooshSearchIndex:
                 #pinned items should not appear in the results
                 if not str(r[0]) in self.pinned:
                     #todo: implement highlighting
-                    rList.append((r[1].replace('`', '\\`'), r[2], r[3], r[0], 1, r[4], ""))
+                    rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
             return { "result" : rList[:self.limit], "stamp" : stamp }
         return { "result" : [], "stamp" : stamp }
 
