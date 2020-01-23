@@ -4,8 +4,10 @@ from aqt import mw
 import utility.misc
 try:
     from .state import check_index
+    from .models import SiacNote, IndexNote
 except:
     from state import check_index
+    from models import SiacNote, IndexNote
 
 def get_notes_added_on_day_of_year(day_of_year : int, limit: int):
     
@@ -16,7 +18,7 @@ def get_notes_added_on_day_of_year(day_of_year : int, limit: int):
     nid_midnight = int(date_then.timestamp() * 1000)
     nid_next_midnight = nid_midnight + 24 * 60 * 60 * 1000
     res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" % (nid_midnight, nid_next_midnight)).fetchall()
-    return to_print_list(res)
+    return to_notes(res)
 
 
 def get_cal_info_context(day_of_year : int):
@@ -72,7 +74,7 @@ def getCreatedSameDay(index, editor, nid):
             if dayCreated != dayOfNote:
                 continue
             if not str(r[0]) in index.pinned:
-                rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
+                rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
                 c += 1
                 if c >= index.limit:
                     break
@@ -100,16 +102,12 @@ def getRandomNotes(index, decks):
 
     limit = index.limit
     if deckQ:
-        #SELECT * FROM table WHERE id IN (SELECT id FROM table ORDER BY RANDOM() LIMIT x)
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s and notes.id in (select id from notes order by random() limit %s)" % (deckQ, limit)).fetchall()
     else:
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id in (select id from notes order by random() limit %s)" % (limit)).fetchall()
-        #res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid order by random() limit %s" % limit).fetchall()
-    rList = []
-    for r in res:
-        rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
+    res = to_notes(res)
     e = time.time() * 1000 - s
-    return { "result" : rList, "stamp" : stamp }
+    return { "result" : res, "stamp" : stamp }
 
 
 def getCreatedNotesOrderedByDate(index, editor, decks, limit, sortOrder):
@@ -133,7 +131,7 @@ def getCreatedNotesOrderedByDate(index, editor, decks, limit, sortOrder):
         #pinned items should not appear in the results
         if not str(r[0]) in index.pinned:
             #todo get refs
-            rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
+            rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
 
     if check_index():
         if len(rList) > 0:
@@ -153,10 +151,7 @@ def getLastReviewed(decks, limit):
     else:
         cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid from notes join cr on notes.id = cr.nid order by cr.rid desc limit %s" % limit
     res = mw.col.db.execute(cmd).fetchall()
-    rList = []
-    for r in res:
-        rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
-    return rList
+    return to_notes(res)
 
 def getLastLapses(decks, limit):
     if decks is not None and len(decks) > 0 and not "-1" in decks:
@@ -169,10 +164,7 @@ def getLastLapses(decks, limit):
     else:
         cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid from notes join cr on notes.id = cr.nid where cr.ease = 1 order by cr.rid desc limit %s" % limit
     res = mw.col.db.execute(cmd).fetchall()
-    rList = []
-    for r in res:
-        rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
-    return rList
+    return to_notes(res)
 
 def getRandomUntagged(decks, limit):
     if not "-1" in decks:
@@ -183,10 +175,7 @@ def getRandomUntagged(decks, limit):
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s and (tags is null or tags = '') order by random() limit %s" % (deckQ, limit)).fetchall()
     else:
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by random() limit %s" % limit).fetchall()
-    rList = []
-    for r in res:
-        rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
-    return rList
+    return to_notes(res) 
     
 
 def findNotesWithLongestText(decks, limit, pinned):
@@ -204,7 +193,7 @@ def findNotesWithLongestText(decks, limit, pinned):
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in pinned:
-            rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
+            rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
     return rList
 
 def getByTimeTaken(decks, limit, mode):
@@ -214,13 +203,15 @@ def getByTimeTaken(decks, limit, mode):
         deckQ = ""
 
     if deckQ:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s group by cr.nid order by timeavg %s limit %s" % (deckQ, mode, limit)
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s group by cr.nid order by timeavg %s limit %s" % (deckQ, mode, limit)
     else:
-        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 group by cr.nid order by timeavg %s limit %s" % (mode, limit)
+        cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 group by cr.nid order by timeavg %s limit %s" % (mode, limit)
     res = mw.col.db.execute(cmd).fetchall()
     rList = []
     for r in res:
-        rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
+        #rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
+        rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
+
     return rList
 
 def getLastModifiedNotes(index, editor, decks, limit):
@@ -239,7 +230,7 @@ def getLastModifiedNotes(index, editor, decks, limit):
     rList = []
     for r in res:
         if not str(r[0]) in index.pinned:
-            rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
+            rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
 
     if check_index():
         if len(rList) > 0:
@@ -253,11 +244,8 @@ def _find_cards_with_one_more_rep(cid: int):
 
     cards_ivls = []
     others = {}
-
     query = "select ro.id, ro.cid, ro.ease, ro.ivl, ro.factor, ro.time, ro.type from revlog ro join (select cid, count(*) from revlog where type = 1 or type = 2 group by cid having count(*) > %s or cid = %s) ri on ro.cid = ri.cid where type = 1 or type = 2" % (reps, cid)
-
     res = mw.col.db.execute(query).fetchall()
-
     for r in res:
         if r[1] == cid:
             cards_ivls.append(r[3])
@@ -455,11 +443,9 @@ def find_cards_with_similar_rep_history(cid : int):
     return [avg_similarity_steps_results] 
 
 
-def to_print_list(db_list):
-    rList = []
-    for r in db_list:
-        rList.append((r[1], r[2], r[3], r[0]))
-    return rList
+
+def to_notes(db_list):
+    return list(map(lambda r : IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")), db_list))
 
 def _to_day_ivl(ivl):
     if ivl < 0:

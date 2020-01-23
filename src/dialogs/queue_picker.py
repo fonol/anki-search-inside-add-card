@@ -42,13 +42,9 @@ class QueuePicker(QDialog):
         self.vbox_left.addWidget(l_lbl)
         self.t_view_left = QListWidget()
     
-        #self.fill_list(self.t_view_left, note_list, with_nums = True)
-
         self.tabs = QTabWidget()
         self.pdfs_tab = PDFsTab(self)
-        #self.pdfs_tab.fill_list(note_list_right)
         self.notes_tab = TextNotesTab(self)
-       # self.notes_tab.fill_list(get_non_pdf_notes_not_in_queue())
         self.folders_tab = FoldersTab(self)
         self.tabs.currentChanged.connect(self.tabs_changed)
         self.tabs.addTab(self.pdfs_tab, "PDFs, Unqueued")
@@ -149,17 +145,17 @@ class QueuePicker(QDialog):
         pdf_icon = None
         icon = QApplication.style().standardIcon(QStyle.SP_FileIcon)
         for ix, n in enumerate(db_res):
-            title = n[1] if n[1] is not None and len(n[1]) > 0 else "Untitled"
+            title = n.title if n.title is not None and len(n.title) > 0 else "Untitled"
             if with_nums:
                 title = f"{ix+1}.  {title}"
-            if pdf_icon is None and n[3].endswith(".pdf"):
-                pdf_icon = icon_provider.icon(QFileInfo(n[3]))
-            i = pdf_icon if n[3].endswith(".pdf") else icon
+            if pdf_icon is None and n.is_pdf():
+                pdf_icon = icon_provider.icon(QFileInfo(n.source))
+            i = pdf_icon if n.is_pdf() else icon
             if with_icons:
                 title_i = QListWidgetItem(i, title)
             else:
                 title_i = QListWidgetItem(title)
-            title_i.setData(Qt.UserRole, QVariant(n[0]))
+            title_i.setData(Qt.UserRole, QVariant(n.id))
             t_view.insertItem(ix, title_i)
         
     def item_clicked(self, item):
@@ -187,9 +183,9 @@ class QueuePicker(QDialog):
     def refill_list_views(self, left_list, right_list):
         self.t_view_left.clear()
         for ix, n in enumerate(left_list):
-            title = n[1] if n[1] is not None and len(n[1]) > 0 else "Untitled"
+            title = n.title if n.title is not None and len(n.title) > 0 else "Untitled"
             title_i = QListWidgetItem(str(ix + 1) + ".  " + title)
-            title_i.setData(Qt.UserRole, QVariant(n[0]))
+            title_i.setData(Qt.UserRole, QVariant(n.id))
             self.t_view_left.insertItem(ix, title_i)
 
         self.pdfs_tab.fill_list(right_list)
@@ -248,10 +244,10 @@ class PDFsTab(QWidget):
         icon = None
         for ix, n in enumerate(db_list):
             if icon is None:
-                icon = icon_provider.icon(QFileInfo(n[3]))
-            title = n[1] if n[1] is not None and len(n[1]) > 0 else "Untitled"
+                icon = icon_provider.icon(QFileInfo(n.source))
+            title = n.get_title()
             title_i = QListWidgetItem(icon, title)
-            title_i.setData(Qt.UserRole, QVariant(n[0]))
+            title_i.setData(Qt.UserRole, QVariant(n.id))
             self.t_view_right.insertItem(ix, title_i)
 
     def search_enter(self):
@@ -339,9 +335,9 @@ class TextNotesTab(QWidget):
         style = QApplication.style()
         icon = style.standardIcon(QStyle.SP_FileIcon)
         for ix, n in enumerate(db_list):
-            title = n[1] if n[1] is not None and len(n[1]) > 0 else "Untitled"
+            title = n.get_title()
             title_i = QListWidgetItem(icon, title)
-            title_i.setData(Qt.UserRole, QVariant(n[0]))
+            title_i.setData(Qt.UserRole, QVariant(n.id))
             self.t_view_right.insertItem(ix, title_i)
 
     def search_enter(self):

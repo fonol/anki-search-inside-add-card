@@ -7,8 +7,10 @@ import random
 
 try:
     from .state import get_index
+    from .models import SiacNote, NoteRelations
 except:
     from state import get_index
+    from models import SiacNote, NoteRelations
 import utility.misc
 import utility.tags
 import utility.text
@@ -123,7 +125,7 @@ def create_note(title, text, source, tags, nid, reminder, queue_schedule):
 
     conn = _get_connection()
     if pos is not None:
-        pos_list = [(ix if ix < pos else ix + 1,r[0]) for ix, r in enumerate(list)]
+        pos_list = [(ix if ix < pos else ix + 1,r.id) for ix, r in enumerate(list)]
         conn.executemany("update notes set position = ? where id = ?", pos_list)
 
     id = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position)
@@ -277,13 +279,13 @@ def get_untagged_notes():
     conn = _get_connection()
     res = list(conn.execute("select * from notes where tags is null or trim(tags) = ''"))
     conn.close()
-    return _to_output_list(res, [])
+    return _to_notes(res)
 
 def get_note(id):
     conn = _get_connection()
     res = conn.execute("select * from notes where id=" + str(id)).fetchone()
     conn.close()
-    return res
+    return _to_notes([res])[0]
 
 def get_random_id_from_queue():
     conn = _get_connection()
@@ -330,7 +332,7 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
     note_had_position = False
     list = []
     for li in orig_prio_list:
-        if li[0] == id:
+        if li.id == id:
             note_had_position = True
         else:
             list.append(li)
@@ -364,7 +366,7 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
 
     if pos is not None:
         list.insert(pos, (id,))
-        pos_list = [(ix,r[0]) for ix, r in enumerate(list)]
+        pos_list = [(ix, r[0]) for ix, r in enumerate(list)]
         conn.executemany("update notes set position = ? where id = ?", pos_list)
     conn.commit()
     conn.close()
@@ -399,28 +401,45 @@ def get_all_tags():
                     tag_set.add(t)
     return tag_set
 
-def find_by_tag(tag_str):
+def find_by_tag(tag_str, to_output_list=True):
+    if len(tag_str.strip()) == 0:
+        return []
     index = get_index()
     pinned = []
     if index is not None:
         pinned = index.pinned
-
+    
     query = "where "
     for t in tag_str.split(" "):
         if len(t) > 0:
             t = t.replace("'", "''")
             if len(query) > 6:
                 query += " or "
-            query += "lower(tags) like '% " + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '%::" + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '" + t + " %' or lower(tags) like '%::" + t + "::%'"
+            query = f"{query}lower(tags) like '% {t} %' or lower(tags) like '% {t}::%' or lower(tags) like '%::{t} %' or lower(tags) like '{t} %' or lower(tags) like '%::{t}::%'"
     conn = _get_connection()
 
     res = conn.execute("select * from notes %s order by id desc" %(query)).fetchall()
-    output_list = _to_output_list(res, pinned)
-    return output_list
+    if not to_output_list:
+        return res
+    return _to_notes(res, pinned)
 
 def find_by_text(text):
     index = get_index()
     index.search(text, [])
+
+def find_notes(text):
+    q = ""
+    for token in text.lower().split():
+        if len(token) > 1:
+            q = f"{q} or lower(title) like '%{token}%'"
+    q = q[4:] if len(q) > 0 else "" 
+    if len(q) == 0:
+        return
+    conn = _get_connection()
+    res = conn.execute(f"select * from notes where ({q}) order by id desc").fetchall()
+    conn.close()
+    return _to_notes(res)
+
 
 def find_unqueued_pdf_notes(text):
     q = ""
@@ -434,7 +453,7 @@ def find_unqueued_pdf_notes(text):
     conn = _get_connection()
     res = conn.execute(f"select * from notes where ({q}) and lower(source) like '%.pdf' and (position is null or position < 0) order by id desc").fetchall()
     conn.close()
-    return res
+    return _to_notes(res)
 
 def find_unqueued_non_pdf_notes(text):
     q = ""
@@ -448,7 +467,7 @@ def find_unqueued_non_pdf_notes(text):
     conn = _get_connection()
     res = conn.execute(f"select * from notes where ({q}) and not lower(source) like '%.pdf' and (position is null or position < 0) order by id desc").fetchall()
     conn.close()
-    return res
+    return _to_notes(res)
 
 def get_most_used_pdf_folders():
     sql = """
@@ -516,7 +535,7 @@ def get_invalid_pdfs():
         if not utility.misc.file_exists(source.strip()):
             filtered.append(res[c])
         c += 1
-    return _to_output_list(filtered, []) 
+    return _to_notes(filtered) 
 
 def get_recently_used_tags():
     """
@@ -548,7 +567,6 @@ def _get_recently_used_tags_counts(limit):
                 counts[tag] += 1
             else:
                 counts[tag] = 1
-
     return counts
 
 def _get_priority_list(nid_to_exclude = None):
@@ -563,7 +581,7 @@ def _get_priority_list(nid_to_exclude = None):
     conn = _get_connection()
     res = conn.execute(sql).fetchall()
     conn.close()
-    return list(res)
+    return _to_notes(res)
 
 
 def get_priority_list():
@@ -577,8 +595,7 @@ def get_priority_list():
     """
     res = conn.execute(sql).fetchall()
     conn.close()
-    output_list = _to_output_list(res, [])
-    return output_list
+    return _to_notes(res)
 
 def get_newest(limit, pinned):
     """
@@ -591,22 +608,19 @@ def get_newest(limit, pinned):
     """ % limit
     res = conn.execute(sql).fetchall()
     conn.close()
-    output_list = _to_output_list(res, pinned)
-    return output_list
+    return _to_notes(res, pinned)
 
 def get_random(limit, pinned):
     conn = _get_connection()
     res = conn.execute("select * from notes order by random() limit %s" % limit).fetchall()
     conn.close()
-    output_list = _to_output_list(res, pinned)
-    return output_list
+    return _to_notes(res, pinned)
 
 def get_queue_in_random_order():
     conn = _get_connection()
     res = conn.execute("select * from notes where position is not null order by random()").fetchall()
     conn.close()
-    output_list = _to_output_list(res, [])
-    return output_list
+    return _to_notes(res)
 
 def set_priority_list(ids):
     ulist = list()
@@ -643,34 +657,31 @@ def get_all_pdf_notes():
     conn = _get_connection()
     res = conn.execute("select * from notes where lower(source) like '%.pdf'").fetchall()
     conn.close()
-    output_list = _to_output_list(res, [])
-    return output_list
+    return _to_notes(res)
 
 def get_pdf_notes_last_added_first():
     conn = _get_connection()
     res = conn.execute("select * from notes where lower(source) like '%.pdf' order by id desc").fetchall()
     conn.close()
-    output_list = _to_output_list(res, [])
-    return output_list
+    return _to_notes(res)
 
 def get_pdf_notes_last_read_first():
     conn = _get_connection()
     res = conn.execute("select notes.id,notes.title,notes.text,notes.source,notes.tags,notes.nid,notes.created,notes.modified,notes.reminder,notes.lastscheduled,notes.position from notes join read on notes.id == read.nid where lower(notes.source) like '%.pdf' group by notes.id order by max(read.created) desc").fetchall()
     conn.close()
-    output_list = _to_output_list(res, [])
-    return output_list
+    return _to_notes(res)
 
 def get_pdf_notes_not_in_queue():
     conn = _get_connection()
     res = conn.execute("select * from notes where lower(source) like '%.pdf' and position is null order by id desc").fetchall()
     conn.close()
-    return list(res)
+    return _to_notes(res)
 
 def get_non_pdf_notes_not_in_queue():
     conn = _get_connection()
     res = conn.execute("select * from notes where not lower(source) like '%.pdf' and position is null order by id desc").fetchall()
     conn.close()
-    return res
+    return _to_notes(res)
 
 def get_pdf_info(nids):
     sql = "select nid, pagestotal, count(*) from read where nid in (%s) and page > -1 group by nid" % (",".join([str(n) for n in nids]))
@@ -681,6 +692,33 @@ def get_pdf_info(nids):
     for r in res:
         ilist.append([r[0], r[2], r[1]])
     return ilist
+
+def get_related_notes(id):
+    note = get_note(id)
+    title = note.title
+    if title is not None and len(title.strip()) > 1:
+        related_by_title = find_notes(title)
+    else:
+        related_by_title = []
+    related_by_tags = []
+    if note.tags is not None and len(note.tags.strip()) > 0:
+        tags = note.tags.strip().split(" ")
+        tags = sorted(tags, key=lambda x: x.count("::"), reverse=True)
+        #begin with most specific tag
+        conn = _get_connection()
+        for t in tags:
+            if len(t) > 0:
+                t = t.replace("'", "''")
+                query = f"where lower(tags) like '% {t} %' or lower(tags) like '% {t}::%' or lower(tags) like '%::{t} %' or lower(tags) like '{t} %' or lower(tags) like '%::{t}::%'"
+                res = conn.execute("select * from notes %s order by id desc" %(query)).fetchall()
+                if len(res) > 0:
+                    related_by_tags += res
+                if len(related_by_tags) >= 10:
+                    break
+        related_by_tags = _to_notes(related_by_tags)
+        conn.close()
+    return NoteRelations(related_by_title, related_by_tags)
+
 
 def mark_all_pages_as_read(nid, num_pages):
     conn = _get_connection()
@@ -715,13 +753,11 @@ def insert_pages_total(nid, pages_total):
     conn.commit()
     conn.close()
 
-def _to_output_list(db_list, pinned):
-    output_list = list()
-    for (id, title, text, source, tags, nid, created, modified, reminder, _, position) in db_list:
-        if not str(id) in pinned:
-            output_list.append((utility.text.build_user_note_text(title, text, source), tags, -1, id, 1, "-1", "", position))
-    return output_list
-
-
+def _to_notes(db_list, pinned=[]):
+    notes = list()
+    for tup in db_list:
+        if not str([tup[0]]) in pinned:
+            notes.append(SiacNote(tup))
+    return notes
 
 

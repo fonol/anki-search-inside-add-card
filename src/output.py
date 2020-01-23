@@ -52,65 +52,63 @@ class Output:
         self.previous_calls = []
 
 
-        self.noteTemplate = """<div class='cardWrapper %s' id='nWr-%s'>
+        self.noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                             <div class='topLeftWr'>
-                                <div id='cW-%s' class='rankingLbl' onclick="expandRankingLbl(this)">%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
-                                %s
+                                <div id='cW-{nid}' class='rankingLbl' onclick="expandRankingLbl(this)">{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
+                                {ret}
                             </div>
-                            <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='editLbl' onclick='edit(%s)'>Edit</div>
+                            <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+                                <div class='editLbl' onclick='edit({nid})'>Edit</div>
                                 <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
-                                <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div>
-                                <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div>
-                                <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div>
+                                <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
+                                <div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>
+                                <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
                             </div>
-                            <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div>
-                            <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>
-                            <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>
+                            <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
+                            <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
+                            <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;INFO&nbsp;</div>
                         </div>"""
 
         self.noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
                             <div class='topLeftWr'>
-                                <div class='rankingLbl'>%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
-                                %s
+                                <div class='rankingLbl'>{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
+                                {ret}
                             </div>
-                            <div class='btnBar' id='btnBarSmp-%s' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='editLbl' onclick='edit(%s)'>Edit</div>
+                            <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+                                <div class='editLbl' onclick='edit({nid})'>Edit</div>
                             </div>
-                            <div class='cardR' onmouseup='%s'  onmouseenter='cardMouseEnter(this, %s, "simple")' onmouseleave='cardMouseLeave(this, %s, "simple")'>%s</div>
-                            <div style='position: absolute; bottom: 0px; right: 0px;'>%s</div>
-                            <div class='cardLeftBot' onclick='expandCard(%s, this)'>&nbsp;INFO&nbsp;</div>
+                            <div class='cardR' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
+                            <div style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
+                            <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;INFO&nbsp;</div>
                         </div>"""
 
         self.noteTemplateUserNoteSimple = """<div class='cardWrapper' style="display: block;">
                             <div class='topLeftWr'>
-                                <div class='rankingLbl'>%s<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
-                                %s
+                                <div class='rankingLbl'>{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
                             </div>
-                            <div class='btnBar' id='btnBarSmp-%s' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='editLbl' onclick='pycmd("siac-edit-user-note %s")'>Edit</div>
+                            <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+                                <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'>Edit</div>
                             </div>
-                            <div class='cardR' onmouseup='%s'  onmouseenter='cardMouseEnter(this, %s, "simple")' onmouseleave='cardMouseLeave(this, %s, "simple")'>%s</div>
-                            <div style='position: absolute; bottom: 0px; right: 0px;'>%s</div>
-                            <div class='cardLeftBot' style='display: none' onclick='%s'></div>
+                            <div class='cardR' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
+                            <div style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
+                            <div class='cardLeftBot' style='display: none' onclick=''></div>
                         </div>"""
 
-        self.noteTemplateUserNote = """<div class='cardWrapper siac-user-note %s' id='nWr-%s'>
+        self.noteTemplateUserNote = """<div class='cardWrapper siac-user-note {grid_class}' id='nWr-{nid}'>
                             <div class='topLeftWr'>
-                                <div id='cW-%s' class='rankingLbl'>%s &nbsp;SIAC<div class='rankingLblAddInfo'>%s</div><div class='editedStamp'>%s</div></div>
-                                %s
+                                <div id='cW-{nid}' class='rankingLbl'>{counter} &nbsp;SIAC<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
                             </div>
-                            <div id='btnBar-%s' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='deleteLbl' onclick='pycmd("siac-delete-user-note-modal %s"); '><div class='siac-trash-icn'></div></div>
-                                <div class='editLbl' onclick='pycmd("siac-edit-user-note %s")'>Edit</div>
+                            <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+                                <div class='deleteLbl' onclick='pycmd("siac-delete-user-note-modal {nid}"); '><div class='siac-trash-icn'></div></div>
+                                <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'>Edit</div>
                                 <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
-                                <div id='pin-%s' class='pinLbl unselected' onclick='pinCard(this, %s)'><span>&#128204;</span></div>
-                                <div class='floatLbl' onclick='addFloatingNote(%s)'>&#10063;</div>
-                                <div id='rem-%s' class='remLbl' onclick='removeNote(%s)'><span>&times;</span></div>
+                                <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
+                                <div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>
+                                <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
                             </div>
-                            <div class='cardR siac-user-note' onmouseup='%s' onmouseenter='cardMouseEnter(this, %s)' onmouseleave='cardMouseLeave(this, %s)' id='%s' data-nid='%s'>%s</div>
-                            <div id='tags-%s'  style='position: absolute; bottom: 0px; right: 0px;'>%s</div>
-                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note %s")'>&nbsp;READ&nbsp;%s</div>
+                            <div class='cardR siac-user-note' onmouseup='{mouseup}' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
+                            <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
+                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'>&nbsp;READ&nbsp;{queue}</div>
                         </div>"""
 
     def show_page(self, editor, page):
@@ -121,29 +119,19 @@ class Output:
             self.print_search_results(self.lastResults, None, editor, False, self.last_had_timing_info, page, query_set = self.last_query_set)
 
 
-    def print_search_results(self, db_list, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_queue=False, is_cached=False):
+    def print_search_results(self, notes, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_queue=False, is_cached=False):
         """
         This is the html that gets rendered in the search results div.
         This will always print the first page.
-        Args:
-        db_list - a list of tuples, see SearchIndex.search()
-        db_list.0: highlighted note text
-        db_list.1: tags
-        db_list.2: did
-        db_list.3: nid
-        db_list.4: score (not used currently)
-        db_list.5: mid
-        db_list.6: refs (not used currently)
-        db_list.7: position in queue (only present if in queue)
         """
         if logging:
             log("Entering print_search_results")
-            log("Length (searchResults): " + str(len(db_list)))
+            log("Length (searchResults): " + str(len(notes)))
         if stamp is not None:
             if stamp != self.latest:
                 return
-        if not is_cached and not len(db_list) == 0:
-            self.previous_calls.append([db_list, None, editor, logging, printTimingInfo, page, query_set, is_queue])
+        if not is_cached and not len(notes) == 0:
+            self.previous_calls.append([notes, None, editor, logging, printTimingInfo, page, query_set, is_queue])
             if len(self.previous_calls) > 11:
                 self.previous_calls.pop(0)
 
@@ -156,12 +144,12 @@ class Output:
         lastNote = ""
         self.last_had_timing_info = printTimingInfo
 
-        if db_list is not None and len(db_list) > 0:
-            self.lastResults = db_list
+        if notes is not None and len(notes) > 0:
+            self.lastResults = notes
             self.last_query_set = query_set
 
-        searchResults = db_list[(page- 1) * 50: page * 50]
-        nids = [r[3] for r in searchResults]
+        searchResults = notes[(page- 1) * 50: page * 50]
+        nids = [r.id for r in searchResults]
 
         if self.showRetentionScores:
             retsByNid = getRetentions(nids)
@@ -183,39 +171,39 @@ class Output:
         pdfs = []
 
         for counter, res in enumerate(searchResults):
+            nid = res.id
             counter += (page - 1)* 50
             try:
-                timeDiffString = self._getTimeDifferenceString(res[3], epochTime)
+                timeDiffString = self._getTimeDifferenceString(nid, epochTime)
             except:
                 if logging:
-                    log("Failed to determine creation date: " + str(res[3]))
+                    log("Failed to determine creation date: " + str(nid))
                 timeDiffString = "Could not determine creation date"
-            ret = retsByNid[int(res[3])] if self.showRetentionScores and int(res[3]) in retsByNid else None
+            ret = retsByNid[int(nid)] if self.showRetentionScores and int(nid) in retsByNid else None
 
             if ret is not None:
                 retMark = "background: %s; color: black;" % (self._retToColor(ret))
-                if str(res[3]) in self.edited:
+                if str(nid) in self.edited:
                     retMark = ''.join((retMark, "max-width: 20px;"))
                 retInfo = """<div class='retMark' style='%s'>%s</div>""" % (retMark, int(ret))
             else:
                 retInfo = ""
 
             lastNote = newNote
-            text = res[0]
 
             #non-anki notes should be displayed differently, we distinguish between title, text and source here
+            #confusing: 'source' on notes from the index means the original note content (without stopwords removed etc.),
+            #on SiacNotes, it means the source field.
             build_user_note_start = time.time()
-            if str(res[2]) == "-1":
-                src = text.split("\u001f")[2]
-                text = self._build_non_anki_note_html(text)
-                if src.endswith(".pdf"):
-                    pdfs.append(res[3])
+            text = res.get_content()
+            if res.note_type == "user" and res.is_pdf():
+                pdfs.append(nid)
 
             build_user_note_total += time.time() - build_user_note_start
 
             # hide fields that should not be shown
-            if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
-                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res[5])]])
+            if str(res.mid) in self.fields_to_hide_in_results:
+                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res.mid)]])
 
             #remove double fields separators
             text = self._cleanFieldSeparators(text).replace("\\", "\\\\")
@@ -227,7 +215,7 @@ class Output:
             text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
 
             #remove <div> tags if set in config
-            if self.remove_divs and str(res[2]) != "-1":
+            if self.remove_divs and res.note_type != "user":
                 text = utility.text.remove_divs(text, " ")
 
             #highlight
@@ -236,11 +224,11 @@ class Output:
                 if counter - (page -1) * 50 < highlight_boundary:
                     text = self._mark_highlights(text, query_set)
                 else:
-                    remaining_to_highlight[res[3]] = ""
+                    remaining_to_highlight[nid] = ""
             highlight_total += time.time() - highlight_start
 
             if query_set is not None and counter - (page -1) * 50 >= highlight_boundary:
-                remaining_to_highlight[res[3]] = text
+                remaining_to_highlight[nid] = text
 
             gridclass = "grid" if self.gridView else ""
             if self.gridView and len(text) < 200:
@@ -258,33 +246,38 @@ class Output:
                 gridclass = ' '.join([gridclass, "siac-sc-%s" % str(self.scale).replace(".", "-")])
 
             # use either the template for addon's notes or the normal
-            if str(res[2]) == "-1":
-                newNote = self.noteTemplateUserNote % (gridclass, counter + 1, res[3], counter + 1,
-                            "&nbsp;&#128336; " + timeDiffString,
-                            "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
-                        retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], "getSelectionText()" if not is_queue else "", res[3], res[3], res[3], res[3],
-                            text,
-                            res[3], self.build_tag_string(res[1]), res[3], ": Q-%s&nbsp;" % (res[7] + 1) if len(res) >= 8 and res[7] is not None else "")
+            if res.note_type == "user":
+                newNote = self.noteTemplateUserNote.format(
+                    grid_class=gridclass, 
+                    counter=counter+1, 
+                    nid=nid, 
+                    creation="&nbsp;&#128336; " + timeDiffString, 
+                    edited="" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
+                    mouseup= "getSelectionText()" if not is_queue else "",
+                    text=text, 
+                    tags=self.build_tag_string(res.tags),
+                    queue=": Q-%s&nbsp;" % (res.position + 1) if res.is_in_queue() else "",
+                    ret=retInfo)
             else:
-                newNote = self.noteTemplate % (gridclass, counter + 1, res[3], counter + 1,
-                            "&nbsp;&#128336; " + timeDiffString,
-                            "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
-                            retInfo, res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3], res[3],
-                            text,
-                            res[3], self.build_tag_string(res[1]), res[3])
-            # if self.gridView:
-            #     if counter % 2 == 1:
-            #         html += "<div class='gridRow'>%s</div>" % (lastNote + newNote)
-            #     elif counter == len(searchResults) - 1:
-            #         html += "<div class='gridRow'>%s</div>" % (newNote)
-            # else:
+                newNote = self.noteTemplate.format(
+                    grid_class=gridclass, 
+                    counter=counter+1, 
+                    nid=nid, 
+                    creation="&nbsp;&#128336; " + timeDiffString, 
+                    edited="" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
+                    mouseup= "getSelectionText()" if not is_queue else "",
+                    text=text, 
+                    tags=self.build_tag_string(res.tags), 
+                    ret=retInfo)
+         
             html = f"{html}{newNote}"
-            tags = self._addToTags(tags, res[1])
+            tags = self._addToTags(tags, res.tags)
             if counter - (page - 1) * 50 < 20:
-                allText = f"{allText} {res[0][:5000]}"
+                # todo: title for user notes
+                allText = f"{allText} {res.text[:5000]}"
         tags.sort()
         html = html.replace("`", "&#96;").replace("$", "&#36;")
-        pageMax = math.ceil(len(db_list) / 50.0)
+        pageMax = math.ceil(len(notes) / 50.0)
         if get_index() is not None and get_index().lastResDict is not None:
             get_index().lastResDict["time-html"] = int((time.time() - start) * 1000)
             get_index().lastResDict["time-html-highlighting"] = int(highlight_total * 1000)
@@ -301,13 +294,13 @@ class Output:
         if not self.hideSidebar:
             infoMap = {
                 "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`lastTiming`)'>&#9432;</b>" if printTimingInfo else ""),
-                "Found" :  "<b>%s</b> notes" % (len(db_list) if len(db_list) > 0 else "<span style='color: red;'>0</span>")
+                "Found" :  "<b>%s</b> notes" % (len(notes) if len(notes) > 0 else "<span style='color: red;'>0</span>")
             }
             timing = "true" if printTimingInfo else "false"
             info = self.build_info_table(infoMap, tags, allText)
-            cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(db_list), len(self.previous_calls), stamp, timing)
+            cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes), len(self.previous_calls), stamp, timing)
         else:
-            cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, page, pageMax, len(db_list), len(self.previous_calls), stamp, timing)
+            cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, page, pageMax, len(notes), len(self.previous_calls), stamp, timing)
         cmd = f"{cmd}updateSwitchBtn({len(searchResults)});" 
 
         self._js(cmd, editor)
@@ -335,8 +328,7 @@ class Output:
                 self._js(cmd, editor)
             
         return (highlight_total * 1000, build_user_note_total)
-
-
+    
     def js(self, js):
         """
             Use webview's eval function to execute the given js.
@@ -395,7 +387,7 @@ class Output:
             return
         stamp = utility.misc.get_milisec_stamp()
         self.latest = stamp
-        sortedByDate = list(sorted(self.lastResults, key=lambda x: x[3]))
+        sortedByDate = list(sorted(self.lastResults, key=lambda x: x.id))
         if mode == "desc":
             sortedByDate = list(reversed(sortedByDate))
         self.print_search_results(sortedByDate, stamp)
@@ -408,7 +400,7 @@ class Output:
         self.latest = stamp
         filtered = []
         for r in self.lastResults:
-            if r[1] is None or len(r[1]) == 0:
+            if r.tags is None or len(r.tags.strip()) == 0:
                 continue
             filtered.append(r)
         self.print_search_results(filtered, stamp)
@@ -420,7 +412,7 @@ class Output:
         self.latest = stamp
         filtered = []
         for r in self.lastResults:
-            if r[1] is None or len(r[1]) == 0:
+            if r.tags is None or len(r.tags.strip()) == 0:
                 filtered.append(r)
         self.print_search_results(filtered, stamp)
 
@@ -432,11 +424,11 @@ class Output:
         filtered = []
         nids = []
         for r in self.lastResults:
-            nids.append(str(r[3]))
+            nids.append(str(r.id))
         nidStr =  "(%s)" % ",".join(nids)
         unreviewed = [r[0] for r in mw.col.db.execute("select nid from cards where nid in %s and reps = 0" % nidStr).fetchall()]
         for r in self.lastResults:
-            if int(r[3]) not in unreviewed:
+            if int(r.id) not in unreviewed:
                 filtered.append(r)
         self.print_search_results(filtered, stamp)
 
@@ -448,52 +440,15 @@ class Output:
         filtered = []
         nids = []
         for r in self.lastResults:
-            nids.append(str(r[3]))
+            nids.append(str(r.id))
         nidStr =  "(%s)" % ",".join(nids)
         reviewed = [r[0] for r in mw.col.db.execute("select nid from cards where nid in %s and reps > 0" % nidStr).fetchall()]
         for r in self.lastResults:
-            if int(r[3]) not in reviewed:
+            if int(r.id) not in reviewed:
                 filtered.append(r)
         self.print_search_results(filtered, stamp)
 
-    def _build_non_anki_note_html(self, text):
-        """
-        User's notes should be displayed in a way to visually distinguish between title, text and source.
-        Also, text might need to be cut if is too long to reduce time needed for highlighting, extracting keywords, and rendering.
-        """
-        #trim very long texts:
-        if len(text) > 5000:
-            src_begin_index = text.rfind("\u001f")
-            src = text[src_begin_index + 1:]
-            title = text[:text.find("\u001f")]
-            body = text[text.find("\u001f") +1:src_begin_index][:5000]
-            #there might be unclosed tags now, but parsing would be too much overhead, so simply remove div, a and span tags
-            #there might be still problems with <p style='...'>
-            body = utility.text.remove_tags(body, ["div", "span", "a"])
-            last_open_bracket = body.rfind("<")
-            if last_open_bracket >= len(body) - 500 or body.rfind(" ") < len(body) - 500:
-                last_close_bracket = body.rfind(">")
-                if last_close_bracket < last_open_bracket:
-                    body = body[:last_open_bracket]
-            body += "<br></ul></b></i></em></span></p></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
-        else:
-            title = text.split("\u001f")[0]
-            body = text.split("\u001f")[1]
-            src = text.split("\u001f")[2]
-        is_pdf = src is not None and src.lower().strip().endswith(".pdf")
-        title = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if is_pdf else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
-        if src is not None and len(src) > 0:
-            src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src)
-        else:
-            src = ""
-        if is_pdf:
-            p_html = "<div class='siac-prog-sq'></div>" * 10
-            prog_bar = f"<div class='siac-prog-tmp'>{p_html} &nbsp;0 / ?</div>"
-        else:
-            prog_bar = ""
-        return title + body + src + prog_bar
-
-
+   
     def _buildEditedInfo(self, timestamp):
         diffInSeconds = time.time() - timestamp
         if diffInSeconds < 60:
@@ -603,7 +558,7 @@ class Output:
         timeDiffString = ""
         newNote = ""
         lastNote = ""
-        nids = [r[3] for r in db_list]
+        nids = [r.id for r in db_list]
         if self.showRetentionScores:
             retsByNid = getRetentions(nids)
         ret = 0
@@ -612,11 +567,11 @@ class Output:
                 timeDiffString = self._getTimeDifferenceString(res[3], epochTime)
             except:
                 timeDiffString = "Could not determine creation date"
-            ret = retsByNid[int(res[3])] if self.showRetentionScores and int(res[3]) in retsByNid else None
+            ret = retsByNid[int(res.id)] if self.showRetentionScores and int(res.id) in retsByNid else None
 
             if ret is not None:
                 retMark = "background: %s; color: black;" % (self._retToColor(ret))
-                if str(res[3]) in self.edited:
+                if str(res.id) in self.edited:
                     retMark += "max-width: 20px;"
                 retInfo = """<div class='retMark' style='%s'>%s</div>
                                 """ % (retMark, int(ret))
@@ -624,33 +579,31 @@ class Output:
                 retInfo = ""
 
             lastNote = newNote
-            text = res[0]
-
-            #non-anki notes should be displayed differently, we distinguish between title, text and source here
-            if str(res[2]) == "-1":
-                text = self._build_non_anki_note_html(text)
+            text = res.get_content()
 
             # hide fields that should not be shown
-            if len(res) > 5 and str(res[5]) in self.fields_to_hide_in_results:
-                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res[5])]])
+            if str(res.mid) in self.fields_to_hide_in_results:
+                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res.mid)]])
 
 
             #remove <div> tags if set in config
-            if self.remove_divs and str(res[2]) != "-1":
+            if self.remove_divs and res.note_type != "user":
                 text = utility.text.remove_divs(text)
 
             text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
             text = self.try_hide_image_occlusion(text)
             #try to put fields that consist of a single image in their own line
             text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
-            template = self.noteTemplateSimple if str(res[2]) != "-1" else self.noteTemplateUserNoteSimple
-            newNote = template % ( counter + 1,
-                        "&nbsp;&#128336; " + timeDiffString,
-                        "" if str(res[3]) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res[3])]),
-                        retInfo, res[3],res[3],"getSelectionText()" if search_on_selection else "", res[3],res[3],
-                        text,
-                        self.build_tag_string(res[1], tag_hover, maxLength = 25, maxCount = 2), res[3])
-
+            template = self.noteTemplateSimple if res.note_type == "index" else self.noteTemplateUserNoteSimple
+            newNote = template.format(
+                counter=counter+1, 
+                nid=res.id, 
+                edited="" if str(res.id) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res.id)]),
+                mouseup="getSelectionText()" if search_on_selection else "",
+                text=text, 
+                ret=retInfo,
+                tags=self.build_tag_string(res.tags, tag_hover, maxLength = 25, maxCount = 2),
+                creation="&nbsp;&#128336; " + timeDiffString)
             html += newNote
         return html
 
@@ -671,7 +624,6 @@ class Output:
     def showInModal(self, text):
         cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`;" % text
         self.js(cmd)
-
 
     def show_in_large_modal(self, html):
         js = """

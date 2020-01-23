@@ -82,6 +82,7 @@ class NoteEditor(QDialog):
     """
     def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None):
         self.note_id = note_id
+        self.note = None
         self.add_only = add_only
         self.read_note_id = read_note_id
         self.tag_prefill = tag_prefill
@@ -288,10 +289,10 @@ class CreateTab(QWidget):
             queue_lbl = QLabel("Add to Queue? (<b>%s</b> items)" % queue_len)
         else:
             #check if note has position (is in queue)
-            if parent.note[10] is None or parent.note[10] < 0:
+            if not parent.note.is_in_queue():
                 queue_lbl = QLabel("<b>Not</b> in Queue (<b>%s</b> items)" % queue_len)
             else:
-                queue_lbl = QLabel("Position: <b>%s</b> / <b>%s</b>" % (parent.note[10] + 1, queue_len))
+                queue_lbl = QLabel("Position: <b>%s</b> / <b>%s</b>" % (parent.note.position + 1, queue_len))
 
         queue_lbl.setAlignment(Qt.AlignCenter)
         ex_v.addWidget(queue_lbl, Qt.AlignCenter)
@@ -300,7 +301,7 @@ class CreateTab(QWidget):
         if parent.note_id is None:
             self.q_lbl_1 = QPushButton("Don't Add to Queue")
         else:
-            if parent.note[10] is None or parent.note[10] < 0:
+            if not parent.note.is_in_queue():
                 self.q_lbl_1 = QPushButton("Don't Add to Queue")
             else:
                 self.q_lbl_1 = QPushButton("Keep Position in Queue")
@@ -630,13 +631,11 @@ class CreateTab(QWidget):
         self.layout.addSpacing(5)
         self.layout.addLayout(vbox, 73)
         self.setLayout(self.layout)
-        if parent.note_id is not None:
-            n = get_note(parent.note_id)
-            if n is not None:
-                self.tag.setText(n[4])
-                self.title.setText(n[1])
-                self.text.setHtml(n[2])
-                self.source.setText(n[3])
+        if parent.note is not None:
+            self.tag.setText(parent.note.tags)
+            self.title.setText(parent.note.title)
+            self.text.setHtml(parent.note.text)
+            self.source.setText(parent.note.source)
 
 
     def _add_to_tree(self, map, prefix):
@@ -911,16 +910,16 @@ class PriorityTab(QWidget):
         for c, pitem in enumerate(priority_list):
 
             # build display text
-            text = pitem[1] if pitem[1] is not None and len(pitem[1].strip()) > 0 else "Untitled"
+            text = pitem.title if pitem.title is not None and len(pitem.title.strip()) > 0 else "Untitled"
             text = "<b>%s</b>" % text
 
-            tags = pitem[4]
+            tags = pitem.tags
             if tags is not None and len(tags.strip()) > 0:
                 tag_sep = "&nbsp;</span> <span style='color: %s; background-color: %s; margin-right: 5px; border-radius: 5px;'>&nbsp;" % (tag_fg, tag_bg)
                 tags = "<span style='color: %s; background-color: %s; margin-right: 5px; border-radius: 5px;'>&nbsp;%s&nbsp;</span>" % (tag_fg, tag_bg, tag_sep.join([t for t in tags.split(" ") if len(t) > 0]))
 
             item = QStandardItem(text)
-            item.setData(QVariant(pitem[0]))
+            item.setData(QVariant(pitem.id))
             item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDragEnabled)
             model.setItem(c, 0, item)
             titem = QStandardItem(tags)
@@ -945,7 +944,7 @@ class PriorityTab(QWidget):
                 rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; margin: 0px; padding: 3px;")
             rem_btn.setCursor(Qt.PointingHandCursor)
             rem_btn.setMinimumHeight(18)
-            rem_btn.clicked.connect(functools.partial(self.on_remove_clicked, priority_list[r][0]))
+            rem_btn.clicked.connect(functools.partial(self.on_remove_clicked, priority_list[r].id))
 
             h_l = QHBoxLayout()
             h_l.addWidget(rem_btn)
@@ -960,7 +959,7 @@ class PriorityTab(QWidget):
             return
         random.shuffle(priority_list)
         model = self.get_model(priority_list)
-        ids = [p[0] for p in priority_list]
+        ids = [p.id for p in priority_list]
         #persist reordering to db
         set_priority_list(ids)
         self.t_view.setModel(model)

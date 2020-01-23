@@ -4,6 +4,7 @@ import random
 from glob import glob  
 from datetime import datetime
 import os
+import time
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import tooltip

@@ -593,6 +593,7 @@ select {
     top: 5px;
     text-align: right;
     color: grey;
+    user-select: none;
 }
 .rnd-icon,.flds-icon,.freeze-icon {
     float: right;
@@ -935,6 +936,9 @@ width: 48%; display: inline-block; text-align: center;
     text-align: center !important;
     padding: 5px !important;
     overflow: hidden;
+}
+.siac-table-cell-btn:hover {
+    color: #2496dc;
 }
 #infoBox {
     border-left: 2px solid $windowColumnSeparatorColor$;
@@ -1517,13 +1521,26 @@ span.tag-symbol {
     background: #272828;
     color: beige;
 }
-#siac-marks-display {
+#siac-pdf-bottom-tab {
     display: inline-block;
+    max-height: 90px;
     overflow: hidden;
-    margin-left: 10px;
-    vertical-align: top;
     overflow-y: auto;
-    max-height: 100px;
+    vertical-align: top;
+    margin-top: 4px;
+    padding: 0 5px 0 0;
+    box-sizing: border-box;
+}
+#siac-marks-display {
+    vertical-align: top;
+    height: 100%;
+}
+.siac-related-notes-item {
+    color: grey;
+    cursor: pointer;
+}
+.siac-related-notes-item:hover {
+    color: lightgrey;
 }
 #siac-marks-display::-webkit-scrollbar {
     display: none;
@@ -1719,10 +1736,12 @@ span.tag-symbol {
 #siac-reading-modal a:not(.siac-disabled) {
     color: darkorange !important;
 }
-#siac-reading-modal a.greyedout {
+#siac-reading-modal a.greyedout, #siac-reading-modal a.active {
     color: lightgray !important;
 }
-
+.siac-clickable-anchor.tab.active {
+    text-decoration: underline;
+}
 #siac-reading-modal-top-btns {
     position: absolute;
     top: 7px; right: 25px;

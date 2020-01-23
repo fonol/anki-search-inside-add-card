@@ -5,9 +5,11 @@ import aqt
 try:
     from .special_searches import *
     from .special_searches import _to_day_ivl
+    from .models import IndexNote
 except: 
     from special_searches import *
     from special_searches import _to_day_ivl
+    from models import IndexNote
 
 import time
 import json
@@ -21,7 +23,8 @@ def findNotesWithLowestPerformance(decks, limit, pinned, retOnly=False):
     c = 0
     for r in scores:
         if str(r[1][1][0]) not in pinned:
-            rList.append((r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][0], 1, r[1][1][5]))
+            rList.append(IndexNote((r[1][1][0], r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][2], -1, r[1][1][5], "", -1)))
+            #rList.append((r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][0], 1, r[1][1][5]))
             c += 1
             if c >= limit:
                 break
@@ -35,7 +38,8 @@ def findNotesWithHighestPerformance(decks, limit, pinned, retOnly=False):
     c = 0
     for r in scores:
         if str(r[1][1][0]) not in pinned:
-            rList.append((r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][0], 1, r[1][1][5]))
+            rList.append(IndexNote((r[1][1][0], r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][2], -1, r[1][1][5], "", -1)))
+            # rList.append((r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][0], 1, r[1][1][5]))
             c += 1
             if c >= limit:
                 break
@@ -56,7 +60,8 @@ def getSortedByInterval(decks, limit, pinned, sortOrder):
     rList = []
     for r in res:
         if not str(r[0]) in pinned:
-            rList.append((r[1], r[2], r[3], r[0], 1, r[5]))
+           #. rList.append((r[1], r[2], r[3], r[0], 1, r[5]))
+           rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
     return rList
 
 

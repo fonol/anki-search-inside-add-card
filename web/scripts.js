@@ -31,7 +31,6 @@ var pdfLoading = false;
 var noteLoading = false;
 var pdfTooltipEnabled = true;
 var iframeIsDisplayed = false;
-
 var pdfImgSel = { canvas : null, context : null, startX : null, endX : null, startY : null, endY : null, cvsOffLeft : null, cvsOffTop : null, mouseIsDown : false, canvasDispl : null};
 
 function pdfImgMouseUp(event) {
@@ -396,6 +395,7 @@ function showTagInfo(elem) {
         if (Number($(existing[i]).css("z-index")) > highestZ)
             highestZ = Number($(existing[i]).css("z-index"));
     }
+
     $('#siac-tag-info-box-' + stamp).css("top", offset.top).css("left", offset.left).css("z-index", highestZ + 1);
     if (offset.top > window.outerHeight - offset.top) {
         document.getElementById(id).style.visibility = "hidden";
@@ -1366,7 +1366,7 @@ function updatePdfDisplayedMarks() {
         tableHtml = `<table style='user-select: none; table-layout: fixed; max-width: ${w}px;'>` + tableHtml + "</table>";
     }
     document.getElementById("siac-pdf-overlay-top-lbl-wrap").innerHTML = html;
-    document.getElementById("siac-marks-display").innerHTML = tableHtml;
+    if (document.getElementById("siac-marks-display")) { document.getElementById("siac-marks-display").innerHTML = tableHtml; }
 
 }
 function markClicked(event) {
@@ -1451,7 +1451,7 @@ function leaveQueueItem(elem) {
 }
 function hideQueueInfobox() {
     document.getElementById("siac-queue-infobox").style.display = "none";
-    document.getElementById("siac-marks-display").style.display = "inline-block";
+    document.getElementById("siac-pdf-bottom-tabs").style.display = "inline-block";
 }
 function toggleNoteSidebar(){
     if (document.getElementById("siac-notes-sidebar")) {

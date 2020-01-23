@@ -4,6 +4,7 @@ import utility.text
 from .stats import getAvgTrueRetention, getTrueRetentionOverTime, retention_stats_for_tag
 from .output import Output
 from .notes import find_by_tag, get_recently_used_tags_with_counts
+from .models import IndexNote
 import time
 
 def findBySameTag(tagStr, limit, decks, pinned):
@@ -15,7 +16,6 @@ def findBySameTag(tagStr, limit, decks, pinned):
             if len(query) > 6:
                 query += " or "
             query += "lower(tags) like '% " + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '%::" + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '" + t + " %' or lower(tags) like '%::" + t + "::%'"
-
   
     if decks is not None and len(decks) > 0 and not "-1" in decks:
         deckQ =  "(%s)" % ",".join(decks)
@@ -30,7 +30,7 @@ def findBySameTag(tagStr, limit, decks, pinned):
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in pinned:
-            rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
+            rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
     return { "result" : rList[:limit]}
 
 def display_tag_info(editor, stamp, tag, index):
@@ -97,7 +97,7 @@ def display_tag_info(editor, stamp, tag, index):
         for t in sortedCounts:
             res = findBySameTag(t[0], 30000, [], [])
             for r in res["result"]:
-                spl = r[1].split()
+                spl = r.tags.split()
                 for s in spl:
                     if s == tag or s in tag.split(): #or s in starter:
                         continue
@@ -120,14 +120,14 @@ def display_tag_info(editor, stamp, tag, index):
         tags = "Could not find any related tags. Related tags are determined by looking for tags that appear on the same notes as the given tag."
 
 
-    nids = [r[3] for r in searchRes["result"]]
+    nids = [r.id for r in searchRes["result"]]
     tret = getAvgTrueRetention(nids)
     if tret is not None:
         color = Output._retToColor(tret)    
         tret = "<span style='background: %s; color: black;'>&nbsp;%s&nbsp;</span>" % (color, tret)
 
     if not should_hide_left_side:
-        sorted_db_list = sorted(searchRes["result"], key=lambda x: x[3], reverse=True)
+        sorted_db_list = sorted(searchRes["result"], key=lambda x: x.id, reverse=True)
         note_html = index.output.get_result_html_simple(sorted_db_list[:100])
         enlarge_note_area_height = "max-height: 320px" if total_length > 120 and tret is not None else ""
         tag_name = tag
@@ -170,7 +170,7 @@ def display_tag_info(editor, stamp, tag, index):
 def _extract_tags(db_list, tag_searched):
     tagsfound = {}
     for r in db_list:
-        spl = r[1].split()
+        spl = r.tags.split()
         for s in spl:
             if s == tag_searched or s in tag_searched.split():
                 continue

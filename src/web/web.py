@@ -14,7 +14,7 @@ import utility.misc
 from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
 from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
-from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar, get_notes_sidebar_html
+from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar, get_notes_sidebar_html, get_related_notes_html
 from ..internals import js, requires_index_loaded, perf_time
 from ..config import get_config_value_or_default
 
@@ -272,9 +272,9 @@ def display_note_reading_modal(note_id):
     html = get_reading_modal_html(note)
     index.output.show_in_large_modal(html)
     # if source is a pdf file path, try to display it
-    if note[3] is not None and note[3].strip().lower().endswith(".pdf"):
-        if utility.misc.file_exists(note[3]):
-            _display_pdf(note[3].strip(), note_id)
+    if note.is_pdf():
+        if utility.misc.file_exists(note.source):
+            _display_pdf(note.source.strip(), note_id)
         else:
             message = "Could not load the given PDF.<br>Are you sure the path is correct?"
             reading_modal_notification(message)
@@ -487,7 +487,7 @@ def update_reading_bottom_bar(nid):
     pos_lbl = ""
     if queue is not None and len(queue) > 0:
         try:
-            pos = next(i for i,v in enumerate(queue) if v[0] == nid)
+            pos = next(i for i,v in enumerate(queue) if v.id == nid)
             pos_lbl = "Position: %s / %s" % (pos + 1, len(queue))
             pos_lbl_btn = "<b>%s</b> / <b>%s</b>" % (pos + 1, len(queue))
         except:
@@ -505,6 +505,25 @@ def update_reading_bottom_bar(nid):
         $('.siac-queue-sched-btn:first').html('%s');
         $('#siac-queue-readings-list').replaceWith(`%s`);
         """ % (pos_lbl, pos_lbl_btn, qd)
+
+@js
+def show_pdf_bottom_tab(note_id, tab):
+    tab_js = "$('.siac-clickable-anchor.tab').removeClass('active');"
+    if tab == "marks":
+        return f"""{tab_js}
+        $('.siac-clickable-anchor.tab').eq(0).addClass('active');
+        document.getElementById('siac-pdf-bottom-tab').innerHTML =`<div id='siac-marks-display' onclick='markClicked(event);'></div>`;
+        updatePdfDisplayedMarks()"""
+    if tab == "info":
+        return f"""{tab_js}
+        $('.siac-clickable-anchor.tab').eq(2).addClass('active');
+        document.getElementById('siac-pdf-bottom-tab').innerHTML =`to be done`;"""
+    if tab == "related":
+        html = get_related_notes_html(note_id)
+        html = html.replace("`", "&#96;")
+        return f"""{tab_js}
+        $('.siac-clickable-anchor.tab').eq(1).addClass('active');
+        document.getElementById('siac-pdf-bottom-tab').innerHTML =`{html}`;"""
 
 @js
 def display_cloze_modal(editor, selection, extracted):

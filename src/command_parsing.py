@@ -26,6 +26,7 @@ from .dialogs.queue_picker import QueuePicker
 from .dialogs.url_import import UrlImporter
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
+from .models import SiacNote
 import utility.misc
 import utility.text
 
@@ -103,28 +104,28 @@ def expanded_on_bridge_cmd(self, cmd):
             notes = get_all_pdf_notes()
             # add special note at front
             sp_body = get_pdf_list_first_card()
-            notes.insert(0, (utility.text.build_user_note_text("PDF Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+            notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
             index.output.print_search_results(notes, stamp)
 
     elif cmd == "siac-pdf-last-read":
         stamp = setStamp()
         notes = get_pdf_notes_last_read_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, (utility.text.build_user_note_text("PDF Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
         index.output.print_search_results(notes, stamp)
 
     elif cmd == "siac-pdf-last-added":
         stamp = setStamp()
         notes = get_pdf_notes_last_added_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, (utility.text.build_user_note_text("PDF Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
         index.output.print_search_results(notes, stamp)
     
     elif cmd == "siac-pdf-find-invalid":
         stamp = setStamp()
         notes = get_invalid_pdfs()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, (utility.text.build_user_note_text("PDF Meta", sp_body, ""), "", -1, -1, 1, "-1", ""))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
         index.output.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-queue-info "):
@@ -135,7 +136,7 @@ def expanded_on_bridge_cmd(self, cmd):
             if (pdfLoading || noteLoading) {
                 hideQueueInfobox();
             } else {
-                $('#siac-marks-display').hide();
+                document.getElementById('siac-pdf-bottom-tabs').style.display = "none";
                 document.getElementById('siac-queue-infobox').style.display = "block";
                 document.getElementById('siac-queue-infobox').innerHTML =`%s`;
             }
@@ -324,6 +325,12 @@ def expanded_on_bridge_cmd(self, cmd):
         if check_index():
             notes = get_random(index.limit, index.pinned)
             index.output.print_search_results(notes, stamp)
+    
+    elif cmd.startswith("siac-user-note-search-tag "):
+        stamp = setStamp()
+        if check_index():
+            notes = find_by_tag(" ".join(cmd.split()[1:]))
+            index.output.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-user-note-queue-picker "):
         nid = int(cmd.split()[1])
@@ -435,10 +442,14 @@ def expanded_on_bridge_cmd(self, cmd):
         rand_id = get_random_id_from_queue()
         if rand_id >= 0:
             display_note_reading_modal(rand_id)
+        else:
+            index.output.js("ungreyoutBottom();")
     elif cmd == "siac-user-note-queue-read-head":
         nid = get_head_of_queue()
         if nid >= 0:
             display_note_reading_modal(nid)
+        else:
+            index.output.js("ungreyoutBottom();")
 
     elif cmd.startswith("siac-scale "):
         factor = float(cmd.split()[1])
@@ -485,6 +496,10 @@ def expanded_on_bridge_cmd(self, cmd):
             index.output.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('infoBox').style.width = '%s%%';" % (value, right) )
         write_config()
 
+    elif cmd.startswith("siac-pdf-show-bottom-tab "):
+        nid = int(cmd.split()[1])
+        tab = cmd.split()[2]
+        show_pdf_bottom_tab(nid, tab)
 
     #
     #   Synonyms
@@ -583,7 +598,7 @@ def expanded_on_bridge_cmd(self, cmd):
         if check_index():
             cid = int(cmd.split()[1])
             min_sim = int(cmd.split()[2])
-            res_and_html = find_similar_cards(cid, min_sim, 20)
+            res_and_html = similar_cards(cid, min_sim, 20)
             index.output.show_in_modal_subpage(res_and_html[1])
 
 

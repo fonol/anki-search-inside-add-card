@@ -11,6 +11,7 @@ from aqt.utils import showInfo, tooltip
 
 from ..output import *
 from ..debug_logging import log, persist_index_info
+from ..models import IndexNote, SiacNote
 import utility.misc
 import utility.text
 
@@ -218,7 +219,12 @@ class FTSIndex:
         # if self.type == "SQLite FTS5":
         for r in res:
             if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                rList.append((r[4], r[2], r[3], r[0], r[5], r[6], r[7]))
+                
+                if str(r[6]) == "-1":
+                    rList.append(SiacNote.from_index(r))
+                else:
+                    rList.append(IndexNote(r))
+                # rList.append((r[4], r[2], r[3], r[0], r[5], r[6], r[7]))
                 c += 1
                 if c >= self.limit:
                     break
@@ -274,7 +280,7 @@ class FTSIndex:
     def searchDB(self, text, decks):
         """
         Used for searches in the search mask,
-        doesn't use the index, instead use the traditional anki search (which is more powerful for single keywords)
+        doesn't use the index, instead use the traditional anki search 
         """
         stamp = utility.misc.get_milisec_stamp()
         self.output.latest = stamp
@@ -296,8 +302,7 @@ class FTSIndex:
                 #pinned items should not appear in the results
                 if not str(r[0]) in self.pinned:
                     #todo: implement highlighting
-                    #todo determine refs
-                    rList.append((r[1], r[2], r[3], r[0], 1, r[4], ""))
+                    rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
             return { "result" : rList[:self.limit], "stamp" : stamp }
         return { "result" : [], "stamp" : stamp }
 
