@@ -78,6 +78,8 @@ class SiacNote(Printable):
         
         title = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
         if src is not None and len(src) > 0:
+            if "/" in src and src.endswith(".pdf"):
+                src = src[src.rindex("/") +1:]
             src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src)
         else:
             src = ""
@@ -102,7 +104,6 @@ class IndexNote(Printable):
         self.mid = props[6]
         self.refs = props[7]
 
-        self.is_siac_note = str(self.mid == "-1")
 
     def get_content(self):
         return self.source

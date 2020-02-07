@@ -185,6 +185,11 @@ def get_web_folder_path():
         return dir + "/web/"
     return dir + "web/"
 
+def get_addon_id():
+    dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
+    if dir.endswith("/"):
+        dir = dir[:-1]
+    return dir[dir.rfind("/")+1:]
 
 def url_to_pdf(url, output_path):
     """

@@ -387,7 +387,7 @@ class Output:
             return
         stamp = utility.misc.get_milisec_stamp()
         self.latest = stamp
-        sortedByDate = list(sorted(self.lastResults, key=lambda x: x.id))
+        sortedByDate = list(sorted(self.lastResults, key=lambda x: int(x.id)))
         if mode == "desc":
             sortedByDate = list(reversed(sortedByDate))
         self.print_search_results(sortedByDate, stamp)

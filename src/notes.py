@@ -232,6 +232,20 @@ def get_pdfs_by_sources(sources):
     conn.close()
     return [r[0] for r in res]
 
+def get_unqueued_notes_for_tag(tag):
+    if len(tag.strip()) == 0:
+        return []
+    query = ""
+    for t in tag.split(" "):
+        if len(t) > 0:
+            t = t.replace("'", "''")
+            if len(query) > 6:
+                query += " or "
+            query = f"{query}lower(tags) like '% {t} %' or lower(tags) like '% {t}::%' or lower(tags) like '%::{t} %' or lower(tags) like '{t} %' or lower(tags) like '%::{t}::%'"
+    conn = _get_connection()
+    res = conn.execute("select * from notes where (%s) and position is null order by id desc" %(query)).fetchall()
+    return _to_notes(res)
+
 def get_read_pages(nid):
     conn = _get_connection()
     res = conn.execute("select page from read where nid = %s and page > -1 order by created asc" % nid).fetchall()
@@ -311,12 +325,26 @@ def update_note_text(id, text):
     text = utility.text.clean_user_note_text(text)
     conn.execute(sql, (text, id))
     conn.commit()
-    note = conn.execute("select title, source, tags from notes where id=" + id).fetchone()
+    note = conn.execute(f"select title, source, tags from notes where id={id}").fetchone()
     conn.close()
     index = get_index()
     if index is not None:
         index.update_user_note((id, note[0], text, note[1], note[2], -1, ""))
 
+def update_note_tags(id, tags):
+    if not tags.endswith(" "):
+        tags += " "
+    if not tags.startswith(" "):
+        tags = f" {tags}"
+    conn = _get_connection()
+    sql = """ update notes set tags=?, modified=datetime('now', 'localtime') where id=? """
+    conn.execute(sql, (tags, id))
+    conn.commit()
+    note = conn.execute(f"select title, source, tags, text from notes where id={id}").fetchone()
+    conn.close()
+    index = get_index()
+    if index is not None:
+        index.update_user_note((id, note[0], note[3], note[1], tags, -1, ""))
 
 def update_note(id, title, text, source, tags, reminder, queue_schedule):
 
@@ -631,6 +659,12 @@ def set_priority_list(ids):
     conn.commit()
     conn.close
 
+def empty_priority_list():
+    conn = _get_connection()
+    conn.execute("update notes set position = null")
+    conn.commit()
+    conn.close()
+
 def _get_db_path():
     file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
     if file_path is None or len(file_path) == 0:
@@ -658,6 +692,20 @@ def get_all_pdf_notes():
     res = conn.execute("select * from notes where lower(source) like '%.pdf'").fetchall()
     conn.close()
     return _to_notes(res)
+
+def get_all_unread_pdf_notes():
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%.pdf' and id not in (select distinct nid from read where page >= 0) order by created desc").fetchall()
+    conn.close()
+    return _to_notes(res)
+
+def get_in_progress_pdf_notes():
+    conn = _get_connection()
+    #todo: find better query, this one is slow
+    res = conn.execute("select * from notes where lower(source) like '%.pdf' and id in (select nid as n1 from read where page > -1 and (select count(*) from read where nid = n1) < pagestotal) order by created desc").fetchall()
+    conn.close()
+    return _to_notes(res)
+
 
 def get_pdf_notes_last_added_first():
     conn = _get_connection()

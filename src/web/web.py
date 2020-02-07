@@ -14,7 +14,7 @@ import utility.misc
 from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
 from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
-from .html import get_model_dialog_html, get_reading_modal_html, stylingModal, get_note_delete_confirm_modal_html, get_loader_html, get_queue_head_display, get_reading_modal_bottom_bar, get_notes_sidebar_html, get_related_notes_html
+from .html import *
 from ..internals import js, requires_index_loaded, perf_time
 from ..config import get_config_value_or_default
 
@@ -174,8 +174,6 @@ def setup_ui_after_index_built(editor, index, init_time=None):
         editor.web.eval("$('#typingCb').prop('checked', false); setSearchOnTyping(false);")
     if not index.searchOnSelection:
         editor.web.eval("$('#selectionCb').prop('checked', false);")
-    if not index.tagSearch:
-        editor.web.eval("$('#tagCb').prop('checked', false);")
     if index.tagSelect:
         fillTagSelect(editor)
     if not index.topToggled:
@@ -301,6 +299,10 @@ def _display_pdf(full_path, note_id):
     # pages read are ordered by date, so take last
     last_page_read = pages_read[-1] if len(pages_read) > 0 else 1
 
+
+    addon_id = utility.misc.get_addon_id()
+    port = mw.mediaServer.getPort()
+
     init_code = """
         pdfLoading = true;
         var bstr = atob(b64);
@@ -330,7 +332,7 @@ def _display_pdf(full_path, note_id):
                 return;
             }
             if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.worker.min.js';
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/pdf.worker.min.js';
             }
             var canvas = document.getElementById("siac-pdf-canvas");
             var typedarray = new Uint8Array(fileReader.result);
@@ -348,7 +350,12 @@ def _display_pdf(full_path, note_id):
                     pdfDisplayed = pdf;
                     pdfDisplayedCurrentPage = %s;
                     $('#siac-loader-modal').remove();
-                    queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
+                    if (pagesRead.length === pdf.numPages) {
+                        pdfDisplayedCurrentPage = 1;
+                        queueRenderPage(1, true, true, true);
+                    } else {
+                        queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
+                    }
                     updatePdfProgressBar();
                     if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + pdf.numPages); }
                     fileReader = null;
@@ -358,7 +365,7 @@ def _display_pdf(full_path, note_id):
 
         fileReader.readAsArrayBuffer(file);
         b64 = ""; arr = null; bstr = null; file = null;
-    """ % (pages_read_js, marks_js, last_page_read, note_id)
+    """ % (pages_read_js, marks_js, port, addon_id, last_page_read, note_id)
     #send large files in multiple packets
     page = index.output.editor.web.page()
     chunk_size = 10000000
@@ -425,7 +432,7 @@ def show_iframe_overlay(url=None):
         if (pdfDisplayed) {
             document.getElementById('siac-pdf-top').style.display = "none";
         } else {
-            document.getElementById('siac-text-top').style.display = "none";
+            document.getElementById('siac-text-top-wr').style.display = "none";
         }
         document.getElementById('siac-iframe').style.display = "block";
         document.getElementById('siac-close-iframe-btn').style.display = "block";
@@ -446,7 +453,7 @@ def hide_iframe_overlay():
         if (pdfDisplayed) {
             document.getElementById('siac-pdf-top').style.display = "block";
         } else {
-            document.getElementById('siac-text-top').style.display = "block";
+            document.getElementById('siac-text-top-wr').style.display = "block";
         }
         iframeIsDisplayed = false;
     """
@@ -468,7 +475,7 @@ def show_web_search_tooltip(inp):
                 search_sources += """<div class="siac-url-ch" onclick='pycmd("siac-url-srch $$$" + document.getElementById("siac-tt-ws-inp").value + "$$$%s"); $(this.parentNode.parentNode).remove();'>%s</div>""" % (url, name)
 
     modal = """ <div class="siac-modal-small dark" style="text-align:center;">
-                    <input style="width: 100%%; border-radius: 3px; padding-left: 4px; box-sizing: border-box; background: #272828; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input> 
+                    <input style="width: 100%%; border-radius: 3px; padding-left: 4px; box-sizing: border-box; background: #2f2f31; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input> 
                     <br/>
                     <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden; cursor: pointer; margin-top: 15px;">%s</div><br><br>
                     <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
@@ -515,9 +522,11 @@ def show_pdf_bottom_tab(note_id, tab):
         document.getElementById('siac-pdf-bottom-tab').innerHTML =`<div id='siac-marks-display' onclick='markClicked(event);'></div>`;
         updatePdfDisplayedMarks()"""
     if tab == "info":
+        html = get_note_info_html(note_id)
+        html = html.replace("`", "&#96;")
         return f"""{tab_js}
         $('.siac-clickable-anchor.tab').eq(2).addClass('active');
-        document.getElementById('siac-pdf-bottom-tab').innerHTML =`to be done`;"""
+        document.getElementById('siac-pdf-bottom-tab').innerHTML =`{html}`;"""
     if tab == "related":
         html = get_related_notes_html(note_id)
         html = html.replace("`", "&#96;")
@@ -611,15 +620,15 @@ def show_timer_elapsed_popup(nid):
         </div>
     </div>
     <div style='margin: 10px 0 25px 0; text-align: center; color: lightgrey;'>
-        Read <b>%s</b> pages today.<br>
-        Added <b>%s</b> cards today.
+        Read <b>%s</b> %s today.<br>
+        Added <b>%s</b> %s today.
     </div>
     <div style='text-align: center;'>
         <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;Start 5m&nbsp;</div>
         <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none";'>&nbsp;&nbsp;Ok&nbsp;&nbsp;</div>
         <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;Start 15m&nbsp;</div>
     </div>
-    """ % (read_today_count, added_today_count)
+    """ % (read_today_count, "page" if read_today_count == 1 else "pages", added_today_count, "card" if added_today_count == 1 else "cards")
     return "$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html
 
 @js

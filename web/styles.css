@@ -201,7 +201,7 @@ body {
 }
 
 #topContainer {
-    z-index: 1000;
+    z-index: 5;
     position: relative;
     flex-wrap: nowrap;
 }
@@ -226,7 +226,7 @@ select {
     float: right;
     font-size: $tagFontSize$ !important;
     cursor: pointer;
-    z-index: 999;
+    z-index: 4;
     user-select: none;
     border: 1px solid $tagBackgroundColor$;
 }
@@ -250,7 +250,7 @@ select {
     position: absolute;
     left: 0px;
     top: 0px;
-    z-index:999;
+    z-index:4;
     font-size: 0;
 }
 .retMark {
@@ -404,7 +404,7 @@ select {
     position: absolute;
     bottom: 2px;
     left: 0px;
-    z-index:999;
+    z-index:4;
     border: 3px outset $noteBorderColor$;
     border-radius: 4px;
     background:  $noteBackgroundColor$;
@@ -778,7 +778,7 @@ table.striped tr:nth-child(even) {
 }
 
 .siac-btn.siac-btn-dark {
-    background-color: #272828;
+    background-color: #2f2f31;
     color: beige;
     border: 2px outset #b2b2a0;
     border-radius: 3px;
@@ -825,21 +825,21 @@ table.striped tr:nth-child(even) {
     font-size: 11px !important;
     border: 1px solid  $buttonBorderColor$;
     border-top: 0px solid white;
-    z-index: 99999999;
+    z-index: 5;
     transition: max-height 0.3s;
 }
 .siac-btn-small-dropdown-inverted {
     display: none;
     position: absolute;
     color: white;
-    background-color: #272828;
+    background-color: #2f2f31;
     width: 200px;
     padding: 0px 4px 0px 4px;
     height: 115px;
     top: -94px;
     left: -181px;
     border: 2px outset darkorange; 
-    z-index: 999;
+    z-index: 5;
     transition: all 0.3s;
 }
 .siac-btn-small:hover .siac-btn-small-dropdown.hover,.siac-btn-small.expanded .siac-btn-small-dropdown.click {
@@ -1283,7 +1283,7 @@ span.tag-symbol {
     right: 15px;
     bottom: 15px;
     padding: 20px;
-    background: #272828;
+    background: #2f2f31;
     color: beige;
     border: 3px outset darkorange;
     border-radius: 4px;
@@ -1353,7 +1353,7 @@ span.tag-symbol {
     border: 3px outset #2496dc;
     border-radius: 4px;
     padding: 4px 6px 4px 6px;
-    background: #272828;
+    background: #2f2f31;
     color: white;
     user-select: none;
 }
@@ -1404,7 +1404,7 @@ span.tag-symbol {
     border: 3px outset #2496dc;
     border-radius: 4px;
     padding: 4px 6px 4px 6px;
-    background: #272828;
+    background: #2f2f31;
     color: white;
     user-select: none;
 }
@@ -1422,7 +1422,7 @@ span.tag-symbol {
 }
 #siac-iframe-btn input {
     width: 100%;
-    background: #272828;
+    background: #2f2f31;
     color: white;
     border-color: white;
     border-radius: 3px;
@@ -1451,7 +1451,7 @@ span.tag-symbol {
 	position: absolute;
 	display: none;
 	z-index: 999;
-    background-color: #272828;
+    background-color: #2f2f31;
 	color: white;
     padding: 9px;
     max-width: $pdfTooltipMaxWidth$px;
@@ -1463,7 +1463,7 @@ span.tag-symbol {
     border-radius: 4px;
     border: 3px outset #43a047;
     padding: 1px 5px 1px 5px;
-    background-color: #272828;
+    background-color: #2f2f31;
     color: beige;
 }
 #siac-pdf-read-btn:hover,#siac-pdf-more-btn:hover {
@@ -1509,7 +1509,7 @@ span.tag-symbol {
     margin-top: 15px;
     margin-bottom: 5px;
     border-radius: 4px;
-    background-color: #272828;
+    background-color: #2f2f31;
     color: white;
     border-color: white;
     padding-left: 4px;
@@ -1518,7 +1518,7 @@ span.tag-symbol {
     outline: none;
 }
 #siac-pdf-page-inp {
-    background: #272828;
+    background: #2f2f31;
     color: beige;
 }
 #siac-pdf-bottom-tab {
@@ -1688,11 +1688,11 @@ span.tag-symbol {
     bottom: 0;
     right: 0;
     margin-left: -4px;
-    background-color: #272828;
+    background-color: #2f2f31;
     color: white;
     font-size: 12px;
     padding: 15px;
-    z-index: 99999999;
+    z-index: 7;
     border-radius: 5px;
     overflow: hidden;
 }
@@ -1913,7 +1913,6 @@ span.tag-symbol {
 #siac-timer-play-btn:hover {
     transform: scale(1.05);
 }
-
 #siac-reading-modal-text img {
     display: block;
     margin-left: auto !important;
@@ -1921,7 +1920,7 @@ span.tag-symbol {
 }
 #siac-timer-popup {
     z-index: 9999999;
-    background: #272828;
+    background: #2f2f31;
     color: white;
     position: absolute;
     top: 50%;
@@ -1933,20 +1932,18 @@ span.tag-symbol {
     border-radius: 5px;
     display: none;
 }
-#siac-pdf-top::-webkit-scrollbar{
-    width: 10px !important;
-}
 #siac-pdf-top::-webkit-scrollbar:horizontal {
     height: 10px !important;
 }
-#siac-pdf-top::-webkit-scrollbar-track {
+#siac-pdf-top::-webkit-scrollbar, body.nightMode ::-webkit-scrollbar {
+    width: 10px !important;
     background: #313d45 !important;
     border-radius: 4px !important;
 }
-#siac-pdf-top::-webkit-scrollbar-thumb {
+ #siac-pdf-top::-webkit-scrollbar-thumb, body.nightMode ::-webkit-scrollbar-thumb {
     background: #515d71 !important;
     border-radius: 4px !important;
-}
+} 
 .siac-modal-small {
     z-index: 9999999;
     background: $modalBackgroundColor$;
@@ -1962,7 +1959,7 @@ span.tag-symbol {
 }
 .siac-modal-small.dark, #siac-reading-modal .siac-modal-small {
     border: 3px outset darkorange;
-    background: #272828;
+    background: #2f2f31;
     color: white;
 }
 hr.siac-modal-sep {
@@ -2152,4 +2149,14 @@ hr.siac-modal-sep {
     #modalText {
         max-height: 350px !important;
     }
+}
+
+.tox-tinymce-aux {
+    z-index: 2147483638 !important!;
+}
+.tox .tox-menu {
+    z-index: 2147483638 !important;
+}
+#siac-text-top-wr > div {
+    height: 100% !important;
 }

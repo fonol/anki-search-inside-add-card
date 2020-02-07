@@ -107,6 +107,18 @@ def expanded_on_bridge_cmd(self, cmd):
             notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
             index.output.print_search_results(notes, stamp)
 
+    elif cmd == "siac-show-pdfs-unread":
+        if check_index():
+            stamp = setStamp()
+            notes = get_all_unread_pdf_notes()
+            index.output.print_search_results(notes, stamp)
+    
+    elif cmd == "siac-show-pdfs-in-progress":
+        if check_index():
+            stamp = setStamp()
+            notes = get_in_progress_pdf_notes()
+            index.output.print_search_results(notes, stamp)
+
     elif cmd == "siac-pdf-last-read":
         stamp = setStamp()
         notes = get_pdf_notes_last_read_first()
@@ -334,16 +346,16 @@ def expanded_on_bridge_cmd(self, cmd):
 
     elif cmd.startswith("siac-user-note-queue-picker "):
         nid = int(cmd.split()[1])
-        #picker = QueuePicker(self.parentWindow, _get_priority_list(), get_pdf_notes_not_in_queue())
         picker = QueuePicker(self.parentWindow, [], [])
-        if picker.exec_():
-            if picker.chosen_id is not None and picker.chosen_id >= 0:
-                display_note_reading_modal(picker.chosen_id)
-            else:
-                reload_note_reading_modal_bottom_bar(nid)
+        if picker.exec_() and picker.chosen_id is not None and picker.chosen_id >= 0:
+            note = get_note(nid)
+            if not note.is_pdf() and not note.is_feed():
+                index.output.js(f"""
+                      readingModalTextKeyup(null, {nid});
+                """)
+            display_note_reading_modal(picker.chosen_id)
         else:
             reload_note_reading_modal_bottom_bar(nid)
-
 
     elif cmd == "siac-user-note-update-btns":
         queue_count = get_queue_count()
@@ -367,6 +379,7 @@ def expanded_on_bridge_cmd(self, cmd):
         queue_sched = int(cmd.split()[2])
         inserted_index = update_position(nid, QueueSchedule(queue_sched))
         queue_readings_list = get_queue_head_display(nid)
+        queue_readings_list = queue_readings_list.replace("`", "\\`")
         index.output.js("""
         document.getElementById('siac-queue-lbl').innerHTML = 'Position: %s / %s';
         $('#siac-queue-lbl').fadeIn('slow');
@@ -380,6 +393,7 @@ def expanded_on_bridge_cmd(self, cmd):
         queue_sched = int(cmd.split()[2])
         inserted_index = update_position(nid, QueueSchedule(queue_sched))
         queue_readings_list = get_queue_head_display(nid_displayed)
+        queue_readings_list = queue_readings_list.replace("`", "\\`")
         p_s = "Position: "
         if nid_displayed != nid:
             pos_displayed = get_position(nid_displayed)
@@ -443,13 +457,20 @@ def expanded_on_bridge_cmd(self, cmd):
         if rand_id >= 0:
             display_note_reading_modal(rand_id)
         else:
-            index.output.js("ungreyoutBottom();")
+            index.output.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;")
     elif cmd == "siac-user-note-queue-read-head":
         nid = get_head_of_queue()
         if nid >= 0:
             display_note_reading_modal(nid)
         else:
-            index.output.js("ungreyoutBottom();")
+            index.output.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;")
+
+    elif cmd.startswith("siac-update-note-tags "):
+        nid = int(cmd.split()[1])
+        tags = " ".join(cmd.split()[2:])
+        tags = utility.text.clean_tags(tags)
+        update_note_tags(nid, tags)
+        reload_note_sidebar()
 
     elif cmd.startswith("siac-scale "):
         factor = float(cmd.split()[1])
@@ -1223,7 +1244,7 @@ def after_index_rebuilt():
     editor.web.eval("""
         $('.freeze-icon').removeClass('frozen');
         siacState.isFrozen = false;
-        $('#selectionCb,#typingCb,#tagCb,#highlightCb').prop("checked", true);
+        $('#selectionCb,#typingCb,#highlightCb').prop("checked", true);
         siacState.searchOnSelection = true;
         siacState.searchOnTyping = true;
         $('#toggleTop').click(function() { toggleTop(this); });

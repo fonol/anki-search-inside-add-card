@@ -110,7 +110,7 @@ class NoteEditor(QDialog):
             self.save.clicked.connect(self.on_update_clicked)
         else:
             self.save = QPushButton("\u2714 Create")
-            self.setWindowTitle('New Note (Ctrl/Cmd + Shift + N)')
+            self.setWindowTitle('New Note  (Ctrl/Cmd+Shift+N)')
             self.save.clicked.connect(self.on_create_clicked)
         self.save.setShortcut("Ctrl+Return")
         self.cancel = QPushButton("Cancel")
@@ -392,7 +392,7 @@ class CreateTab(QWidget):
         vbox_left = QVBoxLayout()
 
         tag_lbl = QLabel()
-        tag_icn = QPixmap(utility.misc.get_web_folder_path() + "tag-icon.png").scaled(14,14)
+        tag_icn = QPixmap(utility.misc.get_web_folder_path() + "icon-tag-24.png").scaled(14,14)
         tag_lbl.setPixmap(tag_icn);
 
         tag_hb = QHBoxLayout()

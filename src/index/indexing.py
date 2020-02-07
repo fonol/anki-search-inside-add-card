@@ -12,7 +12,6 @@ from ..debug_logging import *
 from ..web.web import showSearchResultArea, printStartingInfo, fillDeckSelect, setup_ui_after_index_built
 from ..web.html import loadSynonyms
 from .fts_index import FTSIndex
-from .whoosh_index import WhooshSearchIndex
 from ..notes import get_all_notes
 import utility.misc
 
@@ -80,26 +79,12 @@ def _build_index(index_up_to_date):
     start = time.time()
     config = mw.addonManager.getConfig(__name__)
     
-    # Whoosh support removed for now
-    # try:
-    #     useFTS = config['useFTS']
-    # except KeyError:
-    #     useFTS = True
-    useFTS = True
-
-    index = None
     corpus = get_corpus()
-    #fts4 based sqlite reversed index
-    if config["disableNonNativeSearching"] or useFTS:
-        index = FTSIndex(corpus, config["disableNonNativeSearching"], index_up_to_date)
-        end = time.time()
-        initializationTime = round(end - start)
-    #whoosh index
-    else:
-        index = WhooshSearchIndex(corpus, config["disableNonNativeSearching"], index_up_to_date)
-        end = time.time()
-        initializationTime = round(end - start)
-
+  
+    index = FTSIndex(corpus, config["disableNonNativeSearching"], index_up_to_date)
+    end = time.time()
+    initializationTime = round(end - start)
+ 
     index.finder = Finder(mw.col)
     index.output.stopwords = index.stopWords
     index.output.remove_divs = config["removeDivsFromOutput"]
@@ -109,13 +94,11 @@ def _build_index(index_up_to_date):
     index.selectedDecks = ["-1"]
     index.lastSearch = None
     index.lastResDict = None
-    index.tagSearch = True
     index.tagSelect = False
     index.topToggled = True
     index.output.edited = {}
     index.initializationTime = initializationTime
     index.synonyms = loadSynonyms()
-    index.tagSearch = config["searchOnTagEntry"]
     index.logging = config["logging"]
     index.searchbar_mode = "Add-on"
     try:

@@ -420,7 +420,7 @@ function tagMouseLeave(elem) {
     let hovered = $(".siac-tag-info-box:hover").first();
     if (!hovered.length && !$(`.tagLbl[data-stamp]:hover`).length) {
         $('.siac-tag-info-box').remove();
-        $('.tagLbl').css("z-index", "999");
+        $('.tagLbl').css("z-index", "4");
         $("#greyout").hide();
         return;
     }
@@ -436,7 +436,7 @@ function tagMouseLeave(elem) {
             }
         }
     }
-    $(`.tagLbl[data-stamp='${stamp}']`).first().css("z-index", "999");
+    $(`.tagLbl[data-stamp='${stamp}']`).first().css("z-index", "4");
     if (document.getElementById("siac-tag-info-box-"+ stamp))
         $('#siac-tag-info-box-' + stamp).remove();
     if (!existing || existing.length < 1) {
@@ -456,7 +456,9 @@ function tagInfoBoxClicked(elem) {
 
 }
 function readingModalTextKeyup(elem, nid) {
-        let html = $(elem).html();
+        let html = tinymce.get('siac-text-top').getContent();
+        tinymce.remove();
+        document.getElementById("siac-text-note-status").innerHTML = "Note Saved - " + new Date().toString();
         pycmd("siac-update-note-text " + nid + " " + html);
 }
 
@@ -1136,9 +1138,6 @@ function pdfKeyup() {
         $('#siac-pdf-tooltip').data("sentences", sentences);
         $('#siac-pdf-tooltip').data("selection", text);
 	}
-}
-function nonPDFKeyup() {
-
 }
 function joinTextLayerNodeTexts(nodes, text) {
     let total = "";

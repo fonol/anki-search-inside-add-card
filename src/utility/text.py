@@ -299,3 +299,9 @@ def try_find_sentence(text, selection):
     return pre + after[::-1] + "."
 
    
+def clean_tags(tags):
+    if tags is None or len(tags.strip()) == 0:
+        return ""
+    
+    tags = re.sub("[`'\"]", "", tags)
+    return tags

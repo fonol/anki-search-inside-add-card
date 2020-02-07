@@ -272,6 +272,7 @@ def calculateStats(nid, gridView):
         pass
     if model is not None:
         infoTable["Note Type"] = model["name"]
+    
 
     # get card ids for note
     cards = mw.col.db.all("select * from cards where nid = %s" % (nid))
@@ -283,14 +284,23 @@ def calculateStats(nid, gridView):
     cardTypeById = {}
     cardEaseFactorById = {}
     cardQueueById = {}
+    decks = set()
     cStr = "("
     for c in cards:
+        d = mw.col.decks.get(c[2])["name"]
+        if not d in decks:
+            decks.add(d)
         cStr += str(c[0]) + ", "
         cardOrdById[c[0]] = c[3]
         cardTypeById[c[0]] = _cardTypeStr(c[6])
         cardEaseFactorById[c[0]] = int(c[10] / 10)
         cardQueueById[c[0]] = c[7]
     cStr = cStr[:-2] + ")"
+
+    if len(decks) > 0:
+        infoTable["Deck(s)"] = ", ".join(decks)
+    else:
+        infoTable["Deck(s)"] = "Could not determine decks."
 
     cardNameById = {}
     for k, v in cardOrdById.items():

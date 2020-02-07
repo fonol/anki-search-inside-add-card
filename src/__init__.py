@@ -4,6 +4,7 @@ from aqt import mw
 from aqt.qt import *
 from anki.hooks import addHook
 import aqt
+from aqt.utils import showInfo
 import aqt.webview
 from aqt.addcards import AddCards
 import aqt.editor
@@ -21,6 +22,7 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
 import utility.tags
+import utility.misc
 
 from .state import check_index, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit, set_old_on_bridge_cmd
 from .index.indexing import build_index, get_notes_in_collection
@@ -34,6 +36,7 @@ from .internals import requires_index_loaded
 from .config import get_config_value_or_default
 from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerender_info, add_note_to_index
 
+
 config = mw.addonManager.getConfig(__name__)
 
 def init_addon():
@@ -43,12 +46,14 @@ def init_addon():
     #todo: Find out if there is a better moment to start index creation
     create_db_file_if_not_exists()
     addHook("profileLoaded", build_index)
+    addHook("profileLoaded", insert_tmce)
     orig_add_note = AddCards.addNote
     origEditorContextMenuEvt = EditorWebView.contextMenuEvent
 
     AddCards.addNote = add_note_and_update_index
-    orig_tag_keypress = TagEdit.keyPressEvent
-    TagEdit.keyPressEvent = tag_edit_keypress
+    if get_config_value_or_default("searchOnTagEntry", True):
+        orig_tag_keypress = TagEdit.keyPressEvent
+        TagEdit.keyPressEvent = tag_edit_keypress
 
     setup_tagedit_timer()
     EditorWebView.contextMenuEvent = editorContextMenuEventWrapper
@@ -58,7 +63,6 @@ def init_addon():
     addHook("setupEditorShortcuts", addHideShowShortcut) 
 
     setup_hooks()
-
 
     #main functions to search
     if not config["disableNonNativeSearching"]:
@@ -86,11 +90,12 @@ def init_addon():
                 pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
             }
 
-        var script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.min.js';
-        document.body.appendChild(script);
+       // var script = document.createElement('script');
+       // script.type = 'text/javascript';
+       // script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.min.js';
+      //  document.body.appendChild(script);
 
+    
             </script>
         """
     else:
@@ -121,6 +126,7 @@ def init_addon():
     aqt.editor._html += getScriptPlatformSpecific(config["addToResultAreaHeight"], typing_delay)
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     addHook("loadNote", on_load_note)
+
 
 
 def add_note_and_update_index(dialog, note):
@@ -198,6 +204,26 @@ def editorContextMenuEventWrapper(view, evt):
     pos = evt.pos()
     determineClickTarget(pos)
     #origEditorContextMenuEvt(view, evt)
+
+def insert_tmce():
+    addon_id = utility.misc.get_addon_id()
+    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map)$")
+    port = mw.mediaServer.getPort()
+    aqt.editor._html += f"""
+    <script>
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/tinymce/tinymce.min.js';
+        document.body.appendChild(script);
+
+
+        
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/pdf.min.js';
+        document.body.appendChild(script);
+    </script>
+    """
 
 @requires_index_loaded
 def determineClickTarget(pos):
@@ -281,7 +307,7 @@ def tag_edit_keypress(self, evt):
         return
     index = get_index()
 
-    if index is not None and index.tagSearch and len(self.text()) > 0:
+    if index is not None and len(self.text()) > 0:
         text = self.text()
         try:
             tagEditTimer.timeout.disconnect()
