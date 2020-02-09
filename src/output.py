@@ -108,9 +108,10 @@ class Output:
                             </div>
                             <div class='cardR siac-user-note' onmouseup='{mouseup}' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
                             <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
-                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'>&nbsp;READ&nbsp;{queue}</div>
+                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'><div class='siac-read-icn'></div>{progress}</div>
                         </div>"""
 
+                            #<div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'>&nbsp;READ&nbsp;{queue}</div>
     def show_page(self, editor, page):
         """
             Results are paginated, this will display the results for the given page.
@@ -196,8 +197,11 @@ class Output:
             #on SiacNotes, it means the source field.
             build_user_note_start = time.time()
             text = res.get_content()
+            progress = ""
             if res.note_type == "user" and res.is_pdf():
                 pdfs.append(nid)
+                p_html = "<div class='siac-prog-sq'></div>" * 10
+                progress = f"<div class='siac-prog-tmp'>{p_html} &nbsp;0 / ?</div>"
 
             build_user_note_total += time.time() - build_user_note_start
 
@@ -257,6 +261,7 @@ class Output:
                     text=text, 
                     tags=self.build_tag_string(res.tags),
                     queue=": Q-%s&nbsp;" % (res.position + 1) if res.is_in_queue() else "",
+                    progress=progress,
                     ret=retInfo)
             else:
                 newNote = self.noteTemplate.format(
@@ -324,7 +329,7 @@ class Output:
                             prog_bar = ''.join((prog_bar, "<div class='siac-prog-sq-filled'></div>"))
                         else:
                             prog_bar = ''.join((prog_bar, "<div class='siac-prog-sq'></div>"))
-                    cmd = ''.join((cmd, "document.querySelector('[id=\"%s\"] .siac-prog-tmp').innerHTML = `%s &nbsp;%s / %s`;" % (i[0], prog_bar, i[1], i[2])))
+                    cmd = ''.join((cmd, "document.querySelector('[id=\"nWr-%s\"] .siac-prog-tmp').innerHTML = `%s &nbsp;%s / %s`;" % (i[0], prog_bar, i[1], i[2])))
                 self._js(cmd, editor)
             
         return (highlight_total * 1000, build_user_note_total)
@@ -500,7 +505,7 @@ class Output:
                     if len(value) == 1 and tagData.count("::") < 2 and not key in tags:
                         tagStr = f"{tagStr}<span class='tagLbl' data-stamp='{stamp}' data-name='{tagData.split(' ')[1]}' data-tags='{tagData}' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>{utility.text.trim_if_longer_than(tagData.split()[1],16)}</span>"
                     else:
-                        tagStr = f"<span class='tagLbl' data-stamp='{stamp}' data-name='{tagData}' data-tags='{tagData}' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>{utility.text.trim_if_longer_than(key,12)}&nbsp; (+{len(value)})</span>"
+                        tagStr = f"{tagStr}<span class='tagLbl' data-stamp='{stamp}' data-name='{tagData}' data-tags='{tagData}' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>{utility.text.trim_if_longer_than(key,12)}&nbsp; (+{len(value)})</span>"
 
             infoStr += tagStr
             infoMap["Tags"] = tagStr
