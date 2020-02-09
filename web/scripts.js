@@ -818,7 +818,11 @@ function displayPagination(page, pageMax, total, resultsFound, cacheSize) {
     }
 
     let html = "";
-    if (pageMax === 0 || !resultsFound) { return; }
+    if (pageMax === 0 || !resultsFound) { 
+        document.getElementById("siac-pagination-status").innerHTML = "";
+        document.getElementById("siac-pagination-wrapper").innerHTML = "";
+        return; 
+    }
     if (page === 1 && pageMax == 1) {
         html = "";
     } else {
@@ -1186,7 +1190,7 @@ function globalKeydown(e) {
         } else {
             pycmd('siac-create-note');
         }
-    } else if (pdfDisplayed) {
+    } else if (pdfDisplayed && !$('.field').is(':focus')) {
         pdfViewerKeyup(e);
     }
 }
