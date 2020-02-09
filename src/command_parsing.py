@@ -290,6 +290,12 @@ def expanded_on_bridge_cmd(self, cmd):
         id = int(cmd.split()[1])
         if id > -1:
             NoteEditor(self.parentWindow, id)
+    
+    elif cmd.startswith("siac-edit-user-note-from-modal "):
+        id = int(cmd.split()[1])
+        read_note_id = int(cmd.split()[2])
+        if id > -1:
+            NoteEditor(self.parentWindow, note_id=id, add_only=False, read_note_id=read_note_id)
 
     elif cmd.startswith("siac-delete-user-note-modal "):
         nid = int(cmd.split()[1])
@@ -356,6 +362,10 @@ def expanded_on_bridge_cmd(self, cmd):
             display_note_reading_modal(picker.chosen_id)
         else:
             reload_note_reading_modal_bottom_bar(nid)
+    
+    elif cmd.startswith("siac-reload-reading-modal-bottom "):
+        nid = int(cmd.split()[1])
+        reload_note_reading_modal_bottom_bar(nid)
 
     elif cmd == "siac-user-note-update-btns":
         queue_count = get_queue_count()
