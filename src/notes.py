@@ -393,8 +393,8 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
     conn.execute(sql, (title, text, source, tags, id))
 
     if pos is not None:
-        list.insert(pos, (id,))
-        pos_list = [(ix, r[0]) for ix, r in enumerate(list)]
+        list.insert(pos, SiacNote((id,None,None,None,None,None,None,None,None,None,None)))
+        pos_list = [(ix, r.id) for ix, r in enumerate(list)]
         conn.executemany("update notes set position = ? where id = ?", pos_list)
     conn.commit()
     conn.close()
