@@ -278,14 +278,23 @@ def display_note_reading_modal(note_id):
             reading_modal_notification(message)
 
 @js
-def reload_note_reading_modal_bottom_bar(note_id):
+def reload_note_reading_modal_bottom_bar(note_id=None):
     """
         Called after queue picker dialog has been closed without opening a new note.
     """
-    note = get_note(note_id)
-    html = get_reading_modal_bottom_bar(note)
-    html = html.replace("`", "\\`")
-    return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks();" % html
+    if note_id is not None:
+
+        note = get_note(note_id)
+        html = get_reading_modal_bottom_bar(note)
+        html = html.replace("`", "\\`")
+        return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks();" % html
+    
+    else:
+        return """if (document.getElementById('siac-reading-modal').style.display !== 'none' && document.getElementById('siac-reading-modal-top-bar')) { 
+                     pycmd('siac-reload-reading-modal-bottom '+ $('#siac-reading-modal-top-bar').data('nid')); 
+                   }"""
+
+
 
 def _display_pdf(full_path, note_id):
     index = get_index()
