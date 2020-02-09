@@ -416,8 +416,10 @@ select {
     padding: 1px 1px 1px 1px; 
 }
 .cardLeftBot:hover {
-    color: #2496dc;
     border-color: $noteHoverBorderColor$;
+}
+.cardLeftBot:hover :not(.siac-prog-tmp) {
+    color: #2496dc;
 }
 #predefSearchSelect {
     margin-right: 5px;
@@ -2159,4 +2161,15 @@ hr.siac-modal-sep {
 }
 #siac-text-top-wr > div {
     height: 100% !important;
+}
+.cardLeftBot .siac-read-icn {
+    vertical-align: middle;
+    margin: 0;
+}
+.cardLeftBot .siac-prog-tmp {
+    display: inline-block;
+    margin: 0 4px 0 7px;
+}
+.siac-user-note .cardR {
+    padding-bottom: 22px;
 }
