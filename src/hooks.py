@@ -5,7 +5,7 @@ hooks = dict()
 def add_hook(name, fn):
     name = name.lower()
     if name in hooks:
-        hooks[name] += fn
+        hooks[name].append(fn)
     else:
         hooks[name] = [fn]
 
