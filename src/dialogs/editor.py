@@ -218,7 +218,8 @@ class NoteEditor(QDialog):
         tags = self.create_tab.tag.text()
         queue_schedule = self.create_tab.queue_schedule
         update_note(self.note_id, title, text, source, tags, "", queue_schedule)
-        run_hooks("user-note-created")
+        run_hooks("user-note-edited")
+
         self.reject()
 
 
@@ -632,7 +633,7 @@ class CreateTab(QWidget):
         self.layout.addLayout(vbox, 73)
         self.setLayout(self.layout)
         if parent.note is not None:
-            self.tag.setText(parent.note.tags)
+            self.tag.setText(parent.note.tags.lstrip())
             self.title.setText(parent.note.title)
             self.text.setHtml(parent.note.text)
             self.source.setText(parent.note.source)
