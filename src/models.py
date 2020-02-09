@@ -83,12 +83,8 @@ class SiacNote(Printable):
             src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src)
         else:
             src = ""
-        if self.is_pdf():
-            p_html = "<div class='siac-prog-sq'></div>" * 10
-            prog_bar = f"<div class='siac-prog-tmp'>{p_html} &nbsp;0 / ?</div>"
-        else:
-            prog_bar = ""
-        return title + body + src + prog_bar
+      
+        return title + body + src
 
 class IndexNote(Printable):
 
