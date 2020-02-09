@@ -27,7 +27,7 @@ import utility.misc
 from .state import check_index, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit, set_old_on_bridge_cmd
 from .index.indexing import build_index, get_notes_in_collection
 from .debug_logging import log
-from .web.web import printStartingInfo, getScriptPlatformSpecific, showSearchResultArea, fillDeckSelect, fillTagSelect, reload_note_sidebar, display_notes_sidebar, setup_ui_after_index_built
+from .web.web import printStartingInfo, getScriptPlatformSpecific, showSearchResultArea, fillDeckSelect, fillTagSelect, reload_note_sidebar, display_notes_sidebar, setup_ui_after_index_built, reload_note_reading_modal_bottom_bar
 from .web.html import right_side_html
 from .notes import *
 from .hooks import add_hook
@@ -89,12 +89,6 @@ def init_addon():
                 text += "\u001f";
                 pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
             }
-
-       // var script = document.createElement('script');
-       // script.type = 'text/javascript';
-       // script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.3.200/pdf.min.js';
-      //  document.body.appendChild(script);
-
     
             </script>
         """
@@ -266,6 +260,8 @@ def addOptionsToContextMenu(clickInfo):
 def setup_hooks():
     add_hook("user-note-created", reload_note_sidebar)
     add_hook("user-note-deleted", reload_note_sidebar)
+    add_hook("user-note-edited", reload_note_sidebar)
+    add_hook("user-note-edited", reload_note_reading_modal_bottom_bar)
 
 def openImgInBrowser(url):
     if len(url) > 0:
@@ -307,13 +303,12 @@ def tag_edit_keypress(self, evt):
         return
     index = get_index()
 
-    if index is not None and len(self.text()) > 0:
+    if index is not None and len(self.text().strip()) > 0:
         text = self.text()
         try:
             tagEditTimer.timeout.disconnect()
         except Exception: pass
         tagEditTimer.timeout.connect(lambda: rerender_info(index.output.editor, text, searchByTags = True)) 
         tagEditTimer.start(1000)
-
 
 init_addon()
