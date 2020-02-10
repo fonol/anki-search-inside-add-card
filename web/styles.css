@@ -127,8 +127,11 @@ body {
   overflow-x: hidden;
   overflow-y: hidden;
   max-height: 950px;
-  min-width: 85px;
+  min-width: 95px;
 
+}
+.pdf .cardR{
+    min-width: 200px;
 }
 .cardR img {
     max-height: $imgMaxHeight$;
@@ -388,12 +391,14 @@ select {
 .cardWrapper.grid-small {
     max-width: calc(33% - 12px);
 }
-
 .cardWrapper.grid-large {
    max-width: 100%;
 }
 .cardWrapper.grid-smaller {
     max-width: 20%;
+}
+.cardWrapper.grid.pdf {
+    max-width: 240px;
 }
 
 .cardWrapper .tag-symbol {
@@ -404,7 +409,7 @@ select {
     position: absolute;
     bottom: 2px;
     left: 0px;
-    z-index:4;
+    z-index:3;
     border: 3px outset $noteBorderColor$;
     border-radius: 4px;
     background:  $noteBackgroundColor$;
@@ -414,6 +419,7 @@ select {
     font-size: 10px !important;
     font-weight: bold;
     padding: 1px 1px 1px 1px; 
+    white-space: nowrap;
 }
 .cardLeftBot:hover {
     border-color: $noteHoverBorderColor$;
@@ -837,8 +843,8 @@ table.striped tr:nth-child(even) {
     background-color: #2f2f31;
     width: 200px;
     padding: 0px 4px 0px 4px;
-    height: 115px;
-    top: -94px;
+    height: 135px;
+    top: -114px;
     left: -181px;
     border: 2px outset darkorange; 
     z-index: 5;
@@ -1890,11 +1896,13 @@ span.tag-symbol {
     font-size: 30px;
     user-select: none;
     font-weight: bold;
+    line-height: 1em;
 }
 .siac-timer-btn {
     cursor: pointer;
-    margin-right: 8px;
+    margin-right: 5px;
     font-size: 11px;
+    line-height: 1em;
     display: inline-block;
 }
 .siac-timer-btn:hover {
@@ -1990,6 +1998,9 @@ hr.siac-modal-sep {
 }
 .siac-prog-tmp {
     margin-top: 6px;
+}
+.siac-prog-tmp span {
+    vertical-align: middle;
 }
 .siac-blue-outset {
     border: 2px outset #2496dc; 

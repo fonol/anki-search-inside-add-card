@@ -472,10 +472,10 @@ def get_reading_modal_html(note):
                         <div id='siac-pdf-tooltip-bottom'></div>
                         <input id='siac-pdf-tooltip-searchbar' onkeyup='if (event.keyCode === 13) {{pycmd("siac-pdf-tooltip-search " + this.value);}}'></input>
                     </div>
-                    <div id='siac-reading-modal-top-bar' data-nid='{note_id}' style='min-height: 90px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
+                    <div id='siac-reading-modal-top-bar' data-nid='{note_id}' style='min-height: 77px; width: 100%; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
                         <div style='flex: 1 1; overflow: hidden;'>
                             <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; vertical-align:middle;'>{title}</h2>
-                            <h4 style='whitespace: nowrap; margin-top: 5px; color: lightgrey;'>Source: <i>{source}</i></h4>
+                            <h4 style='whitespace: nowrap; margin: 5px 0 8px 0; color: lightgrey;'>Source: <i>{source}</i></h4>
                             <div id='siac-prog-bar-wr'></div>
                         </div>
                         <div style='flex: 0 0; min-width: 130px; padding: 0 75px 0 10px;'>
@@ -484,7 +484,7 @@ def get_reading_modal_html(note):
                             <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
                         </div>
                     </div>
-                    <div id='siac-reading-modal-text' style='overflow-y: {overflow}; height: calc(90% - 145px); max-height: calc(100% - 235px); font-size: 13px; padding: 20px 20px 0 20px; position: relative;' >
+                    <div id='siac-reading-modal-text' style='overflow-y: {overflow}; height: calc(90% - 132px); max-height: calc(100% - 222px); font-size: 13px; padding: 20px 20px 0 20px; position: relative;' >
                         {text}
                     </div>
                     <div id='siac-reading-modal-bottom-bar' style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden; position: absolute; user-select: none;'>
@@ -922,9 +922,10 @@ def get_pdf_viewer_html(nid, source, title):
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Jump to Last Read Page</b></div>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>Jump to First Unread Page</b></div>
                             <hr>
-                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayedCurrentPage).keys()).map(x => ++x); document.getElementById("siac-pdf-overlay").style.display = "block";document.getElementById("siac-pdf-read-btn").innerHTML = "&times; Unread";updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
-                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pagesRead = []; document.getElementById("siac-pdf-overlay").style.display = "none";document.getElementById("siac-pdf-read-btn").innerHTML = "\u2713&nbsp; Read";updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
-                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayed.numPages).keys()).map(x => ++x); document.getElementById("siac-pdf-overlay").style.display = "block";document.getElementById("siac-pdf-read-btn").innerHTML = "&times; Unread"; updatePdfProgressBar();event.stopPropagation();'>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayedCurrentPage).keys()).map(x => ++x); pdfShowPageReadMark();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + pdfDisplayed.numPages); event.stopPropagation();'><b>Mark Range</b></div>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pagesRead = []; pdfHidePageReadMark(); updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayed.numPages).keys()).map(x => ++x); pdfShowPageReadMark(); updatePdfProgressBar();event.stopPropagation();'>
                                 <b>Mark all as Read</b>
                             </div>
                         </div>
@@ -1016,11 +1017,11 @@ def get_note_delete_confirm_modal_html(nid):
     title = utility.text.trim_if_longer_than(note.get_title(), 100) 
     return """
        <div class='siac-modal-small'>
-            <p style='text-align: center;'><b>Delete the following note?</b></p>
+            <p style='text-align: center; font-size: 14px;'><b>Delete the following note?</b></p>
             <hr class='siac-modal-sep'/>
             <br>
             <div style='text-align: center; font-size: 14px; margin-bottom: 4px;'><b>%s</b></div>
-            <div style='text-align: center; font-size: 14px;'><i>Created: %s</i></div>
+            <div style='text-align: center; font-size: 14px;'><i>%s</i></div>
             <br><br>
             <div style='text-align: center;'><div class='siac-btn' onclick='$(this.parentNode.parentNode).remove(); removeNote(%s); $("#greyout").hide(); pycmd("siac-delete-user-note %s");' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn' onclick='$(this.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
        </div>
