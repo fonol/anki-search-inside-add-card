@@ -176,6 +176,31 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd.startswith("siac-mark-read-up-to "):
         mark_as_read_up_to(int(cmd.split()[1]), int(cmd.split()[2]), int(cmd.split()[3]))
 
+    elif cmd.startswith("siac-display-range-input "):
+        nid = int(cmd.split()[1])
+        num_pages = int(cmd.split()[2])
+        display_read_range_input(nid, num_pages)
+
+    elif cmd.startswith("siac-user-note-mark-range "):
+        nid = int(cmd.split()[1])
+        start = int(cmd.split()[2])
+        end = int(cmd.split()[3])
+        pages_total = int(cmd.split()[4])
+        current_page = int(cmd.split()[5])
+        if start <= 0:
+            start = 1
+        if end > pages_total:
+            end = pages_total
+        if end <= start or start >= pages_total:
+            return
+        mark_range_as_read(nid, start, end, pages_total)
+        pages_read = get_read_pages(nid)
+        js = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
+        js = f"pagesRead = [{js}];"
+        if current_page >= start and current_page <= end:
+            js += "pdfShowPageReadMark();"
+        index.output.js(f"{js}updatePdfProgressBar();")
+
     elif cmd.startswith("siac-mark-all-read "):
         mark_all_pages_as_read(int(cmd.split()[1]), int(cmd.split()[2]))
 

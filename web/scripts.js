@@ -305,6 +305,12 @@ function updatePdfProgressBar() {
     }
     document.getElementById("siac-prog-bar-wr").innerHTML = html;
 }
+function pdfHidePageReadMark() {
+    document.getElementById("siac-pdf-overlay").style.display = "none";document.getElementById("siac-pdf-read-btn").innerHTML = "\u2713&nbsp; Read";
+}
+function pdfShowPageReadMark() {
+    document.getElementById("siac-pdf-overlay").style.display = "block";document.getElementById("siac-pdf-read-btn").innerHTML = "&times; Unread";
+}
 function pdfJumpToPage(e, inp) {
     if (e.keyCode !== 13) {
         return;
@@ -885,14 +891,11 @@ function hideTop() {
 function toggleTop(elem) {
     let height = $('#topContainer').outerHeight(true);
     $('#topContainer').toggle();
-
     let formerHeight = $("#resultsArea").outerHeight(true);
-
     if ($('#topContainer').is(":hidden")) {
         $('#resultsArea').css('height', `${formerHeight + height}px`).css('border-top', '0px');
         $(elem).children().first().html('&#10097;');
         pycmd("toggleTop off");
-
     } else {
         height = $('#topContainer').outerHeight(true);
         $('#resultsArea').css('height', `${formerHeight - height - 1}px`).css('border-top', '1px solid grey');
@@ -919,9 +922,9 @@ function activateGridView() {
 function toggleReadingModalBars() {
     $('#siac-reading-modal-top-bar,#siac-reading-modal-bottom-bar').toggle();
     if ($('#siac-reading-modal-top-bar').is(":hidden")) {
-        $('#siac-reading-modal-text').css('height', 'calc(100%% - 35px)').css('max-height', '').css('margin-top', '15px');
+        $('#siac-reading-modal-text').css('height', 'calc(100%% - 32px)').css('max-height', '').css('margin-top', '15px');
     } else {
-        $('#siac-reading-modal-text').css('height', 'calc(90%% - 145px)').css('max-height', 'calc(100%% - 235px)').css('margin-top', '0px');
+        $('#siac-reading-modal-text').css('height', 'calc(90%% - 132px)').css('max-height', 'calc(100%% - 222px)').css('margin-top', '0px');
     }
 }
 function predefSearch() {

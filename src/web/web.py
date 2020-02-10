@@ -278,6 +278,29 @@ def display_note_reading_modal(note_id):
             reading_modal_notification(message)
 
 @js
+def display_read_range_input(note_id, num_pages):
+
+    on_confirm= """ if (document.getElementById('siac-range-input-min').value && document.getElementById('siac-range-input-max').value) {
+    pycmd('siac-user-note-mark-range %s ' + document.getElementById('siac-range-input-min').value 
+            + ' ' + document.getElementById('siac-range-input-max').value 
+            + ' ' + pdfDisplayed.numPages
+            + ' ' + pdfDisplayedCurrentPage);
+    }
+    """ % note_id
+    modal = f""" <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
+                        Input a range of pages to mark as read (end incl.)<br><br>
+                        <input id='siac-range-input-min' style='width: 60px; background: #222; color: lightgrey;' type='number' min='1' max='{num_pages}'/> &nbsp;-&nbsp; <input id='siac-range-input-max' style='width: 60px;background: #222; color: lightgrey;' type='number' min='1' max='{num_pages}'/>
+                        <br/> <br/>
+                        <div class="siac-btn siac-btn-dark" onclick="{on_confirm} $(this.parentNode).remove();">&nbsp; Ok &nbsp;</div>
+                        &nbsp;
+                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
+                    </div> """
+    return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
+
+
+
+
+@js
 def reload_note_reading_modal_bottom_bar(note_id=None):
     """
         Called after queue picker dialog has been closed without opening a new note.
@@ -604,13 +627,18 @@ def display_cloze_modal(editor, selection, extracted):
             """ % (s_html, len(sentences), btn_html)
 
 @js
-def reading_modal_notification(html):
-    modal = """ <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
-                        %s
+def reading_modal_notification(html, on_ok=None):
+    if on_ok is None:
+        on_ok = ""
+    modal = f""" <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
+                        {html}
                         <br/> <br/>
-                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Ok</div>
-                    </div> """ % html
+                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); {on_ok}">Ok</div>
+                    </div> """
     return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
+
+
+
 
 @js
 def show_timer_elapsed_popup(nid):

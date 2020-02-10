@@ -190,6 +190,19 @@ def mark_page_as_unread(nid, page):
     conn.commit()
     conn.close()
 
+def mark_range_as_read(nid, start, end, pages_total):
+    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    conn = _get_connection()
+    res = conn.execute(f"select page from read where nid={nid} and page > -1").fetchall()
+    res = [r[0] for r in res]
+    to_insert = []
+    for p in range(start, end+1):
+        if not p in res:
+            to_insert.append((nid, p, now, pages_total))  
+    conn.executemany("insert into read (nid, page, created, pagestotal) values (?,?,?,?)", to_insert)
+    conn.commit()
+    conn.close()
+
 def create_pdf_mark(nid, page, pages_total, mark_type):
     now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
     conn = _get_connection()
