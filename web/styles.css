@@ -78,7 +78,7 @@ body {
 }
 #fields {
     overflow-y: auto;
-    height: 90vh;
+    height: calc(100vh - 35px);
     padding-right: 8px;
 }
 #startInfo {
@@ -171,11 +171,17 @@ body {
 .floatingBtnBar {
     display: inline;
     color: white;
-
+    vertical-align: middle;
+    font-weight: bold;
 }
 .floatingBtnBarItem {
     display: inline;
     cursor: pointer;
+    vertical-align: top;
+}
+.floatingBtnBarItem:hover {
+    transform: scale(1.04);
+    color: #2496dc;
 }
 
 .flexCol > select {
@@ -212,6 +218,7 @@ body {
 mark {
     background-color: $highlightBackgroundColor$;
     color: $highlightForegroundColor$;
+    border-radius: 4px;
 }
 
 select {
@@ -424,7 +431,7 @@ select {
 .cardLeftBot:hover {
     border-color: $noteHoverBorderColor$;
 }
-.cardLeftBot:hover :not(.siac-prog-tmp) {
+.cardLeftBot:hover :not(.siac-prog-tmp span) {
     color: #2496dc;
 }
 #predefSearchSelect {
@@ -525,6 +532,7 @@ select {
     position: relative;
     font-size: 12px !important;
     overflow-y: hidden;
+    height: 100vh;
 }
 .hidden {
     display: none;
@@ -1114,8 +1122,9 @@ span.tag-symbol {
 }
 .noteFloating {
     position: absolute;
-    z-index: 9999999999;
-    border: 1px solid #2496dc;
+    z-index: 4;
+    border: 3px outset $noteBorderColor$;
+    border-radius: 4px;
     text-align: center;
 }
 .noteFloatingContent {
@@ -1136,11 +1145,12 @@ span.tag-symbol {
     padding-bottom: 2px;
     cursor: move;
     z-index: 9999999999;
-    background-color: #2496dc;
+    background-color: $noteBorderColor$;
     color: #fff;
     user-select: none;
     font-size: 11px !important;
     text-align: right;
+    line-height: 1em;
 }
 #cal-row {
     margin-bottom: 6px;
@@ -1755,6 +1765,7 @@ span.tag-symbol {
     top: 7px; right: 25px;
     text-align: center;
     vertical-align: center;
+    z-index: 3;
 }
 #siac-reading-modal-top-btns div:hover {
     color: white;
@@ -1869,7 +1880,7 @@ span.tag-symbol {
     left: 0;
     display: none;
     width: 300px;
-    height: 110px;
+    height: 105px;
     border: 3px outset darkorange;
 }
 #siac-queue-infobox:after {
@@ -1984,15 +1995,10 @@ hr.siac-modal-sep {
     border-radius: 3px;
 }
 .siac-prog-sq-filled {
-    /* background-color: #60ad5e; */
-    /* border: 2px solid #005005; */
     background-color: #67c3fc;
     border: 2px solid #1773ac;
 }
 .siac-prog-sq {
-   /* background-color: #616161; */
-    /* border: 2px solid #373737; */
-
      background-color: #747272;
      border: 2px solid #494949;
 }
