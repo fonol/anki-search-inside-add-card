@@ -46,7 +46,7 @@ def init_addon():
     #todo: Find out if there is a better moment to start index creation
     create_db_file_if_not_exists()
     addHook("profileLoaded", build_index)
-    addHook("profileLoaded", insert_tmce)
+    addHook("profileLoaded", insert_scripts)
     orig_add_note = AddCards.addNote
     origEditorContextMenuEvt = EditorWebView.contextMenuEvent
 
@@ -167,7 +167,6 @@ def on_load_note(editor):
             setup_ui_after_index_built(editor, index)
 
         editor.web.eval("onResize()")
-        
 
         if index is None or not index.tagSelect:
             fillDeckSelect(editor)
@@ -199,7 +198,7 @@ def editorContextMenuEventWrapper(view, evt):
     determineClickTarget(pos)
     #origEditorContextMenuEvt(view, evt)
 
-def insert_tmce():
+def insert_scripts():
     addon_id = utility.misc.get_addon_id()
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map)$")
     port = mw.mediaServer.getPort()
@@ -210,11 +209,14 @@ def insert_tmce():
         script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/tinymce/tinymce.min.js';
         document.body.appendChild(script);
 
-
-        
-        var script = document.createElement('script');
+        script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/pdf.min.js';
+        document.body.appendChild(script);
+
+        script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf-reader.js';
         document.body.appendChild(script);
     </script>
     """
