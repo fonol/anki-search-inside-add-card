@@ -94,7 +94,7 @@ class Output:
                             <div class='cardLeftBot' style='display: none' onclick=''></div>
                         </div>"""
 
-        self.noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {grid_class}' id='nWr-{nid}'>
+        self.noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {grid_class}' id='nWr-{counter}'>
                             <div class='topLeftWr'>
                                 <div id='cW-{nid}' class='rankingLbl'>{counter} &nbsp;SIAC<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
                             </div>
@@ -202,7 +202,7 @@ class Output:
             if res.note_type == "user" and res.is_pdf():
                 pdfs.append(nid)
                 p_html = "<div class='siac-prog-sq'></div>" * 10
-                progress = f"<div class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div>"
+                progress = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div>"
                 pdf_class = "pdf"
 
 
@@ -299,13 +299,13 @@ class Output:
             self.last_took = took
         else:
             took = "?"
+        timing = "true" if printTimingInfo else "false"
 
         if not self.hideSidebar:
             infoMap = {
                 "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`lastTiming`)'>&#9432;</b>" if printTimingInfo else ""),
                 "Found" :  "<b>%s</b> notes" % (len(notes) if len(notes) > 0 else "<span style='color: red;'>0</span>")
             }
-            timing = "true" if printTimingInfo else "false"
             info = self.build_info_table(infoMap, tags, allText)
             cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes), len(self.previous_calls), stamp, timing)
         else:
@@ -333,7 +333,7 @@ class Output:
                             prog_bar = ''.join((prog_bar, "<div class='siac-prog-sq-filled'></div>"))
                         else:
                             prog_bar = ''.join((prog_bar, "<div class='siac-prog-sq'></div>"))
-                    cmd = ''.join((cmd, "document.querySelector('[id=\"nWr-%s\"] .siac-prog-tmp').innerHTML = `%s &nbsp;<span>%s / %s</span>`;" % (i[0], prog_bar, i[1], i[2])))
+                    cmd = ''.join((cmd, "document.querySelector('#ptmp-%s').innerHTML = `%s &nbsp;<span>%s / %s</span>`;" % (i[0], prog_bar, i[1], i[2])))
                 self._js(cmd, editor)
             
         return (highlight_total * 1000, build_user_note_total)
