@@ -232,6 +232,8 @@ def printStartingInfo(editor):
 
     if index is None or index.output is None:
         html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
+
+
     editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
 
 
@@ -243,6 +245,8 @@ def display_model_dialog():
 @js
 def show_width_picker():
     html = """
+        <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 10")'><b>10 - 90</b></div>
+        <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 15")'><b>15 - 85</b></div>
         <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 25")'><b>25 - 75</b></div>
         <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 33")'><b>33 - 67</b></div>
         <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 40")'><b>40 - 60</b></div>
@@ -252,7 +256,7 @@ def show_width_picker():
     """
 
     modal = """
-        <div class="siac-modal-small dark" contenteditable="false" style="text-align:center;">
+        <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
             <b>Left Side - Right Side</b>
                 <br><br>
             <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
