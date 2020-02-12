@@ -2,6 +2,7 @@ import datetime
 import time
 from aqt import mw
 import utility.misc
+import random
 try:
     from .state import check_index
     from .models import SiacNote, IndexNote
@@ -88,7 +89,6 @@ def getCreatedSameDay(index, editor, nid):
             index.output.empty_result("Error in calculation.")
 
 def getRandomNotes(index, decks):
-    s = time.time() * 1000
     if index is None:
         return
     stamp = utility.misc.get_milisec_stamp()
@@ -106,7 +106,9 @@ def getRandomNotes(index, decks):
     else:
         res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id in (select id from notes order by random() limit %s)" % (limit)).fetchall()
     res = to_notes(res)
-    e = time.time() * 1000 - s
+    if len(res) > 0:
+        random.shuffle(res)
+
     return { "result" : res, "stamp" : stamp }
 
 
