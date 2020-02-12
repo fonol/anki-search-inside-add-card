@@ -131,7 +131,7 @@ def right_side_html(indexIsLoaded = False):
         $(`#fields`).wrap(`<div class='coll' id='leftSide' style='min-width: 200px; flex-grow: 1; width: %s%%;'></div>`);
         document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
         $(`
-        <div class='coll secondCol' style='width: %s%%; flex-grow: 1;  height: 100%%; zoom: %s' id='infoBox'>
+        <div class='coll secondCol' style='width: %s%%; flex-grow: 1;  height: 100vh; zoom: %s' id='infoBox'>
             <div id='siac-second-col-wrapper'>
                 <div id="greyout"></div>
                 <div id="a-modal" class="modal">
@@ -484,7 +484,7 @@ def get_reading_modal_html(note):
                             <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
                         </div>
                     </div>
-                    <div id='siac-reading-modal-text' style='overflow-y: {overflow}; height: calc(90% - 132px); max-height: calc(100% - 222px); font-size: 13px; padding: 20px 20px 0 20px; position: relative;' >
+                    <div id='siac-reading-modal-text' style='overflow-y: {overflow}; height: calc(90% - 170px); max-height: calc(100% - 260px); font-size: 13px; padding: 20px 20px 0 20px; position: relative;' >
                         {text}
                     </div>
                     <div id='siac-reading-modal-bottom-bar' style='width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden; position: absolute; user-select: none;'>
@@ -1054,7 +1054,7 @@ def get_queue_infobox(note, read_stats):
                 </div>
             </div>
         </div>
-        <div style='width: 50px; height: 100%; padding: 5px 5px 5px 0; display: inline-block;'>
+        <div style='width: 50px; height: 100%; padding: 2px 5px 5px 0; display: inline-block;'>
             <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 2 "+ $("#siac-reading-modal-top-bar").data("nid"))'>Start</div>
             <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 5 "+ $("#siac-reading-modal-top-bar").data("nid"))'>End</div>
             <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 6 "+ $("#siac-reading-modal-top-bar").data("nid"))'>Random</div>
