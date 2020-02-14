@@ -70,7 +70,7 @@
 "synonyms": [],
 "useInEdit" : false,
 "logging": false,
-"renderImmediately": false,
+"renderImmediately": true,
 "tagClickShouldSearch": true,
 "leftSideWidthInPercent": 40,
 "showRetentionScores": true,
