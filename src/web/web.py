@@ -179,7 +179,7 @@ def setup_ui_after_index_built(editor, index, init_time=None):
     if not index.topToggled:
         editor.web.eval("hideTop();")
     if index.output is not None and not index.output.uiVisible:
-        editor.web.eval("$('#infoBox').addClass('addon-hidden')")
+        editor.web.eval("$('#siac-right-side').addClass('addon-hidden')")
     if config["gridView"]:
         editor.web.eval('activateGridView();') 
     if index.searchbar_mode == "Browser":
@@ -264,7 +264,7 @@ def show_width_picker():
             <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Close</div>
         </div> 
     """ % html
-    return "$('#siac-reading-modal-text').append(`%s`)" % modal
+    return "$('#siac-reading-modal-center').append(`%s`)" % modal
 
 @requires_index_loaded
 def display_note_reading_modal(note_id):
@@ -293,13 +293,13 @@ def display_read_range_input(note_id, num_pages):
     """ % note_id
     modal = f""" <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
                         Input a range of pages to mark as read (end incl.)<br><br>
-                        <input id='siac-range-input-min' style='width: 60px; background: #222; color: lightgrey;' type='number' min='1' max='{num_pages}'/> &nbsp;-&nbsp; <input id='siac-range-input-max' style='width: 60px;background: #222; color: lightgrey;' type='number' min='1' max='{num_pages}'/>
+                        <input id='siac-range-input-min' style='width: 60px; background: #222; color: lightgrey; border-radius: 4px;' type='number' min='1' max='{num_pages}'/> &nbsp;-&nbsp; <input id='siac-range-input-max' style='width: 60px;background: #222; color: lightgrey; border-radius: 4px;' type='number' min='1' max='{num_pages}'/>
                         <br/> <br/>
                         <div class="siac-btn siac-btn-dark" onclick="{on_confirm} $(this.parentNode).remove();">&nbsp; Ok &nbsp;</div>
                         &nbsp;
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
                     </div> """
-    return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
+    return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
 
 
@@ -353,7 +353,7 @@ def _display_pdf(full_path, note_id):
         %s
         var loadFn = function(retry) {
             if (retry > 4) {
-                $('#siac-loader-modal').remove();
+                $('#siac-pdf-loader-wrapper').remove();
                 $('#siac-timer-popup').html(`<br><center>PDF.js could not be loaded from CDN.</center><br>`).show();
                 pdfDisplayed = null;
                 ungreyoutBottom();
@@ -374,7 +374,7 @@ def _display_pdf(full_path, note_id):
             var typedarray = new Uint8Array(fileReader.result);
             var loadingTask = pdfjsLib.getDocument(typedarray, {nativeImageDecoderSupport: 'display'});
             loadingTask.promise.catch(function(error) {
-                    $('#siac-loader-modal').remove();
+                    $('#siac-pdf-loader-wrapper').remove();
                     $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
                     pdfDisplayed = null;
                     ungreyoutBottom();
@@ -385,7 +385,7 @@ def _display_pdf(full_path, note_id):
             loadingTask.promise.then(function(pdf) {
                     pdfDisplayed = pdf;
                     pdfDisplayedCurrentPage = %s;
-                    $('#siac-loader-modal').remove();
+                    $('#siac-pdf-loader-wrapper').remove();
                     if (pagesRead.length === pdf.numPages) {
                         pdfDisplayedCurrentPage = 1;
                         queueRenderPage(1, true, true, true);
@@ -441,7 +441,7 @@ def show_img_field_picker_modal(img_src):
         fld_update_js = "pycmd(`blur:%s:${currentNoteId}:${$(`.field:eq(%s)`).html()}`);" % (i,i)
         flds += """<span class="siac-field-picker-opt" onclick="$(`.field`).get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s">%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
     modal = modal % (flds, img_src)
-    return "$('#siac-reading-modal-text').append('%s');" % modal.replace("'", "\\'")
+    return "$('#siac-reading-modal-center').append('%s');" % modal.replace("'", "\\'")
 
 @js
 def show_cloze_field_picker_modal(cloze_text):
@@ -460,7 +460,7 @@ def show_cloze_field_picker_modal(cloze_text):
     for i, f in enumerate(index.output.editor.note.model()['flds']):
         flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`);  $(this.parentNode.parentNode).remove();">{2}</span><br>""".format(i, cloze_text, f["name"])
     modal = modal % (flds)
-    return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
+    return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
 @js
 def show_iframe_overlay(url=None):
@@ -520,7 +520,7 @@ def show_web_search_tooltip(inp):
     js = """
     $('#siac-iframe-btn').removeClass('expanded'); 
     $('#siac-pdf-tooltip').hide(); 
-    $('#siac-reading-modal-text').append('%s');
+    $('#siac-reading-modal-center').append('%s');
     """ % modal.replace("\n", "").replace("'", "\\'")
     return js
 
@@ -534,12 +534,12 @@ def update_reading_bottom_bar(nid):
             pos_lbl = "Position: %s / %s" % (pos + 1, len(queue))
             pos_lbl_btn = "<b>%s</b> / <b>%s</b>" % (pos + 1, len(queue))
         except:
-            pos_lbl = "Not in Queue"
-            pos_lbl_btn = "<b>Not in Queue</b>"
+            pos_lbl = "Unqueued"
+            pos_lbl_btn = "<b>Unqueued</b>"
 
     else:
-        pos_lbl = "Not in Queue"
-        pos_lbl_btn = "<b>Not in Queue</b>"
+        pos_lbl = "Unqueued"
+        pos_lbl_btn = "<b>Unqueued</b>"
 
     qd = get_queue_head_display(nid, queue)
     return """
@@ -639,7 +639,7 @@ def reading_modal_notification(html, on_ok=None):
                         <br/> <br/>
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); {on_ok}">Ok</div>
                     </div> """
-    return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-text').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
+    return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
 
 
@@ -890,14 +890,15 @@ def show_loader(target_div_id, text):
     return "$('#%s').append(`%s`);" % (target_div_id, html)
 
 @js
-def show_notification(editor, html):
+def show_notification(html):
 
     return """
         $('.siac-notification').remove();
-        $('#infoBox').append(`
-        <div class='siac-notification'>
-            %s
-        </div> 
+        let target = $('#siac-reading-modal').is(':visible') ? "#reading-modal" : "#siac-right-side";
+        $(target).append(`
+            <div class='siac-notification'>
+                %s
+            </div> 
          `);
 
         window.setTimeout(function() {
