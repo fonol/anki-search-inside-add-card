@@ -5,7 +5,7 @@ import aqt.webview
 import aqt.editor
 import aqt.stats
 from anki.notes import Note
-from aqt.utils import tooltip
+from aqt.utils import tooltip, showInfo
 import os
 import urllib.parse
 
@@ -23,6 +23,7 @@ from .hooks import run_hooks
 from .output import Output
 from .dialogs.editor import openEditor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
+from .dialogs.quick_schedule import QuickScheduler
 from .dialogs.url_import import UrlImporter
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
@@ -92,6 +93,8 @@ def expanded_on_bridge_cmd(self, cmd):
         if check_index() and ix < len(index.output.previous_calls):
             index.output.print_search_results(*index.output.previous_calls[ix] + [True])
             
+    elif cmd.startswith("siac-notification "):
+        tooltip(cmd[18:])
 
     elif cmd.startswith("siac-show-loader "):
         target = cmd.split()[1]
@@ -148,7 +151,7 @@ def expanded_on_bridge_cmd(self, cmd):
             if (pdfLoading || noteLoading) {
                 hideQueueInfobox();
             } else {
-                document.getElementById('siac-pdf-bottom-tabs').style.display = "none";
+                document.getElementById('siac-pdf-bottom-tabs').style.visibility = "hidden";
                 document.getElementById('siac-queue-infobox').style.display = "block";
                 document.getElementById('siac-queue-infobox').innerHTML =`%s`;
             }
@@ -381,9 +384,7 @@ def expanded_on_bridge_cmd(self, cmd):
         if picker.exec_() and picker.chosen_id is not None and picker.chosen_id >= 0:
             note = get_note(nid)
             if not note.is_pdf() and not note.is_feed():
-                index.output.js(f"""
-                      readingModalTextKeyup(null, {nid});
-                """)
+                index.output.js(f""" saveTextNote({nid}); """)
             display_note_reading_modal(picker.chosen_id)
         else:
             reload_note_reading_modal_bottom_bar(nid)
@@ -433,7 +434,7 @@ def expanded_on_bridge_cmd(self, cmd):
         if nid_displayed != nid:
             pos_displayed = get_position(nid_displayed)
             if pos_displayed is None:
-                pos_html = "Not in Queue"
+                pos_html = "Unqueued"
                 p_s = ""
             else: 
                 pos_html = "%s / %s" % (pos_displayed + 1, inserted_index[1])
@@ -457,7 +458,7 @@ def expanded_on_bridge_cmd(self, cmd):
         queue_readings_list = get_queue_head_display(nid)
 
         index.output.js("afterRemovedFromQueue();")
-        index.output.js("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)
+        index.output.js("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)
     
     elif cmd.startswith("siac-remove-from-queue-tt "):
         # called from the tooltip
@@ -469,8 +470,8 @@ def expanded_on_bridge_cmd(self, cmd):
         queue_readings_list = get_queue_head_display(nid)
         if pos is None:
             pos_js = """
-                document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue';
-                $('.siac-queue-sched-btn:first').html('Not in Queue');
+                document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued';
+                $('.siac-queue-sched-btn:first').html('Unqueued');
                 """
         else: 
             pos_js = """
@@ -479,8 +480,8 @@ def expanded_on_bridge_cmd(self, cmd):
             """ % (pos + 1, queue_len, pos + 1, queue_len)
         js = """
         if ($('#siac-reading-modal-top-bar').data('nid') === '%s')  {
-            document.getElementById('siac-queue-lbl').innerHTML = 'Not in Queue';
-             $('.siac-queue-sched-btn:first').html('Not in Queue');
+            document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued';
+             $('.siac-queue-sched-btn:first').html('Unqueued');
         } else {
             %s
         }
@@ -544,12 +545,27 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd == "siac-left-side-width":
         show_width_picker()
 
+    elif cmd.startswith("siac-quick-schedule "):
+        # not used, wip
+        nid = int(cmd.split()[1])
+        scheduler = QuickScheduler(self.parentWindow, nid)
+        if scheduler.exec_() and scheduler.queue_schedule is not None:
+            update_position(nid, QueueSchedule(scheduler.queue_schedule))
+            reload_note_reading_modal_bottom_bar(nid)
+
+    elif cmd.startswith("siac-move-end-read-next "):
+        nid = int(cmd.split()[1])
+        update_position(nid, QueueSchedule.END)
+        nid = get_head_of_queue()
+        display_note_reading_modal(nid)
+
+
     elif cmd.startswith("siac-left-side-width "):
         value = int(cmd.split()[1])
         config["leftSideWidthInPercent"] = value
         right = 100 - value
         if check_index():
-            index.output.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('infoBox').style.width = '%s%%';" % (value, right) )
+            index.output.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('siac-right-side').style.width = '%s%%'; if (pdfDisplayed) {pdfFitToPage();}" % (value, right) )
         write_config()
 
     elif cmd.startswith("siac-pdf-show-bottom-tab "):
@@ -1067,9 +1083,11 @@ def generate_clozes(sentences, pdf_path, pdf_title, page):
         model = mw.col.models.byName(model_name)
         index = get_index()
         if model is None:
+            tooltip("Could not resolve note model.", period=3000)
             return
         deck_chooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deck_chooser is None: 
+            tooltip("Could not determine chosen deck.", period=3000)
             return
         did = deck_chooser.selectedId()
         if check_index():
@@ -1098,10 +1116,14 @@ def generate_clozes(sentences, pdf_path, pdf_title, page):
             if a > 0:
                 add_note_to_index(note)
             added += a
-
-        tooltip("Added %s Cloze(s)." % added, period=2000)
+        tags_str = " ".join(tags) if len(tags) > 0 else "<i>No tags</i>"
+        deck_name = mw.col.decks.get(did)["name"]
+        s = "" if added == 1 else "s"
+        tooltip(f"""<center>Added {added} Cloze{s}.</center><br>
+                  <center>Deck: <b>{deck_name}</b></center>
+                  <center>Tags: <b>{tags_str}</b></center>""", period=3000)
     except:
-        tooltip("Something went wrong during Cloze generation.", period=2000)
+        tooltip("Something went wrong during Cloze generation.", period=3000)
 
 @requires_index_loaded
 def get_index_info():
@@ -1136,9 +1158,9 @@ def get_index_info():
                <tr><td>Path to Note DB</td><td>  %s</td></tr>
 
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
-               <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Space / Ctrl+Right</b></td></tr>
+               <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Space / Ctrl+Right / Ctrl+J</b></td></tr>
                <tr><td>PDF: Page Right + Mark Page as Read</td><td>  <b>Ctrl+Shift+Space</b></td></tr>
-               <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left</b></td></tr>
+               <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl + K</b></td></tr>
                <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
                <tr><td>Confirm New Note</td><td>  <b>Ctrl+Enter</b></td></tr>
 
@@ -1197,7 +1219,7 @@ def update_styling(cmd):
             index.output.js("addToResultAreaHeight = %s; onResize();" % value)
     elif name == "searchpane.zoom":
         config[name] = float(value)
-        index.output.js("document.getElementById('infoBox').style.zoom = '%s'; showTagInfoOnHover = %s;" % (value, "false" if float(value) != 1.0 else "true"))
+        index.output.js("document.getElementById('siac-right-side').style.zoom = '%s'; showTagInfoOnHover = %s;" % (value, "false" if float(value) != 1.0 else "true"))
     elif name == "renderImmediately":
         m = value == "true" or value == "on"
         config["renderImmediately"] = m
@@ -1225,7 +1247,7 @@ def update_styling(cmd):
         config[name] = int(value)
         right = 100 - int(value)
         if check_index():
-            index.output.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('infoBox').style.width = '%s%%';" % (value, right) )
+            index.output.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('siac-right-side').style.width = '%s%%';" % (value, right) )
 
     elif name == "showTimeline":
         config[name] = value == "true" or value == "on"
