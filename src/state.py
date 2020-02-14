@@ -4,7 +4,6 @@ search_index = None
 contextEvt = None
 corpus = None
 deck_map = None
-output = None
 edit = None
 
 old_on_bridge = None
