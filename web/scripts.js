@@ -258,7 +258,7 @@ function onResize() {
     //height -= 39;
     height -= 19;
     height += addToResultAreaHeight;
-    $('.secondCol').css("height", `calc(100vh + ${addToResultAreaHeight}px`);
+    $('#siac-right-side').css("height", `calc(100vh + ${-20 + addToResultAreaHeight}px`);
     $("#resultsArea").css("height", height + "px");
     if (!$('#switchBtn').is(":visible")) {
         $('#leftSide').show();
@@ -650,18 +650,26 @@ function dragElement(elmnt, headerId, inModal=false) {
     }
 }
 function toggleAddon() {
-
-    if ($('#outerWr').hasClass("onesided")) {
-        showSearchPaneOnLeftSide();
-        $('#infoBox').toggleClass("addon-hidden");
-
-    } else if ($('#switchBtn').is(":visible")) {
-        showSearchPaneOnLeftSide();
+    if (document.getElementById('siac-reading-modal').style.display !== "none" && pdfFullscreen) {
+        if ($(document.body).hasClass("siac-fullscreen-show-fields")) {
+            $(document.body).removeClass("siac-fullscreen-show-fields").addClass("siac-fullscreen-show-right");
+        } else {
+            $(document.body).addClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
+        }
+        
     } else {
-        $('#infoBox').toggleClass("addon-hidden");
+        if ($('#outerWr').hasClass("onesided")) {
+            showSearchPaneOnLeftSide();
+            $('#siac-right-side').toggleClass("addon-hidden");
+        } else if ($('#switchBtn').is(":visible")) {
+            showSearchPaneOnLeftSide();
+        } else {
+            $('#siac-right-side').toggleClass("addon-hidden");
+        }
+        pycmd("toggleAll " + ($('#siac-right-side').hasClass("addon-hidden") ? "off" : "on"));
+        onResize();
+
     }
-    pycmd("toggleAll " + ($('#infoBox').hasClass("addon-hidden") ? "off" : "on"));
-    onResize();
 }
 function showSearchPaneOnLeftSide() {
     if ($('#outerWr').hasClass("onesided")) {
@@ -670,7 +678,7 @@ function showSearchPaneOnLeftSide() {
         $('#outerWr').css('display', 'flex').removeClass('onesided');
     } else {
         $('#leftSide').hide();
-        $('#infoBox').removeClass("addon-hidden");
+        $('#siac-right-side').removeClass("addon-hidden");
         document.getElementById('switchBtn').innerHTML = "&#10149; Back";
         $('#outerWr').css('display', 'block').addClass('onesided');
         onResize();
@@ -760,14 +768,19 @@ function toggleSearchbarMode(elem) {
 }
 
 function globalKeydown(e) {
-    if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode == 78) {
+    if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode === 78) {
         e.preventDefault();
         if ($('#siac-rd-note-btn').length) {
             $('#siac-rd-note-btn').trigger("click");
         } else {
             pycmd('siac-create-note');
         }
-    } else if (pdfDisplayed && !$('.field').is(':focus')) {
+    } else if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode === 83 && $('#siac-reading-modal-top-bar').is(":visible")) {
+       // pycmd("siac-quick-schedule " + $('#siac-reading-modal-top-bar').data('nid'));
+    }
+    
+    
+    else if (pdfDisplayed && !$('.field').is(':focus')) {
         pdfViewerKeyup(e);
     }
 }
