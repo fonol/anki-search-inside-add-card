@@ -284,6 +284,7 @@ class CreateTab(QWidget):
         self.recent_tbl.setMaximumHeight(100)
 
         self.queue_section = QGroupBox("Queue")
+        self.queue_section.setStyleSheet("background-color: transparent;")
         ex_v = QVBoxLayout()
         queue_len = len(parent.priority_list)
         if parent.note_id is None:
@@ -466,11 +467,14 @@ class CreateTab(QWidget):
         t_h.addWidget(text_lbl)
 
         self.tb = QToolBar("Format")
+        self.tb.setStyleSheet("background-color: transparent; border: 0px;")
+
         self.tb.setHidden(False)
         self.tb.setOrientation(Qt.Horizontal)
         self.tb.setIconSize(QSize(12, 12))
 
         self.vtb = QToolBar("Highlight")
+        self.vtb.setStyleSheet("background-color: transparent; border: 0px;")
         self.vtb.setOrientation(Qt.Vertical)
         self.vtb.setIconSize(QSize(16, 16))
 
