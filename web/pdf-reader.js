@@ -15,6 +15,8 @@ var noteLoading = false;
 var pdfLoading = false;
 var pdfTooltipEnabled = true;
 var iframeIsDisplayed = false;
+var pdfFullscreen = false;
+var pdfBarsHidden = false;
 
 function pdfImgMouseUp(event) {
     if (pdfImgSel.mouseIsDown) {
@@ -94,7 +96,7 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false, isInitial=f
     if (!pdfDisplayed || iframeIsDisplayed) {
         return;
     }
-    $("#siac-pdf-tooltip").hide();
+    document.getElementById("siac-pdf-tooltip").style.display = "none";
     document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
     pdfLoading = true;
     pdfDisplayed.getPage(num)
@@ -255,7 +257,7 @@ function pdfPageLeft() {
     }
 }
 
-function readingModalTextKeyup(elem, nid) {
+function saveTextNote(nid) {
     let html = tinymce.get('siac-text-top').getContent();
     tinymce.remove();
     document.getElementById("siac-text-note-status").innerHTML = "Note Saved - " + new Date().toString();
@@ -340,20 +342,13 @@ function pdfMouseWheel(event)  {
        pdfScaleChange("down");
     }
 }
-function toggleReadingModalBars() {
-    $('#siac-reading-modal-top-bar,#siac-reading-modal-bottom-bar').toggle();
-    if ($('#siac-reading-modal-top-bar').is(":hidden")) {
-        $('#siac-reading-modal-text').css('height', 'calc(100% - 55px)').css('max-height', '').css('margin-top', '3px');
-    } else {
-        $('#siac-reading-modal-text').css('height', 'calc(90% - 170px)').css('max-height', 'calc(100% - 260px)').css('margin-top', '0px');
-    }
-}
+
 function swapReadingModal() {
     let modal = document.getElementById("siac-reading-modal");
-    if (modal.parentNode.id === "infoBox")  {
+    if (modal.parentNode.id === "siac-right-side")  {
 	document.getElementById("leftSide").appendChild(modal);
     } else {
-	document.getElementById("infoBox").appendChild(modal);
+	document.getElementById("siac-right-side").appendChild(modal);
     }
 }
 function togglePDFNightMode(elem) {
@@ -413,7 +408,6 @@ function joinTextLayerNodeTexts(nodes, text) {
 }
 
 function nodesInSelection(range) {
-
     var lAllChildren = document.getElementById("text-layer").children;
     let nodes = [];
     let inside = false;
@@ -502,7 +496,6 @@ function sendClozes() {
     let sentences = $('#siac-pdf-tooltip').data("sentences");
     let selection = $('#siac-pdf-tooltip').data("selection");
     pycmd("siac-show-cloze-modal " + selection + "$$$" + sentences.join("$$$"));
-
 }
 function generateClozes() {
     let cmd = "";
@@ -542,9 +535,7 @@ function extractNext(text, extracted, selection) {
         extracted.push(ext);
     }
     return [true, extracted];
-
 }
-
 function pxToSandScheme(red, green, blue){
     if (red > 210 && green > 210 && blue > 210) {return {r:241,g:206,b:147}; }
     if (red <  35 && green < 35 && blue < 35) {return {r:0,g:0,b:0}; }
@@ -564,7 +555,6 @@ function pxToSandScheme(red, green, blue){
     }
     return chosen;
 }
-
 function updatePdfDisplayedMarks() {
     if (pdfDisplayedMarks == null) {
         return;
@@ -624,7 +614,9 @@ function pdfViewerKeyup(event) {
             updatePdfProgressBar();
         }
         pdfPageRight();
-    } else if (event.ctrlKey && event.keyCode === 37) {
+    } else if (event.ctrlKey && event.keyCode === 74) {
+        pdfPageRight();
+    } else if (event.ctrlKey && (event.keyCode === 3 ||event.keyCode === 75)) {
         pdfPageLeft();
     } 
 }
@@ -692,11 +684,66 @@ function leaveQueueItem(elem) {
 }
 function hideQueueInfobox() {
     document.getElementById("siac-queue-infobox").style.display = "none";
-    document.getElementById("siac-pdf-bottom-tabs").style.display = "inline-block";
+    document.getElementById("siac-pdf-bottom-tabs").style.visibility = "visible";
 }
 function greyoutBottom() {
     $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover').addClass("siac-disabled");
 }
 function ungreyoutBottom() {
     $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover').removeClass("siac-disabled");
+}
+function unhideQueue(nid) {
+    if(pdfLoading||noteLoading){return;}
+    pycmd("siac-unhide-pdf-queue " + nid);
+}
+function hideQueue(nid) {
+    if(pdfLoading||noteLoading){return;}
+    pycmd("siac-hide-pdf-queue " + nid);
+}
+function toggleReadingModalBars() {
+    if (!pdfBarsHidden) {
+        document.getElementById("siac-reading-modal-top-bar").style.display = "none";
+        document.getElementById("siac-reading-modal-bottom-bar").style.display = "none";
+        pdfBarsHidden = true;
+    } else {
+        document.getElementById("siac-reading-modal-top-bar").style.display = "flex";
+        document.getElementById("siac-reading-modal-bottom-bar").style.display = "block";
+        pdfBarsHidden = false;
+    }
+}
+
+function toggleReadingModalFullscreen() {
+    pdfFullscreen = !pdfFullscreen;
+    if (pdfFullscreen) {
+        $(document.body).removeClass("siac-fullscreen-show-fields").addClass("siac-fullscreen-show-right");
+        if (pdfDisplayed) {
+            pdfFitToPage();
+        } 
+        pdfBarsHidden = false;
+        toggleReadingModalBars();
+        pycmd("siac-notification Press the toggle shortcut (default Ctrl+F) to switch to fields.");
+
+    } else {
+        $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
+        if (pdfDisplayed) {
+            pdfFitToPage();
+        } 
+    }
+}
+function activateReadingModalFullscreen() {
+    pdfFullscreen = false;
+    pdfBarsHidden = true;
+    toggleReadingModalFullscreen();
+}
+function onReadingModalClose(shouldSave, nid) {
+    if (pdfLoading) {
+        return;
+    }
+    $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
+    $("#siac-reading-modal").hide(); 
+    destroyPDF(); 
+    if (shouldSave) { 
+        saveTextNote(nid);
+    }
+    document.getElementById("siac-reading-modal-center").innerHTML = "";
 }
