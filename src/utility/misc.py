@@ -7,7 +7,7 @@ import os
 import time
 from aqt import mw
 from aqt.qt import *
-from aqt.utils import tooltip
+from aqt.utils import tooltip, showInfo
 from urllib.parse import urlparse
 
 
@@ -37,10 +37,8 @@ def pdf_to_base64(path):
         encoded_string = base64.b64encode(pdf_file.read()).decode("ascii")
     return encoded_string
 
-
 def count_cards_added_today():
     return len(mw.col.findCards("added:1"))
-
 
 def is_dark_color(r,g,b):
     """
@@ -190,6 +188,15 @@ def get_addon_id():
     if dir.endswith("/"):
         dir = dir[:-1]
     return dir[dir.rfind("/")+1:]
+
+def img_src(img_name):
+    """
+    Returns the src attribute for the image with the given name.
+    Must be in web folder.
+    """
+    port = mw.mediaServer.getPort()
+    return f"http://127.0.0.1:{port}/_addons/{get_addon_id()}/web/{img_name}"
+
 
 def url_to_pdf(url, output_path):
     """
