@@ -714,8 +714,7 @@ def get_all_unread_pdf_notes():
 
 def get_in_progress_pdf_notes():
     conn = _get_connection()
-    #todo: find better query, this one is slow
-    res = conn.execute("select * from notes where lower(source) like '%.pdf' and id in (select nid as n1 from read where page > -1 and (select count(*) from read where nid = n1) < pagestotal) order by created desc").fetchall()
+    res = conn.execute("select * from notes where lower(source) like '%.pdf' and id in (select nid from (select nid, pagestotal, max(created) from read where page > -1  group by nid having count(nid) < pagestotal)) order by created desc").fetchall()
     conn.close()
     return _to_notes(res)
 
@@ -745,7 +744,7 @@ def get_non_pdf_notes_not_in_queue():
     return _to_notes(res)
 
 def get_pdf_info(nids):
-    sql = "select nid, pagestotal, count(*) from read where nid in (%s) and page > -1 group by nid" % (",".join([str(n) for n in nids]))
+    sql = "select nid, pagestotal, count(*), max(created) from read where nid in (%s) and page > -1 group by nid" % (",".join([str(n) for n in nids]))
     conn = _get_connection()
     res = conn.execute(sql).fetchall()
     conn.close()
@@ -782,18 +781,20 @@ def get_related_notes(id):
 
 
 def mark_all_pages_as_read(nid, num_pages):
+    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
     conn = _get_connection()
     existing = [r[0] for r in conn.execute("select page from read where page > -1 and nid = %s" % nid).fetchall()]
-    to_insert = [(p, nid, num_pages) for p in range(1, num_pages +1) if p not in existing]
-    conn.executemany("insert into read (page, nid, pagestotal, created) values (?, ?, ?, datetime('now', 'localtime'))", to_insert)
+    to_insert = [(p, nid, num_pages, now) for p in range(1, num_pages +1) if p not in existing]
+    conn.executemany("insert into read (page, nid, pagestotal, created) values (?, ?, ?, ?)", to_insert)
     conn.commit()
     conn.close()
 
 def mark_as_read_up_to(nid, page, num_pages):
+    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
     conn = _get_connection()
     existing = [r[0] for r in conn.execute("select page from read where page > -1 and nid = %s" % nid).fetchall()]
-    to_insert = [(p, nid, num_pages) for p in range(1, page +1) if p not in existing]
-    conn.executemany("insert into read (page, nid, pagestotal, created) values (?, ?, ?, datetime('now', 'localtime'))", to_insert)
+    to_insert = [(p, nid, num_pages, now) for p in range(1, page +1) if p not in existing]
+    conn.executemany("insert into read (page, nid, pagestotal, created) values (?, ?, ?, ?)", to_insert)
     conn.commit()
     conn.close()
 
