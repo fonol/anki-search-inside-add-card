@@ -39,6 +39,8 @@ def expanded_on_bridge_cmd(self, cmd):
     """
     Process the various commands coming from the ui -
     this includes users clicks on option checkboxes, on rendered results, on special searches, etc.
+
+    todo: needs some serious cleanup
     """
     index = get_index()
     if index is not None and index.output.editor is None:
@@ -168,7 +170,9 @@ def expanded_on_bridge_cmd(self, cmd):
             if check_index():
                 stamp = setStamp()
                 index.search(inp, ["-1"], only_user_notes = False, print_mode = "pdf")
-        
+    
+    
+  
 
     elif cmd.startswith("siac-jump-last-read"):
         jump_to_last_read_page(self, int(cmd.split()[1]))
@@ -1160,7 +1164,7 @@ def get_index_info():
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Space / Ctrl+Right / Ctrl+J</b></td></tr>
                <tr><td>PDF: Page Right + Mark Page as Read</td><td>  <b>Ctrl+Shift+Space</b></td></tr>
-               <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl + K</b></td></tr>
+               <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl+K</b></td></tr>
                <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
                <tr><td>Confirm New Note</td><td>  <b>Ctrl+Enter</b></td></tr>
 
