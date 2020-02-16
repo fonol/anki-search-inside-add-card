@@ -882,10 +882,12 @@ def get_pdf_viewer_html(nid, source, title):
     if urls is not None and len(urls) > 0:
         search_sources = iframe_dialog(urls)
 
+    marks_img_src = utility.misc.img_src("mark-star-24px.png")
+    marks_grey_img_src = utility.misc.img_src("mark-star-lightgrey-24px.png")
     html = """
         <div id='siac-pdf-overlay'>PAGE READ</div>
         <div id='siac-pdf-overlay-top'>
-            <div id='siac-pdf-mark-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>M
+            <div id='siac-pdf-mark-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><img src='{marks_img_src}' style='width: 17px; height: 17px; margin: 0;'/>
                 <div style='margin-left: 7px;'>
                     <div class='siac-mark-btn-inner siac-mark-btn-inner-1' onclick='pycmd("siac-pdf-mark 1 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Revisit</div>
                     <div class='siac-mark-btn-inner siac-mark-btn-inner-2' onclick='pycmd("siac-pdf-mark 2 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Hard</div>
@@ -894,7 +896,7 @@ def get_pdf_viewer_html(nid, source, title):
                     <div class='siac-mark-btn-inner siac-mark-btn-inner-5' onclick='pycmd("siac-pdf-mark 5 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Bookmark</div>
                 </div> 
             </div>
-            <div style='display: inline-block; vertical-align: top; margin-top: 3px;' id='siac-pdf-overlay-top-lbl-wrap'></div>
+            <div style='display: inline-block; vertical-align: top;' id='siac-pdf-overlay-top-lbl-wrap'></div>
         </div>
         <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
             <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center;'>Note: Not all Websites allow Embedding!</div>
@@ -904,11 +906,14 @@ def get_pdf_viewer_html(nid, source, title):
                {search_sources}
             </div>
         </div>
+        <div class='siac-btn siac-btn-dark' id='siac-mark-jump-btn' onclick='$(this).toggleClass("expanded"); onMarkBtnClicked(this);'><img src='{marks_grey_img_src}' style='width: 16px; height: 16px;'/>
+            <div id='siac-mark-jump-btn-inner' class='expanded-hidden white-hover' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'></div>
+        </div>
         <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='$(this).toggleClass("expanded")'><div class='siac-read-icn siac-read-icn-light'></div>
             <div class='expanded-hidden white-hover' onclick='pycmd("siac-move-end-read-next {nid}"); event.stopPropagation();' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'><b>Move End, Read Next</b></div>
         </div>
         <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark' onclick='pycmd("siac-close-iframe")'>&times; &nbsp;Close Web</div>
-        <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" onwheel='pdfMouseWheel(event);'>
+        <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
             <div id='siac-pdf-loader-wrapper' style='display: flex; justify-content: center; align-items: center; height: 100%;'>
                 <div class='siac-pdf-loader' style=''>
                     <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>Loading PDF</div></div>
@@ -944,7 +949,7 @@ def get_pdf_viewer_html(nid, source, title):
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>Jump to First Unread Page</b></div>
                             <hr>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayedCurrentPage).keys()).map(x => ++x); pdfShowPageReadMark();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
-                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + pdfDisplayed.numPages); event.stopPropagation();'><b>Mark Range</b></div>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + pdfDisplayed.numPages); event.stopPropagation();'><b>Mark Range ...</b></div>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pagesRead = []; pdfHidePageReadMark(); updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayed.numPages).keys()).map(x => ++x); pdfShowPageReadMark(); updatePdfProgressBar();event.stopPropagation();'>
                                 <b>Mark all as Read</b>
@@ -965,7 +970,7 @@ def get_pdf_viewer_html(nid, source, title):
                 $('#siac-pdf-tooltip-toggle').removeClass('active');
             }}
         </script>
-    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, search_sources=search_sources))
+    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, search_sources=search_sources, marks_img_src=marks_img_src, marks_grey_img_src=marks_grey_img_src))
     return html
 
 

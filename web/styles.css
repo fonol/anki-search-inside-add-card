@@ -892,6 +892,7 @@ table.striped tr:nth-child(even) {
     text-align: center;
     color:darkorange;
     cursor:pointer;
+    user-select: none;
 }
 #siac-cloze-btn:hover {
     transform: scale(1.03);
@@ -960,7 +961,7 @@ width: 48%; display: inline-block; text-align: center;
 }
 #siac-right-side {
     border-left: 2px solid $windowColumnSeparatorColor$;
-    margin-top: 20px;
+    margin-top: 22px !important;
     padding: 20px;
     padding-bottom: 4px;
     margin-left: 8px;
@@ -1190,6 +1191,7 @@ span.tag-symbol {
     line-height: 17px;
     color: black;
     user-select: none;
+    border-radius: 2px;
 }
 .cal-block-week:hover {
     transform: scale(1.15);
@@ -1225,7 +1227,7 @@ span.tag-symbol {
     background: $timelineBoxBackgroundColor$;
     color: white;
     border-radius: 3px;
-    border: 1px solid $timelineBoxBorderColor$;
+    border: 2px outset $timelineBoxBorderColor$;
 }
 #cal-info:after {
     content: " ";
@@ -1336,7 +1338,7 @@ span.tag-symbol {
     margin-right: auto;
 }
 #siac-pdf-mark-btn {
-    padding: 6px 6px 6px 6px;
+    padding: 4px 3px 5px 4px;
     z-index: 3;
     border: 3px outset #2496dc;
     border-radius: 3px;
@@ -1350,6 +1352,9 @@ span.tag-symbol {
 #siac-pdf-mark-btn:hover {
     border-color: #67c3fc;
 }
+#siac-pdf-mark-btn:hover img {
+    filter: brightness(1.4);
+}
 #siac-pdf-mark-btn > div {
     display: none;
 }
@@ -1358,6 +1363,10 @@ span.tag-symbol {
 }
 #siac-pdf-mark-btn.expanded {
     max-width: 400px;
+}
+#siac-pdf-mark-btn.expanded img {
+    float: left;
+    margin-top: 2px !important;
 }
 .siac-mark-btn-inner {
     display: inline-block;
@@ -1409,27 +1418,21 @@ span.tag-symbol {
     flex: 1 1 auto;
     margin-top: 20px;
 }
-#siac-pdf-top {
-    /* max-height: calc(100% - 20px); */
-}
 #siac-text-top {
-    /* width: calc(100% - 20px);   */
-    /* height: calc(100% - 62px);  */
-    /* max-height: calc(100% - 62px);  */
     text-align: left;
     padding: 10px;
 
 }
 #siac-iframe {
     width: 100%;
-    height: calc(100% - 44px); 
+    flex: 1 1 auto;
     display: none;
 }
 #siac-iframe-btn {
     z-index: 2;
     position: absolute;
     left: 0px;
-    top: 55px;
+    top: 50px;
 }
 #siac-close-iframe-btn {
     z-index: 4;
@@ -1464,7 +1467,14 @@ span.tag-symbol {
     bottom: 43px;
     padding: 2px 3px 2px 3px;
 }
-#siac-quick-sched-btn > .expanded-hidden {
+#siac-mark-jump-btn {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    bottom: 76px;
+    padding: 4px 3px 4px 3px;
+}
+#siac-quick-sched-btn > .expanded-hidden, #siac-mark-jump-btn > .expanded-hidden {
     display: none;
     vertical-align: middle;
 }
@@ -1472,8 +1482,15 @@ span.tag-symbol {
     margin: 0;
     vertical-align: middle;
 }
-#siac-quick-sched-btn.expanded > .expanded-hidden {
+#siac-quick-sched-btn.expanded > .expanded-hidden, #siac-mark-jump-btn.expanded > .expanded-hidden {
     display: inline-block;
+}
+#siac-mark-jump-btn:hover img {
+    filter: brightness(1.4);
+}
+#siac-mark-jump-btn.expanded img {
+    float: left;
+    margin-top: 2px;
 }
 #siac-iframe-btn input {
     width: 100%;
@@ -1578,7 +1595,7 @@ span.tag-symbol {
 }
 #siac-pdf-bottom-tab {
     display: inline-block;
-    max-height: 90px;
+    max-height: 89px;
     overflow: hidden;
     overflow-y: auto;
     vertical-align: top;
@@ -2253,7 +2270,7 @@ body.siac-fullscreen-show-right #leftSide {
     display: none !important; 
 }
 body.siac-fullscreen-show-right #siac-right-side {
-    display: flex; 
+    display: flex !important; 
     border-left: 0px;
     margin-top: 5px !important;
     height: calc(100vh - 5px) !important;

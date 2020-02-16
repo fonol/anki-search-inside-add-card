@@ -283,7 +283,7 @@ function queueSchedBtnClicked(btn_el) {
 function afterRemovedFromQueue() {
     toggleQueue();
     $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
-    $('.siac-queue-sched-btn').first().addClass("active").html('Not In Queue');
+    $('.siac-queue-sched-btn').first().addClass("active").html('Unqueued');
 }
 function _startTimer(elementToUpdateId) {
     if (readingTimer) {clearInterval(readingTimer); }
@@ -564,11 +564,11 @@ function updatePdfDisplayedMarks() {
     if (pdfDisplayedCurrentPage in pdfDisplayedMarks) {
         for (var i = 0; i < pdfDisplayedMarks[pdfDisplayedCurrentPage].length; i++) {
             switch(pdfDisplayedMarks[pdfDisplayedCurrentPage][i]) {
-                case 1: html += "<div class='siac-pdf-mark-lbl'>Revisit <b onclick='$(\".siac-mark-btn-inner-1\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-1').first().addClass('active'); break;
-                case 2: html += "<div class='siac-pdf-mark-lbl'>Hard <b onclick='$(\".siac-mark-btn-inner-2\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-2').first().addClass('active'); break;
-                case 3: html += "<div class='siac-pdf-mark-lbl'>More Info <b onclick='$(\".siac-mark-btn-inner-3\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-3').first().addClass('active'); break;
-                case 4: html += "<div class='siac-pdf-mark-lbl'>More Cards <b onclick='$(\".siac-mark-btn-inner-4\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-4').first().addClass('active');  break;
-                case 5: html += "<div class='siac-pdf-mark-lbl'>Bookmark <b onclick='$(\".siac-mark-btn-inner-5\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-5').first().addClass('active'); break;
+                case 1: html += "<div class='siac-pdf-mark-lbl'>Revisit &nbsp;<b onclick='$(\".siac-mark-btn-inner-1\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-1').first().addClass('active'); break;
+                case 2: html += "<div class='siac-pdf-mark-lbl'>Hard &nbsp;<b onclick='$(\".siac-mark-btn-inner-2\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-2').first().addClass('active'); break;
+                case 3: html += "<div class='siac-pdf-mark-lbl'>More Info &nbsp;<b onclick='$(\".siac-mark-btn-inner-3\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-3').first().addClass('active'); break;
+                case 4: html += "<div class='siac-pdf-mark-lbl'>More Cards &nbsp;<b onclick='$(\".siac-mark-btn-inner-4\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-4').first().addClass('active');  break;
+                case 5: html += "<div class='siac-pdf-mark-lbl'>Bookmark &nbsp;<b onclick='$(\".siac-mark-btn-inner-5\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-5').first().addClass('active'); break;
             }
         }
     }
@@ -598,6 +598,7 @@ function updatePdfDisplayedMarks() {
     }
     document.getElementById("siac-pdf-overlay-top-lbl-wrap").innerHTML = html;
     if (document.getElementById("siac-marks-display")) { document.getElementById("siac-marks-display").innerHTML = tableHtml; }
+    onMarkBtnClicked(document.getElementById("siac-mark-jump-btn"));
 
 }
 function markClicked(event) {
@@ -644,6 +645,32 @@ function togglePDFSelect(elem) {
         $(elem).removeClass('active');
     }
 }
+function onMarkBtnClicked(elem) {
+    if ($(elem).hasClass("expanded")) {
+        if (pdfDisplayedMarks && Object.keys(pdfDisplayedMarks).length > 0) {
+            document.getElementById("siac-mark-jump-btn-inner").innerHTML = "<b onclick='event.stopPropagation(); jumpToNextMark();' style='vertical-align: middle;'>Jump to Next Mark</b>";
+        } else {
+            document.getElementById("siac-mark-jump-btn-inner").innerHTML = "<b style='vertical-align:middle; color: grey;'>No Marks in PDF</b>";
+        }
+    }
+}
+function jumpToNextMark() {
+    if (!pdfDisplayed) {
+        return;
+    }
+    let pages = Object.keys(pdfDisplayedMarks);
+    for (var i = 0; i < pages.length; i++) {
+        if (Number(pages[i]) > pdfDisplayedCurrentPage) {
+            pdfDisplayedCurrentPage = Number(pages[i]);
+            queueRenderPage(pdfDisplayedCurrentPage, true, false, false);
+            return;
+        }
+    }
+    pdfDisplayedCurrentPage = Number(pages[0]);
+    queueRenderPage(pdfDisplayedCurrentPage, true, false, false);
+}
+
+
 
 function centerTooltip() {
     let w = $('#siac-pdf-top').width();
@@ -721,7 +748,7 @@ function toggleReadingModalFullscreen() {
         } 
         pdfBarsHidden = false;
         toggleReadingModalBars();
-        pycmd("siac-notification Press the toggle shortcut (default Ctrl+F) to switch to fields.");
+        pycmd("siac-notification Press toggle shortcut (default Ctrl+F) to switch.");
 
     } else {
         $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");

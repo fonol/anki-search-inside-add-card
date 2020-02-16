@@ -258,7 +258,7 @@ function onResize() {
     //height -= 39;
     height -= 19;
     height += addToResultAreaHeight;
-    $('#siac-right-side').css("height", `calc(100vh + ${-20 + addToResultAreaHeight}px`);
+    $('#siac-right-side').css("height", `calc(100vh + ${-22 + addToResultAreaHeight}px`);
     $("#resultsArea").css("height", height + "px");
     if (!$('#switchBtn').is(":visible")) {
         $('#leftSide').show();
