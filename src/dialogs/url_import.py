@@ -13,6 +13,7 @@ from anki.lang import _
 
 
 from ..notes import *
+from ..config import get_config_value_or_default
 import utility.text
 import utility.misc
 
@@ -33,6 +34,18 @@ class UrlImporter(QDialog):
     def setup_ui(self):
 
         self.vbox = QVBoxLayout()
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(QLabel("Save Path:"))
+
+        save_path = get_config_value_or_default("pdfUrlImportSavePath", "user_files (add-on folder)")
+        save_path_disp = QLineEdit()
+        save_path_disp.setText(save_path)
+        save_path_disp.setDisabled(True)
+
+        hbox.addWidget(save_path_disp)
+
+        self.vbox.addLayout(hbox)
 
         url_label = QLabel("Url")
         self.url = QLineEdit()
@@ -157,17 +170,17 @@ class UrlImporter(QDialog):
             QPushButton#q_1,QPushButton#q_2,QPushButton#q_22,QPushButton#q_3,QPushButton#q_33,QPushButton#q_4,QPushButton#q_44,QPushButton#q_5,QPushButton#q_6 { border-radius: 5px; }
             QPushButton#q_1 { margin-left: 10px; margin-right: 10px; }
             QPushButton#q_2 { margin-left: 10px; margin-right: 10px; }
-            QPushButton#q_22 { margin-left: 70px; margin-right: 70px; }
+            QPushButton#q_22 { margin-left: 80px; margin-right: 80px; }
             QPushButton#q_3 { margin-left: 30px; margin-right: 30px; }
-            QPushButton#q_33 { margin-left: 70px; margin-right: 70px; }
+            QPushButton#q_33 { margin-left: 80px; margin-right: 80px; }
             QPushButton#q_4 { margin-left: 30px; margin-right: 30px; }
-            QPushButton#q_44 { margin-left: 70px; margin-right: 70px; }
+            QPushButton#q_44 { margin-left: 80px; margin-right: 80px; }
             QPushButton#q_5 { margin-left: 10px; margin-right: 10px; }
             QPushButton#q_6 { margin-left: 10px; margin-right: 10px; }
 
 
             QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; margin-left: 7px; margin-right: 7px; }
-            QPushButton:hover#q_22,QPushButton:hover#q_33,QPushButton:hover#q_44 { background-color: lightblue; margin-left: 67px; margin-right: 67px; }
+            QPushButton:hover#q_22,QPushButton:hover#q_33,QPushButton:hover#q_44 { background-color: lightblue; margin-left: 77px; margin-right: 77px; }
             QPushButton:hover#q_3,QPushButton:hover#q_4 { background-color: lightblue; margin-left: 27px; margin-right: 27px; }
 
             QLineEdit { border-radius: 5px; border: 1px solid #717378;  padding: 2px;}
