@@ -24,7 +24,6 @@ def findNotesWithLowestPerformance(decks, limit, pinned, retOnly=False):
     for r in scores:
         if str(r[1][1][0]) not in pinned:
             rList.append(IndexNote((r[1][1][0], r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][2], -1, r[1][1][5], "", -1)))
-            #rList.append((r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][0], 1, r[1][1][5]))
             c += 1
             if c >= limit:
                 break
@@ -39,7 +38,6 @@ def findNotesWithHighestPerformance(decks, limit, pinned, retOnly=False):
     for r in scores:
         if str(r[1][1][0]) not in pinned:
             rList.append(IndexNote((r[1][1][0], r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][2], -1, r[1][1][5], "", -1)))
-            # rList.append((r[1][1][2], r[1][1][3], r[1][1][4], r[1][1][0], 1, r[1][1][5]))
             c += 1
             if c >= limit:
                 break
@@ -158,11 +156,8 @@ def getAvgTrueRetentionAndTime():
 
 
 def calcAbsDiffInPercent(i1, i2):
-    diff = round(i1 - i2, 2)
-    if diff >= 0:
-        return "+ " + str(diff)
-    else:
-        return str(diff)
+    return round(i1 - i2, 2)
+  
 
 
 def _getTrueRetentionOverTime(cards):
@@ -420,16 +415,25 @@ def calculateStats(nid, gridView):
             infoTable["<b>Pass Rate (Successful Reviews * 100 / Reviews)</b>"] = ""
             infoTable["Cards from this note"] = str(retention) + " %"
             infoTable["Collection"] = str(avgRetAndTime[0]) + " %"
-            infoTable["Difference"] = str(
-                calcAbsDiffInPercent(retention, avgRetAndTime[0])) + " %"
+            diff = calcAbsDiffInPercent(retention, avgRetAndTime[0]) 
+            if diff > 0:
+                infoTable["Difference"] = f"{diff} % <span style='color: green'>better</span>"
+            elif diff < 0:
+                infoTable["Difference"] = f"{diff} % <span style='color: red'>worse</span>"
+
+            
             tables["Stats"].append(infoTable)
 
             infoTable = {}
             infoTable["<b>Average Time (Reviews Only)</b>"] = ""
             infoTable["Cards from this note"] = str(avgTime) + " seconds"
             infoTable["Collection"] = str(avgRetAndTime[1]) + " seconds"
-            infoTable["Difference"] = str(calcAbsDiffInPercent(
-                avgTime, avgRetAndTime[1])) + " seconds"
+            diff = calcAbsDiffInPercent(avgTime, avgRetAndTime[1])
+            if diff > 0:
+                infoTable["Difference"] = f"{diff} seconds <span style='color: red'>slower</span>"
+            elif diff < 0:
+                infoTable["Difference"] = f"{abs(diff)} seconds <span style='color: green'>faster</span>"
+        
             tables["Stats"].append(infoTable)
 
         infoTable = {}
