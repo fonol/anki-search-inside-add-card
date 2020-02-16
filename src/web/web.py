@@ -354,6 +354,7 @@ def _display_pdf(full_path, note_id):
         var loadFn = function(retry) {
             if (retry > 4) {
                 $('#siac-pdf-loader-wrapper').remove();
+                document.getElementById('siac-pdf-top').style.overflowY = 'auto';
                 $('#siac-timer-popup').html(`<br><center>PDF.js could not be loaded from CDN.</center><br>`).show();
                 pdfDisplayed = null;
                 ungreyoutBottom();
@@ -375,6 +376,8 @@ def _display_pdf(full_path, note_id):
             var loadingTask = pdfjsLib.getDocument(typedarray, {nativeImageDecoderSupport: 'display'});
             loadingTask.promise.catch(function(error) {
                     $('#siac-pdf-loader-wrapper').remove();
+                    document.getElementById('siac-pdf-top').style.overflowY = 'auto';
+
                     $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
                     pdfDisplayed = null;
                     ungreyoutBottom();
@@ -386,6 +389,8 @@ def _display_pdf(full_path, note_id):
                     pdfDisplayed = pdf;
                     pdfDisplayedCurrentPage = %s;
                     $('#siac-pdf-loader-wrapper').remove();
+                    document.getElementById('siac-pdf-top').style.overflowY = 'auto';
+
                     if (pagesRead.length === pdf.numPages) {
                         pdfDisplayedCurrentPage = 1;
                         queueRenderPage(1, true, true, true);
@@ -666,7 +671,7 @@ def show_timer_elapsed_popup(nid):
     </div>
     <div style='text-align: center;'>
         <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;Start 5m&nbsp;</div>
-        <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none";'>&nbsp;&nbsp;Ok&nbsp;&nbsp;</div>
+        <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px; width: 50px;' onclick='this.parentNode.parentNode.style.display="none";'>Ok</div>
         <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;Start 15m&nbsp;</div>
     </div>
     """ % (read_today_count, "page" if read_today_count == 1 else "pages", added_today_count, "card" if added_today_count == 1 else "cards")
