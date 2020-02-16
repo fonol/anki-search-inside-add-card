@@ -218,6 +218,12 @@ def insert_scripts():
         script.type = 'text/javascript';
         script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf-reader.js';
         document.body.appendChild(script);
+
+        script = document.createElement('link');
+        script.type = 'text/css';
+        script.rel = 'stylesheet';
+        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/textlayer.css';
+        document.body.appendChild(script);
     </script>
     """
 
