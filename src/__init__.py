@@ -200,7 +200,7 @@ def editorContextMenuEventWrapper(view, evt):
 
 def insert_scripts():
     addon_id = utility.misc.get_addon_id()
-    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map)$")
+    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png)$")
     port = mw.mediaServer.getPort()
     aqt.editor._html += f"""
     <script>
