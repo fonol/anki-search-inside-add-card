@@ -618,7 +618,13 @@ def expanded_on_bridge_cmd(self, cmd):
     elif cmd.startswith("siac-add-image "):
         b64 = cmd.split()[2][13:]
         image = utility.misc.base64_to_file(b64)
+        if image is None or len(image) == 0:
+            tooltip("Failed to temporarily save file.", duration=5000)
+            return
         name = mw.col.media.addFile(image)
+        if name is None or len(name) == 0:
+            tooltip("Failed to add file to media col.", duration=5000)
+            return
         show_img_field_picker_modal(name)
         os.remove(image)
 
