@@ -23,7 +23,8 @@ def js(fn):
         if ix is not None and ix.output is not None and ix.output.editor is not None and ix.output.editor.web is not None:
             ix.output.js(fn(*args, **kwargs))
         else:
-            mw.app.activeWindow().editor.web.eval(fn(*args, **kwargs))
+            if mw.app.activeWindow() is not None:
+                mw.app.activeWindow().editor.web.eval(fn(*args, **kwargs))
     return _eval_js_dec
 
 def requires_index_loaded(fn):
