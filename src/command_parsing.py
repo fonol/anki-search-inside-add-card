@@ -8,6 +8,7 @@ from anki.notes import Note
 from aqt.utils import tooltip, showInfo
 import os
 import urllib.parse
+import json
 
 
 from .state import check_index, get_index, set_index, set_corpus, get_old_on_bridge_cmd
@@ -619,11 +620,11 @@ def expanded_on_bridge_cmd(self, cmd):
         b64 = cmd.split()[2][13:]
         image = utility.misc.base64_to_file(b64)
         if image is None or len(image) == 0:
-            tooltip("Failed to temporarily save file.", duration=5000)
+            tooltip("Failed to temporarily save file.", period=5000)
             return
         name = mw.col.media.addFile(image)
         if name is None or len(name) == 0:
-            tooltip("Failed to add file to media col.", duration=5000)
+            tooltip("Failed to add file to media col.", period=5000)
             return
         show_img_field_picker_modal(name)
         os.remove(image)
@@ -1224,14 +1225,14 @@ def show_timing_modal(render_time = None):
 def update_styling(cmd):
     index = get_index()
     name = cmd.split()[0]
-    if len(cmd.split()) < 2:
-        return
     value = " ".join(cmd.split()[1:])
-
-    if name == "addToResultAreaHeight":
-        if int(value) < 501 and int(value) > -501:
-            config[name] = int(value)
-            index.output.js("addToResultAreaHeight = %s; onResize();" % value)
+    if name == "default" and value == "day":
+        config["styling"] = json.loads(default_styles())
+        tooltip("Styling updated. Restart to apply changes.", period=4000)
+    elif name == "default" and value == "night":
+        config["styling"] = json.loads(default_night_mode_styles())
+        tooltip("Styling updated. Restart to apply changes.", period=4000)
+   
     elif name == "searchpane.zoom":
         config[name] = float(value)
         index.output.js("document.getElementById('siac-right-side').style.zoom = '%s'; showTagInfoOnHover = %s;" % (value, "false" if float(value) != 1.0 else "true"))
