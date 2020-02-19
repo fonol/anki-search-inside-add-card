@@ -37,6 +37,10 @@ from .config import get_config_value_or_default
 from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerender_info, add_note_to_index
 
 
+
+
+
+
 config = mw.addonManager.getConfig(__name__)
 
 def init_addon():
@@ -48,7 +52,10 @@ def init_addon():
     addHook("profileLoaded", build_index)
     addHook("profileLoaded", insert_scripts)
     orig_add_note = AddCards.addNote
-    origEditorContextMenuEvt = EditorWebView.contextMenuEvent
+
+    #disabled for now, to be able to use Occlude Image in the context menu
+    #origEditorContextMenuEvt = EditorWebView.contextMenuEvent
+    #EditorWebView.contextMenuEvent = editorContextMenuEventWrapper
 
     AddCards.addNote = add_note_and_update_index
     if get_config_value_or_default("searchOnTagEntry", True):
@@ -56,7 +63,6 @@ def init_addon():
         TagEdit.keyPressEvent = tag_edit_keypress
 
     setup_tagedit_timer()
-    EditorWebView.contextMenuEvent = editorContextMenuEventWrapper
 
     orig_save_and_close = EditDialog.saveAndClose
     EditDialog.saveAndClose = editorSaveWithIndexUpdate
@@ -71,10 +77,12 @@ def init_addon():
             function sendContent(event) {
                 if ((event && event.repeat) || pdfDisplayed != null || siacState.isFrozen)
                     return;
+                if (!$fields.text())
+                    return;
                 let html = "";
                 showLoading("Typing");
                 $fields.each(function(index, elem) {
-                    html += $(elem).html() + "\u001f";
+                    html += elem.innerHTML + "\u001f";
                 });
                 pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
             }
