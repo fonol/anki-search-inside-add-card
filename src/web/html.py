@@ -1097,14 +1097,7 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <fieldset>
-            <span><mark>Important:</mark> Modify this value if the bottom bar (containing the predefined searches and the browser search) sits too low or too high. (Can be negative)</span>
-                <table style="width: 100%%">
-                    <tr><td><b>Add To Result Area Height</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" style='width: 60px;' onchange="pycmd('styling addToResultAreaHeight ' + this.value)" value="%s"/> px</td></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-            <span><mark>Important:</mark> Modify this value to scale the whole search pane. Useful e.g. when working on a small screen. If this is not 1.0, the <i>Add To Result Area Height</i> option needs to be modified too.</span>
+            <span><mark>Important:</mark> Modify this value to scale the whole search pane. Useful e.g. when working on a small screen.</span>
                 <table style="width: 100%%">
                     <tr><td><b>Zoom</b></td><td style='text-align: right;'><input placeholder="" type="number" step="0.1" style='width: 60px;' onchange="pycmd('styling searchpane.zoom ' + this.value)" value="%s"/></td></tr>
                 </table>
@@ -1181,7 +1174,7 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
-                        """ % (config["addToResultAreaHeight"],
+                        """ % (
                         config["searchpane.zoom"],
                         "checked='true'" if config["renderImmediately"] else "",
                         config["leftSideWidthInPercent"],
@@ -1200,61 +1193,31 @@ def stylingModal(config):
     <br/> <br/>
     If you want to use the add-on with the <b>night mode</b> add-on, you have to adapt the styling section.
     <br/> <br/>
-    <b>Sample night mode configuration (copy and replace the <i>styling</i> section in your config with it):</b><br/><br/>
-    <div style='width: 100%; overflow-y: auto; max-height: 130px;'>
-    "styling": {
-        "bottomBar": {
-            "browserSearchInputBackgroundColor": "#2f2f31",
-            "browserSearchInputBorderColor": "grey",
-            "browserSearchInputForegroundColor": "beige",
-            "selectBackgroundColor": "#2f2f31",
-            "selectForegroundColor": "white",
-            "timelineBoxBackgroundColor": "#2b2b30",
-            "timelineBoxBorderColor": "DarkOrange"
-        },
-        "general": {
-            "buttonBackgroundColor": "#2f2f31",
-            "buttonBorderColor": "grey",
-            "buttonForegroundColor": "beige",
-            "fieldSeparatorColor": "white",
-            "highlightBackgroundColor": "SpringGreen",
-            "highlightForegroundColor": "Black",
-            "keywordColor": "SpringGreen",
-            "noteBackgroundColor": "#2f2f31",
-            "noteBorderColor": "lightseagreen",
-            "noteFontSize": 12,
-            "noteForegroundColor": "beige",
-            "noteHoverBorderColor": "#62C9C3",
-            "rankingLabelBackgroundColor": "DarkOrange",
-            "rankingLabelForegroundColor": "Black",
-            "tagBackgroundColor": "DarkOrange",
-            "tagFontSize": 12,
-            "tagForegroundColor": "Black",
-            "windowColumnSeparatorColor": "DarkOrange"
-        },
-        "modal": {
-            "modalBackgroundColor": "#2f2f31",
-            "modalBorderColor": "DarkOrange",
-            "modalForegroundColor": "beige",
-            "stripedTableBackgroundColor": "#2b2b30"
-        },
-        "topBar": {
-            "deckSelectBackgroundColor": "#2f2f31",
-            "deckSelectButtonBackgroundColor": "#2f2f31",
-            "deckSelectButtonBorderColor": "grey",
-            "deckSelectButtonForegroundColor": "beige",
-            "deckSelectCheckmarkColor": "LawnGreen",
-            "deckSelectFontSize": 11,
-            "deckSelectForegroundColor": "beige",
-            "deckSelectHoverBackgroundColor": "DarkOrange",
-            "deckSelectHoverForegroundColor": "Black"
-        }
-    },
+    <b>Sample night mode color scheme:</b> <div class='siac-btn' style='margin-left: 15px;' onclick='pycmd("styling default night");'>Apply</div><br/><br/>
+    <div style='width: 100%%; overflow-y: auto; max-height: 150px; opacity: 0.7;'>
+    "styling": %s,
     </div>
     <br/> <br/>
-    <b>Default configuration, to reset the styling without resetting the whole config file:</b><br/><br/>
-    <div style='width: 100%; overflow-y: auto; max-height: 130px;'>
-    "styling": {
+    <b>Default color scheme:</b><div class='siac-btn' style='margin-left: 15px;' onclick='pycmd("styling default day")'>Apply</div><br/><br/>
+    <div style='width: 100%%; overflow-y: auto; max-height: 150px; opacity: 0.7;'>
+    "styling": %s,
+    </div>
+
+    """ % (default_night_mode_styles(), default_styles())
+    return html
+
+
+def get_loader_html(text):
+    html = """
+        <div class='siac-modal-small'>
+            <div> <div class='signal'></div><br/>%s</div>
+        </div>
+    """ % text
+    return html
+
+def default_styles():
+    return """
+        {
         "modal" : {
             "stripedTableBackgroundColor": "#f2f2f2",
             "modalForegroundColor": "black",
@@ -1301,21 +1264,60 @@ def stylingModal(config):
             "timelineBoxBackgroundColor": "#595959",
             "timelineBoxBorderColor": "#595959"
         }
-    },
-    </div>
-
+    }
     """
-    return html
 
-
-def get_loader_html(text):
-    html = """
-        <div class='siac-modal-small'>
-            <div> <div class='signal'></div><br/>%s</div>
-        </div>
-    """ % text
-    return html
-
+def default_night_mode_styles():
+    return """
+        {
+        "bottomBar": {
+            "browserSearchInputBackgroundColor": "#2f2f31",
+            "browserSearchInputBorderColor": "grey",
+            "browserSearchInputForegroundColor": "beige",
+            "selectBackgroundColor": "#2f2f31",
+            "selectForegroundColor": "white",
+            "timelineBoxBackgroundColor": "#2b2b30",
+            "timelineBoxBorderColor": "DarkOrange"
+        },
+        "general": {
+            "buttonBackgroundColor": "#2f2f31",
+            "buttonBorderColor": "grey",
+            "buttonForegroundColor": "beige",
+            "fieldSeparatorColor": "white",
+            "highlightBackgroundColor": "SpringGreen",
+            "highlightForegroundColor": "Black",
+            "keywordColor": "SpringGreen",
+            "noteBackgroundColor": "#2f2f31",
+            "noteBorderColor": "lightseagreen",
+            "noteFontSize": 12,
+            "noteForegroundColor": "beige",
+            "noteHoverBorderColor": "#62C9C3",
+            "rankingLabelBackgroundColor": "DarkOrange",
+            "rankingLabelForegroundColor": "Black",
+            "tagBackgroundColor": "DarkOrange",
+            "tagFontSize": 12,
+            "tagForegroundColor": "Black",
+            "windowColumnSeparatorColor": "DarkOrange"
+        },
+        "modal": {
+            "modalBackgroundColor": "#2f2f31",
+            "modalBorderColor": "DarkOrange",
+            "modalForegroundColor": "beige",
+            "stripedTableBackgroundColor": "#2b2b30"
+        },
+        "topBar": {
+            "deckSelectBackgroundColor": "#2f2f31",
+            "deckSelectButtonBackgroundColor": "#2f2f31",
+            "deckSelectButtonBorderColor": "grey",
+            "deckSelectButtonForegroundColor": "beige",
+            "deckSelectCheckmarkColor": "LawnGreen",
+            "deckSelectFontSize": 11,
+            "deckSelectForegroundColor": "beige",
+            "deckSelectHoverBackgroundColor": "DarkOrange",
+            "deckSelectHoverForegroundColor": "Black"
+        }
+    }
+    """
 
 def get_pdf_list_first_card():
     """
