@@ -131,7 +131,7 @@ def right_side_html(indexIsLoaded = False):
         $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
         document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
         $(`
-        <div class='siac-col' style='width: %s%%; flex-grow: 1;  height: 100vh; zoom: %s' id='siac-right-side'>
+        <div class='siac-col' style='width: %s%%; flex-grow: 1; zoom: %s' id='siac-right-side'>
             <div id='siac-second-col-wrapper'>
                 <div id="greyout"></div>
                 <div id="a-modal" class="modal">
@@ -228,8 +228,7 @@ def right_side_html(indexIsLoaded = False):
                             </div>
                     </div>
                 </div>
-                <div id="resultsArea" style="height: 100px;  width: 100%%; border-top: 1px solid grey; position: relative;">
-                    <div id="icns-large">
+                <div id="icns-large">
                             <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                             <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
                             <div class='rnd-icon' onclick='pycmd("siac-random-notes " + siacState.selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
@@ -239,9 +238,11 @@ def right_side_html(indexIsLoaded = False):
                             </div>
                             <div class='rnd-icon' onclick='toggleNoteSidebar();'>NOTES</div>
                             <div class='siac-read-icn' onclick='pycmd("siac-user-note-queue-read-head")'></div>
-                        </div>
+                </div>
+                <div id="resultsArea" style="">
+         
                     <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
-                    <div style='height: calc(100%% - 28px); padding-top: 28px; z-index: 100;' id='resultsWrapper'>
+                    <div id='resultsWrapper'>
                         <div id='searchInfo' class='%s'></div>
                         <div id='searchResults'></div>
                     </div>
@@ -382,7 +383,7 @@ def get_notes_sidebar_html():
                     <div class='w-100' style='margin-top: 20px;'><b>Tags (%s)</b></div>
                     <hr style='margin-right: 15px;'/>
                 </div>
-                <div style='flex: 1 1 auto; padding-right: 5px; margin-right: 5px; overflow-y: auto;'>
+                <div style='flex: 1 1 auto; padding-right: 5px; margin-right: 5px; margin-bottom: 5px; overflow-y: auto;'>
                     %s
                 </div>
             </div>

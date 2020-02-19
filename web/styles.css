@@ -99,6 +99,22 @@ body {
 #startInfo {
     padding-left: 20px;
 }
+#siac-second-col-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+#resultsArea {
+    height: 100px;  
+    width: 100%; 
+    position: relative;
+    overflow: auto;
+    flex: 1;
+}
+#resultsWrapper {
+    z-index: 100;
+    height: 100%;
+}
 .signal {
     border: 5px solid #2496dc;
     border-radius: 30px;
@@ -121,9 +137,9 @@ body {
 
 #searchResults {
     display: none;
-    height: 100%;
+    height: calc(100% - 15px);
     overflow-y: auto;
-    padding-right: 10px;
+    padding: 10px 10px 5px 0;
     overflow-x: hidden;
     max-width: 100%;
     z-index: 100;
@@ -216,6 +232,7 @@ body {
     margin-right: 0px;
     padding-right: 0px;
     overflow-x: hidden;
+    flex: 0 0 auto;
 }
 
 .keyword {
@@ -231,6 +248,8 @@ body {
     z-index: 5;
     position: relative;
     flex-wrap: nowrap;
+    height: 30px;
+    
 }
 mark {
     background-color: $highlightBackgroundColor$;
@@ -569,6 +588,7 @@ select {
     margin-bottom: 8px;
     margin-left: 20px;
     word-wrap: break-word;
+    padding: 10px 0 0 10px;
 }
 #searchInfo table {
     width: 100%;
@@ -606,12 +626,15 @@ select {
 }
 
 #icns-large, #icns-small {
-    position: absolute;
-    right: 5px;
-    top: 5px;
     text-align: right;
     color: grey;
     user-select: none;
+    height: 23px;
+    border-top: 1px solid grey; 
+    margin: 5px 0 3px 0;
+}
+#icns-large div, #icns-small div {
+    margin-top: 3px;
 }
 .rnd-icon,.flds-icon,.freeze-icon {
     float: right;
@@ -961,9 +984,8 @@ width: 48%; display: inline-block; text-align: center;
 }
 #siac-right-side {
     border-left: 2px solid $windowColumnSeparatorColor$;
-    margin-top: 22px !important;
-    padding: 20px;
-    padding-bottom: 4px;
+    margin-top: 24px !important;
+    padding: 0px 20px 4px 20px !important;
     margin-left: 8px;
     position: relative;
     font-family: 'Open Sans', sans-serif;
@@ -971,7 +993,6 @@ width: 48%; display: inline-block; text-align: center;
     box-sizing: border-box;
     font-size: 12px !important;
     overflow-y: hidden;
-    height: 100vh;
 }
 fieldset {
     padding: 0.7em;
@@ -1242,9 +1263,9 @@ span.tag-symbol {
 #siac-notes-sidebar {
     position: absolute;
     left: 0;
-    top: 38px;
+    top: 5px;
     bottom: 0;
-    width: 250px;
+    width: 230px;
     border-right: 1px solid seagreen;
 }
 .siac-notes-sidebar-item {
@@ -1955,11 +1976,15 @@ span.tag-symbol {
     border-color: transparent darkorange transparent transparent;
     transition: all ease 0.2s;
 }
+#outerWr.onesided {
+    display: flex !important;
+    height: 100vh !important;
+}
 #outerWr.onesided .siac-queue-sched-hor-sep {
     width: 10px;
 }
 #outerWr.onesided #siac-reading-modal {
-    padding-right: 35px;
+    padding-right: 20px;
 }
 #outerWr.onesided .reading-modal-close-icn {
     right: 27px;
@@ -2225,6 +2250,9 @@ body.siac-fullscreen-show-right #siac-right-side {
     border-left: 0px;
     margin-top: 5px !important;
     height: calc(100vh - 5px) !important;
+}
+body.siac-fullscreen-show-fields #switchBtn {
+    display: none !important    ;
 }
 body.siac-fullscreen-show-right #topbuts {
     display: none; 

@@ -247,19 +247,17 @@ function searchForUserNote(event, elem) {
             pycmd('siac-user-note-search-inp ' + elem.value);
         }, 800);
     }
-
 }
 
 function onResize() {
-    let height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-    height -= ($('#topContainer').is(":hidden") ? -1 : $('#topContainer').outerHeight(true));
-    height -= $('#topbutsOuter').outerHeight(true);
-    height -= $('#bottomContainer').outerHeight(true);
-    //height -= 39;
-    height -= 19;
-    height += addToResultAreaHeight;
-    $('#siac-right-side').css("height", `calc(100vh + ${-22 + addToResultAreaHeight}px`);
-    $("#resultsArea").css("height", height + "px");
+    // let height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+    // height -= ($('#topContainer').is(":hidden") ? -1 : $('#topContainer').outerHeight(true));
+    // height -= $('#topbutsOuter').outerHeight(true);
+    // height -= $('#bottomContainer').outerHeight(true);
+    // height -= 19;
+    // height += addToResultAreaHeight;
+    // $('#siac-right-side').css("height", `calc(100vh + ${-22 + addToResultAreaHeight}px`);
+    // $("#resultsArea").css("height", height + "px");
     if (!$('#switchBtn').is(":visible")) {
         $('#leftSide').show();
         $('#outerWr').css('display', 'flex').removeClass('onesided');
