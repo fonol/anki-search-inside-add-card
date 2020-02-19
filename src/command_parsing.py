@@ -31,6 +31,7 @@ from .models import SiacNote
 import utility.misc
 import utility.text
 
+
 config = mw.addonManager.getConfig(__name__)
 
 original_on_bridge_cmd = None
@@ -170,7 +171,11 @@ def expanded_on_bridge_cmd(self, cmd):
             if check_index():
                 stamp = setStamp()
                 index.search(inp, ["-1"], only_user_notes = False, print_mode = "pdf")
-    
+
+    elif cmd.startswith("siac-cutout-io "):
+        img_src = " ".join(cmd.split()[1:])
+        full_path = os.path.join(mw.col.media.dir(), img_src).replace("\\", "/")
+        self.onImgOccButton(image_path=full_path)
     
   
 
