@@ -250,14 +250,11 @@ function searchForUserNote(event, elem) {
 }
 
 function onResize() {
-    // let height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-    // height -= ($('#topContainer').is(":hidden") ? -1 : $('#topContainer').outerHeight(true));
-    // height -= $('#topbutsOuter').outerHeight(true);
-    // height -= $('#bottomContainer').outerHeight(true);
-    // height -= 19;
-    // height += addToResultAreaHeight;
-    // $('#siac-right-side').css("height", `calc(100vh + ${-22 + addToResultAreaHeight}px`);
-    // $("#resultsArea").css("height", height + "px");
+   
+        let offsetTop = document.getElementById("topbutsOuter").offsetHeight + 3;
+        document.getElementById("outerWr").style.marginTop = offsetTop + "px";
+        document.getElementById("outerWr").style.height = `calc(100vh - ${offsetTop}px)`;
+
     if (!$('#switchBtn').is(":visible")) {
         $('#leftSide').show();
         $('#outerWr').css('display', 'flex').removeClass('onesided');
@@ -654,8 +651,8 @@ function toggleAddon() {
         } else {
             $(document.body).addClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
         }
-        
-    } else {
+    }
+    else {
         if ($('#outerWr').hasClass("onesided")) {
             showSearchPaneOnLeftSide();
             $('#siac-right-side').toggleClass("addon-hidden");
@@ -665,9 +662,8 @@ function toggleAddon() {
             $('#siac-right-side').toggleClass("addon-hidden");
         }
         pycmd("toggleAll " + ($('#siac-right-side').hasClass("addon-hidden") ? "off" : "on"));
-        onResize();
-
     }
+    onResize();
 }
 function showSearchPaneOnLeftSide() {
     if ($('#outerWr').hasClass("onesided")) {

@@ -751,11 +751,17 @@ function toggleReadingModalFullscreen() {
         pycmd("siac-notification Press toggle shortcut (default Ctrl+F) to switch.");
 
     } else {
+        
         $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
+        if ($('#switchBtn').is(":visible")) {
+            $('#outerWr').addClass("onesided");
+        }
+        onResize();
         if (pdfDisplayed) {
             pdfFitToPage();
         } 
     }
+
 }
 function activateReadingModalFullscreen() {
     pdfFullscreen = false;
@@ -773,4 +779,5 @@ function onReadingModalClose(shouldSave, nid) {
         saveTextNote(nid);
     }
     document.getElementById("siac-reading-modal-center").innerHTML = "";
+    onResize();
 }
