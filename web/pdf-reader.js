@@ -617,7 +617,7 @@ function pdfViewerKeyup(event) {
         pdfPageRight();
     } else if (event.ctrlKey && event.keyCode === 74) {
         pdfPageRight();
-    } else if (event.ctrlKey && (event.keyCode === 3 ||event.keyCode === 75)) {
+    } else if (event.ctrlKey && (event.keyCode === 37 ||event.keyCode === 75)) {
         pdfPageLeft();
     } 
 }
