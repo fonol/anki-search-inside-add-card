@@ -28,6 +28,9 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
         Returns the css and js used by the add-on in <style>/<script> tags. 
         Some placeholders in the scripts.js file and in the styles.css file are replaced 
         by config values.
+
+        They could be exposed on the internal web server, but as they contain placeholders for config-defined styles, 
+        it is easier for now that way.
     """
     #get path
     dir = utility.misc.get_web_folder_path()
@@ -210,6 +213,9 @@ def showSearchResultArea(editor=None, initializationTime=0):
 
 
 def printStartingInfo(editor):
+    """
+        Displays the information that is visible after the first start of the add-on.
+    """
     if editor is None or editor.web is None:
         return
     config = mw.addonManager.getConfig(__name__)
@@ -236,8 +242,11 @@ def printStartingInfo(editor):
 
     editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
 
-
+@requires_index_loaded
 def display_model_dialog():
+    """
+        Called after clicking on "Set Fields" in the settings modal.
+    """
     if check_index():
         html = get_model_dialog_html()
         get_index().output.show_in_modal_subpage(html)
@@ -327,14 +336,18 @@ def _display_pdf(full_path, note_id):
     index = get_index()
     base64pdf = utility.misc.pdf_to_base64(full_path)
     blen = len(base64pdf)
+
+    #pages read are stored in js array [int]
     pages_read = get_read_pages(note_id)        
     pages_read_js = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
+    
+    #marks are stored in two js maps, one with pages as keys, one with mark types (ints) as keys
     marks = get_pdf_marks(note_id)
     js_maps = utility.misc.marks_to_js_map(marks)
     marks_js = "pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s;" % (js_maps[0], js_maps[1]) 
+    
     # pages read are ordered by date, so take last
     last_page_read = pages_read[-1] if len(pages_read) > 0 else 1
-
 
     addon_id = utility.misc.get_addon_id()
     port = mw.mediaServer.getPort()
@@ -440,12 +453,18 @@ def show_img_field_picker_modal(img_src):
         let the user pick one, and on picking, insert the img into the field.
     """
     index = get_index()
-    modal = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br><div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
+    
+    # if Image Occlusion add-on is there and enabled, add a button to directly open the IO dialog
+    io = ""
+    if hasattr(index.output.editor, 'onImgOccButton') and mw.addonManager.isEnabled("1374772155"):
+       io = f"<div class='siac-btn siac-btn-dark' style='margin-right: 9px;' onclick='pycmd(`siac-cutout-io {img_src}`); $(this.parentNode).remove();'>Image Occlusion</div>" 
+    modal = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br>%s<div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
     flds = ""
     for i, f in enumerate(index.output.editor.note.model()['flds']):
+        # trigger note update
         fld_update_js = "pycmd(`blur:%s:${currentNoteId}:${$(`.field:eq(%s)`).html()}`);" % (i,i)
         flds += """<span class="siac-field-picker-opt" onclick="$(`.field`).get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s">%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
-    modal = modal % (flds, img_src)
+    modal = modal % (flds, io, img_src)
     return "$('#siac-reading-modal-center').append('%s');" % modal.replace("'", "\\'")
 
 @js
@@ -709,7 +728,7 @@ def display_notes_sidebar(editor):
     html = get_notes_sidebar_html()
     return """
     if (!document.getElementById('siac-notes-sidebar')) {
-        document.getElementById('resultsWrapper').style.paddingLeft = "265px"; 
+        document.getElementById('resultsWrapper').style.paddingLeft = "245px"; 
         document.getElementById('resultsWrapper').innerHTML += `%s`; 
         $('#siac-notes-sidebar .exp').click(function(e) {
             e.stopPropagation();
@@ -731,7 +750,7 @@ def reload_note_sidebar():
     return """
         if (document.getElementById('siac-notes-sidebar')) {
             $('#siac-notes-sidebar').remove();
-            document.getElementById('resultsWrapper').style.paddingLeft = "265px"; 
+            document.getElementById('resultsWrapper').style.paddingLeft = "245px"; 
             document.getElementById('resultsWrapper').innerHTML += `%s`; 
             $('#siac-notes-sidebar .exp').click(function(e) {
             e.stopPropagation();
