@@ -292,6 +292,22 @@ select {
     user-select: none;
     border-radius: 4px;
 }
+.siac-susp-lbl {
+    cursor: pointer;
+    border-radius: 3px;
+    margin-left: 4px;
+    user-select: none;
+    background: orange;
+    color: black;
+    padding: 2px 3px 2px 3px;
+    font-size: 11px;
+    position: absolute;
+    top: 0;
+    left: 30px;
+}
+.siac-susp-lbl:hover {
+    filter: brightness(1.2);
+}
 .rankingLbl {
     background: $rankingLabelBackgroundColor$;
     color: $rankingLabelForegroundColor$;
@@ -1258,10 +1274,12 @@ span.tag-symbol {
     font-weight: bold;
     user-select: none;
     margin-bottom: 5px;
+    transition: margin 0.15s ease;
 }
 .siac-notes-sidebar-item:hover {
     border-left: 5px solid #2496dc;
     padding-left: 5px;
+    margin-left: 5px;
     transform: scale(1.05);
 }
 .siac-sidebar-inp {

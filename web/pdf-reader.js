@@ -258,8 +258,15 @@ function pdfPageLeft() {
 }
 
 function saveTextNote(nid) {
-    let html = tinymce.get('siac-text-top').getContent();
-    tinymce.remove();
+    let html = "";
+    try {
+        html = tinymce.get('siac-text-top').getContent();
+    } catch(e) {
+        pycmd("siac-notification Could not save text note. Saving images is not supported at the moment.");
+        return;
+    } finally {
+        tinymce.remove();
+    }
     document.getElementById("siac-text-note-status").innerHTML = "Note Saved - " + new Date().toString();
     pycmd("siac-update-note-text " + nid + " " + html);
 }
@@ -756,7 +763,7 @@ function toggleReadingModalFullscreen() {
         if ($('#switchBtn').is(":visible")) {
             $('#outerWr').addClass("onesided");
         }
-        onResize();
+        onWindowResize();
         if (pdfDisplayed) {
             pdfFitToPage();
         } 
@@ -779,5 +786,5 @@ function onReadingModalClose(shouldSave, nid) {
         saveTextNote(nid);
     }
     document.getElementById("siac-reading-modal-center").innerHTML = "";
-    onResize();
+    onWindowResize();
 }

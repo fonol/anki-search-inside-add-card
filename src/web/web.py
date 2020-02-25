@@ -447,6 +447,13 @@ def showStylingModal(editor):
     return "$('.modal-close').on('click', function() {pycmd(`writeConfig`) })"
 
 @js
+def show_unsuspend_modal(nid):
+    html = get_unsuspend_modal(nid)
+    index = get_index()
+    index.output.showInModal(html)
+    return "$('.modal-close').on('click', function() {pycmd(`siac-rerender`);$('.modal-close').off('click'); })"
+
+@js
 def show_img_field_picker_modal(img_src):
     """
         Called after an image has been selected from a PDF, should display all fields that are currently in the editor,

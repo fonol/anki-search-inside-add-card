@@ -96,7 +96,10 @@ def expanded_on_bridge_cmd(self, cmd):
         ix = int(cmd.split()[1])
         if check_index() and ix < len(index.output.previous_calls):
             index.output.print_search_results(*index.output.previous_calls[ix] + [True])
-            
+
+    elif cmd == "siac-rerender":
+        index.output.try_rerender_last()      
+    
     elif cmd.startswith("siac-notification "):
         tooltip(cmd[18:])
 
@@ -104,6 +107,17 @@ def expanded_on_bridge_cmd(self, cmd):
         target = cmd.split()[1]
         text = cmd.split()[2]
         show_loader(target, text)
+
+    elif cmd.startswith("siac-unsuspend-modal "):
+        nid = cmd.split()[1]
+        show_unsuspend_modal(nid)
+
+    elif cmd.startswith("siac-unsuspend "):
+        nid = cmd.split()[1]
+        cids = [int(cid) for cid in cmd.split()[2:]]
+        mw.col.sched.unsuspendCards(cids)
+        show_unsuspend_modal(nid)
+        
 
     elif cmd == "siac-show-pdfs":
         if check_index():
@@ -504,12 +518,16 @@ def expanded_on_bridge_cmd(self, cmd):
             display_note_reading_modal(rand_id)
         else:
             index.output.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;")
+            tooltip("Queue is Empty! Add some items first.", period=4000)
+
+
     elif cmd == "siac-user-note-queue-read-head":
         nid = get_head_of_queue()
         if nid >= 0:
             display_note_reading_modal(nid)
         else:
             index.output.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;")
+            tooltip("Queue is Empty! Add some items first.", period=4000)
 
     elif cmd.startswith("siac-update-note-tags "):
         nid = int(cmd.split()[1])
@@ -1268,7 +1286,7 @@ def update_styling(cmd):
     elif name == "showTimeline":
         config[name] = value == "true" or value == "on"
         if not config[name] and check_index():
-            index.output.js("document.getElementById('cal-row').style.display = 'none'; onResize();")
+            index.output.js("document.getElementById('cal-row').style.display = 'none'; onWindowResize();")
         elif config[name] and check_index():
             index.output.js("""
             if (document.getElementById('cal-row')) {
@@ -1278,7 +1296,7 @@ def update_styling(cmd):
                 $('.cal-block-outer').mouseenter(function(event) { calBlockMouseEnter(event, this);});
                 $('.cal-block-outer').click(function(event) { displayCalInfo(this);});
             }
-            onResize();
+            onWindowResize();
             """ % getCalendarHtml())
 
     elif name == "showTagInfoOnHover":

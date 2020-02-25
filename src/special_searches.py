@@ -444,6 +444,10 @@ def find_cards_with_similar_rep_history(cid : int):
 
     return [avg_similarity_steps_results] 
 
+def get_suspended(nids):
+    res = mw.col.db.execute("select distinct nid from cards where nid in (%s) and queue = -1" % ",".join([str(nid) for nid in nids])).fetchall()
+    res = [r[0] for r in res]
+    return res
 
 
 def to_notes(db_list):

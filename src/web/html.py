@@ -334,8 +334,8 @@ def right_side_html(indexIsLoaded = False):
         $('.field').attr('onmouseup', 'getSelectionText()');
         var $fields = $('.field');
         var $searchInfo = $('#searchInfo');
-        onResize();
-        window.addEventListener('resize', onResize, true);
+        onWindowResize();
+        window.addEventListener('resize', onWindowResize, true);
         $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
         $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
         $(`<div id='cal-info' onmouseleave='calMouseLeave()'></div>`).insertAfter('#outerWr');
@@ -1191,7 +1191,7 @@ def stylingModal(config):
     <br/> <br/>
     <mark>&nbsp;Important:&nbsp;</mark> At the moment, if you reset your config.json to default, your custom stopwords and synsets will be deleted. If you want to do that, I recommend saving them somewhere first.
     <br/> <br/>
-    If you want to use the add-on with the <b>night mode</b> add-on, you have to adapt the styling section.
+    If you want to use the add-on with Anki's <b>built-in night mode</b> the <b>night mode</b> add-on, you have to adapt the styling section.
     <br/> <br/>
     <b>Sample night mode color scheme:</b> <div class='siac-btn' style='margin-left: 15px;' onclick='pycmd("styling default night");'>Apply</div><br/><br/>
     <div style='width: 100%%; overflow-y: auto; max-height: 150px; opacity: 0.7;'>
@@ -1337,7 +1337,45 @@ def get_pdf_list_first_card():
     """ % (get_avg_pages_read(7))
     return html
 
-
+def get_unsuspend_modal(nid):
+    """
+        Returns the html content for the modal that is opened when clicking on a SUSPENDED label.
+    """
+    cards = mw.col.db.execute(f"select id, ivl, queue, ord from cards where nid = {nid}").fetchall()
+    note = mw.col.getNote(nid)
+    templates = mw.col.findTemplates(note)
+    cards_html = ""
+    unsuspend_all = ""
+    for c in cards:
+        if c[2] == -1:
+            unsuspend_all += str(c[0]) + " "
+        for t in templates:
+            if t["ord"] == c[3]:
+                temp_name = utility.text.trim_if_longer_than(t["name"], 60)
+                break
+        susp = "<span style='background: orange; color: black; border-radius: 3px; padding: 2px 3px 2px 3px;'>SUSPENDED</span>" if c[2] == -1 else ""
+        btn = f"<div class='siac-btn' onclick='pycmd(\"siac-unsuspend {nid} {c[0]}\");'>Unsuspend</div>" if c[2] == -1 else ""
+        ivl = f"{c[1]} days" if c[1] >= 0 else f"{c[1]} seconds"
+        cards_html += f"""
+            <tr>
+                <td><b>{temp_name}</b> ({c[0]})</td>
+                <td>ivl: {ivl}</td>
+                <td>{susp}</td>
+                <td>{btn}</td>
+            </tr>
+        """
+    return f"""
+            <center>
+                <b>{len(cards)}</b> Card(s) for Note <b>{nid}</b> 
+                <table style='min-width: 500px; margin-top: 20px;'>
+                    {cards_html}
+                </table>
+            </center>
+            <hr style='margin-top: 20px; margin-bottom: 20px;'>
+            <center>
+                <div class='siac-btn' onclick='pycmd(\"siac-unsuspend {nid} {unsuspend_all[:-1]}\")'>Unsuspend All</div> 
+            </center>
+            """
 
 
 def pdf_svg(w, h):

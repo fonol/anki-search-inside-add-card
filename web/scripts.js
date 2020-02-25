@@ -57,9 +57,15 @@ function expandRankingLbl(elem) {
     if (elem.getElementsByClassName("rankingLblAddInfo")[0].offsetParent === null) {
         elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "inline";
         elem.getElementsByClassName("editedStamp")[0].style.display = "none";
+        if (elem.parentElement.getElementsByClassName("siac-susp-lbl").length !== 0) {
+            elem.parentElement.getElementsByClassName("siac-susp-lbl")[0].style.display = "none";
+        }
     } else {
         elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "none";
         elem.getElementsByClassName("editedStamp")[0].style.display = "inline";
+        if (elem.parentElement.getElementsByClassName("siac-susp-lbl").length !== 0) {
+            elem.parentElement.getElementsByClassName("siac-susp-lbl")[0].style.display = "block";
+        }
     }
 }
 function expandCard(id, icn) {
@@ -249,7 +255,7 @@ function searchForUserNote(event, elem) {
     }
 }
 
-function onResize() {
+function onWindowResize() {
    
         let offsetTop = document.getElementById("topbutsOuter").offsetHeight + 3;
         document.getElementById("outerWr").style.marginTop = offsetTop + "px";
@@ -663,7 +669,7 @@ function toggleAddon() {
         }
         pycmd("toggleAll " + ($('#siac-right-side').hasClass("addon-hidden") ? "off" : "on"));
     }
-    onResize();
+    onWindowResize();
 }
 function showSearchPaneOnLeftSide() {
     if ($('#outerWr').hasClass("onesided")) {
@@ -675,7 +681,7 @@ function showSearchPaneOnLeftSide() {
         $('#siac-right-side').removeClass("addon-hidden");
         document.getElementById('switchBtn').innerHTML = "&#10149; Back";
         $('#outerWr').css('display', 'block').addClass('onesided');
-        onResize();
+        onWindowResize();
     }
 }
 function updateSwitchBtn(count) {

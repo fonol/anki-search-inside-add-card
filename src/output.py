@@ -12,11 +12,13 @@ try:
     from .stats import getRetentions
     from .state import get_index
     from .notes import get_pdf_info
+    from .special_searches import get_suspended
 except:
     from debug_logging import log
     from stats import getRetentions
     from state import get_index
     from notes import get_pdf_info
+    from special_searches import get_suspended
 
 import utility.tags
 import utility.text
@@ -119,6 +121,10 @@ class Output:
         if self.lastResults is not None:
             self.print_search_results(self.lastResults, None, editor, False, self.last_had_timing_info, page, query_set = self.last_query_set)
 
+    def try_rerender_last(self):
+        if self.previous_calls is not None and len(self.previous_calls) > 0:
+            c = self.previous_calls[-1]
+            self.print_search_results(c[0], None, c[2], c[3], c[4], c[5], c[6], c[7], is_cached=True)
 
     def print_search_results(self, notes, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_queue=False, is_cached=False):
         """
@@ -171,6 +177,8 @@ class Output:
         # query their reading progress after they have been rendered
         pdfs = []
 
+        check_for_suspended = []
+
         for counter, res in enumerate(searchResults):
             nid = res.id
             counter += (page - 1)* 50
@@ -204,7 +212,8 @@ class Output:
                 p_html = "<div class='siac-prog-sq'></div>" * 10
                 progress = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div>"
                 pdf_class = "pdf"
-
+            elif res.note_type == "index" and res.did > 0:
+                check_for_suspended.append(res.id)
 
             build_user_note_total += time.time() - build_user_note_start
 
@@ -319,6 +328,16 @@ class Output:
             for nid,text in remaining_to_highlight.items():
                 cmd = ''.join((cmd, "document.getElementById('%s').innerHTML = `%s`;" % (nid, self._mark_highlights(text, query_set))))
             self._js(cmd, editor)
+        
+        if len(check_for_suspended) > 0:
+            susp = get_suspended(check_for_suspended)
+            if len(susp) > 0:
+                cmd = ""
+                for nid in susp:
+                    cmd = f"{cmd}$('#cW-{nid}').after(`<span id='siac-susp-lbl-{nid}' onclick='pycmd(\"siac-unsuspend-modal {nid}\")' class='siac-susp-lbl'>SUSPENDED</span>`);"
+                    if str(nid) in self.edited:
+                        cmd = f"{cmd} $('#siac-susp-lbl-{nid}').css('left', '140px');"
+                self._js(cmd, editor)
 
         if len(pdfs) > 0:
             pdf_info_list = get_pdf_info(pdfs)
@@ -839,7 +858,12 @@ class Output:
 
         self.editor.web.eval("$('#cW-%s').find('.rankingLblAddInfo').hide();" % nid)
         self.editor.web.eval("fixRetMarkWidth(document.getElementById('cW-%s'));" % nid)
-        self.editor.web.eval("$('#cW-%s .editedStamp').html(`&nbsp;&#128336; Edited just now`).show();" % nid)
+        self.editor.web.eval(f"""$('#cW-{nid} .editedStamp').html(`&nbsp;&#128336; Edited just now`).show();
+            if ($('#siac-susp-lbl-{nid}').length) {{
+                $('#siac-susp-lbl-{nid}').css('left', '140px').show();
+            }} 
+        """)
+        
 
     def _mark_highlights(self, text, querySet):
 
