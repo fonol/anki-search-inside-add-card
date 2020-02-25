@@ -174,7 +174,7 @@ def on_load_note(editor):
         if index is not None:
             setup_ui_after_index_built(editor, index)
 
-        editor.web.eval("onResize()")
+        editor.web.eval("onWindowResize()")
 
         if index is None or not index.tagSelect:
             fillDeckSelect(editor)
