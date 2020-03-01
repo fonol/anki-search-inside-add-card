@@ -1,3 +1,19 @@
+# anki-search-inside-add-card
+# Copyright (C) 2019 - 2020 Tom Z.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import sqlite3
 from enum import Enum, unique
@@ -481,6 +497,19 @@ def find_notes(text):
     conn.close()
     return _to_notes(res)
 
+def find_pdf_notes_by_title(text):
+    q = ""
+    for token in text.lower().split():
+        if len(token) > 0:
+            q = f"{q} or lower(title) like '%{token}%'"
+
+    q = q[4:] if len(q) > 0 else "" 
+    if len(q) == 0:
+        return
+    conn = _get_connection()
+    res = conn.execute(f"select * from notes where ({q}) and lower(source) like '%.pdf' order by id desc").fetchall()
+    conn.close()
+    return _to_notes(res)
 
 def find_unqueued_pdf_notes(text):
     q = ""
@@ -741,6 +770,24 @@ def get_non_pdf_notes_not_in_queue():
     conn = _get_connection()
     res = conn.execute("select * from notes where not lower(source) like '%.pdf' and position is null order by id desc").fetchall()
     conn.close()
+    return _to_notes(res)
+
+def get_pdf_quick_open_suggestions():
+    conn = _get_connection()
+    last_added = conn.execute("select * from notes where lower(source) like '%.pdf' order by id desc limit 8").fetchall()
+    last_read = conn.execute("select notes.id,notes.title,notes.text,notes.source,notes.tags,notes.nid,notes.created,notes.modified,notes.reminder,notes.lastscheduled,notes.position from notes join read on notes.id == read.nid where lower(notes.source) like '%.pdf' group by notes.id order by max(read.created) desc limit 8").fetchall()
+    conn.close()
+    res = []
+    used = set()
+    for nt in zip(last_read, last_added):
+        if nt[0] is not None and not nt[0][0] in used:
+            res.append(nt[0])
+            used.add(nt[0][0])
+        if nt[1] is not None and not nt[1][0] in used:
+            res.append(nt[1])
+            used.add(nt[1][0])
+        if len(res) >= 8:
+            break 
     return _to_notes(res)
 
 def get_pdf_info(nids):

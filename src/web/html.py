@@ -1,3 +1,19 @@
+# anki-search-inside-add-card
+# Copyright (C) 2019 - 2020 Tom Z.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import platform
 import os
 import json
@@ -5,6 +21,7 @@ import re
 import datetime
 import time
 from aqt import mw
+import html as ihtml
 
 from ..state import get_index, check_index
 from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes
@@ -232,7 +249,7 @@ def right_side_html(indexIsLoaded = False):
                             <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                             <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
                             <div class='rnd-icon' onclick='pycmd("siac-random-notes " + siacState.selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
-                            <div class='flds-icon' onclick='sendContent()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
+                            <div class='flds-icon' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
                             <div class='pdf-icon' onclick='pycmd("siac-show-pdfs")'>
                                 %s
                             </div>
@@ -456,7 +473,7 @@ def get_reading_modal_html(note):
 
         title = note.get_title()
         title = utility.text.trim_if_longer_than(title, 70)
-        title = title.replace("<", "&lt;").replace(">", "&gt;")
+        title = ihtml.escape(title)
         source = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
         source_icn = ""
 
@@ -508,7 +525,7 @@ def get_reading_modal_html(note):
                             <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                                 <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                 <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
                                 <a onclick='if (!pdfLoading) {{noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
                                 <a onclick='if (!pdfLoading) {{noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
                             </div>
@@ -724,7 +741,7 @@ def get_reading_modal_bottom_bar(note):
                     <div  id='siac-queue-actions'  style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                         <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                         <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
                         <a onclick='noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
                         <a onclick='noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
                     </div>
@@ -775,7 +792,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
         should_greyout = "greyedout" if queue_item.id == int(note_id) else ""
         if not hide or queue_item.id == int(note_id) :
             qi_title = utility.text.trim_if_longer_than(queue_item.get_title(), 40) 
-            qi_title = utility.text.escape_html(qi_title)
+            qi_title = ihtml.escape(qi_title)
         else:
             qi_title = re.sub("[^ ]", "?",queue_item.get_title())
 
@@ -885,6 +902,8 @@ def get_pdf_viewer_html(nid, source, title):
 
     marks_img_src = utility.misc.img_src("mark-star-24px.png")
     marks_grey_img_src = utility.misc.img_src("mark-star-lightgrey-24px.png")
+    pdf_search_img_src = utility.misc.img_src("magnify-24px.png")
+
     html = """
         <div id='siac-pdf-overlay'>PAGE READ</div>
         <div id='siac-pdf-overlay-top'>
@@ -905,6 +924,13 @@ def get_pdf_viewer_html(nid, source, title):
                 <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
                 <br/>
                {search_sources}
+            </div>
+        </div>
+        <div class='siac-btn siac-btn-dark' id='siac-pdf-search-btn' onclick='$(this).toggleClass("expanded"); onPDFSearchBtnClicked(this);'><img src='{pdf_search_img_src}' style='width: 16px; height: 16px;'/>
+            <div id='siac-pdf-search-btn-inner' class='expanded-hidden white-hover' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'>
+                <input style='width: 200px; border:none; background-color: #2f2f31; color: lightgrey; padding-left: 2px;' onclick='event.stopPropagation();' onkeyup='onPDFSearchInput(this.value, event);'/>
+                <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation();nextPDFSearchResult(dir="left");'><b>&lt;</b></div>
+                <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation();nextPDFSearchResult(dir="right");'><b>&gt;</b></div>
             </div>
         </div>
         <div class='siac-btn siac-btn-dark' id='siac-mark-jump-btn' onclick='$(this).toggleClass("expanded"); onMarkBtnClicked(this);'><img src='{marks_grey_img_src}' style='width: 16px; height: 16px;'/>
@@ -961,7 +987,8 @@ def get_pdf_viewer_html(nid, source, title):
                 <input id="siac-pdf-page-inp" style="width: 50px;margin-right: 5px;" value="1" type="number" min="1" onkeyup="pdfJumpToPage(event, this);"></input>
             </div>
         </div>
-       
+        <div id='siac-pdf-br-notify'>
+        </div>
         <script>
             greyoutBottom();
             document.getElementById('siac-pdf-night-btn').innerHTML = pdfColorMode;
@@ -971,7 +998,7 @@ def get_pdf_viewer_html(nid, source, title):
                 $('#siac-pdf-tooltip-toggle').removeClass('active');
             }}
         </script>
-    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, search_sources=search_sources, marks_img_src=marks_img_src, marks_grey_img_src=marks_grey_img_src))
+    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, search_sources=search_sources, marks_img_src=marks_img_src, marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src))
     return html
 
 

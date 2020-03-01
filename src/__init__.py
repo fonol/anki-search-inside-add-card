@@ -1,8 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from aqt import mw
+
+# anki-search-inside-add-card
+# Copyright (C) 2019 - 2020 Tom Z.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from aqt import mw, gui_hooks
 from aqt.qt import *
-from anki.hooks import addHook
+from anki.hooks import wrap, addHook
 import aqt
 from aqt.utils import showInfo
 import aqt.webview
@@ -24,19 +41,18 @@ sys.path.insert(0, os.path.dirname(__file__))
 import utility.tags
 import utility.misc
 
-from .state import check_index, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit, set_old_on_bridge_cmd
+from .state import check_index, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit
 from .index.indexing import build_index, get_notes_in_collection
 from .debug_logging import log
-from .web.web import printStartingInfo, getScriptPlatformSpecific, showSearchResultArea, fillDeckSelect, fillTagSelect, reload_note_sidebar, display_notes_sidebar, setup_ui_after_index_built, reload_note_reading_modal_bottom_bar
+from .web.web import *
 from .web.html import right_side_html
 from .notes import *
 from .hooks import add_hook
 from .dialogs.editor import EditDialog
+from .dialogs.quick_open_pdf import QuickOpenPDF
 from .internals import requires_index_loaded
 from .config import get_config_value_or_default
-from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerenderNote, rerender_info, add_note_to_index
-
-
+from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index
 
 
 
@@ -44,100 +60,60 @@ from .command_parsing import expanded_on_bridge_cmd, addHideShowShortcut, rerend
 config = mw.addonManager.getConfig(__name__)
 
 def init_addon():
-    global oldOnBridge, orig_add_note, orig_tag_keypress, orig_save_and_close, origEditorContextMenuEvt
-    set_old_on_bridge_cmd(Editor.onBridgeCmd)
-    Editor.onBridgeCmd = expanded_on_bridge_cmd
+    global origEditorContextMenuEvt
+
+    # wrap js -> py bridge to include the add-ons commands, see command_parsing.py
+    Editor.onBridgeCmd = wrap(Editor.onBridgeCmd, expanded_on_bridge_cmd, "around")
+
     #todo: Find out if there is a better moment to start index creation
     create_db_file_if_not_exists()
-    addHook("profileLoaded", build_index)
-    addHook("profileLoaded", insert_scripts)
-    orig_add_note = AddCards.addNote
+    gui_hooks.profile_did_open.append(build_index)
+    gui_hooks.profile_did_open.append(insert_scripts)
 
     #disabled for now, to be able to use Occlude Image in the context menu
     #origEditorContextMenuEvt = EditorWebView.contextMenuEvent
     #EditorWebView.contextMenuEvent = editorContextMenuEventWrapper
 
-    AddCards.addNote = add_note_and_update_index
     if get_config_value_or_default("searchOnTagEntry", True):
-        orig_tag_keypress = TagEdit.keyPressEvent
-        TagEdit.keyPressEvent = tag_edit_keypress
+        TagEdit.keyPressEvent = wrap(TagEdit.keyPressEvent, tag_edit_keypress, "around")
 
     setup_tagedit_timer()
 
-    orig_save_and_close = EditDialog.saveAndClose
-    EditDialog.saveAndClose = editorSaveWithIndexUpdate
-    addHook("setupEditorShortcuts", addHideShowShortcut) 
+    # add new notes to search index when adding
+    AddCards.addNote = wrap(AddCards.addNote, add_note_and_update_index, "around")
+    # update notes in index when changed through the "Edit" button
+    EditDialog.saveAndClose = wrap(EditDialog.saveAndClose, editor_save_with_index_update, "around")
 
+    # shortcut to toggle add-on pane 
+    gui_hooks.editor_did_init_shortcuts.append(add_hide_show_shortcut) 
+
+    # add-on internal hooks
     setup_hooks()
 
-    #main functions to search
-    if not config["disableNonNativeSearching"]:
-        aqt.editor._html += """
-            <script>
-            function sendContent(event) {
-                if ((event && event.repeat) || pdfDisplayed != null || siacState.isFrozen)
-                    return;
-                if (!$fields.text())
-                    return;
-                let html = "";
-                showLoading("Typing");
-                $fields.each(function(index, elem) {
-                    html += elem.innerHTML + "\u001f";
-                });
-                pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
-            }
-            function sendSearchFieldContent() {
-                showLoading("Searchbar");
-                html = document.getElementById('siac-browser-search-inp').value + "\u001f";
-                pycmd('siac-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
-            }
-
-            function searchFor(text) {
-                showLoading("Note Search");
-                text += "\u001f";
-                pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
-            }
-    
-            </script>
-        """
-    else:
-        aqt.editor._html += """
-            <script>
-            function sendContent(event) {
-                return;
-            }
-            function sendSearchFieldContent() {
-                showLoading("Note Search");
-                html = document.getElementById('siac-browser-search-inp').value + "\u001f";
-                pycmd('siac-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
-            }
-            function searchFor(text) {
-                return;
-            }
-            </script>
-        """
     # add shortcuts
     aqt.editor._html += """
     <script>
             document.addEventListener("keydown", function (e) {globalKeydown(e); }, false);
     </script>"""
-
     
     typing_delay = max(500, config['delayWhileTyping'])
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific(config["addToResultAreaHeight"], typing_delay)
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
-    addHook("loadNote", on_load_note)
+    gui_hooks.editor_did_load_note.append(on_load_note)
 
 
 
-def add_note_and_update_index(dialog, note):
-    res = orig_add_note(dialog, note)
+def add_note_and_update_index(dialog, note, _old):
+    """
+        Wrapper around the note adding method, to update the index with the new created note.
+    """
+    res = _old(dialog, note)
     add_note_to_index(note)
     return res
 
-def editorSaveWithIndexUpdate(dialog):
-    orig_save_and_close(dialog)
+def editor_save_with_index_update(dialog, _old):
+    _old(dialog)
     # update index
     index = get_index()
     if index is not None and dialog.editor is not None and dialog.editor.note is not None:
@@ -163,9 +139,9 @@ def on_load_note(editor):
         zoom = get_config_value_or_default("searchpane.zoom", 1.0)
         show_tag_info_on_hover = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
         editor.web.eval(f"""
-        var addToResultAreaHeight = {get_config_value_or_default("addToResultAreaHeight", 0)}; 
-        var showTagInfoOnHover = {show_tag_info_on_hover}; 
-        tagHoverTimeout = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
+            var addToResultAreaHeight = {get_config_value_or_default("addToResultAreaHeight", 0)}; 
+            var showTagInfoOnHover = {show_tag_info_on_hover}; 
+            tagHoverTimeout = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
         """)
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
@@ -207,6 +183,11 @@ def editorContextMenuEventWrapper(view, evt):
     #origEditorContextMenuEvt(view, evt)
 
 def insert_scripts():
+    """
+        Expose the scripts on the internal web server.
+        styles.css and pdf_reader.css are not included that way, because they 
+        are processed ($<config value>$ placeholders are replaced) and inserted via <style> tags.
+    """
     addon_id = utility.misc.get_addon_id()
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png)$")
     port = mw.mediaServer.getPort()
@@ -224,7 +205,7 @@ def insert_scripts():
 
         script = document.createElement('script');
         script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf-reader.js';
+        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf_reader.js';
         document.body.appendChild(script);
 
         script = document.createElement('link');
@@ -279,9 +260,26 @@ def setup_hooks():
     add_hook("user-note-edited", reload_note_sidebar)
     add_hook("user-note-edited", reload_note_reading_modal_bottom_bar)
 
+
+def add_hide_show_shortcut(shortcuts, editor):
+    if not "toggleShortcut" in config:
+        return
+    QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
+    QShortcut(QKeySequence("Ctrl+o"), editor.widget, activated=show_quick_open_pdf)
+
 def openImgInBrowser(url):
     if len(url) > 0:
         webbrowser.open(url)
+
+def show_quick_open_pdf():
+    ix = get_index()
+    dialog = QuickOpenPDF(ix.output.editor.parentWindow)
+    if dialog.exec_():
+        if dialog.chosen_id is not None and dialog.chosen_id > 0:
+            def cb(can_load):
+                if can_load:
+                    display_note_reading_modal(dialog.chosen_id)
+            ix.output.js_with_cb("beforeNoteQuickOpen();", cb)
 
 def appendNoteToField(content, key):
     if not check_index():
@@ -307,12 +305,12 @@ def setup_tagedit_timer():
     tagEditTimer = QTimer()
     tagEditTimer.setSingleShot(True) 
 
-def tag_edit_keypress(self, evt):
+def tag_edit_keypress(self, evt, _old):
     """
     Used if "search on tag entry" is enabled.
     Triggers a search if the user has stopped typing in the tag field.
     """
-    orig_tag_keypress(self, evt)
+    _old(self, evt)
     win = aqt.mw.app.activeWindow()
     # dont trigger keypress in edit dialogs opened within the add dialog
     if isinstance(win, EditDialog) or isinstance(win, Browser):

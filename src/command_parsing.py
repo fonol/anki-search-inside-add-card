@@ -1,3 +1,20 @@
+# anki-search-inside-add-card
+# Copyright (C) 2019 - 2020 Tom Z.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 from aqt import mw
 from aqt.qt import *
 import aqt
@@ -11,7 +28,7 @@ import urllib.parse
 import json
 
 
-from .state import check_index, get_index, set_index, set_corpus, get_old_on_bridge_cmd
+from .state import check_index, get_index, set_index, set_corpus
 from .index.indexing import build_index, get_notes_in_collection
 from .debug_logging import log
 from .web.web import *
@@ -37,7 +54,7 @@ config = mw.addonManager.getConfig(__name__)
 
 original_on_bridge_cmd = None
 
-def expanded_on_bridge_cmd(self, cmd):
+def expanded_on_bridge_cmd(self, cmd, _old):
     """
     Process the various commands coming from the ui -
     this includes users clicks on option checkboxes, on rendered results, on special searches, etc.
@@ -48,7 +65,7 @@ def expanded_on_bridge_cmd(self, cmd):
     if index is not None and index.output.editor is None:
         index.output.editor = self
 
-    if not config["disableNonNativeSearching"] and cmd.startswith("siac-fld "):
+    if cmd.startswith("siac-fld "):
         rerender_info(self, cmd[8:])
     elif cmd.startswith("siac-page "):
         if check_index():
@@ -58,7 +75,7 @@ def expanded_on_bridge_cmd(self, cmd):
             rerender_info(self, cmd[13:])
         else:
             rerender_info(self, cmd[13:], searchDB = True)
-    elif cmd.startswith("fldSlctd ") and not config["disableNonNativeSearching"] and index is not None:
+    elif cmd.startswith("fldSlctd ") and index is not None:
         if index.logging:
             log("Selected in field: " + cmd[9:])
         rerender_info(self, cmd[9:])
@@ -791,7 +808,7 @@ def expanded_on_bridge_cmd(self, cmd):
         self.web.eval("$('#siac-notes-sidebar').remove(); $('#resultsWrapper').css('padding-left', 0);")
         mw.addonManager.writeConfig(__name__, config)
     else:
-        return get_old_on_bridge_cmd()(self, cmd)
+        return _old(self, cmd)
 
 
 def parseSortCommand(cmd):
@@ -1001,10 +1018,7 @@ def search_for_user_notes_only(editor, text):
     index.lastSearch = (cleaned, ["-1"], "user notes")
     searchRes = index.search(cleaned, ["-1"], only_user_notes = True)
 
-def addHideShowShortcut(shortcuts, editor):
-    if not "toggleShortcut" in config:
-        return
-    QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
+
 
 def getCurrentContent(editor):
     text = ""
@@ -1197,6 +1211,7 @@ def get_index_info():
                <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl+K</b></td></tr>
                <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
                <tr><td>Confirm New Note</td><td>  <b>Ctrl+Enter</b></td></tr>
+               <tr><td>PDF Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
 
              </table>
 

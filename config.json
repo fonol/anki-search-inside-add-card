@@ -64,7 +64,6 @@
 
 "numberOfResults": 1000,
 "useFTS": true,
-"disableNonNativeSearching" : false,
 "addToResultAreaHeight": 0,
 "delayWhileTyping": 1000,
 "synonyms": [],

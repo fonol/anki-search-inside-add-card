@@ -238,12 +238,12 @@
     flex-wrap: nowrap;
     height: 30px;
 }
-mark {
+#siac-right-side mark {
     background-color: $highlightBackgroundColor$;
     color: $highlightForegroundColor$;
     border-radius: 4px;
 }
-select {
+#siac-right-side select {
     background-color: $selectBackgroundColor$;
     color: $selectForegroundColor$;
 }
@@ -300,7 +300,8 @@ select {
     background: orange;
     color: black;
     padding: 2px 3px 2px 3px;
-    font-size: 11px;
+    font-size: 10px;
+    font-weight: bold;
     position: absolute;
     top: 0;
     left: 30px;
@@ -442,11 +443,9 @@ select {
 .cardWrapper.grid.pdf {
     max-width: 240px;
 }
-
 .cardWrapper .tag-symbol {
     color: grey;
 }
-
 .cardLeftBot {
     position: absolute;
     bottom: 2px;
@@ -511,8 +510,6 @@ select {
 .darkRed { background: #991f00; color: white; padding: 0 3px 0 3px; }
 .red { background: #ff3300; color: white; padding: 0 3px 0 3px; }
 .lightRed { background:  #ff704d; color: white; padding: 0 3px 0 3px; }
-
-
 #deckSelWrapper {
     max-height: 280px;
     margin-bottom: 0px !important;
@@ -522,7 +519,6 @@ select {
     background:  $deckSelectBackgroundColor$;
     text-align: left;
 }
-
 #deckSel,#deckSelQuick {
     width: 100%;
     background: $deckSelectBackgroundColor$;
@@ -532,7 +528,6 @@ select {
 #deckSelQuickWrapper {
     display: none;
 }
-
 #deckSel tr>td,#deckSelQuick tr>td {
    text-align: left;
    width: 90%;
@@ -913,33 +908,6 @@ table.striped tr:nth-child(even) {
     color: #2496dc;
     transform: scale(1.04);
 }
-#siac-cloze-btn {
-    margin-bottom: 7px;
-    text-align: center;
-    color:darkorange;
-    cursor:pointer;
-    user-select: none;
-}
-#siac-cloze-btn:hover {
-    transform: scale(1.03);
-    filter: brightness(1.4);
-}
-#siac-tt-web-btn {
-    color:darkorange;
-    cursor:pointer;
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    height: 20px;
-    width: 20px;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 20px 20px;
-}
-#siac-tt-web-btn:hover {
-    transform: scale(1.03);
-    filter: brightness(1.4);
-}
 #indexInfo, #synonymsIcon, #stylingIcon, #siac-note-icn {
     margin-right: 5px;
 }
@@ -1106,8 +1074,6 @@ select {
     position: relative;
     margin-top: 8px;
     padding-top: 5px;
-
-
 }
 .tag-btn {
     background: $tagBackgroundColor$;
@@ -1118,7 +1084,6 @@ select {
     user-select: none;
     font-size: $tagFontSize$ !important;
 }
-
 .tag-add {
     position: absolute;
     right: 5px;
@@ -1342,339 +1307,6 @@ span.tag-symbol {
     width: 200px;
     
 }
-
-#siac-pdf-overlay {
-    display: none;
-    position: absolute;
-    bottom: 35px;
-    right: 0; left: 0;
-    z-index: 2;
-    user-select: none;
-    /* background-color: #3b92c9; */
-    /* border: 2px solid #1773ac; */
-    background-color: #43a047;
-    border-radius: 7px;
-    border: 4px outset green;
-    padding: 2px 4px 4px 4px;
-    width: 200px;
-    text-align: center;
-    color: white;
-    margin-left: auto;
-    margin-right: auto;
-}
-#siac-pdf-mark-btn {
-    padding: 4px 3px 5px 4px;
-    z-index: 3;
-    border: 3px outset #2496dc;
-    border-radius: 3px;
-    margin-right: 14px;
-    display: inline-block;
-    max-width: 30px;
-    transition: all 0.4s;
-    overflow: hidden;
-    white-space: nowrap;
-}
-#siac-pdf-mark-btn:hover {
-    border-color: #67c3fc;
-}
-#siac-pdf-mark-btn:hover img {
-    filter: brightness(1.4);
-}
-#siac-pdf-mark-btn > div {
-    display: none;
-}
-#siac-pdf-mark-btn.expanded > div{
-    display: inline-block;
-}
-#siac-pdf-mark-btn.expanded {
-    max-width: 400px;
-}
-#siac-pdf-mark-btn.expanded img {
-    float: left;
-    margin-top: 2px !important;
-}
-.siac-mark-btn-inner {
-    display: inline-block;
-    border: 2px outset grey;
-    border-radius: 3px;
-    margin-left: 5px;
-    font-size: 11px !important;
-    padding: 1px 4px 1px 4px;
-    cursor: pointer;
-}
-.siac-mark-btn-inner.active {
-    border-color: #2496dc;
-}
-.siac-mark-btn-inner:hover {
-    border-color: #43b7ff;
-}
-.siac-pdf-mark-lbl,#siac-iframe-btn {
-    display: inline-block;
-    margin-right: 10px;
-    font-size: 13px;
-    border: 3px outset #2496dc;
-    border-radius: 4px;
-    padding: 4px 6px 4px 6px;
-    background: #2f2f31;
-    color: white;
-    user-select: none;
-}
-.siac-pdf-mark-lbl > b:hover {
-    color: darkorange;
-    cursor: pointer;
-}
-#siac-pdf-overlay-top {
-    position: absolute;
-    top: 4px;
-    left: 0px;
-    width: 100%;
-    z-index: 2;
-}
-#siac-pdf-top {
-    width: 100%; 
-    flex: 1 1 auto;
-    position:relative; 
-    height: calc(100% - 90px); 
-    overflow-y: auto; 
-    text-align: center;
-    margin-top: 20px;
-}
-#siac-text-top-wr {
-    flex: 1 1 auto;
-    margin-top: 20px;
-}
-#siac-text-top {
-    text-align: left;
-    padding: 10px;
-
-}
-#siac-iframe {
-    width: 100%;
-    flex: 1 1 auto;
-    display: none;
-}
-#siac-iframe-btn {
-    z-index: 2;
-    position: absolute;
-    left: 0px;
-    top: 50px;
-}
-#siac-close-iframe-btn {
-    z-index: 4;
-    position: absolute;
-    right: 0px;
-    top: 5px;
-    display: none;
-    font-size: 13px;
-    border: 3px outset #2496dc;
-    border-radius: 4px;
-    padding: 4px 6px 4px 6px;
-    background: #2f2f31;
-    color: white;
-    user-select: none;
-}
-#siac-close-iframe-btn:hover {
-    border-color: #67c3fc;
-}
-#siac-iframe-btn:hover {
-    border-color: #67c3fc;
-}
-#siac-iframe-btn > div {
-    display: none;
-}
-#siac-iframe-btn.expanded > div {
-    display: inline-block;
-}
-#siac-quick-sched-btn {
-    position: absolute;
-    z-index: 2;
-    left: 0;
-    bottom: 43px;
-    padding: 2px 3px 2px 3px;
-}
-#siac-mark-jump-btn {
-    position: absolute;
-    z-index: 2;
-    left: 0;
-    bottom: 76px;
-    padding: 4px 3px 4px 3px;
-}
-#siac-quick-sched-btn > .expanded-hidden, #siac-mark-jump-btn > .expanded-hidden {
-    display: none;
-    vertical-align: middle;
-}
-#siac-quick-sched-btn .siac-read-icn {
-    margin: 0;
-    vertical-align: middle;
-}
-#siac-quick-sched-btn.expanded > .expanded-hidden, #siac-mark-jump-btn.expanded > .expanded-hidden {
-    display: inline-block;
-}
-#siac-mark-jump-btn:hover img {
-    filter: brightness(1.4);
-}
-#siac-mark-jump-btn.expanded img {
-    float: left;
-    margin-top: 2px;
-}
-#siac-iframe-btn input {
-    width: 100%;
-    background: #2f2f31;
-    color: white;
-    border-color: white;
-    border-radius: 3px;
-    padding-left: 4px;
-    vertical-align: top;
-    box-sizing: border-box;
-}
-#siac-iframe-btn input:focus {
-    outline: none;
-}
-#siac-iframe-btn.expanded {
-    max-width: 400px;
-}
-#siac-iframe-btn label:hover {
-    color: darkorange;
-    cursor: pointer;
-}
-.siac-url-ch {
-   color: orange; 
-   margin-bottom: 4px;
-}
-.siac-url-ch:hover {
-    filter: brightness(1.4);
-}
-#siac-pdf-tooltip {
-	position: absolute;
-	display: none;
-	z-index: 999;
-    background-color: #2f2f31;
-	color: white;
-    padding: 9px;
-    max-width: $pdfTooltipMaxWidth$px;
-	border-radius: 5px;
-    border: 4px outset darkorange;
-    transition: all 0.5s;
-}
-#siac-pdf-read-btn,#siac-pdf-more-btn {
-    border-radius: 4px;
-    border: 3px outset #43a047;
-    padding: 1px 5px 1px 5px;
-    background-color: #2f2f31;
-    color: beige;
-}
-#siac-pdf-read-btn:hover,#siac-pdf-more-btn:hover {
-    color: white;
-    border: 3px outset #69B36C;
-    background-color: #2f3030;
-}
-#siac-pdf-night-btn {
-    padding-left: 4px;
-    padding-right: 4px;
-}
-#siac-pdf-tooltip-results-area {
-	overflow-y: auto;
-    overflow-x: hidden;
-    width: calc(100% - 18px);
-	padding-right: 8px;
-    padding-left: 3px;
-    max-height: $pdfTooltipMaxHeight$px;
-}
-#siac-pdf-tooltip-bottom {
-    text-align: center;
-}
-#siac-tooltip-center {
-    position: absolute;
-    top: 7px;
-    left: 7px;
-    cursor: pointer;
-    display: inline-block;
-    color: darkorange;
-    border: 3px solid darkorange;
-    border-radius: 2px;
-    width: 9px;
-    height: 9px;
-}
-#siac-pdf-tooltip-top {
-    text-align: center;
-}
-#siac-tooltip-center:hover {
-    filter: brightness(1.4);
-}
-#siac-pdf-tooltip-searchbar {
-    width: calc(100% - 14px);
-    margin-top: 15px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    background-color: #2f2f31;
-    color: white;
-    border-color: white;
-    padding-left: 4px;
-}
-#siac-pdf-tooltip-searchbar:focus {
-    outline: none;
-}
-#siac-pdf-page-inp {
-    background: #2f2f31;
-    color: beige;
-}
-#siac-pdf-bottom-tab {
-    display: inline-block;
-    max-height: 89px;
-    overflow: hidden;
-    overflow-y: auto;
-    vertical-align: top;
-    margin-top: 4px;
-    padding: 0 5px 0 0;
-    box-sizing: border-box;
-}
-.siac-reading-modal-button-bar-wrapper {
-    flex: 0 0 30px; 
-    width: 100%; 
-    text-align: center; 
-    margin-top: 15px; 
-    position: relative; 
-}
-#siac-marks-display {
-    vertical-align: top;
-    height: 100%;
-}
-.siac-related-notes-item {
-    color: grey;
-    cursor: pointer;
-}
-.siac-related-notes-item:hover {
-    color: lightgrey;
-}
-#siac-marks-display::-webkit-scrollbar {
-    display: none;
-}
-#siac-marks-display td:nth-child(2) {
-    word-wrap: break-word; 
-    white-space: normal;
-    padding-left: 5px;
-}
-.siac-page-mark-link {
-    display: inline-block;
-    cursor: pointer;
-    color: darkorange;
-    font-weight: bold;
-}
-.siac-page-mark-link:hover {
-    filter: brightness(1.4);
-}
-.siac-field-picker-opt {
-    display: inline-block;
-    font-size: 15px;
-    line-height: 18px;;
-    color: darkorange;
-    cursor: pointer;
-    user-select: none;
-}
-.siac-field-picker-opt:hover {
-    filter: brightness(1.4);
-    transform: scale(1.04);
-}
 .siac-tag-info-box {
     position: absolute;
     z-index: 9999;
@@ -1775,31 +1407,7 @@ span.tag-symbol {
     margin-left: 15px;
     width: calc(100% - 15px);
 }
-#siac-note-text-inp {
-    width: 100%;
-    min-height: 200px;
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid $modalForegroundColor$;
-    margin-bottom: 10px;
-    padding-left: 2px;
-}
-#siac-reading-modal {
-    display: none;
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    background-color: #2f2f31;
-    color: white;
-    padding: 12px;
-    padding-bottom: 6px;
-    font-size: 12px;
-    z-index: 7;
-    border-radius: 5px;
-    overflow: hidden;
-}
+
 #siac-search-modal {
     display: none;
     position: absolute;
@@ -1837,149 +1445,8 @@ span.tag-symbol {
     text-align: center;
     margin-bottom: 4px;
 }
-#siac-reading-modal a:not(.siac-disabled) {
-    color: darkorange !important;
-}
-#siac-reading-modal a.greyedout, #siac-reading-modal a.active {
-    color: lightgray !important;
-}
-.siac-clickable-anchor.tab.active {
-    text-decoration: underline;
-}
-#siac-reading-modal-top-btns {
-    position: absolute;
-    top: 7px; right: 25px;
-    text-align: center;
-    vertical-align: middle;
-    z-index: 3;
-}
-#siac-reading-modal-top-btns div:hover {
-    color: white;
-}
-#siac-reading-modal-top-btns siac-btn {
-    line-height: 13px;
-}
-#siac-reading-modal-top-btns span {
-    border: 1px solid lightgrey; 
-    height: 11px; 
-    width: 4px;
-    margin: 0;
-    vertical-align: middle;
-    display: inline-block;
-}
-#siac-reading-modal-top-btns div:hover span {
-    border-color: white;
-}
-.siac-queue-picker-icn {
-    margin-left: 25px; cursor: pointer; font-weight: bold; color: darkorange;
-    display: inline-block;
-}
-.siac-queue-picker-icn:not(.siac-disabled):hover {
-    transform: scale(1.4);
-    filter: brightness(140%);
-}
-#siac-queue-sched-wrapper {
-    padding: 5px 0 0 0;
-    max-width: 0px;
-    overflow: hidden;
-    display: inline-block;
-    transition: max-width 0.6s;
-    transform: translateZ(0);
-}
-.siac-queue-sched-btn, .siac-queue-sched-btn-hor {
-    display: inline-block;
-    font-size: 13px;
-    padding: 2px;
-    border: 2px solid #2496dc;;
-    color: lightblue;
-    user-select: none;
-    cursor: pointer;
-    text-align: center;
-    border-radius: 4px;
-}
-.siac-queue-sched-btn {
-    writing-mode: vertical-lr;
-    height: 90px;
-}
-.siac-queue-sched-btn-hor {
-    vertical-align: top;
-    margin: 40px 5px 0px 5px;
-}
-.siac-queue-sched-btn-tt {
-    font-size: 10px;
-    padding: 1px 3px 1px 3px;
-    border: 2px outset #2496dc;
-    color: lightgrey;
-    user-select: none;
-    cursor: pointer;
-    text-align: center;
-    border-radius: 3px;
-    margin: 5px 0 5px 0;
-}
-.siac-queue-sched-btn-tt:hover {
-    border-color: white;
-    color: white;
-}
-.siac-queue-sched-btn:hover, .siac-queue-sched-btn-hor:hover {
-    color: white;
-    border-color: white;
-    transform: scale(1.04);
-}
-.siac-queue-sched-btn.active, .siac-queue-sched-btn-hor.active {
-    color: white;
-    border-color: darkorange;
-}
-.siac-queue-sched-btn.active:hover, .siac-queue-sched-btn-hor.active:hover {
-   filter: brightness(140%);
-}
-.siac-queue-sched-hor-sep {
-    display: inline-block;
-    height: 50px;
-    width: 20px;
-    margin: 0 10px 0 10px;
-    border-top: 2px solid lightgrey;
-    border-style: dotted;
-    border-width: 2px 0 0 0;
-}
-.siac-clickable-anchor {
-    cursor: pointer;
-    background-color: inherit !important;
-    display: inline-block;
-    border: 1px solid transparent;
-}
-.siac-clickable-anchor.siac-disabled,.siac-queue-picker-icn.siac-disabled {
-    color: grey !important;
-}
-.siac-clickable-anchor:not(.siac-disabled):hover {
-    transform: scale(1.02);
-    filter: brightness(140%);
-}
-#siac-queue-infobox-wrapper {
-    position: relative;
-    display: inline-block;
-    vertical-align: top;
-    margin-left: 14px;
-}
-#siac-queue-infobox {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: none;
-    width: 300px;
-    height: 102px;
-    border: 3px outset darkorange;
-}
-#siac-queue-infobox:after {
-    content: " ";
-    position: absolute;
-    right: 100%;
-    top: var(--ttop);
-    margin-top: -11px;
-    border-width: 11px;
-    border-style: solid;
-    border-color: transparent darkorange transparent transparent;
-    transition: all ease 0.2s;
-}
+
+
 #outerWr.onesided {
     display: flex !important;
     /* height: 100vh !important; */
@@ -1993,68 +1460,7 @@ span.tag-symbol {
 #outerWr.onesided .reading-modal-close-icn {
     right: 27px;
 }
-#siac-reading-modal-timer {
-    font-size: 30px;
-    user-select: none;
-    font-weight: bold;
-    line-height: 1em;
-}
-.siac-timer-btn {
-    cursor: pointer;
-    margin-right: 5px;
-    font-size: 11px;
-    line-height: 1em;
-    display: inline-block;
-}
-.siac-timer-btn:hover {
-    transform: scale(1.2);
-    user-select: none;
-}
-.siac-timer-btn.active {
-    color: darkorange;
-    font-weight: bold;
-}
-#siac-timer-play-btn {
-    font-size: 19px;
-    line-height: 19px;
-    cursor: pointer;
-    user-select: none;
-    display: inline-block;
-}
-#siac-timer-play-btn:hover {
-    transform: scale(1.05);
-}
-#siac-reading-modal-center img {
-    display: block;
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-#siac-timer-popup {
-    z-index: 9999999;
-    background: #2f2f31;
-    color: white;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 15px;
-    width: 300px;
-    border: 4px outset $modalBorderColor$;
-    border-radius: 5px;
-    display: none;
-}
-#siac-pdf-top::-webkit-scrollbar:horizontal {
-    height: 10px !important;
-}
-#siac-pdf-top::-webkit-scrollbar, #siac-pdf-bottom-tab::-webkit-scrollbar, body.nightMode ::-webkit-scrollbar {
-    width: 10px !important;
-    background: #313d45 !important;
-    border-radius: 4px !important;
-}
- #siac-pdf-top::-webkit-scrollbar-thumb, body.nightMode ::-webkit-scrollbar-thumb {
-    background: #515d71 !important;
-    border-radius: 4px !important;
-} 
+
 .siac-modal-small {
     z-index: 9999999;
     background: $modalBackgroundColor$;
@@ -2073,15 +1479,7 @@ span.tag-symbol {
     background: #2f2f31;
     color: white;
 }
-.siac-pdf-loader {
-    width: 250px; 
-    padding: 15px; 
-    position: relative; 
-    text-align: center;
-    border: 3px outset darkorange;
-    background: #2f2f31;
-    color: white;
-}
+
 hr.siac-modal-sep {
     border-color: $modalBorderColor$;
 }
@@ -2120,16 +1518,7 @@ hr.siac-modal-sep {
     text-decoration: none;
 }
 
-#text-layer {
-    position: absolute;
-     left: 0;
-     top: 0;
-     right: 0;
-     bottom: 0;
-     overflow: hidden;
-     opacity: 0.2;
-     line-height: 1.0;
- }
+
   
 @media (max-height: 640px) {
     #tagContainer {
@@ -2217,15 +1606,8 @@ hr.siac-modal-sep {
     }
 }
 
-.tox-tinymce-aux {
-    z-index: 2147483638 !important!;
-}
-.tox .tox-menu {
-    z-index: 2147483638 !important;
-}
-#siac-text-top-wr > div {
-    height: 100% !important;
-}
+
+
 .cardLeftBot .siac-read-icn {
     vertical-align: middle;
     margin: 0;
@@ -2235,7 +1617,7 @@ hr.siac-modal-sep {
     margin: 0 4px 0 7px;
 }
 .siac-user-note .cardR {
-    padding-bottom: 22px;
+    padding-bottom: 21px;
 }
 body.siac-fullscreen-show-fields #leftSide {
      display: flex !important; 

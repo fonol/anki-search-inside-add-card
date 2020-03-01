@@ -1,3 +1,20 @@
+# anki-search-inside-add-card
+# Copyright (C) 2019 - 2020 Tom Z.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import platform
 import os
 import json
@@ -48,6 +65,8 @@ def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
         script = f.read()
     with open(dir + "styles.css") as f:
         css = f.read().replace("%", "%%")
+    with open(dir + "pdf_reader.css") as f:
+        css += f.read().replace("%", "%%")
     script = script.replace("$del$", str(delayWhileTyping))
 
     deckSelectFontSize = get_config_value_or_default(["styling", "topBar", "deckSelectFontSize"], 11)
@@ -292,7 +311,6 @@ def display_note_reading_modal(note_id):
 
 @js
 def display_read_range_input(note_id, num_pages):
-
     on_confirm= """ if (document.getElementById('siac-range-input-min').value && document.getElementById('siac-range-input-max').value) {
     pycmd('siac-user-note-mark-range %s ' + document.getElementById('siac-range-input-min').value 
             + ' ' + document.getElementById('siac-range-input-max').value 
@@ -309,8 +327,6 @@ def display_read_range_input(note_id, num_pages):
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
                     </div> """
     return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
-
-
 
 
 @js

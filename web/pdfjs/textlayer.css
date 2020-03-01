@@ -1,3 +1,13 @@
+#text-layer {
+    position: absolute;
+     left: 0;
+     top: 0;
+     right: 0;
+     bottom: 0;
+     overflow: hidden;
+     opacity: 0.2;
+     line-height: 1.0;
+ }
 .textLayer > span {
     color: transparent;
     position: absolute;
@@ -50,4 +60,8 @@
 
 .textLayer .endOfContent.active {
       top: 0px;
+}
+
+.textLayer .tl-highlight {
+    background: yellow;
 }

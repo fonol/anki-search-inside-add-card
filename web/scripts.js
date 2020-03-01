@@ -1,3 +1,20 @@
+// anki-search-inside-add-card
+// Copyright (C) 2019 - 2020 Tom Z.
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 var siacState = {
     selectedDecks : ["-1"],
     timeout : null,
@@ -16,6 +33,30 @@ var tagHoverCB;
 var tagHoverTimeout = 750;
 var searchMaskTimer;
 
+
+function sendContent(event) {
+    if ((event && event.repeat) || pdfDisplayed != null || siacState.isFrozen)
+        return;
+    if (!$fields.text())
+        return;
+    let html = "";
+    showLoading("Typing");
+    $fields.each(function(index, elem) {
+        html += elem.innerHTML + "\u001f";
+    });
+    pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+}
+function sendSearchFieldContent() {
+    showLoading("Searchbar");
+    html = document.getElementById('siac-browser-search-inp').value + "\u001f";
+    pycmd('siac-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+}
+
+function searchFor(text) {
+    showLoading("Note Search");
+    text += "\u001f";
+    pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
+}
 
 
 function updateSelectedDecks(elem) {
@@ -735,6 +776,22 @@ function calMouseLeave() {
             document.getElementById('cal-info').style.display = "none";
         calTimer = null;
     }, 300);
+}
+function fieldsBtnClicked() {
+    if (siacState.isFrozen) {
+        pycmd("siac-notification Results are frozen.");
+        return;
+    }
+    if (!$fields.text()) {
+        pycmd("siac-notification Fields are empty.");
+        return;
+    }
+    let html = "";
+    showLoading("Typing");
+    $fields.each(function(index, elem) {
+        html += elem.innerHTML + "\u001f";
+    });
+    pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 
 function showModalSubpage(html) {

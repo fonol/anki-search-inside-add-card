@@ -1,3 +1,19 @@
+# anki-search-inside-add-card
+# Copyright (C) 2019 - 2020 Tom Z.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import sqlite3
 import os
 import sys
@@ -17,7 +33,7 @@ import utility.text
 
 class FTSIndex:
 
-    def __init__(self, corpus, searchingDisabled, index_up_to_date):
+    def __init__(self, corpus, index_up_to_date):
 
         self.limit = 20
         self.pinned = []
@@ -50,7 +66,7 @@ class FTSIndex:
         self.output.fields_to_exclude = self.fields_to_exclude
 
         self.creation_info["index_was_rebuilt"] = not index_up_to_date
-        if not searchingDisabled and not index_up_to_date:
+        if not index_up_to_date:
             if self.porter:
                 sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs, tokenize=porter)"
             else:
@@ -193,11 +209,6 @@ class FTSIndex:
         if self.type == "SQLite FTS5":
             dbStr = "select nid, text, tags, did, source, bm25(notes) as score, mid, refs from notes where notes match '%s' %s order by score" %(query, user_note_filter)
 
-        #bm25 results in really slow queries for some reason, so we use the simpler ranking for fts4
-
-        # elif self.type == "SQLite FTS4":
-        #     conn.create_function("bm25", 1, bm25)
-        #     dbStr = "select nid, text, tags, did, source, bm25(matchinfo(notes, 'pcnalx')) as score, mid, refs from notes where text match '%s' %s order by score desc" %(query, user_note_filter)
         else:
             conn.create_function("simple_rank", 1, simple_rank)
             dbStr = "select nid, text, tags, did, source, simple_rank(matchinfo(notes)) as score, mid, refs from notes where text match '%s' %s order by score desc" %(query, user_note_filter)
@@ -224,31 +235,12 @@ class FTSIndex:
                     rList.append(SiacNote.from_index(r))
                 else:
                     rList.append(IndexNote(r))
-                # rList.append((r[4], r[2], r[3], r[0], r[5], r[6], r[7]))
                 c += 1
                 if c >= self.limit:
                     break
 
-        # else:
-        #     start = time.time()
-        #     for r in res:
-        #         if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-        #             rList.append((r[4], r[2], r[3], r[0], r[5], r[6], r[7]))
-        #     resDict["time-ranking"] = int((time.time() - start) * 1000)
-
-        # else:
-        #     start = time.time()
-        #     for r in res:
-        #         if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-        #             rList.append((r[4], r[2], r[3], r[0], r[5], r[6], r[7]))
-        #     resDict["time-ranking"] = int((time.time() - start) * 1000)
-
         conn.close()
 
-        #if fts5 is not used, results are not sorted by score
-        # if not self.type == "SQLite FTS5":
-        #     listSorted = sorted(rList, key=lambda x: x[4])
-        #     rList = listSorted
         if self.logging:
             log("Query was: " + query)
             log("Result length (after removing pinned and unselected decks): " + str(len(rList)))
