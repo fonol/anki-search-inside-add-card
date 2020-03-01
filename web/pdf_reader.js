@@ -515,7 +515,7 @@ async function getNextPagesToSearchIn(dir) {
             s = lastEnd + 1;
             n = Math.min(pdfDisplayed.numPages - s, ivl);
         }
-        if (lastEnd !== null && lastEnd < pdfDisplayedCurrentPage && s + ivl >= pdfDisplayedCurrentPage) {
+        if (lastEnd !== null && (lastEnd < pdfDisplayedCurrentPage || lastEnd === pdfDisplayed.numPages) && s + ivl >= pdfDisplayedCurrentPage) {
             n = pdfDisplayedCurrentPage - s;
             pdfCurrentSearch.breakOnNext = true;
         } else if (pdfDisplayed.numPages === 1) {
