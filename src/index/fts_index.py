@@ -261,7 +261,7 @@ class FTSIndex:
 
     def print_pdf(self, result, stamp):
         query_set = None
-        if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
+        if self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
             query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
         if result is not None:
             self.output.print_pdf_search_results(result["results"], stamp, query_set)
