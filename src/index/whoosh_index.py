@@ -57,8 +57,6 @@ class WhooshSearchIndex:
         self.pinned = []
         self.threadPool = QThreadPool()
         self.highlighting = True
-        self.searchWhileTyping = True
-        self.searchOnSelection = True
         self.limit = 10
         self.TAG_RE = re.compile(r'<[^>]+>')
         self.SP_RE = re.compile(r'&nbsp;| {2,}')

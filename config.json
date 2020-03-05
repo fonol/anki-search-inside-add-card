@@ -64,7 +64,6 @@
 
 "numberOfResults": 1000,
 "useFTS": true,
-"addToResultAreaHeight": 0,
 "delayWhileTyping": 1000,
 "synonyms": [],
 "useInEdit" : false,
@@ -83,6 +82,8 @@
 "tagHoverDelayInMiliSec": 1000,
 "alwaysRebuildIndexIfSmallerThan" : 1500,
 "searchOnTagEntry" : true,
+"searchOnTyping": true,
+"searchOnSelection": true,
 "userNotesPerDay": 5,
 "removeDivsFromOutput": false,
 "addonNoteDBFolderPath": "",

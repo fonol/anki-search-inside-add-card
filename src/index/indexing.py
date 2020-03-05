@@ -110,7 +110,6 @@ def _build_index(index_up_to_date):
     index.selectedDecks = ["-1"]
     index.lastSearch = None
     index.lastResDict = None
-    index.tagSelect = False
     index.topToggled = True
     index.output.edited = {}
     index.initializationTime = initializationTime

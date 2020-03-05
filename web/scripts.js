@@ -372,10 +372,10 @@ function setSearchOnTyping(active) {
     sendSearchOnTyping();
 }
 function sendSearchOnTyping() {
-    pycmd("searchWhileTyping " + siacState.searchOnTyping ? "on" : "off");
+    pycmd("searchWhileTyping " + (siacState.searchOnTyping ? "on" : "off"));
 }
 function sendSearchOnSelection() {
-    pycmd("searchOnSelection " + siacState.searchOnSelection ? "on" : "off");
+    pycmd("searchOnSelection " + (siacState.searchOnSelection ? "on" : "off"));
 }
 function fieldKeypress(event) {
     if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 32 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
@@ -692,25 +692,29 @@ function dragElement(elmnt, headerId, inModal=false) {
     }
 }
 function toggleAddon() {
-    if (document.getElementById('siac-reading-modal').style.display !== "none" && pdfFullscreen) {
-        if ($(document.body).hasClass("siac-fullscreen-show-fields")) {
-            $(document.body).removeClass("siac-fullscreen-show-fields").addClass("siac-fullscreen-show-right");
-        } else {
-            $(document.body).addClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
+    try {
+        if (document.getElementById('siac-reading-modal').style.display !== "none" && pdfFullscreen) {
+            if ($(document.body).hasClass("siac-fullscreen-show-fields")) {
+                $(document.body).removeClass("siac-fullscreen-show-fields").addClass("siac-fullscreen-show-right");
+            } else {
+                $(document.body).addClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
+            }
         }
-    }
-    else {
-        if ($('#outerWr').hasClass("onesided")) {
-            showSearchPaneOnLeftSide();
-            $('#siac-right-side').toggleClass("addon-hidden");
-        } else if ($('#switchBtn').is(":visible")) {
-            showSearchPaneOnLeftSide();
-        } else {
-            $('#siac-right-side').toggleClass("addon-hidden");
+        else {
+            if ($('#outerWr').hasClass("onesided")) {
+                showSearchPaneOnLeftSide();
+                $('#siac-right-side').toggleClass("addon-hidden");
+            } else if ($('#switchBtn').is(":visible")) {
+                showSearchPaneOnLeftSide();
+            } else {
+                $('#siac-right-side').toggleClass("addon-hidden");
+            }
+            pycmd("toggleAll " + ($('#siac-right-side').hasClass("addon-hidden") ? "off" : "on"));
         }
-        pycmd("toggleAll " + ($('#siac-right-side').hasClass("addon-hidden") ? "off" : "on"));
+        onWindowResize();
+    } catch (e) {
+        pycmd("siac-notification Failed to toggle: " + e.message);
     }
-    onWindowResize();
 }
 function showSearchPaneOnLeftSide() {
     if ($('#outerWr').hasClass("onesided")) {
@@ -736,7 +740,7 @@ function removeNote(nid) {
 function getOffset(el) {
     var _x = 0;
     var _y = 0;
-    while (el && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
+    while (el && el.id !== "siac-right-side" && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
         _x += el.offsetLeft - el.scrollLeft;
         _y += el.offsetTop - el.scrollTop;
         el = el.offsetParent;
@@ -752,9 +756,11 @@ function calBlockMouseEnter(event, elem) {
     }, 100);
 }
 function displayCalInfo(elem) {
+
     let offset = getOffset(elem.children[0]);
+
     let offsetLeft = offset.left - 153;
-    let offsetRight = document.getElementsByTagName("BODY")[0].clientWidth  - offset.left - 153;
+    let offsetRight = document.getElementById("siac-second-col-wrapper").clientWidth  - offset.left - 153;
     if (offsetLeft < 0) {
         offsetLeft -= (offset.left - 153);
         document.documentElement.style.setProperty('--tleft', (offset.left) + 'px')
@@ -797,7 +803,7 @@ function fieldsBtnClicked() {
 function showModalSubpage(html) {
     $('#modalText').hide();
     $('#modal-subpage-inner').html(html);
-    $('#modal-subpage').show();
+    document.getElementById('modal-subpage').style.display = "flex";
 }
 function hideModalSubpage() {
     $('#modal-subpage-inner').html('');

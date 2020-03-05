@@ -38,8 +38,6 @@ class FTSIndex:
         self.limit = 20
         self.pinned = []
         self.highlighting = True
-        self.searchWhileTyping = True
-        self.searchOnSelection = True
         self.dir = utility.misc.get_user_files_folder_path()
         self.stopWords = []
         # mid : [fld_ord]

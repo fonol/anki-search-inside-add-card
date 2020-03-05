@@ -23,6 +23,7 @@ import datetime
 import time
 import sys
 from aqt import mw
+from aqt.utils import showInfo
 
 import utility.tags
 import utility.text
@@ -40,7 +41,7 @@ def toggleAddon():
     return "toggleAddon();"
 
 
-def getScriptPlatformSpecific(addToHeight, delayWhileTyping):
+def getScriptPlatformSpecific(delayWhileTyping):
     """
         Returns the css and js used by the add-on in <style>/<script> tags. 
         Some placeholders in the scripts.js file and in the styles.css file are replaced 
@@ -190,22 +191,20 @@ def setup_ui_after_index_built(editor, index, init_time=None):
     config = mw.addonManager.getConfig(__name__)
     showSearchResultArea(editor, init_time)
     #restore previous settings
+    cmd = ""
     if not index.highlighting:
-        editor.web.eval("$('#highlightCb').prop('checked', false);")
-    if not index.searchWhileTyping:
-        editor.web.eval("$('#typingCb').prop('checked', false); setSearchOnTyping(false);")
-    if not index.searchOnSelection:
-        editor.web.eval("$('#selectionCb').prop('checked', false);")
-    if index.tagSelect:
-        fillTagSelect(editor)
+       cmd += "$('#highlightCb').prop('checked', false);"
+    if not get_config_value_or_default("searchOnTyping", True):
+        cmd += "$('#typingCb').prop('checked', false); setSearchOnTyping(false);"
+    if not get_config_value_or_default("searchOnSelection", True):
+        cmd += "$('#selectionCb').prop('checked', false); siacState.searchOnSelection = false;"
     if not index.topToggled:
-        editor.web.eval("hideTop();")
+        cmd += "hideTop();"
     if index.output is not None and not index.output.uiVisible:
-        editor.web.eval("$('#siac-right-side').addClass('addon-hidden')")
+        cmd += "$('#siac-right-side').addClass('addon-hidden')"
     if config["gridView"]:
-        editor.web.eval('activateGridView();') 
-    if index.searchbar_mode == "Browser":
-        editor.web.eval("toggleSearchbarMode(document.getElementById('siac-search-inp-mode-lbl'));")
+        cmd += "activateGridView();" 
+    editor.web.eval(cmd)
     if index.output is not None:
         #plot.js is already loaded if a note was just added, so this is a lazy solution for now
         index.output.plotjsLoaded = False
@@ -751,8 +750,7 @@ def display_notes_sidebar(editor):
     html = get_notes_sidebar_html()
     return """
     if (!document.getElementById('siac-notes-sidebar')) {
-        document.getElementById('resultsWrapper').style.paddingLeft = "245px"; 
-        document.getElementById('resultsWrapper').innerHTML += `%s`; 
+        document.getElementById('resultsWrapper').insertAdjacentHTML("afterbegin", `%s`); 
         $('#siac-notes-sidebar .exp').click(function(e) {
             e.stopPropagation();
             let icn = $(this);

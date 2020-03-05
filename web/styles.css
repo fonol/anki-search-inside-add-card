@@ -108,6 +108,8 @@
 #resultsWrapper {
     z-index: 100;
     height: 100%;
+    overflow: hidden;
+    display: flex;
 }
 .signal {
     border: 5px solid #2496dc;
@@ -132,10 +134,10 @@
     display: none;
     height: calc(100% - 15px);
     overflow-y: auto;
-    padding: 10px 10px 5px 0;
+    padding: 10px 10px 5px 10px;
     overflow-x: hidden;
     max-width: 100%;
-    z-index: 100;
+    flex: 1 1 auto;
 }
 .editedStamp {
     display: inline;
@@ -534,6 +536,7 @@
 }
 #tagContainer {
     overflow-x: hidden;
+    overflow-y: auto;
 }
 #switchBtn {
     display: none !important;
@@ -581,16 +584,19 @@
     display: none;
 }
 #searchInfo {
-    width: 150px;
-    float:right;
+    flex: 0 0 150px;
     margin-bottom: 8px;
-    margin-left: 20px;
+    margin-left: 10px;
     word-wrap: break-word;
     padding: 10px 0 0 10px;
+    display: flex;
+    flex-direction: column;
+}
+#searchInfo.hidden {
+    display: none;
 }
 #searchInfo table {
     width: 100%;
-
 }
 #searchInfo table > tbody > td > td:first-child {
     width: 100px;
@@ -753,10 +759,10 @@ border: 1px solid $deckSelectButtonBorderColor$;
 background: $deckSelectBackgroundColor$;
 color: $deckSelectButtonForegroundColor$;
 cursor: pointer;
-font-size: 11px !important;
+font-size: 12px !important;
 user-select: none;
 display: inline-block;
-padding: 1px 4px 1px 4px;
+padding: 1px 5px 1px 5px;
 outline: none;
 }
 .deck-list-button.center {
@@ -1025,30 +1031,28 @@ select {
     border: 4px outset $modalBorderColor$;
     border-radius: 5px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 #modalText {
-    z-index: 99999999999;
     color: $modalForegroundColor$;
-    max-height: 450px;
+    flex: 1 1 auto;
     overflow-y: auto;
     padding-right: 10px;
 }
-#modalText.small {
-    max-height: 200px !important;
-    background: yellow;
-    color: green;
-    font-size: 30px;
-}
 #modal-subpage {
     display:none;
-    z-index: 99999999999;
     color: $modalForegroundColor$;
-    max-height: 450px;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
 }
 #modal-subpage-inner {
-    overflow-y: auto;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    margin-top: 5px;
+    overflow: hidden;
 }
 .modal-close {
     border: 1px solid $buttonBorderColor$;
@@ -1228,11 +1232,8 @@ span.tag-symbol {
     border-color: $timelineBoxBorderColor$ transparent transparent transparent;
 }
 #siac-notes-sidebar {
-    position: absolute;
-    left: 0;
-    top: 5px;
-    bottom: 0;
-    width: 230px;
+    flex: 0 230px;
+    min-width: 230px;
     border-right: 1px solid seagreen;
 }
 .siac-notes-sidebar-item {
@@ -1518,19 +1519,6 @@ hr.siac-modal-sep {
     text-decoration: none;
 }
 
-
-  
-@media (max-height: 640px) {
-    #tagContainer {
-        max-height: 100px !important;
-    }
-    .searchInfoTagSep{
-        margin-top: 5px !important;
-    }
-    .searchInfoTagSep.bottom {
-        margin-top: 8px !important;
-    }
-}
 @media (max-width: 1000px) , (max-height: 500px) {
     #siac-right-side {
         display: none;
@@ -1546,29 +1534,16 @@ hr.siac-modal-sep {
         display: inline-block !important;
     }
 }
-@media (max-width: 1300px) {
-    #predefCol {
-        margin-left: 5px;
-    }
-}
+
 @media (max-width: 800px) {
     .icns-add {
         display: none !important;
     }
-    /* .freeze-icon, .rnd-icon, .flds-icon #toggleTop {
-        font-size: 17px !important;
-    } */
-    /* .flds-icon {
-        margin-top: 2px;
-    } */
 }
 @media (max-width: 1200px) {
-    .cardR, .tagLbl, .searchInfoTagLbl, .keyword {
+    /* .cardR, .tagLbl, .searchInfoTagLbl, .keyword {
         font-size: 12px !important;
-    }
-    .minorScore, #searchInfo {
-        display: none;
-    }
+    } */
     .siac-queue-sched-hor-sep {
         width: 10px;
     }
@@ -1577,35 +1552,10 @@ hr.siac-modal-sep {
     #outerWr.onesided #searchMaskCol {
         display: flex;
     }
-    #outerWr.onesided #searchInfo:not(.hidden) {
+    /* #outerWr.onesided #searchInfo:not(.hidden) {
         display: block;
-    }
+    } */
 }
-@media (min-height: 900px) {
-    #tagContainer {
-        max-height: 380px !important;
-    }
-    .searchInfoTagSep{
-        margin-top: 20px !important;
-    }
-    #modalText {
-         max-height: 650px !important;
-    }
-}
-@media (max-width: 500px) {
-    #sortCol {
-        display: none;
-    }
-    .modal-content {
-        width: 80% !important;
-    }
-}
-@media (max-height: 600px) {
-    #modalText {
-        max-height: 350px !important;
-    }
-}
-
 
 
 .cardLeftBot .siac-read-icn {
@@ -1646,3 +1596,18 @@ body.siac-fullscreen-show-right #outerWr {
     margin-top: 3px !important;
     height: calc(100vh - 3px) !important;
 }
+@media (max-width: 600px) {
+    #sortCol {
+        display: none;
+    }
+    #siac-notes-sidebar, #searchInfo {
+        display: none;
+    }
+    .modal-content {
+        width: 80% !important;
+    }
+
+}
+
+
+

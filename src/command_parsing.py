@@ -732,12 +732,12 @@ def expanded_on_bridge_cmd(self, cmd, _old):
     elif (cmd.startswith("highlight ")):
         if check_index():
             index.highlighting = cmd[10:] == "on"
-    elif (cmd.startswith("searchWhileTyping ")):
-        if check_index():
-            index.searchWhileTyping = cmd[18:] == "on"
+    elif cmd.startswith("searchWhileTyping "):
+        config["searchOnTyping"] = cmd[18:] == "on"
+        mw.addonManager.writeConfig(__name__, config)
     elif (cmd.startswith("searchOnSelection ")):
-        if check_index():
-            index.searchOnSelection = cmd[18:] == "on"
+        config["searchOnSelection"] = cmd[18:] == "on"
+        mw.addonManager.writeConfig(__name__, config)
     elif (cmd.startswith("deckSelection")):
         if not check_index():
             return
@@ -1356,3 +1356,5 @@ def after_index_rebuilt():
         $('#toggleTop').click(function() { toggleTop(this); });
     """)
     fillDeckSelect(editor)
+    setup_ui_after_index_built(editor, search_index)
+

@@ -98,7 +98,7 @@ def init_addon():
     
     typing_delay = max(500, config['delayWhileTyping'])
     #this inserts all the javascript functions in scripts.js into the editor webview
-    aqt.editor._html += getScriptPlatformSpecific(config["addToResultAreaHeight"], typing_delay)
+    aqt.editor._html += getScriptPlatformSpecific(typing_delay)
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
 
@@ -139,7 +139,6 @@ def on_load_note(editor):
         zoom = get_config_value_or_default("searchpane.zoom", 1.0)
         show_tag_info_on_hover = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
         editor.web.eval(f"""
-            var addToResultAreaHeight = {get_config_value_or_default("addToResultAreaHeight", 0)}; 
             var showTagInfoOnHover = {show_tag_info_on_hover}; 
             tagHoverTimeout = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
         """)
@@ -152,8 +151,8 @@ def on_load_note(editor):
 
         editor.web.eval("onWindowResize()")
 
-        if index is None or not index.tagSelect:
-            fillDeckSelect(editor)
+        fillDeckSelect(editor)
+        if index is None:
             if get_index() is None or (index is not None and index.lastSearch is None):
                 printStartingInfo(editor)
         if not corpus_is_loaded():

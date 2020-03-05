@@ -133,7 +133,6 @@ def right_side_html(indexIsLoaded = False):
     Returns the javascript call that inserts the html that is essentially the right side of the add card dialog.
     The right side html is only inserted if not already present, so it is safe to call this function on every note load.
     """
-    addToResultAreaHeight = int(conf_or_def("addToResultAreaHeight", 0))
     leftSideWidth = conf_or_def("leftSideWidthInPercent", 40)
     if not isinstance(leftSideWidth, int) or leftSideWidth <= 0 or leftSideWidth > 100:
         leftSideWidth = 50
@@ -153,15 +152,15 @@ def right_side_html(indexIsLoaded = False):
                 <div id="greyout"></div>
                 <div id="a-modal" class="modal">
                     <div class="modal-content">
-                        <div id='modal-visible'>
                         <div id="modalText"></div>
                         <div id="modal-subpage">
-                            <button class='modal-close siac-btn' onclick='hideModalSubpage()'>&#8592; Back</button>
+                            <div style='flex: 0 0 auto;'>
+                                <button class='modal-close siac-btn' onclick='hideModalSubpage()'>&#8592; Back</button>
+                            </div>
                             <div id="modal-subpage-inner"></div>
                         </div>
-                        <div style='text-align: right; margin-top:25px;'>
+                        <div style='flex: 0 0 auto; text-align: right; padding-top:15px;'>
                             <button class='modal-close siac-btn' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
-                        </div>
                         </div>
                     </div>
                 </div>
@@ -257,11 +256,10 @@ def right_side_html(indexIsLoaded = False):
                             <div class='siac-read-icn' onclick='pycmd("siac-user-note-queue-read-head")'></div>
                 </div>
                 <div id="resultsArea" style="">
-         
                     <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
                     <div id='resultsWrapper'>
-                        <div id='searchInfo' class='%s'></div>
                         <div id='searchResults'></div>
+                        <div id='searchInfo' class='%s'></div>
                     </div>
                 </div>
                 <div id='bottomContainer' style='display: block;'>
@@ -340,6 +338,7 @@ def right_side_html(indexIsLoaded = False):
                         </div>
                     </div>
                 </div>
+                <div id='cal-info' onmouseleave='calMouseLeave()'></div>
                 <div id='siac-reading-modal'></div>
             </div>
         </div>
@@ -355,8 +354,7 @@ def right_side_html(indexIsLoaded = False):
         window.addEventListener('resize', onWindowResize, true);
         $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
         $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
-        $(`<div id='cal-info' onmouseleave='calMouseLeave()'></div>`).insertAfter('#outerWr');
-""" % (
+    """ % (
     leftSideWidth,
     rightSideWidth,
     conf_or_def("searchpane.zoom", 1.0),
@@ -420,16 +418,19 @@ def get_model_dialog_html():
     config = mw.addonManager.getConfig(__name__)
 
     html = """
-    <div style='display: flex; flex-flow: column; height: 400px;'>
-    <p>Changes in <i>Show Field in Results</i> take effect immediately, changes in <i>Search in Field</i> need a rebuild of the index.</p>
-    <table style='width: 100%; margin: 10px 0 5px 0;'>
-        <tr>
-            <td style='width: 80%; font-weight: bold;'>Field Name</td>
-            <td style='width: 10%; font-weight: bold;'>Search in Field</td>
-            <td style='width: 10%; font-weight: bold;'>Show Field in Results</td>
-        </tr>
-    </table>
-    <div style='overflow-y: auto; flex-grow: 1; margin-top: 20px; width: 100%'>
+    <div style='flex: 0 0 auto;'>
+        <p>Changes in <i>Show Field in Results</i> take effect immediately, changes in <i>Search in Field</i> need a rebuild of the index.</p>
+    </div>
+    <div style='flex: 0 0 auto;'>
+        <table style='width: 100%; margin: 10px 0 5px 0;'>
+            <tr>
+                <td style='width: 80%; font-weight: bold;'>Field Name</td>
+                <td style='width: 10%; font-weight: bold;'>Search in Field</td>
+                <td style='width: 10%; font-weight: bold;'>Show Field in Results</td>
+            </tr>
+        </table>
+    </div>
+    <div style='overflow-y: auto; flex: 1 1 auto; width: 100%'><div class='h-100'>
     """
     for m in all_models:
         html += "<div class='siac-model-name'>%s</div>" % utility.text.trim_if_longer_than(m["name"], 40)
