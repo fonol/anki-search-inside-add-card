@@ -771,8 +771,7 @@ def reload_note_sidebar():
     return """
         if (document.getElementById('siac-notes-sidebar')) {
             $('#siac-notes-sidebar').remove();
-            document.getElementById('resultsWrapper').style.paddingLeft = "245px"; 
-            document.getElementById('resultsWrapper').innerHTML += `%s`; 
+            document.getElementById('resultsWrapper').insertAdjacentHTML("afterbegin", `%s`); 
             $('#siac-notes-sidebar .exp').click(function(e) {
             e.stopPropagation();
             let icn = $(this);
