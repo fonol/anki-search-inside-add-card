@@ -152,9 +152,8 @@ def on_load_note(editor):
         editor.web.eval("onWindowResize()")
 
         fillDeckSelect(editor)
-        if index is None:
-            if get_index() is None or (index is not None and index.lastSearch is None):
-                printStartingInfo(editor)
+        if index is not None and index.lastSearch is None:
+            printStartingInfo(editor)
         if not corpus_is_loaded():
             if index is not None and index.logging:
                 log("loading notes from anki db...")
