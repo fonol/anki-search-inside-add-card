@@ -1231,6 +1231,7 @@ span.tag-symbol {
     border-style: solid;
     border-color: $timelineBoxBorderColor$ transparent transparent transparent;
 }
+
 #siac-notes-sidebar {
     flex: 0 230px;
     min-width: 230px;

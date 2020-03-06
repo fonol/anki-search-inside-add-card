@@ -465,9 +465,9 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
         lastHadResults = false;
     if (renderImmediately) {
         if (gridView)
-            $('.cardWrapper').css("display", "inline-block");
+            $('#searchResults .cardWrapper').css("display", "inline-block");
         else
-            $('.cardWrapper').show();
+            $('#searchResults .cardWrapper').show();
         sr.style.overflowY = 'auto';
         sr.style.paddingRight = '10px';
         document.getElementById("greyout").style.display = "none";
@@ -504,9 +504,9 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
                     renderLoop();
                 } else {
                     if (gridView)
-                        $('.cardWrapper').css("display", "inline-block");
+                        $('#searchResults .cardWrapper').css("display", "inline-block");
                     else
-                        $('.cardWrapper').show();
+                        $('#searchResults .cardWrapper').show();
                     sr.style.overflowY = 'auto';
                     sr.style.paddingRight = '10px';
                     document.getElementById("greyout").style.display = "none";

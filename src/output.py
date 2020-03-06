@@ -665,7 +665,7 @@ class Output:
         else:
             html = """
                 %s
-                <div id='cal-info-notes' style='overflow-y: auto; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div>
+                <div id='cal-info-notes' style='overflow-y: auto; overflow-x: hidden; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div>
             """ % (context_html, html)
         self.editor.web.eval("document.getElementById('cal-info').innerHTML = `%s`;" % html)
 
