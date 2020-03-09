@@ -459,6 +459,21 @@
     writing-mode: vertical-lr;
     height: 90px;
 }
+.siac-queue-sched-btn.siac-prio-5 {
+    height: 80px;
+}
+.siac-queue-sched-btn.siac-prio-4 {
+    height: 70px;
+}
+.siac-queue-sched-btn.siac-prio-3 {
+    height: 60px;
+}
+.siac-queue-sched-btn.siac-prio-2 {
+    height: 50px;
+}
+.siac-queue-sched-btn.siac-prio-1 {
+    height: 40px;
+}
 .siac-queue-sched-btn-hor {
     vertical-align: top;
     margin: 40px 5px 0px 5px;

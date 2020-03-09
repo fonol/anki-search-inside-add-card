@@ -69,6 +69,7 @@ def init_addon():
     create_db_file_if_not_exists()
     gui_hooks.profile_did_open.append(build_index)
     gui_hooks.profile_did_open.append(insert_scripts)
+    gui_hooks.profile_did_open.append(recalculate_priority_queue)
 
     #disabled for now, to be able to use Occlude Image in the context menu
     #origEditorContextMenuEvt = EditorWebView.contextMenuEvent
@@ -121,7 +122,7 @@ def editor_save_with_index_update(dialog, _old):
         # note should be rerendered
         rerenderNote(dialog.editor.note.id)
          # keep track of edited notes (to display a little remark in the results)
-        index.output.edited[str(dialog.editor.note.id)] = t.time()
+        index.ui.edited[str(dialog.editor.note.id)] = t.time()
 
 
 def on_load_note(editor):
@@ -133,9 +134,7 @@ def on_load_note(editor):
     #only display in add cards dialog or in the review edit dialog (if enabled)
     if editor.addMode or (get_config_value_or_default("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
         index = get_index()
-        if index is not None and index.logging:
-            log("Trying to insert html in editor")
-            log("Editor.addMode: %s" % editor.addMode)
+
         zoom = get_config_value_or_default("searchpane.zoom", 1.0)
         show_tag_info_on_hover = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
         editor.web.eval(f"""
@@ -155,16 +154,13 @@ def on_load_note(editor):
         if index is not None and index.lastSearch is None:
             printStartingInfo(editor)
         if not corpus_is_loaded():
-            if index is not None and index.logging:
-                log("loading notes from anki db...")
             corpus = get_notes_in_collection()
             set_corpus(corpus)
-            if index is not None and index.logging:
-                log("loaded notes: len(corpus): " + str(len(corpus)))
 
-        if index is not None and index.output is not None:
-            index.output.editor = editor
-            index.output._loadPlotJsIfNotLoaded()
+        if index is not None and index.ui is not None:
+            index.ui.set_editor(editor)
+            index.ui._loadPlotJsIfNotLoaded()
+
     if get_edit() is None and editor is not None:
         set_edit(editor)
 
@@ -216,7 +212,7 @@ def insert_scripts():
 
 @requires_index_loaded
 def determineClickTarget(pos):
-    get_index().output.editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
+    get_index().ui._editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
 
 
 def addOptionsToContextMenu(clickInfo):
@@ -225,38 +221,38 @@ def addOptionsToContextMenu(clickInfo):
     if clickInfo is not None and clickInfo.startswith("img "):
         try:
             src = clickInfo[4:]
-            m = QMenu(index.output.editor.web)
+            m = QMenu(index.ui._editor.web)
             a = m.addAction("Open Image in Browser")
             a.triggered.connect(lambda: openImgInBrowser(src))
             cpSubMenu = m.addMenu("Copy Image To Field...")
-            for key in index.output.editor.note.keys():
+            for key in index.ui._editor.note.keys():
                 cpSubMenu.addAction("Append to %s" % key).triggered.connect(functools.partial(appendImgToField, src, key))
             m.popup(QCursor.pos())
         except:
-            origEditorContextMenuEvt(index.output.editor.web, contextEvt)
+            origEditorContextMenuEvt(index.ui._editor.web, contextEvt)
     elif clickInfo is not None and clickInfo.startswith("note "):
         try:
             content = " ".join(clickInfo.split()[2:])
             nid = int(clickInfo.split()[1])
-            m = QMenu(index.output.editor.web)
+            m = QMenu(index.ui._editor.web)
             a = m.addAction("Find Notes Added On The Same Day")
-            a.triggered.connect(lambda: getCreatedSameDay(index, index.output.editor, nid))
+            a.triggered.connect(lambda: getCreatedSameDay(index, index.ui._editor, nid))
             m.popup(QCursor.pos())
         except:
-            origEditorContextMenuEvt(index.output.editor.web, contextEvt)
+            origEditorContextMenuEvt(index.ui._editor.web, contextEvt)
 
     # elif clickInfo is not None and clickInfo.startswith("span "):
     #     content = clickInfo.split()[1]
 
     else:
-        origEditorContextMenuEvt(index.output.editor.web, contextEvt)
+        origEditorContextMenuEvt(index.ui._editor.web, contextEvt)
 
 
 def setup_hooks():
     add_hook("user-note-created", reload_note_sidebar)
     add_hook("user-note-deleted", reload_note_sidebar)
     add_hook("user-note-edited", reload_note_sidebar)
-    add_hook("user-note-edited", reload_note_reading_modal_bottom_bar)
+    add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
 
 
 def add_hide_show_shortcut(shortcuts, editor):
@@ -271,32 +267,32 @@ def openImgInBrowser(url):
 
 def show_quick_open_pdf():
     ix = get_index()
-    dialog = QuickOpenPDF(ix.output.editor.parentWindow)
+    dialog = QuickOpenPDF(ix.ui._editor.parentWindow)
     if dialog.exec_():
         if dialog.chosen_id is not None and dialog.chosen_id > 0:
             def cb(can_load):
                 if can_load:
-                    display_note_reading_modal(dialog.chosen_id)
-            ix.output.js_with_cb("beforeNoteQuickOpen();", cb)
+                    ix.ui.reading_modal.display(dialog.chosen_id)
+            ix.ui.js_with_cb("beforeNoteQuickOpen();", cb)
 
 def appendNoteToField(content, key):
     if not check_index():
         return
     index = get_index()
-    note = index.output.editor.note
+    note = index.ui._editor.note
     note.fields[note._fieldOrd(key)] += content
     note.flush()
-    index.output.editor.loadNote()
+    index.ui._editor.loadNote()
 
 def appendImgToField(src, key):
     if src is None or len(src) == 0:
         return
     index = get_index()
-    note = index.output.editor.note
+    note = index.ui._editor.note
     src = re.sub("https?://[0-9.]+:\\d+/", "", src)
     note.fields[note._fieldOrd(key)] += "<img src='%s'/>" % src
     note.flush()
-    index.output.editor.loadNote()
+    index.ui._editor.loadNote()
 
 def setup_tagedit_timer():
     global tagEditTimer
@@ -320,7 +316,7 @@ def tag_edit_keypress(self, evt, _old):
         try:
             tagEditTimer.timeout.disconnect()
         except Exception: pass
-        tagEditTimer.timeout.connect(lambda: rerender_info(index.output.editor, text, searchByTags = True)) 
+        tagEditTimer.timeout.connect(lambda: rerender_info(index.ui._editor, text, searchByTags = True)) 
         tagEditTimer.start(1000)
 
 init_addon()

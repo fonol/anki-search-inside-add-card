@@ -36,8 +36,8 @@ def js(fn):
     """
     def _eval_js_dec(*args, **kwargs):
         ix = get_index()
-        if ix is not None and ix.output is not None and ix.output.editor is not None and ix.output.editor.web is not None:
-            ix.output.js(fn(*args, **kwargs))
+        if ix is not None and ix.ui is not None and ix.ui._editor is not None and ix.ui._editor.web is not None:
+            ix.ui.js(fn(*args, **kwargs))
         else:
             if mw.app.activeWindow() is not None:
                 mw.app.activeWindow().editor.web.eval(fn(*args, **kwargs))

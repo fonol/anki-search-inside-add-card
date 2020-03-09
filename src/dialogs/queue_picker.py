@@ -16,6 +16,7 @@
 
 
 from aqt.qt import *
+from aqt.utils import tooltip
 import aqt
 import random
 import os
@@ -51,12 +52,12 @@ class QueuePicker(QDialog):
     def setup_ui(self, note_list, note_list_right):
 
         self.vbox_left = QVBoxLayout()
-        l_lbl = QLabel("Queue (Drag & Drop to Reorder)") 
+        l_lbl = QLabel("Queue") 
         l_lbl.setAlignment(Qt.AlignCenter)
         self.vbox_left.addWidget(l_lbl)
         self.t_view_left = QListWidget()
-        self.t_view_left.setDragDropMode(QAbstractItemView.InternalMove)
-        self.t_view_left.model().rowsMoved.connect(self.on_list_reorder)
+        # self.t_view_left.setDragDropMode(QAbstractItemView.InternalMove)
+        # self.t_view_left.model().rowsMoved.connect(self.on_list_reorder)
         self.tabs = QTabWidget()
         self.tags_tab = TagsTab(self)
         self.pdfs_tab = PDFsTab(self)
@@ -80,24 +81,24 @@ class QueuePicker(QDialog):
         self.unqueue_all_btn = QPushButton("Empty Queue")
         self.unqueue_all_btn.clicked.connect(self.remove_all_from_queue)
 
-        self.shuffle_queue_btn = QPushButton("Shuffle")
-        self.shuffle_queue_btn.clicked.connect(self.shuffle_queue)
+        # self.shuffle_queue_btn = QPushButton("Shuffle")
+        # self.shuffle_queue_btn.clicked.connect(self.shuffle_queue)
 
         btn_hbox_l = QHBoxLayout()
         btn_hbox_l.addWidget(self.unqueue_all_btn)
-        btn_hbox_l.addWidget(self.shuffle_queue_btn)
+        # btn_hbox_l.addWidget(self.shuffle_queue_btn)
         self.vbox_left.addLayout(btn_hbox_l)
 
-        self.reorder_select = QComboBox()
-        self.reorder_select.addItem("Reorder by Date Created (Asc.)")
-        self.reorder_select.addItem("Reorder by Date Created (Desc.)")
-        self.reorder_select.addItem("Reorder by Name (Asc.)")
-        self.reorder_btn = QPushButton("Apply")
-        self.reorder_btn.clicked.connect(self.on_reorder_clicked)
-        h_r = QHBoxLayout()
-        h_r.addWidget(self.reorder_select)
-        h_r.addWidget(self.reorder_btn)
-        self.vbox_left.addLayout(h_r)
+        # self.reorder_select = QComboBox()
+        # self.reorder_select.addItem("Reorder by Date Created (Asc.)")
+        # self.reorder_select.addItem("Reorder by Date Created (Desc.)")
+        # self.reorder_select.addItem("Reorder by Name (Asc.)")
+        # self.reorder_btn = QPushButton("Apply")
+        # self.reorder_btn.clicked.connect(self.on_reorder_clicked)
+        # h_r = QHBoxLayout()
+        # h_r.addWidget(self.reorder_select)
+        # h_r.addWidget(self.reorder_btn)
+        # self.vbox_left.addLayout(h_r)
         self.vbox = QVBoxLayout()
 
         self.hbox = QHBoxLayout()
@@ -259,6 +260,7 @@ class QueuePicker(QDialog):
         empty_priority_list()
         self.fill_list(self.t_view_left, [], with_nums = True)
         self.tabs.currentWidget().refresh()
+        tooltip(f"Queue emptied.")
 
     def remove_from_queue(self):
         sels = self.t_view_left.selectedItems()
@@ -267,21 +269,22 @@ class QueuePicker(QDialog):
         nid = sels[0].data(Qt.UserRole)
         if self.chosen_id == nid:
             self.set_chosen(-1, "")
-        update_position(nid, QueueSchedule.NOT_ADD)
+        remove_from_priority_list(nid)
         self.refresh_queue_list()
         self.tabs.currentWidget().refresh()
+        tooltip(f"Removed Note from Queue.")
     
-    def on_reorder_clicked(self):
-        sel = self.reorder_select.currentIndex()
-        priority_list = _get_priority_list()
-        if sel == 0:
-            priority_list = sorted(priority_list, key=lambda x: x.created)
-        elif sel == 1:
-            priority_list = sorted(priority_list, key=lambda x: x.created, reverse=True)
-        elif sel == 2:
-            priority_list = sorted(priority_list, key=lambda x: x.title if x.title is not None else "")
-        self.fill_list(self.t_view_left, priority_list, with_nums = True)
-        set_priority_list([x.id for x in priority_list])
+    # def on_reorder_clicked(self):
+    #     sel = self.reorder_select.currentIndex()
+    #     priority_list = _get_priority_list()
+    #     if sel == 0:
+    #         priority_list = sorted(priority_list, key=lambda x: x.created)
+    #     elif sel == 1:
+    #         priority_list = sorted(priority_list, key=lambda x: x.created, reverse=True)
+    #     elif sel == 2:
+    #         priority_list = sorted(priority_list, key=lambda x: x.title if x.title is not None else "")
+    #     self.fill_list(self.t_view_left, priority_list, with_nums = True)
+    #     set_priority_list([x.id for x in priority_list])
 
 
 
@@ -305,16 +308,31 @@ class PDFsTab(QWidget):
         self.t_view_right = QListWidget()
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
-        self.move_to_queue_start_btn = QPushButton("Enqueue [Start]")
-        self.move_to_queue_start_btn.clicked.connect(self.move_to_queue_beginning)
-        self.move_to_queue_rnd_btn = QPushButton("Enqueue [Rnd]")
-        self.move_to_queue_rnd_btn.clicked.connect(self.move_to_queue_random)
-        self.move_to_queue_end_btn = QPushButton("Enqueue [End]")
-        self.move_to_queue_end_btn.clicked.connect(self.move_to_queue_end)
+        self.enq_lbl = QLabel("Add to Queue: ")
+        self.enq_1 = QPushButton("5")
+        self.enq_1.setMinimumWidth(15)
+        self.enq_1.clicked.connect(lambda: self.enqueue(5))
+        self.enq_2 = QPushButton("4")
+        self.enq_2.setMinimumWidth(15)
+        self.enq_2.clicked.connect(lambda: self.enqueue(4))
+        self.enq_3 = QPushButton("3")
+        self.enq_3.setMinimumWidth(15)
+        self.enq_3.clicked.connect(lambda: self.enqueue(3))
+        self.enq_4 = QPushButton("2")
+        self.enq_4.setMinimumWidth(15)
+        self.enq_4.clicked.connect(lambda: self.enqueue(2))
+        self.enq_5 = QPushButton("1")
+        self.enq_5.setMinimumWidth(15)
+        self.enq_5.clicked.connect(lambda: self.enqueue(1))
         btn_hbox = QHBoxLayout()
-        btn_hbox.addWidget(self.move_to_queue_start_btn)
-        btn_hbox.addWidget(self.move_to_queue_rnd_btn)
-        btn_hbox.addWidget(self.move_to_queue_end_btn)
+        btn_hbox.addWidget(self.enq_lbl)
+        btn_hbox.addWidget(self.enq_1)
+        btn_hbox.addWidget(self.enq_2)
+        btn_hbox.addWidget(self.enq_3)
+        btn_hbox.addWidget(self.enq_4)
+        btn_hbox.addWidget(self.enq_5)
+        btn_hbox.addStretch(1)
+
         self.vbox_right.addLayout(btn_hbox)
         self.setLayout(self.vbox_right)
         self.t_view_right.itemClicked.connect(self.item_clicked_right_side)
@@ -345,40 +363,20 @@ class PDFsTab(QWidget):
         self.t_view_right.clear()
         self.fill_list(res)
 
-    def move_to_queue_beginning(self):
+    def enqueue(self, sched):
         sels = self.t_view_right.selectedItems()
         if sels is None or len(sels) == 0:
             return
         nid = sels[0].data(Qt.UserRole)
         self.parent.set_chosen(-1, "")
-        update_position(nid, QueueSchedule.HEAD)
+        update_priority_list(nid, sched)
         self.parent.refresh_queue_list()
         self.refresh()
-
-    def move_to_queue_end(self):
-        sels = self.t_view_right.selectedItems()
-        if sels is None or len(sels) == 0:
-            return
-        nid = sels[0].data(Qt.UserRole)
-        self.parent.set_chosen(-1, "")
-        update_position(nid, QueueSchedule.END)
-        self.parent.refresh_queue_list()
-        self.refresh()
-
-    def move_to_queue_random(self):
-        sels = self.t_view_right.selectedItems()
-        if sels is None or len(sels) == 0:
-            return
-        nid = sels[0].data(Qt.UserRole)
-        self.parent.set_chosen(-1, "")
-        update_position(nid, QueueSchedule.RANDOM)
-        self.parent.refresh_queue_list()
-        self.refresh()
+        tooltip(f"Moved in Queue, with priority <b>{dynamic_sched_to_str(sched)}</b>")
 
     def item_clicked_right_side(self, item):
         self.parent.clear_selection("left")
         self.parent.set_chosen(item.data(Qt.UserRole), item.text())
-
 
 class TextNotesTab(QWidget):
     
@@ -398,16 +396,31 @@ class TextNotesTab(QWidget):
         self.t_view_right = QListWidget()
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
-        self.move_to_queue_start_btn = QPushButton("Enqueue [Start]")
-        self.move_to_queue_start_btn.clicked.connect(self.move_to_queue_beginning)
-        self.move_to_queue_rnd_btn = QPushButton("Enqueue [Rnd]")
-        self.move_to_queue_rnd_btn.clicked.connect(self.move_to_queue_random)
-        self.move_to_queue_end_btn = QPushButton("Enqueue [End]")
-        self.move_to_queue_end_btn.clicked.connect(self.move_to_queue_end)
+        self.enq_lbl = QLabel("Add to Queue: ")
+        self.enq_1 = QPushButton("5")
+        self.enq_1.setMinimumWidth(15)
+        self.enq_1.clicked.connect(lambda: self.enqueue(5))
+        self.enq_2 = QPushButton("4")
+        self.enq_2.setMinimumWidth(15)
+        self.enq_2.clicked.connect(lambda: self.enqueue(4))
+        self.enq_3 = QPushButton("3")
+        self.enq_3.setMinimumWidth(15)
+        self.enq_3.clicked.connect(lambda: self.enqueue(3))
+        self.enq_4 = QPushButton("2")
+        self.enq_4.setMinimumWidth(15)
+        self.enq_4.clicked.connect(lambda: self.enqueue(2))
+        self.enq_5 = QPushButton("1")
+        self.enq_5.setMinimumWidth(15)
+        self.enq_5.clicked.connect(lambda: self.enqueue(1))
         btn_hbox = QHBoxLayout()
-        btn_hbox.addWidget(self.move_to_queue_start_btn)
-        btn_hbox.addWidget(self.move_to_queue_rnd_btn)
-        btn_hbox.addWidget(self.move_to_queue_end_btn)
+        btn_hbox.addWidget(self.enq_lbl)
+        btn_hbox.addWidget(self.enq_1)
+        btn_hbox.addWidget(self.enq_2)
+        btn_hbox.addWidget(self.enq_3)
+        btn_hbox.addWidget(self.enq_4)
+        btn_hbox.addWidget(self.enq_5)
+        btn_hbox.addStretch(1)
+
         self.vbox_right.addLayout(btn_hbox)
         self.setLayout(self.vbox_right)
         self.t_view_right.itemClicked.connect(self.item_clicked_right_side)
@@ -435,37 +448,16 @@ class TextNotesTab(QWidget):
         self.t_view_right.clear()
         self.fill_list(res)
 
-    def move_to_queue_beginning(self):
+    def enqueue(self, sched):
         sels = self.t_view_right.selectedItems()
         if sels is None or len(sels) == 0:
             return
         nid = sels[0].data(Qt.UserRole)
         self.parent.set_chosen(-1, "")
-        update_position(nid, QueueSchedule.HEAD)
+        update_priority_list(nid, sched)
         self.parent.refresh_queue_list()
         self.refresh()
-       
-
-    def move_to_queue_end(self):
-        sels = self.t_view_right.selectedItems()
-        if sels is None or len(sels) == 0:
-            return
-        nid = sels[0].data(Qt.UserRole)
-        self.parent.set_chosen(-1, "")
-        update_position(nid, QueueSchedule.END)
-        self.parent.refresh_queue_list()
-        self.refresh()
-
-    def move_to_queue_random(self):
-        sels = self.t_view_right.selectedItems()
-        if sels is None or len(sels) == 0:
-            return
-        nid = sels[0].data(Qt.UserRole)
-        self.parent.set_chosen(-1, "")
-        update_position(nid, QueueSchedule.RANDOM)
-        self.parent.refresh_queue_list()
-        self.refresh()
-
+        tooltip(f"Moved in Queue, with priority <b>{dynamic_sched_to_str(sched)}</b>")
 
     def item_clicked_right_side(self, item):
         self.parent.clear_selection("left")
@@ -626,16 +618,31 @@ class TagsTab(QWidget):
         self.empty_and_enqueue_all_btn.clicked.connect(self.empty_queue_and_enqueue_all)
         self.vbox_right.addWidget(self.enqueue_all_btn)
         self.vbox_right.addWidget(self.empty_and_enqueue_all_btn)
-        self.move_to_queue_start_btn = QPushButton("Enqueue [Start]")
-        self.move_to_queue_start_btn.clicked.connect(self.move_to_queue_beginning)
-        self.move_to_queue_rnd_btn = QPushButton("Enqueue [Rnd]")
-        self.move_to_queue_rnd_btn.clicked.connect(self.move_to_queue_random)
-        self.move_to_queue_end_btn = QPushButton("Enqueue [End]")
-        self.move_to_queue_end_btn.clicked.connect(self.move_to_queue_end)
+        self.enq_lbl = QLabel("Add to Queue: ")
+        self.enq_1 = QPushButton("5")
+        self.enq_1.setMinimumWidth(15)
+        self.enq_1.clicked.connect(lambda: self.enqueue(5))
+        self.enq_2 = QPushButton("4")
+        self.enq_2.setMinimumWidth(15)
+        self.enq_2.clicked.connect(lambda: self.enqueue(4))
+        self.enq_3 = QPushButton("3")
+        self.enq_3.setMinimumWidth(15)
+        self.enq_3.clicked.connect(lambda: self.enqueue(3))
+        self.enq_4 = QPushButton("2")
+        self.enq_4.setMinimumWidth(15)
+        self.enq_4.clicked.connect(lambda: self.enqueue(2))
+        self.enq_5 = QPushButton("1")
+        self.enq_5.setMinimumWidth(15)
+        self.enq_5.clicked.connect(lambda: self.enqueue(1))
+        self.enq_5.adjustSize()
         btn_hbox = QHBoxLayout()
-        btn_hbox.addWidget(self.move_to_queue_start_btn)
-        btn_hbox.addWidget(self.move_to_queue_rnd_btn)
-        btn_hbox.addWidget(self.move_to_queue_end_btn)
+        btn_hbox.addWidget(self.enq_lbl)
+        btn_hbox.addWidget(self.enq_1)
+        btn_hbox.addWidget(self.enq_2)
+        btn_hbox.addWidget(self.enq_3)
+        btn_hbox.addWidget(self.enq_4)
+        btn_hbox.addWidget(self.enq_5)
+        btn_hbox.addStretch(1)
         self.vbox_right.addLayout(btn_hbox)
         # self.list.itemDoubleClicked.connect(self.add_pdf_note)
         self.tag_tree.itemClicked.connect(self.tree_item_clicked)
@@ -704,36 +711,16 @@ class TagsTab(QWidget):
         if self.tag_displayed is not None:
             self.load_tags_unused_notes(self.tag_displayed)
 
-    def move_to_queue_beginning(self):
+    def enqueue(self, sched):
         sels = self.list.selectedItems()
         if sels is None or len(sels) == 0:
             return
         nid = sels[0].data(Qt.UserRole)
         self.parent.set_chosen(-1, "")
-        update_position(nid, QueueSchedule.HEAD)
+        update_priority_list(nid, sched)
         self.parent.refresh_queue_list()
         self.refresh()
-       
-
-    def move_to_queue_end(self):
-        sels = self.list.selectedItems()
-        if sels is None or len(sels) == 0:
-            return
-        nid = sels[0].data(Qt.UserRole)
-        self.parent.set_chosen(-1, "")
-        update_position(nid, QueueSchedule.END)
-        self.parent.refresh_queue_list()
-        self.refresh()
-
-    def move_to_queue_random(self):
-        sels = self.list.selectedItems()
-        if sels is None or len(sels) == 0:
-            return
-        nid = sels[0].data(Qt.UserRole)
-        self.parent.set_chosen(-1, "")
-        update_position(nid, QueueSchedule.RANDOM)
-        self.parent.refresh_queue_list()
-        self.refresh()
+        tooltip(f"Moved in Queue, with priority <b>{dynamic_sched_to_str(sched)}</b>")
     
     def empty_queue_and_enqueue_all(self):
         if self.tag_displayed is None:
@@ -743,6 +730,7 @@ class TagsTab(QWidget):
         set_priority_list([n.id for n in notes])
         self.parent.refresh_queue_list()
         self.refresh()
+        tooltip(f"Emptied Queue, inserted all with tag <b>{self.tag_displayed}</b>")
 
     def enqueue_all(self):
         if self.tag_displayed is None:
@@ -752,6 +740,8 @@ class TagsTab(QWidget):
         set_priority_list([e.id for e in queue] + [n.id for n in notes])
         self.parent.refresh_queue_list()
         self.refresh()
+        tooltip(f"Added all with tag <b>{self.tag_displayed}</b>")
+
 
 
 

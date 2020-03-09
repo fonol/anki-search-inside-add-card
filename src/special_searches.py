@@ -75,7 +75,7 @@ def get_cal_info_context(day_of_year : int):
 
 def getCreatedSameDay(index, editor, nid):
     stamp = utility.misc.get_milisec_stamp()
-    index.output.latest = stamp
+    index.ui.latest = stamp
     index.lastSearch = (nid, None, "createdSameDay")
     try:
         nidMinusOneDay = nid - (24 * 60 * 60 * 1000)
@@ -97,18 +97,18 @@ def getCreatedSameDay(index, editor, nid):
                     break
         if check_index():
             if len(rList) > 0:
-                index.output.print_search_results(rList, stamp, editor)
+                index.ui.print_search_results(rList, stamp, editor)
             else:
-                index.output.empty_result("No results found.")
+                index.ui.empty_result("No results found.")
     except:
         if check_index():
-            index.output.empty_result("Error in calculation.")
+            index.ui.empty_result("Error in calculation.")
 
 def getRandomNotes(index, decks):
     if index is None:
         return
     stamp = utility.misc.get_milisec_stamp()
-    index.output.latest = stamp
+    index.ui.latest = stamp
     index.lastSearch = (None, decks, "random")
 
     if not "-1" in decks:
@@ -130,7 +130,7 @@ def getRandomNotes(index, decks):
 
 def getCreatedNotesOrderedByDate(index, editor, decks, limit, sortOrder):
     stamp = utility.misc.get_milisec_stamp()
-    index.output.latest = stamp
+    index.ui.latest = stamp
     if sortOrder == "desc":
         index.lastSearch = (None, decks, "lastCreated", limit)
     else:
@@ -153,9 +153,9 @@ def getCreatedNotesOrderedByDate(index, editor, decks, limit, sortOrder):
 
     if check_index():
         if len(rList) > 0:
-            index.output.print_search_results(rList, stamp, editor)
+            index.ui.print_search_results(rList, stamp, editor)
         else:
-            index.output.empty_result("No results found.")
+            index.ui.empty_result("No results found.")
 
 
 def getLastReviewed(decks, limit):
@@ -234,7 +234,7 @@ def getByTimeTaken(decks, limit, mode):
 
 def getLastModifiedNotes(index, editor, decks, limit):
     stamp = utility.misc.get_milisec_stamp()
-    index.output.latest = stamp
+    index.ui.latest = stamp
     index.lastSearch = (None, decks, "lastModified")
 
     if not "-1" in decks and len(decks) > 0:
@@ -252,9 +252,9 @@ def getLastModifiedNotes(index, editor, decks, limit):
 
     if check_index():
         if len(rList) > 0:
-            index.output.print_search_results(rList, stamp, editor)
+            index.ui.print_search_results(rList, stamp, editor)
         else:
-            index.output.empty_result("No results found.")
+            index.ui.empty_result("No results found.")
 
 
 def _find_cards_with_one_more_rep(cid: int):

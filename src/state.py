@@ -25,7 +25,7 @@ edit = None
 old_on_bridge = None
 
 def check_index():
-    return search_index is not None and search_index.output is not None and search_index.output.editor is not None and search_index.output.editor.web is not None
+    return search_index is not None and search_index.ui is not None and search_index.ui._editor is not None and search_index.ui._editor.web is not None
 
 def set_index(index):
     global search_index

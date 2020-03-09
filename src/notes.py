@@ -19,14 +19,17 @@ import sqlite3
 from enum import Enum, unique
 from datetime import datetime, time, date, timedelta
 from aqt import mw
+from aqt.utils import tooltip, showInfo
 import random
 
 try:
     from .state import get_index
     from .models import SiacNote, NoteRelations
+    from .config import get_config_value_or_default
 except:
     from state import get_index
     from models import SiacNote, NoteRelations
+    from config import get_config_value_or_default
 import utility.misc
 import utility.tags
 import utility.text
@@ -34,15 +37,13 @@ import utility.text
 
 @unique
 class QueueSchedule(Enum):
-    NOT_ADD = 1
-    HEAD = 2
-    FIRST_THIRD = 3
-    SECOND_THIRD = 4
-    END = 5
-    RANDOM = 6
-    RANDOM_FIRST_THIRD = 7
-    RANDOM_SECOND_THIRD = 8
-    RANDOM_THIRD_THIRD = 9
+    NOT_ADD = 0
+    VERY_LOW_PRIO = 1
+    LOW_PRIO = 2
+    AVERAGE_PRIO = 3
+    HIGH_PRIO = 4
+    VERY_HIGH_PRIO = 5
+
 
 @unique
 class PDFMark(Enum):
@@ -51,6 +52,7 @@ class PDFMark(Enum):
     MORE_INFO = 3
     MORE_CARDS = 4
     BOOKMARK = 5
+
 
 def create_db_file_if_not_exists():
     file_path = _get_db_path()
@@ -98,7 +100,16 @@ def create_db_file_if_not_exists():
             FOREIGN KEY(nid) REFERENCES notes(id)
         ); 
     """)
-
+    conn.execute("""
+        create table if not exists queue_prio_log
+        (
+            nid INTEGER,
+            prio INTEGER,
+            type TEXT,
+            created TEXT,
+            FOREIGN KEY(nid) REFERENCES notes(id)
+        ); 
+    """)
     conn.commit()
     conn.close()
 
@@ -110,95 +121,195 @@ def create_note(title, text, source, tags, nid, reminder, queue_schedule):
 
     if source is not None:
         source = source.strip()
-
     if (len(text) + len(title)) == 0:
         return
-
     if tags is not None and len(tags.strip()) > 0:
         tags = " %s " % tags.strip()
     else: 
         tags = ""
 
-    pos = None
-    if queue_schedule != 1:
-        list = _get_priority_list()
-        if QueueSchedule(queue_schedule) == QueueSchedule.HEAD:
-            pos = 0
-        elif QueueSchedule(queue_schedule) == QueueSchedule.FIRST_THIRD:
-            pos = int(len(list) / 3.0)
-        elif QueueSchedule(queue_schedule) == QueueSchedule.SECOND_THIRD:
-            pos = int(2 * len(list) / 3.0)
-        elif QueueSchedule(queue_schedule) == QueueSchedule.END:
-            pos = len(list)
-        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM:
-            pos = random.randint(0, len(list))
-        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_FIRST_THIRD:
-            pos = random.randint(0, int(len(list) / 3.0))
-        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_SECOND_THIRD:
-            pos = random.randint(int(len(list) / 3.0), int(len(list) * 2 / 3.0))
-        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_THIRD_THIRD:
-            pos = random.randint(int(len(list) * 2 / 3.0), int(len(list) * 3 / 3.0))
-
     conn = _get_connection()
-    if pos is not None:
-        pos_list = [(ix if ix < pos else ix + 1,r.id) for ix, r in enumerate(list)]
-        conn.executemany("update notes set position = ? where id = ?", pos_list)
-
     id = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position)
-                values (?,?,?,?,?,datetime('now', 'localtime'),""," ","", ?)""", (title, text, source, tags, nid, pos)).lastrowid
+                values (?,?,?,?,?,datetime('now', 'localtime'),""," ","", NULL)""", (title, text, source, tags, nid)).lastrowid
     conn.commit()
     conn.close()
+    update_priority_list(id, queue_schedule)
     index = get_index()
     if index is not None:
         index.add_user_note((id, title, text, source, tags, nid, ""))
 
+def remove_from_priority_list(nid_to_remove):
+    return update_priority_list(nid_to_remove, QueueSchedule.NOT_ADD.value)
 
-def update_position(note_id, queue_schedule):
+
+def update_priority_list(nid_to_update, schedule):
     """
-        Called after note has been marked as read.
-        Will updated the positions of all notes in the queue.
-        Also sets the lastscheduled timestamp for the given note.
+    Call this after a note has been added or updated. 
+    Will read the current priority queue and update it, depending 
+    on what schedule mode is active.
+    Will also insert the given priority in queue_prio_log.
     """
+
+    # priority log entries that have to be inserted in the log
+    to_update_in_log = []
+    # priority log entries that have to be removed from the log, because item is no longer in the queue
+    to_remove_from_log = []
+    # will contain the ids in priority order, highest first
+    final_list = []
+    index = -1
+    
+    current = _get_priority_list_with_last_prios()
+    scores = []
+    nid_was_included = False
+    now = datetime.now()
+    for nid, last_prio, last_prio_creation, current_position in current:
+        # last prio might be null, because of legacy queue system
+        if last_prio is None:
+            # lazy solution: set to average priority
+            last_prio = 3
+            now += timedelta(seconds=1)
+            ds = now.strftime('%Y-%m-%d-%H-%M-%S')
+            last_prio_creation = ds
+            to_update_in_log.append((nid, ds, schedule))
+            
+        # assert(current_position >= 0)
+        
+        
+        if nid == nid_to_update:
+            nid_was_included = True
+            # initial score is 0 (delta_days is 0), but the note will climb up the queue faster if it has a high prio
+            score = 0
+            if schedule == QueueSchedule.NOT_ADD.value:
+                # if not in queue, remove from log
+                to_remove_from_log.append(nid)
+            else:
+                now += timedelta(seconds=1)
+                ds = now.strftime('%Y-%m-%d-%H-%M-%S')
+                if not nid in [x[0] for x in to_update_in_log]:
+                    to_update_in_log.append((nid, ds, schedule))
+                scores.append((nid, ds, last_prio, score))
+        else:
+            days_delta = max(0, (datetime.now() - _dt_from_date_str(last_prio_creation)).total_seconds() / 86400.0)
+            # assert(days_delta >= 0)
+            # assert(days_delta < 10000)
+            score = days_delta * last_prio
+            scores.append((nid, last_prio_creation, last_prio, score))
+
+    # note to be updated doesn't have to be in the results, it might not have been in the queue before
+    if not nid_was_included:
+        if schedule == QueueSchedule.NOT_ADD.value:
+            to_remove_from_log.append(nid_to_update)
+        else:
+            now += timedelta(seconds=1)
+            ds = now.strftime('%Y-%m-%d-%H-%M-%S')
+            scores.append((nid_to_update, ds, schedule, 0))
+            to_update_in_log.append((nid_to_update, ds, schedule))
+    final_list = sorted(scores, key=lambda x: x[3], reverse=True)
+    
+    # assert(len(scores) == 0 or len(final_list)  >0)
+    # for s in scores:
+    #     assert(s[3] >= 0)
+    #     assert(s[1] is not None and len(s[1]) > 0)
+    # assert(len(final_list) == len(set([f[0] for f in final_list])))
+        
+    # assert((len(to_update_in_log) + len(to_remove_from_log)) > 0)
+
+    # update log and positions
+    cmd = f"update notes set position = NULL;"
+    for ix, f in enumerate(final_list):
+        cmd += f"update notes set position = {ix} where id = {f[0]};"
+        if f[0] == nid_to_update:
+            index = ix
+    for nid in to_remove_from_log:
+        cmd += f"delete from queue_prio_log where nid = {nid};"
+    for nid, created, prio in to_update_in_log:
+        cmd += f"insert into queue_prio_log (nid, prio, created) values ({nid}, {prio}, '{created}');"
     conn = _get_connection()
-    queue = conn.execute("select id from notes where position is not null and id != %s order by position asc" % note_id).fetchall()
-    existing = [e[0] for e in queue]
-
-    if queue_schedule == QueueSchedule.HEAD:
-        existing.insert(0, note_id)
-    elif queue_schedule == QueueSchedule.FIRST_THIRD:
-        existing.insert(int(len(existing) / 3.0), note_id)
-    elif queue_schedule == QueueSchedule.SECOND_THIRD:
-        existing.insert(int(2 * len(existing) / 3.0), note_id)
-    elif queue_schedule == QueueSchedule.END:
-        existing.append(note_id)
-    elif queue_schedule == QueueSchedule.RANDOM:
-        existing.insert(random.randint(0, len(existing)), note_id)
-    elif queue_schedule == QueueSchedule.RANDOM_FIRST_THIRD:
-        existing.insert(random.randint(0, int(len(existing) / 3.0)), note_id)
-    elif queue_schedule == QueueSchedule.RANDOM_SECOND_THIRD:
-        existing.insert(random.randint(int(len(existing) / 3.0), int(len(existing) * 2 / 3.0)), note_id)
-    elif queue_schedule == QueueSchedule.RANDOM_THIRD_THIRD:
-        existing.insert(random.randint(int(len(existing) * 2 / 3.0), int(len(existing) * 3 / 3.0)), note_id)
-
-
-    pos_ids = [(ix, r) for ix, r in enumerate(existing)]
-    conn.executemany("update notes set position = ? where id=?", pos_ids)
-    conn.execute("update notes set lastscheduled = datetime('now', 'localtime') where id=%s" % note_id)
-    if queue_schedule == queue_schedule.NOT_ADD:
-        conn.execute("update notes set position = NULL where id=%s" % note_id)
+    conn.executescript(cmd)
     conn.commit()
     conn.close()
-    index = existing.index(note_id) if queue_schedule != QueueSchedule.NOT_ADD else -1
-    return (index, len(existing))
+    #return new position (0-based), and length of queue, some functions need that to update the ui
+    return (index, len(final_list))
+    
+def get_priority(nid):
+    conn = _get_connection()
+    res = conn.execute(f"select prio from queue_prio_log where nid = {nid} order by created desc limit 1").fetchone()
+    if res is None:
+        return None
+    conn.close()
+    return res[0]
+
+def get_priority_as_str(nid):
+    conn = _get_connection()
+    res = conn.execute(f"select prio from queue_prio_log where nid = {nid} order by created desc limit 1").fetchone()
+    conn.close()
+    if res is None or len(res) == 0:
+        return "No priority yet"
+    return dynamic_sched_to_str(res[0])
+
+def dynamic_sched_to_str(sched):
+    if sched == QueueSchedule.VERY_HIGH_PRIO.value:
+        return "Very high (5)"
+    if sched == QueueSchedule.HIGH_PRIO.value:
+        return "High (4)"
+    if sched == QueueSchedule.AVERAGE_PRIO.value:
+        return "Medium (3)"
+    if sched == QueueSchedule.LOW_PRIO.value:
+        return "Low (2)"
+    if sched == QueueSchedule.VERY_LOW_PRIO.value:
+        return "Very low (1)"
+        
+def recalculate_priority_queue():
+    """
+        If schedule mode dynamic, calculate the priority queue again, without writing anything to the 
+        priority log. Has to be done at least once on startup to incorporate the changed difference in days.
+    """
+    current = _get_priority_list_with_last_prios()
+    scores = []
+    to_update_in_log = []
+    now = datetime.now()
+    for nid, last_prio, last_prio_creation, current_position in current:
+        # last prio might be null, because of legacy queue system
+        if last_prio is None:
+            # lazy solution: set to average priority
+            last_prio = 3
+            now += timedelta(seconds=1)
+            ds = now.strftime('%Y-%m-%d-%H-%M-%S')
+            last_prio_creation = ds
+            to_update_in_log.append((nid, ds, last_prio))
+            
+        # assert(current_position >= 0)
+        days_delta = max(0, (datetime.now() - _dt_from_date_str(last_prio_creation)).total_seconds() / 86400.0)
+        
+        # assert(days_delta >= 0)
+        # assert(days_delta < 10000)
+        score = days_delta * last_prio
+        scores.append((nid, last_prio_creation, last_prio, score))
+    final_list = sorted(scores, key=lambda x: x[3], reverse=True)
+    
+    # assert(len(scores) == 0 or len(final_list)  >0)
+    # for s in scores:
+        # assert(s[3] >= 0)
+        # assert(s[1] is not None and len(s[1]) > 0)
+    # assert(len(final_list) == len(set([f[0] for f in final_list])))
+    cmd = f"update notes set position = NULL;"
+    for ix, f in enumerate(final_list):
+        cmd += f"update notes set position = {ix} where id = {f[0]};"
+    for nid, created, prio in to_update_in_log:
+        cmd += f"insert into queue_prio_log (nid, prio, created) values ({nid}, {prio}, '{created}');"
+    conn = _get_connection()
+    conn.executescript(cmd)
+    conn.commit()
+    conn.close()
+
 
 def mark_page_as_read(nid, page, pages_total):
-    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    now = _date_now_str()
     conn = _get_connection()
     conn.execute("insert or ignore into read (page, nid) values (%s, %s)" % (page, nid))
     conn.execute("update read set created = '%s', pagestotal = %s where page = %s and nid = %s" % (now, pages_total, page, nid))
     conn.commit()
     conn.close()
-
 
 def mark_page_as_unread(nid, page):
     conn = _get_connection()
@@ -207,7 +318,7 @@ def mark_page_as_unread(nid, page):
     conn.close()
 
 def mark_range_as_read(nid, start, end, pages_total):
-    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    now = _date_now_str()
     conn = _get_connection()
     res = conn.execute(f"select page from read where nid={nid} and page > -1").fetchall()
     res = [r[0] for r in res]
@@ -220,7 +331,7 @@ def mark_range_as_read(nid, start, end, pages_total):
     conn.close()
 
 def create_pdf_mark(nid, page, pages_total, mark_type):
-    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    now = _date_now_str()
     conn = _get_connection()
     conn.execute("delete from marks where nid = %s and page = %s and marktype = %s" % (nid, page, mark_type))
     conn.execute("insert into marks (page, nid, pagestotal, created, marktype) values (?, ?, ?, ?, ?)", (page, nid, pages_total, now, mark_type))
@@ -379,54 +490,13 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
 
     text = utility.text.clean_user_note_text(text)
     tags = " %s " % tags.strip()
+    mod = _date_now_str()
+    sql = f"update notes set title=?, text=?, source=?, tags=?, position=null, modified='{mod}' where id=?"
     conn = _get_connection()
-    sql = """
-        update notes set title=?, text=?, source=?, tags=?, modified=datetime('now', 'localtime') where id=?
-    """
-
-    pos = None
-    orig_prio_list = _get_priority_list()
-    note_had_position = False
-    list = []
-    for li in orig_prio_list:
-        if li.id == id:
-            note_had_position = True
-        else:
-            list.append(li)
-    if queue_schedule != 1:
-        if QueueSchedule(queue_schedule) == QueueSchedule.HEAD:
-            pos = 0
-        elif QueueSchedule(queue_schedule) == QueueSchedule.FIRST_THIRD:
-            pos = int(len(list) / 3.0)
-        elif QueueSchedule(queue_schedule) == QueueSchedule.SECOND_THIRD:
-            pos = int(2 * len(list) / 3.0)
-        elif QueueSchedule(queue_schedule) == QueueSchedule.END:
-            pos = len(list)
-        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM:
-            pos = random.randint(0, len(list))
-        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_FIRST_THIRD:
-            pos = random.randint(0, int(len(list) / 3.0))
-        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_SECOND_THIRD:
-            pos = random.randint(int(len(list) / 3.0), int(len(list) * 2 / 3.0))
-        elif QueueSchedule(queue_schedule) == QueueSchedule.RANDOM_THIRD_THIRD:
-            pos = random.randint(int(len(list) * 2 / 3.0), int(len(list) * 3 / 3.0))
-        sql = """
-            update notes set title=?, text=?, source=?, tags=?, position=%s, modified=datetime('now', 'localtime') where id=?
-        """ % pos
-    else:
-        if note_had_position:
-            sql = "update notes set title=?, text=?, source=?, tags=?, modified=datetime('now', 'localtime') where id=?"
-        else:
-            sql = "update notes set title=?, text=?, source=?, tags=?, position=null, modified=datetime('now', 'localtime') where id=?"
-
     conn.execute(sql, (title, text, source, tags, id))
-
-    if pos is not None:
-        list.insert(pos, SiacNote((id,None,None,None,None,None,None,None,None,None,None)))
-        pos_list = [(ix, r.id) for ix, r in enumerate(list)]
-        conn.executemany("update notes set position = ? where id = ?", pos_list)
     conn.commit()
     conn.close()
+    update_priority_list(id, queue_schedule)
     index = get_index()
     if index is not None:
         index.update_user_note((id, title, text, source, tags, -1, ""))
@@ -558,7 +628,7 @@ def get_position(nid):
     return res[0]
 
 def delete_note(id):
-    update_position(id, QueueSchedule.NOT_ADD)
+    update_priority_list(id, QueueSchedule.NOT_ADD)
     conn = _get_connection()
     conn.execute("delete from read where nid =%s" % id)
     conn.execute("delete from marks where nid =%s" % id)
@@ -653,6 +723,17 @@ def _get_priority_list(nid_to_exclude = None):
     conn.close()
     return _to_notes(res)
 
+def _get_priority_list_with_last_prios():
+    """
+        Used when in dynamic queue scheduling mode.
+        Returns (nid, last prio, last prio creation, current position)
+    """
+    sql = """ select notes.id, prios.prio, prios.created, notes.position from notes left join (select distinct nid, prio, max(created) as created, type from queue_prio_log group by nid) as prios on prios.nid = notes.id where notes.position >= 0 order by position asc """
+    conn = _get_connection()
+    res = conn.execute(sql).fetchall()
+    conn.close()
+    return res
+
 
 def get_priority_list():
     """
@@ -697,6 +778,7 @@ def set_priority_list(ids):
     for ix,id in enumerate(ids):
         ulist.append((ix, id))
     conn = _get_connection()
+    conn.execute('update notes set position = NULL;')
     conn.executemany('update notes set position = ? where id = ?', ulist)
     conn.commit()
     conn.close
@@ -828,7 +910,7 @@ def get_related_notes(id):
 
 
 def mark_all_pages_as_read(nid, num_pages):
-    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    now = _date_now_str()
     conn = _get_connection()
     existing = [r[0] for r in conn.execute("select page from read where page > -1 and nid = %s" % nid).fetchall()]
     to_insert = [(p, nid, num_pages, now) for p in range(1, num_pages +1) if p not in existing]
@@ -837,7 +919,7 @@ def mark_all_pages_as_read(nid, num_pages):
     conn.close()
 
 def mark_as_read_up_to(nid, page, num_pages):
-    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    now = _date_now_str()
     conn = _get_connection()
     existing = [r[0] for r in conn.execute("select page from read where page > -1 and nid = %s" % nid).fetchall()]
     to_insert = [(p, nid, num_pages, now) for p in range(1, page +1) if p not in existing]
@@ -869,4 +951,27 @@ def _to_notes(db_list, pinned=[]):
             notes.append(SiacNote(tup))
     return notes
 
+def _date_now_str():
+    return datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
 
+def _dt_from_date_str(dtst):
+    return datetime.strptime(dtst, '%Y-%m-%d-%H-%M-%S')
+
+
+    
+
+def _convert_manual_prio_to_dynamic(prio):
+    if prio == 2 or prio == 7:
+        return 5
+    if prio == 3:
+        return 4
+    if prio == 8 or prio == 4:
+        return 3
+    if prio == 0:
+        return 2
+    # count random as average
+    if prio == 6:
+        return 3
+    return 1
+
+    

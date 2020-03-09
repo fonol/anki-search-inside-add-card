@@ -29,12 +29,14 @@ try:
     from .state import get_index
     from .notes import get_pdf_info
     from .special_searches import get_suspended
+    from .reading_modal import ReadingModal
 except:
     from debug_logging import log
     from stats import getRetentions
     from state import get_index
     from notes import get_pdf_info
     from special_searches import get_suspended
+    from reading_modal import ReadingModal
 
 import utility.tags
 import utility.text
@@ -43,15 +45,25 @@ import utility.misc
 class Output:
 
     def __init__(self):
-        #todo: cleanup
-        self.editor = None
+
+        #
+        # components
+        #
+        self._editor = None
+        self.reading_modal = ReadingModal()
+       
+        # todo: move to text utils
         self.SEP_RE = re.compile(r'(?:\u001f){2,}|(?:\u001f[\s\r\n]+\u001f)')
         self.SEP_END = re.compile(r'</div>\u001f$')
         self.SOUND_TAG = re.compile(r'sound[a-zA-Z0-9]*mp')
         self.IO_REPLACE = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>)?-[OA]|-(<mark>)?ao(</mark>)?-[OA])\.svg" ?/?>(</img>)?')
         self.IMG_FLD =  re.compile('\\|</span> ?(<img[^>]+/?>)( ?<span class=\'fldSep\'>|$)')
-        self.latest = -1
         self.wordToken = re.compile(u"[a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U)
+       
+        #
+        # state
+        #
+        self.latest = -1
         self.gridView = False
         self.stopwords = []
         self.plotjsLoaded = False
@@ -62,13 +74,15 @@ class Output:
         # saved to display the same time taken when clicking on a page other than 1
         self.last_took = None
         self.last_had_timing_info = False
-
         #determines the zoom factor of rendered notes
         self.scale = 1.0
-
         #cache previous calls
         self.previous_calls = []
 
+
+        #
+        # html templates for search results
+        #
 
         self.noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                             <div class='topLeftWr'>
@@ -129,7 +143,15 @@ class Output:
                             <div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'><div class='siac-read-icn'></div>{progress}</div>
                         </div>"""
 
-                            #<div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'>&nbsp;READ&nbsp;{queue}</div>
+
+    def set_editor(self, editor):
+        """
+            An editor instance is needed to communicate to the web view, so the ui should always hold one.
+            All included children should have a ref to the instance too.
+        """
+        self._editor = editor
+        self.reading_modal.editor = editor
+
     def show_page(self, editor, page):
         """
             Results are paginated, this will display the results for the given page.
@@ -207,7 +229,7 @@ class Output:
             ret = retsByNid[int(nid)] if self.showRetentionScores and int(nid) in retsByNid else None
 
             if ret is not None:
-                retMark = "background: %s; color: black;" % (self._retToColor(ret))
+                retMark = "background: %s; color: black;" % (utility.misc._retToColor(ret))
                 if str(nid) in self.edited:
                     retMark = ''.join((retMark, "max-width: 20px;"))
                 retInfo = """<div class='retMark' style='%s'>%s</div>""" % (retMark, int(ret))
@@ -377,22 +399,22 @@ class Output:
         """
             Use webview's eval function to execute the given js.
         """
-        if self.editor is None or self.editor.web is None:
+        if self._editor is None or self._editor.web is None:
             return
-        self.editor.web.eval(js)
+        self._editor.web.eval(js)
 
     def js_with_cb(self, js, cb):
-        if self.editor is None or self.editor.web is None:
+        if self._editor is None or self._editor.web is None:
             return
-        self.editor.web.evalWithCallback(js, cb)
+        self._editor.web.evalWithCallback(js, cb)
 
     def _js(self, js, editor):
         """
             Try to eval the given js, prefer if editor ref is given (through cmd parsing).
         """
         if editor is None or editor.web is None:
-            if self.editor is not None and self.editor.web is not None:
-                self.editor.web.eval(js)
+            if self._editor is not None and self._editor.web is not None:
+                self._editor.web.eval(js)
         else:
             editor.web.eval(js)
 
@@ -619,7 +641,7 @@ class Output:
             ret = retsByNid[int(res.id)] if self.showRetentionScores and int(res.id) in retsByNid else None
 
             if ret is not None:
-                retMark = "background: %s; color: black;" % (self._retToColor(ret))
+                retMark = "background: %s; color: black;" % (utility.misc._retToColor(ret))
                 if str(res.id) in self.edited:
                     retMark += "max-width: 20px;"
                 retInfo = """<div class='retMark' style='%s'>%s</div>
@@ -667,7 +689,7 @@ class Output:
                 %s
                 <div id='cal-info-notes' style='overflow-y: auto; overflow-x: hidden; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div>
             """ % (context_html, html)
-        self.editor.web.eval("document.getElementById('cal-info').innerHTML = `%s`;" % html)
+        self._editor.web.eval("document.getElementById('cal-info').innerHTML = `%s`;" % html)
 
 
     def showInModal(self, text):
@@ -675,28 +697,28 @@ class Output:
         self.js(cmd)
 
     def show_in_large_modal(self, html):
+        html = html.replace("`", "&#96;")
         js = """
             $('#siac-reading-modal').html(`%s`);
             document.getElementById('siac-reading-modal').style.display = 'flex';
-
-        """ % html.replace("`", "&#96;")
+        """ % (html)
         self.js(js) 
 
     def empty_result(self, message):
-        if self.editor is None or self.editor.web is None:
+        if self._editor is None or self._editor.web is None:
             return
-        self.editor.web.eval("setSearchResults('', `%s`, null, 1, 1, 50, %s)" % (message, len(self.previous_calls) + 1))
+        self._editor.web.eval("setSearchResults('', `%s`, null, 1, 1, 50, %s)" % (message, len(self.previous_calls) + 1))
 
     def _loadPlotJsIfNotLoaded(self):
         if not self.plotjsLoaded:
             with open(utility.misc.get_web_folder_path() + "plot.js") as f:
                 plotjs = f.read()
-            self.editor.web.eval(plotjs)
+            self._editor.web.eval(plotjs)
             self.plotjsLoaded = True
 
 
     def show_search_modal(self, on_enter_attr, header):
-        self.editor.web.eval("""
+        self._editor.web.eval("""
         document.getElementById('siac-search-modal').style.display = 'block';
         document.getElementById('siac-search-modal-header').innerHTML = `%s`;
         document.getElementById('siac-search-modal-inp').setAttribute('onkeyup', '%s');
@@ -856,7 +878,7 @@ class Output:
         Used after note has been edited. The edited note should be rerendered.
         To keep things simple, only note text and tags are replaced.
         """
-        if self.editor is None or self.editor.web is None:
+        if self._editor is None or self._editor.web is None:
             return
         tags = note[2]
         tagStr =  self.build_tag_string(tags)
@@ -872,14 +894,14 @@ class Output:
         text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
 
         #find rendered note and replace text and tags
-        self.editor.web.eval("""
+        self._editor.web.eval("""
             document.getElementById('%s').innerHTML = `%s`;
             document.getElementById('tags-%s').innerHTML = `%s`;
         """ % (nid, text, nid, tagStr))
 
-        self.editor.web.eval("$('#cW-%s').find('.rankingLblAddInfo').hide();" % nid)
-        self.editor.web.eval("fixRetMarkWidth(document.getElementById('cW-%s'));" % nid)
-        self.editor.web.eval(f"""$('#cW-{nid} .editedStamp').html(`&nbsp;&#128336; Edited just now`).show();
+        self._editor.web.eval("$('#cW-%s').find('.rankingLblAddInfo').hide();" % nid)
+        self._editor.web.eval("fixRetMarkWidth(document.getElementById('cW-%s'));" % nid)
+        self._editor.web.eval(f"""$('#cW-{nid} .editedStamp').html(`&nbsp;&#128336; Edited just now`).show();
             if ($('#siac-susp-lbl-{nid}').length) {{
                 $('#siac-susp-lbl-{nid}').css('left', '140px').show();
             }} 
@@ -962,7 +984,7 @@ class Output:
                     <i>%s</i>
                 </div>
             """ % (" ".join(query_set))
-            self.editor.web.eval("""
+            self._editor.web.eval("""
                 document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
                 document.getElementById('siac-pdf-tooltip-results-area').scrollTop = 0; 
                 document.getElementById('siac-pdf-tooltip-top').innerHTML = `%s`
@@ -976,7 +998,7 @@ class Output:
                 message = "Query was empty after cleaning."
             else:
                 message = "Nothing found for query: <br/><br/><i>%s</i>" % (utility.text.trim_if_longer_than(" ".join(query_set), 200))
-            self.editor.web.eval("""
+            self._editor.web.eval("""
                 document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
                 document.getElementById('siac-pdf-tooltip-top').innerHTML = `<div id='siac-tooltip-center' onclick='centerTooltip();'></div>
                                                         <div class='siac-search-icn-dark' id='siac-tt-web-btn' onclick='pycmd("siac-show-web-search-tooltip " + $("#siac-pdf-tooltip").data("selection"));'></div>
@@ -989,20 +1011,6 @@ class Output:
 
 
 
-    @staticmethod
-    def _retToColor(retention):
-        if retention < (100 / 7.0):
-            return "#ff0000"
-        if retention < (100 / 7.0) * 2:
-            return "#ff4c00"
-        if retention < (100 / 7.0) * 3:
-            return "#ff9900"
-        if retention < (100 / 7.0) * 4:
-            return "#ffe500"
-        if retention < (100 / 7.0) * 5:
-            return "#cbff00"
-        if retention < (100 / 7.0) * 6:
-            return "#7fff00"
-        return "#32ff00"
+   
 
 

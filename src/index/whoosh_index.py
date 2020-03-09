@@ -61,7 +61,8 @@ class WhooshSearchIndex:
         self.TAG_RE = re.compile(r'<[^>]+>')
         self.SP_RE = re.compile(r'&nbsp;| {2,}')
         self.SEP_RE = re.compile(r'(\u001f){2,}')
-        self.output = Output()
+        self.ui = Output()
+
         self.creation_info = {}
         
         config = mw.addonManager.getConfig(__name__)
@@ -71,7 +72,7 @@ class WhooshSearchIndex:
             self.creation_info["fields_to_exclude_original"] = self.fields_to_exclude 
         except KeyError:
             self.fields_to_exclude = {} 
-        self.output.fields_to_exclude = self.fields_to_exclude
+        self.ui.fields_to_exclude = self.fields_to_exclude
         
         try:
             self.stopWords = set(config['stopwords'])
@@ -126,7 +127,7 @@ class WhooshSearchIndex:
         """
         worker = Worker(self.searchProc, text, decks, only_user_notes, print_mode)
         worker.stamp = utility.misc.get_milisec_stamp()
-        self.output.latest = worker.stamp
+        self.ui.latest = worker.stamp
         if print_mode == "default":
             worker.signals.result.connect(self.printOutput)
         elif print_mode == "pdf":
@@ -146,7 +147,7 @@ class WhooshSearchIndex:
         self.lastSearch = (text, decks, "default")
         if len(text) == 0:
             if print_mode == "default":
-                self.output.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", ""))
+                self.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", ""))
                 return None
             elif print_mode == "pdf":
                 return None
@@ -230,7 +231,7 @@ class WhooshSearchIndex:
             query_set = None
             if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
                 query_set = set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
-            self.output.print_search_results(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
+            self.ui.print_search_results(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
 
     def print_pdf(self, result, stamp):
         query_set = None
@@ -239,7 +240,7 @@ class WhooshSearchIndex:
         if result is not None:
             self.output.print_pdf_search_results(result["results"], stamp, query_set)
         else:
-            self.output.print_pdf_search_results([], stamp, self.lastSearch[0])
+            self.ui.print_pdf_search_results([], stamp, self.lastSearch[0])
 
 
     def removeTags(self, text):

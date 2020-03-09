@@ -287,16 +287,24 @@ function pdfPageLeft() {
         queueRenderPage(pdfDisplayedCurrentPage);
     }
 }
-
-function saveTextNote(nid) {
+function markReadUpToCurrent() {
+    for (var i = 0; i < pdfDisplayedCurrentPage; i++) {
+        if (pagesRead.indexOf(i + 1) === -1) {
+            pagesRead.push(i +1);
+        }
+    }
+}
+function saveTextNote(nid, remove=true) {
     let html = "";
     try {
         html = tinymce.get('siac-text-top').getContent();
     } catch(e) {
-        pycmd("siac-notification Could not save text note. Saving images is not supported at the moment.");
+        pycmd("siac-notification Could not save text note for some reason.");
         return;
     } finally {
-        tinymce.remove();
+        if (remove) {
+            tinymce.remove();
+        }
     }
     document.getElementById("siac-text-note-status").innerHTML = "Note Saved - " + new Date().toString();
     pycmd("siac-update-note-text " + nid + " " + html);
@@ -352,7 +360,13 @@ function toggleTimer(timer) {
         timer.innerHTML = "Start";
     }
 }
-
+function onQuickSchedBtnClicked(elem) {
+    if (!$(elem).hasClass("expanded")) {
+        pycmd("siac-quick-schedule-fill");
+    } else {
+        $(elem).toggleClass('expanded');
+    }
+}
 function onPDFSearchBtnClicked(elem) {
     if ($(elem).hasClass("expanded")) {
         $(elem).find("input").focus();
@@ -363,16 +377,19 @@ function onPDFSearchBtnClicked(elem) {
 }
 function onPDFSearchInput(value, event) {
     if (event.keyCode === 13 && value && value.length) {
+        showPDFBottomRightNotification("Searching ...");
         if (value.toLowerCase() !== pdfCurrentSearch.query)  {
             pdfCurrentSearch.lastStart = null;
             pdfCurrentSearch.lastEnd = null;
             pdfCurrentSearch.query = value.toLowerCase();
         }
-        nextPDFSearchResult();
+        setTimeout(function() {
+            nextPDFSearchResult();
+        }, 10);
     }
 }
 
-function getContents(s=1, n=10000) {
+async function getContents(s=1, n=10000) {
     var countPromises = []; 
     for (var j = s; j <= pdfDisplayed.numPages && j <= s + n; j++) {
         var page = pdfDisplayed.getPage(j);
@@ -389,7 +406,7 @@ function getContents(s=1, n=10000) {
        }));
     }
     return Promise.all(countPromises).then(function (counts) {
-      return counts;
+        return counts;
     });
 }
 function resetSearch() {
@@ -420,8 +437,14 @@ async function nextPDFSearchResult(dir="right") {
     var shouldBreak = false;
     var found = false;
     var spl = pdfCurrentSearch.query.toLowerCase().split(" ");
+    var it = 0;
     do {
-        var pdfPagesContents = await getNextPagesToSearchIn(dir);
+        it++;
+        var next = getNextPagesToSearchIn(dir);
+        if (dir === "left")
+            var pdfPagesContents = (await getContents(next.s, next.n)).reverse();
+        else
+            var pdfPagesContents = await getContents(next.s, next.n);
         if (pdfPagesContents.length === 0) {
             shouldBreak = true;
         }
@@ -445,6 +468,10 @@ async function nextPDFSearchResult(dir="right") {
                 }
             }
         }
+        if (it >  Math.round(pdfDisplayed.numPages / 25.0) + 2) {
+            showPDFBottomRightNotification("Search aborted, took too long.", true);
+            break;
+        }
     } while (!shouldBreak);
     
     if (!found) {
@@ -455,7 +482,8 @@ async function nextPDFSearchResult(dir="right") {
 
 }
 
-async function getNextPagesToSearchIn(dir) {
+
+function getNextPagesToSearchIn(dir) {
     if (pdfCurrentSearch.breakOnNext) {
         return [];
     }
@@ -473,7 +501,6 @@ async function getNextPagesToSearchIn(dir) {
         }  
         // last search block was up to first page, so start at the end
         else if (lastStart === 1) {
-            showPDFBottomRightNotification("Beginning reached, searching from end...");
             s = Math.max(pdfDisplayed.numPages - ivl, 1);
         } 
         // page rendered with highlighted search results 
@@ -501,24 +528,27 @@ async function getNextPagesToSearchIn(dir) {
             pdfCurrentSearch.breakOnNext = true;
         }
       
-      
     } else {
         if  (lastStart === null) {
             s = pdfDisplayedCurrentPage;
             n = Math.min(pdfDisplayed.numPages - s, ivl);
         }
         else if (lastEnd === pdfDisplayed.numPages) {
-            showPDFBottomRightNotification("End reached, searching from beginning...");
             s = 1;
             n = Math.min(ivl, pdfDisplayed.numPages);
         } else {
             s = lastEnd + 1;
             n = Math.min(pdfDisplayed.numPages - s, ivl);
         }
-        if (lastEnd !== null && (lastEnd < pdfDisplayedCurrentPage || lastEnd === pdfDisplayed.numPages) && s + ivl >= pdfDisplayedCurrentPage) {
+        if (lastEnd !== null && lastEnd < pdfDisplayedCurrentPage && s + ivl >= pdfDisplayedCurrentPage) {
             n = pdfDisplayedCurrentPage - s;
             pdfCurrentSearch.breakOnNext = true;
-        } else if (pdfDisplayed.numPages === 1) {
+        } else if (lastEnd !== null && lastEnd === pdfDisplayed.numPages && 1 + ivl >=pdfDisplayedCurrentPage) {
+            n = pdfDisplayedCurrentPage - s;
+            pdfCurrentSearch.breakOnNext = true;
+        }
+        
+        else if (pdfDisplayed.numPages === 1) {
             n = 0;
             pdfCurrentSearch.breakOnNext = true;
         }
@@ -528,10 +558,8 @@ async function getNextPagesToSearchIn(dir) {
     }
     pdfCurrentSearch.lastStart = s;
     pdfCurrentSearch.lastEnd = Math.min(pdfDisplayed.numPages, s + n);
-    showPDFBottomRightNotification(`Searching pages ${s} - ${Math.min(s + n, pdfDisplayed.numPages)} `);
-    if (dir === "left")
-        return (await getContents(s, n)).reverse();
-    return (await getContents(s, n));
+    // showPDFBottomRightNotification(`Searching pages ${s} - ${Math.min(s + n, pdfDisplayed.numPages)}`);
+    return {s , n};
 }
 function highlightPDFText(query, n=0) {
     var tlEls = document.getElementById('text-layer').querySelectorAll('span');
@@ -583,7 +611,9 @@ function pdfMouseWheel(event)  {
     }
 }
 function showPDFBottomRightNotification(html, fadeout = false) {
-    $('#siac-pdf-br-notify').html(html).show();
+    document.getElementById('siac-pdf-br-notify').innerHTML = html;
+    document.getElementById('siac-pdf-br-notify').style.display = "block";
+    // $('#siac-pdf-br-notify').html(html).show();
     if (fadeout) {
         window.setTimeout(() => {
             removePDFBottomRightNotification();
@@ -1050,4 +1080,8 @@ function onReadingModalClose(shouldSave, nid) {
     }
     document.getElementById("siac-reading-modal-center").innerHTML = "";
     onWindowResize();
+}
+function tryExtractTextFromTextNote() {
+    saveTextNote($('#siac-reading-modal-top-bar').data('nid'), remove=false);        
+    pycmd("siac-try-copy-text-note");
 }

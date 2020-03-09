@@ -102,16 +102,16 @@ def _build_index(index_up_to_date):
     initializationTime = round(end - start)
  
     index.finder = Finder(mw.col)
-    index.output.stopwords = index.stopWords
-    index.output.remove_divs = config["removeDivsFromOutput"]
-    index.output.gridView = config["gridView"]
-    index.output.scale = config["noteScale"]
-    index.output.fields_to_hide_in_results = config["fieldsToHideInResults"]
+    index.ui.stopwords = index.stopWords
+    index.ui.remove_divs = config["removeDivsFromOutput"]
+    index.ui.gridView = config["gridView"]
+    index.ui.scale = config["noteScale"]
+    index.ui.fields_to_hide_in_results = config["fieldsToHideInResults"]
     index.selectedDecks = ["-1"]
     index.lastSearch = None
     index.lastResDict = None
     index.topToggled = True
-    index.output.edited = {}
+    index.ui.edited = {}
     index.initializationTime = initializationTime
     index.synonyms = loadSynonyms()
     index.logging = config["logging"]
@@ -130,12 +130,12 @@ def _build_index(index_up_to_date):
         showRetentionScores = config["showRetentionScores"]
     except KeyError:
         showRetentionScores = True
-    index.output.showRetentionScores = showRetentionScores
+    index.ui.showRetentionScores = showRetentionScores
     try:
         hideSidebar = config["hideSidebar"]
     except KeyError:
         hideSidebar = False
-    index.output.hideSidebar = hideSidebar
+    index.ui.hideSidebar = hideSidebar
 
     if index.logging:
         log("\n--------------------\nInitialized index:")
@@ -143,7 +143,7 @@ def _build_index(index_up_to_date):
 
     editor = aqt.mw.app.activeWindow().editor if hasattr(aqt.mw.app.activeWindow(), "editor") else None
     if editor is not None and editor.addMode:
-        index.output.editor = editor
+        index.ui.set_editor(editor)
     set_index(index)
     editor = editor if editor is not None else get_edit()
     setup_ui_after_index_built(editor, index)
