@@ -24,7 +24,7 @@ from aqt import mw
 import html as ihtml
 
 from ..state import get_index, check_index
-from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes
+from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority_as_str
 from ..feeds import read
 from ..internals import perf_time
 from ..config import get_config_value_or_default as conf_or_def
@@ -477,6 +477,8 @@ def get_reading_modal_html(note):
         title = ihtml.escape(title)
         source = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
         source_icn = ""
+        schedule_btns = get_schedule_btns(note_id)
+        save = f"saveTextNote({note.id});" if not note.is_pdf() else ""
 
         html = """
             <div style='width: 100%; display: flex; flex-direction: column;'>
@@ -511,24 +513,13 @@ def get_reading_modal_html(note):
                         <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
 
                             <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
-                            <div id='siac-queue-sched-wrapper'>
-                                <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>Start</div>
-                                <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 7")'>Rnd</div>
-                                <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>First 3rd</div>
-                                <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 8")'>Rnd</div>
-                                <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>Second 3rd</div>
-                                <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 9")'>Rnd</div>
-                                <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>End</div>
-                                <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
-                                <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
-                                <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
-                            </div>
+                            {schedule_btns}
                             <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                                 <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                 <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
                                 <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
-                                <a onclick='if (!pdfLoading) {{noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
-                                <a onclick='if (!pdfLoading) {{noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
+                                <a onclick='if (!pdfLoading) {{ {save} noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
+                                <a onclick='if (!pdfLoading) {{ {save} noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
                             </div>
                             {queue_readings_list}
                             <div id='siac-queue-infobox-wrapper'>
@@ -546,8 +537,6 @@ def get_reading_modal_html(note):
                         </div>
                     </div>
                     <div id='siac-timer-popup'>
-                        
-
                     </div>
             </div>
             <script>
@@ -585,12 +574,12 @@ def get_reading_modal_html(note):
         
        
         save_on_close = "true" if editable else "false"
-        queue_info = "Position: <b>%s</b> / <b>%s</b>" % (note.position + 1, queue_len) if note.is_in_queue() else "Unqueued."
-        queue_info_short = "<b>%s</b> / <b>%s</b>" % (note.position + 1, queue_len) if note.is_in_queue() else "Unqueued"
+        queue_info = "Priority: %s" % (get_priority_as_str(note_id)) if note.is_in_queue() else "Unqueued."
+        queue_info_short = "In Queue" if note.is_in_queue() else "Unqueued"
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, save_on_close = save_on_close, overflow=overflow)
+        params = dict(note_id = note_id, title = title, source = source, save=save, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, save_on_close = save_on_close, overflow=overflow)
         html = html.format_map(params)
         return html
     return ""
@@ -609,8 +598,8 @@ def get_text_note_html(text, nid, editable):
     if urls is not None and len(urls) > 0:
         search_sources = iframe_dialog(urls)
     is_content_editable = "true" if editable else "false"
+    quick_sched = quick_sched_btn(nid, editable)
     # editable_notification = "<span style='margin-left: 30px; color: grey;'>(i) Note content too long to edit here.</span>" if not editable else ""
-    save = "saveTextNote(%s);"  % (nid) if editable else ""
     html = """
         <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
             <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center; color: grey;'>Note: Not all sites allow embedding!</div>
@@ -620,9 +609,7 @@ def get_text_note_html(text, nid, editable):
                {search_sources}
             </div>
         </div>
-        <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='$(this).toggleClass("expanded")'><div class='siac-read-icn siac-read-icn-light'></div>
-            <div class='expanded-hidden white-hover' onclick='{save} pycmd("siac-move-end-read-next {nid}"); event.stopPropagation();' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'><b>Move End, Read Next</b></div>
-        </div>
+        {quick_sched_btn}
         <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark' onclick='pycmd("siac-close-iframe")'>&times; &nbsp;Close Web</div>
         <div id='siac-text-top-wr' style='height: calc(100% - 42px);'>
             <div id='siac-text-top'>
@@ -634,15 +621,31 @@ def get_text_note_html(text, nid, editable):
             <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
                 <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
                 <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
+                <div class='siac-btn siac-btn-dark' id='siac-extract-text-btn' onclick='tryExtractTextFromTextNote()' style='margin-left: 5px;'><b>Copy to new Note</b></div>
                 <span id='siac-text-note-status' style='margin-left: 30px; color: grey;'></span>
             </div>
         </div>
         <script>
             {tiny_mce} 
         </script>
-    """.format_map(dict(text = text, save=save, nid = nid, search_sources=search_sources , tiny_mce=tiny_mce_init_code()))
+    """.format_map(dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, tiny_mce=tiny_mce_init_code()))
     return html
 
+def quick_sched_btn(nid, should_save=False):
+
+    save = "saveTextNote(%s);"  % (nid) if should_save else ""
+    return f"""
+        <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='onQuickSchedBtnClicked(this);'><div class='siac-read-icn siac-read-icn-light'></div>
+            <div class='expanded-hidden white-hover' onclick='{save}' style='margin: 0 0 0 6px; color: lightgrey; text-align: center;'>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 5");'><b>5</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 4");'><b>4</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 3");'><b>3</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 2");'><b>2</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 1");'><b>1</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 0");'><b>Current</b></div>
+            </div>
+        </div>
+    """
 
 def get_feed_html(nid, source):
     #extract feed url
@@ -718,6 +721,7 @@ def get_reading_modal_bottom_bar(note):
     diff = datetime.datetime.now() - created_dt
     queue = _get_priority_list()
     queue_len = len(queue)
+    schedule_btns = get_schedule_btns(note_id)
 
     time_str = "Added %s ago." % utility.misc.date_diff_to_string(diff)
        
@@ -726,19 +730,7 @@ def get_reading_modal_bottom_bar(note):
                 <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap; display: relative;'>
 
                     <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
-                    <div id='siac-queue-sched-wrapper'>
-
-                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>Start</div>
-                        <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 7")'>Rnd</div>
-                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>First 3rd</div>
-                        <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 8")'>Rnd</div>
-                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>Second 3rd</div>
-                        <div class='siac-queue-sched-btn-hor' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 9")'>Rnd</div>
-                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>End</div>
-                        <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
-                        <div class='siac-queue-sched-btn' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 6");'>&#9861; Random</div>
-                        <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
-                    </div>
+                    {schedule_btns} 
                     <div  id='siac-queue-actions'  style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                         <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                         <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
@@ -762,11 +754,12 @@ def get_reading_modal_bottom_bar(note):
             </div>
     """
     editable = not note.is_feed() and not note.is_pdf() and len(text) < 50000
-    queue_info = "Position: <b>%s</b> / <b>%s</b>" % (note.position + 1, queue_len) if note.is_in_queue() else "Unqueued."
-    queue_info_short = "<b>%s</b> / <b>%s</b>" % (note.position + 1, queue_len) if note.is_in_queue() else "Unqueued"
+    queue_info = "Priority: %s" % (get_priority_as_str(note_id)) if note.is_in_queue() else "Unqueued."
+    queue_info_short = "In Queue" if note.is_in_queue() else "Unqueued"
+   
     queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-    params = dict(note_id = note_id, time_str = time_str, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list )
+    params = dict(note_id = note_id, time_str = time_str, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, schedule_btns=schedule_btns )
     html = html.format_map(params)
     return html
 
@@ -816,6 +809,25 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
      </div>
     """ % (hide_btn, queue_head_readings)
     return html
+
+def get_schedule_btns(note_id):
+    """
+        Returns the html for the buttons that allow to quickly reschedule the current item in the reading modal.
+        Buttons differ depending on the schedule mode used.
+    """
+  
+    return f"""
+    <div id='siac-queue-sched-wrapper'>
+        <div class='siac-queue-sched-btn siac-prio-5' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>5</div>
+        <div class='siac-queue-sched-btn siac-prio-4' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>4</div>
+        <div class='siac-queue-sched-btn siac-prio-3' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>3</div>
+        <div class='siac-queue-sched-btn siac-prio-2' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>2</div>
+        <div class='siac-queue-sched-btn siac-prio-1' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 1")'>1</div>
+        <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
+        <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
+    </div>
+    """
+
 
 def get_related_notes_html(note_id):
     r = get_related_notes(note_id)
@@ -904,6 +916,7 @@ def get_pdf_viewer_html(nid, source, title):
     marks_img_src = utility.misc.img_src("mark-star-24px.png")
     marks_grey_img_src = utility.misc.img_src("mark-star-lightgrey-24px.png")
     pdf_search_img_src = utility.misc.img_src("magnify-24px.png")
+    quick_sched = quick_sched_btn(nid)
 
     html = """
         <div id='siac-pdf-overlay'>PAGE READ</div>
@@ -930,16 +943,14 @@ def get_pdf_viewer_html(nid, source, title):
         <div class='siac-btn siac-btn-dark' id='siac-pdf-search-btn' onclick='$(this).toggleClass("expanded"); onPDFSearchBtnClicked(this);'><img src='{pdf_search_img_src}' style='width: 16px; height: 16px;'/>
             <div id='siac-pdf-search-btn-inner' class='expanded-hidden white-hover' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'>
                 <input style='width: 200px; border:none; background-color: #2f2f31; color: lightgrey; padding-left: 2px;' onclick='event.stopPropagation();' onkeyup='onPDFSearchInput(this.value, event);'/>
-                <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation();nextPDFSearchResult(dir="left");'><b>&lt;</b></div>
-                <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation();nextPDFSearchResult(dir="right");'><b>&gt;</b></div>
+                <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); showPDFBottomRightNotification("Searching..."); nextPDFSearchResult(dir="left");'><b>&lt;</b></div>
+                <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); showPDFBottomRightNotification("Searching..."); nextPDFSearchResult(dir="right");'><b>&gt;</b></div>
             </div>
         </div>
         <div class='siac-btn siac-btn-dark' id='siac-mark-jump-btn' onclick='$(this).toggleClass("expanded"); onMarkBtnClicked(this);'><img src='{marks_grey_img_src}' style='width: 16px; height: 16px;'/>
             <div id='siac-mark-jump-btn-inner' class='expanded-hidden white-hover' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'></div>
         </div>
-        <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='$(this).toggleClass("expanded")'><div class='siac-read-icn siac-read-icn-light'></div>
-            <div class='expanded-hidden white-hover' onclick='pycmd("siac-move-end-read-next {nid}"); event.stopPropagation();' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'><b>Move End, Read Next</b></div>
-        </div>
+        {quick_sched_btn} 
         <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark' onclick='pycmd("siac-close-iframe")'>&times; &nbsp;Close Web</div>
         <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
             <div id='siac-pdf-loader-wrapper' style='display: flex; justify-content: center; align-items: center; height: 100%;'>
@@ -976,7 +987,7 @@ def get_pdf_viewer_html(nid, source, title):
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Jump to Last Read Page</b></div>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>Jump to First Unread Page</b></div>
                             <hr>
-                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayedCurrentPage).keys()).map(x => ++x); pdfShowPageReadMark();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
+                            <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); markReadUpToCurrent(); pdfShowPageReadMark();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + pdfDisplayed.numPages); event.stopPropagation();'><b>Mark Range ...</b></div>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pagesRead = []; pdfHidePageReadMark(); updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
                             <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayed.numPages).keys()).map(x => ++x); pdfShowPageReadMark(); updatePdfProgressBar();event.stopPropagation();'>
@@ -999,7 +1010,7 @@ def get_pdf_viewer_html(nid, source, title):
                 $('#siac-pdf-tooltip-toggle').removeClass('active');
             }}
         </script>
-    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, search_sources=search_sources, marks_img_src=marks_img_src, marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src))
+    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, quick_sched_btn=quick_sched, search_sources=search_sources, marks_img_src=marks_img_src, marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src))
     return html
 
 
@@ -1092,29 +1103,33 @@ def get_queue_infobox(note, read_stats):
     # pagestotal might be None (it is only available if at least one page has been read)
     if read_stats[2] is not None:
         prog_bar = pdf_prog_bar(read_stats[0], read_stats[2])
-        pages_read = "<div style='width: 100%%; margin-top: 7px; font-weight: bold; text-align: center; font-size: 20px;'>%s / %s</div>" % (read_stats[0], read_stats[2])
+        pages_read = "<div style='width: 100%%; margin-top: 3px; font-weight: bold; text-align: center; font-size: 20px;'>%s / %s</div>" % (read_stats[0], read_stats[2])
     else:
+        text_len = f"{len(note.text.split())} Words" if note.text is not None else "Empty"
         prog_bar = ""
-        pages_read = ""
+        pages_read = f"<div style='width: 100%; margin-top: 7px; font-weight: bold; text-align: center; font-size: 16px;'>Text Note, {text_len}</div>"
 
     html = """
-        <div style='width: calc(100% - 81px); height: 100%; padding: 10px; display: inline-block; position: relative; vertical-align: top;'>
-            <div style='width: calc(100%); text-align:center; white-space: nowrap; overflow: hidden; font-weight: bold; vertical-align: top; text-overflow: ellipsis;'>{title}</div>
-            <div style='width: calc(100%); text-align:center; white-space: nowrap; overflow: hidden; color: lightgrey;vertical-align: top;'>{time_str}</div>
+        <div style='box-sizing: border-box; width: 100%; height: 100%; padding: 10px; display: inline-block; position: relative; vertical-align: top;'>
+            <div style='width: 100%; text-align:center; white-space: nowrap; overflow: hidden; font-weight: bold; vertical-align: top; text-overflow: ellipsis;'>{title}</div>
+            <div style='width: 100%; text-align:center; white-space: nowrap; overflow: hidden; color: lightgrey;vertical-align: top;'>{time_str}</div>
             {pages_read}
-            <div style='position: absolute; bottom: 20px; left: 0px; right: 0px; width: calc(100% - 20px); padding: 10px; text-align: center;'>
+            <div style='width: calc(100%); padding: 5px 0 10px 0; text-align: center;'>
                 <div style='display: inline-block; vertical-align: bottom;'>
                     {prog_bar}
                 </div>
             </div>
         </div>
-        <div style='width: 50px; height: 100%; padding: 2px 5px 2px 0; display: inline-block;'>
-            <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 2 "+ $("#siac-reading-modal-top-bar").data("nid"))'>Start</div>
-            <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 5 "+ $("#siac-reading-modal-top-bar").data("nid"))'>End</div>
-            <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 6 "+ $("#siac-reading-modal-top-bar").data("nid"))'>Random</div>
-            <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-remove-from-queue-tt {nid} " + $("#siac-reading-modal-top-bar").data("nid"))'>Remove</div>
-        </div>
+      
     """.format_map(dict(title = note.get_title(), pages_read=pages_read, time_str= time_str, prog_bar= prog_bar, nid = note.id))
+
+    # todo: include again?
+    #   <div style='width: 50px; height: 100%; padding: 2px 5px 2px 0; display: inline-block;'>
+    #         <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 2 "+ $("#siac-reading-modal-top-bar").data("nid"))'>Start</div>
+    #         <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 5 "+ $("#siac-reading-modal-top-bar").data("nid"))'>End</div>
+    #         <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-requeue-tt {nid} 6 "+ $("#siac-reading-modal-top-bar").data("nid"))'>Random</div>
+    #         <div class='siac-queue-sched-btn-tt' onclick='hideQueueInfobox(); pycmd("siac-remove-from-queue-tt {nid} " + $("#siac-reading-modal-top-bar").data("nid"))'>Remove</div>
+    #     </div>
     return html
 
 def stylingModal(config):
@@ -1443,11 +1458,12 @@ def tiny_mce_init_code():
     return """
         tinymce.init({
             selector: '#siac-text-top',
-            plugins: 'preview paste importcss searchreplace autolink directionality code visualblocks visualchars image link media codesample table charmap hr nonbreaking toc insertdatetime advlist lists wordcount imagetools textpattern noneditable charmap quickbars',
+            plugins: 'preview paste importcss searchreplace autolink directionality code visualblocks visualchars link codesample table charmap hr nonbreaking toc insertdatetime advlist lists wordcount imagetools textpattern noneditable charmap quickbars',
             menubar: 'edit view insert format tools table',
-            toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | charmap | image codesample | ltr rtl',
+            toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | charmap | codesample | ltr rtl',
             toolbar_sticky: true,
             resize: false,
+            statusbar: false,
             skin: "oxide-dark",
             content_css: "dark",
             image_advtab: true,
@@ -1456,10 +1472,13 @@ def tiny_mce_init_code():
             quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote quickimage quicktable',
             noneditable_noneditable_class: "mceNonEditable",
             toolbar_drawer: 'sliding',
-            contextmenu: "link image imagetools table",
+            contextmenu: "table",
             setup: function (ed) {
                 ed.on('init', function(args) {
                     setTimeout(function() { $('.tox-notification__dismiss').first().trigger('click'); }, 200);
+                    $('#siac-text-top_ifr').contents().find('body').css({
+                            background: '#2f2f31'
+                    });
                 });
             }
         });

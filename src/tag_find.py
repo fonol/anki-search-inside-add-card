@@ -18,9 +18,9 @@
 from aqt import *
 import utility.text
 from .stats import getAvgTrueRetention, getTrueRetentionOverTime, retention_stats_for_tag
-from .output import Output
 from .notes import find_by_tag, get_recently_used_tags_with_counts
 from .models import IndexNote
+import utility.misc
 import time
 
 def findBySameTag(tagStr, limit, decks, pinned):
@@ -139,12 +139,12 @@ def display_tag_info(editor, stamp, tag, index):
     nids = [r.id for r in searchRes["result"]]
     tret = getAvgTrueRetention(nids)
     if tret is not None:
-        color = Output._retToColor(tret)    
+        color = utility.misc._retToColor(tret)    
         tret = "<span style='background: %s; color: black;'>&nbsp;%s&nbsp;</span>" % (color, tret)
 
     if not should_hide_left_side:
         sorted_db_list = sorted(searchRes["result"], key=lambda x: x.id, reverse=True)
-        note_html = index.output.get_result_html_simple(sorted_db_list[:100])
+        note_html = index.ui.get_result_html_simple(sorted_db_list[:100])
         enlarge_note_area_height = "max-height: 320px" if total_length > 120 and tret is not None else ""
         tag_name = tag
         if " " in tag_name:
@@ -158,7 +158,7 @@ def display_tag_info(editor, stamp, tag, index):
     else:
         html = html % (time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)
 
-    index.output._loadPlotJsIfNotLoaded()
+    index.ui._loadPlotJsIfNotLoaded()
 
     ret_data = getTrueRetentionOverTime(nids)
     graph_js = retention_stats_for_tag(ret_data, "siac-tag-graph-" + time_stamp_for_graph, "siac-tag-graph-lbl-" + time_stamp_for_graph)

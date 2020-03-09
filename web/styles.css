@@ -154,7 +154,6 @@
   overflow-y: hidden;
   max-height: 950px;
   min-width: 95px;
-
 }
 .pdf .cardR{
     min-width: 200px;
@@ -821,12 +820,14 @@ table.striped tr:nth-child(even) {
     font-size: 13px !important;
     outline: none;
 }
-
-.siac-btn.siac-btn-dark {
+.siac-btn.siac-btn-dark, .siac-btn.siac-btn-dark-smaller {
     background-color: #2f2f31;
     color: beige;
     border: 2px outset #b2b2a0;
     border-radius: 3px;
+}
+.siac-btn-dark-smaller {
+    font-size: 10px !important;
 }
 .siac-btn:hover {
     color: #2496dc;

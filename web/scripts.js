@@ -586,25 +586,25 @@ function toggleFreeze(elem) {
     }
 }
 function hideTop() {
-    let height = $('#topContainer').outerHeight(true);
-    let formerHeight =  $("#resultsArea").outerHeight(true);
+    // let height = $('#topContainer').outerHeight(true);
+    // let formerHeight =  $("#resultsArea").outerHeight(true);
     $('#topContainer').hide();
-    $('#resultsArea').css('height', `${formerHeight + height}px`).css('border-top', '0px');
+    // $('#resultsArea').css('height', `${formerHeight + height}px`).css('border-top', '0px');
     $('#toggleTop').children().first().html('&#10097;');
     pycmd("toggleTop off");
 }
 
 function toggleTop(elem) {
-    let height = $('#topContainer').outerHeight(true);
+    // let height = $('#topContainer').outerHeight(true);
     $('#topContainer').toggle();
-    let formerHeight = $("#resultsArea").outerHeight(true);
+    // let formerHeight = $("#resultsArea").outerHeight(true);
     if ($('#topContainer').is(":hidden")) {
-        $('#resultsArea').css('height', `${formerHeight + height}px`).css('border-top', '0px');
+        // $('#resultsArea').css('height', `${formerHeight + height}px`).css('border-top', '0px');
         $(elem).children().first().html('&#10097;');
         pycmd("toggleTop off");
     } else {
-        height = $('#topContainer').outerHeight(true);
-        $('#resultsArea').css('height', `${formerHeight - height - 1}px`).css('border-top', '1px solid grey');
+        // height = $('#topContainer').outerHeight(true);
+        // $('#resultsArea').css('height', `${formerHeight - height - 1}px`).css('border-top', '1px solid grey');
         $(elem).children().first().html('&#10096;');
         pycmd("toggleTop on");
     }

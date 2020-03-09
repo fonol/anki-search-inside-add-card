@@ -251,3 +251,18 @@ def find_pdf_files_in_dir(dir):
         return res
     except:
         return []
+
+def _retToColor(retention):
+    if retention < (100 / 7.0):
+        return "#ff0000"
+    if retention < (100 / 7.0) * 2:
+        return "#ff4c00"
+    if retention < (100 / 7.0) * 3:
+        return "#ff9900"
+    if retention < (100 / 7.0) * 4:
+        return "#ffe500"
+    if retention < (100 / 7.0) * 5:
+        return "#cbff00"
+    if retention < (100 / 7.0) * 6:
+        return "#7fff00"
+    return "#32ff00"

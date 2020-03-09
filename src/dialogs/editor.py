@@ -29,9 +29,10 @@ from anki.lang import _
 from ..notes import *
 from ..notes import _get_priority_list
 from ..hooks import run_hooks
+from ..state import get_index
 import utility.text
 import utility.misc
-from ..web.web import update_reading_bottom_bar
+
 
 def openEditor(mw, nid):
     note = mw.col.getNote(nid)
@@ -97,13 +98,16 @@ class NoteEditor(QDialog):
     The editor window for non-anki notes.
     Has a text field and a tag field.
     """
-    def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None):
+    def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None, text_prefill = None, title_prefill = None, prio_prefill = None):
         self.note_id = note_id
         self.note = None
         self.add_only = add_only
         self.read_note_id = read_note_id
         self.tag_prefill = tag_prefill
         self.source_prefill = source_prefill
+        self.text_prefill = text_prefill
+        self.title_prefill = title_prefill
+        self.prio_prefill = prio_prefill
         try:
             self.dark_mode_used = utility.misc.dark_mode_is_used(mw.addonManager.getConfig(__name__))
         except Exception as err:
@@ -218,7 +222,7 @@ class NoteEditor(QDialog):
 
         # if reading modal is open, we might have to update the bottom bar
         if self.read_note_id is not None:
-            update_reading_bottom_bar(self.read_note_id)
+            get_index().ui.reading_modal.update_reading_bottom_bar(self.read_note_id)
 
     def on_update_clicked(self):
         title = self.create_tab.title.text()
@@ -323,7 +327,7 @@ class CreateTab(QWidget):
             if not parent.note.is_in_queue():
                 self.q_lbl_1 = QPushButton("Don't Add to Queue")
             else:
-                self.q_lbl_1 = QPushButton("Keep Position in Queue")
+                self.q_lbl_1 = QPushButton("Keep Priority")
 
         if parent.dark_mode_used:
             btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }"
@@ -332,12 +336,15 @@ class CreateTab(QWidget):
             btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: grey; }"
             btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: black; font-weight: bold;}"
 
-
+       
         self.q_lbl_1.setObjectName("q_1")
         self.q_lbl_1.setFlat(True)
         self.q_lbl_1.setStyleSheet(btn_style_active)
+        self.q_lbl_1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.q_lbl_1.clicked.connect(lambda: self.queue_selected(1))
         ex_v.addWidget(self.q_lbl_1)
+        ex_v.setAlignment(self.q_lbl_1, Qt.AlignCenter)
+
 
         ex_v.addSpacing(5)
         line_sep = QFrame()
@@ -346,64 +353,63 @@ class CreateTab(QWidget):
         ex_v.addWidget(line_sep)
         ex_v.addSpacing(5)
 
-        self.q_lbl_2 = QPushButton("Head")
+        lbl = QLabel("Priority")
+        lbl.setAlignment(Qt.AlignCenter)
+        ex_v.addWidget(lbl)
+
+        self.q_lbl_2 = QPushButton("5 - Very High")
         self.q_lbl_2.setObjectName("q_2")
+        self.q_lbl_2.setMinimumWidth(220)
         self.q_lbl_2.setFlat(True)
         self.q_lbl_2.setStyleSheet(btn_style)
+        self.q_lbl_2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.q_lbl_2.clicked.connect(lambda: self.queue_selected(2))
         ex_v.addWidget(self.q_lbl_2)
-
-        self.q_lbl_22 = QPushButton("[Rnd]")
-        self.q_lbl_22.setObjectName("q_22")
-        self.q_lbl_22.setFlat(True)
-        self.q_lbl_22.setStyleSheet(btn_style)
-        self.q_lbl_22.clicked.connect(lambda: self.queue_selected(7))
-        ex_v.addWidget(self.q_lbl_22)
+        ex_v.setAlignment(self.q_lbl_2, Qt.AlignCenter)
 
 
-        self.q_lbl_3 = QPushButton("End of first 3rd")
+        self.q_lbl_3 = QPushButton("4 - High")
         self.q_lbl_3.setObjectName("q_3")
+        self.q_lbl_3.setMinimumWidth(185)
         self.q_lbl_3.setFlat(True)
+        self.q_lbl_3.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.q_lbl_3.setStyleSheet(btn_style)
         self.q_lbl_3.clicked.connect(lambda: self.queue_selected(3))
         ex_v.addWidget(self.q_lbl_3)
-
-        self.q_lbl_33 = QPushButton("[Rnd]")
-        self.q_lbl_33.setObjectName("q_33")
-        self.q_lbl_33.setFlat(True)
-        self.q_lbl_33.setStyleSheet(btn_style)
-        self.q_lbl_33.clicked.connect(lambda: self.queue_selected(8))
-        ex_v.addWidget(self.q_lbl_33)
+        ex_v.setAlignment(self.q_lbl_3, Qt.AlignCenter)
 
 
-
-        self.q_lbl_4 = QPushButton("End of second 3rd")
+        self.q_lbl_4 = QPushButton("3 - Medium")
+        self.q_lbl_4.setMinimumWidth(150)
         self.q_lbl_4.setObjectName("q_4")
         self.q_lbl_4.setFlat(True)
+        self.q_lbl_4.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.q_lbl_4.setStyleSheet(btn_style)
         self.q_lbl_4.clicked.connect(lambda: self.queue_selected(4))
         ex_v.addWidget(self.q_lbl_4)
+        ex_v.setAlignment(self.q_lbl_4, Qt.AlignCenter)
 
-        self.q_lbl_44 = QPushButton("[Rnd]")
-        self.q_lbl_44.setObjectName("q_44")
-        self.q_lbl_44.setFlat(True)
-        self.q_lbl_44.setStyleSheet(btn_style)
-        self.q_lbl_44.clicked.connect(lambda: self.queue_selected(9))
-        ex_v.addWidget(self.q_lbl_44)
 
-        self.q_lbl_5 = QPushButton("End")
+        self.q_lbl_5 = QPushButton("2 - Low")
+        self.q_lbl_5.setMinimumWidth(115)
         self.q_lbl_5.setObjectName("q_5")
         self.q_lbl_5.setFlat(True)
+        self.q_lbl_5.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.q_lbl_5.setStyleSheet(btn_style)
         self.q_lbl_5.clicked.connect(lambda: self.queue_selected(5))
         ex_v.addWidget(self.q_lbl_5)
+        ex_v.setAlignment(self.q_lbl_5, Qt.AlignCenter)
 
-        self.q_lbl_6 = QPushButton("\u2685 Random")
+
+        self.q_lbl_6 = QPushButton("1 - Very Low")
+        self.q_lbl_6.setMinimumWidth(80)
         self.q_lbl_6.setObjectName("q_6")
         self.q_lbl_6.setFlat(True)
+        self.q_lbl_6.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.q_lbl_6.setStyleSheet(btn_style)
         self.q_lbl_6.clicked.connect(lambda: self.queue_selected(6))
         ex_v.addWidget(self.q_lbl_6)
+        ex_v.setAlignment(self.q_lbl_6, Qt.AlignCenter)
 
         self.queue_section.setLayout(ex_v)
 
@@ -412,7 +418,7 @@ class CreateTab(QWidget):
 
         tag_lbl = QLabel()
         tag_icn = QPixmap(utility.misc.get_web_folder_path() + "icon-tag-24.png").scaled(14,14)
-        tag_lbl.setPixmap(tag_icn);
+        tag_lbl.setPixmap(tag_icn)
 
         tag_hb = QHBoxLayout()
         tag_hb.setAlignment(Qt.AlignLeft)
@@ -446,8 +452,7 @@ class CreateTab(QWidget):
 
         vbox_left.addWidget(self.queue_section)
 
-
-        self.layout.addLayout(vbox_left, 27)
+        self.layout.addLayout(vbox_left, 7)
 
         hbox = QHBoxLayout()
         hbox.addStretch(1)
@@ -459,6 +464,8 @@ class CreateTab(QWidget):
 
         title_lbl = QLabel("Title")
         self.title = QLineEdit()
+        if self.parent.title_prefill is not None:
+            self.title.setText(self.parent.title_prefill)
         f = self.title.font()
         f.setPointSize(14)
         self.title.setFont(f)
@@ -479,7 +486,7 @@ class CreateTab(QWidget):
         self.text.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         self.text.setLineWidth(2)
         self.text.cursorPositionChanged.connect(self.on_text_cursor_change)
-
+      
         t_h = QHBoxLayout()
         t_h.addWidget(text_lbl)
 
@@ -600,29 +607,40 @@ class CreateTab(QWidget):
         vbox.addWidget(source_lbl)
         vbox.addLayout(source_hb)
 
+        if self.parent.text_prefill is not None:
+            self.text.setText(self.parent.text_prefill)
+        if self.parent.prio_prefill is not None:
+            if self.parent.prio_prefill == 1:
+                self.q_lbl_6.animateClick()
+            elif self.parent.prio_prefill == 2:
+                self.q_lbl_5.animateClick()
+            elif self.parent.prio_prefill == 3:
+                self.q_lbl_4.animateClick()
+            elif self.parent.prio_prefill == 4:
+                self.q_lbl_3.animateClick()
+            elif self.parent.prio_prefill == 5:
+                self.q_lbl_2.animateClick()
+
+        btn_styles = """
+        QPushButton#q_1 { padding-left: 20px; padding-right: 20px; }
+        QPushButton#q_2 { padding-left: 17px; padding-right: 17px; }
+        QPushButton#q_3 { padding-left: 13px; padding-right: 13px; }
+        QPushButton#q_4 { padding-left: 8px; padding-right: 8px; }
+        QPushButton#q_5 { padding-left: 2px; padding-right: 2px; }
+        QPushButton#q_6 { padding-left: 0px; padding-right: 0px; }
+        QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_3,QPushButton:hover#q_4,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; }
+        """
+     
         styles = """
-            QPushButton#q_1,QPushButton#q_2,QPushButton#q_22,QPushButton#q_3,QPushButton#q_33,QPushButton#q_4,QPushButton#q_44,QPushButton#q_5,QPushButton#q_6 { border-radius: 5px; }
-            QPushButton#q_1 { margin-left: 10px; margin-right: 10px; }
-            QPushButton#q_2 { margin-left: 10px; margin-right: 10px; }
-            QPushButton#q_22 { margin-left: 70px; margin-right: 70px; }
-            QPushButton#q_3 { margin-left: 30px; margin-right: 30px; }
-            QPushButton#q_33 { margin-left: 70px; margin-right: 70px; }
-            QPushButton#q_4 { margin-left: 30px; margin-right: 30px; }
-            QPushButton#q_44 { margin-left: 70px; margin-right: 70px; }
-            QPushButton#q_5 { margin-left: 10px; margin-right: 10px; }
-            QPushButton#q_6 { margin-left: 10px; margin-right: 10px; }
-
-
-            QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; margin-left: 7px; margin-right: 7px; }
-            QPushButton:hover#q_22,QPushButton:hover#q_33,QPushButton:hover#q_44 { background-color: lightblue; margin-left: 67px; margin-right: 67px; }
-            QPushButton:hover#q_3,QPushButton:hover#q_4 { background-color: lightblue; margin-left: 27px; margin-right: 27px; }
-
+            QPushButton#q_1,QPushButton#q_2,QPushButton#q_3,QPushButton#q_4,QPushButton#q_5,QPushButton#q_6 { border-radius: 5px; }
+            %s 
+    
             QTextEdit { border-radius: 5px; border: 1px solid #717378;  padding: 3px; }
             QLineEdit { border-radius: 5px; border: 1px solid #717378;  padding: 2px;}
 
             #recentDisp { margin: 5px; }
 
-        """
+        """ % btn_styles
 
         # if parent.dark_mode_used:
         #     styles += """
@@ -706,14 +724,14 @@ class CreateTab(QWidget):
             self.tree.addTopLevelItem(ti)
 
     def queue_selected(self, queue_schedule):
-        for lbl in [self.q_lbl_1, self.q_lbl_2,  self.q_lbl_22,  self.q_lbl_3,  self.q_lbl_33,  self.q_lbl_4, self.q_lbl_44, self.q_lbl_5, self.q_lbl_6]:
+        self.queue_schedule = queue_schedule - 1
+        lbls =  [self.q_lbl_1, self.q_lbl_2, self.q_lbl_3, self.q_lbl_4, self.q_lbl_5, self.q_lbl_6]
+        for lbl in lbls:
             if self.parent.dark_mode_used:
                 lbl.setStyleSheet("QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }")
             else:
                 lbl.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey; font-weight: normal;")
-        [self.q_lbl_1, self.q_lbl_2,  self.q_lbl_3, self.q_lbl_4, self.q_lbl_5, self.q_lbl_6, self.q_lbl_22, self.q_lbl_33, self.q_lbl_44][queue_schedule-1].setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
-        self.queue_schedule = queue_schedule
-
+            lbls[queue_schedule-1].setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
 
     def on_pdf_clicked(self):
         fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"PDF (*.pdf)")
@@ -870,7 +888,7 @@ class PriorityTab(QWidget):
 
 
         self.t_view.resizeColumnsToContents()
-        self.t_view.setSelectionBehavior(QAbstractItemView.SelectRows);
+        self.t_view.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.t_view.setDragEnabled(True)
         self.t_view.setDropIndicatorShown(True)
         self.t_view.setAcceptDrops(True)
@@ -885,7 +903,7 @@ class PriorityTab(QWidget):
             self.t_view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
 
         self.t_view.verticalHeader().setSectionsMovable(False)
-        self.t_view.setSelectionMode(QAbstractItemView.SingleSelection);
+        self.t_view.setSelectionMode(QAbstractItemView.SingleSelection)
 
         self.vbox = QVBoxLayout()
         lbl = QLabel("Drag & Drop to reorder.\n'Remove' will only remove the item from the queue, not delete it.")
@@ -919,7 +937,7 @@ class PriorityTab(QWidget):
             n_id = self.t_view.model().item(r, 0).data()
             if n_id == id:
                 self.t_view.model().removeRow(r)
-                update_position(n_id, QueueSchedule.NOT_ADD)
+                remove_from_priority_list(n_id)
                 break
 
     def get_model(self, priority_list):
