@@ -21,6 +21,7 @@ from datetime import datetime, time, date, timedelta
 from aqt import mw
 from aqt.utils import tooltip, showInfo
 import random
+import time
 
 try:
     from .state import get_index
@@ -33,6 +34,8 @@ except:
 import utility.misc
 import utility.tags
 import utility.text
+
+db_path = None
 
 
 @unique
@@ -106,10 +109,30 @@ def create_db_file_if_not_exists():
             nid INTEGER,
             prio INTEGER,
             type TEXT,
-            created TEXT,
-            FOREIGN KEY(nid) REFERENCES notes(id)
+            created TEXT
         ); 
     """)
+
+    # temporary, drop fk
+    if not _table_exists("_queue_prio_log_old"):
+        conn.executescript("""
+        PRAGMA foreign_keys=off;
+        ALTER TABLE queue_prio_log RENAME TO _queue_prio_log_old;
+        CREATE TABLE queue_prio_log
+        (
+            nid INTEGER,
+            prio INTEGER,
+            type TEXT,
+            created TEXT
+        );
+        INSERT INTO queue_prio_log SELECT * FROM _queue_prio_log_old;
+        PRAGMA foreign_keys=on; 
+        
+        """)
+
+    conn.execute("CREATE INDEX if not exists read_nid ON read (nid);")
+    conn.execute("CREATE INDEX if not exists mark_nid ON marks (nid);")
+    conn.execute("CREATE INDEX if not exists prio_nid ON queue_prio_log (nid);")
     conn.commit()
     conn.close()
 
@@ -149,7 +172,6 @@ def update_priority_list(nid_to_update, schedule):
     on what schedule mode is active.
     Will also insert the given priority in queue_prio_log.
     """
-
     # priority log entries that have to be inserted in the log
     to_update_in_log = []
     # priority log entries that have to be removed from the log, because item is no longer in the queue
@@ -194,7 +216,6 @@ def update_priority_list(nid_to_update, schedule):
             # assert(days_delta < 10000)
             score = days_delta * last_prio
             scores.append((nid, last_prio_creation, last_prio, score))
-
     # note to be updated doesn't have to be in the results, it might not have been in the queue before
     if not nid_was_included:
         if schedule == QueueSchedule.NOT_ADD.value:
@@ -215,18 +236,20 @@ def update_priority_list(nid_to_update, schedule):
     # assert((len(to_update_in_log) + len(to_remove_from_log)) > 0)
 
     # update log and positions
-    cmd = f"update notes set position = NULL;"
+    conn = _get_connection()
+    conn.isolation_level = None
+    c = conn.cursor()
+    c.execute("begin transaction")
+    c.execute(f"update notes set position = NULL where position is not NULL;")
     for ix, f in enumerate(final_list):
-        cmd += f"update notes set position = {ix} where id = {f[0]};"
+        c.execute(f"update notes set position = {ix} where id = {f[0]};")
         if f[0] == nid_to_update:
             index = ix
     for nid in to_remove_from_log:
-        cmd += f"delete from queue_prio_log where nid = {nid};"
+        c.execute(f"delete from queue_prio_log where nid = {nid};")
     for nid, created, prio in to_update_in_log:
-        cmd += f"insert into queue_prio_log (nid, prio, created) values ({nid}, {prio}, '{created}');"
-    conn = _get_connection()
-    conn.executescript(cmd)
-    conn.commit()
+        c.execute(f"insert into queue_prio_log (nid, prio, created) values ({nid}, {prio}, '{created}');")
+    c.execute("commit")
     conn.close()
     #return new position (0-based), and length of queue, some functions need that to update the ui
     return (index, len(final_list))
@@ -292,13 +315,13 @@ def recalculate_priority_queue():
         # assert(s[3] >= 0)
         # assert(s[1] is not None and len(s[1]) > 0)
     # assert(len(final_list) == len(set([f[0] for f in final_list])))
-    cmd = f"update notes set position = NULL;"
-    for ix, f in enumerate(final_list):
-        cmd += f"update notes set position = {ix} where id = {f[0]};"
-    for nid, created, prio in to_update_in_log:
-        cmd += f"insert into queue_prio_log (nid, prio, created) values ({nid}, {prio}, '{created}');"
     conn = _get_connection()
-    conn.executescript(cmd)
+    c = conn.cursor()
+    c.execute(f"update notes set position = NULL where position is not NULL;")
+    for ix, f in enumerate(final_list):
+        c.execute(f"update notes set position = {ix} where id = {f[0]};")
+    for nid, created, prio in to_update_in_log:
+        c.execute(f"insert into queue_prio_log (nid, prio, created) values ({nid}, {prio}, '{created}');")
     conn.commit()
     conn.close()
 
@@ -628,16 +651,23 @@ def get_position(nid):
     return res[0]
 
 def delete_note(id):
-    update_priority_list(id, QueueSchedule.NOT_ADD)
+    update_priority_list(id, QueueSchedule.NOT_ADD.value)
+    # s = time.time() * 1000
     conn = _get_connection()
-    conn.execute("delete from read where nid =%s" % id)
-    conn.execute("delete from marks where nid =%s" % id)
-    sql = """
-        delete from notes where id=%s
-    """ % id
-    conn.execute(sql)
+    conn.executescript(f"""delete from read where nid ={id};
+                            delete from marks where nid ={id};
+                            delete from notes where id={id};
+                            delete from queue_prio_log where nid={id}; 
+                            """)
+    # conn.execute("delete from marks where nid =%s" % id)
+    # sql = """
+    #     delete from notes where id=%s
+    # """ % id
+    # conn.execute(sql) 
     conn.commit()
     conn.close()
+    # e = str(time.time() * 1000 - s)
+    # showInfo(e)
 
 def get_read_today_count():
     now = datetime.today().strftime('%Y-%m-%d')
@@ -790,10 +820,14 @@ def empty_priority_list():
     conn.close()
 
 def _get_db_path():
+    global db_path
+    if db_path is not None:
+        return db_path
     file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
     if file_path is None or len(file_path) == 0:
         file_path = utility.misc.get_user_files_folder_path()
     file_path += "siac-notes.db"
+    db_path = file_path
     return file_path
 
 def _get_connection():
@@ -957,7 +991,13 @@ def _date_now_str():
 def _dt_from_date_str(dtst):
     return datetime.strptime(dtst, '%Y-%m-%d-%H-%M-%S')
 
-
+def _table_exists(name):
+    conn = _get_connection()
+    res = conn.execute(f"SELECT count(name) FROM sqlite_master WHERE type='table' AND name='{name}'").fetchone()
+    conn.close()
+    if res[0]==1:
+        return True
+    return False
     
 
 def _convert_manual_prio_to_dynamic(prio):
