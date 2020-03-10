@@ -322,13 +322,13 @@ function toggleQueue() {
 }
 function queueSchedBtnClicked(btn_el) {
     $('#siac-queue-lbl').hide();
-    $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
+    $('.siac-queue-sched-btn').removeClass("active");
     toggleQueue();
     $(btn_el).addClass("active");
 }
 function afterRemovedFromQueue() {
     toggleQueue();
-    $('.siac-queue-sched-btn,.siac-queue-sched-btn-hor').removeClass("active");
+    $('.siac-queue-sched-btn').removeClass("active");
     $('.siac-queue-sched-btn').first().addClass("active").html('Unqueued');
 }
 function _startTimer(elementToUpdateId) {
@@ -903,19 +903,23 @@ function pdfViewerKeyup(event) {
     } 
 }
 function pdfTooltipClozeKeyup(event) {
-    if (event.ctrlKey && event.shiftKey && event.keyCode === 67) {
-        let text = window.getSelection().toString();
-        if (!text || text.length === 0) {
-            return;
-        }
-        let c_text = document.getElementById("siac-pdf-tooltip-results-area").innerHTML;
-        for (var i = 1; i < 20; i++) {
-            if (c_text.indexOf("{{c" + i + "::") === -1) {
-                c_text = c_text.split(text).join("<span style='color: lightblue;'>{{c"+ i + "::" + text + "}}</span>");
-                document.getElementById("siac-pdf-tooltip-results-area").innerHTML = c_text;
-                break;
+    try {
+        if (event.ctrlKey && event.shiftKey && event.keyCode === 67) {
+            let text = window.getSelection().toString();
+            if (!text || text.length === 0) {
+                return;
+            }
+            let c_text = document.getElementById("siac-pdf-tooltip-results-area").innerHTML;
+            for (var i = 1; i < 20; i++) {
+                if (c_text.indexOf("{{c" + i + "::") === -1) {
+                    c_text = c_text.split(text).join("<span style='color: lightblue;'>{{c"+ i + "::" + text + "}}</span>");
+                    document.getElementById("siac-pdf-tooltip-results-area").innerHTML = c_text;
+                    break;
+                }
             }
         }
+    } catch (ex) {
+        pycmd("siac-notification Something went wrong during clozing:<br> " + ex.message);
     }
 }
 function togglePDFSelect(elem) {
