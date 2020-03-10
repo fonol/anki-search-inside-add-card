@@ -634,3 +634,6 @@
 #siac-text-top-wr > div {
     height: 100% !important;
 }
+.siac-pdf-mark-lbl {
+    font-weight: bold;
+}
