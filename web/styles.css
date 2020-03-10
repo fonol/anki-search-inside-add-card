@@ -971,6 +971,18 @@ width: 48%; display: inline-block; text-align: center;
     font-size: 12px !important;
     overflow-y: hidden;
 }
+.siac-tags-exp-icon {
+    cursor: pointer;
+    float: right;
+    user-select: none;
+    border: 2px solid;
+    border-radius: 4px;
+    font-size: 9px;
+    opacity: 0.8;
+}
+.siac-tags-exp-icon:hover {
+    transform: scale(1.25);
+}
 fieldset {
     padding: 0.7em;
 }
