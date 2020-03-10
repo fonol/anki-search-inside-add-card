@@ -395,7 +395,10 @@ def get_notes_sidebar_html():
                     <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-untagged")'>Untagged</div>
                     <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-random");'>Random</div>
                     <input type='text' class='siac-sidebar-inp' style='width: calc(100%% - 15px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>
-                    <div class='w-100' style='margin-top: 20px;'><b>Tags (%s)</b></div>
+                    <div class='w-100' style='margin-top: 20px;'><b>Tags (%s)</b>
+                        <b class='siac-tags-exp-icon' style='margin-right: 15px;' onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
+                        <b class='siac-tags-exp-icon' style='margin-right: 5px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
+                    </div>
                     <hr style='margin-right: 15px;'/>
                 </div>
                 <div style='flex: 1 1 auto; padding-right: 5px; margin-right: 5px; margin-bottom: 5px; overflow-y: auto;'>
@@ -636,13 +639,13 @@ def quick_sched_btn(nid, should_save=False):
     save = "saveTextNote(%s);"  % (nid) if should_save else ""
     return f"""
         <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='onQuickSchedBtnClicked(this);'><div class='siac-read-icn siac-read-icn-light'></div>
-            <div class='expanded-hidden white-hover' onclick='{save}' style='margin: 0 0 0 6px; color: lightgrey; text-align: center;'>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 5");'><b>5</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 4");'><b>4</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 3");'><b>3</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 2");'><b>2</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 1");'><b>1</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 0");'><b>Current</b></div>
+            <div class='expanded-hidden white-hover' style='margin: 0 0 0 6px; color: lightgrey; text-align: center;'>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 5"); {save}'><b>5</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 4"); {save}'><b>4</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 3"); {save}'><b>3</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 2"); {save}'><b>2</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 1"); {save}'><b>1</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 0"); {save}'><b>Current</b></div>
             </div>
         </div>
     """
@@ -813,7 +816,6 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
 def get_schedule_btns(note_id):
     """
         Returns the html for the buttons that allow to quickly reschedule the current item in the reading modal.
-        Buttons differ depending on the schedule mode used.
     """
   
     return f"""
@@ -1081,14 +1083,14 @@ def get_note_delete_confirm_modal_html(nid):
     creation_date = note.created
     title = utility.text.trim_if_longer_than(note.get_title(), 100) 
     return """
-       <div class='siac-modal-small'>
+       <div class='siac-modal-small' id='siac-del-modal'>
             <p style='text-align: center; font-size: 14px;'><b>Delete the following note?</b></p>
             <hr class='siac-modal-sep'/>
             <br>
             <div style='text-align: center; font-size: 14px; margin-bottom: 4px;'><b>%s</b></div>
             <div style='text-align: center; font-size: 14px;'><i>%s</i></div>
             <br><br>
-            <div style='text-align: center;'><div class='siac-btn' onclick='$(this.parentNode.parentNode).remove(); removeNote(%s); $("#greyout").hide(); pycmd("siac-delete-user-note %s");' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn' onclick='$(this.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
+            <div style='text-align: center;'><div class='siac-btn' onclick='removeNote(%s);deleteNote(%s);' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn' onclick='$(this.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
        </div>
 
 
