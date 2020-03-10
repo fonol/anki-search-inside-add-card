@@ -320,10 +320,10 @@ def expanded_on_bridge_cmd(self, cmd, _old):
     elif cmd == "siac_rebuild_index":
         # we have to reset the ui because if the index is recreated, its values won't be in sync with the ui anymore
         self.web.eval("""
-        $('#searchResults').html('').hide();
-        $('#siac-pagination-wrapper,#siac-pagination-status,#searchInfo').html("");
-        $('#toggleTop').removeAttr('onclick').unbind("click");
-        $('#loader').show();""")
+            $('#searchResults').html('').hide();
+            $('#siac-pagination-wrapper,#siac-pagination-status,#searchInfo').html("");
+            $('#toggleTop').removeAttr('onclick').unbind("click");
+            $('#loader').show();""")
         set_index(None)
         set_corpus(None)
         build_index(force_rebuild=True, execute_after_end=after_index_rebuilt)
@@ -365,9 +365,14 @@ def expanded_on_bridge_cmd(self, cmd, _old):
     elif cmd.startswith("siac-delete-user-note "):
         id = int(cmd.split()[1])
         delete_note(id)
-        if index is not None and index.type != "Whoosh":
+        if index is not None:
             index.deleteNote(id)
         run_hooks("user-note-deleted")
+        index.ui.js("""
+            $("#greyout").hide(); 
+            $('#siac-del-modal').remove();
+        """)
+
 
     elif cmd.startswith("siac-read-user-note "):
         id = int(cmd.split()[1])
