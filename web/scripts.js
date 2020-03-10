@@ -328,6 +328,34 @@ function tagClick(elem) {
     $("#greyout").hide();
     pycmd('tagClicked ' + name);
 }
+function noteSidebarExpandAll() {
+    $('#siac-notes-sidebar .exp').each(function(ix, elem) {
+        let icn = $(elem);
+        if (icn.text().length) {
+            if (icn.text() === '[+]') {
+                icn.text('[-]');
+                icn.parent().parent().children('ul').toggle();
+            }
+        }
+    });
+}
+function noteSidebarCollapseAll() {
+    $('#siac-notes-sidebar .exp').each(function(ix, elem) {
+        let icn = $(elem);
+        if (icn.text().length) {
+            if (icn.text() === '[-]') {
+                icn.text('[+]');
+                icn.parent().parent().children('ul').toggle();
+            }
+        }
+    });
+}
+function deleteNote(id) {
+    document.getElementById('siac-del-modal').innerHTML = '<center style="margin: 20px 0 20px 0;">Deleting...</center>';
+    setTimeout(function() {
+        pycmd("siac-delete-user-note " + id);
+    }, 80);
+}
 
 function synInputKeyup(event, elem) {
     if (event.keyCode == 13 && elem.value)
