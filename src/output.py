@@ -30,6 +30,7 @@ try:
     from .notes import get_pdf_info
     from .special_searches import get_suspended
     from .reading_modal import ReadingModal
+    from .config import get_config_value_or_default
 except:
     from debug_logging import log
     from stats import getRetentions
@@ -37,6 +38,7 @@ except:
     from notes import get_pdf_info
     from special_searches import get_suspended
     from reading_modal import ReadingModal
+    from config import get_config_value_or_default
 
 import utility.tags
 import utility.text
@@ -357,7 +359,7 @@ class Output:
             cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes), len(self.previous_calls), stamp, timing)
         else:
             cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, page, pageMax, len(notes), len(self.previous_calls), stamp, timing)
-        cmd = f"{cmd}updateSwitchBtn({len(searchResults)});" 
+        cmd = f"{cmd}updateSwitchBtn({len(notes)});" 
 
         self._js(cmd, editor)
 
@@ -975,7 +977,8 @@ class Output:
                 }
         """
         if results is not None and len(results) > 0:
-            html = self.get_result_html_simple(results[:50], False, False)
+            limit = get_config_value_or_default("pdfTooltipResultLimit", 50)
+            html = self.get_result_html_simple(results[:limit], False, False)
             qhtml = """
                 <div id='siac-tooltip-center' onclick='centerTooltip();'></div>
                 <div class='siac-search-icn-dark' id='siac-tt-web-btn' onclick='pycmd("siac-show-web-search-tooltip " + $("#siac-pdf-tooltip").data("selection"));'></div>

@@ -20,6 +20,7 @@
     margin: -1px;
     padding: 1px;
     background-color: rgb(180, 0, 170);
+    /* background-color: yellow; */
     border-radius: 4px;
   }
 
@@ -39,9 +40,11 @@
     background-color: rgb(0, 100, 0);
   }
 
-  .textLayer ::-moz-selection { background: rgb(0,0,255); }
-
-  .textLayer ::selection { background: rgb(0,0,255); }
+  .textLayer ::selection { 
+    /* background: rgb(0,0,255);  */
+    /* background:  rgb(255, 196, 0); */
+     background:  darkorange;
+  }
 
   .textLayer .endOfContent {
     display: block;

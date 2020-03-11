@@ -36,6 +36,7 @@ try:
     from .web.html import *
     from .internals import js, requires_index_loaded, perf_time
     from .config import get_config_value_or_default
+    from .web_import import import_webpage
 except:
     from tag_find import get_most_active_tags
     from state import get_index, check_index, set_deck_map
@@ -43,6 +44,7 @@ except:
     from web.html import *
     from internals import js, requires_index_loaded, perf_time
     from config import get_config_value_or_default
+    from web_import import import_webpage
 
 class ReadingModal:
 
@@ -463,10 +465,10 @@ class ReadingModal:
         if on_ok is None:
             on_ok = ""
         modal = f""" <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
-                            {html}
-                            <br/> <br/>
-                            <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); {on_ok}">Ok</div>
-                        </div> """
+                        {html}
+                        <br/> <br/>
+                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); {on_ok}">&nbsp; Ok &nbsp;</div>
+                    </div> """
         return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
     @js

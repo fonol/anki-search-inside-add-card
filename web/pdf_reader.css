@@ -69,8 +69,6 @@
     right: 0; left: 0;
     z-index: 2;
     user-select: none;
-    /* background-color: #3b92c9; */
-    /* border: 2px solid #1773ac; */
     background-color: #43a047;
     border-radius: 7px;
     border: 4px outset green;
@@ -607,12 +605,12 @@
 #siac-pdf-top::-webkit-scrollbar:horizontal {
     height: 10px !important;
 }
-#siac-pdf-top::-webkit-scrollbar, #siac-pdf-bottom-tab::-webkit-scrollbar, body.nightMode ::-webkit-scrollbar {
+#siac-pdf-top::-webkit-scrollbar, #siac-pdf-bottom-tab::-webkit-scrollbar,#siac-pdf-tooltip-results-area::-webkit-scrollbar, body.nightMode ::-webkit-scrollbar {
     width: 10px !important;
     background: #313d45 !important;
     border-radius: 4px !important;
 }
- #siac-pdf-top::-webkit-scrollbar-thumb, body.nightMode ::-webkit-scrollbar-thumb, #siac-pdf-bottom-tab::-webkit-scrollbar-thumb {
+ #siac-pdf-top::-webkit-scrollbar-thumb, body.nightMode ::-webkit-scrollbar-thumb,#siac-pdf-tooltip-results-area::-webkit-scrollbar-thumb, #siac-pdf-bottom-tab::-webkit-scrollbar-thumb {
     background: #515d71 !important;
     border-radius: 4px !important;
 } 

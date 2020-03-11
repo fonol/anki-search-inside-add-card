@@ -183,7 +183,7 @@ def insert_scripts():
         are processed ($<config value>$ placeholders are replaced) and inserted via <style> tags.
     """
     addon_id = utility.misc.get_addon_id()
-    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png)$")
+    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|ttf)$")
     port = mw.mediaServer.getPort()
     aqt.editor._html += f"""
     <script>
@@ -207,6 +207,30 @@ def insert_scripts():
         script.rel = 'stylesheet';
         script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/textlayer.css';
         document.body.appendChild(script);
+
+        var css = `@font-face {{
+                        font-family: "Open Sans";
+                        src: url("http://127.0.0.1:{port}/_addons/{addon_id}/web/font/OpenSans-Regular.ttf");
+                        font-weight: normal;
+                        font-style: normal;
+                    }}
+                    @font-face {{
+                        font-family: "Open Sans";
+                        src: url("http://127.0.0.1:{port}/_addons/{addon_id}/web/font/OpenSans-Bold.ttf");
+                        font-weight: bold;
+                        font-style: normal;
+                    }}
+                    @font-face {{
+                        font-family: "Open Sans";
+                        src: url("http://127.0.0.1:{port}/_addons/{addon_id}/web/font/OpenSans-Italic.ttf");
+                        font-weight: normal;
+                        font-style: italic;
+                    }}`;
+        var font_style = document.createElement('style');
+        document.head.appendChild(font_style);
+        font_style.type = 'text/css';
+        font_style.appendChild(document.createTextNode(css));
+
     </script>
     """
 

@@ -259,12 +259,8 @@ def expanded_on_bridge_cmd(self, cmd, _old):
                         <center>Config value: <i>pdfUrlImportSavePath</i></center> 
                     """, period=4000)
                     return
-                c = 0
-                while os.path.isfile(os.path.join(path, name + ".pdf")):
-                    name += "-" + str(c) 
-                    c += 1 
-                path = os.path.join(path, name + ".pdf")
-                utility.misc.url_to_pdf(dialog.chosen_url, path)
+                path = utility.misc.get_pdf_save_full_path(path, name)
+                utility.misc.url_to_pdf(dialog.chosen_url, path, lambda *args: tooltip("Generated PDF Note.", period=4000))
                 title = dialog._chosen_name
                 if title is None or len(title) == 0:
                     title = name
@@ -420,8 +416,6 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         picker = QueuePicker(self.parentWindow, [], [])
         if picker.exec_() and picker.chosen_id is not None and picker.chosen_id >= 0:
             note = get_note(nid)
-            if not note.is_pdf() and not note.is_feed():
-                index.ui.js(f""" saveTextNote({nid}); """)
             index.ui.reading_modal.display(picker.chosen_id)
         else:
             index.ui.reading_modal.reload_bottom_bar(nid)

@@ -231,7 +231,7 @@ def remove_divs(html, replacement = ""):
     return re.sub("</?div ?[^>]*?>", replacement, html, flags=re.IGNORECASE)
 
 def remove_tags(html, tags):
-    return re.sub("</?(%s) ?[^>]*?>" % "|".join(tags), "", html, flags=re.IGNORECASE)
+    return re.sub("</?(%s) ?[^>]{0,200}?>" % "|".join(tags), "", html, flags=re.IGNORECASE)
 
 def remove_headers(html):
     html = re.sub("</?h[123456]( [^>]*?)?>", "", html, flags=re.IGNORECASE)
@@ -274,7 +274,7 @@ def clean_user_note_title(title):
 
 
 def clean_file_name(name):
-    name = re.sub("[^a-zA-Z]", "-", name)
+    name = re.sub("[^a-zA-Z0-9]", "-", name)
     return name
 
 def remove_special_chars(text):

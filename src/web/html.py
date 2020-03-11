@@ -20,7 +20,9 @@ import json
 import re
 import datetime
 import time
+import io
 from aqt import mw
+from aqt.utils import showInfo
 import html as ihtml
 
 from ..state import get_index, check_index
@@ -295,6 +297,7 @@ def right_side_html(indexIsLoaded = False):
 
                                 <fieldset id="searchMaskCol" style="flex: 1 1 auto; font-size: 0.85em;">
                                     <legend id="siac-search-inp-mode-lbl" onclick='toggleSearchbarMode(this);'>Mode: Add-on</legend>
+                                    <span class='siac-search-icn' style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
                                     <input id='siac-browser-search-inp' placeholder='' onkeyup='searchMaskKeypress(event)'></input>
                                 </fieldset>
 
@@ -394,7 +397,8 @@ def get_notes_sidebar_html():
                     <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-in-progress")'>PDFs - In Progress</div>
                     <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-untagged")'>Untagged</div>
                     <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-random");'>Random</div>
-                    <input type='text' class='siac-sidebar-inp' style='width: calc(100%% - 15px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>
+                    <input type='text' class='siac-sidebar-inp' style='width: calc(100%% - 35px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>
+                    <span class='siac-search-icn' style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
                     <div class='w-100' style='margin-top: 20px;'><b>Tags (%s)</b>
                         <b class='siac-tags-exp-icon' style='margin-right: 15px;' onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
                         <b class='siac-tags-exp-icon' style='margin-right: 5px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
@@ -481,15 +485,15 @@ def get_reading_modal_html(note):
         source = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
         source_icn = ""
         schedule_btns = get_schedule_btns(note_id)
-        save = f"saveTextNote({note.id});" if not note.is_pdf() else ""
 
         html = """
+            <script>destroyTinyMCE();</script>
             <div style='width: 100%; display: flex; flex-direction: column;'>
                     <div id='siac-reading-modal-top-btns'>
                         <div class='siac-btn siac-btn-dark' style='font-size: 8px;' onclick='toggleReadingModalFullscreen();'> <div class='siac-fullscreen-icn'></div> </div>
                         <div class='siac-btn siac-btn-dark' style='font-size: 8px;' onclick='pycmd("siac-left-side-width");'> / </div>
                         <div class='siac-btn siac-btn-dark' onclick='toggleReadingModalBars();'>&#x2195;</div>
-                        <div class='siac-btn siac-btn-dark' style='padding-left: 7px; padding-right: 7px;' onclick='onReadingModalClose({save_on_close}, {note_id});'>&times;</div>
+                        <div class='siac-btn siac-btn-dark' style='padding-left: 7px; padding-right: 7px;' onclick='onReadingModalClose({note_id});'>&times;</div>
                     </div>
                     <div id='siac-pdf-tooltip' onclick='event.stopPropagation();' onkeyup='event.stopPropagation();'>
                         <div id='siac-pdf-tooltip-top'></div>
@@ -514,15 +518,14 @@ def get_reading_modal_html(note):
                     </div>
                     <div id='siac-reading-modal-bottom-bar' style='flex: 0 0 auto; position: relative; width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden; user-select: none;'>
                         <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
-
                             <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
                             {schedule_btns}
                             <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                                 <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                 <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
                                 <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
-                                <a onclick='if (!pdfLoading) {{ {save} noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
-                                <a onclick='if (!pdfLoading) {{ {save} noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
+                                <a onclick='if (!pdfLoading) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
+                                <a onclick='if (!pdfLoading) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
                             </div>
                             {queue_readings_list}
                             <div id='siac-queue-infobox-wrapper'>
@@ -536,7 +539,6 @@ def get_reading_modal_html(note):
                                     <div id='siac-marks-display' onclick='markClicked(event);'></div>
                                 </div>
                             </div>
-                           
                         </div>
                     </div>
                     <div id='siac-timer-popup'>
@@ -576,13 +578,12 @@ def get_reading_modal_html(note):
             text = get_text_note_html(text, note_id, editable)
         
        
-        save_on_close = "true" if editable else "false"
         queue_info = "Priority: %s" % (get_priority_as_str(note_id)) if note.is_in_queue() else "Unqueued."
         queue_info_short = "In Queue" if note.is_in_queue() else "Unqueued"
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-        params = dict(note_id = note_id, title = title, source = source, save=save, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, save_on_close = save_on_close, overflow=overflow)
+        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow)
         html = html.format_map(params)
         return html
     return ""
@@ -601,7 +602,7 @@ def get_text_note_html(text, nid, editable):
     if urls is not None and len(urls) > 0:
         search_sources = iframe_dialog(urls)
     is_content_editable = "true" if editable else "false"
-    quick_sched = quick_sched_btn(nid, editable)
+    quick_sched = quick_sched_btn(nid)
     # editable_notification = "<span style='margin-left: 30px; color: grey;'>(i) Note content too long to edit here.</span>" if not editable else ""
     html = """
         <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
@@ -625,8 +626,11 @@ def get_text_note_html(text, nid, editable):
                 <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
                 <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
                 <div class='siac-btn siac-btn-dark' id='siac-extract-text-btn' onclick='tryExtractTextFromTextNote()' style='margin-left: 5px;'><b>Copy to new Note</b></div>
+                <div class='siac-btn siac-btn-dark' onclick='saveTextNote({nid}, remove=false)' style='margin-left: 5px;'><b>Save</b></div>
                 <span id='siac-text-note-status' style='margin-left: 30px; color: grey;'></span>
             </div>
+        </div>
+        <div id='siac-pdf-br-notify'>
         </div>
         <script>
             {tiny_mce} 
@@ -634,18 +638,17 @@ def get_text_note_html(text, nid, editable):
     """.format_map(dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, tiny_mce=tiny_mce_init_code()))
     return html
 
-def quick_sched_btn(nid, should_save=False):
+def quick_sched_btn(nid):
 
-    save = "saveTextNote(%s);"  % (nid) if should_save else ""
     return f"""
         <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='onQuickSchedBtnClicked(this);'><div class='siac-read-icn siac-read-icn-light'></div>
             <div class='expanded-hidden white-hover' style='margin: 0 0 0 6px; color: lightgrey; text-align: center;'>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 5"); {save}'><b>5</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 4"); {save}'><b>4</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 3"); {save}'><b>3</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 2"); {save}'><b>2</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 1"); {save}'><b>1</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 0"); {save}'><b>Current</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 5");'><b>5</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 4");'><b>4</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 3");'><b>3</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 2");'><b>2</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 1");'><b>1</b></div>
+                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 0");'><b>Current</b></div>
             </div>
         </div>
     """
@@ -779,10 +782,6 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
     if not note.is_pdf() and not note.is_feed():
         should_save = True
 
-    if should_save:
-        save = "saveTextNote(%s);"  % (note_id)
-    else:
-        save = ""
     hide = config = mw.addonManager.getConfig(__name__)["pdf.queue.hide"]
     queue_head_readings = ""
     for ix, queue_item in enumerate(queue):
@@ -797,7 +796,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
         #if the note is a pdf or feed, show a loader
         pdf_or_feed = queue_item.is_feed() or queue_item.is_pdf()
         should_show_loader = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if pdf_or_feed else ""
-        queue_head_readings +=  "<a onclick='if (!pdfLoading) {%s %s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s. %s</a><br>" % (save, should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, qi_title)
+        queue_head_readings +=  "<a onclick='if (!pdfLoading) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s. %s</a><br>" % (should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, qi_title)
         if ix > 3:
             break
 
@@ -834,10 +833,6 @@ def get_schedule_btns(note_id):
 def get_related_notes_html(note_id):
     r = get_related_notes(note_id)
     note = get_note(note_id)
-    if not note.is_pdf() and not note.is_feed():
-        save = "saveTextNote(%s);"  % (note_id)
-    else:
-        save = ""
     html = "" 
     ids = set()
     res = []
@@ -863,7 +858,7 @@ def get_related_notes_html(note_id):
         title = utility.text.trim_if_longer_than(rel.get_title(), 100)
         pdf_or_feed = rel.is_pdf() or rel.is_feed()
         should_show_loader = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if pdf_or_feed else ""
-        html = f"{html}<div class='siac-related-notes-item' onclick='if (!pdfLoading) {{ {save} {should_show_loader}  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note {rel.id}\"); }}'>{title}</div>"
+        html = f"{html}<div class='siac-related-notes-item' onclick='if (!pdfLoading) {{ {should_show_loader}  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note {rel.id}\"); }}'>{title}</div>"
     return html
 
 def get_note_info_html(note_id):

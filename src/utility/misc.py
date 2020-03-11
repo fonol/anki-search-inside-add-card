@@ -214,7 +214,7 @@ def img_src(img_name):
     return f"http://127.0.0.1:{port}/_addons/{get_addon_id()}/web/{img_name}"
 
 
-def url_to_pdf(url, output_path):
+def url_to_pdf(url, output_path, cb_after_finish = None):
     """
         Save the given site as pdf. 
         output_path has to be the full path to the output file including name.
@@ -224,7 +224,8 @@ def url_to_pdf(url, output_path):
     valid = True
     try:
         x = urlparse(url)
-        valid = all([x.scheme, x.netloc, x.path])
+        # path seems to be null on ubuntu for some reason
+        valid = all([x.scheme, x.netloc])
     except:
         valid = False
     if not valid:
@@ -233,7 +234,8 @@ def url_to_pdf(url, output_path):
     tooltip("Starting Conversion, this might take some seconds...",period=4000)
     temp = QWebEngineView()
     temp.setZoomFactor(1)
-    temp.page().pdfPrintingFinished.connect(lambda *args: tooltip("Generated PDF Note.", period=4000))
+    if cb_after_finish is not None:
+        temp.page().pdfPrintingFinished.connect(cb_after_finish)
     temp.load(QUrl(url))
 
     def save_pdf(finished):
@@ -241,6 +243,21 @@ def url_to_pdf(url, output_path):
 
     temp.loadFinished.connect(save_pdf)
 
+def get_pdf_save_full_path(path, pdfname):
+    """
+        path : folder where the pdf shall be saved to
+        pdfname : name the pdf should be given
+    """
+    if path is None or len(path) == 0:
+        return None
+    c = 0
+    if pdfname.lower().endswith(".pdf"):
+        pdfname = pdfname[:-4]
+    while os.path.isfile(os.path.join(path, pdfname + ".pdf")):
+        pdfname += "-" + str(c) 
+        c += 1 
+    path = os.path.join(path, pdfname + ".pdf")
+    return path
 
 def find_pdf_files_in_dir(dir):
     try:

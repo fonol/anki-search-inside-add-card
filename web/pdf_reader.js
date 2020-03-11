@@ -306,9 +306,17 @@ function saveTextNote(nid, remove=true) {
             tinymce.remove();
         }
     }
-    document.getElementById("siac-text-note-status").innerHTML = "Note Saved - " + new Date().toString();
+    showPDFBottomRightNotification("Note Saved.", 4000);
     pycmd("siac-update-note-text " + nid + " " + html);
 }
+function destroyTinyMCE() {
+    if (tinymce) {
+        try {
+            tinymce.remove();
+        } catch(e) {}
+    }
+}
+
 function toggleQueue() {
     let $wr = $("#siac-queue-sched-wrapper");
     if ($wr.hasClass('active')) {
@@ -969,9 +977,7 @@ function beforeNoteQuickOpen() {
         noteLoading = true;
         greyoutBottom(); 
         destroyPDF(); 
-    } else if (document.getElementById("siac-text-top")) {
-        saveTextNote($('#siac-reading-modal-top-bar').data("nid"));
-    }
+    } 
     bringPDFIntoView();
     return true;
 }
@@ -1072,16 +1078,13 @@ function activateReadingModalFullscreen() {
     pdfBarsHidden = true;
     toggleReadingModalFullscreen();
 }
-function onReadingModalClose(shouldSave, nid) {
+function onReadingModalClose(nid) {
     if (pdfLoading) {
         return;
     }
     $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
     $("#siac-reading-modal").hide(); 
     destroyPDF(); 
-    if (shouldSave) { 
-        saveTextNote(nid);
-    }
     document.getElementById("siac-reading-modal-center").innerHTML = "";
     onWindowResize();
 }

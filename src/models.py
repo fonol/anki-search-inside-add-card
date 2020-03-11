@@ -16,6 +16,7 @@
 
 import utility.text
 import html
+from .web_import import import_webpage
 
 class Printable():
     
@@ -72,6 +73,7 @@ class SiacNote(Printable):
             return "Untitled"
         return self.title
 
+
     def _build_non_anki_note_html(self):
         """
         User's notes should be displayed in a way to visually distinguish between title, text and source.
@@ -81,16 +83,17 @@ class SiacNote(Printable):
         title = html.escape(self.title)
         body = self.text
         #trim very long texts:
-        if len(body) > 5000:
+        if len(body) > 3000:
             #there might be unclosed tags now, but parsing would be too much overhead, so simply remove div, a and span tags
             #there might be still problems with <p style='...'>
+            body = body[:3000]
             body = utility.text.remove_tags(body, ["div", "span", "a"])
             last_open_bracket = body.rfind("<")
             if last_open_bracket >= len(body) - 500 or body.rfind(" ") < len(body) - 500:
                 last_close_bracket = body.rfind(">")
                 if last_close_bracket < last_open_bracket:
                     body = body[:last_open_bracket]
-            body += "<br></ul></b></i></em></span></p></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
+            body += "<br></ul></b></i></em></span></p></a></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
         
         title = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
         if src is not None and len(src) > 0:

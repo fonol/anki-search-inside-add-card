@@ -30,6 +30,11 @@ from ..notes import *
 from ..notes import _get_priority_list
 from ..hooks import run_hooks
 from ..state import get_index
+from ..config import get_config_value_or_default
+from ..web_import import import_webpage
+from .url_import import UrlImporter
+from .url_input_dialog import URLInputDialog
+
 import utility.text
 import utility.misc
 
@@ -115,7 +120,7 @@ class NoteEditor(QDialog):
 
         if self.note_id is not None:
             self.note = get_note(note_id)
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMaximizeButtonHint)
         self.mw = aqt.mw
         self.parent = parent
         #self.mw.setupDialogGC(self)
@@ -257,7 +262,7 @@ class CreateTab(QWidget):
 
     def __init__(self, parent):
         QWidget.__init__(self)
-        self.queue_schedule = 1
+        self.queue_schedule = 0
         self.parent = parent
         tmap = get_all_tags_as_hierarchy(False)
         self.tree = QTreeWidget()
@@ -322,10 +327,10 @@ class CreateTab(QWidget):
         ex_v.addSpacing(5)
 
         if parent.note_id is None:
-            self.q_lbl_1 = QPushButton("Don't Add to Queue")
+            self.q_lbl_1 = QPushButton(" Don't Add ")
         else:
             if not parent.note.is_in_queue():
-                self.q_lbl_1 = QPushButton("Don't Add to Queue")
+                self.q_lbl_1 = QPushButton(" Don't Add ")
             else:
                 self.q_lbl_1 = QPushButton("Keep Priority")
 
@@ -341,7 +346,7 @@ class CreateTab(QWidget):
         self.q_lbl_1.setFlat(True)
         self.q_lbl_1.setStyleSheet(btn_style_active)
         self.q_lbl_1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_1.clicked.connect(lambda: self.queue_selected(1))
+        self.q_lbl_1.clicked.connect(lambda: self.queue_selected(0))
         ex_v.addWidget(self.q_lbl_1)
         ex_v.setAlignment(self.q_lbl_1, Qt.AlignCenter)
 
@@ -363,7 +368,7 @@ class CreateTab(QWidget):
         self.q_lbl_2.setFlat(True)
         self.q_lbl_2.setStyleSheet(btn_style)
         self.q_lbl_2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_2.clicked.connect(lambda: self.queue_selected(2))
+        self.q_lbl_2.clicked.connect(lambda: self.queue_selected(5))
         ex_v.addWidget(self.q_lbl_2)
         ex_v.setAlignment(self.q_lbl_2, Qt.AlignCenter)
 
@@ -374,7 +379,7 @@ class CreateTab(QWidget):
         self.q_lbl_3.setFlat(True)
         self.q_lbl_3.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.q_lbl_3.setStyleSheet(btn_style)
-        self.q_lbl_3.clicked.connect(lambda: self.queue_selected(3))
+        self.q_lbl_3.clicked.connect(lambda: self.queue_selected(4))
         ex_v.addWidget(self.q_lbl_3)
         ex_v.setAlignment(self.q_lbl_3, Qt.AlignCenter)
 
@@ -385,7 +390,7 @@ class CreateTab(QWidget):
         self.q_lbl_4.setFlat(True)
         self.q_lbl_4.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.q_lbl_4.setStyleSheet(btn_style)
-        self.q_lbl_4.clicked.connect(lambda: self.queue_selected(4))
+        self.q_lbl_4.clicked.connect(lambda: self.queue_selected(3))
         ex_v.addWidget(self.q_lbl_4)
         ex_v.setAlignment(self.q_lbl_4, Qt.AlignCenter)
 
@@ -396,7 +401,7 @@ class CreateTab(QWidget):
         self.q_lbl_5.setFlat(True)
         self.q_lbl_5.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.q_lbl_5.setStyleSheet(btn_style)
-        self.q_lbl_5.clicked.connect(lambda: self.queue_selected(5))
+        self.q_lbl_5.clicked.connect(lambda: self.queue_selected(2))
         ex_v.addWidget(self.q_lbl_5)
         ex_v.setAlignment(self.q_lbl_5, Qt.AlignCenter)
 
@@ -407,7 +412,7 @@ class CreateTab(QWidget):
         self.q_lbl_6.setFlat(True)
         self.q_lbl_6.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.q_lbl_6.setStyleSheet(btn_style)
-        self.q_lbl_6.clicked.connect(lambda: self.queue_selected(6))
+        self.q_lbl_6.clicked.connect(lambda: self.queue_selected(1))
         ex_v.addWidget(self.q_lbl_6)
         ex_v.setAlignment(self.q_lbl_6, Qt.AlignCenter)
 
@@ -574,10 +579,11 @@ class CreateTab(QWidget):
         header_a3 = clean_menu.addAction("Remove All Colors")
         header_a3.triggered.connect(self.on_remove_colors_clicked)
         clean_btn.setMenu(clean_menu)
-
         self.tb.addWidget(clean_btn)
 
         t_h.addWidget(self.tb)
+
+
         vbox.addLayout(t_h)
         text_h = QHBoxLayout()
         text_h.addWidget(self.text)
@@ -591,6 +597,10 @@ class CreateTab(QWidget):
         p_hb.addWidget(self.line_status)
         p_hb.addStretch(1)
         p_hb.addWidget(self.plain_text_cb)
+        
+        url_btn = QPushButton(u" Fetch from URL ... ")
+        url_btn.clicked.connect(self.on_url_clicked)
+        p_hb.addWidget(url_btn)
         p_hb.addSpacing(35)
         vbox.addLayout(p_hb)
 
@@ -603,6 +613,9 @@ class CreateTab(QWidget):
         pdf_btn = QPushButton("PDF")
         pdf_btn.clicked.connect(self.on_pdf_clicked)
         source_hb.addWidget(pdf_btn)
+        pdf_from_url_btn = QPushButton("PDF from Webpage")
+        pdf_from_url_btn.clicked.connect(self.on_pdf_from_url_clicked)
+        source_hb.addWidget(pdf_from_url_btn)
 
         vbox.addWidget(source_lbl)
         vbox.addLayout(source_hb)
@@ -724,19 +737,48 @@ class CreateTab(QWidget):
             self.tree.addTopLevelItem(ti)
 
     def queue_selected(self, queue_schedule):
-        self.queue_schedule = queue_schedule - 1
-        lbls =  [self.q_lbl_1, self.q_lbl_2, self.q_lbl_3, self.q_lbl_4, self.q_lbl_5, self.q_lbl_6]
+        self.queue_schedule = queue_schedule
+        lbls = [self.q_lbl_1, self.q_lbl_6, self.q_lbl_5, self.q_lbl_4, self.q_lbl_3, self.q_lbl_2]
+
         for lbl in lbls:
             if self.parent.dark_mode_used:
                 lbl.setStyleSheet("QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }")
             else:
                 lbl.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey; font-weight: normal;")
-            lbls[queue_schedule-1].setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
+            lbls[queue_schedule].setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
 
     def on_pdf_clicked(self):
         fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"PDF (*.pdf)")
         if fname is not None:
             self.source.setText(fname[0])
+
+    def on_pdf_from_url_clicked(self):
+        dialog = UrlImporter(self, show_schedule=False)
+        if dialog.exec_():
+            if dialog.chosen_url is not None and len(dialog.chosen_url.strip()) > 0:
+                name = dialog.get_name()
+                path = get_config_value_or_default("pdfUrlImportSavePath", "")
+                if path is None or len(path) == 0:
+                    tooltip("""You have to set a save path for imported URLs first.
+                        <center>Config value: <i>pdfUrlImportSavePath</i></center> 
+                    """, period=4000)
+                    return
+                path = utility.misc.get_pdf_save_full_path(path, name)
+                utility.misc.url_to_pdf(dialog.chosen_url, path)
+                self.source.setText(path)
+            else: 
+                tooltip("Invalid URL")
+        
+
+    def on_url_clicked(self):
+        dialog = URLInputDialog(self)
+        if dialog.exec_():
+            if dialog.chosen_url is not None and len(dialog.chosen_url.strip()) > 0:
+                text = import_webpage(dialog.chosen_url)
+                if text is None:
+                    tooltip("Failed to fetch text from page.")
+                else:
+                    self.text.setHtml(text)
 
     def on_italic_clicked(self):
         self.text.setFontItalic(not self.text.fontItalic())
