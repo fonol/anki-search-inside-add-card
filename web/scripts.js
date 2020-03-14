@@ -32,6 +32,7 @@ var renderImmediately = $renderImmediately$;
 var tagHoverCB;
 var tagHoverTimeout = 750;
 var searchMaskTimer;
+var $fields;
 
 
 function sendContent(event) {
@@ -110,7 +111,7 @@ function expandRankingLbl(elem) {
     }
 }
 function expandCard(id, icn) {
-    pycmd("nStats " + id);
+    pycmd("siac-note-stats " + id);
 }
 function pinMouseLeave(elem) {
     $(elem).css('opacity', '0');
@@ -161,7 +162,7 @@ function tagMouseEnter(elem) {
         return;
     tagHoverCB = setTimeout(function () {
             if (elem && elem.parentElement && elem.parentElement.querySelector(':hover') === elem && !document.getElementById('siac-tag-info-box-' + $(elem).data('stamp'))) {
-                pycmd("tagInfo " + $(elem).data("stamp") + " " + $(elem).data("name"));
+                pycmd("siac-tag-info " + $(elem).data("stamp") + " " + $(elem).data("name"));
             }
     }, tagHoverTimeout);
 }
@@ -326,7 +327,7 @@ function tagClick(elem) {
     let name = $(elem).data('target') || $(elem).data('name');
     $(".siac-tag-info-box").remove();
     $("#greyout").hide();
-    pycmd('tagClicked ' + name);
+    pycmd('siac-tag-clicked ' + name);
 }
 function noteSidebarExpandAll() {
     $('#siac-notes-sidebar .exp').each(function(ix, elem) {
