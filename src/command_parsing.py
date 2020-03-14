@@ -85,14 +85,14 @@ def expanded_on_bridge_cmd(self, cmd, _old):
     
     elif (cmd.startswith("siac-note-stats ")):
         # note "Info" button clicked
-        setStats(cmd[7:], calculateStats(cmd[7:], index.ui.gridView))
+        setStats(cmd[16:], calculateStats(cmd[16:], index.ui.gridView))
 
     elif (cmd.startswith("siac-tag-clicked ")):
         # clicked on a tag
         if config["tagClickShouldSearch"]:
-            rerender_info(self, cmd[11:].strip(), searchByTags=True)
+            rerender_info(self, cmd[17:].strip(), searchByTags=True)
         else:
-            add_tag(cmd[11:])
+            add_tag(cmd[17:])
 
     elif cmd.startswith("siac-edit-note "):
         # "Edit" clicked on a normal note
