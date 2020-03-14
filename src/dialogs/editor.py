@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from aqt.qt import *
-from aqt.utils import tooltip
+from aqt.utils import tooltip 
 import aqt.editor
 import aqt
 import functools
+import time
 import math
 import re
 import random
@@ -38,11 +38,9 @@ from .url_input_dialog import URLInputDialog
 import utility.text
 import utility.misc
 
-
 def openEditor(mw, nid):
     note = mw.col.getNote(nid)
     dialog = EditDialog(mw, note)
-
 
 class EditDialog(QDialog):
 
@@ -97,13 +95,13 @@ class EditDialog(QDialog):
             onsuccess()
         self.editor.saveNow(callback)
 
-
 class NoteEditor(QDialog):
     """
     The editor window for non-anki notes.
     Has a text field and a tag field.
     """
     def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None, text_prefill = None, title_prefill = None, prio_prefill = None):
+
         self.note_id = note_id
         self.note = None
         self.add_only = add_only
@@ -129,7 +127,8 @@ class NoteEditor(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
-
+        
+         
         if self.note_id is not None:
             self.save = QPushButton("\u2714 Save")
             self.setWindowTitle('Edit Note')
@@ -145,7 +144,11 @@ class NoteEditor(QDialog):
         self.priority_list = priority_list
 
         self.tabs = QTabWidget()
+        
+        
+         
         self.create_tab = CreateTab(self)
+        
         #self.browse_tab = BrowseTab()
         self.tabs.addTab(self.create_tab, "Create")
         if not self.add_only:
@@ -196,8 +199,8 @@ class NoteEditor(QDialog):
             """
         self.setStyleSheet(styles)
         self.create_tab.title.setFocus()
-        self.exec_()
 
+        self.exec_()
 
 
     def on_create_clicked(self):
@@ -248,7 +251,6 @@ class NoteEditor(QDialog):
 
         self.reject()
 
-
     def reject(self):
         if not self.add_only:
             self.priority_tab.t_view.setModel(None)
@@ -256,7 +258,6 @@ class NoteEditor(QDialog):
 
     def accept(self):
         self.reject()
-
 
 class CreateTab(QWidget):
 
@@ -276,6 +277,7 @@ class CreateTab(QWidget):
         self.tree.setHeaderHidden(True)
         self.original_bg = None
         self.original_fg = None
+        web_path = utility.misc.get_web_folder_path()
 
         self.highlight_map = {
             "ob": [0,0,0,232,151,0],
@@ -285,10 +287,14 @@ class CreateTab(QWidget):
             "gb": [255,255,255,34,177,76]
         }
 
+         
         recently_used_tags = get_recently_used_tags()
+        
         config = mw.addonManager.getConfig(__name__)
         tag_bg = config["styling"]["general"]["tagBackgroundColor"]
         tag_fg = config["styling"]["general"]["tagForegroundColor"]
+
+         
 
         self.recent_tbl = QWidget()
         self.recent_tbl.setObjectName("recentDisp")
@@ -350,7 +356,6 @@ class CreateTab(QWidget):
         ex_v.addWidget(self.q_lbl_1)
         ex_v.setAlignment(self.q_lbl_1, Qt.AlignCenter)
 
-
         ex_v.addSpacing(5)
         line_sep = QFrame()
         line_sep.setFrameShape(QFrame.HLine)
@@ -372,7 +377,6 @@ class CreateTab(QWidget):
         ex_v.addWidget(self.q_lbl_2)
         ex_v.setAlignment(self.q_lbl_2, Qt.AlignCenter)
 
-
         self.q_lbl_3 = QPushButton("4 - High")
         self.q_lbl_3.setObjectName("q_3")
         self.q_lbl_3.setMinimumWidth(185)
@@ -382,7 +386,6 @@ class CreateTab(QWidget):
         self.q_lbl_3.clicked.connect(lambda: self.queue_selected(4))
         ex_v.addWidget(self.q_lbl_3)
         ex_v.setAlignment(self.q_lbl_3, Qt.AlignCenter)
-
 
         self.q_lbl_4 = QPushButton("3 - Medium")
         self.q_lbl_4.setMinimumWidth(150)
@@ -394,7 +397,6 @@ class CreateTab(QWidget):
         ex_v.addWidget(self.q_lbl_4)
         ex_v.setAlignment(self.q_lbl_4, Qt.AlignCenter)
 
-
         self.q_lbl_5 = QPushButton("2 - Low")
         self.q_lbl_5.setMinimumWidth(115)
         self.q_lbl_5.setObjectName("q_5")
@@ -404,7 +406,6 @@ class CreateTab(QWidget):
         self.q_lbl_5.clicked.connect(lambda: self.queue_selected(2))
         ex_v.addWidget(self.q_lbl_5)
         ex_v.setAlignment(self.q_lbl_5, Qt.AlignCenter)
-
 
         self.q_lbl_6 = QPushButton("1 - Very Low")
         self.q_lbl_6.setMinimumWidth(80)
@@ -422,7 +423,7 @@ class CreateTab(QWidget):
         vbox_left = QVBoxLayout()
 
         tag_lbl = QLabel()
-        tag_icn = QPixmap(utility.misc.get_web_folder_path() + "icon-tag-24.png").scaled(14,14)
+        tag_icn = QPixmap(utility.misc.get_web_folder_path() + "icons/icon-tag-24.png").scaled(14,14)
         tag_lbl.setPixmap(tag_icn)
 
         tag_hb = QHBoxLayout()
@@ -484,7 +485,7 @@ class CreateTab(QWidget):
         f.setPointSize(12)
         self.text.setFont(f)
         self.text.setMinimumHeight(380)
-        self.text.setMinimumWidth(450)
+        self.text.setMinimumWidth(470)
         self.text.setSizePolicy(
             QSizePolicy.Expanding,
             QSizePolicy.Expanding)
@@ -507,22 +508,25 @@ class CreateTab(QWidget):
         self.vtb.setOrientation(Qt.Vertical)
         self.vtb.setIconSize(QSize(16, 16))
 
-        self.orange_black = self.vtb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-orange-black.png"), "Highlight 1")
+         
+        self.orange_black = self.vtb.addAction(QIcon(web_path + "icons/icon-orange-black.png"), "Highlight 1")
         self.orange_black.triggered.connect(self.on_highlight_ob_clicked)
 
-        self.red_white = self.vtb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-red-white.png"), "Highlight 2")
+        self.red_white = self.vtb.addAction(QIcon(web_path + "icons/icon-red-white.png"), "Highlight 2")
         self.red_white.triggered.connect(self.on_highlight_rw_clicked)
 
-        self.yellow_black = self.vtb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-yellow-black.png"), "Highlight 3")
+        self.yellow_black = self.vtb.addAction(QIcon(web_path + "icons/icon-yellow-black.png"), "Highlight 3")
         self.yellow_black.triggered.connect(self.on_highlight_yb_clicked)
 
-        self.blue_white = self.vtb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-blue-white.png"), "Highlight 4")
+        self.blue_white = self.vtb.addAction(QIcon(web_path + "icons/icon-blue-white.png"), "Highlight 4")
         self.blue_white.triggered.connect(self.on_highlight_bw_clicked)
 
-        self.green_black = self.vtb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-green-black.png"), "Highlight 5")
+        self.green_black = self.vtb.addAction(QIcon(web_path + "icons/icon-green-black.png"), "Highlight 5")
         self.green_black.triggered.connect(self.on_highlight_gb_clicked)
 
+        
 
+         
         bold =  self.tb.addAction("b")
         f = bold.font()
         f.setBold(True)
@@ -554,7 +558,7 @@ class CreateTab(QWidget):
         f.setStrikeOut(True)
         strike.setFont(f)
 
-        color = self.tb.addAction(QIcon(utility.misc.get_web_folder_path() + "icon-color-change.png"), "Foreground Color")
+        color = self.tb.addAction(QIcon(web_path + "icons/icon-color-change.png"), "Foreground Color")
         color.triggered.connect(self.on_color_clicked)
 
         bullet_list = self.tb.addAction("BL")
@@ -570,6 +574,19 @@ class CreateTab(QWidget):
         clean_btn.setPopupMode(QToolButton.InstantPopup)
         clean_btn.setFocusPolicy(Qt.NoFocus)
         clean_menu = QMenu(clean_btn)
+        if self.parent.dark_mode_used:
+            clean_menu.setStyleSheet("""
+                QMenu { background: #3a3a3a; color: lightgrey; }
+                QMenu:item:selected { background: #aaa; color: white; }
+            """)
+        else:
+            clean_menu.setStyleSheet("""
+                QMenu { background: white; color: black; }
+                QMenu:item:selected { background: #2496dc; color: white; }
+            """)
+        
+
+         
         header_a = clean_menu.addAction("Remove Headers")
         header_a.triggered.connect(self.on_remove_headers_clicked)
         header_a1 = clean_menu.addAction("Remove All Bold Formatting")
@@ -582,7 +599,6 @@ class CreateTab(QWidget):
         self.tb.addWidget(clean_btn)
 
         t_h.addWidget(self.tb)
-
 
         vbox.addLayout(t_h)
         text_h = QHBoxLayout()
@@ -661,13 +677,14 @@ class CreateTab(QWidget):
         #         QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_22,QPushButton:hover#q_3,QPushButton:hover#q_33,QPushButton:hover#q_4,QPushButton:hover#q_44,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: grey; border-color: blue; color: white; }
         #     """
 
-
         self.setStyleSheet(styles)
 
         # vbox.addStretch(1)
         tag_lbl2 = QLabel()
         tag_lbl2.setPixmap(tag_icn)
 
+        
+         
         tag_hb2 = QHBoxLayout()
         tag_hb2.setAlignment(Qt.AlignLeft)
         tag_hb2.addWidget(tag_lbl2)
@@ -690,6 +707,7 @@ class CreateTab(QWidget):
             self.text.setHtml(parent.note.text)
             self.source.setText(parent.note.source)
 
+        
 
     def _add_to_tree(self, map, prefix):
         res = []
@@ -817,7 +835,6 @@ class CreateTab(QWidget):
         color = QColorDialog.getColor()
         self.text.setTextColor(color)
 
-
     def highlight(self, type):
         self.save_original_bg_and_fg()
         if self.text.textCursor().selectedText() is not None and len(self.text.textCursor().selectedText()) > 0:
@@ -858,7 +875,6 @@ class CreateTab(QWidget):
         bg = self.text.textBackgroundColor()
         return (fg, bg)
 
-
     def save_original_bg_and_fg(self):
         if self.original_bg is None:
             self.original_bg = self.text.palette().color(QPalette.Base)
@@ -875,7 +891,6 @@ class CreateTab(QWidget):
         line = cursor.blockNumber() + 1
         col = cursor.columnNumber()
         self.line_status.setText("Ln: {}, Col: {}".format(line,col))
-
 
     def on_remove_colors_clicked(self):
         html = self.text.toHtml()
@@ -913,10 +928,11 @@ class CreateTab(QWidget):
         self.text.setHtml(html)
 
 
-
 class PriorityTab(QWidget):
 
     def __init__(self, priority_list, parent):
+        
+         
         QWidget.__init__(self)
         self.parent = parent
         model = self.get_model(priority_list)
@@ -927,7 +943,6 @@ class PriorityTab(QWidget):
         self.t_view.setModel(model)
 
         self.set_remove_btns(priority_list)
-
 
         self.t_view.resizeColumnsToContents()
         self.t_view.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -959,7 +974,6 @@ class PriorityTab(QWidget):
         bottom_box.addStretch(1)
         self.vbox.addLayout(bottom_box)
 
-
         self.setLayout(self.vbox)
         if parent.dark_mode_used:
             self.setStyleSheet("""
@@ -968,7 +982,7 @@ class PriorityTab(QWidget):
                 background-color: #313233;
             }
             """)
-
+        
 
     def on_remove_clicked(self, id):
         """
@@ -1016,7 +1030,6 @@ class PriorityTab(QWidget):
         model.setHeaderData(2, Qt.Horizontal, "Actions")
         return model
 
-
     def set_remove_btns(self, priority_list):
         for r in range(len(priority_list)):
             rem_btn = QPushButton("Remove")
@@ -1034,7 +1047,6 @@ class PriorityTab(QWidget):
             cell_widget.setLayout(h_l)
             self.t_view.setIndexWidget(self.t_view.model().index(r,2), cell_widget)
 
-
     def on_shuffle_btn_clicked(self):
         priority_list = _get_priority_list()
         if priority_list is None or len(priority_list) == 0:
@@ -1046,7 +1058,6 @@ class PriorityTab(QWidget):
         set_priority_list(ids)
         self.t_view.setModel(model)
         self.set_remove_btns(priority_list)
-
 
 class PriorityListModel(QStandardItemModel):
     def __init__(self, parent):
@@ -1086,11 +1097,9 @@ class PriorityListModel(QStandardItemModel):
             self.parent.t_view.setIndexWidget(self.index(row,2), cell_widget)
         return success
 
-
 class BrowseTab(QWidget):
     def __init__(self):
         QWidget.__init__(self)
-
 
     def _add_to_tree(self, map):
         res = []
@@ -1104,7 +1113,6 @@ class BrowseTab(QWidget):
     def tree_item_clicked(self, item, col):
         tag = item.text(0)
         pass
-
 
 class HTMLDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
@@ -1136,7 +1144,6 @@ class HTMLDelegate(QStyledItemDelegate):
         textRect = style.subElementRect(
             QStyle.SE_ItemViewItemText, options)
 
-
         painter.translate(textRect.topLeft())
         painter.setClipRect(textRect.translated(-textRect.topLeft()))
         self.doc.documentLayout().draw(painter, ctx)
@@ -1145,7 +1152,6 @@ class HTMLDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         return QSize(self.doc.idealWidth(), self.doc.size().height())
-
 
 class ExpandableSection(QWidget):
     def __init__(self, title="", parent=None):
