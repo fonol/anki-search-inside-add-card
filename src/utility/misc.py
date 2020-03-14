@@ -211,7 +211,7 @@ def img_src(img_name):
     Must be in web folder.
     """
     port = mw.mediaServer.getPort()
-    return f"http://127.0.0.1:{port}/_addons/{get_addon_id()}/web/{img_name}"
+    return f"http://127.0.0.1:{port}/_addons/{get_addon_id()}/web/icons/{img_name}"
 
 
 def url_to_pdf(url, output_path, cb_after_finish = None):
