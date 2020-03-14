@@ -144,6 +144,7 @@ def right_side_html(indexIsLoaded = False):
     return """
 
         //check if ui has been rendered already
+        (() => { 
         if (!$('#outerWr').length) {
 
         $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
@@ -235,6 +236,10 @@ def right_side_html(indexIsLoaded = False):
                                                     <option value="1.4"></option>
                                                     <option value="1.5" label="1.5"></option>
                                                 </datalist>
+                                                <br>
+                                                <span>Window Partition</span>
+                                                <hr>
+                                                <input id='siac-partition-slider' type='range' min='0' max='100' step='1' value='%s' onchange='pycmd("siac-left-side-width " + this.value)'/>
                                                 <br>
                                                 <span>Menus</span>
                                                 <hr>
@@ -348,20 +353,31 @@ def right_side_html(indexIsLoaded = False):
         `).insertAfter('#fields');
         $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
         updatePinned();
+        var there = false;
+        
+        } else {
+           var there = true;
         }
+        
         $('.field').on('keyup', fieldKeypress);
         $('.field').attr('onmouseup', 'getSelectionText()');
-        var $fields = $('.field');
-        var $searchInfo = $('#searchInfo');
+        window.$fields = $('.field');
+        window.$searchInfo = $('#searchInfo');
         onWindowResize();
         window.addEventListener('resize', onWindowResize, true);
         $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
         $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
+
+        return there; 
+        
+        })();
+
     """ % (
     leftSideWidth,
     rightSideWidth,
     conf_or_def("searchpane.zoom", 1.0),
     conf_or_def("noteScale", 1.0),
+    conf_or_def("leftSideWidthInPercent", 40),
     pdf_svg(15, 18),
     "display: none;" if indexIsLoaded else "",
     "hidden" if hideSidebar else "",
@@ -626,7 +642,7 @@ def get_text_note_html(text, nid, editable):
                 <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
                 <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
                 <div class='siac-btn siac-btn-dark' id='siac-extract-text-btn' onclick='tryExtractTextFromTextNote()' style='margin-left: 5px;'><b>Copy to new Note</b></div>
-                <div class='siac-btn siac-btn-dark' onclick='saveTextNote({nid}, remove=false)' style='margin-left: 5px;'><b>Save</b></div>
+                <div class='siac-btn siac-btn-dark' onclick='saveTextNote({nid}, remove=false)' style='margin-left: 5px;'><b>&nbsp; Save &nbsp;</b></div>
                 <span id='siac-text-note-status' style='margin-left: 30px; color: grey;'></span>
             </div>
         </div>
@@ -1213,6 +1229,13 @@ def stylingModal(config):
                 </table>
             </fieldset>
             <br/>
+            <fieldset>
+                <span>This controls if the addon's notes shall be displayed with their source field (on the bottom: "Source: ..."), or not.</span>
+                <table style="width: 100%%">
+                    <tr><td><b>Notes - Show Source</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling notes.showSource ' + this.checked)" %s/></tr>
+                </table>
+            </fieldset>
+            <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
                         """ % (
                         config["searchpane.zoom"],
@@ -1225,7 +1248,8 @@ def stylingModal(config):
                        config["alwaysRebuildIndexIfSmallerThan"],
                        "checked='true'" if config["removeDivsFromOutput"] else "",
                        config["addonNoteDBFolderPath"],
-                       config["pdfUrlImportSavePath"]
+                       config["pdfUrlImportSavePath"],
+                       "checked='true'" if config["notes.showSource"] else ""
                         )
     html += """
     <br/> <br/>
@@ -1459,17 +1483,15 @@ def tiny_mce_init_code():
             menubar: 'edit view insert format tools table',
             toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | charmap | codesample | ltr rtl',
             toolbar_sticky: true,
+            contextmenu: false,
             resize: false,
             statusbar: false,
             skin: "oxide-dark",
             content_css: "dark",
-            image_advtab: true,
             importcss_append: true,
-            image_caption: true,
             quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote quickimage quicktable',
             noneditable_noneditable_class: "mceNonEditable",
             toolbar_drawer: 'sliding',
-            contextmenu: "table",
             setup: function (ed) {
                 ed.on('init', function(args) {
                     setTimeout(function() { $('.tox-notification__dismiss').first().trigger('click'); }, 200);
