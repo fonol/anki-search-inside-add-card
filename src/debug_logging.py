@@ -63,9 +63,28 @@ def persist_index_info(search_index):
 
     _write_to_data_file(c_json)
 
+
+def persist_notes_db_checked():
+    """
+        Update "notes" - "db_last_checked" with current timestamp
+    """
+    stamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    c_json = _get_data_file_content()
+    if not "notes" in c_json:
+        c_json["notes"] = {}
+    c_json["notes"]["db_last_checked"] = stamp
+    _write_to_data_file(c_json)
+
+
 def get_index_info():
     c_json = _get_data_file_content() 
     return c_json["index"]
+
+def get_notes_info():
+    c_json = _get_data_file_content()
+    if "notes" in c_json:
+        return c_json["notes"]
+    return None
 
 def _get_data_file_content():
     dir = utility.misc.get_user_files_folder_path()
@@ -75,7 +94,7 @@ def _get_data_file_content():
 def _write_to_data_file(c_json):
     dir = utility.misc.get_user_files_folder_path() + "data.json"
     with open(dir, "w") as json_file:
-        json.dump(c_json, json_file)
+        json.dump(c_json, json_file, indent=2)
         
 def toggle_should_rebuild():
     c_json = _get_data_file_content() 

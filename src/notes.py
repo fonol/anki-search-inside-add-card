@@ -27,10 +27,12 @@ try:
     from .state import get_index
     from .models import SiacNote, NoteRelations
     from .config import get_config_value_or_default
+    from .debug_logging import get_notes_info, persist_notes_db_checked
 except:
     from state import get_index
     from models import SiacNote, NoteRelations
     from config import get_config_value_or_default
+    from debug_logging import get_notes_info, persist_notes_db_checked
 import utility.misc
 import utility.tags
 import utility.text
@@ -81,6 +83,11 @@ def create_db_file_if_not_exists():
         conn.execute(creation_sql)
     else:
         conn = sqlite3.connect(file_path)
+    
+    info_from_data_json = get_notes_info()
+    if info_from_data_json is not None and "db_last_checked" in info_from_data_json and len(info_from_data_json["db_last_checked"]) > 0:
+        return
+   
     conn.execute("""
         create table if not exists read
         (
@@ -135,6 +142,9 @@ def create_db_file_if_not_exists():
     conn.execute("CREATE INDEX if not exists prio_nid ON queue_prio_log (nid);")
     conn.commit()
     conn.close()
+
+    # store a timestamp in /user_files/data.json to check next time, so we don't have to do this on every startup
+    persist_notes_db_checked()
 
 
 def create_note(title, text, source, tags, nid, reminder, queue_schedule):
