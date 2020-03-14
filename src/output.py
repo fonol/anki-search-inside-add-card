@@ -703,6 +703,9 @@ class Output:
         js = """
             $('#siac-reading-modal').html(`%s`);
             document.getElementById('siac-reading-modal').style.display = 'flex';
+            document.getElementById('resultsArea').style.display = 'none';
+            document.getElementById('bottomContainer').style.display = 'none';
+            document.getElementById('topContainer').style.display = 'none';
         """ % (html)
         self.js(js) 
 
