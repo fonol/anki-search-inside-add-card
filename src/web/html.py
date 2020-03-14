@@ -416,8 +416,8 @@ def get_notes_sidebar_html():
                     <input type='text' class='siac-sidebar-inp' style='width: calc(100%% - 35px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>
                     <span class='siac-search-icn' style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
                     <div class='w-100' style='margin-top: 20px;'><b>Tags (%s)</b>
-                        <b class='siac-tags-exp-icon' style='margin-right: 15px;' onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
-                        <b class='siac-tags-exp-icon' style='margin-right: 5px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
+                        <b class='siac-tags-exp-icon' style='margin-right: 15px; padding: 0 2px 0 2px;' onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
+                        <b class='siac-tags-exp-icon' style='margin-right: 5px; padding: 0 2px 0 2px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
                     </div>
                     <hr style='margin-right: 15px;'/>
                 </div>
