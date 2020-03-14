@@ -297,7 +297,7 @@ function markReadUpToCurrent() {
 function saveTextNote(nid, remove=true) {
     let html = "";
     try {
-        html = tinymce.get('siac-text-top').getContent();
+        html = tinymce.activeEditor.getContent();
     } catch(e) {
         pycmd("siac-notification Could not save text note for some reason.");
         return;
@@ -1084,6 +1084,9 @@ function onReadingModalClose(nid) {
     }
     $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
     $("#siac-reading-modal").hide(); 
+    document.getElementById('resultsArea').style.display = 'block';
+    document.getElementById('bottomContainer').style.display = 'block';
+    document.getElementById('topContainer').style.display = 'flex';
     destroyPDF(); 
     document.getElementById("siac-reading-modal-center").innerHTML = "";
     onWindowResize();
