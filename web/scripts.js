@@ -296,6 +296,20 @@ function searchForUserNote(event, elem) {
         }, 800);
     }
 }
+function switchLeftRight() {
+    let flds = document.getElementById("leftSide");
+    let addon = document.getElementById("siac-right-side");
+    if (flds.parentNode.children[0].id === "leftSide") {
+        flds.parentNode.insertBefore(addon, flds);
+        $(document.body).addClass("siac-left-right-switched");
+        pycmd("siac-switch-left-right true");
+    }
+    else {
+        flds.parentNode.insertBefore(flds, addon);
+        $(document.body).removeClass("siac-left-right-switched");
+        pycmd("siac-switch-left-right false");
+    }
+}
 
 function onWindowResize() {
    
