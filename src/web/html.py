@@ -141,6 +141,16 @@ def right_side_html(indexIsLoaded = False):
     rightSideWidth = 100 - leftSideWidth
     hideSidebar = conf_or_def("hideSidebar", False)
 
+    if conf_or_def("switchLeftRight", False):
+        insert_code = """
+            $(toInsert).insertBefore('#leftSide');
+            $(document.body).addClass('siac-left-right-switched');
+        """
+    else:
+        insert_code = """
+            $(toInsert).insertAfter('#leftSide');   
+        """
+
     return """
 
         //check if ui has been rendered already
@@ -149,7 +159,7 @@ def right_side_html(indexIsLoaded = False):
 
         $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
         document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
-        $(`
+        let toInsert = `
         <div class='siac-col' style='width: %s%%; flex-grow: 1; zoom: %s' id='siac-right-side'>
             <div id='siac-second-col-wrapper'>
                 <div id="greyout"></div>
@@ -197,8 +207,8 @@ def right_side_html(indexIsLoaded = False):
                             </div>
                         </div>
                     </div>
-                    <div class='flexCol right' style="position: relative; padding-bottom: 7px; white-space: nowrap;">
-                            <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")'  onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'>&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;
+                    <div class='flexCol right' style="position: relative; padding-bottom: 7px; padding-right: 0px; white-space: nowrap;">
+                            <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'>&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;
                                 <div class='siac-btn-small-dropdown click'>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
@@ -237,7 +247,7 @@ def right_side_html(indexIsLoaded = False):
                                                     <option value="1.5" label="1.5"></option>
                                                 </datalist>
                                                 <br>
-                                                <span>Window Partition</span>
+                                                <span>Fields - Add-on</span>
                                                 <hr>
                                                 <input id='siac-partition-slider' type='range' min='0' max='100' step='1' value='%s' onchange='pycmd("siac-left-side-width " + this.value)'/>
                                                 <br>
@@ -249,18 +259,19 @@ def right_side_html(indexIsLoaded = False):
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
                                         </div>
                             </div>
+                            <div id='siac-switch-lr-btn' class='siac-btn-small' onclick='switchLeftRight();' style='float: right;'>&#8596;</div>
                     </div>
                 </div>
                 <div id="icns-large">
-                            <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
-                            <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
-                            <div class='rnd-icon' onclick='pycmd("siac-random-notes " + siacState.selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
-                            <div class='flds-icon' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
-                            <div class='pdf-icon' onclick='pycmd("siac-show-pdfs")'>
-                                %s
-                            </div>
-                            <div class='rnd-icon' onclick='toggleNoteSidebar();'>NOTES</div>
-                            <div class='siac-read-icn' onclick='pycmd("siac-user-note-queue-read-head")'></div>
+                    <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
+                    <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
+                    <div class='rnd-icon' onclick='pycmd("siac-random-notes " + siacState.selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
+                    <div class='flds-icon' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
+                    <div class='pdf-icon' onclick='pycmd("siac-show-pdfs")'>
+                        %s
+                    </div>
+                    <div class='rnd-icon' onclick='toggleNoteSidebar();'>NOTES</div>
+                    <div class='siac-read-icn' onclick='pycmd("siac-user-note-queue-read-head")'></div>
                 </div>
                 <div id="resultsArea" style="">
                     <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
@@ -350,11 +361,12 @@ def right_side_html(indexIsLoaded = False):
                 <div id='siac-reading-modal'></div>
             </div>
         </div>
-        `).insertAfter('#fields');
+        `;
+        %s  
         $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
         updatePinned();
         var there = false;
-        
+         
         } else {
            var there = true;
         }
@@ -381,7 +393,8 @@ def right_side_html(indexIsLoaded = False):
     pdf_svg(15, 18),
     "display: none;" if indexIsLoaded else "",
     "hidden" if hideSidebar else "",
-    getCalendarHtml() if conf_or_def("showTimeline", True) else ""
+    getCalendarHtml() if conf_or_def("showTimeline", True) else "",
+    insert_code
     )
 
 def get_notes_sidebar_html():
@@ -506,6 +519,7 @@ def get_reading_modal_html(note):
             <script>destroyTinyMCE();</script>
             <div style='width: 100%; display: flex; flex-direction: column;'>
                     <div id='siac-reading-modal-top-btns'>
+                        <div class='siac-btn siac-btn-dark' style='font-size: 8px;' onclick='switchLeftRight();'>&#8596;</div>
                         <div class='siac-btn siac-btn-dark' style='font-size: 8px;' onclick='toggleReadingModalFullscreen();'> <div class='siac-fullscreen-icn'></div> </div>
                         <div class='siac-btn siac-btn-dark' style='font-size: 8px;' onclick='pycmd("siac-left-side-width");'> / </div>
                         <div class='siac-btn siac-btn-dark' onclick='toggleReadingModalBars();'>&#x2195;</div>
@@ -523,7 +537,7 @@ def get_reading_modal_html(note):
                             <h4 style='whitespace: nowrap; margin: 5px 0 8px 0; color: lightgrey;'>Source: <i>{source}</i></h4>
                             <div id='siac-prog-bar-wr'></div>
                         </div>
-                        <div style='flex: 0 0; min-width: 130px; padding: 0 85px 0 10px;'>
+                        <div style='flex: 0 0; min-width: 130px; padding: 0 120px 0 10px;'>
                             <span class='siac-timer-btn' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn active' onclick='resetTimer(this)'>30</span><br>
                             <span id='siac-reading-modal-timer'>30 : 00</span><br>
                             <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
