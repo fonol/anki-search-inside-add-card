@@ -908,7 +908,9 @@ function pdfViewerKeyup(event) {
         pdfPageRight();
     } else if (event.ctrlKey && (event.keyCode === 37 ||event.keyCode === 75)) {
         pdfPageLeft();
-    } 
+    } else if (event.keyCode === 122) {
+        toggleReadingModalBars();
+    }
 }
 function pdfTooltipClozeKeyup(event) {
     try {
