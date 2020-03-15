@@ -146,12 +146,13 @@
   overflow-y: hidden;
   max-height: 950px;
   min-width: 95px;
+  box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.3);
 }
 .pdf .cardR{
     min-width: 200px;
 }
 .cardR img {
-    max-height: $imgMaxHeight$;
+    max-height: $imgMaxHeight$ !important;
     max-width: 100%;
 }
 .cardWrapper.grid .cardR {
@@ -839,6 +840,7 @@ table.striped tr:nth-child(even) {
     user-select: none;
     font-size: 11px !important;
     outline: none;
+    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.3);
 }
 .siac-btn-smaller {
     display: inline;
