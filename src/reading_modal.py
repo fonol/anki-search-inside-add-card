@@ -91,7 +91,7 @@ class ReadingModal:
 
         modal = """
             <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
-                <b>Left Side - Right Side</b>
+                <b>Fields - Add-on</b>
                     <br><br>
                 <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
                     <br><br>
