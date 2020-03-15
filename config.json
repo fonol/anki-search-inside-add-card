@@ -103,6 +103,7 @@
 "pdf.queue.hide": false,
 "notes.sidebar.visible": false,
 "notes.showSource": true,
-"searchpane.zoom" : 1.0
+"searchpane.zoom" : 1.0,
+"switchLeftRight": false
 
 }
