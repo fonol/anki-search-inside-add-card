@@ -620,6 +620,11 @@ def expanded_on_bridge_cmd(self, cmd, _old):
                         if (pdfDisplayed) {pdfFitToPage();}""" % (value, right, value) )
         write_config()
 
+    elif cmd.startswith("siac-switch-left-right "):
+        config["switchLeftRight"] = cmd.split()[1]  == "true"
+        write_config()
+        tooltip("Layout switched.")
+
     elif cmd.startswith("siac-pdf-show-bottom-tab "):
         nid = int(cmd.split()[1])
         tab = cmd.split()[2]
@@ -1353,6 +1358,8 @@ def update_styling(cmd):
     
     elif name == "notes.showSource":
         config[name] = value == "true"
+    
+        
 
 
 @js
