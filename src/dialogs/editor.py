@@ -479,7 +479,7 @@ class CreateTab(QWidget):
         vbox.addWidget(self.title)
 
         text_lbl = QLabel("Text")
-        text_lbl.setToolTip("Text may contain HTML (some tags and inline styles may be removed), \nimages in the HTML will only be visible when connected to the internet.")
+        text_lbl.setToolTip("Text may contain HTML (some tags and inline styles may be removed).")
         self.text = QTextEdit()
         f = self.text.font()
         f.setPointSize(12)
@@ -492,7 +492,7 @@ class CreateTab(QWidget):
         self.text.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         self.text.setLineWidth(2)
         self.text.cursorPositionChanged.connect(self.on_text_cursor_change)
-      
+        self.text.setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 4) 
         t_h = QHBoxLayout()
         t_h.addWidget(text_lbl)
 
@@ -666,12 +666,19 @@ class CreateTab(QWidget):
     
             QTextEdit { border-radius: 5px; border: 1px solid #717378;  padding: 3px; }
             QLineEdit { border-radius: 5px; border: 1px solid #717378;  padding: 2px;}
-
             #recentDisp { margin: 5px; }
 
         """ % btn_styles
 
-        # if parent.dark_mode_used:
+        if parent.dark_mode_used:
+            styles += """
+                QToolTip { background: #3a3a3a; color: lightgrey; }
+            """
+        else:
+            styles += """
+                QToolTip { color: black; background-color: white; }
+            """
+
         #     styles += """
         #         QPushButton#q_1,QPushButton#q_2,QPushButton#q_22,QPushButton#q_3,QPushButton#q_33,QPushButton#q_4,QPushButton#q_44,QPushButton#q_5,QPushButton#q_6 { color: beige; }
         #         QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_22,QPushButton:hover#q_3,QPushButton:hover#q_33,QPushButton:hover#q_4,QPushButton:hover#q_44,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: grey; border-color: blue; color: white; }
