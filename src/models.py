@@ -17,6 +17,7 @@
 import utility.text
 import html
 from .web_import import import_webpage
+from .config import get_config_value_or_default
 
 class Printable():
     
@@ -96,7 +97,9 @@ class SiacNote(Printable):
             body += "<br></ul></b></i></em></span></p></a></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
         
         title = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
-        if src is not None and len(src) > 0:
+
+        # add the source, separated by a line
+        if src is not None and len(src) > 0 and get_config_value_or_default("notes.showSource", True):
             if "/" in src and src.endswith(".pdf"):
                 src = src[src.rindex("/") +1:]
             src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src)

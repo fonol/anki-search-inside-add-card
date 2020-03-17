@@ -151,7 +151,7 @@
     min-width: 200px;
 }
 .cardR img {
-    max-height: $imgMaxHeight$;
+    max-height: $imgMaxHeight$ !important;
     max-width: 100%;
 }
 .cardWrapper.grid .cardR {
@@ -839,6 +839,7 @@ table.striped tr:nth-child(even) {
     user-select: none;
     font-size: 11px !important;
     outline: none;
+    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.3);
 }
 .siac-btn-smaller {
     display: inline;
@@ -882,7 +883,7 @@ table.striped tr:nth-child(even) {
     transition: all 0.3s;
 }
 .siac-btn-small:hover .siac-btn-small-dropdown.hover,.siac-btn-small.expanded .siac-btn-small-dropdown.click {
-    max-height: 310px;
+    max-height: 320px;
     border-top: 1px solid $buttonBorderColor$;
 }
 .siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {
@@ -955,7 +956,7 @@ width: 48%; display: inline-block; text-align: center;
 }
 #siac-right-side {
     border-left: 2px solid $windowColumnSeparatorColor$;
-    padding: 0px 20px 4px 20px !important;
+    padding: 0px 20px 4px 20px;
     margin-left: 8px;
     position: relative;
     font-family: 'Open Sans', sans-serif;
@@ -972,6 +973,7 @@ width: 48%; display: inline-block; text-align: center;
     border-radius: 4px;
     font-size: 9px;
     opacity: 0.8;
+    color: grey; 
 }
 .siac-tags-exp-icon:hover {
     transform: scale(1.25);
@@ -1542,7 +1544,7 @@ hr.siac-modal-sep {
 }
 
 @media (max-width: 800px) {
-    .icns-add {
+    .icns-add, #siac-switch-lr-btn {
         display: none !important;
     }
 }
@@ -1583,7 +1585,8 @@ body.siac-fullscreen-show-right #leftSide {
 }
 body.siac-fullscreen-show-right #siac-right-side {
     display: flex !important; 
-    border-left: 0px;
+    border-left: 0px !important;
+    border-right: 0px !important;
     height: calc(100vh - 5px) !important;
 }
 body.siac-fullscreen-show-fields #switchBtn {
@@ -1595,6 +1598,16 @@ body.siac-fullscreen-show-right #topbuts {
 body.siac-fullscreen-show-right #outerWr {
     margin-top: 3px !important;
     height: calc(100vh - 3px) !important;
+}
+body.siac-left-right-switched #siac-right-side {
+    border-right: 2px solid $windowColumnSeparatorColor$;
+    border-left: 0px solid white;
+    padding-left: 0px;
+    padding-right: 10px;
+}
+body.siac-left-right-switched #fields {
+    padding-right: 0px;
+    padding-left: 8px
 }
 @media (max-width: 600px) {
     #sortCol {

@@ -192,7 +192,7 @@ class QueuePicker(QDialog):
                 title = f"{ix+1}.  {title}"
             if pdf_icon is None and n.is_pdf():
                 #pdf_icon = icon_provider.icon(QFileInfo(n.source))
-                pdf_icon = QIcon(utility.misc.get_web_folder_path() + "pdf-icon.png")
+                pdf_icon = QIcon(utility.misc.get_web_folder_path() + "icons/pdf-icon.png")
             i = pdf_icon if n.is_pdf() else icon
             if with_icons:
                 title_i = QListWidgetItem(i, title)
@@ -347,7 +347,7 @@ class PDFsTab(QWidget):
         icon = None
         for ix, n in enumerate(db_list):
             if icon is None:
-                icon = QIcon(utility.misc.get_web_folder_path() + "pdf-icon.png")
+                icon = QIcon(utility.misc.get_web_folder_path() + "icons/pdf-icon.png")
                 # icon = icon_provider.icon(QFileInfo(n.source))
             title = n.get_title()
             title_i = QListWidgetItem(icon, title)
@@ -490,7 +490,7 @@ class FoldersTab(QWidget):
         style = QApplication.style()
         self.dir_open = style.standardIcon(QStyle.SP_DirOpenIcon)
         self.dir_closed = style.standardIcon(QStyle.SP_DirClosedIcon)
-        self.pdf_icon = QIcon(utility.misc.get_web_folder_path()+ "pdf-icon.png")
+        self.pdf_icon = QIcon(utility.misc.get_web_folder_path()+ "icons/pdf-icon.png")
         self.vbox_left.addWidget(self.folders_tree)
         self.path_displayed = None
 
@@ -599,8 +599,8 @@ class TagsTab(QWidget):
         self.tag_tree.setColumnCount(1)
         self.tag_tree.setHeaderHidden(True)
         self.tag_tree.setMaximumWidth(370)
-        self.tag_icon = QIcon(utility.misc.get_web_folder_path()+ "icon-tag-24.png")
-        self.pdf_icon = QIcon(utility.misc.get_web_folder_path()+ "pdf-icon.png")
+        self.tag_icon = QIcon(utility.misc.get_web_folder_path()+ "icons/icon-tag-24.png")
+        self.pdf_icon = QIcon(utility.misc.get_web_folder_path()+ "icons/pdf-icon.png")
         style = QApplication.style()
         self.text_note_icon = style.standardIcon(QStyle.SP_FileIcon)
         self.vbox_left.addWidget(self.tag_tree)

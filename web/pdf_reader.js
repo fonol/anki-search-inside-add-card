@@ -207,11 +207,14 @@ function invertCanvas(ctx) {
         }
     } else {
         for (var i = 0; i < data.length; i += 4) {
-             data[i]     = 255 - data[i];  
-             data[i + 1] = 255 - data[i + 1];
-             data[i + 2] = 255 - data[i + 2];
+            if (data[i] >= 250 && data[i +1] >= 250 && data[i+2] >= 250) {
+                data[i] = 47; data[i+1] = 47; data[i+2] = 49;
+            } else {
+                data[i]     = 255 - data[i];  
+                data[i + 1] = 255 - data[i + 1];
+                data[i + 2] = 255 - data[i + 2];
+            }
         }
-
     }
     ctx.putImageData(imgData, 0, 0);  
     ctx.canvas.style.display = "inline-block";
@@ -297,7 +300,7 @@ function markReadUpToCurrent() {
 function saveTextNote(nid, remove=true) {
     let html = "";
     try {
-        html = tinymce.get('siac-text-top').getContent();
+        html = tinymce.activeEditor.getContent();
     } catch(e) {
         pycmd("siac-notification Could not save text note for some reason.");
         return;
@@ -908,7 +911,9 @@ function pdfViewerKeyup(event) {
         pdfPageRight();
     } else if (event.ctrlKey && (event.keyCode === 37 ||event.keyCode === 75)) {
         pdfPageLeft();
-    } 
+    } else if (event.keyCode === 122) {
+        toggleReadingModalBars();
+    }
 }
 function pdfTooltipClozeKeyup(event) {
     try {
@@ -1084,6 +1089,9 @@ function onReadingModalClose(nid) {
     }
     $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
     $("#siac-reading-modal").hide(); 
+    document.getElementById('resultsArea').style.display = 'block';
+    document.getElementById('bottomContainer').style.display = 'block';
+    document.getElementById('topContainer').style.display = 'flex';
     destroyPDF(); 
     document.getElementById("siac-reading-modal-center").innerHTML = "";
     onWindowResize();

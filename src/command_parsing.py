@@ -83,16 +83,16 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         # selection in field or note
         rerender_info(self, cmd[9:])
     
-    elif (cmd.startswith("nStats ")):
+    elif (cmd.startswith("siac-note-stats ")):
         # note "Info" button clicked
-        setStats(cmd[7:], calculateStats(cmd[7:], index.ui.gridView))
+        setStats(cmd[16:], calculateStats(cmd[16:], index.ui.gridView))
 
-    elif (cmd.startswith("tagClicked ")):
+    elif (cmd.startswith("siac-tag-clicked ")):
         # clicked on a tag
         if config["tagClickShouldSearch"]:
-            rerender_info(self, cmd[11:].strip(), searchByTags=True)
+            rerender_info(self, cmd[17:].strip(), searchByTags=True)
         else:
-            add_tag(cmd[11:])
+            add_tag(cmd[17:])
 
     elif cmd.startswith("siac-edit-note "):
         # "Edit" clicked on a normal note
@@ -114,7 +114,7 @@ def expanded_on_bridge_cmd(self, cmd, _old):
     elif cmd.startswith("searchTag "):
         rerender_info(self, cmd[10:].strip(), searchByTags=True)
 
-    elif cmd.startswith("tagInfo "):
+    elif cmd.startswith("siac-tag-info "):
         #this renders the popup
         display_tag_info(self, cmd.split()[1], " ".join(cmd.split()[2:]), index)
 
@@ -319,6 +319,7 @@ def expanded_on_bridge_cmd(self, cmd, _old):
             $('#searchResults').html('').hide();
             $('#siac-pagination-wrapper,#siac-pagination-status,#searchInfo').html("");
             $('#toggleTop').removeAttr('onclick').unbind("click");
+            $('#greyout').show();
             $('#loader').show();""")
         set_index(None)
         set_corpus(None)
@@ -607,11 +608,22 @@ def expanded_on_bridge_cmd(self, cmd, _old):
 
     elif cmd.startswith("siac-left-side-width "):
         value = int(cmd.split()[1])
+        if value > 70:
+            tooltip("Value capped at 70%.")
+            value = 70
         config["leftSideWidthInPercent"] = value
         right = 100 - value
         if check_index():
-            index.ui.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('siac-right-side').style.width = '%s%%'; if (pdfDisplayed) {pdfFitToPage();}" % (value, right) )
+            index.ui.js("""document.getElementById('leftSide').style.width = '%s%%'; 
+                        document.getElementById('siac-right-side').style.width = '%s%%'; 
+                        document.getElementById('siac-partition-slider').value = '%s';
+                        if (pdfDisplayed) {pdfFitToPage();}""" % (value, right, value) )
         write_config()
+
+    elif cmd.startswith("siac-switch-left-right "):
+        config["switchLeftRight"] = cmd.split()[1]  == "true"
+        write_config()
+        tooltip("Layout switched.")
 
     elif cmd.startswith("siac-pdf-show-bottom-tab "):
         nid = int(cmd.split()[1])
@@ -1219,8 +1231,8 @@ def get_index_info():
                <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl+K</b></td></tr>
                <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
                <tr><td>Confirm New Note</td><td>  <b>Ctrl+Enter</b></td></tr>
-               <tr><td>PDF Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
-
+               <tr><td>PDF: Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
+               <tr><td>PDF: Toggle Top & Bottom Bar</td><td>  <b>F11</b></td></tr>
              </table>
 
             """ % (index.type, str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
@@ -1343,6 +1355,11 @@ def update_styling(cmd):
             if not value.endswith("/"):
                 value += "/"
             config["pdfUrlImportSavePath"] = value
+    
+    elif name == "notes.showSource":
+        config[name] = value == "true"
+    
+        
 
 
 @js
@@ -1362,6 +1379,7 @@ def after_index_rebuilt():
         siacState.searchOnSelection = true;
         siacState.searchOnTyping = true;
         $('#toggleTop').click(function() { toggleTop(this); });
+        $('#greyout').hide();
     """)
     fillDeckSelect(editor)
     setup_ui_after_index_built(editor, search_index)

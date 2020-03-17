@@ -27,10 +27,12 @@ try:
     from .state import get_index
     from .models import SiacNote, NoteRelations
     from .config import get_config_value_or_default
+    from .debug_logging import get_notes_info, persist_notes_db_checked
 except:
     from state import get_index
     from models import SiacNote, NoteRelations
     from config import get_config_value_or_default
+    from debug_logging import get_notes_info, persist_notes_db_checked
 import utility.misc
 import utility.tags
 import utility.text
@@ -81,6 +83,11 @@ def create_db_file_if_not_exists():
         conn.execute(creation_sql)
     else:
         conn = sqlite3.connect(file_path)
+    
+    info_from_data_json = get_notes_info()
+    if info_from_data_json is not None and "db_last_checked" in info_from_data_json and len(info_from_data_json["db_last_checked"]) > 0:
+        return
+   
     conn.execute("""
         create table if not exists read
         (
@@ -136,6 +143,9 @@ def create_db_file_if_not_exists():
     conn.commit()
     conn.close()
 
+    # store a timestamp in /user_files/data.json to check next time, so we don't have to do this on every startup
+    persist_notes_db_checked()
+
 
 def create_note(title, text, source, tags, nid, reminder, queue_schedule):
 
@@ -156,7 +166,8 @@ def create_note(title, text, source, tags, nid, reminder, queue_schedule):
                 values (?,?,?,?,?,datetime('now', 'localtime'),""," ","", NULL)""", (title, text, source, tags, nid)).lastrowid
     conn.commit()
     conn.close()
-    update_priority_list(id, queue_schedule)
+    if queue_schedule != QueueSchedule.NOT_ADD:
+        update_priority_list(id, queue_schedule)
     index = get_index()
     if index is not None:
         index.add_user_note((id, title, text, source, tags, nid, ""))
@@ -514,12 +525,14 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
     text = utility.text.clean_user_note_text(text)
     tags = " %s " % tags.strip()
     mod = _date_now_str()
-    sql = f"update notes set title=?, text=?, source=?, tags=?, position=null, modified='{mod}' where id=?"
+    sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}' where id=?"
     conn = _get_connection()
     conn.execute(sql, (title, text, source, tags, id))
     conn.commit()
     conn.close()
-    update_priority_list(id, queue_schedule)
+    # if schedule is NOT_ADD/keep priority, don't recalc queue
+    if queue_schedule != QueueSchedule.NOT_ADD.value:
+        update_priority_list(id, queue_schedule)
     index = get_index()
     if index is not None:
         index.update_user_note((id, title, text, source, tags, -1, ""))
@@ -659,15 +672,8 @@ def delete_note(id):
                             delete from notes where id={id};
                             delete from queue_prio_log where nid={id}; 
                             """)
-    # conn.execute("delete from marks where nid =%s" % id)
-    # sql = """
-    #     delete from notes where id=%s
-    # """ % id
-    # conn.execute(sql) 
     conn.commit()
     conn.close()
-    # e = str(time.time() * 1000 - s)
-    # showInfo(e)
 
 def get_read_today_count():
     now = datetime.today().strftime('%Y-%m-%d')

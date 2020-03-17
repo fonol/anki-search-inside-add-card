@@ -64,13 +64,13 @@ def init_addon():
 
     # wrap js -> py bridge to include the add-ons commands, see command_parsing.py
     Editor.onBridgeCmd = wrap(Editor.onBridgeCmd, expanded_on_bridge_cmd, "around")
-
     #todo: Find out if there is a better moment to start index creation
+    
     create_db_file_if_not_exists()
+
     gui_hooks.profile_did_open.append(build_index)
     gui_hooks.profile_did_open.append(insert_scripts)
     gui_hooks.profile_did_open.append(recalculate_priority_queue)
-
     #disabled for now, to be able to use Occlude Image in the context menu
     #origEditorContextMenuEvt = EditorWebView.contextMenuEvent
     #EditorWebView.contextMenuEvent = editorContextMenuEventWrapper
@@ -102,6 +102,7 @@ def init_addon():
     aqt.editor._html += getScriptPlatformSpecific(typing_delay)
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
+
 
 
 
@@ -141,28 +142,36 @@ def on_load_note(editor):
             var showTagInfoOnHover = {show_tag_info_on_hover}; 
             tagHoverTimeout = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
         """)
+
+        def cb(was_already_rendered):
+            if was_already_rendered:
+                return
+            if index is not None:
+                setup_ui_after_index_built(editor, index)
+
+            # editor.web.eval("onWindowResize()")
+
+            fillDeckSelect(editor)
+            if index is not None and index.lastSearch is None:
+                printStartingInfo(editor)
+            if not corpus_is_loaded():
+                corpus = get_notes_in_collection()
+                set_corpus(corpus)
+
+            if index is not None and index.ui is not None:
+                index.ui.set_editor(editor)
+                index.ui._loadPlotJsIfNotLoaded()
+
+
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
-        editor.web.eval(right_side_html(index is not None))
-
-        if index is not None:
-            setup_ui_after_index_built(editor, index)
-
-        editor.web.eval("onWindowResize()")
-
-        fillDeckSelect(editor)
-        if index is not None and index.lastSearch is None:
-            printStartingInfo(editor)
-        if not corpus_is_loaded():
-            corpus = get_notes_in_collection()
-            set_corpus(corpus)
-
-        if index is not None and index.ui is not None:
-            index.ui.set_editor(editor)
-            index.ui._loadPlotJsIfNotLoaded()
+        editor.web.evalWithCallback(right_side_html(index is not None), cb)
+        
+      
 
     if get_edit() is None and editor is not None:
         set_edit(editor)
+
 
 
 def editorContextMenuEventWrapper(view, evt):
