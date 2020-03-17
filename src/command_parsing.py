@@ -1231,8 +1231,8 @@ def get_index_info():
                <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl+K</b></td></tr>
                <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
                <tr><td>Confirm New Note</td><td>  <b>Ctrl+Enter</b></td></tr>
-               <tr><td>PDF Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
-
+               <tr><td>PDF: Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
+               <tr><td>PDF: Toggle Top & Bottom Bar</td><td>  <b>F11</b></td></tr>
              </table>
 
             """ % (index.type, str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
