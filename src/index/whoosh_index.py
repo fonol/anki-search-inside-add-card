@@ -19,7 +19,6 @@ from aqt import mw
 from anki.hooks import runHook, addHook, wrap
 import aqt
 import aqt.webview
-from anki.find import Finder
 import aqt.editor
 from aqt.editor import Editor
 import aqt.stats
@@ -192,7 +191,7 @@ class WhooshSearchIndex:
         stamp = utility.misc.get_milisec_stamp()
         self.output.latest = stamp
 
-        found = self.finder.findNotes(text)
+        found = mw.col.find_notes(text)
         
         if len (found) > 0:
             if not "-1" in decks:
@@ -202,9 +201,9 @@ class WhooshSearchIndex:
             #query db with found ids
             foundQ = "(%s)" % ",".join([str(f) for f in found])
             if deckQ:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ)).fetchall()
+                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ))
             else:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ)).fetchall()
+                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ))
             rList = []
             for r in res:
                 #pinned items should not appear in the results
@@ -255,7 +254,7 @@ class WhooshSearchIndex:
         
         content = " \u001f ".join(note.fields)
         tags = " ".join(note.tags)
-        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id).fetchone()
+        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id)
         if did is None or len(did) == 0:
             return
         did = did[0]
@@ -298,7 +297,7 @@ class WhooshSearchIndex:
         c = writer.delete_by_term("nid", str(note.id))
         content = " \u001f ".join(note.fields)
         tags = " ".join(note.tags)
-        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id).fetchone()
+        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id)
         if did is None or len(did) == 0:
             return
         did = did[0]
