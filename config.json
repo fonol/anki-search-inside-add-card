@@ -104,6 +104,7 @@
 "notes.sidebar.visible": false,
 "notes.showSource": true,
 "searchpane.zoom" : 1.0,
-"switchLeftRight": false
+"switchLeftRight": false,
+"highlighting": true
 
 }
