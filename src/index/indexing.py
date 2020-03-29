@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from aqt import mw
+from aqt.utils import showInfo
 from aqt.qt import *
-from anki.find import Finder
 import aqt
 import time
 import os
@@ -101,7 +101,6 @@ def _build_index(index_up_to_date):
     end = time.time()
     initializationTime = round(end - start)
  
-    index.finder = Finder(mw.col)
     index.ui.stopwords = index.stopWords
     index.ui.remove_divs = config["removeDivsFromOutput"]
     index.ui.gridView = config["gridView"]
@@ -111,6 +110,7 @@ def _build_index(index_up_to_date):
     index.lastSearch = None
     index.lastResDict = None
     index.topToggled = True
+    index.highlighting = config["highlighting"]
     index.ui.edited = {}
     index.initializationTime = initializationTime
     index.synonyms = loadSynonyms()
@@ -145,6 +145,7 @@ def _build_index(index_up_to_date):
     if editor is not None and editor.addMode:
         index.ui.set_editor(editor)
     set_index(index)
+    set_corpus(None)
     editor = editor if editor is not None else get_edit()
     setup_ui_after_index_built(editor, index)
     # showSearchResultArea(editor, initializationTime=initializationTime)
@@ -155,6 +156,7 @@ def _build_index(index_up_to_date):
 def _should_rebuild():
     """
     Check if the index has to be rebuilt.
+    Will not catch all cases, but better than nothing.
     """
 
     info = get_index_info()
@@ -218,6 +220,7 @@ def _should_rebuild():
                 if field_name not in info["fieldsToExclude"][model_name]:
                     return True
 
+    # if stopwords changed, rebuild
     if len(set(config["stopwords"])) != info["stopwordsSize"]:
         return True
 
