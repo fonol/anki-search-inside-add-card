@@ -231,7 +231,7 @@
     flex-wrap: nowrap;
     height: 30px;
 }
-#siac-right-side mark {
+#siac-right-side mark, #siac-left-tab-browse mark {
     background-color: $highlightBackgroundColor$;
     color: $highlightForegroundColor$;
     border-radius: 4px;
@@ -819,6 +819,12 @@ table.striped tr:nth-child(even) {
     border: 2px outset #b2b2a0;
     border-radius: 3px;
 }
+body:not(.nightMode) #leftSide .siac-btn-dark {
+    color: $buttonForegroundColor$;
+    background: $buttonBackgroundColor$;
+    border: 1px solid  $buttonBorderColor$;
+}
+
 .siac-btn-dark-smaller {
     font-size: 10px !important;
 }
@@ -1347,7 +1353,7 @@ span.tag-symbol {
 .siac-tag-info-box-left .cardR {
     user-select: text;
 }
-.siac-tag-info-box-left .editLbl {
+.siac-tag-info-box-left .editLbl, #siac-left-tab-browse .editLbl {
     border-right: 2px solid $noteBorderColor$;
     border-radius: 4px;
 }
@@ -1608,6 +1614,17 @@ body.siac-left-right-switched #siac-right-side {
 body.siac-left-right-switched #fields {
     padding-right: 0px;
     padding-left: 8px
+}
+body.siac-reading-modal-displayed #leftSide {
+    display: flex;
+    flex-direction: column;
+}
+body.siac-reading-modal-displayed #fields {
+    flex: 1 1 auto;
+    height: auto !important;
+}
+body.siac-reading-modal-displayed #siac-reading-modal-tabs-left {
+    flex: 0 0 auto;
 }
 @media (max-width: 600px) {
     #sortCol {
