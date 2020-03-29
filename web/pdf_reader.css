@@ -635,3 +635,47 @@
 .siac-pdf-mark-lbl {
     font-weight: bold;
 }
+.siac-note-title-only {
+    font-weight: bold;
+    overflow: ellipsis;
+    user-select: none;
+    cursor: pointer;
+}
+body.night_mode .siac-note-title-only {
+    color: lightgrey;
+}
+.siac-note-title-only:hover {
+    filter: brightness(1.4);
+}
+#siac-reading-modal-tabs-left {
+    font-family: 'Open Sans', sans-serif;
+    margin: 10px 5px 0 5px;
+    padding: 10px 15px 5px 0;
+    border-top: 2px solid;
+    margin-top: 10px;
+}
+#siac-reading-modal-tabs-left .siac-btn {
+    color: #b2b2a0;
+    border-color: #b2b2a0;
+    margin-left: 4px;
+}
+#siac-reading-modal-tabs-left .siac-btn.active {
+    color: #61c3ff !important;
+    border-color: #2496dc !important;
+}
+#siac-left-tab-browse,#siac-left-tab-pdfs {
+    font-family: 'Open Sans', sans-serif;
+    flex: 1 1 auto;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 10px 0 10px;
+    overflow: hidden;
+}
+#siac-left-tab-browse input,#siac-left-tab-pdfs input {
+    border-radius: 4px;
+    padding-left: 3px;
+}       
+body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs input {
+    background: #333333;
+    color: lightgrey;
+}
