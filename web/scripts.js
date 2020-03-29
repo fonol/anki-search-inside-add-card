@@ -91,7 +91,7 @@ function selectDeckWithId(did) {
     updateSelectedDecks();
 }
 function fixRetMarkWidth(elem) {
-    if (elem.parentElement.getElementsByClassName("retMark").length > 0 && elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth.length == 0)
+    if (elem && elem.parentElement.getElementsByClassName("retMark").length > 0 && elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth.length == 0)
         elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth = elem.offsetWidth + "px";
 }
 function expandRankingLbl(elem) {
