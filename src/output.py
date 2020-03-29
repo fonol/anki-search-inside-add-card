@@ -29,15 +29,17 @@ try:
     from .state import get_index
     from .notes import get_pdf_info
     from .special_searches import get_suspended
-    from .reading_modal import ReadingModal
+    from .web.reading_modal import ReadingModal
     from .config import get_config_value_or_default
+    from .web.note_templates import *
 except:
     from debug_logging import log
     from stats import getRetentions
     from state import get_index
     from notes import get_pdf_info
     from special_searches import get_suspended
-    from reading_modal import ReadingModal
+    from web.reading_modal import ReadingModal
+    from web.note_templates import *
     from config import get_config_value_or_default
 
 import utility.tags
@@ -55,12 +57,8 @@ class Output:
         self.reading_modal = ReadingModal()
        
         # todo: move to text utils
-        self.SEP_RE = re.compile(r'(?:\u001f){2,}|(?:\u001f[\s\r\n]+\u001f)')
         self.SEP_END = re.compile(r'</div>\u001f$')
         self.SOUND_TAG = re.compile(r'sound[a-zA-Z0-9]*mp')
-        self.IO_REPLACE = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>)?-[OA]|-(<mark>)?ao(</mark>)?-[OA])\.svg" ?/?>(</img>)?')
-        self.IMG_FLD =  re.compile('\\|</span> ?(<img[^>]+/?>)( ?<span class=\'fldSep\'>|$)')
-        self.wordToken = re.compile(u"[a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U)
        
         #
         # state
@@ -82,77 +80,13 @@ class Output:
         self.previous_calls = []
 
 
-        #
-        # html templates for search results
-        #
-
-        self.noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
-                            <div class='topLeftWr'>
-                                <div id='cW-{nid}' class='rankingLbl' onclick="expandRankingLbl(this)">{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
-                                {ret}
-                            </div>
-                            <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='editLbl' onclick='edit({nid})'>Edit</div>
-                                <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
-                                <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
-                                <div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>
-                                <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
-                            </div>
-                            <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
-                            <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
-                            <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;INFO&nbsp;</div>
-                        </div>"""
-
-        self.noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
-                            <div class='topLeftWr'>
-                                <div class='rankingLbl'>{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
-                                {ret}
-                            </div>
-                            <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='editLbl' onclick='edit({nid})'>Edit</div>
-                            </div>
-                            <div class='cardR' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
-                            <div style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
-                            <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;INFO&nbsp;</div>
-                        </div>"""
-
-        self.noteTemplateUserNoteSimple = """<div class='cardWrapper' style="display: block;">
-                            <div class='topLeftWr'>
-                                <div class='rankingLbl'>{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
-                            </div>
-                            <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'>Edit</div>
-                            </div>
-                            <div class='cardR' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
-                            <div style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
-                            <div class='cardLeftBot' style='display: none' onclick=''></div>
-                        </div>"""
-
-        self.noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {grid_class}' id='nWr-{counter}'>
-                            <div class='topLeftWr'>
-                                <div id='cW-{nid}' class='rankingLbl'>{counter} &nbsp;SIAC<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
-                            </div>
-                            <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                                <div class='deleteLbl' onclick='pycmd("siac-delete-user-note-modal {nid}"); '><div class='siac-trash-icn'></div></div>
-                                <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'>Edit</div>
-                                <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
-                                <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
-                                <div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>
-                                <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
-                            </div>
-                            <div class='cardR siac-user-note' onmouseup='{mouseup}' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
-                            <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
-                            <div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'><div class='siac-read-icn'></div>{progress}</div>
-                        </div>"""
-
-
     def set_editor(self, editor):
         """
             An editor instance is needed to communicate to the web view, so the ui should always hold one.
             All included children should have a ref to the instance too.
         """
         self._editor = editor
-        self.reading_modal.editor = editor
+        self.reading_modal.set_editor(editor)
 
     def show_page(self, editor, page):
         """
@@ -262,13 +196,13 @@ class Output:
                 text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res.mid)]])
 
             #remove double fields separators
-            text = self._cleanFieldSeparators(text).replace("\\", "\\\\")
+            text = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\")
 
             #try to remove image occlusion fields
-            text = self.try_hide_image_occlusion(text)
+            text = utility.text.try_hide_image_occlusion(text)
 
             #try to put fields that consist of a single image in their own line
-            text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
+            text = utility.text.newline_before_images(text)
 
             #remove <div> tags if set in config
             if self.remove_divs and res.note_type != "user":
@@ -278,7 +212,7 @@ class Output:
             highlight_start = time.time()
             if query_set is not None:
                 if counter - (page -1) * 50 < highlight_boundary:
-                    text = self._mark_highlights(text, query_set)
+                    text = utility.text.mark_highlights(text, query_set)
                 else:
                     remaining_to_highlight[nid] = ""
             highlight_total += time.time() - highlight_start
@@ -303,7 +237,7 @@ class Output:
 
             # use either the template for addon's notes or the normal
             if res.note_type == "user":
-                newNote = self.noteTemplateUserNote.format(
+                newNote = noteTemplateUserNote.format(
                     grid_class=gridclass, 
                     counter=counter+1, 
                     nid=nid, 
@@ -311,13 +245,13 @@ class Output:
                     edited="" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
                     mouseup= "getSelectionText()" if not is_queue else "",
                     text=text, 
-                    tags=self.build_tag_string(res.tags),
+                    tags=utility.tags.build_tag_string(res.tags, self.gridView),
                     queue=": Q-%s&nbsp;" % (res.position + 1) if res.is_in_queue() else "",
                     progress=progress,
                     pdf_class=pdf_class,
                     ret=retInfo)
             else:
-                newNote = self.noteTemplate.format(
+                newNote = noteTemplate.format(
                     grid_class=gridclass, 
                     counter=counter+1, 
                     nid=nid, 
@@ -325,7 +259,7 @@ class Output:
                     edited="" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
                     mouseup= "getSelectionText()" if not is_queue else "",
                     text=text, 
-                    tags=self.build_tag_string(res.tags), 
+                    tags=utility.tags.build_tag_string(res.tags, self.gridView), 
                     ret=retInfo)
          
             html = f"{html}{newNote}"
@@ -366,7 +300,7 @@ class Output:
         if len(remaining_to_highlight) > 0:
             cmd = ""
             for nid,text in remaining_to_highlight.items():
-                cmd = ''.join((cmd, "document.getElementById('%s').innerHTML = `%s`;" % (nid, self._mark_highlights(text, query_set))))
+                cmd = ''.join((cmd, "document.getElementById('%s').innerHTML = `%s`;" % (nid, utility.text.mark_highlights(text, query_set))))
             self._js(cmd, editor)
         
         if len(check_for_suspended) > 0:
@@ -420,36 +354,7 @@ class Output:
         else:
             editor.web.eval(js)
 
-    def build_tag_string(self, tags, hover = True, maxLength = -1, maxCount = -1):
-        """
-        Builds the html for the tags that are displayed at the bottom right of each rendered search result.
-        """
-        html = ""
-        tags_split = tags.split()
-        tm = self.getTagMap(tags_split)
-        totalLength = sum([len(k) for k,v in tm.items()])
-        if maxLength == -1:
-            maxLength = 40 if not self.gridView else 30
-        if maxCount == -1:
-            maxCount = 3 if not self.gridView else 2
-        if len(tm) <= maxCount or totalLength < maxLength:
-            hover = "onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'" if hover else ""
-            for t, s in tm.items():
-                stamp = "siac-tg-" + utility.text.get_stamp()
-                if len(s) > 0:
-                    tagData = " ".join(self.iterateTagmap({t : s}, ""))
-                    if len(s) == 1 and tagData.count("::") < 2 and not t in tags_split:
-                        html = f"{html}<div class='tagLbl' data-stamp='{stamp}' data-tags='{tagData}' data-name='{tagData.split(' ')[1]}' {hover} onclick='tagClick(this);'>{utility.text.trim_if_longer_than(tagData.split(' ')[1], maxLength)}</div>"
-                    else:
-                        html = f"{html}<div class='tagLbl' data-stamp='{stamp}' data-tags='{tagData}' data-name='{tagData}' {hover} onclick='tagClick(this);'>{utility.text.trim_if_longer_than(t, maxLength)} (+{len(s)})</div>" 
-                else:
-                    html = f"{html}<div class='tagLbl' data-stamp='{stamp}' {hover} data-name='{t}' onclick='tagClick(this);'>{utility.text.trim_if_longer_than(t, maxLength)}</div>"
-        else:
-            stamp = "siac-tg-" + utility.text.get_stamp()
-            tagData = " ".join(self.iterateTagmap(tm, ""))
-            html = f"{html}<div class='tagLbl' data-stamp='{stamp}' data-tags='{tagData}' data-name='{tagData}' onclick='tagClick(this);'>{len(tm)} tags ...</div>" 
-
-        return html
+ 
 
 
     def sortByDate(self, mode):
@@ -499,7 +404,7 @@ class Output:
         for r in self.lastResults:
             nids.append(str(r.id))
         nidStr =  "(%s)" % ",".join(nids)
-        unreviewed = [r[0] for r in mw.col.db.execute("select nid from cards where nid in %s and reps = 0" % nidStr).fetchall()]
+        unreviewed = [r[0] for r in mw.col.db.execute("select nid from cards where nid in %s and reps = 0" % nidStr)]
         for r in self.lastResults:
             if int(r.id) not in unreviewed:
                 filtered.append(r)
@@ -515,7 +420,7 @@ class Output:
         for r in self.lastResults:
             nids.append(str(r.id))
         nidStr =  "(%s)" % ",".join(nids)
-        reviewed = [r[0] for r in mw.col.db.execute("select nid from cards where nid in %s and reps > 0" % nidStr).fetchall()]
+        reviewed = [r[0] for r in mw.col.db.execute("select nid from cards where nid in %s and reps > 0" % nidStr)]
         for r in self.lastResults:
             if int(r.id) not in reviewed:
                 filtered.append(r)
@@ -564,7 +469,7 @@ class Output:
             infoStr += "No tags in the results."
             infoMap["Tags"] = "No tags in the results."
         else:
-            for key, value in self.getTagMap(tags).items():
+            for key, value in utility.tags.to_tag_hierarchy(tags).items():
                 stamp = f"siac-tg-{utility.text.get_stamp()}"
                 if len(value)  == 0:
                     tagStr = f"{tagStr}<span class='tagLbl' data-stamp='{stamp}' data-name='{key}' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>{utility.text.trim_if_longer_than(key, 19)}</span>"
@@ -584,22 +489,6 @@ class Output:
         infoMap["Keywords"] = mostCommonWords
         return (infoStr, infoMap)
     
-
-    def _cleanFieldSeparators(self, text):
-        text = self.SEP_RE.sub("\u001f", text)
-        if text.endswith("\u001f"):
-            text = text[:-1]
-        text = text.replace("\u001f", "<span class='fldSep'>|</span>")
-        return text
-
-    def try_hide_image_occlusion(self, text):
-        """
-        Image occlusion cards take up too much space, so we try to hide all images except for the first.
-        """
-        if not text.count("<img ") > 1:
-            return text
-        text = self.IO_REPLACE.sub("(IO - image hidden)", text)
-        return text
 
 
     def _most_common_words(self, text):
@@ -663,11 +552,11 @@ class Output:
             if self.remove_divs and res.note_type != "user":
                 text = utility.text.remove_divs(text)
 
-            text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
-            text = self.try_hide_image_occlusion(text)
+            text = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
+            text = utility.text.try_hide_image_occlusion(text)
             #try to put fields that consist of a single image in their own line
-            text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
-            template = self.noteTemplateSimple if res.note_type == "index" else self.noteTemplateUserNoteSimple
+            text = utility.text.newline_before_images(text)
+            template = noteTemplateSimple if res.note_type == "index" else noteTemplateUserNoteSimple
             newNote = template.format(
                 counter=counter+1, 
                 nid=res.id, 
@@ -675,7 +564,7 @@ class Output:
                 mouseup="getSelectionText()" if search_on_selection else "",
                 text=text, 
                 ret=retInfo,
-                tags=self.build_tag_string(res.tags, tag_hover, maxLength = 25, maxCount = 2),
+                tags=utility.tags.build_tag_string(res.tags, tag_hover, maxLength = 25, maxCount = 2),
                 creation="&nbsp;&#128336; " + timeDiffString)
             html += newNote
         return html
@@ -838,7 +727,7 @@ class Output:
         self.js(cmd)
 
     def buildTagHierarchy(self, tags):
-        tmap = self.getTagMap(tags)
+        tmap = utility.tags.to_tag_hierarchy(tags)
         config = mw.addonManager.getConfig(__name__)
         def iterateMap(tmap, prefix, start=False):
             if start:
@@ -886,7 +775,7 @@ class Output:
         if self._editor is None or self._editor.web is None:
             return
         tags = note[2]
-        tagStr =  self.build_tag_string(tags)
+        tagStr = utility.tags.build_tag_string(tags, self.gridView)
         nid = note[0]
         text = note[1]
 
@@ -894,9 +783,9 @@ class Output:
         if len(note) > 4 and str(note[4]) in self.fields_to_hide_in_results:
             text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(note[4])]])
 
-        text = self._cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
-        text = self.try_hide_image_occlusion(text)
-        text = self.IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
+        text = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
+        text = utility.text.try_hide_image_occlusion(text)
+        text = utility.text.newline_before_images(text)
 
         #find rendered note and replace text and tags
         self._editor.web.eval("""
@@ -912,57 +801,6 @@ class Output:
             }} 
         """)
         
-
-    def _mark_highlights(self, text, querySet):
-
-        currentWord = ""
-        currentWordNormalized = ""
-        textMarked = ""
-        lastIsMarked = False
-        # c = 0
-        for char in text:
-            # c += 1
-            if self.wordToken.match(char):
-                currentWordNormalized = ''.join((currentWordNormalized, utility.text.ascii_fold_char(char).lower()))
-                # currentWordNormalized = ''.join((currentWordNormalized, char.lower()))
-                if utility.text.is_chinese_char(char) and str(char) in querySet:
-                    currentWord = ''.join((currentWord, "<MARK>%s</MARK>" % char))
-                else:
-                    currentWord = ''.join((currentWord, char))
-
-            else:
-                #we have reached a word boundary
-                #check if word is empty
-                if currentWord == "":
-                    textMarked = ''.join((textMarked, char))
-                else:
-                    #if the word before the word boundary is in the query, we want to highlight it
-                    if currentWordNormalized in querySet:
-                        #we check if the word before has been marked too, if so, we want to enclose both, the current word and
-                        # the word before in the same <mark></mark> tag (looks better)
-                        if lastIsMarked and not "\u001f" in textMarked[textMarked.rfind("<MARK>"):]:
-                        # if lastIsMarked:
-                            closing_index = textMarked.rfind("</MARK>")
-                            textMarked = ''.join((textMarked[0: closing_index], textMarked[closing_index + 7 :]))
-                            textMarked = ''.join((textMarked, currentWord, "</MARK>", char))
-                        else:
-                            textMarked = ''.join((textMarked, "<MARK>", currentWord, "</MARK>", char))
-                            # c += 13
-                        lastIsMarked = True
-                    #if the word is not in the query, we simply append it unhighlighted
-                    else:
-                        textMarked = ''.join((textMarked, currentWord, char))
-                        lastIsMarked = False
-                    currentWord = ""
-                    currentWordNormalized = ""
-        if currentWord != "":
-            if currentWord != "MARK" and currentWordNormalized in querySet:
-                textMarked = ''.join((textMarked, "<MARK>", currentWord, "</MARK>"))
-            else:
-                textMarked = ''.join((textMarked, currentWord))
-
-        return textMarked
-
     def show_tooltip(self, text):
         if mw.addonManager.getConfig(__name__)["hideSidebar"]:
             tooltip("Query was empty after cleaning.")
