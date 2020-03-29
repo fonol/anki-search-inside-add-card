@@ -23,6 +23,16 @@ import random
 cleanWordReg = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*$", re.I |re.U)    
 ignoreReg = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+$", re.I | re.U)
 nonWordReg = re.compile(u"[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U) 
+wordToken = re.compile(u"[a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U)
+
+# used to merge multiple field separator signs into singles 
+SEP_RE = re.compile(r'(?:\u001f){2,}|(?:\u001f[\s\r\n]+\u001f)')
+# used to hide IO fields
+IO_REPLACE = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>)?-[OA]|-(<mark>)?ao(</mark>)?-[OA])\.svg" ?/?>(</img>)?')
+# move images in own line
+IMG_FLD =  re.compile('\\|</span> ?(<img[^>]+/?>)( ?<span class=\'fldSep\'>|$)')
+
+
 tagReg = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
 spaceReg = re.compile('\s{2,}')
 normalChar = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U) 
@@ -272,6 +282,24 @@ def clean_user_note_title(title):
     title = title.replace("\t", "")
     return title
 
+def cleanFieldSeparators(text):
+    text = SEP_RE.sub("\u001f", text)
+    if text.endswith("\u001f"):
+        text = text[:-1]
+    text = text.replace("\u001f", "<span class='fldSep'>|</span>")
+    return text
+
+def newline_before_images(text):
+    return IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
+
+def try_hide_image_occlusion(text):
+    """
+    Image occlusion cards take up too much space, so we try to hide all images except for the first.
+    """
+    if not text.count("<img ") > 1:
+        return text
+    text = IO_REPLACE.sub("(IO - image hidden)", text)
+    return text
 
 def clean_file_name(name):
     name = re.sub("[^a-zA-Z0-9]", "-", name)
@@ -322,3 +350,54 @@ def clean_tags(tags):
     
     tags = re.sub("[`'\"]", "", tags)
     return tags
+
+
+def mark_highlights(text, querySet):
+
+    currentWord = ""
+    currentWordNormalized = ""
+    textMarked = ""
+    lastIsMarked = False
+    # c = 0
+    for char in text:
+        # c += 1
+        if wordToken.match(char):
+            currentWordNormalized = ''.join((currentWordNormalized, ascii_fold_char(char).lower()))
+            # currentWordNormalized = ''.join((currentWordNormalized, char.lower()))
+            if is_chinese_char(char) and str(char) in querySet:
+                currentWord = ''.join((currentWord, "<MARK>%s</MARK>" % char))
+            else:
+                currentWord = ''.join((currentWord, char))
+
+        else:
+            #we have reached a word boundary
+            #check if word is empty
+            if currentWord == "":
+                textMarked = ''.join((textMarked, char))
+            else:
+                #if the word before the word boundary is in the query, we want to highlight it
+                if currentWordNormalized in querySet:
+                    #we check if the word before has been marked too, if so, we want to enclose both, the current word and
+                    # the word before in the same <mark></mark> tag (looks better)
+                    if lastIsMarked and not "\u001f" in textMarked[textMarked.rfind("<MARK>"):]:
+                    # if lastIsMarked:
+                        closing_index = textMarked.rfind("</MARK>")
+                        textMarked = ''.join((textMarked[0: closing_index], textMarked[closing_index + 7 :]))
+                        textMarked = ''.join((textMarked, currentWord, "</MARK>", char))
+                    else:
+                        textMarked = ''.join((textMarked, "<MARK>", currentWord, "</MARK>", char))
+                        # c += 13
+                    lastIsMarked = True
+                #if the word is not in the query, we simply append it unhighlighted
+                else:
+                    textMarked = ''.join((textMarked, currentWord, char))
+                    lastIsMarked = False
+                currentWord = ""
+                currentWordNormalized = ""
+    if currentWord != "":
+        if currentWord != "MARK" and currentWordNormalized in querySet:
+            textMarked = ''.join((textMarked, "<MARK>", currentWord, "</MARK>"))
+        else:
+            textMarked = ''.join((textMarked, currentWord))
+
+    return textMarked
