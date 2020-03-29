@@ -148,6 +148,8 @@ class FTSIndex:
             worker.signals.result.connect(self.printOutput)
         elif print_mode == "pdf":
             worker.signals.result.connect(self.print_pdf)
+        elif print_mode == "pdf.left":
+            worker.signals.result.connect(self.print_pdf_left)
 
         worker.signals.tooltip.connect(self.ui.show_tooltip)
         self.threadPool.start(worker)
@@ -258,6 +260,9 @@ class FTSIndex:
 
 
     def print_pdf(self, result, stamp):
+        """
+            Results printed in the tooltip in the pdf modal.
+        """
         query_set = None
         if self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
             query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
@@ -266,6 +271,17 @@ class FTSIndex:
         else:
             self.ui.print_pdf_search_results([], stamp, self.lastSearch[0])
 
+    def print_pdf_left(self, result, stamp):
+        """
+            Results printed on the fields pane when the pdf modal is opened.
+        """
+        query_set = None
+        if self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
+            query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
+        if result is not None:
+            self.ui.reading_modal.sidebar.print(result["results"], stamp, query_set)
+        else:
+            self.ui.reading_modal.sidebar.print([], stamp, self.lastSearch[0])
 
     def searchDB(self, text, decks):
         """
@@ -274,7 +290,7 @@ class FTSIndex:
         """
         stamp = utility.misc.get_milisec_stamp()
         self.ui.latest = stamp
-        found = self.finder.findNotes(text)
+        found = mw.col.find_notes(text)
 
         if len (found) > 0:
             if not "-1" in decks:
@@ -284,9 +300,9 @@ class FTSIndex:
             #query db with found ids
             foundQ = "(%s)" % ",".join([str(f) for f in found])
             if deckQ:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ)).fetchall()
+                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ))
             else:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ)).fetchall()
+                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ))
             rList = []
             for r in res:
                 #pinned items should not appear in the results
@@ -331,10 +347,10 @@ class FTSIndex:
         content = " \u001f ".join(note.fields)
         tags = " ".join(note.tags)
         #did = note.model()['did']
-        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id).fetchone()
+        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id)
         if did is None or len(did) == 0:
             return
-        did = did[0]
+        did = did[0][0]
         if str(note.mid) in self.fields_to_exclude:
             content = utility.text.remove_fields(content, self.fields_to_exclude[str(note.mid)])
         conn = sqlite3.connect(self.dir + "search-data.db")
