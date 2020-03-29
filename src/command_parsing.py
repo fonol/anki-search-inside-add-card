@@ -288,6 +288,29 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         sentences = [s for s in cmd.split("$$$")[4:] if len(s) > 0]
         generate_clozes(sentences, pdf_path, pdf_title, page)
 
+    elif cmd == "siac-reading-modal-tabs-left-browse":
+        # clicked on "Browse" in the tabs on the fields' side.
+        index.ui.reading_modal.show_browse_tab()
+
+    elif cmd == "siac-reading-modal-tabs-left-flds":
+        # clicked on "Fields" in the tabs on the fields' side.
+        index.ui.reading_modal.show_fields_tab()
+    
+    elif cmd == "siac-reading-modal-tabs-left-pdfs":
+        # clicked on "Fields" in the tabs on the fields' side.
+        index.ui.reading_modal.show_pdfs_tab() 
+    
+    elif cmd.startswith("siac-pdf-left-tab-anki-search "):
+        # search input coming from the "Browse" tab in the pdf viewer
+        inp = " ".join(cmd.split(" ")[1:])
+        index.search(inp, ["-1"], only_user_notes = False, print_mode = "pdf.left")
+
+    elif cmd.startswith("siac-pdf-left-tab-pdf-search "):
+        # search input coming from the "PDFs" tab in the pdf viewer
+        inp = " ".join(cmd.split(" ")[1:])
+        if inp is not None and len(inp) > 0:
+            notes = find_pdf_notes_by_title(inp) 
+            index.ui.reading_modal.sidebar.print(notes)
 
     elif cmd.startswith("pSort "):
         if check_index():
@@ -744,6 +767,25 @@ def expanded_on_bridge_cmd(self, cmd, _old):
             res_and_html = similar_cards(cid, min_sim, 20)
             index.ui.show_in_modal_subpage(res_and_html[1])
 
+    elif cmd == "siac-pdf-sidebar-last-addon":
+        # last add-on notes button clicked in the pdf sidebar
+        notes = get_newest(get_config_value_or_default("pdfTooltipResultLimit", 50), [])
+        index.ui.reading_modal.sidebar.print(notes, "", [])
+    
+    elif cmd == "siac-pdf-sidebar-last-anki":
+        # last anki notes button clicked in the pdf sidebar
+        notes = get_last_added_anki_notes(get_config_value_or_default("pdfTooltipResultLimit", 50))
+        index.ui.reading_modal.sidebar.print(notes, "", [])
+
+    elif cmd == "siac-pdf-sidebar-pdfs-in-progress":
+        # pdfs in progress button clicked in the pdf sidebar
+        notes = get_in_progress_pdf_notes()
+        index.ui.reading_modal.sidebar.print(notes)
+
+    elif cmd == "siac-pdf-sidebar-pdfs-unread":
+        # pdfs unread button clicked in the pdf sidebar
+        notes = get_all_unread_pdf_notes()
+        index.ui.reading_modal.sidebar.print(notes)
 
     #
     #   Checkboxes
@@ -752,6 +794,8 @@ def expanded_on_bridge_cmd(self, cmd, _old):
     elif (cmd.startswith("highlight ")):
         if check_index():
             index.highlighting = cmd[10:] == "on"
+            config["highlighting"] = cmd[10:] == "on"
+            mw.addonManager.writeConfig(__name__, config)
     elif cmd.startswith("searchWhileTyping "):
         config["searchOnTyping"] = cmd[18:] == "on"
         mw.addonManager.writeConfig(__name__, config)
@@ -992,8 +1036,9 @@ def rerender_info(editor, content="", searchDB = False, searchByTags = False):
 
 
 def rerenderNote(nid):
-    res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid).fetchone()
+    res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid)
     if res is not None and len(res) > 0:
+        res = res[0]
         index = get_index()
         if index is not None and index.ui is not None:
             index.ui.updateSingle(res)
