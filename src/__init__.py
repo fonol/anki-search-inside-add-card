@@ -79,8 +79,8 @@ def init_addon():
 
     setup_tagedit_timer()
 
-    # add new notes to search index when adding
-    AddCards.addNote = wrap(AddCards.addNote, add_note_and_update_index, "around")
+    # add new notes to search index when addin
+    gui_hooks.add_cards_did_add_note.append(add_note_to_index)
     # update notes in index when changed through the "Edit" button
     EditDialog.saveAndClose = wrap(EditDialog.saveAndClose, editor_save_with_index_update, "around")
 
@@ -102,16 +102,6 @@ def init_addon():
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
 
-
-
-
-def add_note_and_update_index(dialog, note, _old):
-    """
-        Wrapper around the note adding method, to update the index with the new created note.
-    """
-    res = _old(dialog, note)
-    add_note_to_index(note)
-    return res
 
 def editor_save_with_index_update(dialog, _old):
     _old(dialog)
