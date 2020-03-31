@@ -52,13 +52,15 @@ import utility.text
 
 config = mw.addonManager.getConfig(__name__)
 
-def expanded_on_bridge_cmd(self, cmd, _old):
+def expanded_on_bridge_cmd(handled, cmd, self):
     """
     Process the various commands coming from the ui -
     this includes users clicks on option checkboxes, on rendered results, on special searches, etc.
 
     todo: needs some serious cleanup
     """
+    if not isinstance(self, Editor):
+        return handled
     index = get_index()
     # just to make sure
     if index is not None and index.ui._editor is None:
@@ -872,7 +874,12 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         self.web.eval("$('#siac-notes-sidebar').remove(); $('#resultsWrapper').css('padding-left', 0);")
         mw.addonManager.writeConfig(__name__, config)
     else:
-        return _old(self, cmd)
+        return handled
+
+    # If we are here, else didn't return. So an (el)if did suceed, the
+    # action was done, so we can return message to state that the
+    # command is handled.
+    return (True, None)
 
 
 def parseSortCommand(cmd):
