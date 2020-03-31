@@ -105,6 +105,8 @@
 "notes.showSource": true,
 "searchpane.zoom" : 1.0,
 "switchLeftRight": false,
-"highlighting": true
+"highlighting": true,
+"pdf.onOpen.autoFillTagsWithPDFsTags" : true,
+"pdf.onOpen.autoFillFieldsWithPDFName": []
 
 }

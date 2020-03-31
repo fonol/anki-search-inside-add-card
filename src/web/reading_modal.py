@@ -22,6 +22,7 @@ import re
 import datetime
 import time
 import sys
+import aqt
 from aqt import mw
 from aqt.utils import showInfo
 
@@ -50,8 +51,6 @@ class ReadingModal:
         self.sidebar = ReadingModalSidebar()
 
         self.sep_color = mw.addonManager.getConfig(__name__)["styling"]["general"]["windowColumnSeparatorColor"]
-
-
 
     def set_editor(self, editor):
         self._editor = editor
@@ -96,6 +95,19 @@ class ReadingModal:
                 message = "Could not load the given PDF.<br>Are you sure the path is correct?"
                 self.notification(message)
         
+        # auto fill tag entry if pdf has tags and config option is set
+        if note.tags is not None and len(note.tags.strip()) > 0 and get_config_value_or_default("pdf.onOpen.autoFillTagsWithPDFsTags", True):
+            self._editor.tags.setText(" ".join(mw.col.tags.canonify(mw.col.tags.split(note.tags))))
+
+        # auto fill user defined fields
+        fields_to_prefill = get_config_value_or_default("pdf.onOpen.autoFillFieldsWithPDFName", [])
+        if len(fields_to_prefill) > 0:
+            for f in fields_to_prefill:
+                title = note.get_title().replace("`", "&#96;")
+                if f in self._editor.note:
+                    i = self._editor.note._fieldOrd(f)
+                    self._editor.web.eval(f"$('.field').eq({i}).text(`{title}`);")
+
 
     @js
     def show_width_picker(self):
