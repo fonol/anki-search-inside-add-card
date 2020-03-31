@@ -19,7 +19,6 @@ from aqt import mw
 from anki.hooks import runHook, addHook, wrap
 import aqt
 import aqt.webview
-from anki.find import Finder
 import aqt.editor
 from aqt.editor import Editor
 import aqt.stats
@@ -192,7 +191,7 @@ class WhooshSearchIndex:
         stamp = utility.misc.get_milisec_stamp()
         self.output.latest = stamp
 
-        found = self.finder.findNotes(text)
+        found = mw.col.find_notes(text)
         
         if len (found) > 0:
             if not "-1" in decks:

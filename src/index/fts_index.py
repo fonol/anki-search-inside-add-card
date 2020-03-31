@@ -274,7 +274,7 @@ class FTSIndex:
         """
         stamp = utility.misc.get_milisec_stamp()
         self.ui.latest = stamp
-        found = self.finder.findNotes(text)
+        found = mw.col.find_notes(text)
 
         if len (found) > 0:
             if not "-1" in decks:

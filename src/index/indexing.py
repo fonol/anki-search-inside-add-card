@@ -16,7 +16,6 @@
 
 from aqt import mw
 from aqt.qt import *
-from anki.find import Finder
 import aqt
 import time
 import os
@@ -101,7 +100,6 @@ def _build_index(index_up_to_date):
     end = time.time()
     initializationTime = round(end - start)
  
-    index.finder = Finder(mw.col)
     index.ui.stopwords = index.stopWords
     index.ui.remove_divs = config["removeDivsFromOutput"]
     index.ui.gridView = config["gridView"]
