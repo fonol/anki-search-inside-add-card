@@ -62,9 +62,7 @@ config = mw.addonManager.getConfig(__name__)
 def init_addon():
     global origEditorContextMenuEvt
 
-    # wrap js -> py bridge to include the add-ons commands, see command_parsing.py
     webview_did_receive_js_message.append(expanded_on_bridge_cmd)
-    Editor.onBridgeCmd = wrap(Editor.onBridgeCmd, expanded_on_bridge_cmd, "around")
     #todo: Find out if there is a better moment to start index creation
     
     create_db_file_if_not_exists()
