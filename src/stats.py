@@ -67,11 +67,11 @@ def getSortedByInterval(decks, limit, pinned, sortOrder):
     else:
         deckQ = ""
     if deckQ:
-        res = mw.col.db.execute("select notes.id, flds, tags, did, cards.nid, notes.mid FROM cards left join notes on cards.nid = notes.id where did in %s and reps > 0 group by cards.nid order by ivl %s limit %s" % (
-            deckQ, sortOrder, limit)).fetchall()
+        res = mw.col.db.all("select notes.id, flds, tags, did, cards.nid, notes.mid FROM cards left join notes on cards.nid = notes.id where did in %s and reps > 0 group by cards.nid order by ivl %s limit %s" % (
+            deckQ, sortOrder, limit))
     else:
-        res = mw.col.db.execute("select notes.id, flds, tags, did, cards.nid, notes.mid FROM cards left join notes on cards.nid = notes.id where reps > 0 group by cards.nid order by ivl %s limit %s" % (
-            sortOrder, limit)).fetchall()
+        res = mw.col.db.all("select notes.id, flds, tags, did, cards.nid, notes.mid FROM cards left join notes on cards.nid = notes.id where reps > 0 group by cards.nid order by ivl %s limit %s" % (
+            sortOrder, limit))
     rList = []
     for r in res:
         if not str(r[0]) in pinned:
@@ -86,11 +86,11 @@ def _calcScores(decks, limit, retOnly):
     else:
         deckQ = ""
     if deckQ:
-        notes = mw.col.db.execute(
-            "select notes.id, cards.id, flds, tags, did, notes.mid from cards left join notes on cards.nid = notes.id where did in %s order by notes.id" % deckQ).fetchall()
+        notes = mw.col.db.all(
+            "select notes.id, cards.id, flds, tags, did, notes.mid from cards left join notes on cards.nid = notes.id where did in %s order by notes.id" % deckQ)
     else:
-        notes = mw.col.db.execute(
-            "select notes.id, cards.id, flds, tags, did, notes.mid from cards left join notes on cards.nid = notes.id order by notes.id ").fetchall()
+        notes = mw.col.db.all(
+            "select notes.id, cards.id, flds, tags, did, notes.mid from cards left join notes on cards.nid = notes.id order by notes.id ")
     scores = dict()
     cardsByNotes = dict()
     for note in notes:
@@ -111,7 +111,7 @@ def _calcScores(decks, limit, retOnly):
 def getAvgTrueRetention(nids):
     query = "select id from cards where nid in %s" % (
         "(%s)" % ",".join([str(nid) for nid in nids]))
-    cids = mw.col.db.execute(query).fetchall()
+    cids = mw.col.db.all(query)
     cids = [c[0] for c in cids]
     tret = _getScore(cids, True)
     return tret
@@ -120,7 +120,7 @@ def getAvgTrueRetention(nids):
 def getTrueRetentionOverTime(nids):
     query = "select id from cards where nid in %s" % (
         "(%s)" % ",".join([str(nid) for nid in nids]))
-    cids = mw.col.db.execute(query).fetchall()
+    cids = mw.col.db.all(query)
     cids = [c[0] for c in cids]
     return _getTrueRetentionOverTime(cids)
 
@@ -134,7 +134,7 @@ def getRetentions(nids):
     retsByNid = {}
     query = "select a.nid, ease from revlog join (select notes.id as nid, cards.id as cid from notes join cards on notes.id = cards.nid where notes.id in (%s)) as a on revlog.cid = a.cid where revlog.type = 1"
     query = query % ",".join([str(n) for n in nids])
-    res = list(mw.col.db.execute(query).fetchall())
+    res = mw.col.db.all(query)
 
     for r in res:
         if r[0] is None:
@@ -613,7 +613,7 @@ def _cardTypeStr(typeNumber):
     return "?"
 
 def _get_revlog_graph(cid):
-    entries = mw.col.db.execute("select * from revlog where cid = %s and (type = 1 or type = 2)" % cid).fetchall()
+    entries = mw.col.db.all("select * from revlog where cid = %s and (type = 1 or type = 2)" % cid)
     html = "<div class='full-width'>%s</div>"
     blocks = ""
     for _,_,_,ease,ivl,_,_,_,type in entries:

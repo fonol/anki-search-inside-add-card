@@ -992,7 +992,7 @@ def rerender_info(editor, content="", searchDB = False, searchByTags = False):
 
 
 def rerenderNote(nid):
-    res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid).fetchone()
+    res = mw.col.db.first("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid)
     if res is not None and len(res) > 0:
         index = get_index()
         if index is not None and index.ui is not None:
