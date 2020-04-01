@@ -62,7 +62,7 @@ config = mw.addonManager.getConfig(__name__)
 def init_addon():
     global origEditorContextMenuEvt
 
-    webview_did_receive_js_message.append(expanded_on_bridge_cmd)
+    gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
     #todo: Find out if there is a better moment to start index creation
     
     create_db_file_if_not_exists()
