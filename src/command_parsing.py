@@ -59,7 +59,7 @@ def expanded_on_bridge_cmd(handled, cmd, self):
 
     todo: needs some serious cleanup
     """
-    if not isinstance(self, Editor):
+    if not isinstance(self, aqt.editor.Editor):
         return handled
     index = get_index()
     # just to make sure
