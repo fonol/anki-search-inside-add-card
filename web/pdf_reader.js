@@ -1097,6 +1097,10 @@ function onReadingModalClose(nid) {
     destroyPDF(); 
     document.getElementById("siac-reading-modal-center").innerHTML = "";
     onWindowResize();
+    window.$fields = $('.field');
+    if (siacState.searchOnTyping) {
+        setSearchOnTyping(true);
+    }
 }
 function tryExtractTextFromTextNote() {
     saveTextNote($('#siac-reading-modal-top-bar').data('nid'), remove=false);        
