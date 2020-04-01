@@ -492,7 +492,8 @@ class CreateTab(QWidget):
         self.text.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         self.text.setLineWidth(2)
         self.text.cursorPositionChanged.connect(self.on_text_cursor_change)
-        self.text.setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 4) 
+        if hasattr(self.text, "setTabStopDistance"):
+            self.text.setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 4) 
         t_h = QHBoxLayout()
         t_h.addWidget(text_lbl)
 
