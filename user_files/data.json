@@ -1,13 +1,13 @@
 {
   "index": {
-    "timestamp": "14/03/2020 07:16:18",
-    "size": 11081,
+    "timestamp": "31/03/2020 14:09:53",
+    "size": 63506,
     "decks": [],
     "shouldRebuild": false,
     "lastInsertedId": -1,
     "fieldsToExclude": {},
     "stopwordsSize": 123,
-    "type": "SQLite FTS5"
+    "type": "SQLite FTS4"
   },
   "synsets": [],
   "notes": {
