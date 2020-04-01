@@ -509,7 +509,9 @@ class Output:
         sortedCounts = sorted(counts.items(), key=lambda kv: kv[1][1], reverse=True)
         html = ""
         for entry in sortedCounts[:15]:
-            html = "%s<a class='keyword' href='#' onclick='event.preventDefault(); searchFor($(this).text())'>%s</a>, " % (html, entry[1][0])
+            k = utility.text.trim_if_longer_than(entry[1][0], 25)
+            kd = entry[1][0].replace("'", "")
+            html = f"{html}<a class='keyword' href='#' data-keyword='{kd}' onclick='event.preventDefault(); searchFor($(this).data(\"keyword\"));'>{k}</a>, "
         if len(html) == 0:
             return "No keywords for empty result."
         return html[:-2]
