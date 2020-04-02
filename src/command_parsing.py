@@ -1259,6 +1259,7 @@ def get_index_info():
     html = """
             <table class="striped" style='width: 100%%; margin-bottom: 18px;'>
                <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
+               <tr><td>SQLite Version</td><td> <b>%s</b></td></tr>
                <tr><td>Initialization:</td><td>  <b>%s s</b></td></tr>
                <tr><td>Index Size:</td><td>  <b>%s</b> notes</td></tr>
                <tr><td>Index is always rebuilt if smaller than:</td><td>  <b>%s</b> notes</td></tr>
@@ -1287,7 +1288,8 @@ def get_index_info():
                <tr><td>PDF: Toggle Top & Bottom Bar</td><td>  <b>F11</b></td></tr>
              </table>
 
-            """ % (index.type, str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
+            """ % (index.type, sqlite3.sqlite_version + str(sqlite3.__file__),
+            str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if index.logging else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["renderImmediately"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
             "Search" if config["tagClickShouldSearch"] else "Add",
