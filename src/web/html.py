@@ -965,6 +965,18 @@ def get_pdf_viewer_html(nid, source, title):
                {search_sources}
             </div>
         </div>
+        <div style='position: absolute; left: 0; bottom: 150px; text-align: center;'>
+            <div style='background: #e65100;' data-id="1" data-color="#e65100" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
+            <div style='background: #558b2f;' data-id="2" data-color="#558b2f" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
+            <div style='background: #2196f3;' data-id="3" data-color="#2196f3" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
+            <div style='background: #ffee58;' data-id="4" data-color="#ffee58" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
+            <div style='background: #ab47bc;' data-id="5" data-color="#ab47bc" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
+            <br> 
+            <div style='background: #e65100;' data-id="6" data-color="#e65100" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-ul-btn'></div>
+            <div style='background: #558b2f;' data-id="7" data-color="#558b2f" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-ul-btn'></div>
+            <div style='background: #2196f3;' data-id="8" data-color="#2196f3" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-ul-btn'></div>
+        </div>
+
         <div class='siac-btn siac-btn-dark' id='siac-pdf-search-btn' onclick='$(this).toggleClass("expanded"); onPDFSearchBtnClicked(this);'><img src='{pdf_search_img_src}' style='width: 16px; height: 16px;'/>
             <div id='siac-pdf-search-btn-inner' class='expanded-hidden white-hover' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'>
                 <input style='width: 200px; border:none; background-color: #2f2f31; color: lightgrey; padding-left: 2px;' onclick='event.stopPropagation();' onkeyup='onPDFSearchInput(this.value, event);'/>
@@ -984,7 +996,7 @@ def get_pdf_viewer_html(nid, source, title):
                 </div>
             </div>
             <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
-            <div id="text-layer" onmouseup='pdfKeyup();' onclick='if (!window.getSelection().toString().length) {{$("#siac-pdf-tooltip").hide();}}' class="textLayer"></div>
+            <div id="text-layer" onmouseup='pdfKeyup(event);' onclick='textlayerClicked(event, this);' class="textLayer"></div>
         </div>
         <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
         <div class='siac-reading-modal-button-bar-wrapper' style="">
@@ -1034,6 +1046,8 @@ def get_pdf_viewer_html(nid, source, title):
             }} else {{
                 $('#siac-pdf-tooltip-toggle').removeClass('active');
             }}
+            $('.siac-pdf-color-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
+            $('.siac-pdf-ul-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
         </script>
     """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, quick_sched_btn=quick_sched, search_sources=search_sources, marks_img_src=marks_img_src, marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src))
     return html

@@ -67,7 +67,7 @@
     position: absolute;
     bottom: 35px;
     right: 0; left: 0;
-    z-index: 2;
+    z-index: 4;
     user-select: none;
     background-color: #43a047;
     border-radius: 7px;
@@ -678,4 +678,29 @@ body.night_mode .siac-note-title-only {
 body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs input {
     background: #333333;
     color: lightgrey;
+}
+.siac-pdf-color-btn {
+    height: 18px; 
+    width: 18px; 
+    border-radius: 4px;
+    margin-bottom: 4px;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+.siac-pdf-color-btn.active,.siac-pdf-ul-btn.active {
+    border-color: white;
+}
+.siac-hl {
+    position: absolute;
+    mix-blend-mode: multiply;
+    z-index: 2;
+    border-radius: 7px;
+}
+.siac-pdf-ul-btn {
+    height: 5px; 
+    width: 18px; 
+    border: 2px solid transparent;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    cursor: pointer;
 }

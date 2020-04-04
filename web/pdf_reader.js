@@ -16,10 +16,11 @@
 
 
 
-var pdfImgSel = { canvas : null, context : null, startX : null, endX : null, startY : null, endY : null, cvsOffLeft : null, cvsOffTop : null, mouseIsDown : false, canvasDispl : null};
+var pdfImgSel = { canvas: null, context: null, startX: null, endX: null, startY: null, endY: null, cvsOffLeft: null, cvsOffTop: null, mouseIsDown: false, canvasDispl: null };
 var remainingSeconds = 30 * 60;
 var readingTimer;
 var pdfDisplayed;
+var pdfDisplayedViewPort;
 var pdfPageRendering = false;
 var pdfDisplayedCurrentPage;
 var pdfDisplayedScale = 2.0;
@@ -37,9 +38,9 @@ var pdfFullscreen = false;
 var pdfBarsHidden = false;
 var pdfSearchOngoing = false;
 var pdfCurrentSearch = {
-    query : null,
-    lastStart : null,
-    lastEnd : null,
+    query: null,
+    lastStart: null,
+    lastEnd: null,
     breakOnNext: null
 };
 
@@ -49,7 +50,7 @@ function pdfImgMouseUp(event) {
         pdfImgSel.mouseIsDown = false;
         drawSquare();
         var pdfC = document.getElementById("siac-pdf-canvas");
-        cropSelection(pdfC, pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX , pdfImgSel.endY - pdfImgSel.startY, insertImage);
+        cropSelection(pdfC, pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY, insertImage);
         $(pdfImgSel.canvas).remove();
         $('#text-layer').show();
     }
@@ -63,7 +64,7 @@ function cropSelection(canvasSrc, offsetX, offsetY, width, height, callback) {
     callback(temp.toDataURL());
 }
 function insertImage(data) {
-   pycmd("siac-add-image 1 " + data.replace("image/png", ""));
+    pycmd("siac-add-image 1 " + data.replace("image/png", ""));
 }
 function pdfImgMouseDown(event) {
     pdfImgSel.canvasDispl = document.getElementById("siac-pdf-canvas").offsetLeft;
@@ -71,7 +72,7 @@ function pdfImgMouseDown(event) {
     pdfImgSel.cvsOffLeft = $(pdfImgSel.canvas).offset().left;
     pdfImgSel.cvsOffTop = $(pdfImgSel.canvas).offset().top;
     pdfImgSel.startX = pdfImgSel.endX = event.clientX - pdfImgSel.cvsOffLeft;
-    pdfImgSel.startY = pdfImgSel.endY = event.clientY- pdfImgSel.cvsOffTop;
+    pdfImgSel.startY = pdfImgSel.endY = event.clientY - pdfImgSel.cvsOffTop;
     drawSquare();
 }
 function initImageSelection() {
@@ -79,18 +80,18 @@ function initImageSelection() {
         $(pdfImgSel.canvas).remove();
         $('#text-layer').show();
         return;
-    } 
+    }
     $('#text-layer').hide();
     pdfImgSel.canvas = document.getElementById("siac-pdf-canvas");
     var lCanvasOverlay = document.createElement("canvas");
     pdfImgSel.canvas.parentNode.insertBefore(lCanvasOverlay, pdfImgSel.canvas.nextSibling);
-    $(lCanvasOverlay).css({"width": pdfImgSel.canvas.width + "px", "height" : pdfImgSel.canvas.height + "px", "top": "0", "left": document.getElementById('text-layer').style.left, "position" : "absolute", "z-index": 999999, "opacity": 0.3, "cursor": "crosshair"});
+    $(lCanvasOverlay).css({ "width": pdfImgSel.canvas.width + "px", "height": pdfImgSel.canvas.height + "px", "top": "0", "left": document.getElementById('text-layer').style.left, "position": "absolute", "z-index": 999999, "opacity": 0.3, "cursor": "crosshair" });
     lCanvasOverlay.setAttribute('width', pdfImgSel.canvas.width);
     lCanvasOverlay.setAttribute('height', pdfImgSel.canvas.height);
     pdfImgSel.context = lCanvasOverlay.getContext("2d");
-    lCanvasOverlay.addEventListener("mousedown", function(e) {pdfImgMouseDown(e); }, false);
-    lCanvasOverlay.addEventListener("mouseup", function(e) {pdfImgMouseUp(e); }, false);
-    lCanvasOverlay.addEventListener("mousemove", function(e) {pdfImgMouseXY(e); }, false);
+    lCanvasOverlay.addEventListener("mousedown", function (e) { pdfImgMouseDown(e); }, false);
+    lCanvasOverlay.addEventListener("mouseup", function (e) { pdfImgMouseUp(e); }, false);
+    lCanvasOverlay.addEventListener("mousemove", function (e) { pdfImgMouseXY(e); }, false);
     pdfImgSel.canvas = lCanvasOverlay;
 }
 function pdfImgMouseXY(event) {
@@ -111,31 +112,32 @@ function pdfFitToPage() {
         rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
     }
 }
-function queueRenderPage(num, shouldScrollUp=true, fitToPage=false, isInitial=false, query='') {
+function queueRenderPage(num, shouldScrollUp = true, fitToPage = false, isInitial = false, query = '', fetchHighlights = true) {
     if (pdfPageRendering) {
         pageNumPending = num;
     } else {
-        rerenderPDFPage(num, shouldScrollUp, fitToPage, isInitial, query);
+        rerenderPDFPage(num, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
     }
 }
-function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false, isInitial=false, query='') {
+function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitial = false, query = '', fetchHighlights = true) {
     if (!pdfDisplayed || iframeIsDisplayed) {
         return;
     }
     document.getElementById("siac-pdf-tooltip").style.display = "none";
     document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
+    Highlighting._removeAllHighlights();
     pdfLoading = true;
     pdfDisplayed.getPage(num)
-       .then(function(page) {
+        .then(function (page) {
             updatePdfDisplayedMarks();
             pdfPageRendering = true;
             var lPage = page;
             var canvas = document.getElementById("siac-pdf-canvas");
-	        if (fitToPage) {
-                var viewport = page.getViewport({scale : 1.0});
+            if (fitToPage) {
+                var viewport = page.getViewport({ scale: 1.0 });
                 pdfDisplayedScale = (canvas.parentNode.clientWidth - 23) / viewport.width;
             }
-            var viewport = page.getViewport({scale : pdfDisplayedScale});
+            var viewport = page.getViewport({ scale: pdfDisplayedScale });
             canvas.height = viewport.height;
             canvas.width = viewport.width;
             if (pdfColorMode !== "Day")
@@ -146,8 +148,8 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false, isInitial=f
             var renderTask = page.render({
                 canvasContext: ctx,
                 viewport: viewport,
-                continueCallback: function(cont) {
-                    if(timestamp != pageTimestamp) {
+                continueCallback: function (cont) {
+                    if (timestamp != pageTimestamp) {
                         return;
                     }
                     cont();
@@ -163,75 +165,81 @@ function rerenderPDFPage(num, shouldScrollUp= true, fitToPage=false, isInitial=f
                         invertCanvas(ctx);
                     }
                 }
-                return lPage.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false});
-            }).then(function(textContent) {
-                   $("#text-layer").css({ height: canvas.height , width: canvas.width, left: canvas.offsetLeft  }).html('');
-                   pdfjsLib.renderTextLayer({
-                       textContent: textContent,
-                       container: document.getElementById("text-layer"),
-                       viewport: viewport,
-                       textDivs: []
-                   });
-                    if (query) {
-                        highlightPDFText(query);
-                    } else {
-                        resetSearch();
-                    }
-                   pdfLoading = false;
-                   if (isInitial || query) {
-                       ungreyoutBottom();
-                   }
-               });
-           if (shouldScrollUp)  {
-               canvas.parentElement.scrollTop = 0;
-           }
-	    if (pagesRead.indexOf(num) !== -1) {
-            document.getElementById('siac-pdf-overlay').style.display = 'block';
-            document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
-	    } else {
-            document.getElementById('siac-pdf-overlay').style.display = 'none';
-            document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
-	    }
+                return lPage.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false });
+            }).then(function (textContent) {
+                $("#text-layer").css({ height: canvas.height, width: canvas.width, left: canvas.offsetLeft }).html('');
+                pdfjsLib.renderTextLayer({
+                    textContent: textContent,
+                    container: document.getElementById("text-layer"),
+                    viewport: viewport,
+                    textDivs: []
+                });
+                if (query) {
+                    highlightPDFText(query);
+                } else {
+                    resetSearch();
+                }
+                pdfLoading = false;
+                if (isInitial || query) {
+                    ungreyoutBottom();
+                }
+                pdfDisplayedViewPort = viewport;
+                if (fetchHighlights) {
+                    pycmd("siac-pdf-page-loaded " + pdfDisplayedCurrentPage);
+                } else {
+                    Highlighting.displayHighlights();
+                }
+            });
+            if (shouldScrollUp) {
+                canvas.parentElement.scrollTop = 0;
+            }
+            if (pagesRead.indexOf(num) !== -1) {
+                document.getElementById('siac-pdf-overlay').style.display = 'block';
+                document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
+            } else {
+                document.getElementById('siac-pdf-overlay').style.display = 'none';
+                document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
+            }
         });
 }
 function invertCanvas(ctx) {
-    var imgData = ctx.getImageData(0,0, ctx.canvas.width, ctx.canvas.height);
+    var imgData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
     var data = imgData.data;
     var mapped;
     if (pdfColorMode === "Sand") {
         for (var i = 0; i < data.length; i += 4) {
-            mapped = pxToSandScheme(data[i], data[i + 1], data[i + 2]) ;
-            data[i]     = mapped.r;  
+            mapped = pxToSandScheme(data[i], data[i + 1], data[i + 2]);
+            data[i] = mapped.r;
             data[i + 1] = mapped.g;
             data[i + 2] = mapped.b;
         }
     } else {
         for (var i = 0; i < data.length; i += 4) {
-            if (data[i] >= 250 && data[i +1] >= 250 && data[i+2] >= 250) {
-                data[i] = 47; data[i+1] = 47; data[i+2] = 49;
+            if (data[i] >= 250 && data[i + 1] >= 250 && data[i + 2] >= 250) {
+                data[i] = 47; data[i + 1] = 47; data[i + 2] = 49;
             } else {
-                data[i]     = 255 - data[i];  
+                data[i] = 255 - data[i];
                 data[i + 1] = 255 - data[i + 1];
                 data[i + 2] = 255 - data[i + 2];
             }
         }
     }
-    ctx.putImageData(imgData, 0, 0);  
+    ctx.putImageData(imgData, 0, 0);
     ctx.canvas.style.display = "inline-block";
 }
 
 function togglePageRead(nid) {
 
-	if (pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
+    if (pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
         document.getElementById('siac-pdf-overlay').style.display = 'block';
         document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
-		pycmd("siac-pdf-page-read " + nid + " " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages);
-		if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
-	} else {
+        pycmd("siac-pdf-page-read " + nid + " " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages);
+        if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
+    } else {
         document.getElementById('siac-pdf-overlay').style.display = 'none';
         document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
-		pycmd("siac-pdf-page-unread " + nid + " " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages);
-		pagesRead.splice(pagesRead.indexOf(pdfDisplayedCurrentPage), 1);
+        pycmd("siac-pdf-page-unread " + nid + " " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages);
+        pagesRead.splice(pagesRead.indexOf(pdfDisplayedCurrentPage), 1);
     }
     updatePdfProgressBar();
 }
@@ -248,10 +256,10 @@ function updatePdfProgressBar() {
     document.getElementById("siac-prog-bar-wr").innerHTML = html;
 }
 function pdfHidePageReadMark() {
-    document.getElementById("siac-pdf-overlay").style.display = "none";document.getElementById("siac-pdf-read-btn").innerHTML = "\u2713&nbsp; Read";
+    document.getElementById("siac-pdf-overlay").style.display = "none"; document.getElementById("siac-pdf-read-btn").innerHTML = "\u2713&nbsp; Read";
 }
 function pdfShowPageReadMark() {
-    document.getElementById("siac-pdf-overlay").style.display = "block";document.getElementById("siac-pdf-read-btn").innerHTML = "&times; Unread";
+    document.getElementById("siac-pdf-overlay").style.display = "block"; document.getElementById("siac-pdf-read-btn").innerHTML = "&times; Unread";
 }
 function pdfJumpToPage(e, inp) {
     if (e.keyCode !== 13) {
@@ -269,7 +277,7 @@ function pdfScaleChange(mode) {
         pdfDisplayedScale -= 0.1;
         pdfDisplayedScale = Math.max(0.1, pdfDisplayedScale);
     }
-    queueRenderPage(pdfDisplayedCurrentPage, shouldScrollUp=false);
+    queueRenderPage(pdfDisplayedCurrentPage, shouldScrollUp = false, fetchHighlights = false);
 }
 
 function pdfPageRight() {
@@ -278,7 +286,7 @@ function pdfPageRight() {
     }
     if (pdfDisplayedCurrentPage < pdfDisplayed.numPages) {
         pdfDisplayedCurrentPage++;
-    queueRenderPage(pdfDisplayedCurrentPage);
+        queueRenderPage(pdfDisplayedCurrentPage);
     }
 }
 function pdfPageLeft() {
@@ -293,15 +301,15 @@ function pdfPageLeft() {
 function markReadUpToCurrent() {
     for (var i = 0; i < pdfDisplayedCurrentPage; i++) {
         if (pagesRead.indexOf(i + 1) === -1) {
-            pagesRead.push(i +1);
+            pagesRead.push(i + 1);
         }
     }
 }
-function saveTextNote(nid, remove=true) {
+function saveTextNote(nid, remove = true) {
     let html = "";
     try {
         html = tinymce.activeEditor.getContent();
-    } catch(e) {
+    } catch (e) {
         pycmd("siac-notification Could not save text note for some reason.");
         return;
     } finally {
@@ -316,17 +324,17 @@ function destroyTinyMCE() {
     if (tinymce) {
         try {
             tinymce.remove();
-        } catch(e) {}
+        } catch (e) { }
     }
 }
 
 function toggleQueue() {
     let $wr = $("#siac-queue-sched-wrapper");
     if ($wr.hasClass('active')) {
-        $wr.css( { "max-width" : "0px" , "overflow": "hidden"});
+        $wr.css({ "max-width": "0px", "overflow": "hidden" });
         $('.siac-queue-sched-btn:first').addClass("active");
     } else {
-        $wr.css({ "max-width": "500px", "overflow": "visible"});
+        $wr.css({ "max-width": "500px", "overflow": "visible" });
         $('.siac-queue-sched-btn:first').removeClass("active");
     }
     $wr.toggleClass('active');
@@ -343,9 +351,9 @@ function afterRemovedFromQueue() {
     $('.siac-queue-sched-btn').first().addClass("active").html('Unqueued');
 }
 function _startTimer(elementToUpdateId) {
-    if (readingTimer) {clearInterval(readingTimer); }
-    readingTimer = setInterval(function() {
-        remainingSeconds --;
+    if (readingTimer) { clearInterval(readingTimer); }
+    readingTimer = setInterval(function () {
+        remainingSeconds--;
         document.getElementById(elementToUpdateId).innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds % 60 < 10 ? "0" + remainingSeconds % 60 : remainingSeconds % 60);
         if (remainingSeconds <= 0) {
             clearInterval(readingTimer);
@@ -389,32 +397,32 @@ function onPDFSearchBtnClicked(elem) {
 function onPDFSearchInput(value, event) {
     if (event.keyCode === 13 && value && value.length) {
         showPDFBottomRightNotification("Searching ...");
-        if (value.toLowerCase() !== pdfCurrentSearch.query)  {
+        if (value.toLowerCase() !== pdfCurrentSearch.query) {
             pdfCurrentSearch.lastStart = null;
             pdfCurrentSearch.lastEnd = null;
             pdfCurrentSearch.query = value.toLowerCase();
         }
-        setTimeout(function() {
+        setTimeout(function () {
             nextPDFSearchResult();
         }, 10);
     }
 }
 
-async function getContents(s=1, n=10000) {
-    var countPromises = []; 
+async function getContents(s = 1, n = 10000) {
+    var countPromises = [];
     for (var j = s; j <= pdfDisplayed.numPages && j <= s + n; j++) {
         var page = pdfDisplayed.getPage(j);
-            countPromises.push(page.then(function(page) { 
+        countPromises.push(page.then(function (page) {
             var n = page.pageIndex + 1;
             var txt = "";
             var textContent = page.getTextContent();
-            return textContent.then(function(page){ 
-            for(var i=0;i<page.items.length;i++){
-                txt += " "+ page.items[i].str;
-            }
-               return { page: n, text: txt.toLowerCase()}; 
-           });
-       }));
+            return textContent.then(function (page) {
+                for (var i = 0; i < page.items.length; i++) {
+                    txt += " " + page.items[i].str;
+                }
+                return { page: n, text: txt.toLowerCase() };
+            });
+        }));
     }
     return Promise.all(countPromises).then(function (counts) {
         return counts;
@@ -424,7 +432,7 @@ function resetSearch() {
     pdfCurrentSearch.lastStart = null;
     pdfCurrentSearch.lastEnd = null;
 }
-async function nextPDFSearchResult(dir="right") {
+async function nextPDFSearchResult(dir = "right") {
     if (pdfSearchOngoing) {
         return;
     }
@@ -432,7 +440,7 @@ async function nextPDFSearchResult(dir="right") {
     if (pdfCurrentSearch.query === null) {
         pdfCurrentSearch.query = value;
     } else {
-        if (value !== pdfCurrentSearch.query || (pdfDisplayedCurrentPage !== pdfCurrentSearch.lastStart && pdfCurrentSearch.lastStart === pdfCurrentSearch.lastEnd))  {
+        if (value !== pdfCurrentSearch.query || (pdfDisplayedCurrentPage !== pdfCurrentSearch.lastStart && pdfCurrentSearch.lastStart === pdfCurrentSearch.lastEnd)) {
             pdfCurrentSearch.lastStart = null;
             pdfCurrentSearch.lastEnd = null;
             pdfCurrentSearch.query = value;
@@ -444,7 +452,7 @@ async function nextPDFSearchResult(dir="right") {
     pdfCurrentSearch.breakOnNext = false;
     pdfSearchOngoing = true;
     greyoutBottom();
-    
+
     var shouldBreak = false;
     var found = false;
     var spl = pdfCurrentSearch.query.toLowerCase().split(" ");
@@ -470,7 +478,7 @@ async function nextPDFSearchResult(dir="right") {
                         showPDFBottomRightNotification("Text found on page " + pdfPagesContents[n].page, true);
                     }
                     pdfDisplayedCurrentPage = pdfPagesContents[n].page;
-                    queueRenderPage(pdfDisplayedCurrentPage, true, false, false, pdfCurrentSearch.query); 
+                    queueRenderPage(pdfDisplayedCurrentPage, true, false, false, pdfCurrentSearch.query);
                     pdfCurrentSearch.lastStart = pdfDisplayedCurrentPage;
                     pdfCurrentSearch.lastEnd = pdfDisplayedCurrentPage;
                     shouldBreak = true;
@@ -479,16 +487,16 @@ async function nextPDFSearchResult(dir="right") {
                 }
             }
         }
-        if (it >  Math.round(pdfDisplayed.numPages / 25.0) + 2) {
+        if (it > Math.round(pdfDisplayed.numPages / 25.0) + 2) {
             showPDFBottomRightNotification("Search aborted, took too long.", true);
             break;
         }
     } while (!shouldBreak);
-    
+
     if (!found) {
         showPDFBottomRightNotification("Text was not found.", true);
         ungreyoutBottom();
-    } 
+    }
     pdfSearchOngoing = false;
 
 }
@@ -503,44 +511,44 @@ function getNextPagesToSearchIn(dir) {
     let ivl = 25;
     let s = -1;
     let n = ivl;
-  
+
     if (dir === "left") {
         // button or enter just pressed
-        if  (lastStart === null) {
+        if (lastStart === null) {
             s = Math.max(pdfDisplayedCurrentPage - ivl, 1);
             n = Math.min(ivl, pdfDisplayedCurrentPage - s);
-        }  
+        }
         // last search block was up to first page, so start at the end
         else if (lastStart === 1) {
             s = Math.max(pdfDisplayed.numPages - ivl, 1);
-        } 
+        }
         // page rendered with highlighted search results 
         else if (lastEnd === lastStart && lastEnd !== 1 && pdfDisplayed.numPages > 1) {
-            s =  Math.max(lastStart - ivl - 1, 1);
+            s = Math.max(lastStart - ivl - 1, 1);
             if (s === 1)
                 n = Math.max(0, Math.min(ivl, pdfDisplayedCurrentPage - 3));
-            else 
+            else
                 n = Math.min(ivl, pdfDisplayedCurrentPage - s - 1);
         }
         // else
         else {
             s = Math.max(lastStart - ivl, 1);
             if (s === 1)
-                n = Math.max(0, lastStart- 2);
+                n = Math.max(0, lastStart - 2);
         }
         // went from end of pdf to search start again, so stop
         if (lastStart !== null && lastStart > pdfDisplayedCurrentPage && s <= pdfDisplayedCurrentPage) {
             s = pdfDisplayedCurrentPage;
             pdfCurrentSearch.breakOnNext = true;
-        } 
+        }
         // 1 page, so range to look at should be 1 and stop after
         else if (pdfDisplayed.numPages === 1) {
             n = 0;
             pdfCurrentSearch.breakOnNext = true;
         }
-      
+
     } else {
-        if  (lastStart === null) {
+        if (lastStart === null) {
             s = pdfDisplayedCurrentPage;
             n = Math.min(pdfDisplayed.numPages - s, ivl);
         }
@@ -554,34 +562,34 @@ function getNextPagesToSearchIn(dir) {
         if (lastEnd !== null && lastEnd < pdfDisplayedCurrentPage && s + ivl >= pdfDisplayedCurrentPage) {
             n = pdfDisplayedCurrentPage - s;
             pdfCurrentSearch.breakOnNext = true;
-        } else if (lastEnd !== null && lastEnd === pdfDisplayed.numPages && 1 + ivl >=pdfDisplayedCurrentPage) {
+        } else if (lastEnd !== null && lastEnd === pdfDisplayed.numPages && 1 + ivl >= pdfDisplayedCurrentPage) {
             n = pdfDisplayedCurrentPage - s;
             pdfCurrentSearch.breakOnNext = true;
         }
-        
+
         else if (pdfDisplayed.numPages === 1) {
             n = 0;
             pdfCurrentSearch.breakOnNext = true;
         }
-    } 
+    }
     if (s === 1 && pdfDisplayed.numPages <= n) {
         pdfCurrentSearch.breakOnNext = true;
     }
     pdfCurrentSearch.lastStart = s;
     pdfCurrentSearch.lastEnd = Math.min(pdfDisplayed.numPages, s + n);
     // showPDFBottomRightNotification(`Searching pages ${s} - ${Math.min(s + n, pdfDisplayed.numPages)}`);
-    return {s , n};
+    return { s, n };
 }
-function highlightPDFText(query, n=0) {
+function highlightPDFText(query, n = 0) {
     var tlEls = document.getElementById('text-layer').querySelectorAll('span');
     if (tlEls.length === 0) {
-        if (n < 3) 
-            setTimeout(function() {highlightPDFText(query, n+1);}, 200);
+        if (n < 3)
+            setTimeout(function () { highlightPDFText(query, n + 1); }, 200);
         return;
     }
     let spl = query.toLowerCase().split(" ");
     for (var i = 0; i < spl.length; i++) {
-        for (var t = 0; t < tlEls.length; t++){
+        for (var t = 0; t < tlEls.length; t++) {
             if (tlEls[t].innerHTML.toLowerCase().indexOf(spl[i]) !== -1) {
                 var regEx = new RegExp(escapeRegExp(spl[i]), "ig");
                 tlEls[t].innerHTML = tlEls[t].innerHTML.replace(regEx, "<span class='tl-highlight'>$&</span>");
@@ -591,14 +599,14 @@ function highlightPDFText(query, n=0) {
     document.getElementById("siac-pdf-top").scrollTop = Math.max(0, $('#text-layer .tl-highlight').first()[0].parentElement.offsetTop - 50);
 }
 function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
-  }
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 function resetTimer(elem) {
     clearInterval(readingTimer);
     readingTimer = null;
     $('.siac-timer-btn').removeClass('active');
     $(elem).addClass('active');
-    remainingSeconds =  Number(elem.innerHTML) * 60;
+    remainingSeconds = Number(elem.innerHTML) * 60;
     document.getElementById("siac-reading-modal-timer").innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds % 60 < 10 ? "0" + remainingSeconds % 60 : remainingSeconds % 60);
     $('#siac-timer-play-btn').addClass("inactive").html("Start");
 }
@@ -610,15 +618,13 @@ function startTimer(mins) {
         }
     });
 }
-function pdfMouseWheel(event)  {
-    if(!event.ctrlKey) { return; }
-    if (event.deltaY < 0)
-    {
+function pdfMouseWheel(event) {
+    if (!event.ctrlKey) { return; }
+    if (event.deltaY < 0) {
         pdfScaleChange("up");
     }
-    else if (event.deltaY > 0)
-    {
-       pdfScaleChange("down");
+    else if (event.deltaY > 0) {
+        pdfScaleChange("down");
     }
 }
 function showPDFBottomRightNotification(html, fadeout = false) {
@@ -636,10 +642,10 @@ function removePDFBottomRightNotification() {
 }
 function swapReadingModal() {
     let modal = document.getElementById("siac-reading-modal");
-    if (modal.parentNode.id === "siac-right-side")  {
-	document.getElementById("leftSide").appendChild(modal);
+    if (modal.parentNode.id === "siac-right-side") {
+        document.getElementById("leftSide").appendChild(modal);
     } else {
-	document.getElementById("siac-right-side").appendChild(modal);
+        document.getElementById("siac-right-side").appendChild(modal);
     }
 }
 function togglePDFNightMode(elem) {
@@ -654,35 +660,67 @@ function togglePDFNightMode(elem) {
     elem.innerHTML = pdfColorMode;
     rerenderPDFPage(pdfDisplayedCurrentPage, false);
 }
-function pdfKeyup() {
-	if (pdfTooltipEnabled && window.getSelection().toString().length) {
+/**
+ *  executed after keyup in the pdf pane
+ */
+function pdfKeyup(e) {
+    // selected text, no ctrl key -> show tooltip if enabled 
+    if (!e.ctrlKey && pdfTooltipEnabled && window.getSelection().toString().length) {
         $('#text-layer .tl-highlight').remove();
-		let s = window.getSelection();
+        let s = window.getSelection();
         let r = s.getRangeAt(0);
         let text = s.toString();
         if (text === " " || text.length > 500) { return; }
+        // spans in textlayer have a max height to prevent selection jumping, but here we have to temporarily 
+        // disable it, to get the actual bounding client rect
+        $('#text-layer > span').css("height", "auto");
         let nodesInSel = nodesInSelection(r);
         let sentences = getSentencesAroundSelection(r, nodesInSel, text);
         if (nodesInSel.length > 1) {
             text = joinTextLayerNodeTexts(nodesInSel, text);
         }
-		let rect = r.getBoundingClientRect();
-		let prect = document.getElementById("siac-reading-modal").getBoundingClientRect();
+        let rect = r.getBoundingClientRect();
+        let prect = document.getElementById("siac-reading-modal").getBoundingClientRect();
         document.getElementById('siac-pdf-tooltip-results-area').innerHTML = 'Searching...';
         document.getElementById('siac-pdf-tooltip-searchbar').value = "";
-        let left =  rect.left - prect.left;
+        let left = rect.left - prect.left;
         if (prect.width - left < 250) {
             left -= 200;
         }
-        $('#siac-pdf-tooltip').css({'top': (rect.top - prect.top + rect.height) + "px", 'left':left + "px" }).show();
+        $('#siac-pdf-tooltip').css({ 'top': (rect.top - prect.top + rect.height) + "px", 'left': left + "px" }).show();
         pycmd("siac-pdf-selection " + text);
         $('#siac-pdf-tooltip').data("sentences", sentences);
         $('#siac-pdf-tooltip').data("selection", text);
-	}
+        // limit height again to prevent selection jumping
+        $('#text-layer > span').css("height", "200px");
+    } else if (e.ctrlKey && window.getSelection().toString().length) {
+        // selected text, ctrl key pressed -> highlight 
+        Highlighting.highlight(); 
+    }
 }
+
+
+
+// clicked on the text layer, should
+// 1. hide the tooltip if present
+// 2. trigger the click on a highlight if it is below the textlayer at the given coords
+function textlayerClicked(event, el) {
+    if (!event.ctrlKey && !window.getSelection().toString().length) {
+        $("#siac-pdf-tooltip").hide();
+        if (el.style.pointerEvents !== "none") {
+            el.style.pointerEvents = "none";
+            let e = $.Event("click");
+            e.ctrlKey = true;
+            $(document.elementFromPoint(event.clientX, event.clientY)).trigger(e);
+            el.style.pointerEvents = "auto";
+        }
+    }
+}
+
+
 function joinTextLayerNodeTexts(nodes, text) {
     let total = "";
-    for (var i = 0; i <nodes.length; i++) {
+    for (var i = 0; i < nodes.length; i++) {
         if (nodes[i].innerHTML === text) {
             return text;
         }
@@ -731,7 +769,7 @@ function getSentencesAroundSelection(range, nodesInSel, selection) {
         text = nodesInSel[0].innerHTML;
         height = nodesInSel[0].clientHeight;
     } else {
-        for (var i = 0; i< nodesInSel.length; i++) {
+        for (var i = 0; i < nodesInSel.length; i++) {
             text += nodesInSel[i].innerHTML + " ";
             height = nodesInSel[i].clientHeight;
         }
@@ -742,19 +780,19 @@ function getSentencesAroundSelection(range, nodesInSel, selection) {
     if (!currentNode) {
         extracted.push(text);
     }
-    while(currentNode) {
+    while (currentNode) {
         if (Math.abs(currentNode.clientHeight - height) > 3 || lastOffsetTop - currentNode.offsetTop > height * 1.5) {
             extracted.push(text);
             break;
-        } 
+        }
         lastOffsetTop = currentNode.offsetTop;
-        text = (currentNode.innerHTML + " " + text).replace(/  +/g, " ").trim();        
+        text = (currentNode.innerHTML + " " + text).replace(/  +/g, " ").trim();
         let ext = extractPrev(text, extracted, selection);
         extracted = ext[1];
         if (ext[0]) {
             break;
         }
-        currentNode = currentNode.previousSibling; 
+        currentNode = currentNode.previousSibling;
         if (!currentNode) {
             extracted.push(text);
             break;
@@ -767,14 +805,14 @@ function getSentencesAroundSelection(range, nodesInSel, selection) {
         if (!currentNode) {
             extractedFinal.push(text);
         }
-        while(currentNode) {
-            text = (text + " " + currentNode.innerHTML).replace(/  +/g, " ").trim();        
+        while (currentNode) {
+            text = (text + " " + currentNode.innerHTML).replace(/  +/g, " ").trim();
             let ext = extractNext(text, extractedFinal, selection);
             extractedFinal = ext[1];
             if (ext[0]) {
                 break;
             }
-            currentNode = currentNode.nextSibling; 
+            currentNode = currentNode.nextSibling;
             if (!currentNode) {
                 extractedFinal.push(text);
                 break;
@@ -791,9 +829,9 @@ function sendClozes() {
 }
 function generateClozes() {
     let cmd = "";
-    $('.siac-cl-row').each(function(i, elem) {
-        if($(elem.children[1].children[0]).is(":checked")) {
-           cmd += "$$$" + $(elem.children[0].children[0]).text();
+    $('.siac-cl-row').each(function (i, elem) {
+        if ($(elem.children[1].children[0]).is(":checked")) {
+            cmd += "$$$" + $(elem.children[0].children[0]).text();
         }
     });
     let pdfPath = $('#siac-pdf-top').data("pdfpath");
@@ -803,9 +841,9 @@ function generateClozes() {
 }
 
 function extractPrev(text, extracted, selection) {
-    text = text.substring(0, text.lastIndexOf(selection)+ selection.length) + text.substring(text.lastIndexOf(selection) + selection.length).replace(/\./g, "$DOT$");
+    text = text.substring(0, text.lastIndexOf(selection) + selection.length) + text.substring(text.lastIndexOf(selection) + selection.length).replace(/\./g, "$DOT$");
     let matches = text.match(/.*[^.\d][.!?]"? (.+)/);
-    if (!matches || matches[1].indexOf(selection) === -1 ) {
+    if (!matches || matches[1].indexOf(selection) === -1) {
         return [false, extracted];
     }
     let ext = matches[1].replace(/\$DOT\$/g, ".");
@@ -828,21 +866,21 @@ function extractNext(text, extracted, selection) {
     }
     return [true, extracted];
 }
-function pxToSandScheme(red, green, blue){
-    if (red > 210 && green > 210 && blue > 210) {return {r:241,g:206,b:147}; }
-    if (red <  35 && green < 35 && blue < 35) {return {r:0,g:0,b:0}; }
-    var p = [{r:241,g:206,b:147},{r:0,g:0,b:0},{r:146,g:146,b:146},{r:64,g:64,b:64},{r:129,g:125,b:113},{r:204,g:0,b:0},{r:0,g:102,b:151}]
+function pxToSandScheme(red, green, blue) {
+    if (red > 210 && green > 210 && blue > 210) { return { r: 241, g: 206, b: 147 }; }
+    if (red < 35 && green < 35 && blue < 35) { return { r: 0, g: 0, b: 0 }; }
+    var p = [{ r: 241, g: 206, b: 147 }, { r: 0, g: 0, b: 0 }, { r: 146, g: 146, b: 146 }, { r: 64, g: 64, b: 64 }, { r: 129, g: 125, b: 113 }, { r: 204, g: 0, b: 0 }, { r: 0, g: 102, b: 151 }]
     var color, diffR, diffG, diffB, diff, chosen;
-    var distance= 25000;
-    for (var i=0; i < p.length; i++) {
+    var distance = 25000;
+    for (var i = 0; i < p.length; i++) {
         color = p[i];
         diffR = (color.r - red);
         diffG = (color.g - green);
         diffB = (color.b - blue);
         diff = Math.sqrt(diffR * diffR + diffG * diffG + diffB * diffB);
-        if( diff < distance) { 
-            distance = diff; 
-            chosen = p[i]; 
+        if (diff < distance) {
+            distance = diff;
+            chosen = p[i];
         }
     }
     return chosen;
@@ -852,15 +890,15 @@ function updatePdfDisplayedMarks() {
         return;
     }
     let html = "";
-    $('.siac-mark-btn-inner').removeClass('active'); 
+    $('.siac-mark-btn-inner').removeClass('active');
     if (pdfDisplayedCurrentPage in pdfDisplayedMarks) {
         for (var i = 0; i < pdfDisplayedMarks[pdfDisplayedCurrentPage].length; i++) {
-            switch(pdfDisplayedMarks[pdfDisplayedCurrentPage][i]) {
+            switch (pdfDisplayedMarks[pdfDisplayedCurrentPage][i]) {
                 case 1: html += "<div class='siac-pdf-mark-lbl'>Revisit &nbsp;<b onclick='$(\".siac-mark-btn-inner-1\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-1').first().addClass('active'); break;
-                case 2: html += "<div class='siac-pdf-mark-lbl'>Hard &nbsp;<b onclick='$(\".siac-mark-btn-inner-2\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-2').first().addClass('active'); break;
-                case 3: html += "<div class='siac-pdf-mark-lbl'>More Info &nbsp;<b onclick='$(\".siac-mark-btn-inner-3\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-3').first().addClass('active'); break;
-                case 4: html += "<div class='siac-pdf-mark-lbl'>More Cards &nbsp;<b onclick='$(\".siac-mark-btn-inner-4\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-4').first().addClass('active');  break;
-                case 5: html += "<div class='siac-pdf-mark-lbl'>Bookmark &nbsp;<b onclick='$(\".siac-mark-btn-inner-5\").trigger(\"click\");'>&times</b></div>";  $('.siac-mark-btn-inner-5').first().addClass('active'); break;
+                case 2: html += "<div class='siac-pdf-mark-lbl'>Hard &nbsp;<b onclick='$(\".siac-mark-btn-inner-2\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-2').first().addClass('active'); break;
+                case 3: html += "<div class='siac-pdf-mark-lbl'>More Info &nbsp;<b onclick='$(\".siac-mark-btn-inner-3\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-3').first().addClass('active'); break;
+                case 4: html += "<div class='siac-pdf-mark-lbl'>More Cards &nbsp;<b onclick='$(\".siac-mark-btn-inner-4\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-4').first().addClass('active'); break;
+                case 5: html += "<div class='siac-pdf-mark-lbl'>Bookmark &nbsp;<b onclick='$(\".siac-mark-btn-inner-5\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-5').first().addClass('active'); break;
             }
         }
     }
@@ -868,21 +906,21 @@ function updatePdfDisplayedMarks() {
     let w2 = document.getElementById("siac-queue-actions").offsetWidth;
     let w = document.getElementById("siac-reading-modal-bottom-bar").clientWidth - w1 - w2 - 100;
     var tableHtml = "";
-    Object.keys(pdfDisplayedMarksTable).forEach(function(key) {
+    Object.keys(pdfDisplayedMarksTable).forEach(function (key) {
         let name = "";
-        switch(key) {
+        switch (key) {
             case "1": name = "Revisit"; break;
             case "2": name = "Hard"; break;
             case "3": name = "More Info"; break;
             case "4": name = "More Cards"; break;
             case "5": name = "Bookmark"; break;
-        } 
+        }
         let pages = "";
-     
+
         for (var i = 0; i < pdfDisplayedMarksTable[key].length; i++) {
             pages += "<span class='siac-page-mark-link'>" + pdfDisplayedMarksTable[key][i] + "</span>, ";
         }
-        pages = pages.length > 0 ? pages.substring(0, pages.length -2) : pages;
+        pages = pages.length > 0 ? pages.substring(0, pages.length - 2) : pages;
         tableHtml += `<tr style='color: grey;'><td><b>${name}</b></td><td>${pages}</td></tr>`;
     });
     if (tableHtml.length) {
@@ -909,7 +947,7 @@ function pdfViewerKeyup(event) {
         pdfPageRight();
     } else if (event.ctrlKey && event.keyCode === 74) {
         pdfPageRight();
-    } else if (event.ctrlKey && (event.keyCode === 37 ||event.keyCode === 75)) {
+    } else if (event.ctrlKey && (event.keyCode === 37 || event.keyCode === 75)) {
         pdfPageLeft();
     } else if (event.keyCode === 122) {
         toggleReadingModalBars();
@@ -925,7 +963,7 @@ function pdfTooltipClozeKeyup(event) {
             let c_text = document.getElementById("siac-pdf-tooltip-results-area").innerHTML;
             for (var i = 1; i < 20; i++) {
                 if (c_text.indexOf("{{c" + i + "::") === -1) {
-                    c_text = c_text.split(text).join("<span style='color: lightblue;'>{{c"+ i + "::" + text + "}}</span>");
+                    c_text = c_text.split(text).join("<span style='color: lightblue;'>{{c" + i + "::" + text + "}}</span>");
                     document.getElementById("siac-pdf-tooltip-results-area").innerHTML = c_text;
                     break;
                 }
@@ -970,7 +1008,7 @@ function jumpToNextMark() {
     queueRenderPage(pdfDisplayedCurrentPage, true, false, false);
 }
 function bringPDFIntoView() {
-    if ($('#siac-right-side').hasClass("addon-hidden") ||$('#switchBtn').is(":visible")) {
+    if ($('#siac-right-side').hasClass("addon-hidden") || $('#switchBtn').is(":visible")) {
         toggleAddon();
     }
 }
@@ -980,9 +1018,9 @@ function beforeNoteQuickOpen() {
     }
     if (pdfDisplayed) {
         noteLoading = true;
-        greyoutBottom(); 
-        destroyPDF(); 
-    } 
+        greyoutBottom();
+        destroyPDF();
+    }
     bringPDFIntoView();
     return true;
 }
@@ -1000,27 +1038,27 @@ function destroyPDF() {
     pdfDisplayed = null;
 }
 function pdfUrlSearch(input) {
-    if (!input.length) {return; }
+    if (!input.length) { return; }
     let url = "";
     $("#siac-iframe-btn tr").each(function () {
         if ($(this.children[1].children[0]).is(":checked")) {
             url = $(this.children[1].children[0]).data("url");
         }
     });
-    pycmd('siac-url-srch $$$' + input + '$$$' + url); 
+    pycmd('siac-url-srch $$$' + input + '$$$' + url);
     $('#siac-iframe-btn').removeClass('expanded');
 }
 function showQueueInfobox(elem, nid) {
-    if (pdfLoading || noteLoading) {return;}
+    if (pdfLoading || noteLoading) { return; }
     pycmd('siac-queue-info ' + nid);
     document.documentElement.style.setProperty('--ttop', (elem.offsetTop) + 'px');
-    if (pdfLoading || noteLoading) {return;}
-   
+    if (pdfLoading || noteLoading) { return; }
+
 }
 function leaveQueueItem(elem) {
-    window.setTimeout(function() {
+    window.setTimeout(function () {
         if (!$('#siac-queue-infobox').is(":hover") && !$('#siac-queue-readings-list .siac-clickable-anchor:hover').length) {
-           hideQueueInfobox();
+            hideQueueInfobox();
         }
     }, 400);
 }
@@ -1035,11 +1073,11 @@ function ungreyoutBottom() {
     $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link').removeClass("siac-disabled");
 }
 function unhideQueue(nid) {
-    if(pdfLoading||noteLoading){return;}
+    if (pdfLoading || noteLoading) { return; }
     pycmd("siac-unhide-pdf-queue " + nid);
 }
 function hideQueue(nid) {
-    if(pdfLoading||noteLoading){return;}
+    if (pdfLoading || noteLoading) { return; }
     pycmd("siac-hide-pdf-queue " + nid);
 }
 function toggleReadingModalBars() {
@@ -1060,13 +1098,13 @@ function toggleReadingModalFullscreen() {
         $(document.body).removeClass("siac-fullscreen-show-fields").addClass("siac-fullscreen-show-right");
         if (pdfDisplayed) {
             pdfFitToPage();
-        } 
+        }
         pdfBarsHidden = false;
         toggleReadingModalBars();
         pycmd("siac-notification Press toggle shortcut (default Ctrl+F) to switch.");
 
     } else {
-        
+
         $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
         if ($('#switchBtn').is(":visible")) {
             $('#outerWr').addClass("onesided");
@@ -1074,7 +1112,7 @@ function toggleReadingModalFullscreen() {
         onWindowResize();
         if (pdfDisplayed) {
             pdfFitToPage();
-        } 
+        }
     }
 
 }
@@ -1090,11 +1128,11 @@ function onReadingModalClose(nid) {
     $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right").removeClass('siac-reading-modal-displayed');
     $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
     $('#fields').show();
-    $("#siac-reading-modal").hide(); 
+    $("#siac-reading-modal").hide();
     document.getElementById('resultsArea').style.display = 'block';
     document.getElementById('bottomContainer').style.display = 'block';
     document.getElementById('topContainer').style.display = 'flex';
-    destroyPDF(); 
+    destroyPDF();
     document.getElementById("siac-reading-modal-center").innerHTML = "";
     onWindowResize();
     window.$fields = $('.field');
@@ -1103,7 +1141,7 @@ function onReadingModalClose(nid) {
     }
 }
 function tryExtractTextFromTextNote() {
-    saveTextNote($('#siac-reading-modal-top-bar').data('nid'), remove=false);        
+    saveTextNote($('#siac-reading-modal-top-bar').data('nid'), remove = false);
     pycmd("siac-try-copy-text-note");
 }
 

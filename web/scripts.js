@@ -318,7 +318,7 @@ function onWindowResize() {
         document.getElementById("outerWr").style.height = `calc(100vh - ${offsetTop}px)`;
 
     if (!$('#switchBtn').is(":visible")) {
-        $('#leftSide').show();
+        $('#leftSide').css("display", "flex");
         $('#outerWr').css('display', 'flex').removeClass('onesided');
         document.getElementById('switchBtn').innerHTML = "&#10149; Search";
     }

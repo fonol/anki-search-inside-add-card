@@ -84,9 +84,10 @@ def create_db_file_if_not_exists():
     else:
         conn = sqlite3.connect(file_path)
     
-    info_from_data_json = get_notes_info()
-    if info_from_data_json is not None and "db_last_checked" in info_from_data_json and len(info_from_data_json["db_last_checked"]) > 0:
-        return
+    # disable for now
+    # info_from_data_json = get_notes_info()
+    # if info_from_data_json is not None and "db_last_checked" in info_from_data_json and len(info_from_data_json["db_last_checked"]) > 0:
+    #     return
    
     conn.execute("""
         create table if not exists read
@@ -116,6 +117,22 @@ def create_db_file_if_not_exists():
             nid INTEGER,
             prio INTEGER,
             type TEXT,
+            created TEXT
+        ); 
+    """)
+    conn.execute("""
+        create table if not exists highlights 
+        (
+            nid INTEGER,
+            page INTEGER,
+            type INTEGER,
+            grouping INTEGER,
+            x0 REAL,
+            y0 REAL,
+            x1 REAL,
+            y1 REAL,
+            text TEXT,
+            data TEXT,
             created TEXT
         ); 
     """)
@@ -548,6 +565,38 @@ def get_read_stats(nid):
     conn.close()
     return res
 
+#
+# highlights
+#
+
+def insert_highlights(highlights):
+    """
+        [(nid,page,group,type,text,x0,y0,x1,y1)]
+    """
+    dt = _date_now_str()
+    highlights = [h + (dt,) for h in highlights]
+    conn = _get_connection()
+
+    res = conn.executemany("insert into highlights(nid, page, grouping, type, text, x0, y0, x1, y1, created) values (?,?,?,?,?,?,?,?,?,?)", highlights)
+    conn.commit()
+    conn.close()
+
+def delete_highlight(id):
+    conn = _get_connection()
+    conn.execute(f"delete from highlights where rowid = {id}")
+    conn.commit()
+    conn.close()
+
+def get_highlights(nid, page):
+    conn = _get_connection()
+    res = conn.execute(f"select rowid, * from highlights where nid = {nid} and page = {page}").fetchall()
+    conn.close()
+    return res
+
+#
+# end highlights
+#
+
 
 def get_all_tags():
     """
@@ -671,6 +720,7 @@ def delete_note(id):
                             delete from marks where nid ={id};
                             delete from notes where id={id};
                             delete from queue_prio_log where nid={id}; 
+                            delete from highlights where nid={id};
                             """)
     conn.commit()
     conn.close()
@@ -983,6 +1033,12 @@ def insert_pages_total(nid, pages_total):
         conn.execute("insert into read (page, nid, pagestotal, created) values (-1,%s,%s, datetime('now', 'localtime'))" % (nid, pages_total))
     conn.commit()
     conn.close()
+
+
+#
+# helpers
+#
+
 
 def _to_notes(db_list, pinned=[]):
     notes = list()

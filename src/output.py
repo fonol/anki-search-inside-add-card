@@ -58,7 +58,7 @@ class Output:
        
         # todo: move to text utils
         self.SEP_END = re.compile(r'</div>\u001f$')
-        self.SOUND_TAG = re.compile(r'sound[a-zA-Z0-9]*mp')
+        self.EXCLUDE_KEYWORDS = re.compile(r'(?:sound|mp3|c[0-9]+)')
        
         #
         # state
@@ -354,9 +354,6 @@ class Output:
         else:
             editor.web.eval(js)
 
- 
-
-
     def sortByDate(self, mode):
         """
             Rerenders the last search results, but sorted by creation date.
@@ -500,7 +497,7 @@ class Output:
         text = utility.text.clean(text, self.stopwords)
         counts = {}
         for token in text.split():
-            if token == "" or len(token) == 1 or self.SOUND_TAG.match(token):
+            if token == "" or len(token) == 1 or self.EXCLUDE_KEYWORDS.match(token):
                 continue
             if token.lower() in counts:
                 counts[token.lower()][1] += 1

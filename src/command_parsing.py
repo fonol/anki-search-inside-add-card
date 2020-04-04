@@ -789,6 +789,54 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         notes = get_all_unread_pdf_notes()
         index.ui.reading_modal.sidebar.print(notes)
 
+
+    #
+    # highlights
+    #
+
+    elif cmd.startswith("siac-hl-clicked "):
+        # highlight btn clicked -> store current highlight color in reading modal
+        id = int(cmd.split()[1])
+        color = " ".join(cmd.split()[2:])
+        index.ui.reading_modal.highlight_color = color
+        index.ui.reading_modal.highlight_type = id
+
+    elif cmd.startswith("siac-pdf-page-loaded "):
+        # page loaded, so load highlights from db
+        page = int(cmd.split()[1])
+        index.ui.reading_modal.show_highlights_for_page(page)
+
+    elif cmd.startswith("siac-hl-new "):
+        # highlights created, save to db
+        # order is page group type [x0,y0,x1,y1]+ # text
+        page = int(cmd.split(" ")[1])
+        group = int(cmd.split(" ")[2])
+        type = int(cmd.split(" ")[3])
+        nid = index.ui.reading_modal.note_id
+        all = []
+        # [(nid,page,group,type,text,x0,y0,x1,y1)]
+        text = cmd[cmd.index("#") + 1:]
+        for ix, i in enumerate(cmd.split(" ")[4:]):
+            if i == "#":
+                break
+            if ix % 4 == 0:
+                x0 = float(i[:10])
+            elif ix % 4 == 1:
+                y0 = float(i[:10])
+            elif ix % 4 == 2:
+                x1 = float(i[:10])
+            else:
+                y1 = float(i[:10])
+                all.append((nid,page,group,type,text,x0,y0,x1,y1))
+        insert_highlights(all)
+        index.ui.reading_modal.show_highlights_for_page(page)
+
+    elif cmd.startswith("siac-hl-del "):
+        id = int(cmd.split()[1])
+        delete_highlight(id)
+
+
+
     #
     #   Checkboxes
     #

@@ -32,7 +32,7 @@ import utility.misc
 
 from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
-from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
+from ..notes import *
 from .html import *
 from .note_templates import *
 from ..internals import js, requires_index_loaded, perf_time
@@ -47,6 +47,9 @@ class ReadingModal:
         self.note_id = None
         self.note = None
         self._editor = None
+
+        self.highlight_color = "#e65100"
+        self.highlight_type = 1
 
         self.sidebar = ReadingModalSidebar()
 
@@ -564,14 +567,31 @@ class ReadingModal:
         return """
             if (pdfDisplayed) {
                 for (var i = 1; i < pdfDisplayed.numPages + 1; i++) {
-                if (!pagesRead || pagesRead.indexOf(i) === -1) {
-                    pdfDisplayedCurrentPage = i;
-                    rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
-                    break;
-                } 
+                    if (!pagesRead || pagesRead.indexOf(i) === -1) {
+                        pdfDisplayedCurrentPage = i;
+                        rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
+                        break;
+                    } 
                 }
             }
         """
+
+    #
+    # highlights
+    # 
+
+    def show_highlights_for_page(self, page):
+        highlights = get_highlights(self.note_id, page)
+        if highlights is not None and len(highlights) > 0:
+            js = ""
+            for h in highlights:
+                # [(rowid, nid, page, type, grouping, x0, y0, x1, y1, text, data, created)]
+                js = f"{js},[{h[5]},{h[6]},{h[7]},{h[8]},{h[3]},{h[0]}]"
+            js = js[1:]
+            print(js)
+            self._editor.web.eval("Highlighting.current = [%s]; Highlighting.displayHighlights();" % js)
+
+
 
     
 
