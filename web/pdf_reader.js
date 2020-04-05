@@ -187,7 +187,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 if (fetchHighlights) {
                     pycmd("siac-pdf-page-loaded " + pdfDisplayedCurrentPage);
                 } else {
-                    Highlighting.displayHighlights();
+                    displayHighlights();
                 }
             });
             if (shouldScrollUp) {
@@ -206,23 +206,17 @@ function invertCanvas(ctx) {
     var imgData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
     var data = imgData.data;
     var mapped;
-    if (pdfColorMode === "Sand") {
-        for (var i = 0; i < data.length; i += 4) {
-            mapped = pxToSandScheme(data[i], data[i + 1], data[i + 2]);
-            data[i] = mapped.r;
-            data[i + 1] = mapped.g;
-            data[i + 2] = mapped.b;
-        }
-    } else {
-        for (var i = 0; i < data.length; i += 4) {
-            if (data[i] >= 250 && data[i + 1] >= 250 && data[i + 2] >= 250) {
-                data[i] = 47; data[i + 1] = 47; data[i + 2] = 49;
-            } else {
-                data[i] = 255 - data[i];
-                data[i + 1] = 255 - data[i + 1];
-                data[i + 2] = 255 - data[i + 2];
-            }
-        }
+    var fn;
+    switch(pdfColorMode) {
+        case "Sand": fn = pxToSandScheme; break;
+        case "Night": fn = pxToNightScheme; break;
+        case "Peach": fn = pxToPeachScheme; break;
+    }
+    for (var i = 0; i < data.length; i += 4) {
+        mapped = fn(data[i], data[i + 1], data[i + 2]);
+        data[i] = mapped.r;
+        data[i + 1] = mapped.g;
+        data[i + 2] = mapped.b;
     }
     ctx.putImageData(imgData, 0, 0);
     ctx.canvas.style.display = "inline-block";
@@ -651,10 +645,11 @@ function swapReadingModal() {
 function togglePDFNightMode(elem) {
     if (pdfColorMode === "Day") {
         pdfColorMode = "Night";
-
     } else if (pdfColorMode === "Night") {
         pdfColorMode = "Sand";
-    } else {
+    } else if (pdfColorMode === "Sand") {
+        pdfColorMode = "Peach";
+    }else {
         pdfColorMode = "Day";
     }
     elem.innerHTML = pdfColorMode;
@@ -665,7 +660,7 @@ function togglePDFNightMode(elem) {
  */
 function pdfKeyup(e) {
     // selected text, no ctrl key -> show tooltip if enabled 
-    if (!e.ctrlKey && pdfTooltipEnabled && window.getSelection().toString().length) {
+    if (!e.ctrlKey && pdfTooltipEnabled && windowHasSelection()) {
         $('#text-layer .tl-highlight').remove();
         let s = window.getSelection();
         let r = s.getRangeAt(0);
@@ -693,9 +688,12 @@ function pdfKeyup(e) {
         $('#siac-pdf-tooltip').data("selection", text);
         // limit height again to prevent selection jumping
         $('#text-layer > span').css("height", "200px");
-    } else if (e.ctrlKey && window.getSelection().toString().length) {
+    } else if (e.ctrlKey && Highlighting.colorSelected.id > 0 && windowHasSelection()) {
         // selected text, ctrl key pressed -> highlight 
-        Highlighting.highlight(); 
+        Highlighting.highlight();
+    } else if (e.ctrlKey && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
+        // clicked with ctrl, text insert btn is active -> insert text area at coordinates
+        Highlighting.insertText(e);
     }
 }
 
@@ -705,7 +703,7 @@ function pdfKeyup(e) {
 // 1. hide the tooltip if present
 // 2. trigger the click on a highlight if it is below the textlayer at the given coords
 function textlayerClicked(event, el) {
-    if (!event.ctrlKey && !window.getSelection().toString().length) {
+    if (!event.ctrlKey && !windowHasSelection()) {
         $("#siac-pdf-tooltip").hide();
         if (el.style.pointerEvents !== "none") {
             el.style.pointerEvents = "none";
@@ -867,24 +865,38 @@ function extractNext(text, extracted, selection) {
     return [true, extracted];
 }
 function pxToSandScheme(red, green, blue) {
-    if (red > 210 && green > 210 && blue > 210) { return { r: 241, g: 206, b: 147 }; }
-    if (red < 35 && green < 35 && blue < 35) { return { r: 0, g: 0, b: 0 }; }
-    var p = [{ r: 241, g: 206, b: 147 }, { r: 0, g: 0, b: 0 }, { r: 146, g: 146, b: 146 }, { r: 64, g: 64, b: 64 }, { r: 129, g: 125, b: 113 }, { r: 204, g: 0, b: 0 }, { r: 0, g: 102, b: 151 }]
-    var color, diffR, diffG, diffB, diff, chosen;
-    var distance = 25000;
-    for (var i = 0; i < p.length; i++) {
-        color = p[i];
-        diffR = (color.r - red);
-        diffG = (color.g - green);
-        diffB = (color.b - blue);
-        diff = Math.sqrt(diffR * diffR + diffG * diffG + diffB * diffB);
-        if (diff < distance) {
-            distance = diff;
-            chosen = p[i];
-        }
+    if (red > 240 && green > 240 && blue > 240) { return { r: 241, g: 206, b: 147 }; }
+    if (Math.abs(red - green) < 15 && Math.abs(red - blue) < 15) {
+        red = Math.max(0, red - 40);
+        green = Math.max(0, green - 40);
+        blue = Math.max(0, blue - 40);
+        return { r: red, g: green, b: blue };
     }
-    return chosen;
+    if (red < 100 && green < 100 && blue < 100) { return { r: 0, g: 0, b: 0 }; }
+    return { r: red, g: green, b: blue };
 }
+function pxToPeachScheme(red, green, blue) {
+    if (red > 240 && green > 240 && blue > 240) { return { r: 237, g: 209, b: 176 }; }
+    if (Math.abs(red - green) < 15 && Math.abs(red - blue) < 15) {
+        red = Math.max(0, red - 40);
+        green = Math.max(0, green - 40);
+        blue = Math.max(0, blue - 40);
+        return { r: red, g: green, b: blue };
+    }
+    if (red < 100 && green < 100 && blue < 100) { return { r: 0, g: 0, b: 0 }; }
+    return { r: red, g: green, b: blue };
+}
+function pxToNightScheme(red, green, blue) {
+    if (red >= 250 && green >= 250 && blue >= 250) {
+        red = 47; green = 47; blue = 49;
+    } else {
+        red = Math.min(255 - red + 30, 255);
+        green = Math.min(255 - green + 30, 255);
+        blue = Math.min(255 - blue + 30, 255);
+    }
+    return { r: red, g: green, b: blue };
+}
+
 function updatePdfDisplayedMarks() {
     if (pdfDisplayedMarks == null) {
         return;
@@ -1165,4 +1177,13 @@ function modalTabsLeftClicked(tab, elem) {
     $('#siac-reading-modal-tabs-left .siac-btn').removeClass("active");
     $(elem).addClass("active");
     pycmd("siac-reading-modal-tabs-left-" + tab);
+}
+
+
+//
+// helpers
+//
+
+function windowHasSelection() {
+    return window.getSelection().toString().length;
 }

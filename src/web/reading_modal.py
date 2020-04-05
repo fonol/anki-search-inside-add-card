@@ -584,11 +584,10 @@ class ReadingModal:
         highlights = get_highlights(self.note_id, page)
         if highlights is not None and len(highlights) > 0:
             js = ""
-            for h in highlights:
-                # [(rowid, nid, page, type, grouping, x0, y0, x1, y1, text, data, created)]
-                js = f"{js},[{h[5]},{h[6]},{h[7]},{h[8]},{h[3]},{h[0]}]"
+            for rowid, nid, page, type, grouping, x0, y0, x1, y1, text, data, created in highlights:
+                text = text.replace("`", "")
+                js = f"{js},[{x0},{y0},{x1},{y1},{type},{rowid}, `{text}`]"
             js = js[1:]
-            print(js)
             self._editor.web.eval("Highlighting.current = [%s]; Highlighting.displayHighlights();" % js)
 
 

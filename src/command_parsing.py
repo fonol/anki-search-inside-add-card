@@ -832,10 +832,24 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         index.ui.reading_modal.show_highlights_for_page(page)
 
     elif cmd.startswith("siac-hl-del "):
+        # delete highlight with given id
         id = int(cmd.split()[1])
         delete_highlight(id)
 
+    elif cmd.startswith("siac-hl-text-update-coords "):
+        # text comment was resized, so update coords in db
+        id = int(cmd.split()[1])
+        x0 = float(cmd.split()[2])
+        y0 = float(cmd.split()[3])
+        x1 = float(cmd.split()[4])
+        y1 = float(cmd.split()[5])
+        update_text_comment_coords(id, x0, y0, x1, y1)
 
+    elif cmd.startswith("siac-hl-text-update-text "):
+        # text comment content has changed, so update in db
+        id = int(cmd.split()[1])
+        text = " ".join(cmd.split(" ")[2:])
+        update_text_comment_text(id, text)
 
     #
     #   Checkboxes

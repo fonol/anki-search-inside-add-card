@@ -3,8 +3,8 @@ var Highlighting = {
     /**
      * state
      */
-    colorSelected : { id: 1, color: "red" },
-    current :  [],
+    colorSelected: { id: 1, color: "red" },
+    current: [],
 
 
 
@@ -32,7 +32,7 @@ var Highlighting = {
 
             cmd += conv[0] + " " + conv[1] + " ";
             conv = pdfDisplayedViewPort.convertToPdfPoint(x + r.w, y + r.h + 3);
-            cmd += conv[0]+ " " + conv[1] + " ";
+            cmd += conv[0] + " " + conv[1] + " ";
             // text layer spans seem to be shifted to the top by some pixels, so add a small offset to the highlight div
             this._createHighlightDiv(x + offset, y + 3, r.w, r.h, this.colorSelected.id);
 
@@ -42,37 +42,53 @@ var Highlighting = {
         pycmd("siac-hl-new " + cmd);
         $('#text-layer > span').css("height", "100px");
     },
+    insertText: function (event) {
+        let rectCanvas = document.getElementById("text-layer").getBoundingClientRect();
+        let offset = document.getElementById('text-layer').offsetLeft;
+
+        let x = event.clientX - rectCanvas.x;
+        let y = event.clientY - rectCanvas.y;
+        this._createHighlightDiv(x + offset, y, 100, 20, this.colorSelected.id, "");
+        let cmd = pdfDisplayedCurrentPage + " -1 0 ";
+        let conv = pdfDisplayedViewPort.convertToPdfPoint(x, y);
+        cmd += conv[0] + " " + conv[1] + " ";
+        conv = pdfDisplayedViewPort.convertToPdfPoint(x + 100, y + 20);
+        cmd += conv[0] + " " + conv[1] + " #";
+        pycmd("siac-hl-new " + cmd);
+    },
 
     displayHighlights: function () {
         this._removeAllHighlights();
         let canvas = document.getElementById("siac-pdf-canvas");
         this.current.forEach((r) => {
-           let x0 = r[0] ;
-           let y0 = r[1] ;
-           let x1 = r[2] ;
-           let y1 = r[3] ;
-           let t = r[4];
-           let id = r[5];
-           let bounds = pdfDisplayedViewPort.convertToViewportRectangle([x0,y0,x1, y1]);
-           let x = Math.min(bounds[0], bounds[2]);
-           x += canvas.offsetLeft;
-           let y = Math.min(bounds[1], bounds[3]);
-           let w = Math.abs(bounds[0] - bounds[2]);
-           let h = Math.abs(bounds[1] - bounds[3]);
-           this._createHighlightDiv(x,y,w,h, t, id);
+            let x0 = r[0];
+            let y0 = r[1];
+            let x1 = r[2];
+            let y1 = r[3];
+            let t = r[4];
+            let id = r[5];
+            let text = r[6];
+            let bounds = pdfDisplayedViewPort.convertToViewportRectangle([x0, y0, x1, y1]);
+            let x = Math.min(bounds[0], bounds[2]);
+            x += canvas.offsetLeft;
+            let y = Math.min(bounds[1], bounds[3]);
+            let w = Math.abs(bounds[0] - bounds[2]);
+            let h = Math.abs(bounds[1] - bounds[3]);
+            this._createHighlightDiv(x, y, w, h, t, id, text);
 
         });
     },
 
-    _removeAllHighlights : function () {
+    _removeAllHighlights: function () {
         let all = document.getElementsByClassName('siac-hl');
-        while(all[0]) {
+        while (all[0]) {
             all[0].parentNode.removeChild(all[0]);
         }
     },
 
-    _colorById : function(t) {
-        switch(t) {
+    _colorById: function (t) {
+        switch (t) {
+            case 0: return "white";
             case 1: return "#e65100";
             case 2: return "#558b2f";
             case 3: return "#2196f3";
@@ -128,8 +144,8 @@ var Highlighting = {
                         } else if (clientRects[i1].x !== x && clientRects[i1].y === y && clientRects[i1].w === w && clientRects[i1].h === h) {
                             x = Math.min(x, clientRects[i1].x);
                             fused = true;
-                        } 
-                        
+                        }
+
                         else if (clientRects[i1].x !== x && clientRects[i1].y === y && clientRects[i1].w === w && clientRects[i1].h !== h && Math.abs(clientRects[i1].h - h) < 100) {
                             x = Math.min(x, clientRects[i1].x);
                             h = Math.max(clientRects[i1].h, h);
@@ -173,41 +189,122 @@ var Highlighting = {
         }
         return clientRects;
     },
+    /**
+     * Button at the side of the pdf pane clicked.
+     * Switches selected highlighting tool.
+     */
     onColorBtn: function (elem) {
         this.colorSelected = { id: Number($(elem).data("id")), color: $(elem).data("color") };
         $('.siac-pdf-color-btn,.siac-pdf-ul-btn').removeClass("active");
         $(elem).addClass("active");
         pycmd("siac-hl-clicked " + this.colorSelected.id + " " + this.colorSelected.color);
-        showPDFBottomRightNotification("CTRL + select to highlight", true);
+        if (this.colorSelected.id > 0) {
+            showPDFBottomRightNotification("CTRL + select to highlight", true);
+        } else {
+            showPDFBottomRightNotification("CTRL + click to insert text", true);
+        }
+    },
+
+    /**
+     * Mouse up in text comment, should check if width has changed (element was resized by dragging), if yes,
+     * update db entry. 
+     */
+    onTextMouseUp: function(event, el) {
+        if (!el.dataset.id) {
+            return;
+        }
+        if (el.clientWidth != el.dataset.ow || el.clientHeight != el.dataset.oh) {
+            el.dataset.ow = el.clientWidth;
+            el.dataset.oh = el.clientHeight;
+
+            let rectCanvas = document.getElementById("text-layer").getBoundingClientRect();
+            let x0 = el.offsetLeft - document.getElementById("siac-pdf-canvas").offsetLeft;
+            let y0 = el.offsetTop ;
+            let x1 = x0 + el.clientWidth; 
+            let y1 = y0 + el.clientHeight; 
+
+            let conv = pdfDisplayedViewPort.convertToPdfPoint(x0, y0);
+            x0 = conv[0];
+            y0 = conv[1];
+            conv = pdfDisplayedViewPort.convertToPdfPoint(x1, y1);
+            x1 = conv[0];
+            y1 = conv[1];
+
+            pycmd(`siac-hl-text-update-coords ${el.dataset.id} ${x0} ${y0} ${x1} ${y1}`);
+        }
+    },
+
+    /**
+     * Text comment loses focus, so save changed content to db. 
+     */
+    onTextBlur: function(el) {
+        if (!el.dataset.id) {
+            return;
+        }
+        pycmd("siac-hl-text-update-text " + el.dataset.id + " " + $(el).val());
+    },
+
+    onTextKeyup: function(el) {
+        $(el).height(1); 
+        $(el).height($(el).prop('scrollHeight') + 1);
+        this.onTextMouseUp(null, el);
     },
 
     /**
      * Clicked on a highlight marker 
      */
     hlClick: function (event, el) {
+        if (!el.dataset.id) {
+            return;
+        }
         if (event.ctrlKey) {
             $(el).remove();
-            pycmd("siac-hl-del "+ $(el).data("id"));
+            pycmd("siac-hl-del " + el.dataset.id);
         }
     },
     /**
      *  create the actual div that will be the highlight and append it to the dom
      */
-    _createHighlightDiv: function (x, y, w, h, t, id=-1) {
-        let el = document.createElement("div");
-        el.className = "siac-hl";
-        el.style.height = h + "px";
-        el.style.width = w + "px";
-        el.style.top = y + "px";
-        el.style.left = x + "px";
-        if (id !== -1) {
-            el.dataset.id = id;
+    _createHighlightDiv: function (x, y, w, h, t, id = -1, text = "") {
+
+        let el;
+        //regular highlight
+        if (t > 0) {
+            el = document.createElement("div");
+            el.className = "siac-hl" + (t === 0 ? " siac-text-hl" : "");
+            el.style.height = h + "px";
+            el.style.width = w + "px";
+            el.style.top = y + "px";
+            el.style.left = x + "px";
+            if (id !== -1) {
+                el.dataset.id = id;
+            }
+            el.setAttribute("onclick", "Highlighting.hlClick(event, this);");
+            if (t >= 6)
+                el.style.borderBottom = "3px solid " + this._colorById(t);
+            else
+                el.style.background = this._colorById(t);
         }
-        el.setAttribute("onclick", "Highlighting.hlClick(event, this);");
-        if (t >= 6)
-            el.style.borderBottom = "3px solid " + this._colorById(t);
-        else
+        // text highlight 
+        else {
+            el = document.createElement("textarea");
+            el.className = "siac-hl siac-text-hl";
+            el.style.height = h + "px";
+            el.style.width = w + "px";
+            el.style.top = y + "px";
+            el.style.left = x + "px";
+            if (id !== -1) {
+                el.dataset.id = id;
+            }
+            el.value = text;
+            el.setAttribute("onclick", "Highlighting.hlClick(event, this);");
             el.style.background = this._colorById(t);
+            el.setAttribute("onmouseup", "Highlighting.onTextMouseUp(event, this);");
+            el.setAttribute("onblur", "Highlighting.onTextBlur(this);");
+            el.setAttribute("onkeyup", "Highlighting.onTextKeyup(this);");
+        }
+
         document.getElementById("siac-pdf-top").appendChild(el);
+        return el;
     }
 };

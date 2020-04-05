@@ -134,6 +134,7 @@
     padding: 4px 6px 4px 6px;
     background: #2f2f31;
     color: white;
+    z-index: 4;
     user-select: none;
 }
 .siac-pdf-mark-lbl > b:hover {
@@ -171,7 +172,6 @@
     display: none;
 }
 #siac-iframe-btn {
-    z-index: 2;
     position: absolute;
     left: 0px;
     top: 50px;
@@ -688,13 +688,21 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     cursor: pointer;
 }
 .siac-pdf-color-btn.active,.siac-pdf-ul-btn.active {
-    border-color: white;
+    border-color: white !important;
 }
 .siac-hl {
     position: absolute;
     mix-blend-mode: multiply;
     z-index: 2;
     border-radius: 7px;
+}
+.siac-text-hl {
+    mix-blend-mode: normal;
+    z-index: 3;
+    border: 3px outset darkorange;
+    font-family: 'Open Sans', sans-serif;
+    white-space: pre-wrap;
+    outline: none;
 }
 .siac-pdf-ul-btn {
     height: 5px; 

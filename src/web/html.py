@@ -958,7 +958,7 @@ def get_pdf_viewer_html(nid, source, title):
             <div style='display: inline-block; vertical-align: top;' id='siac-pdf-overlay-top-lbl-wrap'></div>
         </div>
         <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
-            <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center;'>Note: Not all Websites allow Embedding!</div>
+            <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center;'>Note: Not all sites allow embedding!</div>
             <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
                 <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
                 <br/>
@@ -966,6 +966,8 @@ def get_pdf_viewer_html(nid, source, title):
             </div>
         </div>
         <div style='position: absolute; left: 0; bottom: 150px; text-align: center;'>
+            <div style='color: lightgrey; border-color: grey; text-align:center;' data-id="0" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'>A</div>
+            <br>
             <div style='background: #e65100;' data-id="1" data-color="#e65100" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
             <div style='background: #558b2f;' data-id="2" data-color="#558b2f" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
             <div style='background: #2196f3;' data-id="3" data-color="#2196f3" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
@@ -1011,7 +1013,7 @@ def get_pdf_viewer_html(nid, source, title):
             </div>
             <div style='user-select:none; display: inline-block; position:relative; z-index: 2; padding: 0 5px 0 5px; background: #2f2f31;'>
                 <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b>&lt;</b></div>
-                <span style='display: inline-block; text-align: center; width: 70px; user-select: none;' id='siac-pdf-page-lbl'>Loading...</span>
+                <span style='display: inline-block; text-align: center; width: 78px; user-select: none;' id='siac-pdf-page-lbl'>Loading...</span>
                 <div class='siac-btn siac-btn-dark' onclick='pdfPageRight();'><b>&gt;</b></div>
             </div>
 

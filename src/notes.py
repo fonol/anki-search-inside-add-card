@@ -593,6 +593,19 @@ def get_highlights(nid, page):
     conn.close()
     return res
 
+def update_text_comment_coords(id, x0, y0, x1, y1):
+    conn = _get_connection()
+    conn.execute(f"update highlights set x0 = {x0}, y0 = {y0}, x1 = {x1}, y1 = {y1} where rowid = {id}")
+    conn.commit()
+    conn.close()
+
+def update_text_comment_text(id, text):
+    conn = _get_connection()
+    conn.execute("update highlights set text = ? where rowid = ?", (text, id))
+    conn.commit()
+    conn.close()
+
+
 #
 # end highlights
 #
