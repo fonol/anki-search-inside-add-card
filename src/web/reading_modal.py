@@ -33,6 +33,7 @@ import utility.misc
 from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
 from ..notes import *
+from ..notes import _get_priority_list
 from .html import *
 from .note_templates import *
 from ..internals import js, requires_index_loaded, perf_time
