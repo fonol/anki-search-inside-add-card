@@ -401,7 +401,7 @@ class Output:
         for r in self.lastResults:
             nids.append(str(r.id))
         nidStr =  "(%s)" % ",".join(nids)
-        unreviewed = [r[0] for r in mw.col.db.execute("select nid from cards where nid in %s and reps = 0" % nidStr)]
+        unreviewed = [r[0] for r in mw.col.db.all("select nid from cards where nid in %s and reps = 0" % nidStr)]
         for r in self.lastResults:
             if int(r.id) not in unreviewed:
                 filtered.append(r)
@@ -417,7 +417,7 @@ class Output:
         for r in self.lastResults:
             nids.append(str(r.id))
         nidStr =  "(%s)" % ",".join(nids)
-        reviewed = [r[0] for r in mw.col.db.execute("select nid from cards where nid in %s and reps > 0" % nidStr)]
+        reviewed = [r[0] for r in mw.col.db.all("select nid from cards where nid in %s and reps > 0" % nidStr)]
         for r in self.lastResults:
             if int(r.id) not in reviewed:
                 filtered.append(r)

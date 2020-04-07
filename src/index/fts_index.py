@@ -300,9 +300,9 @@ class FTSIndex:
             #query db with found ids
             foundQ = "(%s)" % ",".join([str(f) for f in found])
             if deckQ:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ))
+                res = mw.col.db.all("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ))
             else:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ))
+                res = mw.col.db.all("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ))
             rList = []
             for r in res:
                 #pinned items should not appear in the results
@@ -347,7 +347,7 @@ class FTSIndex:
         content = " \u001f ".join(note.fields)
         tags = " ".join(note.tags)
         #did = note.model()['did']
-        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id)
+        did = mw.col.db.all("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id)
         if did is None or len(did) == 0:
             return
         did = did[0][0]

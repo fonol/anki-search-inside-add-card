@@ -38,9 +38,9 @@ def findBySameTag(tagStr, limit, decks, pinned):
     else:
         deckQ = ""
     if deckQ:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s and did in %s" %(query, deckQ))
+        res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s and did in %s" %(query, deckQ))
     else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s" %(query))
+        res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s" %(query))
     rList = []
     rList.extend(find_by_tag(tagStr))
     for r in res:
@@ -203,7 +203,7 @@ def get_most_active_tags(max_count):
     Looks into the 100 last edited/created notes.
     Returns an ordered list of max max_count items.
     """
-    res = mw.col.db.execute("select tags from notes order by mod desc limit 100")
+    res = mw.col.db.all("select tags from notes order by mod desc limit 100")
     if res is None or len(res) == 0:
         return []
     counts = dict()

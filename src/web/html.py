@@ -1063,7 +1063,7 @@ def getCalendarHtml():
     nid_now = int(time.time()* 1000)
     nid_minus_day_of_year = int(date_year_begin.timestamp() * 1000)
 
-    res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now))
+    res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now))
 
     counts = []
     c = 1
@@ -1433,7 +1433,7 @@ def get_unsuspend_modal(nid):
     """
         Returns the html content for the modal that is opened when clicking on a SUSPENDED label.
     """
-    cards = mw.col.db.execute(f"select id, ivl, queue, ord from cards where nid = {nid}")
+    cards = mw.col.db.all(f"select id, ivl, queue, ord from cards where nid = {nid}")
     note = mw.col.getNote(nid)
     templates = mw.col.findTemplates(note)
     cards_html = ""
