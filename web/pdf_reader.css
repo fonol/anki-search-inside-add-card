@@ -712,3 +712,12 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     border-radius: 4px;
     cursor: pointer;
 }
+#siac-reading-modal-top-btns > div {
+    height: 24px;
+    width: 24px;
+    box-sizing: border-box;
+    background-size: 17px 17px;
+    padding: 0 !important;
+    background-repeat: no-repeat;
+    background-position: center;
+}
