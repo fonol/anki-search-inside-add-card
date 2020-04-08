@@ -512,16 +512,16 @@ def get_reading_modal_html(note):
         source = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
         source_icn = ""
         schedule_btns = get_schedule_btns(note_id)
-
+        img_folder = utility.misc.img_src_base_path()
         html = """
             <script>destroyTinyMCE();</script>
             <div style='width: 100%; display: flex; flex-direction: column;'>
                     <div id='siac-reading-modal-top-btns'>
-                        <div class='siac-btn siac-btn-dark' style='font-size: 8px;' onclick='switchLeftRight();'>&#8596;</div>
-                        <div class='siac-btn siac-btn-dark' style='font-size: 8px;' onclick='toggleReadingModalFullscreen();'> <div class='siac-fullscreen-icn'></div> </div>
-                        <div class='siac-btn siac-btn-dark' style='font-size: 8px;' onclick='pycmd("siac-left-side-width");'> / </div>
-                        <div class='siac-btn siac-btn-dark' onclick='toggleReadingModalBars();'>&#x2195;</div>
-                        <div class='siac-btn siac-btn-dark' style='padding-left: 7px; padding-right: 7px;' onclick='onReadingModalClose({note_id});'>&times;</div>
+                        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}switch_layout.png");' onclick='switchLeftRight();'></div>
+                        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}fullscreen.png");' onclick='toggleReadingModalFullscreen();'></div>
+                        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}partition.png");' onclick='pycmd("siac-left-side-width");'></div>
+                        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}toggle_bars.png");' onclick='toggleReadingModalBars();'></div>
+                        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}close.png");' onclick='onReadingModalClose({note_id});'></div>
                     </div>
                     <div id='siac-pdf-tooltip' onclick='event.stopPropagation();' onkeyup='event.stopPropagation();'>
                         <div id='siac-pdf-tooltip-top'></div>
@@ -611,7 +611,7 @@ def get_reading_modal_html(note):
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, text = text, queue_info = queue_info, queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow)
+        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, text = text, queue_info = queue_info, queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow)
         html = html.format_map(params)
         return html
     return ""
