@@ -96,9 +96,9 @@ def init_addon():
             document.addEventListener("keydown", function (e) {globalKeydown(e); }, false);
     </script>"""
     
-    typing_delay = max(500, config['delayWhileTyping'])
+    
     #this inserts all the javascript functions in scripts.js into the editor webview
-    aqt.editor._html += getScriptPlatformSpecific(typing_delay)
+    aqt.editor._html += getScriptPlatformSpecific()
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
 
@@ -126,10 +126,12 @@ def on_load_note(editor):
         index = get_index()
 
         zoom = get_config_value_or_default("searchpane.zoom", 1.0)
+        typing_delay = max(500, get_config_value_or_default('delayWhileTyping', 1000))
         show_tag_info_on_hover = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
         editor.web.eval(f"""
             var showTagInfoOnHover = {show_tag_info_on_hover}; 
             tagHoverTimeout = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
+            var delayWhileTyping = {typing_delay};
         """)
 
         def cb(was_already_rendered):

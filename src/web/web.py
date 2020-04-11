@@ -41,7 +41,7 @@ def toggleAddon():
     return "toggleAddon();"
 
 
-def getScriptPlatformSpecific(delayWhileTyping):
+def getScriptPlatformSpecific():
     """
         Returns the css and js used by the add-on in <style>/<script> tags. 
         Some placeholders in the scripts.js file and in the styles.css file are replaced 
@@ -68,7 +68,6 @@ def getScriptPlatformSpecific(delayWhileTyping):
         css = f.read().replace("%", "%%")
     with open(dir + "pdf_reader.css") as f:
         css += f.read().replace("%", "%%")
-    script = script.replace("$del$", str(delayWhileTyping))
 
     deckSelectFontSize = get_config_value_or_default(["styling", "topBar", "deckSelectFontSize"], 11)
     noteFontSize = get_config_value_or_default(["styling", "general", "noteFontSize"], 12)

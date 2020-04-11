@@ -407,9 +407,9 @@ function updateFieldToHideInResult(checkbox, mid, fldOrd) {
 function setSearchOnTyping(active) {
     siacState.searchOnTyping = active;
     if (!active)
-        $('.field').off('keyup', fieldKeypress);
+        $('.field').off('keyup.siac', fieldKeypress);
     else {
-        $('.field').on('keyup', fieldKeypress);
+        $('.field').on('keyup.siac', fieldKeypress);
         sendContent();
     }
     sendSearchOnTyping();
@@ -421,14 +421,14 @@ function sendSearchOnSelection() {
     pycmd("searchOnSelection " + (siacState.searchOnSelection ? "on" : "off"));
 }
 function fieldKeypress(event) {
-    if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 32 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
+    if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
         if (siacState.timeout) {
             clearTimeout(siacState.timeout);
             siacState.timeout = null;
         }
         siacState.timeout = setTimeout(function () {
             sendContent(event);
-        }, $del$);
+        }, delayWhileTyping);
     }
 }
 function searchMaskKeypress(event) {
