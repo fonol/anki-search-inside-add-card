@@ -369,7 +369,7 @@ def right_side_html(indexIsLoaded = False):
            var there = true;
         }
         
-        $('.field').on('keyup', fieldKeypress);
+        $('.field').off('siac').on('keyup.siac', fieldKeypress);
         $('.field').attr('onmouseup', 'getSelectionText()');
         window.$fields = $('.field');
         window.$searchInfo = $('#searchInfo');
