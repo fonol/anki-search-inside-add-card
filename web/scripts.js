@@ -564,7 +564,7 @@ function displayPagination(page, pageMax, total, resultsFound, cacheSize) {
     if (cacheSize !== -1) {
         let c_html = "";
         if (cacheSize > 1) {
-            c_html += "<div style='display: inline;'>Last Results: &nbsp;</div>"
+            c_html += `<div onclick='pycmd("siac-rerender ${cacheSize - 2}")' style='display: inline; cursor: pointer;'>Last Results: &nbsp;</div>`;
             for (var i = 0; i < cacheSize - 1; i++) {
                 c_html += `<span onclick='pycmd("siac-rerender ${cacheSize - i - 2}")'>${i+1}</span>`;
             }

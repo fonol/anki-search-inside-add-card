@@ -423,6 +423,15 @@ def get_pdfs_by_sources(sources):
     conn.close()
     return [r[0] for r in res]
 
+def get_pdf_id_for_source(source):
+    """
+    Takes a source and returns the id of the first note with the given source, if existing, else -1
+    """
+    conn = _get_connection()
+    res = conn.execute(f"select id from notes where source = ?", (source,)).fetchone()
+    conn.close()
+    return -1 if res is None or len(res) == 0 else res[0]
+
 def get_unqueued_notes_for_tag(tag):
     if len(tag.strip()) == 0:
         return []

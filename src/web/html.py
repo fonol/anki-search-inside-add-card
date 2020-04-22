@@ -46,7 +46,7 @@ def getSynonymEditor():
     </div>
     <br/>
     <span>Input a set of terms, separated by ',' and hit enter.</span>
-    <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
+    <input type='text' id='siac-syn-inp' onkeyup='synInputKeyup(event, this)'/>
     """
     synonyms = loadSynonyms()
     st = ""
@@ -62,7 +62,7 @@ def getSynonymEditor():
                 </tr>""" % (c, ", ".join(sList), c)
     if not synonyms:
         return """No synonyms defined yet. Input a set of terms, separated by ',' and hit enter.<br/><br/>
-        <input type='text' id='synonymInput' onkeyup='synInputKeyup(event, this)'/>
+        <input type='text' id='siac-syn-inp' onkeyup='synInputKeyup(event, this)'/>
         """
     return synonymEditor % st
 
@@ -206,7 +206,7 @@ def right_side_html(indexIsLoaded = False):
                         </div>
                     </div>
                     <div class='flexCol right' style="position: relative; padding-bottom: 7px; padding-right: 0px; white-space: nowrap;">
-                            <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'>&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;
+                            <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'>&nbsp;&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;&nbsp;
                                 <div class='siac-btn-small-dropdown click'>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
@@ -395,52 +395,7 @@ def right_side_html(indexIsLoaded = False):
     )
 
 
-def get_notes_sidebar_html():
-    """
-        Returns the html for the sidebar that is displayed when clicking on the notes button.
-    """
-    tags = get_all_tags()
-    tmap = utility.tags.to_tag_hierarchy(tags)
 
-    def iterateMap(tmap, prefix, start=False):
-        if start:
-            html = "<ul class='deck-sub-list outer'>"
-        else:
-            html = "<ul class='deck-sub-list'>"
-        for key, value in tmap.items():
-            full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-user-note-search-tag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='siac-tl-plus' onclick='pycmd(\"siac-create-note-tag-prefill %s\") '><b>NEW</b></span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), full, iterateMap(value, full, False))
-        html += "</ul>"
-        return html
-
-    tag_html = iterateMap(tmap, "", True)
-    html = """
-        <div id='siac-notes-sidebar'>
-            <div style='display: flex; flex-direction: column; height: 100%%;'>
-                <div style='flex: 0 1 auto;'>
-                    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-newest");'>Newest</div>
-                    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs")'>PDFs</div>
-                    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-unread")'>PDFs - Unread</div>
-                    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-in-progress")'>PDFs - In Progress</div>
-                    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-untagged")'>Untagged</div>
-                    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-random");'>Random</div>
-                    <input type='text' class='siac-sidebar-inp' style='width: calc(100%% - 35px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>
-                    <span class='siac-search-icn' style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
-                    <div class='w-100' style='margin-top: 20px;'><b>Tags (%s)</b>
-                        <b class='siac-tags-exp-icon' style='margin-right: 15px; padding: 0 2px 0 2px;' onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
-                        <b class='siac-tags-exp-icon' style='margin-right: 5px; padding: 0 2px 0 2px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
-                    </div>
-                    <hr style='margin-right: 15px;'/>
-                </div>
-                <div style='flex: 1 1 auto; padding-right: 5px; margin-right: 5px; margin-bottom: 5px; overflow-y: auto;'>
-                    %s
-                </div>
-            </div>
-
-        </div>
-
-    """ % (len(tmap) if tmap is not None else 0, tag_html)
-    return html
 
 
 def get_model_dialog_html():
@@ -542,6 +497,7 @@ def get_reading_modal_html(note):
                         </div>
                     </div>
                     <div id='siac-reading-modal-center' style='flex: 1 1 auto; overflow-y: {overflow}; font-size: 13px; padding: 0 20px 0 24px; position: relative; display: flex; flex-direction: column;' >
+                        <div id='siac-rm-greyout'></div>
                         {text}
                     </div>
                     <div id='siac-reading-modal-bottom-bar' style='flex: 0 0 auto; position: relative; width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden; user-select: none;'>
@@ -1374,7 +1330,7 @@ def default_night_mode_styles():
         "general": {
             "buttonBackgroundColor": "#2f2f31",
             "buttonBorderColor": "grey",
-            "buttonForegroundColor": "beige",
+            "buttonForegroundColor": "lightgrey",
             "fieldSeparatorColor": "white",
             "highlightBackgroundColor": "SpringGreen",
             "highlightForegroundColor": "Black",

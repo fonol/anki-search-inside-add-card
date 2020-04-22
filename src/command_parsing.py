@@ -367,6 +367,14 @@ def expanded_on_bridge_cmd(handled, cmd, self):
     elif cmd.startswith("siac-create-note-tag-prefill "):
         tag = cmd.split()[1]
         NoteEditor(self.parentWindow, add_only=False, read_note_id=None, tag_prefill = tag)
+    
+    elif cmd.startswith("siac-create-note-source-prefill "):
+        source = " ".join(cmd.split()[1:])
+        existing = get_pdf_id_for_source(source)
+        if existing > 0:
+            index.ui.reading_modal.display(existing)
+        else:
+            NoteEditor(self.parentWindow, add_only=False, read_note_id=None, tag_prefill = None, source_prefill=source)
 
     elif cmd.startswith("siac-edit-user-note "):
         id = int(cmd.split()[1])
@@ -547,7 +555,7 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         tags = " ".join(cmd.split()[2:])
         tags = utility.text.clean_tags(tags)
         update_note_tags(nid, tags)
-        reload_note_sidebar()
+        index.ui.sidebar.refresh()
 
     elif cmd == "siac-try-copy-text-note":
         # copy to new note button clicked in reading modal
@@ -929,12 +937,21 @@ def expanded_on_bridge_cmd(handled, cmd, self):
 
     elif cmd == "siac-show-note-sidebar":
         config["notes.sidebar.visible"] = True
-        display_notes_sidebar(self)
+        index.ui.sidebar.display()
         mw.addonManager.writeConfig(__name__, config)
+
     elif cmd == "siac-hide-note-sidebar":
         config["notes.sidebar.visible"] = False
-        self.web.eval("$('#siac-notes-sidebar').remove(); $('#resultsWrapper').css('padding-left', 0);")
+        index.ui.sidebar.hide()
         mw.addonManager.writeConfig(__name__, config)
+
+    elif cmd == "siac-sidebar-show-notes-tab":
+        index.ui.sidebar.show_tab(index.ui.sidebar.ADDON_NOTES_TAB)
+    elif cmd == "siac-sidebar-show-import-tab":
+        index.ui.sidebar.show_tab(index.ui.sidebar.PDF_IMPORT_TAB)
+
+
+
     else:
         return handled
 

@@ -40,6 +40,22 @@ def iterateTagmap(tmap, prefix):
                 res.append(prefix + key)
     return res
 
+def flatten_map(map, sep):
+    changed = True
+
+    while changed:
+        changed = False
+        updated = dict()
+        for key, value in map.items():
+            if len(value) == 1:
+                changed = True
+                new_key = key + sep + next(iter(value))
+                updated[new_key] = value[next(iter(value))]
+            else:
+                updated[key] = value
+        map = updated
+    return map
+
 
 def _add_to_tag_list(tmap, name, sep="::"):
     """

@@ -200,7 +200,7 @@ def setup_ui_after_index_built(editor, index, init_time=None):
     if not index.topToggled:
         cmd += "hideTop();"
     if index.ui is not None and not index.ui.uiVisible:
-        cmd += "$('#siac-right-side').addClass('addon-hidden')"
+        cmd += "$('#siac-right-side').addClass('addon-hidden');"
     if config["gridView"]:
         cmd += "activateGridView();" 
     editor.web.eval(cmd)
@@ -208,7 +208,7 @@ def setup_ui_after_index_built(editor, index, init_time=None):
         #plot.js is already loaded if a note was just added, so this is a lazy solution for now
         index.ui.plotjsLoaded = False
     if config["notes.sidebar.visible"]:
-        display_notes_sidebar(editor)
+        index.ui.sidebar.display()
         
 
 def showSearchResultArea(editor=None, initializationTime=0):
@@ -293,47 +293,7 @@ def display_note_del_confirm_modal(editor, nid):
 
 
 
-@js
-def display_notes_sidebar(editor):
-    html = get_notes_sidebar_html()
-    return """
-    if (!document.getElementById('siac-notes-sidebar')) {
-        document.getElementById('resultsWrapper').insertAdjacentHTML("afterbegin", `%s`); 
-        $('#siac-notes-sidebar .exp').click(function(e) {
-            e.stopPropagation();
-            let icn = $(this);
-            if (icn.text()) {
-                if (icn.text() === '[+]')
-                    icn.text('[-]');
-                else
-                    icn.text('[+]');
-            }
-            $(this).parent().parent().children('ul').toggle();
-        });
-    }
-    """ % html
 
-@js
-def reload_note_sidebar():
-    html = get_notes_sidebar_html()
-    return """
-        if (document.getElementById('siac-notes-sidebar')) {
-            $('#siac-notes-sidebar').remove();
-            document.getElementById('resultsWrapper').insertAdjacentHTML("afterbegin", `%s`); 
-            $('#siac-notes-sidebar .exp').click(function(e) {
-            e.stopPropagation();
-            let icn = $(this);
-            if (icn.text()) {
-                if (icn.text() === '[+]')
-                    icn.text('[-]');
-                else
-                    icn.text('[+]');
-            }
-            $(this).parent().parent().children('ul').toggle();
-            });
-        }
-    """ % html
-    
    
 
 def fillTagSelect(editor = None, expanded = False) :

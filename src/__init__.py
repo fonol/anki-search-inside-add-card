@@ -61,7 +61,6 @@ config = mw.addonManager.getConfig(__name__)
 
 def init_addon():
     global origEditorContextMenuEvt
-
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
     #todo: Find out if there is a better moment to start index creation
     
@@ -137,6 +136,11 @@ def on_load_note(editor):
         def cb(was_already_rendered):
             if was_already_rendered:
                 return
+
+            if index is not None and index.ui is not None:
+                index.ui.set_editor(editor)
+                index.ui._loadPlotJsIfNotLoaded()
+
             if index is not None:
                 setup_ui_after_index_built(editor, index)
 
@@ -149,9 +153,7 @@ def on_load_note(editor):
                 corpus = get_notes_in_collection()
                 set_corpus(corpus)
 
-            if index is not None and index.ui is not None:
-                index.ui.set_editor(editor)
-                index.ui._loadPlotJsIfNotLoaded()
+         
 
 
         # render the right side (search area) of the editor
@@ -279,9 +281,9 @@ def addOptionsToContextMenu(clickInfo):
 
 
 def setup_hooks():
-    add_hook("user-note-created", reload_note_sidebar)
-    add_hook("user-note-deleted", reload_note_sidebar)
-    add_hook("user-note-edited", reload_note_sidebar)
+    add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("user-note-deleted", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("user-note-edited", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
 
 

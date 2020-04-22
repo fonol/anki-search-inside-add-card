@@ -389,7 +389,7 @@ function onPDFSearchBtnClicked(elem) {
     }
 }
 function onPDFSearchInput(value, event) {
-    if (event.keyCode === 13 && value && value.length) {
+    if (event.keyCode === 13 && value && value.trim().length) {
         showPDFBottomRightNotification("Searching ...");
         if (value.toLowerCase() !== pdfCurrentSearch.query) {
             pdfCurrentSearch.lastStart = null;
@@ -938,7 +938,8 @@ function updatePdfDisplayedMarks() {
     if (tableHtml.length) {
         tableHtml = `<table style='user-select: none; table-layout: fixed; max-width: ${w}px;'>` + tableHtml + "</table>";
     }
-    document.getElementById("siac-pdf-overlay-top-lbl-wrap").innerHTML = html;
+    if (document.getElementById("siac-pdf-overlay-top-lbl-wrap"))
+        document.getElementById("siac-pdf-overlay-top-lbl-wrap").innerHTML = html;
     if (document.getElementById("siac-marks-display")) { document.getElementById("siac-marks-display").innerHTML = tableHtml; }
     onMarkBtnClicked(document.getElementById("siac-mark-jump-btn"));
 

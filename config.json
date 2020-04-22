@@ -107,6 +107,7 @@
 "switchLeftRight": false,
 "highlighting": true,
 "pdf.onOpen.autoFillTagsWithPDFsTags" : true,
-"pdf.onOpen.autoFillFieldsWithPDFName": []
+"pdf.onOpen.autoFillFieldsWithPDFName": [],
+"pdf.import.folders_to_search" : []
 
 }

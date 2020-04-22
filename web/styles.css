@@ -843,7 +843,7 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
     border: 1px solid  $buttonBorderColor$;
     cursor: pointer;
     user-select: none;
-    font-size: 11px !important;
+    font-size: 12px !important;
     outline: none;
     box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.3);
 }
@@ -868,7 +868,7 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
     width: calc(100% - 8px);
     margin-left: -5px;
     padding: 0px 4px 0px 4px;
-    font-size: 11px !important;
+    font-size: 12px !important;
     border: 1px solid  $buttonBorderColor$;
     border-top: 0px solid white;
     z-index: 5;
@@ -994,11 +994,12 @@ select {
 #modal-content > fieldset {
     font-size: 1.9em;
 }
-#synonymInput {
-    width: 97%;
+#siac-syn-inp {
+    width: 100%;
     margin-top: 5px;
     background: $modalBackgroundColor$;
     color: $modalForegroundColor$;
+    border-radius: 5px;
 }
 #synTable tr td:first-child {
     max-width: 150px;
@@ -1532,7 +1533,10 @@ hr.siac-modal-sep {
     font-weight: bold; 
     text-decoration: none;
 }
-
+#siac-sidebar-selected {
+    text-align: center;
+    font-weight: bold;
+}
 @media (max-width: 1000px) , (max-height: 500px) {
     #siac-right-side {
         display: none;

@@ -128,6 +128,7 @@ class ReadingModal:
 
         modal = """
             <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
+                <b>Width (%%)</b><br>
                 <b>Fields - Add-on</b>
                     <br><br>
                 <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
@@ -511,9 +512,12 @@ class ReadingModal:
         modal = f""" <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
                         {html}
                         <br/> <br/>
-                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); {on_ok}">&nbsp; Ok &nbsp;</div>
+                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); $('#siac-rm-greyout').hide(); {on_ok}">&nbsp; Ok &nbsp;</div>
                     </div> """
-        return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
+        return """$('#siac-pdf-tooltip').hide();
+                $('.siac-modal-small').remove(); 
+                $('#siac-rm-greyout').show();
+                $('#siac-reading-modal-center').append('%s');""" % modal.replace("\n", "").replace("'", "\\'")
 
     @js
     def update_bottom_bar_positions(self, nid, new_index, queue_len):
@@ -546,10 +550,17 @@ class ReadingModal:
             Read <b>%s</b> %s today.<br>
             Added <b>%s</b> %s today.
         </div>
+        <div style='text-align: center; margin-bottom: 5px;'>
+            Start:
+        </div>
         <div style='text-align: center;'>
-            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;Start 5m&nbsp;</div>
-            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px; width: 50px;' onclick='this.parentNode.parentNode.style.display="none";'>Ok</div>
-            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;Start 15m&nbsp;</div>
+            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;5m&nbsp;</div>
+            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;15m&nbsp;</div>
+            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(30);'>&nbsp;30m&nbsp;</div>
+            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(60);'>&nbsp;60m&nbsp;</div>
+        </div>
+        <div style='text-align: center; margin-top: 10px;'>
+            <div class='siac-btn siac-btn-dark' style='width: 60px;' onclick='this.parentNode.parentNode.style.display="none";'>Ok</div>
         </div>
         """ % (read_today_count, "page" if read_today_count == 1 else "pages", added_today_count, "card" if added_today_count == 1 else "cards")
         return "$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html

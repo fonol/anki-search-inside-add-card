@@ -128,15 +128,21 @@ class NoteEditor(QDialog):
 
     def setup_ui(self):
         
-         
+        # editing an existing note
         if self.note_id is not None:
             self.save = QPushButton("\u2714 Save")
             self.setWindowTitle('Edit Note')
             self.save.clicked.connect(self.on_update_clicked)
+        # creating a new note
         else:
             self.save = QPushButton("\u2714 Create")
             self.setWindowTitle('New Note  (Ctrl/Cmd+Shift+N)')
             self.save.clicked.connect(self.on_create_clicked)
+        
+            self.save_and_stay = QPushButton("\u2714 Create && Keep Open")
+            self.save_and_stay.clicked.connect(self.on_create_and_keep_open_clicked)
+            self.save_and_stay.setShortcut("Ctrl+Shift+Return")
+
         self.save.setShortcut("Ctrl+Return")
         self.cancel = QPushButton("Cancel")
         self.cancel.clicked.connect(self.reject)
@@ -144,8 +150,6 @@ class NoteEditor(QDialog):
         self.priority_list = priority_list
 
         self.tabs = QTabWidget()
-        
-        
          
         self.create_tab = CreateTab(self)
         
@@ -204,6 +208,29 @@ class NoteEditor(QDialog):
 
 
     def on_create_clicked(self):
+        
+        success = self._create_note()
+        if not success:
+            return
+        #aqt.dialogs.close("UserNoteEditor")
+        run_hooks("user-note-created")
+        self.reject()
+
+        # if reading modal is open, we might have to update the bottom bar
+        if self.read_note_id is not None:
+            get_index().ui.reading_modal.update_reading_bottom_bar(self.read_note_id)
+
+    def on_create_and_keep_open_clicked(self):
+        success = self._create_note()
+        if not success:
+            return
+        run_hooks("user-note-created")
+        if self.read_note_id is not None:
+            get_index().ui.reading_modal.update_reading_bottom_bar(self.read_note_id)
+
+        self._reset()
+
+    def _create_note(self):
         title = self.create_tab.title.text()
         title = utility.text.clean_user_note_title(title) 
         if self.create_tab.plain_text_cb.checkState() == Qt.Checked:
@@ -221,16 +248,21 @@ class NoteEditor(QDialog):
 
         # don't allow for completely empty fields
         if len(title.strip()) + len(text.strip()) == 0:
-            return
+            return False
 
         create_note(title, text, source, tags, None, "", queue_schedule)
-        #aqt.dialogs.close("UserNoteEditor")
-        run_hooks("user-note-created")
-        self.reject()
+        return True
 
-        # if reading modal is open, we might have to update the bottom bar
-        if self.read_note_id is not None:
-            get_index().ui.reading_modal.update_reading_bottom_bar(self.read_note_id)
+    def _reset(self):
+        """
+            Called after a note is created with the save_and_stay button.
+            Clear the fields for the next note.
+        """
+        self.create_tab.title.setText("")
+        self.create_tab.text.setText("")
+        if self.create_tab.source.text().endswith(".pdf"):
+            self.create_tab.source.setText("")
+        
 
     def on_update_clicked(self):
         title = self.create_tab.title.text()
@@ -462,6 +494,8 @@ class CreateTab(QWidget):
 
         hbox = QHBoxLayout()
         hbox.addStretch(1)
+        if parent.note_id is None:
+            hbox.addWidget(parent.save_and_stay)
         hbox.addWidget(parent.save)
         hbox.addWidget(parent.cancel)
 

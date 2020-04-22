@@ -82,7 +82,6 @@ class UrlImporter(QDialog):
             self.q_lbl_1 = QPushButton(" Don't Add ")
             self.q_lbl_1.setObjectName("q_1")
             self.q_lbl_1.setFlat(True)
-            self.q_lbl_1.setStyleSheet(btn_style_active)
             self.q_lbl_1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
             self.q_lbl_1.clicked.connect(lambda: self.queue_selected(0)) 
 
@@ -93,6 +92,7 @@ class UrlImporter(QDialog):
             else:
                 btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: grey; }"
                 btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: black; font-weight: bold;}"
+            self.q_lbl_1.setStyleSheet(btn_style_active)
         
             lbl = QLabel("Priority")
             lbl.setAlignment(Qt.AlignCenter)

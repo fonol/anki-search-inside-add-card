@@ -30,6 +30,7 @@ try:
     from .notes import get_pdf_info
     from .special_searches import get_suspended
     from .web.reading_modal import ReadingModal
+    from .web.sidebar import Sidebar
     from .config import get_config_value_or_default
     from .web.note_templates import *
 except:
@@ -39,6 +40,7 @@ except:
     from notes import get_pdf_info
     from special_searches import get_suspended
     from web.reading_modal import ReadingModal
+    from web.sidebar import Sidebar
     from web.note_templates import *
     from config import get_config_value_or_default
 
@@ -55,6 +57,7 @@ class Output:
         #
         self._editor = None
         self.reading_modal = ReadingModal()
+        self.sidebar = Sidebar()
        
         # todo: move to text utils
         self.SEP_END = re.compile(r'</div>\u001f$')
@@ -87,6 +90,7 @@ class Output:
         """
         self._editor = editor
         self.reading_modal.set_editor(editor)
+        self.sidebar.set_editor(editor)
 
     def show_page(self, editor, page):
         """

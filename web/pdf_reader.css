@@ -146,7 +146,7 @@
     top: 4px;
     left: 0px;
     width: 100%;
-    z-index: 2;
+    z-index: 4;
 }
 #siac-pdf-top {
     width: 100%; 
@@ -204,7 +204,7 @@
 }
 #siac-quick-sched-btn, #siac-mark-jump-btn, #siac-pdf-search-btn {
     position: absolute;
-    z-index: 2;
+    z-index: 4;
     left: 0;
 }
 #siac-quick-sched-btn {
@@ -407,7 +407,7 @@
     top: 7px; right: 25px;
     text-align: center;
     vertical-align: middle;
-    z-index: 3;
+    z-index: 6;
 }
 #siac-reading-modal-top-btns div:hover {
     color: white;
@@ -720,4 +720,15 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     padding: 0 !important;
     background-repeat: no-repeat;
     background-position: center;
+}
+#siac-rm-greyout {
+    position: absolute;
+    display: none;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.4;
+    background-color: black;
+    z-index: 5;
 }

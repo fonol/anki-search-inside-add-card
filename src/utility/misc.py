@@ -262,15 +262,46 @@ def get_pdf_save_full_path(path, pdfname):
     path = os.path.join(path, pdfname + ".pdf")
     return path
 
-def find_pdf_files_in_dir(dir):
+def find_pdf_files_in_dir(dir, cut_path=True):
     try:
         if not os.path.exists(dir):
             return []
-        res = glob(os.path.join(dir, "*.pdf"))
-        res = [r[max(r.rindex("\\"),r.rindex("/"))+1:] for r in res]
+        res = [f.path for f in os.scandir(dir) if f.name.endswith(".pdf")]
+        if cut_path:
+            res = [r[max(r.rindex("\\"),r.rindex("/"))+1:] for r in res]
         return res
     except:
         return []
+
+def find_pdf_files_in_dir_recursive(directory, cut_path=True):
+    directory = directory.replace("\\", "/")
+    if not directory.endswith("/"):
+        directory += "/"
+
+    if not os.path.exists(directory):
+        return []
+    def _find_rec(dir, cut_path):
+        try:
+            dir = dir.replace("\\", "/")
+            if not dir.endswith("/"):
+                dir += "/"
+            res = [f.path for f in os.scandir(dir) if f.name.endswith(".pdf")]
+            if cut_path:
+                res = [r[max(r.rindex("\\"),r.rindex("/"))+1:] for r in res]
+            sub_dirs = subdirs_fullpath(dir)
+            for sub_dir in sub_dirs:
+                res += _find_rec(sub_dir, cut_path)
+            return res
+        except Exception as e:
+            print(e)
+            return []
+
+    result = _find_rec(directory, cut_path)
+
+    return result
+
+def subdirs_fullpath(path):
+    return [entry.path for entry in os.scandir(path) if entry.is_dir()]
 
 def _retToColor(retention):
     if retention < (100 / 7.0):
