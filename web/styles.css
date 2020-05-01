@@ -831,7 +831,7 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
 .siac-btn:hover {
     color: #2496dc;
 }
-.siac-btn-dark:hover {
+.siac-btn-dark:hover, .siac-btn-dark-smaller:hover {
     color: white;
     border-color: white;
 }
