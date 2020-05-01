@@ -94,6 +94,9 @@ class UrlImporter(QDialog):
                 btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: black; font-weight: bold;}"
             self.q_lbl_1.setStyleSheet(btn_style_active)
         
+            ex_v.addWidget(self.q_lbl_1)
+            ex_v.setAlignment(self.q_lbl_1, Qt.AlignCenter)
+
             lbl = QLabel("Priority")
             lbl.setAlignment(Qt.AlignCenter)
             ex_v.addWidget(lbl)
