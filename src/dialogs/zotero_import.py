@@ -320,16 +320,16 @@ class ZoteroImporter(QDialog):
                         # lets add author and so on:
                         note_text = append_to_string(note_text, entry_authors, "<b>Authors:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_publicationyear, "<b>Year:</b>", "<br>")
-                        note_text = append_to_string(note_text, entry_authors, "<b>Authors:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_publicationtitle, "<b>Journal:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_pages, "<b>Pages:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_issue, "<b>Issue:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_volume, "<b>Volume:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_edition, "<b>Edition:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_publisher, "<b>Publisher:</b>", "<br>")
+                        note_text = append_to_string(note_text, entry_url, "<b>Url:</b>", "<br>")
 
                         # add tags as keywords
-                        if (entry_mantags or entry_autotags): note_text = note_text + "<br>Keywords:<br>"
+                        if (entry_mantags or entry_autotags): note_text = note_text + "<br><b>Keywords:</b><br>"
                         note_text = append_to_string(note_text, entry_mantags, "<b>Manual Tags:</b><br>", "<br><br>")
                         note_text = append_to_string(note_text, entry_autotags, "<b>Auto Tags:</b><br>", "<br><br>")
 
