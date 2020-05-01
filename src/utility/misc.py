@@ -268,9 +268,10 @@ def find_pdf_files_in_dir(dir, cut_path=True):
             return []
         res = [f.path for f in os.scandir(dir) if f.name.endswith(".pdf")]
         if cut_path:
-            res = [r[max(r.rindex("\\"),r.rindex("/"))+1:] for r in res]
+            res = [r[max(r.rfind("\\"),r.rfind("/"))+1:] for r in res]
         return res
-    except:
+    except Exception as e:
+        print(e)
         return []
 
 def find_pdf_files_in_dir_recursive(directory, cut_path=True):
@@ -287,7 +288,7 @@ def find_pdf_files_in_dir_recursive(directory, cut_path=True):
                 dir += "/"
             res = [f.path for f in os.scandir(dir) if f.name.endswith(".pdf")]
             if cut_path:
-                res = [r[max(r.rindex("\\"),r.rindex("/"))+1:] for r in res]
+                res = [r[max(r.rfind("\\"),r.rfind("/"))+1:] for r in res]
             sub_dirs = subdirs_fullpath(dir)
             for sub_dir in sub_dirs:
                 res += _find_rec(sub_dir, cut_path)
