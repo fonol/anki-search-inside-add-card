@@ -68,6 +68,16 @@ class ZoteroImporter(QDialog):
         self.oi_cb = QCheckBox("Add ISBN/ISSN/DOI to title if possible")
         self.vbox.addWidget(self.oi_cb)
 
+        self.gb = QGroupBox("Duplicate file paths")
+        gb_vbox = QVBoxLayout()
+        self.dup_radio_1 = QRadioButton("Skip if duplicate")
+        self.dup_radio_1.setChecked(True)
+        self.dup_radio_2 = QRadioButton("Overwrite if duplicate")
+        gb_vbox.addWidget(self.dup_radio_1)
+        gb_vbox.addWidget(self.dup_radio_2)
+        self.gb.setLayout(gb_vbox)
+        self.vbox.addWidget(self.gb)
+
         # hbox_check = QHBoxLayout() 
         # replace_ws_cb = QCheckBox("Replace in file name")
         # replace_regex = QLineEdit()
@@ -269,6 +279,14 @@ class ZoteroImporter(QDialog):
                     #search for PDFs
 
                     if re.match(".*?.pdf", attachment):                       
+
+                        id = get_pdf_id_for_source(attachment.strip())
+                        if id >= 0:
+                            if self.dup_radio_2.isChecked():
+                                delete_note(id)
+                            else:
+                                continue
+
                          # now that we have a pdf, let's get all the info
                         entry_title            = zot_entry["Title"]
                         entry_publicationyear  = zot_entry["Publication Year"]
