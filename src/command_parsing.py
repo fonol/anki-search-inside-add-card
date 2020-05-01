@@ -43,6 +43,7 @@ from .dialogs.editor import openEditor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
 from .dialogs.quick_schedule import QuickScheduler
 from .dialogs.url_import import UrlImporter
+from .dialogs.zotero_import import ZoteroImporter
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 from .models import SiacNote
@@ -269,8 +270,13 @@ def expanded_on_bridge_cmd(handled, cmd, self):
                 create_note(title, "", path, "", "", "", sched)
             else:
                 pass
-        else:
-            pass
+    
+    elif cmd == "siac-zotero-import":
+        dialog = ZoteroImporter(self.parentWindow)
+        if dialog.exec_():
+            tooltip(f"Created {dialog.total_count} notes.")
+
+
 
     
     elif cmd.startswith("siac-pdf-mark "):
