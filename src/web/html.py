@@ -564,7 +564,7 @@ def get_reading_modal_html(note):
         
        
         queue_info = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
-        queue_info_short = "In Queue" if note.is_in_queue() else "Unqueued"
+        queue_info_short = f"Queue: {note.position + 1}" if note.is_in_queue() else "Unqueued"
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
@@ -712,8 +712,8 @@ def get_reading_modal_bottom_bar(note):
     diff = datetime.datetime.now() - created_dt
     queue = _get_priority_list()
     queue_len = len(queue)
-    schedule_btns = get_schedule_btns(note_id)
-
+    priority = get_priority(note_id)
+    schedule_btns = get_schedule_btns(note_id, priority)
     time_str = "Added %s ago." % utility.misc.date_diff_to_string(diff)
        
     html = """
@@ -745,8 +745,8 @@ def get_reading_modal_bottom_bar(note):
             </div>
     """
     editable = not note.is_feed() and not note.is_pdf() and len(text) < 50000
-    queue_info = "Priority: %s" % (get_priority_as_str(note_id)) if note.is_in_queue() else "Unqueued."
-    queue_info_short = "In Queue" if note.is_in_queue() else "Unqueued"
+    queue_info = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
+    queue_info_short = f"Queue: {note.position + 1}" if note.is_in_queue() else "Unqueued"
    
     queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
@@ -805,7 +805,7 @@ def get_schedule_btns(note_id, priority):
     priority = 0 if priority is None else priority
     return f"""
     <div id='siac-queue-sched-wrapper'>
-        <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' class='siac-prio-slider' style='margin-top: 15px;'/>
+        <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 15px;'/>
         <div class='w-100' style='text-align: center; padding-top: 10px;'>
             <span style='font-size: 20px;' id='siac-sched-prio-val'>{priority}</span><br>
             <span style='font-size: 14px; color: grey;' id='siac-sched-prio-lbl'>Current Priority</span>

@@ -33,7 +33,7 @@ class QuickScheduler(QDialog):
         Used in the reading modal to quickly move the current note in the queue.
     """
     def __init__(self, parent, note_id):
-        self.queue_schedule = QueueSchedule.NOT_ADD
+        self.queue_schedule = 0
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
         self.mw = aqt.mw
         self.note = get_note(note_id)

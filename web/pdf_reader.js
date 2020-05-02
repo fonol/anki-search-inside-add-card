@@ -1188,6 +1188,13 @@ function schedChange(slider) {
         document.getElementById('siac-sched-prio-lbl').innerHTML = "Removed from Queue";
     }
 }
+function schedChanged(slider, nid) {
+    if (slider.value > 0) {
+        pycmd("siac-requeue " + nid + " " + slider.value);
+    } else {
+        pycmd("siac-remove-from-queue " + nid);
+    }
+}
 
 
 //

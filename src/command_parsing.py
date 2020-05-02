@@ -510,6 +510,11 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         queue_readings_list = get_queue_head_display(nid)
         index.ui.js("afterRemovedFromQueue();")
         index.ui.js("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)
+
+    elif cmd.startswith("siac-update-prio "):
+        nid = int(cmd.split()[1])
+        prio = int(cmd.split()[2])
+        update_priority_list(nid, prio)
     
     elif cmd.startswith("siac-remove-from-queue-tt "):
         # called from the tooltip
@@ -619,13 +624,6 @@ def expanded_on_bridge_cmd(handled, cmd, self):
             update_priority_list(nid, scheduler.queue_schedule)
             index.ui.reading_modal.reload_bottom_bar(nid)
 
-    elif cmd.startswith("siac-move-end-read-next "):
-        # quick schedule btn clicked when in manual schedule mode
-        nid = int(cmd.split()[1])
-        update_priority_list(nid, QueueSchedule.END.value)
-        nid = get_head_of_queue()
-        index.ui.reading_modal.display(nid)
-    
     elif cmd.startswith("siac-reschedule-read-next "):
         # quick schedule btn clicked when in dynamic schedule mode
         nid = int(cmd.split()[1])

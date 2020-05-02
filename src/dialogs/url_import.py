@@ -37,7 +37,7 @@ class UrlImporter(QDialog):
         self.chosen_url = None
         self._chosen_name = None
         self.show_schedule = show_schedule
-        self.queue_schedule = QueueSchedule.NOT_ADD.value
+        self.queue_schedule = 0
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
         self.mw = aqt.mw
         self.parent = parent

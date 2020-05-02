@@ -172,14 +172,14 @@ def create_note(title, text, source, tags, nid, reminder, queue_schedule):
                 values (?,?,?,?,?,datetime('now', 'localtime'),""," ","", NULL)""", (title, text, source, tags, nid)).lastrowid
     conn.commit()
     conn.close()
-    if queue_schedule != QueueSchedule.NOT_ADD:
+    if queue_schedule != 0:
         update_priority_list(id, queue_schedule)
     index = get_index()
     if index is not None:
         index.add_user_note((id, title, text, source, tags, nid, ""))
 
 def remove_from_priority_list(nid_to_remove):
-    return update_priority_list(nid_to_remove, QueueSchedule.NOT_ADD.value)
+    return update_priority_list(nid_to_remove, 0)
 
 
 def update_priority_list(nid_to_update, schedule):
@@ -545,7 +545,7 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
     conn.commit()
     conn.close()
     # if schedule is NOT_ADD/keep priority, don't recalc queue
-    if queue_schedule != QueueSchedule.NOT_ADD.value:
+    if queue_schedule != 0:
         update_priority_list(id, queue_schedule)
     index = get_index()
     if index is not None:
@@ -723,7 +723,7 @@ def get_position(nid):
     return res[0]
 
 def delete_note(id):
-    update_priority_list(id, QueueSchedule.NOT_ADD.value)
+    update_priority_list(id, 0)
     # s = time.time() * 1000
     conn = _get_connection()
     conn.executescript(f"""delete from read where nid ={id};
