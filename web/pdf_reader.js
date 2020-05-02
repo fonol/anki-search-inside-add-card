@@ -688,10 +688,10 @@ function pdfKeyup(e) {
         $('#siac-pdf-tooltip').data("selection", text);
         // limit height again to prevent selection jumping
         $('#text-layer > span').css("height", "200px");
-    } else if ((e.ctrlKey || e.metaKey) && Highlighting.colorSelected.id > 0 && windowHasSelection()) {
+    } else if ((e.ctrlKey || e.shiftKey) && Highlighting.colorSelected.id > 0 && windowHasSelection()) {
         // selected text, ctrl key pressed -> highlight 
         Highlighting.highlight();
-    } else if ((e.ctrlKey || e.metaKey) && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
+    } else if ((e.ctrlKey || e.shiftKey) && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
         // clicked with ctrl, text insert btn is active -> insert text area at coordinates
         Highlighting.insertText(e);
     }
