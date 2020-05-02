@@ -552,7 +552,7 @@ def get_reading_modal_html(note):
         if note.is_pdf() and utility.misc.file_exists(source):
             editable = False
             overflow = "hidden" 
-            text = get_pdf_viewer_html(note_id, source, note.get_title())
+            text = get_pdf_viewer_html(note_id, source, note.get_title(), priority)
             if "/" in source:
                 source = source[source.rindex("/") +1:]
         elif note.is_feed():
@@ -560,11 +560,11 @@ def get_reading_modal_html(note):
             editable = False
         else:
             editable = len(text) < 100000
-            text = get_text_note_html(text, note_id, editable)
+            text = get_text_note_html(text, note_id, editable, priority)
         
        
         queue_info = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
-        queue_info_short = f"Queue: {note.position + 1}" if note.is_in_queue() else "Unqueued"
+        queue_info_short = f"Queue [{note.position + 1}]" if note.is_in_queue() else "Unqueued"
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
@@ -574,7 +574,7 @@ def get_reading_modal_html(note):
     return ""
 
 
-def get_text_note_html(text, nid, editable):
+def get_text_note_html(text, nid, editable, priority):
     """
         Returns the html which is wrapped around the text of user notes inside the reading modal.
         This function is used if the note is a regular, text-only note, if the note is a pdf note, 
@@ -587,7 +587,7 @@ def get_text_note_html(text, nid, editable):
     if urls is not None and len(urls) > 0:
         search_sources = iframe_dialog(urls)
     is_content_editable = "true" if editable else "false"
-    quick_sched = quick_sched_btn(nid)
+    quick_sched = quick_sched_btn(nid, priority)
     # editable_notification = "<span style='margin-left: 30px; color: grey;'>(i) Note content too long to edit here.</span>" if not editable else ""
     html = """
         <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
@@ -623,17 +623,19 @@ def get_text_note_html(text, nid, editable):
     """.format_map(dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, tiny_mce=tiny_mce_init_code()))
     return html
 
-def quick_sched_btn(nid):
+def quick_sched_btn(nid, priority):
 
+    value = 0 if priority is None or priority < 0 else priority
+    if value == 0: 
+        current_btn = ""
+    else:
+        current_btn = f"""<div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} -1");'><b>Current</b></div>"""
     return f"""
         <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='onQuickSchedBtnClicked(this);'><div class='siac-read-icn siac-read-icn-light'></div>
             <div class='expanded-hidden white-hover' style='margin: 0 0 0 6px; color: lightgrey; text-align: center;'>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 5");'><b>5</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 4");'><b>4</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 3");'><b>3</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 2");'><b>2</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 1");'><b>1</b></div>
-                <div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-reschedule-read-next {nid} 0");'><b>Current</b></div>
+                <input id='siac-prio-slider-small' type='range' class='siac-prio-slider-small' max='100' min='0' value='{value}' oninput='schedSmallChange(this)' onchange='schedSmallChanged(this, {nid})'/>
+                <span id='siac-slider-small-lbl' style='margin: 0 5px 0 5px;'>{value}</span>
+                {current_btn}
             </div>
         </div>
     """
@@ -746,7 +748,7 @@ def get_reading_modal_bottom_bar(note):
     """
     editable = not note.is_feed() and not note.is_pdf() and len(text) < 50000
     queue_info = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
-    queue_info_short = f"Queue: {note.position + 1}" if note.is_in_queue() else "Unqueued"
+    queue_info_short = f"Queue [{note.position + 1}]" if note.is_in_queue() else "Unqueued"
    
     queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
@@ -807,7 +809,7 @@ def get_schedule_btns(note_id, priority):
     <div id='siac-queue-sched-wrapper'>
         <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 15px;'/>
         <div class='w-100' style='text-align: center; padding-top: 10px;'>
-            <span style='font-size: 20px;' id='siac-sched-prio-val'>{priority}</span><br>
+            <span style='font-size: 23px;' id='siac-sched-prio-val'>{priority}</span><br>
             <span style='font-size: 14px; color: grey;' id='siac-sched-prio-lbl'>Current Priority</span>
         </div>
     </div>
@@ -896,7 +898,7 @@ def iframe_dialog(urls):
 
 
 
-def get_pdf_viewer_html(nid, source, title):
+def get_pdf_viewer_html(nid, source, title, priority):
     
     dir = utility.misc.get_web_folder_path()
     search_sources = ""
@@ -908,7 +910,7 @@ def get_pdf_viewer_html(nid, source, title):
     marks_img_src = utility.misc.img_src("mark-star-24px.png")
     marks_grey_img_src = utility.misc.img_src("mark-star-lightgrey-24px.png")
     pdf_search_img_src = utility.misc.img_src("magnify-24px.png")
-    quick_sched = quick_sched_btn(nid)
+    quick_sched = quick_sched_btn(nid, priority)
 
     html = """
         <div id='siac-pdf-overlay'>PAGE READ</div>

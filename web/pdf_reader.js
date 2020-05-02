@@ -1185,18 +1185,23 @@ function schedChange(slider) {
     if (slider.value > 0) {
         document.getElementById('siac-sched-prio-lbl').innerHTML = "Updated Priority";
     } else {
-        document.getElementById('siac-sched-prio-lbl').innerHTML = "Removed from Queue";
+        document.getElementById('siac-sched-prio-lbl').innerHTML = "Release to remove from Queue";
     }
 }
 function schedChanged(slider, nid) {
+    $('#siac-quick-sched-btn').removeClass('expanded');
     if (slider.value > 0) {
         pycmd("siac-requeue " + nid + " " + slider.value);
     } else {
         pycmd("siac-remove-from-queue " + nid);
     }
 }
-
-
+function schedSmallChange(slider) {
+    document.getElementById('siac-slider-small-lbl').innerHTML = slider.value;
+}
+function schedSmallChanged(slider, nid) {
+    pycmd("siac-reschedule-read-next " + nid + " " + slider.value);
+}
 //
 // helpers
 //

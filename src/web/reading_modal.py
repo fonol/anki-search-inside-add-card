@@ -397,7 +397,7 @@ class ReadingModal:
             except:
                 pos = -1
             pos_lbl = "Priority: " + get_priority_as_str(nid)
-            pos_lbl_btn = f"Queue: {pos + 1}" if pos >= 0 else "Unqueued"
+            pos_lbl_btn = f"Queue [{pos + 1}]" if pos >= 0 else "Unqueued"
         else:
             pos_lbl = "Unqueued"
             pos_lbl_btn = "<b>Unqueued</b>"
@@ -526,7 +526,7 @@ class ReadingModal:
         return f"""
             document.getElementById('siac-queue-lbl').innerHTML = 'Priority: {priority_str}';
             $('#siac-queue-lbl').fadeIn('slow');
-            $('.siac-queue-sched-btn:first').html('In Queue ({new_index + 1})');
+            $('.siac-queue-sched-btn:first').html('Queue [{new_index + 1}]');
             $('#siac-queue-readings-list').replaceWith(`{queue_readings_list}`);
         """
 

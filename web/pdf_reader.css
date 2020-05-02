@@ -732,11 +732,10 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     background-color: black;
     z-index: 5;
 }
-.siac-prio-slider {
+.siac-prio-slider, .siac-prio-slider-small {
     width: 250px;
     -webkit-appearance: none;  /* Override default CSS styles */
     appearance: none;
-    height: 15px; /* Specified height */
     background: #d3d3d3; /* Grey background */
     outline: none; /* Remove outline */
     opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
@@ -744,10 +743,13 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     height: 10px;
     border-radius: 3px;
 }
-.siac-prio-slider:hover {
+.siac-prio-slider-small {
+    width: 150px;
+}
+.siac-prio-slider:hover, .siac-prio-slider-small:hover {
     opacity: 1;
   }
-  .siac-prio-slider::-webkit-slider-thumb {
+  .siac-prio-slider::-webkit-slider-thumb, .siac-prio-slider-small::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 15px;
@@ -756,6 +758,6 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     cursor: pointer;
     border-radius: 3px;
   }
-  .siac-prio-slider::-webkit-slider-thumb:hover {
+  .siac-prio-slider::-webkit-slider-thumb:hover, .siac-prio-slider-small::-webkit-slider-thumb:hover {
       filter: brightness(1.4);
   }

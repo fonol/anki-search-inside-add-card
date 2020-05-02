@@ -628,16 +628,23 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         # quick schedule btn clicked when in dynamic schedule mode
         nid = int(cmd.split()[1])
         sched = int(cmd.split()[2])
-        # sched is 0 when "current" btn is clicked
-        if sched == 0:
+        # sched is -1 when "current" btn is clicked
+        if sched == -1:
             sched = get_priority(nid)
             if sched is None:
                 tooltip("Item has no priority yet.", period=3500)
                 return
         try:
+            if sched == 0:
+                queue = _get_priority_list()
+                if len(queue) == 1:
+                    tootltip("Cannot remove and open next, queue only contains this item.")
+                    return
             update_priority_list(nid, sched)
-            tooltip(f"""Note moved back in queue.<br>
-                    <center>Priority: <b>{dynamic_sched_to_str(sched)}</b></center>""")
+            if sched == 0:
+                tooltip(f"""Note removed from queue.""")
+            else:
+                tooltip(f"""Note moved back in queue.<br><center>Priority: <b>{dynamic_sched_to_str(sched)}</b></center>""")
         except:
             tooltip("Something went wrong during queue recalculation.")
         nid = get_head_of_queue()
@@ -672,9 +679,15 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         nid = index.ui.reading_modal.note_id
         prio = get_priority(nid)
         if prio is None:
-            index.ui.js("$('#siac-quick-sched-btn .siac-btn-dark-smaller').last().hide();$('#siac-quick-sched-btn').toggleClass('expanded');")
+            index.ui.js(f"""$('#siac-quick-sched-btn .siac-btn-dark-smaller').last().hide();
+                        $('#siac-prio-slider-small').val(0);
+                        $('#siac-slider-small-lbl').html('0');
+                        $('#siac-quick-sched-btn').toggleClass('expanded');""")
         else:
-            index.ui.js(f"$('#siac-quick-sched-btn .siac-btn-dark-smaller').last().show().text('Current ({prio})');$('#siac-quick-sched-btn').toggleClass('expanded');")
+            index.ui.js(f"""$('#siac-quick-sched-btn .siac-btn-dark-smaller').last().show().text('Current ({prio})');
+                            $('#siac-prio-slider-small').val({prio});
+                            $('#siac-slider-small-lbl').html('{prio}');
+                            $('#siac-quick-sched-btn').toggleClass('expanded');""")
     #
     #   Synonyms
     #
