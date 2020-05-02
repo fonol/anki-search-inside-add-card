@@ -78,12 +78,12 @@ class ZoteroImporter(QDialog):
         self.gb.setLayout(gb_vbox)
         self.vbox.addWidget(self.gb)
 
-        # hbox_check = QHBoxLayout() 
+        # hbox_check = QHBoxLayout()
         # replace_ws_cb = QCheckBox("Replace in file name")
         # replace_regex = QLineEdit()
         # replace_repl = QLineEdit()
         # hbox_check.
-       
+
         self.queue_section = QGroupBox("Queue")
         ex_v = QVBoxLayout()
         queue_lbl = QLabel("Add to Queue?")
@@ -96,7 +96,7 @@ class ZoteroImporter(QDialog):
         self.q_lbl_1.setObjectName("q_1")
         self.q_lbl_1.setFlat(True)
         self.q_lbl_1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_1.clicked.connect(lambda: self.queue_selected(0)) 
+        self.q_lbl_1.clicked.connect(lambda: self.queue_selected(0))
 
         self.dark_mode_used = utility.misc.dark_mode_is_used(mw.addonManager.getConfig(__name__))
         if self.dark_mode_used:
@@ -196,7 +196,7 @@ class ZoteroImporter(QDialog):
 
         """ % btn_styles
         self.setStyleSheet(styles)
-        
+
 
     def queue_selected(self, queue_schedule):
         lbls = [self.q_lbl_1, self.q_lbl_6, self.q_lbl_5, self.q_lbl_4, self.q_lbl_3, self.q_lbl_2]
@@ -229,20 +229,20 @@ class ZoteroImporter(QDialog):
     def get_name(self):
         if self._chosen_name is None or len(self._chosen_name) == 0:
             name = utility.text.strip_url(self.chosen_url)
-            name = utility.text.clean_file_name(name) 
+            name = utility.text.clean_file_name(name)
             return name
         name = utility.text.clean_file_name(self._chosen_name)
         return name
 
-    
-  
+
+
 
 
     def scan_csv(self):
         total_count = 0
         with open(self.file_path_disp.text(), newline='', encoding="utf-8") as zotero_csv:
             csvreader = csv.DictReader(zotero_csv, delimiter=',')
-                
+
             for zot_entry in csvreader:
                 attachment_string = zot_entry["File Attachments"]
                 attachment_array = re.split(";", attachment_string)
@@ -253,7 +253,7 @@ class ZoteroImporter(QDialog):
             else:
                 self.status.setText(f"Found no PDF attachments in the CSV.")
                 self.status.setStyleSheet('color: red')
-                       
+
 
     def read_csv(self):
 
@@ -278,7 +278,7 @@ class ZoteroImporter(QDialog):
                 for attachment in attachment_array:
                     #search for PDFs
 
-                    if re.match(".*?.pdf", attachment):                       
+                    if re.match(".*?.pdf", attachment):
 
                         id = get_pdf_id_for_source(attachment.strip())
                         if id >= 0:
@@ -315,7 +315,7 @@ class ZoteroImporter(QDialog):
                             note_title = append_to_string(note_title, entry_doi, " - ", "")
 
                         # let's generate a note text with all that data we might or might not have
-                        note_text = note_title + "<br>"
+                        note_text = "<b>" + entry_title + "</b><br><br>"
 
                         # lets add author and so on:
                         note_text = append_to_string(note_text, entry_authors, "<b>Authors:</b>", "<br>")
@@ -327,6 +327,11 @@ class ZoteroImporter(QDialog):
                         note_text = append_to_string(note_text, entry_edition, "<b>Edition:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_publisher, "<b>Publisher:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_url, "<b>Url:</b>", "<br>")
+
+                        # add object identifiers
+                        note_text = append_to_string(note_text, entry_doi, "<b>DOI:</b>", "<br>")
+                        note_text = append_to_string(note_text, entry_isbn, "<b>ISBN</b>", "<br>")
+                        note_text = append_to_string(note_text, entry_issn, "<b>ISSN</b>", "<br>")
 
                         # add tags as keywords
                         if (entry_mantags or entry_autotags): note_text = note_text + "<br><b>Keywords:</b><br>"
