@@ -1,6 +1,5 @@
 # anki-search-inside-add-card
 # Copyright (C) 2019 - 2020 Tom Z.
-
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +25,7 @@ from aqt.utils import showInfo
 import html as ihtml
 
 from ..state import get_index, check_index
-from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority_as_str
+from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str
 from ..feeds import read
 from ..internals import perf_time
 from ..config import get_config_value_or_default as conf_or_def
@@ -467,7 +466,8 @@ def get_reading_modal_html(note):
         title = ihtml.escape(title)
         source = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
         source_icn = ""
-        schedule_btns = get_schedule_btns(note_id)
+        priority = get_priority(note_id)
+        schedule_btns = get_schedule_btns(note_id, priority)
         img_folder = utility.misc.img_src_base_path()
         html = """
             <script>destroyTinyMCE();</script>
@@ -563,7 +563,7 @@ def get_reading_modal_html(note):
             text = get_text_note_html(text, note_id, editable)
         
        
-        queue_info = "Priority: %s" % (get_priority_as_str(note_id)) if note.is_in_queue() else "Unqueued."
+        queue_info = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
         queue_info_short = "In Queue" if note.is_in_queue() else "Unqueued"
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
@@ -797,22 +797,32 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
     """ % (hide_btn, queue_head_readings)
     return html
 
-def get_schedule_btns(note_id):
+def get_schedule_btns(note_id, priority):
     """
         Returns the html for the buttons that allow to quickly reschedule the current item in the reading modal.
     """
-  
+    
+    priority = 0 if priority is None else priority
     return f"""
     <div id='siac-queue-sched-wrapper'>
-        <div class='siac-queue-sched-btn siac-prio-5' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>5</div>
-        <div class='siac-queue-sched-btn siac-prio-4' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>4</div>
-        <div class='siac-queue-sched-btn siac-prio-3' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>3</div>
-        <div class='siac-queue-sched-btn siac-prio-2' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>2</div>
-        <div class='siac-queue-sched-btn siac-prio-1' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 1")'>1</div>
-        <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
-        <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
+        <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' class='siac-prio-slider' style='margin-top: 15px;'/>
+        <div class='w-100' style='text-align: center; padding-top: 10px;'>
+            <span style='font-size: 20px;' id='siac-sched-prio-val'>{priority}</span><br>
+            <span style='font-size: 14px; color: grey;' id='siac-sched-prio-lbl'>Current Priority</span>
+        </div>
     </div>
     """
+    # return f"""
+    # <div id='siac-queue-sched-wrapper'>
+    #     <div class='siac-queue-sched-btn siac-prio-5' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 5")'>5</div>
+    #     <div class='siac-queue-sched-btn siac-prio-4' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 4")'>4</div>
+    #     <div class='siac-queue-sched-btn siac-prio-3' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 3")'>3</div>
+    #     <div class='siac-queue-sched-btn siac-prio-2' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 2")'>2</div>
+    #     <div class='siac-queue-sched-btn siac-prio-1' onclick='queueSchedBtnClicked(this); pycmd("siac-requeue {note_id} 1")'>1</div>
+    #     <div style='display: inline-block; height: 94px; margin: 0 10px 0 10px; border-left: 2px solid lightgrey; border-style: dotted; border-width: 0 0 0 2px;'></div>
+    #     <div class='siac-queue-sched-btn' style='margin-left: 10px;' onclick='pycmd("siac-remove-from-queue {note_id}")'>&times; Remove</div>
+    # </div>
+    # """
 
 
 def get_related_notes_html(note_id):

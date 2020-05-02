@@ -1180,6 +1180,15 @@ function modalTabsLeftClicked(tab, elem) {
     pycmd("siac-reading-modal-tabs-left-" + tab);
 }
 
+function schedChange(slider) {
+    document.getElementById('siac-sched-prio-val').innerHTML = slider.value;
+    if (slider.value > 0) {
+        document.getElementById('siac-sched-prio-lbl').innerHTML = "Updated Priority";
+    } else {
+        document.getElementById('siac-sched-prio-lbl').innerHTML = "Removed from Queue";
+    }
+}
+
 
 //
 // helpers

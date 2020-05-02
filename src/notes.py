@@ -39,17 +39,6 @@ import utility.text
 
 db_path = None
 
-
-@unique
-class QueueSchedule(Enum):
-    NOT_ADD = 0
-    VERY_LOW_PRIO = 1
-    LOW_PRIO = 2
-    AVERAGE_PRIO = 3
-    HIGH_PRIO = 4
-    VERY_HIGH_PRIO = 5
-
-
 @unique
 class PDFMark(Enum):
     REVISIT = 1
@@ -224,12 +213,11 @@ def update_priority_list(nid_to_update, schedule):
             
         # assert(current_position >= 0)
         
-        
         if nid == nid_to_update:
             nid_was_included = True
             # initial score is 0 (delta_days is 0), but the note will climb up the queue faster if it has a high prio
             score = 0
-            if schedule == QueueSchedule.NOT_ADD.value:
+            if schedule == 0:
                 # if not in queue, remove from log
                 to_remove_from_log.append(nid)
             else:
@@ -246,7 +234,7 @@ def update_priority_list(nid_to_update, schedule):
             scores.append((nid, last_prio_creation, last_prio, score))
     # note to be updated doesn't have to be in the results, it might not have been in the queue before
     if not nid_was_included:
-        if schedule == QueueSchedule.NOT_ADD.value:
+        if schedule == 0:
             to_remove_from_log.append(nid_to_update)
         else:
             now += timedelta(seconds=1)
@@ -299,16 +287,16 @@ def get_priority_as_str(nid):
     return dynamic_sched_to_str(res[0])
 
 def dynamic_sched_to_str(sched):
-    if sched == QueueSchedule.VERY_HIGH_PRIO.value:
-        return "Very high (5)"
-    if sched == QueueSchedule.HIGH_PRIO.value:
-        return "High (4)"
-    if sched == QueueSchedule.AVERAGE_PRIO.value:
-        return "Medium (3)"
-    if sched == QueueSchedule.LOW_PRIO.value:
-        return "Low (2)"
-    if sched == QueueSchedule.VERY_LOW_PRIO.value:
-        return "Very low (1)"
+    if sched >= 85 :
+        return f"Very high ({sched})"
+    if sched >= 70:
+        return f"High ({sched})"
+    if sched >= 30:
+        return f"Medium ({sched})"
+    if sched >= 15:
+        return f"Low ({sched})"
+    if sched >= 1:
+        return f"Very low ({sched})"
         
 def recalculate_priority_queue():
     """
