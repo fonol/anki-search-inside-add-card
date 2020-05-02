@@ -807,10 +807,13 @@ def get_schedule_btns(note_id, priority):
     priority = 0 if priority is None else priority
     return f"""
     <div id='siac-queue-sched-wrapper'>
-        <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 15px;'/>
+        <div class='w-100' style='text-align: center; color: lightgrey;'>
+            Priority
+        </div>
+        <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 7px;'/>
         <div class='w-100' style='text-align: center; padding-top: 10px;'>
             <span style='font-size: 23px;' id='siac-sched-prio-val'>{priority}</span><br>
-            <span style='font-size: 14px; color: grey;' id='siac-sched-prio-lbl'>Current Priority</span>
+            <span style='font-size: 12px; color: grey;' id='siac-sched-prio-lbl'></span>
         </div>
     </div>
     """

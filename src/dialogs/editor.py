@@ -33,6 +33,7 @@ from ..state import get_index
 from ..config import get_config_value_or_default
 from ..web_import import import_webpage
 from .url_import import UrlImporter
+from .components import QtPrioritySlider
 from .url_input_dialog import URLInputDialog
 
 import utility.text
@@ -148,6 +149,7 @@ class NoteEditor(QDialog):
         self.cancel.clicked.connect(self.reject)
         priority_list = _get_priority_list()
         self.priority_list = priority_list
+        self.priority = get_priority(note_id)
 
         self.tabs = QTabWidget()
          
@@ -244,7 +246,7 @@ class NoteEditor(QDialog):
 
         source = self.create_tab.source.text()
         tags = self.create_tab.tag.text()
-        queue_schedule = self.create_tab.queue_schedule
+        queue_schedule = self.create_tab.slider.value()
 
         # don't allow for completely empty fields
         if len(title.strip()) + len(text.strip()) == 0:
@@ -277,7 +279,7 @@ class NoteEditor(QDialog):
                 text = self.create_tab.text.toHtml()
         source = self.create_tab.source.text()
         tags = self.create_tab.tag.text()
-        queue_schedule = self.create_tab.queue_schedule
+        queue_schedule = self.create_tab.slider.value()
         update_note(self.note_id, title, text, source, tags, "", queue_schedule)
         run_hooks("user-note-edited")
 
@@ -347,109 +349,8 @@ class CreateTab(QWidget):
         self.recent_tbl.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.recent_tbl.setMaximumHeight(100)
 
-        self.queue_section = QGroupBox("Queue")
-        self.queue_section.setStyleSheet("background-color: transparent;")
-        ex_v = QVBoxLayout()
         queue_len = len(parent.priority_list)
-        if parent.note_id is None:
-            queue_lbl = QLabel("Add to Queue? (<b>%s</b> items)" % queue_len)
-        else:
-            #check if note has position (is in queue)
-            if not parent.note.is_in_queue():
-                queue_lbl = QLabel("<b>Not</b> in Queue (<b>%s</b> items)" % queue_len)
-            else:
-                queue_lbl = QLabel("Position: <b>%s</b> / <b>%s</b>" % (parent.note.position + 1, queue_len))
-
-        queue_lbl.setAlignment(Qt.AlignCenter)
-        ex_v.addWidget(queue_lbl, Qt.AlignCenter)
-        ex_v.addSpacing(5)
-
-        if parent.note_id is None:
-            self.q_lbl_1 = QPushButton(" Don't Add ")
-        else:
-            if not parent.note.is_in_queue():
-                self.q_lbl_1 = QPushButton(" Don't Add ")
-            else:
-                self.q_lbl_1 = QPushButton("Keep Priority")
-
-        if parent.dark_mode_used:
-            btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }"
-            btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: lightgrey; font-weight: bold; } QPushButton:hover { border: 2px solid #2496dc; color: black; }"
-        else:
-            btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: grey; }"
-            btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: black; font-weight: bold;}"
-
-       
-        self.q_lbl_1.setObjectName("q_1")
-        self.q_lbl_1.setFlat(True)
-        self.q_lbl_1.setStyleSheet(btn_style_active)
-        self.q_lbl_1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_1.clicked.connect(lambda: self.queue_selected(0))
-        ex_v.addWidget(self.q_lbl_1)
-        ex_v.setAlignment(self.q_lbl_1, Qt.AlignCenter)
-
-        ex_v.addSpacing(5)
-        line_sep = QFrame()
-        line_sep.setFrameShape(QFrame.HLine)
-        line_sep.setFrameShadow(QFrame.Sunken)
-        ex_v.addWidget(line_sep)
-        ex_v.addSpacing(5)
-
-        lbl = QLabel("Priority")
-        lbl.setAlignment(Qt.AlignCenter)
-        ex_v.addWidget(lbl)
-
-        self.q_lbl_2 = QPushButton("5 - Very High")
-        self.q_lbl_2.setObjectName("q_2")
-        self.q_lbl_2.setMinimumWidth(220)
-        self.q_lbl_2.setFlat(True)
-        self.q_lbl_2.setStyleSheet(btn_style)
-        self.q_lbl_2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_2.clicked.connect(lambda: self.queue_selected(5))
-        ex_v.addWidget(self.q_lbl_2)
-        ex_v.setAlignment(self.q_lbl_2, Qt.AlignCenter)
-
-        self.q_lbl_3 = QPushButton("4 - High")
-        self.q_lbl_3.setObjectName("q_3")
-        self.q_lbl_3.setMinimumWidth(185)
-        self.q_lbl_3.setFlat(True)
-        self.q_lbl_3.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_3.setStyleSheet(btn_style)
-        self.q_lbl_3.clicked.connect(lambda: self.queue_selected(4))
-        ex_v.addWidget(self.q_lbl_3)
-        ex_v.setAlignment(self.q_lbl_3, Qt.AlignCenter)
-
-        self.q_lbl_4 = QPushButton("3 - Medium")
-        self.q_lbl_4.setMinimumWidth(150)
-        self.q_lbl_4.setObjectName("q_4")
-        self.q_lbl_4.setFlat(True)
-        self.q_lbl_4.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_4.setStyleSheet(btn_style)
-        self.q_lbl_4.clicked.connect(lambda: self.queue_selected(3))
-        ex_v.addWidget(self.q_lbl_4)
-        ex_v.setAlignment(self.q_lbl_4, Qt.AlignCenter)
-
-        self.q_lbl_5 = QPushButton("2 - Low")
-        self.q_lbl_5.setMinimumWidth(115)
-        self.q_lbl_5.setObjectName("q_5")
-        self.q_lbl_5.setFlat(True)
-        self.q_lbl_5.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_5.setStyleSheet(btn_style)
-        self.q_lbl_5.clicked.connect(lambda: self.queue_selected(2))
-        ex_v.addWidget(self.q_lbl_5)
-        ex_v.setAlignment(self.q_lbl_5, Qt.AlignCenter)
-
-        self.q_lbl_6 = QPushButton("1 - Very Low")
-        self.q_lbl_6.setMinimumWidth(80)
-        self.q_lbl_6.setObjectName("q_6")
-        self.q_lbl_6.setFlat(True)
-        self.q_lbl_6.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_6.setStyleSheet(btn_style)
-        self.q_lbl_6.clicked.connect(lambda: self.queue_selected(1))
-        ex_v.addWidget(self.q_lbl_6)
-        ex_v.setAlignment(self.q_lbl_6, Qt.AlignCenter)
-
-        self.queue_section.setLayout(ex_v)
+        self.slider = QtPrioritySlider(self.parent.priority)
 
         self.layout = QHBoxLayout()
         vbox_left = QVBoxLayout()
@@ -488,8 +389,8 @@ class CreateTab(QWidget):
             qs.setWidget(self.recent_tbl)
             vbox_left.addWidget(qs)
 
-        vbox_left.addWidget(self.queue_section)
 
+        vbox_left.addWidget(self.slider)
         self.layout.addLayout(vbox_left, 7)
 
         hbox = QHBoxLayout()
@@ -795,17 +696,6 @@ class CreateTab(QWidget):
             ti.setData(0, 1, QVariant(t))
             ti.addChildren(self._add_to_tree(children, t + "::"))
             self.tree.addTopLevelItem(ti)
-
-    def queue_selected(self, queue_schedule):
-        self.queue_schedule = queue_schedule
-        lbls = [self.q_lbl_1, self.q_lbl_6, self.q_lbl_5, self.q_lbl_4, self.q_lbl_3, self.q_lbl_2]
-
-        for lbl in lbls:
-            if self.parent.dark_mode_used:
-                lbl.setStyleSheet("QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }")
-            else:
-                lbl.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey; font-weight: normal;")
-            lbls[queue_schedule].setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
 
     def on_pdf_clicked(self):
         fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"PDF (*.pdf)")

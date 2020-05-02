@@ -1183,7 +1183,7 @@ function modalTabsLeftClicked(tab, elem) {
 function schedChange(slider) {
     document.getElementById('siac-sched-prio-val').innerHTML = slider.value;
     if (slider.value > 0) {
-        document.getElementById('siac-sched-prio-lbl').innerHTML = "Updated Priority";
+        // document.getElementById('siac-sched-prio-lbl').innerHTML = "Updated.";
     } else {
         document.getElementById('siac-sched-prio-lbl').innerHTML = "Release to remove from Queue";
     }
@@ -1192,6 +1192,7 @@ function schedChanged(slider, nid) {
     $('#siac-quick-sched-btn').removeClass('expanded');
     if (slider.value > 0) {
         pycmd("siac-requeue " + nid + " " + slider.value);
+        document.getElementById('siac-sched-prio-lbl').innerHTML = "Updated.";
     } else {
         pycmd("siac-remove-from-queue " + nid);
     }
