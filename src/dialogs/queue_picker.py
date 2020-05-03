@@ -310,7 +310,7 @@ class PDFsTab(QWidget):
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
      
-        self.slider = QtPrioritySlider(0)
+        self.slider = QtPrioritySlider(0, show_spec_sched=False)
         self.slider.set_released_fn(self.enqueue)
         btn_hbox = QHBoxLayout()
         btn_hbox.addWidget(self.slider)
@@ -381,7 +381,7 @@ class TextNotesTab(QWidget):
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
     
-        self.slider = QtPrioritySlider(0)
+        self.slider = QtPrioritySlider(0, show_spec_sched=False)
         self.slider.set_released_fn(self.enqueue)
         btn_hbox = QHBoxLayout()
         btn_hbox.addWidget(self.slider)
@@ -586,7 +586,7 @@ class TagsTab(QWidget):
         self.vbox_right.addWidget(self.enqueue_all_btn)
         self.vbox_right.addWidget(self.empty_and_enqueue_all_btn)
      
-        self.slider = QtPrioritySlider(0)
+        self.slider = QtPrioritySlider(0, show_spec_sched=False)
         self.slider.set_released_fn(self.enqueue)
         btn_hbox = QHBoxLayout()
         btn_hbox.addWidget(self.slider)

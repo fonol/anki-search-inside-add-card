@@ -788,7 +788,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
             qi_title = utility.text.trim_if_longer_than(queue_item.get_title(), 40) 
             qi_title = ihtml.escape(qi_title)
         else:
-            qi_title = re.sub("[^ ]", "?",queue_item.get_title())
+            qi_title = utility.text.trim_if_longer_than(re.sub("[^ ]", "?",queue_item.get_title()), 40)
 
         hover_actions = "onmouseenter='showQueueInfobox(this, %s);' onmouseleave='leaveQueueItem(this);'" % (queue_item.id) if not hide else ""
         #if the note is a pdf or feed, show a loader
@@ -821,7 +821,7 @@ def get_schedule_btns(note_id, priority):
         <div class='w-100' style='text-align: center; color: lightgrey;'>
             Priority
         </div>
-        <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 7px;'/>
+        <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 9px;'/>
         <div class='w-100' style='text-align: center; padding-top: 10px;'>
             <span style='font-size: 23px;' id='siac-sched-prio-val'>{priority}</span><br>
             <span style='font-size: 12px; color: grey;' id='siac-sched-prio-lbl'></span>
@@ -866,7 +866,7 @@ def get_related_notes_html(note_id):
     for rel in res[:20]:
         if rel.id == note_id:
             continue
-        title = utility.text.trim_if_longer_than(rel.get_title(), 100)
+        title = utility.text.trim_if_longer_than(rel.get_title(), 70)
         pdf_or_feed = rel.is_pdf() or rel.is_feed()
         should_show_loader = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if pdf_or_feed else ""
         html = f"{html}<div class='siac-related-notes-item' onclick='if (!pdfLoading) {{ {should_show_loader}  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note {rel.id}\"); }}'>{title}</div>"

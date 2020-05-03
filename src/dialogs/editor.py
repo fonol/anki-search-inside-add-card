@@ -248,12 +248,13 @@ class NoteEditor(QDialog):
         source = self.create_tab.source.text()
         tags = self.create_tab.tag.text()
         queue_schedule = self.create_tab.slider.value()
+        specific_schedule = self.create_tab.slider.schedule()
 
         # don't allow for completely empty fields
         if len(title.strip()) + len(text.strip()) == 0:
             return False
 
-        create_note(title, text, source, tags, None, "", queue_schedule)
+        create_note(title, text, source, tags, None, specific_schedule, queue_schedule)
         return True
 
     def _reset(self):
@@ -281,7 +282,8 @@ class NoteEditor(QDialog):
         source = self.create_tab.source.text()
         tags = self.create_tab.tag.text()
         queue_schedule = self.create_tab.slider.value()
-        update_note(self.note_id, title, text, source, tags, "", queue_schedule)
+        specific_schedule = self.create_tab.slider.schedule()
+        update_note(self.note_id, title, text, source, tags, specific_schedule, queue_schedule)
         run_hooks("user-note-edited")
 
         self.reject()
@@ -351,7 +353,8 @@ class CreateTab(QWidget):
         self.recent_tbl.setMaximumHeight(100)
 
         queue_len = len(parent.priority_list)
-        self.slider = QtPrioritySlider(self.parent.priority)
+        schedule = None if self.parent.note is None else self.parent.note.reminder
+        self.slider = QtPrioritySlider(self.parent.priority, schedule=schedule)
 
         self.layout = QHBoxLayout()
         vbox_left = QVBoxLayout()

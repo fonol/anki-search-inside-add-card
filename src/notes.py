@@ -172,7 +172,7 @@ def create_note(title, text, source, tags, nid, reminder, queue_schedule):
 
     conn = _get_connection()
     id = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position)
-                values (?,?,?,?,?,datetime('now', 'localtime'),""," ","", NULL)""", (title, text, source, tags, nid)).lastrowid
+                values (?,?,?,?,?,datetime('now', 'localtime'),"",?,"", NULL)""", (title, text, source, tags, nid, reminder)).lastrowid
     conn.commit()
     conn.close()
     if queue_schedule != 0:
@@ -188,8 +188,7 @@ def remove_from_priority_list(nid_to_remove):
 def update_priority_list(nid_to_update, schedule):
     """
     Call this after a note has been added or updated. 
-    Will read the current priority queue and update it, depending 
-    on what schedule mode is active.
+    Will read the current priority queue and update it.
     Will also insert the given priority in queue_prio_log.
     """
     # priority log entries that have to be inserted in the log
@@ -204,7 +203,7 @@ def update_priority_list(nid_to_update, schedule):
     scores = []
     nid_was_included = False
     now = datetime.now()
-    for nid, last_prio, last_prio_creation, current_position in current:
+    for nid, last_prio, last_prio_creation, current_position, reminder in current:
         # last prio might be null, because of legacy queue system
         if last_prio is None:
             # lazy solution: set to average priority
@@ -315,11 +314,11 @@ def recalculate_priority_queue():
     scores = []
     to_update_in_log = []
     now = datetime.now()
-    for nid, last_prio, last_prio_creation, current_position in current:
+    for nid, last_prio, last_prio_creation, current_position, reminder in current:
         # last prio might be null, because of legacy queue system
         if last_prio is None:
             # lazy solution: set to average priority
-            last_prio = 3
+            last_prio = 50
             now += timedelta(seconds=1)
             ds = now.strftime('%Y-%m-%d-%H-%M-%S')
             last_prio_creation = ds
@@ -330,7 +329,7 @@ def recalculate_priority_queue():
         
         # assert(days_delta >= 0)
         # assert(days_delta < 10000)
-        score = days_delta * last_prio
+        score = _calc_score(last_prio, days_delta)
         scores.append((nid, last_prio_creation, last_prio, score))
     final_list = sorted(scores, key=lambda x: x[3], reverse=True)
     
@@ -547,14 +546,14 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
     text = utility.text.clean_user_note_text(text)
     tags = " %s " % tags.strip()
     mod = _date_now_str()
-    sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}' where id=?"
+    sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=? where id=?"
     conn = _get_connection()
-    conn.execute(sql, (title, text, source, tags, id))
+    conn.execute(sql, (title, text, source, tags, reminder, id))
     conn.commit()
     conn.close()
     # if schedule is NOT_ADD/keep priority, don't recalc queue
-    if queue_schedule != 0:
-        update_priority_list(id, queue_schedule)
+    # if queue_schedule !=kk 0:
+    update_priority_list(id, queue_schedule)
     index = get_index()
     if index is not None:
         index.update_user_note((id, title, text, source, tags, -1, ""))
@@ -829,10 +828,9 @@ def _get_priority_list(nid_to_exclude = None):
 
 def _get_priority_list_with_last_prios():
     """
-        Used when in dynamic queue scheduling mode.
-        Returns (nid, last prio, last prio creation, current position)
+        Returns (nid, last prio, last prio creation, current position, schedule)
     """
-    sql = """ select notes.id, prios.prio, prios.created, notes.position from notes left join (select distinct nid, prio, max(created) as created, type from queue_prio_log group by nid) as prios on prios.nid = notes.id where notes.position >= 0 order by position asc """
+    sql = """ select notes.id, prios.prio, prios.created, notes.position, notes.reminder from notes left join (select distinct nid, prio, max(created) as created, type from queue_prio_log group by nid) as prios on prios.nid = notes.id where notes.position >= 0 order by position asc """
     conn = _get_connection()
     res = conn.execute(sql).fetchall()
     conn.close()
