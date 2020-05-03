@@ -745,6 +745,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
 }
 .siac-prio-slider-small {
     width: 150px;
+    height: 8px;
 }
 .siac-prio-slider:hover, .siac-prio-slider-small:hover {
     opacity: 1;

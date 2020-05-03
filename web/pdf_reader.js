@@ -19,6 +19,7 @@
 var pdfImgSel = { canvas: null, context: null, startX: null, endX: null, startY: null, endY: null, cvsOffLeft: null, cvsOffTop: null, mouseIsDown: false, canvasDispl: null };
 var remainingSeconds = 30 * 60;
 var readingTimer;
+var pdfTextLayerMetaKey = false;
 var pdfDisplayed;
 var pdfDisplayedViewPort;
 var pdfPageRendering = false;
@@ -655,6 +656,12 @@ function togglePDFNightMode(elem) {
     elem.innerHTML = pdfColorMode;
     rerenderPDFPage(pdfDisplayedCurrentPage, false);
 }
+function pdfMouseDown(e) {
+    if (e.metaKey) {
+        pdfTextLayerMetaKey = true;
+    }
+}
+
 /**
  *  executed after keyup in the pdf pane
  */
@@ -688,13 +695,15 @@ function pdfKeyup(e) {
         $('#siac-pdf-tooltip').data("selection", text);
         // limit height again to prevent selection jumping
         $('#text-layer > span').css("height", "200px");
-    } else if ((e.ctrlKey || e.shiftKey) && Highlighting.colorSelected.id > 0 && windowHasSelection()) {
+    } else if (((e.ctrlKey && document.body.className.indexOf('isMac') === -1) || pdfTextLayerMetaKey) && Highlighting.colorSelected.id > 0 && windowHasSelection()) {
         // selected text, ctrl key pressed -> highlight 
         Highlighting.highlight();
-    } else if ((e.ctrlKey || e.shiftKey) && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
+    } else if (((e.ctrlKey && document.body.className.indexOf('isMac') === -1) || pdfTextLayerMetaKey) && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
         // clicked with ctrl, text insert btn is active -> insert text area at coordinates
         Highlighting.insertText(e);
     }
+    pdfTextLayerMetaKey = false;
+
 }
 
 
@@ -1196,6 +1205,7 @@ function schedChanged(slider, nid) {
     } else {
         pycmd("siac-remove-from-queue " + nid);
     }
+    document.getElementById("siac-first-in-queue-btn").innerHTML = "First in Queue";
 }
 function schedSmallChange(slider) {
     document.getElementById('siac-slider-small-lbl').innerHTML = slider.value;

@@ -556,6 +556,13 @@ def expanded_on_bridge_cmd(handled, cmd, self):
     elif cmd == "siac-user-note-queue-read-head":
         nid = get_head_of_queue()
         if nid >= 0:
+            # if the head of the queue is currently opened, and the read next button is pressed,
+            # recalculate queue, and then open the head
+            if index.ui.reading_modal.note_id == nid:   
+                prio = get_priority(nid)
+                update_priority_list(nid, prio)
+                nid = get_head_of_queue()
+
             index.ui.reading_modal.display(nid)
         else:
             index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;")

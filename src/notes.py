@@ -39,6 +39,9 @@ import utility.text
 
 db_path = None
 
+# How many times more important is a priority 100 item than a priority 1 item?
+PRIORITY_SCALE_FACTOR = get_config_value_or_default("notes.queue.priorityScaleFactor", 5)
+
 @unique
 class PDFMark(Enum):
     REVISIT = 1
@@ -205,7 +208,7 @@ def update_priority_list(nid_to_update, schedule):
         # last prio might be null, because of legacy queue system
         if last_prio is None:
             # lazy solution: set to average priority
-            last_prio = 3
+            last_prio = 50
             now += timedelta(seconds=1)
             ds = now.strftime('%Y-%m-%d-%H-%M-%S')
             last_prio_creation = ds
@@ -230,7 +233,7 @@ def update_priority_list(nid_to_update, schedule):
             days_delta = max(0, (datetime.now() - _dt_from_date_str(last_prio_creation)).total_seconds() / 86400.0)
             # assert(days_delta >= 0)
             # assert(days_delta < 10000)
-            score = days_delta * last_prio
+            score = _calc_score(last_prio, days_delta)
             scores.append((nid, last_prio_creation, last_prio, score))
     # note to be updated doesn't have to be in the results, it might not have been in the queue before
     if not nid_was_included:
@@ -270,6 +273,11 @@ def update_priority_list(nid_to_update, schedule):
     #return new position (0-based), and length of queue, some functions need that to update the ui
     return (index, len(final_list))
     
+
+def _calc_score(priority, days_delta):
+    prio_factor = 1 + ((priority - 1)/99) * (PRIORITY_SCALE_FACTOR - 1)
+    return days_delta * prio_factor
+
 def get_priority(nid):
     conn = _get_connection()
     res = conn.execute(f"select prio from queue_prio_log where nid = {nid} order by created desc limit 1").fetchone()

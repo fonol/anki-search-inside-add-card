@@ -469,6 +469,12 @@ def get_reading_modal_html(note):
         priority = get_priority(note_id)
         schedule_btns = get_schedule_btns(note_id, priority)
         img_folder = utility.misc.img_src_base_path()
+        if note.is_in_queue() and note.position > 0:
+            queue_btn_text = "First in Queue"
+        elif note.is_in_queue() and note.position == 0:
+            queue_btn_text = "Read Next"
+        else:
+            queue_btn_text = "First in Queue"
         html = """
             <script>destroyTinyMCE();</script>
             <div style='width: 100%; display: flex; flex-direction: column;'>
@@ -508,8 +514,8 @@ def get_reading_modal_html(note):
                             <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                                 <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                 <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
-                                <a onclick='if (!pdfLoading) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
+                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Proceed: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                                <a onclick='if (!pdfLoading) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a><br>
                                 <a onclick='if (!pdfLoading) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
                             </div>
                             {queue_readings_list}
@@ -564,11 +570,11 @@ def get_reading_modal_html(note):
         
        
         queue_info = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
-        queue_info_short = f"Queue [{note.position + 1}]" if note.is_in_queue() else "Unqueued"
+        queue_info_short = f"Priority" if note.is_in_queue() else "Unqueued"
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, text = text, queue_info = queue_info, queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow)
+        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, text = text, queue_info = queue_info, queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow)
         html = html.format_map(params)
         return html
     return ""
@@ -717,7 +723,12 @@ def get_reading_modal_bottom_bar(note):
     priority = get_priority(note_id)
     schedule_btns = get_schedule_btns(note_id, priority)
     time_str = "Added %s ago." % utility.misc.date_diff_to_string(diff)
-       
+    if note.is_in_queue() and note.position > 0:
+        queue_btn_text = "First in Queue"
+    elif note.is_in_queue() and note.position == 0:
+        queue_btn_text = "Read Next"
+    else:
+        queue_btn_text = "First in Queue"
     html = """
             <div id='siac-reading-modal-bottom-bar' style='width: 100%; flex: 0 0 auto; position: relative; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden; user-select: none;'>
                 <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap; display: relative;'>
@@ -727,8 +738,8 @@ def get_reading_modal_bottom_bar(note):
                     <div  id='siac-queue-actions'  style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                         <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                         <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Read Next: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
-                        <a onclick='noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;'>First In Queue</a><br>
+                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Proceed: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                        <a onclick='noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a><br>
                         <a onclick='noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
                     </div>
                     {queue_readings_list}
@@ -752,7 +763,7 @@ def get_reading_modal_bottom_bar(note):
    
     queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-    params = dict(note_id = note_id, time_str = time_str, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, schedule_btns=schedule_btns )
+    params = dict(note_id = note_id, time_str = time_str, queue_btn_text = queue_btn_text, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, schedule_btns=schedule_btns )
     html = html.format_map(params)
     return html
 
@@ -970,7 +981,7 @@ def get_pdf_viewer_html(nid, source, title, priority):
                 </div>
             </div>
             <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
-            <div id="text-layer" onmouseup='pdfKeyup(event);' onclick='textlayerClicked(event, this);' class="textLayer"></div>
+            <div id="text-layer" onmousedown='pdfMouseDown(event)' onmouseup='pdfKeyup(event);' onclick='textlayerClicked(event, this);' class="textLayer"></div>
         </div>
         <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
         <div class='siac-reading-modal-button-bar-wrapper' style="">

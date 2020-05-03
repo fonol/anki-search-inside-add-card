@@ -134,11 +134,13 @@ class NoteEditor(QDialog):
             self.save = QPushButton("\u2714 Save")
             self.setWindowTitle('Edit Note')
             self.save.clicked.connect(self.on_update_clicked)
+            self.priority = get_priority(self.note_id)
         # creating a new note
         else:
             self.save = QPushButton("\u2714 Create")
             self.setWindowTitle('New Note  (Ctrl/Cmd+Shift+N)')
             self.save.clicked.connect(self.on_create_clicked)
+            self.priority = 0
         
             self.save_and_stay = QPushButton("\u2714 Create && Keep Open")
             self.save_and_stay.clicked.connect(self.on_create_and_keep_open_clicked)
@@ -149,7 +151,6 @@ class NoteEditor(QDialog):
         self.cancel.clicked.connect(self.reject)
         priority_list = _get_priority_list()
         self.priority_list = priority_list
-        self.priority = get_priority(note_id)
 
         self.tabs = QTabWidget()
          
