@@ -35,7 +35,10 @@ class QtPrioritySlider(QWidget):
         if show_spec_sched:
             bg = QButtonGroup()
             if self.has_schedule:
-                vbox.addWidget(QLabel("Current schedule: " + schedule))
+                s_rep = schedule.split("|")[1]
+                s_rep_label = QLabel("Due next: " + s_rep)
+                s_rep_label.setAlignment(Qt.AlignCenter)
+                vbox.addWidget(s_rep_label)
                 self.no_sched_rb = QRadioButton("Keep schedule")
             else:
                 self.no_sched_rb = QRadioButton("No specific schedule")
@@ -113,7 +116,8 @@ class QtPrioritySlider(QWidget):
         self.setLayout(vbox_outer)
     
         self.update_lbl()
-        self.sched_radio_clicked()
+        if show_spec_sched:
+            self.sched_radio_clicked()
         self.slider.valueChanged.connect(self.update_lbl)
         self.slider.sliderReleased.connect(self.slider_released)
 
@@ -163,10 +167,11 @@ class QtPrioritySlider(QWidget):
             self.td_rb.setEnabled(True)
             self.tpd_rb.setEnabled(True)
             self.tpwd_rb.setEnabled(True)
-            self.no_sched_rb.setEnabled(True)
+            if self.show_spec_sched:
+                self.no_sched_rb.setEnabled(True)
 
-            if self.has_schedule:
-                self.remove_sched_rb.setEnabled(True)
+                if self.has_schedule:
+                    self.remove_sched_rb.setEnabled(True)
 
 
     def sched_radio_clicked(self):
@@ -218,7 +223,7 @@ class QtPrioritySlider(QWidget):
             val = self.td_inp.text()
             if val is None or len(val) == 0 or int(val) <= 0:
                 return None
-            due = datetime.now() + timedelta(days=int(val))
+            due = (datetime.now() + timedelta(days=int(val))).strftime('%Y-%m-%d-%H-%M-%S')
             return f"{now}|{due}|td:{val}"
         if self.tpd_rb.isChecked():
             val = self.tpd_inp.text()

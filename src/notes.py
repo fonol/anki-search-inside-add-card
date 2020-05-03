@@ -203,7 +203,7 @@ def update_priority_list(nid_to_update, schedule):
     scores = []
     nid_was_included = False
     now = datetime.now()
-    for nid, last_prio, last_prio_creation, current_position, reminder in current:
+    for nid, last_prio, last_prio_creation, current_position, rem in current:
         # last prio might be null, because of legacy queue system
         if last_prio is None:
             # lazy solution: set to average priority
@@ -227,13 +227,13 @@ def update_priority_list(nid_to_update, schedule):
                 ds = now.strftime('%Y-%m-%d-%H-%M-%S')
                 if not nid in [x[0] for x in to_update_in_log]:
                     to_update_in_log.append((nid, ds, schedule))
-                scores.append((nid, ds, last_prio, score))
+                scores.append((nid, ds, last_prio, score, rem))
         else:
             days_delta = max(0, (datetime.now() - _dt_from_date_str(last_prio_creation)).total_seconds() / 86400.0)
             # assert(days_delta >= 0)
             # assert(days_delta < 10000)
             score = _calc_score(last_prio, days_delta)
-            scores.append((nid, last_prio_creation, last_prio, score))
+            scores.append((nid, last_prio_creation, last_prio, score, rem))
     # note to be updated doesn't have to be in the results, it might not have been in the queue before
     if not nid_was_included:
         if schedule == 0:
@@ -241,9 +241,19 @@ def update_priority_list(nid_to_update, schedule):
         else:
             now += timedelta(seconds=1)
             ds = now.strftime('%Y-%m-%d-%H-%M-%S')
-            scores.append((nid_to_update, ds, schedule, 0))
+            reminder = get_reminder(nid_to_update)
+            scores.append((nid_to_update, ds, schedule, 0, reminder))
             to_update_in_log.append((nid_to_update, ds, schedule))
-    final_list = sorted(scores, key=lambda x: x[3], reverse=True)
+    sorted_by_scores = sorted(scores, key=lambda x: x[3], reverse=True)
+    final_list = [s for s in sorted_by_scores if s[4] is None or len(s[4].strip()) == 0 or not _specific_schedule_is_due_today(s[4])]
+    due_today = [s for s in sorted_by_scores if s[4] is not None and len(s[4].strip()) > 0 and _specific_schedule_is_due_today(s[4])]
+    if len(due_today) > 0:
+        due_today = sorted(due_today, key=lambda x : x[3], reverse=True)
+        final_list = due_today + final_list
+
+    
+    # now account for specific schedules
+    
     
     # assert(len(scores) == 0 or len(final_list)  >0)
     # for s in scores:
@@ -273,9 +283,24 @@ def update_priority_list(nid_to_update, schedule):
     return (index, len(final_list))
     
 
+def _specific_schedule_is_due_today(sched_str):
+    if not "|" in sched_str:
+        return False
+    dt = _dt_from_date_str(sched_str.split("|")[1])
+    return dt.date() == datetime.today().date()
+        
+
 def _calc_score(priority, days_delta):
     prio_factor = 1 + ((priority - 1)/99) * (PRIORITY_SCALE_FACTOR - 1)
     return days_delta * prio_factor
+
+def get_reminder(nid):
+    conn = _get_connection()
+    res = conn.execute(f"select reminder from notes where id = {nid} limit 1").fetchone()
+    if res is None:
+        return None
+    conn.close()
+    return res[0]
 
 def get_priority(nid):
     conn = _get_connection()
@@ -330,8 +355,13 @@ def recalculate_priority_queue():
         # assert(days_delta >= 0)
         # assert(days_delta < 10000)
         score = _calc_score(last_prio, days_delta)
-        scores.append((nid, last_prio_creation, last_prio, score))
-    final_list = sorted(scores, key=lambda x: x[3], reverse=True)
+        scores.append((nid, last_prio_creation, last_prio, score, reminder))
+    sorted_by_scores = sorted(scores, key=lambda x: x[3], reverse=True)
+    final_list = [s for s in sorted_by_scores if s[4] is None or len(s[4].strip()) == 0 or not _specific_schedule_is_due_today(s[4])]
+    due_today = [s for s in sorted_by_scores if s[4] is not None and len(s[4].strip()) > 0 and _specific_schedule_is_due_today(s[4])]
+    if len(due_today) > 0:
+        due_today = sorted(due_today, key=lambda x : x[3], reverse=True)
+        final_list = due_today + final_list
     
     # assert(len(scores) == 0 or len(final_list)  >0)
     # for s in scores:
