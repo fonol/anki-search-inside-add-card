@@ -1143,7 +1143,7 @@ function activateReadingModalFullscreen() {
     pdfBarsHidden = true;
     toggleReadingModalFullscreen();
 }
-function onReadingModalClose(nid) {
+function onReadingModalClose() {
     if (pdfLoading) {
         return;
     }
@@ -1161,6 +1161,7 @@ function onReadingModalClose(nid) {
     if (siacState.searchOnTyping) {
         setSearchOnTyping(true);
     }
+    pycmd("siac-exec index.ui.reading_modal.note_id = None")
 }
 function tryExtractTextFromTextNote() {
     saveTextNote($('#siac-reading-modal-top-bar').data('nid'), remove = false);
@@ -1212,6 +1213,10 @@ function schedSmallChange(slider) {
 }
 function schedSmallChanged(slider, nid) {
     pycmd("siac-reschedule-read-next " + nid + " " + slider.value);
+}
+function scheduleDialogQuickAction() {
+    cmd = $("input[name=sched]:checked").data("pycmd");
+    pycmd(`siac-eval index.ui.reading_modal.schedule_note(${cmd})`);
 }
 //
 // helpers

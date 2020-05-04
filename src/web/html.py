@@ -472,7 +472,7 @@ def get_reading_modal_html(note):
         if note.is_in_queue() and note.position > 0:
             queue_btn_text = "First in Queue"
         elif note.is_in_queue() and note.position == 0:
-            queue_btn_text = "Read Next"
+            queue_btn_text = "Done!"
         else:
             queue_btn_text = "First in Queue"
         html = """
@@ -514,7 +514,7 @@ def get_reading_modal_html(note):
                             <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                                 <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                 <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Proceed: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
                                 <a onclick='if (!pdfLoading) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-head");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a><br>
                                 <a onclick='if (!pdfLoading) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random In Queue</a>
                             </div>
@@ -726,7 +726,7 @@ def get_reading_modal_bottom_bar(note):
     if note.is_in_queue() and note.position > 0:
         queue_btn_text = "First in Queue"
     elif note.is_in_queue() and note.position == 0:
-        queue_btn_text = "Read Next"
+        queue_btn_text = "Done!"
     else:
         queue_btn_text = "First in Queue"
     html = """
@@ -738,7 +738,7 @@ def get_reading_modal_bottom_bar(note):
                     <div  id='siac-queue-actions'  style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                         <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                         <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Proceed: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
                         <a onclick='noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-head")' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a><br>
                         <a onclick='noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random")' class='siac-clickable-anchor'>Random In Queue</a>
                     </div>
@@ -759,7 +759,8 @@ def get_reading_modal_bottom_bar(note):
     """
     editable = not note.is_feed() and not note.is_pdf() and len(text) < 50000
     queue_info = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
-    queue_info_short = f"Queue [{note.position + 1}]" if note.is_in_queue() else "Unqueued"
+    # queue_info_short = f"Queue [{note.position + 1}]" if note.is_in_queue() else "Unqueued"
+    queue_info_short = f"Priority" if note.is_in_queue() else "Unqueued"
    
     queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
@@ -791,10 +792,11 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
             qi_title = utility.text.trim_if_longer_than(re.sub("[^ ]", "?",queue_item.get_title()), 40)
 
         hover_actions = "onmouseenter='showQueueInfobox(this, %s);' onmouseleave='leaveQueueItem(this);'" % (queue_item.id) if not hide else ""
-        #if the note is a pdf or feed, show a loader
+        #if the note is a pdf or feed, show a loader on click
         pdf_or_feed = queue_item.is_feed() or queue_item.is_pdf()
+        clock = "<img src='%s' style='height: 12px; width: 12px; margin-left: 4px;'/>" % (utility.misc.img_src("clock.png" if len(should_greyout) > 0 else "clock-orange.png")) if queue_item.is_or_was_due() else ""
         should_show_loader = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if pdf_or_feed else ""
-        queue_head_readings +=  "<a onclick='if (!pdfLoading) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s. %s</a><br>" % (should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, qi_title)
+        queue_head_readings +=  "<a onclick='if (!pdfLoading) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s.%s %s</a><br>" % (should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
         if ix > 3:
             break
 

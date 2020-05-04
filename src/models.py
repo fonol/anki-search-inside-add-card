@@ -16,8 +16,10 @@
 
 import utility.text
 import html
+from datetime import datetime, timedelta
 from .web_import import import_webpage
 from .config import get_config_value_or_default
+
 
 class Printable():
     
@@ -74,6 +76,33 @@ class SiacNote(Printable):
             return "Untitled"
         return self.title
 
+    def is_due_today(self):
+        if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
+            return False
+        dt = datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
+        return dt.date() == datetime.today().date()
+    
+    def is_or_was_due(self):
+        if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
+            return False
+        dt = datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
+        return dt.date() <= datetime.today().date()
+    
+    def is_due_sometime(self):
+        if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
+            return False
+        return True
+    
+    def current_due_date(self):
+        if not self.is_due_sometime():
+            return None
+        return datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
+
+    def due_days_delta(self):
+        return (datetime.now().date() - self.current_due_date().date()).days
+        
+    def schedule_type(self):
+        return self.reminder.split("|")[2][:2]
 
     def _build_non_anki_note_html(self):
         """

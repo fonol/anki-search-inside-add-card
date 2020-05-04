@@ -101,6 +101,13 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         # "Edit" clicked on a normal note
         openEditor(mw, int(cmd[15:]))
 
+    elif cmd.startswith("siac-eval "):
+        # direct eval, saves code
+        eval(cmd[10:])
+    elif cmd.startswith("siac-exec "):
+        # direct exec, saves code
+        exec(cmd[10:])
+
     elif cmd.startswith("siac-pin"):
         set_pinned(cmd[9:])
 
@@ -559,11 +566,15 @@ def expanded_on_bridge_cmd(handled, cmd, self):
             # if the head of the queue is currently opened, and the read next button is pressed,
             # recalculate queue, and then open the head
             if index.ui.reading_modal.note_id == nid:   
-                prio = get_priority(nid)
-                update_priority_list(nid, prio)
-                nid = get_head_of_queue()
-
-            index.ui.reading_modal.display(nid)
+                if index.ui.reading_modal.note.is_due_sometime():
+                    index.ui.reading_modal.display_schedule_dialog() 
+                else:
+                    prio = get_priority(nid)
+                    update_priority_list(nid, prio)
+                    nid = get_head_of_queue()
+                    index.ui.reading_modal.display(nid)
+            else:
+                index.ui.reading_modal.display(nid)
         else:
             index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;")
             tooltip("Queue is Empty! Add some items first.", period=4000)
@@ -632,7 +643,7 @@ def expanded_on_bridge_cmd(handled, cmd, self):
             index.ui.reading_modal.reload_bottom_bar(nid)
 
     elif cmd.startswith("siac-reschedule-read-next "):
-        # quick schedule btn clicked when in dynamic schedule mode
+        # quick schedule btn clicked
         nid = int(cmd.split()[1])
         sched = int(cmd.split()[2])
         # sched is -1 when "current" btn is clicked

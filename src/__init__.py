@@ -185,7 +185,7 @@ def insert_scripts():
         are processed ($<config value>$ placeholders are replaced) and inserted via <style> tags.
     """
     addon_id = utility.misc.get_addon_id()
-    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|ttf)$")
+    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf)$")
     port = mw.mediaServer.getPort()
     aqt.editor._html += f"""
     <script>

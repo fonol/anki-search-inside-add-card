@@ -329,6 +329,13 @@ def dynamic_sched_to_str(sched):
         return f"Low ({sched})"
     if sched >= 1:
         return f"Very low ({sched})"
+
+def update_reminder(nid, rem):
+    conn = _get_connection()
+    sql = "update notes set reminder=?, modified=datetime('now', 'localtime') where id=? "
+    conn.execute(sql, (rem, nid))
+    conn.commit()
+    conn.close()
         
 def recalculate_priority_queue():
     """
@@ -1094,7 +1101,7 @@ def _to_notes(db_list, pinned=[]):
     return notes
 
 def _date_now_str():
-    return datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    return datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
 def _dt_from_date_str(dtst):
     return datetime.strptime(dtst, '%Y-%m-%d-%H-%M-%S')

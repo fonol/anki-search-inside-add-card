@@ -22,6 +22,7 @@ import re
 import datetime
 import time
 import sys
+import typing
 import aqt
 from aqt import mw
 from aqt.utils import showInfo
@@ -29,6 +30,7 @@ from aqt.utils import showInfo
 import utility.tags
 import utility.text
 import utility.misc
+import utility.date
 
 from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
@@ -287,6 +289,159 @@ class ReadingModal:
 
     def show_pdfs_tab(self):
         self.sidebar.show_pdfs_tab()
+
+    @js
+    def display_schedule_dialog(self):
+        """
+            Called when the currently opened note has a schedule and after it is finished reading.
+        """
+        delta = self.note.due_days_delta()
+        if delta == 0:
+            header = "This note was scheduled for <b>today</b>."
+        elif delta == 1:
+            header = "This note was scheduled for <b>yesterday</b>, but not marked as done."
+        elif delta  == -1:
+            header = "This note is due <b>tomorrow</b>."
+        elif delta < -1:
+            header = f"This note is due in <b>{abs(delta)}</b> days."
+        else:
+            header = f"This note was due <b>{delta}</b> days ago, but not marked as done."
+
+        header +="<br>How do you want to proceed?"
+        options = ""
+            
+        if delta < 0:
+            options += """
+                    <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                    <label for='siac-rb-1'>Keep Schedule & Requeue</label><br>
+            """
+        else:
+            if self.note.schedule_type() == "td":
+                days_delta = int(self.note.reminder.split("|")[2][3:])
+                s = "s" if days_delta > 1 else ""
+                options += f"""
+                    <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                    <label for='siac-rb-1'>Show again in <b>{days_delta}</b> day{s}</label><br>
+                """
+            elif self.note.schedule_type() == "wd":
+                weekdays_due = [int(d) for d in self.note.reminder.split("|")[2][3:]]
+                next_date_due = utility.date.next_instance_of_weekdays(weekdays_due)
+                weekday_name = utility.date.weekday_name(next_date_due.weekday() + 1)
+                options += f"""
+                    <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                    <label for='siac-rb-1'>Show again next <b>{weekday_name}</b></label><br>
+                """
+            elif self.note.schedule_type() == "id":
+                days_delta = int(self.note.reminder.split("|")[2][3:])
+                s = "s" if days_delta > 1 else ""
+                options += f"""
+                    <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                    <label for='siac-rb-1'>Show again in <b>{days_delta}</b> day{s}</label><br>
+                """
+
+
+        options += """
+                <input id='siac-rb-2' type='radio' name='sched' data-pycmd="2">
+                <label for='siac-rb-2'>Remove Schedule & Requeue</label><br>
+                <input id='siac-rb-3' type='radio' name='sched' data-pycmd="3">
+                <label for='siac-rb-3'>Remove from Queue</label><br>
+            """
+        
+        modal = f"""
+            <div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">
+                {header}
+
+                <div style='text-align: left; border-top: 2px solid orange; user-select: none; cursor: pointer; border-bottom: 2px solid orange; margin: 10px 0 10px 0; padding: 15px;'>
+                  {options} 
+
+                </div>
+                <div style='text-align: left;'>
+                    <a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.show_schedule_change_modal()")'>Change Scheduling</a>
+                    <div class='siac-btn siac-btn-dark' style='float: right;' onclick='scheduleDialogQuickAction()'>Ok</div>
+                </div>
+
+            </div>
+        """
+        return """noteLoading=true;
+            $('#siac-rm-greyout').show(); 
+            if (document.getElementById('siac-schedule-dialog')) {
+                $('#siac-schedule-dialog').replaceWith(`%s`);
+            } else {
+                $('#siac-reading-modal-center').append(`%s`);
+            }
+            """ % (modal, modal)
+
+    @js
+    def show_schedule_change_modal(self):
+
+        body = """
+                Set a new Schedule 
+                <div style='text-align: left; border-top: 2px solid orange; user-select: none; cursor: pointer; border-bottom: 2px solid orange; margin: 10px 0 10px 0; padding: 15px;'>
+
+                    <input id='siac-rb-4' type='radio' name='sched'>
+                    <label for='siac-rb-4'>Show again in [n] days:</label><br>
+
+                    <input id='siac-rb-5' type='radio' name='sched'>
+                    <label for='siac-rb-5'>Show on Weekday(s):</label><br>
+
+                    <input id='siac-rb-6' type='radio' name='sched'>
+                    <label for='siac-rb-6'>Show every [n]th Day</label><br>
+                </div>
+                <div style='text-align: left;'>
+                    <a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.display_schedule_dialog()")'>Back</a>
+                    <div class='siac-btn siac-btn-dark' style='float: right;'>Ok</div>
+                </div>
+        """
+        return f"""
+            document.getElementById("siac-schedule-dialog").innerHTML = `{body}`;
+        """
+
+    def schedule_note(self, option: int):
+        delta = self.note.due_days_delta()
+        now = utility.date.date_now_stamp()
+        new_prio = get_priority(self.note_id)
+        if option == 1:
+            if delta < 0:
+                # keep schedule & requeue
+                new_reminder = self.note.reminder
+            else:
+                if self.note.schedule_type() == "td":
+                    # show again in n days
+                    days_delta = int(self.note.reminder.split("|")[2][3:])
+                    next_date_due = datetime.now() + timedelta(days=days_delta)
+                    new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|td:{days_delta}"
+
+                elif self.note.schedule_type() == "wd":
+                    # show again on next weekday instance
+                    wd_part = self.note.reminder.split("|")[2]
+                    weekdays_due = [int(d) for d in wd_part[3:]]
+                    next_date_due = utility.date.next_instance_of_weekdays(weekdays_due)
+                    new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|{wd_part}"
+                elif self.note.schedule_type() == "id":
+                    # show again according to interval
+                    days_delta = int(self.note.reminder.split("|")[2][3:])
+                    next_date_due = datetime.now() + timedelta(days=days_delta)
+                    new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|id:{days_delta}"
+        elif option == 2:
+            #remove schedule & requeue
+            new_reminder = ""
+        elif option == 3:
+            # remove entirely from queue
+            new_reminder = ""
+            new_prio = 0
+        
+        update_reminder(self.note_id, new_reminder)
+        update_priority_list(self.note_id, new_prio)
+        nid = get_head_of_queue()
+        if nid is not None and nid >= 0:
+            self.display(nid)
+        else:
+            self._editor.web.eval("""
+                onReadingModalClose();
+            """)
+
+
+        
 
     @js
     def show_img_field_picker_modal(self, img_src):
