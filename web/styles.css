@@ -1486,7 +1486,7 @@ span.tag-symbol {
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 15px;
-    width: 250px;
+    width: 280px;
     border: 2px solid $modalBorderColor$;
     text-align: center;
 }

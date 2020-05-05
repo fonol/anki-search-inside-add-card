@@ -196,7 +196,7 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         note = get_note(nid)
         read_stats = get_read_stats(nid)
         index.ui.js("""
-            if (pdfLoading || noteLoading) {
+            if (pdfLoading || noteLoading || modalShown) {
                 hideQueueInfobox();
             } else {
                 document.getElementById('siac-pdf-bottom-tabs').style.visibility = "hidden";
@@ -416,6 +416,22 @@ def expanded_on_bridge_cmd(handled, cmd, self):
             $('#siac-del-modal').remove();
         """)
 
+    elif cmd == "siac-delete-current-user-note":
+        # delete the currently opened note in the reading modal
+        id = index.ui.reading_modal.note_id
+        delete_note(id)
+        if index is not None:
+            index.deleteNote(id)
+        run_hooks("user-note-deleted")
+        head = get_head_of_queue()
+        tooltip("Deleted note.")
+        if head is None or head < 0:
+            index.ui.js("""
+                onReadingModalClose(); 
+            """)
+        else:
+            index.ui.reading_modal.display(head)
+
 
     elif cmd.startswith("siac-read-user-note "):
         id = int(cmd.split()[1])
@@ -489,95 +505,76 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         update_note_text(id, text)
 
     elif cmd.startswith("siac-requeue "):
-        # queue btn pressed 
+        # priority slider released
         nid = int(cmd.split()[1])
-        queue_sched = int(cmd.split()[2])
-        inserted_index = update_priority_list(nid, queue_sched)
-        index.ui.reading_modal.update_bottom_bar_positions(nid, inserted_index[0], inserted_index[1])
-        tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(queue_sched)}</b></center><center>Recalculated Priority Queue.</center>")
-
-    elif cmd.startswith("siac-requeue-tt "):
-        # queue btn pressed in tooltip
-        nid = int(cmd.split()[1])
-        nid_displayed = cmd.split()[3]
-        queue_sched = int(cmd.split()[2])
-        inserted_index = update_priority_list(nid, queue_sched)
-        if nid_displayed != nid:
-            pos_displayed = get_position(nid_displayed)
-            index.ui.reading_modal.update_bottom_bar_positions(nid_displayed, pos_displayed, inserted_index[1])
+        new_prio = int(cmd.split()[2])
+        note = get_note(nid)
+        if note.is_due_sometime():
+            add_to_prio_log(nid, new_prio)
+            index.ui.reading_modal.display_schedule_dialog() 
         else:
-            index.ui.reading_modal.update_bottom_bar_positions(nid, inserted_index[0], inserted_index[1])
-        tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(queue_sched)}</b></center><center>Recalculated Priority Queue.</center>")
-        
+            update_priority_list(nid, new_prio)
+            nid = get_head_of_queue()
+            index.ui.reading_modal.display(nid)
+            if new_prio == 0:
+                tooltip(f"<center>Removed from Queue.</center>")
+            else:
+                tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
 
-    elif cmd.startswith("siac-remove-from-queue "):
-        # called from the buttons on the left of the reading modal bottom bar 
-        nid = int(cmd.split()[1])
-        remove_from_priority_list(nid)
-        queue_readings_list = get_queue_head_display(nid)
-        index.ui.js("afterRemovedFromQueue();")
-        index.ui.js("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)
 
     elif cmd.startswith("siac-update-prio "):
+        # prio slider in bottom bar released on value != 0
+        # not used atm
         nid = int(cmd.split()[1])
-        prio = int(cmd.split()[2])
-        update_priority_list(nid, prio)
-    
-    elif cmd.startswith("siac-remove-from-queue-tt "):
-        # called from the tooltip
-        nid = int(cmd.split()[1])
-        nid_displayed = cmd.split()[2]
-        ix = remove_from_priority_list(nid)
-        pos = get_position(nid_displayed)
-        queue_len = ix[1]
-        queue_readings_list = get_queue_head_display(nid)
-        if pos is None:
-            pos_js = """
-                document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued';
-                $('.siac-queue-sched-btn:first').html('Unqueued');
-                """
-        else: 
-            pos_js = """
-                document.getElementById('siac-queue-lbl').innerHTML = 'Position: %s / %s';
-                $('.siac-queue-sched-btn:first').html('%s / %s');
-            """ % (pos + 1, queue_len, pos + 1, queue_len)
-        js = """
-        if ($('#siac-reading-modal-top-bar').data('nid') === '%s')  {
-            document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued';
-             $('.siac-queue-sched-btn:first').html('Unqueued');
-        } else {
-            %s
-        }
-        $('#siac-queue-readings-list').replaceWith(`%s`)""" % (nid, pos_js, queue_readings_list)
-        index.ui.js(js)
+        new_prio = int(cmd.split()[2])
+        update_priority_without_timestamp(nid, new_prio)
+        # todo: find a better solution
+        recalculate_priority_queue()
+        index.ui.reading_modal.update_reading_bottom_bar(nid)
+        tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
+
+    elif cmd.startswith("siac-remove-from-queue"):
+        # called from the buttons on the left of the reading modal bottom bar 
+        # if not " " in cmd:
+        #     nid = index.ui.reading_modal.note_id
+        # else:
+        #     nid = int(cmd.split()[1])
+        # remove_from_priority_list(nid)
+        # queue_readings_list = get_queue_head_display(nid)
+        # index.ui.js("afterRemovedFromQueue();")
+        # index.ui.js("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)    
+        update_priority_list(index.ui.reading_modal.note_id, 0)
+        nid = get_head_of_queue()
+        if nid is None or nid < 0:
+            index.ui.eval("onReadingModalClose();")
+        else:
+            index.ui.reading_modal.display(nid)
+        tooltip(f"<center>Removed from Queue.</center>")
 
     elif cmd == "siac-user-note-queue-read-random":
         rand_id = get_random_id_from_queue()
         if rand_id >= 0:
             index.ui.reading_modal.display(rand_id)
         else:
-            index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;")
+            index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
             tooltip("Queue is Empty! Add some items first.", period=4000)
-
 
     elif cmd == "siac-user-note-queue-read-head":
         nid = get_head_of_queue()
-        if nid >= 0:
-            # if the head of the queue is currently opened, and the read next button is pressed,
-            # recalculate queue, and then open the head
-            if index.ui.reading_modal.note_id == nid:   
-                if index.ui.reading_modal.note.is_due_sometime():
-                    index.ui.reading_modal.display_schedule_dialog() 
-                else:
-                    prio = get_priority(nid)
-                    update_priority_list(nid, prio)
-                    nid = get_head_of_queue()
-                    index.ui.reading_modal.display(nid)
-            else:
-                index.ui.reading_modal.display(nid)
+        if nid is not None and nid >= 0:
+            index.ui.reading_modal.display(nid)
         else:
-            index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;")
             tooltip("Queue is Empty! Add some items first.", period=4000)
+
+    elif cmd == "siac-user-note-done":
+        if index.ui.reading_modal.note.is_due_sometime():
+            index.ui.reading_modal.display_schedule_dialog() 
+        else:
+            nid = index.ui.reading_modal.note_id
+            prio = get_priority(nid)
+            update_priority_list(nid, prio)
+            nid = get_head_of_queue()
+            index.ui.reading_modal.display(nid)
 
     elif cmd.startswith("siac-update-note-tags "):
         nid = int(cmd.split()[1])
@@ -641,32 +638,6 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         if scheduler.exec_() and scheduler.queue_schedule is not None:
             update_priority_list(nid, scheduler.queue_schedule)
             index.ui.reading_modal.reload_bottom_bar(nid)
-
-    elif cmd.startswith("siac-reschedule-read-next "):
-        # quick schedule btn clicked
-        nid = int(cmd.split()[1])
-        sched = int(cmd.split()[2])
-        # sched is -1 when "current" btn is clicked
-        if sched == -1:
-            sched = get_priority(nid)
-            if sched is None:
-                tooltip("Item has no priority yet.", period=3500)
-                return
-        try:
-            if sched == 0:
-                queue = _get_priority_list()
-                if len(queue) == 1:
-                    tootltip("Cannot remove and open next, queue only contains this item.")
-                    return
-            update_priority_list(nid, sched)
-            if sched == 0:
-                tooltip(f"""Note removed from queue.""")
-            else:
-                tooltip(f"""Note moved back in queue.<br><center>Priority: <b>{dynamic_sched_to_str(sched)}</b></center>""")
-        except:
-            tooltip("Something went wrong during queue recalculation.")
-        nid = get_head_of_queue()
-        index.ui.reading_modal.display(nid)
 
     elif cmd.startswith("siac-left-side-width "):
         value = int(cmd.split()[1])

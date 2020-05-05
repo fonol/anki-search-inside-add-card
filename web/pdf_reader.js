@@ -33,6 +33,7 @@ var pdfDisplayedMarksTable = null;
 var timestamp;
 var noteLoading = false;
 var pdfLoading = false;
+var modalShown = false;
 var pdfTooltipEnabled = true;
 var iframeIsDisplayed = false;
 var pdfFullscreen = false;
@@ -324,6 +325,9 @@ function destroyTinyMCE() {
 }
 
 function toggleQueue() {
+    if (noteLoading || pdfLoading || modalShown) {
+        return;
+    }
     let $wr = $("#siac-queue-sched-wrapper");
     if ($wr.hasClass('active')) {
         $wr.css({ "max-width": "0px", "overflow": "hidden" });
@@ -342,7 +346,6 @@ function queueSchedBtnClicked(btn_el) {
 }
 function afterRemovedFromQueue() {
     toggleQueue();
-    $('.siac-queue-sched-btn').removeClass("active");
     $('.siac-queue-sched-btn').first().addClass("active").html('Unqueued');
 }
 function _startTimer(elementToUpdateId) {
@@ -1035,7 +1038,7 @@ function bringPDFIntoView() {
     }
 }
 function beforeNoteQuickOpen() {
-    if (noteLoading || pdfLoading) {
+    if (noteLoading || pdfLoading || modalShown) {
         return false;
     }
     if (pdfDisplayed) {
@@ -1071,10 +1074,10 @@ function pdfUrlSearch(input) {
     $('#siac-iframe-btn').removeClass('expanded');
 }
 function showQueueInfobox(elem, nid) {
-    if (pdfLoading || noteLoading) { return; }
+    if (pdfLoading || noteLoading || modalShown) { return; }
     pycmd('siac-queue-info ' + nid);
     document.documentElement.style.setProperty('--ttop', (elem.offsetTop) + 'px');
-    if (pdfLoading || noteLoading) { return; }
+    if (pdfLoading || noteLoading || modalShown) { return; }
 
 }
 function leaveQueueItem(elem) {
@@ -1085,21 +1088,23 @@ function leaveQueueItem(elem) {
     }, 400);
 }
 function hideQueueInfobox() {
-    document.getElementById("siac-queue-infobox").style.display = "none";
-    document.getElementById("siac-pdf-bottom-tabs").style.visibility = "visible";
+    if (document.getElementById("siac-queue-infobox")) {
+        document.getElementById("siac-queue-infobox").style.display = "none";
+        document.getElementById("siac-pdf-bottom-tabs").style.visibility = "visible";
+    }
 }
 function greyoutBottom() {
-    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link').addClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').addClass("siac-disabled");
 }
 function ungreyoutBottom() {
-    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link').removeClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').removeClass("siac-disabled");
 }
 function unhideQueue(nid) {
-    if (pdfLoading || noteLoading) { return; }
+    if (pdfLoading || noteLoading || modalShown) { return; }
     pycmd("siac-unhide-pdf-queue " + nid);
 }
 function hideQueue(nid) {
-    if (pdfLoading || noteLoading) { return; }
+    if (pdfLoading || noteLoading || modalShown) { return; }
     pycmd("siac-hide-pdf-queue " + nid);
 }
 function toggleReadingModalBars() {
@@ -1191,32 +1196,46 @@ function modalTabsLeftClicked(tab, elem) {
 }
 
 function schedChange(slider) {
-    document.getElementById('siac-sched-prio-val').innerHTML = slider.value;
-    if (slider.value > 0) {
-        // document.getElementById('siac-sched-prio-lbl').innerHTML = "Updated.";
-    } else {
-        document.getElementById('siac-sched-prio-lbl').innerHTML = "Release to remove from Queue";
-    }
+    document.getElementById('siac-sched-prio-val').innerHTML = prioVerbose(slider.value);
+}
+function prioVerbose(prio) {
+    if (prio >= 85)
+        return `Very high (<b>${prio}</b>)`;
+    if (prio >= 70)
+        return `High (<b>${prio}</b>)`;
+    if (prio >= 30)
+        return `Medium (<b>${prio}</b>)`;
+    if (prio >= 15)
+        return `Low (<b>${prio}</b>)`;
+    if (prio >= 1)
+        return `Very low (<b>${prio}</b>)`;
+    return "Remove from Queue (<b>0</b>)";
 }
 function schedChanged(slider, nid) {
     $('#siac-quick-sched-btn').removeClass('expanded');
-    if (slider.value > 0) {
+    // if (slider.value > 0) {
         pycmd("siac-requeue " + nid + " " + slider.value);
-        document.getElementById('siac-sched-prio-lbl').innerHTML = "Updated.";
-    } else {
-        pycmd("siac-remove-from-queue " + nid);
-    }
-    document.getElementById("siac-first-in-queue-btn").innerHTML = "First in Queue";
+    // } else {
+    //     pycmd("siac-remove-from-queue " + nid);
+    // }
+}
+function schedSmallChanged(slider, nid) {
+    pycmd("siac-requeue " + nid + " " + slider.value);
 }
 function schedSmallChange(slider) {
     document.getElementById('siac-slider-small-lbl').innerHTML = slider.value;
 }
-function schedSmallChanged(slider, nid) {
-    pycmd("siac-reschedule-read-next " + nid + " " + slider.value);
-}
+
 function scheduleDialogQuickAction() {
-    cmd = $("input[name=sched]:checked").data("pycmd");
+    let cmd = $("input[name=sched]:checked").data("pycmd");
     pycmd(`siac-eval index.ui.reading_modal.schedule_note(${cmd})`);
+}
+function removeDialogOk() {
+    if ($("input[name=del]:checked").data("pycmd") == "1") {
+        pycmd("siac-remove-from-queue");
+    } else {
+        pycmd("siac-delete-current-user-note");
+    }
 }
 //
 // helpers

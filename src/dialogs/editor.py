@@ -903,12 +903,12 @@ class PriorityTab(QWidget):
         self.vbox.addWidget(lbl)
         self.vbox.addWidget(self.t_view)
 
-        bottom_box = QHBoxLayout()
-        self.shuffle_btn = QPushButton("Shuffle")
-        self.shuffle_btn.clicked.connect(self.on_shuffle_btn_clicked)
-        bottom_box.addWidget(self.shuffle_btn)
-        bottom_box.addStretch(1)
-        self.vbox.addLayout(bottom_box)
+        # bottom_box = QHBoxLayout()
+        # # self.shuffle_btn = QPushButton("Shuffle")
+        # # # self.shuffle_btn.clicked.connect(self.on_shuffle_btn_clicked)
+        # # bottom_box.addWidget(self.shuffle_btn)
+        # # bottom_box.addStretch(1)
+        # self.vbox.addLayout(bottom_box)
 
         self.setLayout(self.vbox)
         if parent.dark_mode_used:

@@ -33,6 +33,7 @@ class Printable():
 class SiacNote(Printable):
 
     note_type = "user"
+    MISSED_NOTES = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
 
     def __init__(self, props):
         self.id = props[0]
@@ -82,6 +83,13 @@ class SiacNote(Printable):
         dt = datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
         return dt.date() == datetime.today().date()
     
+    def is_scheduled(self):
+        if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
+            return False
+        if SiacNote.MISSED_NOTES != "place-front":
+            return self.is_due_today()
+        return self.is_or_was_due()
+
     def is_or_was_due(self):
         if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
             return False

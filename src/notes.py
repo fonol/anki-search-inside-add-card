@@ -36,11 +36,18 @@ except:
 import utility.misc
 import utility.tags
 import utility.text
+import utility.date
 
 db_path = None
 
 # How many times more important is a priority 100 item than a priority 1 item?
 PRIORITY_SCALE_FACTOR = get_config_value_or_default("notes.queue.priorityScaleFactor", 5)
+
+# if a note was scheduled for some time point in the past, but not done, 
+# 1. schedule can be removed ('remove-schedule'), 
+# 2. note can be placed in front of the queue ('place-front') or
+# 3. note can be scheduled again from the missed due date on ('new-schedule')
+MISSED_NOTES_HANDLING = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
 
 @unique
 class PDFMark(Enum):
@@ -185,6 +192,30 @@ def remove_from_priority_list(nid_to_remove):
     return update_priority_list(nid_to_remove, 0)
 
 
+def update_priority_without_timestamp(nid_to_update, new_prio):
+    """
+    Updates the priority for the given note, without adding a new entry in 
+    queue_prio_log, if there is already one.
+    This is useful to simply change the priority of a note in the queue without having it moved 
+    at the end of the queue, which would happen if a new entry would be created (time delta would be 0 or very small).
+    """
+    conn = _get_connection()
+    res = conn.execute(f"select rowid from queue_prio_log where nid = {nid_to_update} order by created desc limit 1").fetchone()
+    if res is None or len(res) == 0:
+        created = _date_now_str()
+        conn.execute(f"insert into queue_prio_log (nid, prio, type, created) values ({nid_to_update}, {new_prio}, '', '{created}')")
+    else:
+        conn.execute(f"update queue_prio_log set prio = {new_prio} where rowid = {res[0]}")
+    conn.commit()
+    conn.close()
+
+def add_to_prio_log(nid, prio):
+    created = _date_now_str()
+    conn = _get_connection()
+    conn.execute(f"insert into queue_prio_log (nid, prio, type, created) values ({nid}, {prio}, '', '{created}')")
+    conn.commit()
+    conn.close()
+
 def update_priority_list(nid_to_update, schedule):
     """
     Call this after a note has been added or updated. 
@@ -251,6 +282,10 @@ def update_priority_list(nid_to_update, schedule):
         due_today = sorted(due_today, key=lambda x : x[3], reverse=True)
         final_list = due_today + final_list
 
+
+
+
+        
     
     # now account for specific schedules
     
@@ -287,7 +322,16 @@ def _specific_schedule_is_due_today(sched_str):
     if not "|" in sched_str:
         return False
     dt = _dt_from_date_str(sched_str.split("|")[1])
-    return dt.date() == datetime.today().date()
+    if MISSED_NOTES_HANDLING != "place-front":
+        return dt.date() == datetime.today().date()
+    return dt.date() <= datetime.today().date()
+
+def _specific_schedule_was_due_before_today(sched_str):
+    if not "|" in sched_str:
+        return False
+    dt = _dt_from_date_str(sched_str.split("|")[1])
+    return dt.date() < datetime.today().date()
+        
         
 
 def _calc_score(priority, days_delta):
@@ -329,6 +373,7 @@ def dynamic_sched_to_str(sched):
         return f"Low ({sched})"
     if sched >= 1:
         return f"Very low ({sched})"
+    return "Not in Queue (0)"
 
 def update_reminder(nid, rem):
     conn = _get_connection()
@@ -345,6 +390,8 @@ def recalculate_priority_queue():
     current = _get_priority_list_with_last_prios()
     scores = []
     to_update_in_log = []
+    to_remove_schedules = []
+    to_reschedule = []
     now = datetime.now()
     for nid, last_prio, last_prio_creation, current_position, reminder in current:
         # last prio might be null, because of legacy queue system
@@ -370,6 +417,37 @@ def recalculate_priority_queue():
         due_today = sorted(due_today, key=lambda x : x[3], reverse=True)
         final_list = due_today + final_list
     
+    if MISSED_NOTES_HANDLING != "place-front":
+        for f in final_list:
+            if f[4] is None or len(f[4].strip()) == 0:
+                continue
+            if _specific_schedule_was_due_before_today(f[4]):
+                if MISSED_NOTES_HANDLING == "remove-schedule":
+                    to_remove_schedules.append(f[0])
+                elif MISSED_NOTES_HANDLING == "new-schedule":
+                    n = Note([None for i in range(12)])
+                    n.reminder = f[4]
+                    delta = n.due_days_delta()
+                    now = _date_now_str()
+                    if n.schedule_type() == "td":
+                        # show again in n days
+                        days_delta = int(n.reminder.split("|")[2][3:])
+                        next_date_due = datetime.now() + timedelta(days=days_delta)
+                        new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|td:{days_delta}"
+
+                    elif n.schedule_type() == "wd":
+                        # show again on next weekday instance
+                        wd_part = n.reminder.split("|")[2]
+                        weekdays_due = [int(d) for d in wd_part[3:]]
+                        next_date_due = utility.date.next_instance_of_weekdays(weekdays_due)
+                        new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|{wd_part}"
+                    elif n.schedule_type() == "id":
+                        # show again according to interval
+                        days_delta = int(n.reminder.split("|")[2][3:])
+                        next_date_due = datetime.now() + timedelta(days=days_delta)
+                        new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|id:{days_delta}"
+                    to_reschedule.append((f[0], new_reminder))
+    
     # assert(len(scores) == 0 or len(final_list)  >0)
     # for s in scores:
         # assert(s[3] >= 0)
@@ -382,6 +460,10 @@ def recalculate_priority_queue():
         c.execute(f"update notes set position = {ix} where id = {f[0]};")
     for nid, created, prio in to_update_in_log:
         c.execute(f"insert into queue_prio_log (nid, prio, created) values ({nid}, {prio}, '{created}');")
+    for nid in to_remove_schedules:
+        c.execute(f"update notes set reminder = '' where id = {nid};")
+    for nid, new_rem in to_reschedule:
+        c.execute(f"update notes set reminder = '{new_rem}' where id = {nid};")
     conn.commit()
     conn.close()
 
@@ -588,8 +670,6 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
     conn.execute(sql, (title, text, source, tags, reminder, id))
     conn.commit()
     conn.close()
-    # if schedule is NOT_ADD/keep priority, don't recalc queue
-    # if queue_schedule !=kk 0:
     update_priority_list(id, queue_schedule)
     index = get_index()
     if index is not None:

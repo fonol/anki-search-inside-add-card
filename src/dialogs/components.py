@@ -2,6 +2,7 @@ from aqt.qt import *
 import aqt
 from ..notes import dynamic_sched_to_str
 from datetime import datetime, timedelta
+import utility.date
 
 class QtPrioritySlider(QWidget):
 
@@ -35,8 +36,7 @@ class QtPrioritySlider(QWidget):
         if show_spec_sched:
             bg = QButtonGroup()
             if self.has_schedule:
-                s_rep = schedule.split("|")[1]
-                s_rep_label = QLabel("Due next: " + s_rep)
+                s_rep_label = QLabel(utility.date.schedule_verbose(schedule))
                 s_rep_label.setAlignment(Qt.AlignCenter)
                 vbox.addWidget(s_rep_label)
                 self.no_sched_rb = QRadioButton("Keep schedule")
@@ -164,10 +164,10 @@ class QtPrioritySlider(QWidget):
         else:
             self.value_lbl.setText(dynamic_sched_to_str(self.slider.value()).replace("(", "(<b>").replace(")", "</b>)"))
             self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #2496dc; border-radius: 3px;}")
-            self.td_rb.setEnabled(True)
-            self.tpd_rb.setEnabled(True)
-            self.tpwd_rb.setEnabled(True)
             if self.show_spec_sched:
+                self.td_rb.setEnabled(True)
+                self.tpd_rb.setEnabled(True)
+                self.tpwd_rb.setEnabled(True)
                 self.no_sched_rb.setEnabled(True)
 
                 if self.has_schedule:
