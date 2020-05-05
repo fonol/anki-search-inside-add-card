@@ -59,5 +59,20 @@ def schedule_verbose(sched: str) -> str:
         return f"This note was scheduled {delta_days} days ago to appear in {stype_val} day(s)."
 
 
+def get_new_reminder(stype: str, svalue: str) -> str:
+    now = date_now_stamp()
+    if stype == "td":
+        # show again in n days
+        next_date_due = datetime.now() + timedelta(days=int(svalue))
+        return f"{now}|{dt_to_stamp(next_date_due)}|td:{svalue}"
+    elif stype == "wd":
+        # show again on next weekday instance
+        weekdays_due = [int(d) for d in svalue]
+        next_date_due = next_instance_of_weekdays(weekdays_due)
+        new_reminder = f"{now}|{dt_to_stamp(next_date_due)}|wd:{svalue}"
+    elif stype == "id":
+        # show again according to interval
+        next_date_due = datetime.now() + timedelta(days=int(svalue))
+        new_reminder = f"{now}|{dt_to_stamp(next_date_due)}|id:{svalue}"
         
 

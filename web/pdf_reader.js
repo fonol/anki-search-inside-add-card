@@ -1213,11 +1213,7 @@ function prioVerbose(prio) {
 }
 function schedChanged(slider, nid) {
     $('#siac-quick-sched-btn').removeClass('expanded');
-    // if (slider.value > 0) {
-        pycmd("siac-requeue " + nid + " " + slider.value);
-    // } else {
-    //     pycmd("siac-remove-from-queue " + nid);
-    // }
+    pycmd("siac-requeue " + nid + " " + slider.value);
 }
 function schedSmallChanged(slider, nid) {
     pycmd("siac-requeue " + nid + " " + slider.value);
@@ -1235,6 +1231,27 @@ function removeDialogOk() {
         pycmd("siac-remove-from-queue");
     } else {
         pycmd("siac-delete-current-user-note");
+    }
+}
+function updateSchedule() {
+    let checked = $("input[name=sched]:checked").data("pycmd");
+    if (checked == "4") {
+        let td = document.getElementById("siac-sched-td-inp").value;    
+        if (!td) { pycmd('siac-notification Value is empty!'); return; }
+        pycmd("siac-update-schedule td " + td);
+    } else if (checked == "5") {
+        let w = '';
+        $('#siac-sched-wd input').each(function(ix) {
+            if ($(this).is(":checked")) {
+                w += (ix + 1).toString();
+            }
+        });
+        if (!w.length) { pycmd('siac-notification Value is empty!'); return; }
+        pycmd("siac-update-schedule wd " + w);
+    } else {
+        let id = document.getElementById("siac-sched-id-inp").value;    
+        if (!id) { pycmd('siac-notification Value is empty!'); return; }
+        pycmd("siac-update-schedule id " + id);
     }
 }
 //

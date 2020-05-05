@@ -24,6 +24,7 @@ from datetime import datetime as dt
 import sys
 import typing
 import aqt
+import uuid
 from aqt import mw
 from aqt.utils import showInfo, tooltip
 
@@ -421,33 +422,48 @@ class ReadingModal:
             $('#siac-reading-modal-center').append(`%s`);
             """ % (modal)
 
-
-
     @js
     def show_schedule_change_modal(self):
 
-        body = """
+        body = f"""
                 Set a new Schedule 
                 <div style='text-align: left; border-top: 2px solid orange; user-select: none; cursor: pointer; border-bottom: 2px solid orange; margin: 10px 0 10px 0; padding: 15px;'>
 
                     <label class='blue-hover' for='siac-rb-4'>
-                        <input id='siac-rb-4' type='radio' name='sched'>
+                        <input id='siac-rb-4' type='radio' data-pycmd='4' checked name='sched'>
                         <span>Show again in [n] days:</span>
                     </label><br>
-
+                    <div class='w-100' style='margin: 10px 0 10px 0;'>
+                        <input id='siac-sched-td-inp' type='number' min='1' style='width: 70px; color: lightgrey; border: 2px outset #b2b2a0; background: transparent;'/>
+                        <div class='siac-btn siac-btn-dark' style='margin-left: 15px;' onclick='document.getElementById("siac-sched-td-inp").value = 1;'>Tomorrow</div>
+                        <div class='siac-btn siac-btn-dark' style='margin-left: 5px;' onclick='document.getElementById("siac-sched-td-inp").value = 7;'>In 7 Days</div>
+                    </div>
                     <label class='blue-hover' for='siac-rb-5'>
-                        <input id='siac-rb-5' type='radio' name='sched'>
+                        <input id='siac-rb-5' type='radio'  data-pycmd='5' name='sched'>
                         <span>Show on Weekday(s):</span>
                     </label><br>
+                    <div class='w-100' style='margin: 10px 0 10px 0;' id='siac-sched-wd'>
+                        <label><input type='checkbox' style='vertical-align: middle;'/>M</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>T</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>W</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>T</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>F</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>S</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>S</label>
+                    </div>
 
                     <label class='blue-hover' for='siac-rb-6'>
-                        <input id='siac-rb-6' type='radio' name='sched'>
+                        <input id='siac-rb-6' type='radio'  data-pycmd='6' name='sched'>
                         <span>Show every [n]th Day</span>
                     </label><br>
+                    <div class='w-100' style='margin: 10px 0 10px 0;'>
+                        <input id='siac-sched-id-inp' type='number' min='1' style='width: 70px; color: lightgrey; border: 2px outset #b2b2a0; background: transparent;'/>
+                    </div>
+
                 </div>
                 <div style='text-align: left;'>
                     <a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.display_schedule_dialog()")'>Back</a>
-                    <div class='siac-btn siac-btn-dark' style='float: right;'>Ok</div>
+                    <div class='siac-btn siac-btn-dark' style='float: right;' onclick='updateSchedule()'>Set Schedule</div>
                 </div>
         """
         return f"""

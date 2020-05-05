@@ -575,6 +575,21 @@ def expanded_on_bridge_cmd(handled, cmd, self):
             update_priority_list(nid, prio)
             nid = get_head_of_queue()
             index.ui.reading_modal.display(nid)
+    
+    elif cmd.startswith("siac-update-schedule "):
+        stype = cmd.split()[1]
+        svalue = cmd.split()[2]
+        new_reminder = utility.date.get_new_reminder(stype, svalue)
+        update_reminder(index.ui.reading_modal.note_id, new_reminder)
+        nid = index.ui.reading_modal.note_id
+        prio = get_priority(nid)
+        update_priority_list(nid, prio)
+        nid = get_head_of_queue()   
+        if nid is not None and nid >= 0:
+            index.ui.reading_modal.display(nid)
+        else:
+            tooltip("Queue is Empty! Add some items first.", period=4000)
+        
 
     elif cmd.startswith("siac-update-note-tags "):
         nid = int(cmd.split()[1])
