@@ -266,6 +266,7 @@ class NoteEditor(QDialog):
         self.create_tab.text.setText("")
         if self.create_tab.source.text().endswith(".pdf"):
             self.create_tab.source.setText("")
+        self.create_tab.title.setFocus()
         
 
     def on_update_clicked(self):
