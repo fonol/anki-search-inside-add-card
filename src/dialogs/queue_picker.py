@@ -21,6 +21,7 @@ import aqt
 import random
 import os
 from .editor import NoteEditor
+from .components import QtPrioritySlider
 from ..notes import *
 from ..notes import _get_priority_list
 from ..internals import perf_time
@@ -308,30 +309,11 @@ class PDFsTab(QWidget):
         self.t_view_right = QListWidget()
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
-        self.enq_lbl = QLabel("Add to Queue: ")
-        self.enq_1 = QPushButton("5")
-        self.enq_1.setMinimumWidth(15)
-        self.enq_1.clicked.connect(lambda: self.enqueue(5))
-        self.enq_2 = QPushButton("4")
-        self.enq_2.setMinimumWidth(15)
-        self.enq_2.clicked.connect(lambda: self.enqueue(4))
-        self.enq_3 = QPushButton("3")
-        self.enq_3.setMinimumWidth(15)
-        self.enq_3.clicked.connect(lambda: self.enqueue(3))
-        self.enq_4 = QPushButton("2")
-        self.enq_4.setMinimumWidth(15)
-        self.enq_4.clicked.connect(lambda: self.enqueue(2))
-        self.enq_5 = QPushButton("1")
-        self.enq_5.setMinimumWidth(15)
-        self.enq_5.clicked.connect(lambda: self.enqueue(1))
+     
+        self.slider = QtPrioritySlider(0, show_spec_sched=False)
+        self.slider.set_released_fn(self.enqueue)
         btn_hbox = QHBoxLayout()
-        btn_hbox.addWidget(self.enq_lbl)
-        btn_hbox.addWidget(self.enq_1)
-        btn_hbox.addWidget(self.enq_2)
-        btn_hbox.addWidget(self.enq_3)
-        btn_hbox.addWidget(self.enq_4)
-        btn_hbox.addWidget(self.enq_5)
-        btn_hbox.addStretch(1)
+        btn_hbox.addWidget(self.slider)
 
         self.vbox_right.addLayout(btn_hbox)
         self.setLayout(self.vbox_right)
@@ -364,6 +346,8 @@ class PDFsTab(QWidget):
         self.fill_list(res)
 
     def enqueue(self, sched):
+        if sched == 0: 
+            return
         sels = self.t_view_right.selectedItems()
         if sels is None or len(sels) == 0:
             return
@@ -396,30 +380,11 @@ class TextNotesTab(QWidget):
         self.t_view_right = QListWidget()
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
-        self.enq_lbl = QLabel("Add to Queue: ")
-        self.enq_1 = QPushButton("5")
-        self.enq_1.setMinimumWidth(15)
-        self.enq_1.clicked.connect(lambda: self.enqueue(5))
-        self.enq_2 = QPushButton("4")
-        self.enq_2.setMinimumWidth(15)
-        self.enq_2.clicked.connect(lambda: self.enqueue(4))
-        self.enq_3 = QPushButton("3")
-        self.enq_3.setMinimumWidth(15)
-        self.enq_3.clicked.connect(lambda: self.enqueue(3))
-        self.enq_4 = QPushButton("2")
-        self.enq_4.setMinimumWidth(15)
-        self.enq_4.clicked.connect(lambda: self.enqueue(2))
-        self.enq_5 = QPushButton("1")
-        self.enq_5.setMinimumWidth(15)
-        self.enq_5.clicked.connect(lambda: self.enqueue(1))
+    
+        self.slider = QtPrioritySlider(0, show_spec_sched=False)
+        self.slider.set_released_fn(self.enqueue)
         btn_hbox = QHBoxLayout()
-        btn_hbox.addWidget(self.enq_lbl)
-        btn_hbox.addWidget(self.enq_1)
-        btn_hbox.addWidget(self.enq_2)
-        btn_hbox.addWidget(self.enq_3)
-        btn_hbox.addWidget(self.enq_4)
-        btn_hbox.addWidget(self.enq_5)
-        btn_hbox.addStretch(1)
+        btn_hbox.addWidget(self.slider)
 
         self.vbox_right.addLayout(btn_hbox)
         self.setLayout(self.vbox_right)
@@ -449,6 +414,8 @@ class TextNotesTab(QWidget):
         self.fill_list(res)
 
     def enqueue(self, sched):
+        if sched == 0: 
+            return
         sels = self.t_view_right.selectedItems()
         if sels is None or len(sels) == 0:
             return
@@ -618,31 +585,11 @@ class TagsTab(QWidget):
         self.empty_and_enqueue_all_btn.clicked.connect(self.empty_queue_and_enqueue_all)
         self.vbox_right.addWidget(self.enqueue_all_btn)
         self.vbox_right.addWidget(self.empty_and_enqueue_all_btn)
-        self.enq_lbl = QLabel("Add to Queue: ")
-        self.enq_1 = QPushButton("5")
-        self.enq_1.setMinimumWidth(15)
-        self.enq_1.clicked.connect(lambda: self.enqueue(5))
-        self.enq_2 = QPushButton("4")
-        self.enq_2.setMinimumWidth(15)
-        self.enq_2.clicked.connect(lambda: self.enqueue(4))
-        self.enq_3 = QPushButton("3")
-        self.enq_3.setMinimumWidth(15)
-        self.enq_3.clicked.connect(lambda: self.enqueue(3))
-        self.enq_4 = QPushButton("2")
-        self.enq_4.setMinimumWidth(15)
-        self.enq_4.clicked.connect(lambda: self.enqueue(2))
-        self.enq_5 = QPushButton("1")
-        self.enq_5.setMinimumWidth(15)
-        self.enq_5.clicked.connect(lambda: self.enqueue(1))
-        self.enq_5.adjustSize()
+     
+        self.slider = QtPrioritySlider(0, show_spec_sched=False)
+        self.slider.set_released_fn(self.enqueue)
         btn_hbox = QHBoxLayout()
-        btn_hbox.addWidget(self.enq_lbl)
-        btn_hbox.addWidget(self.enq_1)
-        btn_hbox.addWidget(self.enq_2)
-        btn_hbox.addWidget(self.enq_3)
-        btn_hbox.addWidget(self.enq_4)
-        btn_hbox.addWidget(self.enq_5)
-        btn_hbox.addStretch(1)
+        btn_hbox.addWidget(self.slider)
         self.vbox_right.addLayout(btn_hbox)
         # self.list.itemDoubleClicked.connect(self.add_pdf_note)
         self.tag_tree.itemClicked.connect(self.tree_item_clicked)
@@ -712,6 +659,8 @@ class TagsTab(QWidget):
             self.load_tags_unused_notes(self.tag_displayed)
 
     def enqueue(self, sched):
+        if sched == 0: 
+            return
         sels = self.list.selectedItems()
         if sels is None or len(sels) == 0:
             return

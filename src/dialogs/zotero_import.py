@@ -29,13 +29,14 @@ from ..notes import *
 from ..config import get_config_value_or_default
 import utility.text
 import utility.misc
+from .components import QtPrioritySlider
 
 class ZoteroImporter(QDialog):
     """
         Create pdf notes from a Zotero exported CSV file.
     """
     def __init__(self, parent):
-        self.queue_schedule = QueueSchedule.NOT_ADD.value
+        self.queue_schedule = 0
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
         self.mw = aqt.mw
         self.parent = parent
@@ -78,98 +79,14 @@ class ZoteroImporter(QDialog):
         self.gb.setLayout(gb_vbox)
         self.vbox.addWidget(self.gb)
 
-        # hbox_check = QHBoxLayout()
+        # hbox_check = QHBoxLayout() 
         # replace_ws_cb = QCheckBox("Replace in file name")
         # replace_regex = QLineEdit()
         # replace_repl = QLineEdit()
         # hbox_check.
-
-        self.queue_section = QGroupBox("Queue")
-        ex_v = QVBoxLayout()
-        queue_lbl = QLabel("Add to Queue?")
-
-        queue_lbl.setAlignment(Qt.AlignCenter)
-        ex_v.addWidget(queue_lbl, Qt.AlignCenter)
-        ex_v.addSpacing(5)
-
-        self.q_lbl_1 = QPushButton(" Don't Add ")
-        self.q_lbl_1.setObjectName("q_1")
-        self.q_lbl_1.setFlat(True)
-        self.q_lbl_1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_1.clicked.connect(lambda: self.queue_selected(0))
-
-        self.dark_mode_used = utility.misc.dark_mode_is_used(mw.addonManager.getConfig(__name__))
-        if self.dark_mode_used:
-            btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }"
-            btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: lightgrey; font-weight: bold; } QPushButton:hover { border: 2px solid #2496dc; color: black; }"
-        else:
-            btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: grey; }"
-            btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: black; font-weight: bold;}"
-        self.q_lbl_1.setStyleSheet(btn_style_active)
-        ex_v.addWidget(self.q_lbl_1)
-        ex_v.setAlignment(self.q_lbl_1, Qt.AlignCenter)
-
-        lbl = QLabel("Priority")
-        lbl.setAlignment(Qt.AlignCenter)
-        ex_v.addWidget(lbl)
-
-        self.q_lbl_2 = QPushButton("5 - Very High")
-        self.q_lbl_2.setObjectName("q_2")
-        self.q_lbl_2.setMinimumWidth(220)
-        self.q_lbl_2.setFlat(True)
-        self.q_lbl_2.setStyleSheet(btn_style)
-        self.q_lbl_2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_2.clicked.connect(lambda: self.queue_selected(5))
-        ex_v.addWidget(self.q_lbl_2)
-        ex_v.setAlignment(self.q_lbl_2, Qt.AlignCenter)
-
-
-        self.q_lbl_3 = QPushButton("4 - High")
-        self.q_lbl_3.setObjectName("q_3")
-        self.q_lbl_3.setMinimumWidth(185)
-        self.q_lbl_3.setFlat(True)
-        self.q_lbl_3.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_3.setStyleSheet(btn_style)
-        self.q_lbl_3.clicked.connect(lambda: self.queue_selected(4))
-        ex_v.addWidget(self.q_lbl_3)
-        ex_v.setAlignment(self.q_lbl_3, Qt.AlignCenter)
-
-
-        self.q_lbl_4 = QPushButton("3 - Medium")
-        self.q_lbl_4.setMinimumWidth(150)
-        self.q_lbl_4.setObjectName("q_4")
-        self.q_lbl_4.setFlat(True)
-        self.q_lbl_4.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_4.setStyleSheet(btn_style)
-        self.q_lbl_4.clicked.connect(lambda: self.queue_selected(3))
-        ex_v.addWidget(self.q_lbl_4)
-        ex_v.setAlignment(self.q_lbl_4, Qt.AlignCenter)
-
-
-        self.q_lbl_5 = QPushButton("2 - Low")
-        self.q_lbl_5.setMinimumWidth(115)
-        self.q_lbl_5.setObjectName("q_5")
-        self.q_lbl_5.setFlat(True)
-        self.q_lbl_5.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_5.setStyleSheet(btn_style)
-        self.q_lbl_5.clicked.connect(lambda: self.queue_selected(2))
-        ex_v.addWidget(self.q_lbl_5)
-        ex_v.setAlignment(self.q_lbl_5, Qt.AlignCenter)
-
-
-        self.q_lbl_6 = QPushButton("1 - Very Low")
-        self.q_lbl_6.setMinimumWidth(80)
-        self.q_lbl_6.setObjectName("q_6")
-        self.q_lbl_6.setFlat(True)
-        self.q_lbl_6.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_6.setStyleSheet(btn_style)
-        self.q_lbl_6.clicked.connect(lambda: self.queue_selected(1))
-        ex_v.addWidget(self.q_lbl_6)
-        ex_v.setAlignment(self.q_lbl_6, Qt.AlignCenter)
-
-        self.queue_section.setLayout(ex_v)
-        self.vbox.addWidget(self.queue_section)
-
+       
+        self.slider = QtPrioritySlider(0)
+        self.vbox.addWidget(self.slider)
         self.vbox.addSpacing(15)
 
         hbox_bot = QHBoxLayout()
@@ -184,7 +101,7 @@ class ZoteroImporter(QDialog):
         hbox_bot.addWidget(self.reject_btn)
         self.vbox.addLayout(hbox_bot)
 
-        self.resize(350, 450)
+        self.resize(350, 350)
         self.setLayout(self.vbox)
         btn_styles = """
         QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_3,QPushButton:hover#q_4,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; }
@@ -196,7 +113,7 @@ class ZoteroImporter(QDialog):
 
         """ % btn_styles
         self.setStyleSheet(styles)
-
+        
 
     def queue_selected(self, queue_schedule):
         lbls = [self.q_lbl_1, self.q_lbl_6, self.q_lbl_5, self.q_lbl_4, self.q_lbl_3, self.q_lbl_2]
@@ -229,20 +146,20 @@ class ZoteroImporter(QDialog):
     def get_name(self):
         if self._chosen_name is None or len(self._chosen_name) == 0:
             name = utility.text.strip_url(self.chosen_url)
-            name = utility.text.clean_file_name(name)
+            name = utility.text.clean_file_name(name) 
             return name
         name = utility.text.clean_file_name(self._chosen_name)
         return name
 
-
-
+    
+  
 
 
     def scan_csv(self):
         total_count = 0
         with open(self.file_path_disp.text(), newline='', encoding="utf-8") as zotero_csv:
             csvreader = csv.DictReader(zotero_csv, delimiter=',')
-
+                
             for zot_entry in csvreader:
                 attachment_string = zot_entry["File Attachments"]
                 attachment_array = re.split(";", attachment_string)
@@ -253,7 +170,7 @@ class ZoteroImporter(QDialog):
             else:
                 self.status.setText(f"Found no PDF attachments in the CSV.")
                 self.status.setStyleSheet('color: red')
-
+                       
 
     def read_csv(self):
 
@@ -278,7 +195,7 @@ class ZoteroImporter(QDialog):
                 for attachment in attachment_array:
                     #search for PDFs
 
-                    if re.match(".*?.pdf", attachment):
+                    if re.match(".*?.pdf", attachment):                       
 
                         id = get_pdf_id_for_source(attachment.strip())
                         if id >= 0:
@@ -315,7 +232,7 @@ class ZoteroImporter(QDialog):
                             note_title = append_to_string(note_title, entry_doi, " - ", "")
 
                         # let's generate a note text with all that data we might or might not have
-                        note_text = "<b>" + entry_title + "</b><br><br>"
+                        note_text = note_title + "<br>"
 
                         # lets add author and so on:
                         note_text = append_to_string(note_text, entry_authors, "<b>Authors:</b>", "<br>")
@@ -327,11 +244,6 @@ class ZoteroImporter(QDialog):
                         note_text = append_to_string(note_text, entry_edition, "<b>Edition:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_publisher, "<b>Publisher:</b>", "<br>")
                         note_text = append_to_string(note_text, entry_url, "<b>Url:</b>", "<br>")
-
-                        # add object identifiers
-                        note_text = append_to_string(note_text, entry_doi, "<b>DOI:</b>", "<br>")
-                        note_text = append_to_string(note_text, entry_isbn, "<b>ISBN</b>", "<br>")
-                        note_text = append_to_string(note_text, entry_issn, "<b>ISSN</b>", "<br>")
 
                         # add tags as keywords
                         if (entry_mantags or entry_autotags): note_text = note_text + "<br><b>Keywords:</b><br>"

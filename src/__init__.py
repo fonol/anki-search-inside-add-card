@@ -185,7 +185,7 @@ def insert_scripts():
         are processed ($<config value>$ placeholders are replaced) and inserted via <style> tags.
     """
     addon_id = utility.misc.get_addon_id()
-    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|ttf)$")
+    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf)$")
     port = mw.mediaServer.getPort()
     aqt.editor._html += f"""
     <script>
@@ -283,6 +283,7 @@ def addOptionsToContextMenu(clickInfo):
 def setup_hooks():
     add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-deleted", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("user-note-deleted", lambda: recalculate_priority_queue())
     add_hook("user-note-edited", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
 

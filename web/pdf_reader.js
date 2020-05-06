@@ -19,6 +19,7 @@
 var pdfImgSel = { canvas: null, context: null, startX: null, endX: null, startY: null, endY: null, cvsOffLeft: null, cvsOffTop: null, mouseIsDown: false, canvasDispl: null };
 var remainingSeconds = 30 * 60;
 var readingTimer;
+var pdfTextLayerMetaKey = false;
 var pdfDisplayed;
 var pdfDisplayedViewPort;
 var pdfPageRendering = false;
@@ -32,6 +33,7 @@ var pdfDisplayedMarksTable = null;
 var timestamp;
 var noteLoading = false;
 var pdfLoading = false;
+var modalShown = false;
 var pdfTooltipEnabled = true;
 var iframeIsDisplayed = false;
 var pdfFullscreen = false;
@@ -323,6 +325,9 @@ function destroyTinyMCE() {
 }
 
 function toggleQueue() {
+    if (noteLoading || pdfLoading || modalShown) {
+        return;
+    }
     let $wr = $("#siac-queue-sched-wrapper");
     if ($wr.hasClass('active')) {
         $wr.css({ "max-width": "0px", "overflow": "hidden" });
@@ -341,7 +346,6 @@ function queueSchedBtnClicked(btn_el) {
 }
 function afterRemovedFromQueue() {
     toggleQueue();
-    $('.siac-queue-sched-btn').removeClass("active");
     $('.siac-queue-sched-btn').first().addClass("active").html('Unqueued');
 }
 function _startTimer(elementToUpdateId) {
@@ -655,6 +659,12 @@ function togglePDFNightMode(elem) {
     elem.innerHTML = pdfColorMode;
     rerenderPDFPage(pdfDisplayedCurrentPage, false);
 }
+function pdfMouseDown(e) {
+    if (e.metaKey) {
+        pdfTextLayerMetaKey = true;
+    }
+}
+
 /**
  *  executed after keyup in the pdf pane
  */
@@ -688,13 +698,15 @@ function pdfKeyup(e) {
         $('#siac-pdf-tooltip').data("selection", text);
         // limit height again to prevent selection jumping
         $('#text-layer > span').css("height", "200px");
-    } else if ((e.ctrlKey || e.shiftKey) && Highlighting.colorSelected.id > 0 && windowHasSelection()) {
+    } else if (((e.ctrlKey && document.body.className.indexOf('isMac') === -1) || pdfTextLayerMetaKey) && Highlighting.colorSelected.id > 0 && windowHasSelection()) {
         // selected text, ctrl key pressed -> highlight 
         Highlighting.highlight();
-    } else if ((e.ctrlKey || e.shiftKey) && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
+    } else if (((e.ctrlKey && document.body.className.indexOf('isMac') === -1) || pdfTextLayerMetaKey) && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
         // clicked with ctrl, text insert btn is active -> insert text area at coordinates
         Highlighting.insertText(e);
     }
+    pdfTextLayerMetaKey = false;
+
 }
 
 
@@ -1026,7 +1038,7 @@ function bringPDFIntoView() {
     }
 }
 function beforeNoteQuickOpen() {
-    if (noteLoading || pdfLoading) {
+    if (noteLoading || pdfLoading || modalShown) {
         return false;
     }
     if (pdfDisplayed) {
@@ -1062,10 +1074,10 @@ function pdfUrlSearch(input) {
     $('#siac-iframe-btn').removeClass('expanded');
 }
 function showQueueInfobox(elem, nid) {
-    if (pdfLoading || noteLoading) { return; }
+    if (pdfLoading || noteLoading || modalShown) { return; }
     pycmd('siac-queue-info ' + nid);
     document.documentElement.style.setProperty('--ttop', (elem.offsetTop) + 'px');
-    if (pdfLoading || noteLoading) { return; }
+    if (pdfLoading || noteLoading || modalShown) { return; }
 
 }
 function leaveQueueItem(elem) {
@@ -1076,21 +1088,23 @@ function leaveQueueItem(elem) {
     }, 400);
 }
 function hideQueueInfobox() {
-    document.getElementById("siac-queue-infobox").style.display = "none";
-    document.getElementById("siac-pdf-bottom-tabs").style.visibility = "visible";
+    if (document.getElementById("siac-queue-infobox")) {
+        document.getElementById("siac-queue-infobox").style.display = "none";
+        document.getElementById("siac-pdf-bottom-tabs").style.visibility = "visible";
+    }
 }
 function greyoutBottom() {
-    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link').addClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').addClass("siac-disabled");
 }
 function ungreyoutBottom() {
-    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link').removeClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').removeClass("siac-disabled");
 }
 function unhideQueue(nid) {
-    if (pdfLoading || noteLoading) { return; }
+    if (pdfLoading || noteLoading || modalShown) { return; }
     pycmd("siac-unhide-pdf-queue " + nid);
 }
 function hideQueue(nid) {
-    if (pdfLoading || noteLoading) { return; }
+    if (pdfLoading || noteLoading || modalShown) { return; }
     pycmd("siac-hide-pdf-queue " + nid);
 }
 function toggleReadingModalBars() {
@@ -1134,7 +1148,7 @@ function activateReadingModalFullscreen() {
     pdfBarsHidden = true;
     toggleReadingModalFullscreen();
 }
-function onReadingModalClose(nid) {
+function onReadingModalClose() {
     if (pdfLoading) {
         return;
     }
@@ -1152,6 +1166,7 @@ function onReadingModalClose(nid) {
     if (siacState.searchOnTyping) {
         setSearchOnTyping(true);
     }
+    pycmd("siac-exec index.ui.reading_modal.note_id = None")
 }
 function tryExtractTextFromTextNote() {
     saveTextNote($('#siac-reading-modal-top-bar').data('nid'), remove = false);
@@ -1180,7 +1195,65 @@ function modalTabsLeftClicked(tab, elem) {
     pycmd("siac-reading-modal-tabs-left-" + tab);
 }
 
+function schedChange(slider) {
+    document.getElementById('siac-sched-prio-val').innerHTML = prioVerbose(slider.value);
+}
+function prioVerbose(prio) {
+    if (prio >= 85)
+        return `Very high (<b>${prio}</b>)`;
+    if (prio >= 70)
+        return `High (<b>${prio}</b>)`;
+    if (prio >= 30)
+        return `Medium (<b>${prio}</b>)`;
+    if (prio >= 15)
+        return `Low (<b>${prio}</b>)`;
+    if (prio >= 1)
+        return `Very low (<b>${prio}</b>)`;
+    return "Remove from Queue (<b>0</b>)";
+}
+function schedChanged(slider, nid) {
+    $('#siac-quick-sched-btn').removeClass('expanded');
+    pycmd("siac-requeue " + nid + " " + slider.value);
+}
+function schedSmallChanged(slider, nid) {
+    pycmd("siac-requeue " + nid + " " + slider.value);
+}
+function schedSmallChange(slider) {
+    document.getElementById('siac-slider-small-lbl').innerHTML = slider.value;
+}
 
+function scheduleDialogQuickAction() {
+    let cmd = $("input[name=sched]:checked").data("pycmd");
+    pycmd(`siac-eval index.ui.reading_modal.schedule_note(${cmd})`);
+}
+function removeDialogOk() {
+    if ($("input[name=del]:checked").data("pycmd") == "1") {
+        pycmd("siac-remove-from-queue");
+    } else {
+        pycmd("siac-delete-current-user-note");
+    }
+}
+function updateSchedule() {
+    let checked = $("input[name=sched]:checked").data("pycmd");
+    if (checked == "4") {
+        let td = document.getElementById("siac-sched-td-inp").value;    
+        if (!td) { pycmd('siac-notification Value is empty!'); return; }
+        pycmd("siac-update-schedule td " + td);
+    } else if (checked == "5") {
+        let w = '';
+        $('#siac-sched-wd input').each(function(ix) {
+            if ($(this).is(":checked")) {
+                w += (ix + 1).toString();
+            }
+        });
+        if (!w.length) { pycmd('siac-notification Value is empty!'); return; }
+        pycmd("siac-update-schedule wd " + w);
+    } else {
+        let id = document.getElementById("siac-sched-id-inp").value;    
+        if (!id) { pycmd('siac-notification Value is empty!'); return; }
+        pycmd("siac-update-schedule id " + id);
+    }
+}
 //
 // helpers
 //

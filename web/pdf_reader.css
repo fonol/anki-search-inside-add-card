@@ -476,21 +476,6 @@
     vertical-align: top;
     margin: 40px 5px 0px 5px;
 }
-.siac-queue-sched-btn-tt {
-    font-size: 10px;
-    padding: 1px 3px 1px 3px;
-    border: 2px outset #2496dc;
-    color: lightgrey;
-    user-select: none;
-    cursor: pointer;
-    text-align: center;
-    border-radius: 3px;
-    margin: 5px 0 5px 0;
-}
-.siac-queue-sched-btn-tt:hover {
-    border-color: white;
-    color: white;
-}
 .siac-queue-sched-btn:hover, .siac-queue-sched-btn-hor:hover {
     color: white;
     border-color: white;
@@ -519,8 +504,14 @@
     display: inline-block;
     border: 1px solid transparent;
 }
-.siac-clickable-anchor.siac-disabled,.siac-queue-picker-icn.siac-disabled,.siac-page-mark-link.siac-disabled {
+.siac-clickable-anchor.siac-disabled,.siac-queue-picker-icn.siac-disabled,.siac-page-mark-link.siac-disabled,.siac-queue-sched-btn.siac-disabled {
     color: grey !important;
+}
+.siac-sched-icn.siac-disabled {
+    opacity: 0.3;
+}
+.siac-queue-sched-btn.siac-disabled {
+    border-color: grey !important;
 }
 .siac-clickable-anchor:not(.siac-disabled):hover {
     transform: scale(1.02);
@@ -699,7 +690,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
 .siac-text-hl {
     mix-blend-mode: normal;
     z-index: 3;
-    border: 3px outset darkorange;
+    border: 3px outset #2496dc;
     font-family: 'Open Sans', sans-serif;
     white-space: pre-wrap;
     outline: none;
@@ -731,4 +722,37 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     opacity: 0.4;
     background-color: black;
     z-index: 5;
+}
+.siac-prio-slider, .siac-prio-slider-small {
+    width: 250px;
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    background: #d3d3d3; /* Grey background */
+    outline: none; /* Remove outline */
+    opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+    transition: opacity .2s;
+    height: 10px;
+    border-radius: 3px;
+}
+.siac-prio-slider-small {
+    width: 150px;
+    height: 8px;
+}
+.siac-prio-slider:hover, .siac-prio-slider-small:hover {
+    opacity: 1;
+  }
+  .siac-prio-slider::-webkit-slider-thumb, .siac-prio-slider-small::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 20px;
+    background: #2496dc;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .siac-prio-slider::-webkit-slider-thumb:hover, .siac-prio-slider-small::-webkit-slider-thumb:hover {
+      filter: brightness(1.4);
+  }
+label input:checked ~ span {
+    font-weight: bold;
 }

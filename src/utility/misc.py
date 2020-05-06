@@ -318,3 +318,5 @@ def _retToColor(retention):
     if retention < (100 / 7.0) * 6:
         return "#7fff00"
     return "#32ff00"
+
+

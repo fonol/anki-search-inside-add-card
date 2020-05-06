@@ -19,16 +19,19 @@ import platform
 import os
 import json
 import re
-import datetime
 import time
+from datetime import datetime as dt
 import sys
+import typing
 import aqt
+import uuid
 from aqt import mw
-from aqt.utils import showInfo
+from aqt.utils import showInfo, tooltip
 
 import utility.tags
 import utility.text
 import utility.misc
+import utility.date
 
 from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
@@ -111,7 +114,6 @@ class ReadingModal:
                 if f in self._editor.note:
                     i = self._editor.note._fieldOrd(f)
                     self._editor.web.eval(f"$('.field').eq({i}).text(`{title}`);")
-
 
     @js
     def show_width_picker(self):
@@ -231,6 +233,7 @@ class ReadingModal:
                 var typedarray = new Uint8Array(fileReader.result);
                 var loadingTask = pdfjsLib.getDocument(typedarray, {nativeImageDecoderSupport: 'display'});
                 loadingTask.promise.catch(function(error) {
+                        console.log(error);
                         $('#siac-pdf-loader-wrapper').remove();
                         document.getElementById('siac-pdf-top').style.overflowY = 'auto';
 
@@ -287,6 +290,232 @@ class ReadingModal:
 
     def show_pdfs_tab(self):
         self.sidebar.show_pdfs_tab()
+
+    @js
+    def display_schedule_dialog(self):
+        """
+            Called when the currently opened note has a schedule and after it is finished reading.
+        """
+        delta = self.note.due_days_delta()
+        if delta == 0:
+            header = "This note was scheduled for <b>today</b>."
+        elif delta == 1:
+            header = "This note was scheduled for <b>yesterday</b>, but not marked as done."
+        elif delta  == -1:
+            header = "This note is due <b>tomorrow</b>."
+        elif delta < -1:
+            header = f"This note is due in <b>{abs(delta)}</b> days."
+        else:
+            header = f"This note was due <b>{delta}</b> days ago, but not marked as done."
+
+        header +="<br>How do you want to proceed?"
+        options = ""
+            
+        if delta < 0:
+            options += """
+                    <label class='blue-hover' for='siac-rb-1'>
+                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                        <span>Keep that Schedule</span>
+                    </label><br>
+            """
+        else:
+            if self.note.schedule_type() == "td":
+                days_delta = int(self.note.reminder.split("|")[2][3:])
+                s = "s" if days_delta > 1 else ""
+                options += f"""
+                    <label class='blue-hover' for='siac-rb-1'>
+                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                        <span>Show again in <b>{days_delta}</b> day{s}</span>
+                    </label><br>
+                """
+            elif self.note.schedule_type() == "wd":
+                weekdays_due = [int(d) for d in self.note.reminder.split("|")[2][3:]]
+                next_date_due = utility.date.next_instance_of_weekdays(weekdays_due)
+                weekday_name = utility.date.weekday_name(next_date_due.weekday() + 1)
+                options += f"""
+                    <label class='blue-hover' for='siac-rb-1'>
+                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                        <span>Show again next <b>{weekday_name}</b></span>
+                    </label><br>
+                """
+            elif self.note.schedule_type() == "id":
+                days_delta = int(self.note.reminder.split("|")[2][3:])
+                s = "s" if days_delta > 1 else ""
+                options += f"""
+                    <label class='blue-hover' for='siac-rb-1'>
+                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                        <span>Show again in <b>{days_delta}</b> day{s}</span>
+                    </label><br>
+                """
+
+
+        options += """
+                <label class='blue-hover' for='siac-rb-2'>
+                    <input id='siac-rb-2' type='radio' name='sched' data-pycmd="2">
+                    <span>Rem. Schedule, but keep in Queue</span>
+                </label><br>
+                <label class='blue-hover' for='siac-rb-3'>
+                    <input id='siac-rb-3' type='radio' name='sched' data-pycmd="3">
+                    <span>Remove from Queue</span>
+                </label><br>
+            """
+        
+        modal = f"""
+            <div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">
+                {header}
+
+                <div style='text-align: left; border-top: 2px solid orange; user-select: none; cursor: pointer; border-bottom: 2px solid orange; margin: 10px 0 10px 0; padding: 15px;'>
+                  {options} 
+
+                </div>
+                <div style='text-align: left;'>
+                    <a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.show_schedule_change_modal()")'>Change Scheduling</a>
+                    <div class='siac-btn siac-btn-dark' style='float: right;' onclick='scheduleDialogQuickAction()'>Ok</div>
+                </div>
+
+            </div>
+        """
+        return """modalShown=true;
+            $('#siac-rm-greyout').show(); 
+            if (document.getElementById('siac-schedule-dialog')) {
+                $('#siac-schedule-dialog').replaceWith(`%s`);
+            } else {
+                $('#siac-reading-modal-center').append(`%s`);
+            }
+            """ % (modal, modal)
+    
+
+    @js
+    def show_remove_dialog(self):
+        """
+            Shows a dialog to either remove the current note from the queue or to delete it altogether.
+        """
+        title = utility.text.trim_if_longer_than(self.note.get_title(), 40).replace("`", "")
+        rem_cl = "checked" if self.note.position is not None and self.note.position >= 0 else "disabled"
+        del_cl = "checked" if self.note.position is None or self.note.position < 0 else ""
+        modal = f"""
+            <div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">
+                Remove / delete this note?<br><br>
+                {title}
+
+                <div style='text-align: left; border-top: 2px solid orange; user-select: none; cursor: pointer; border-bottom: 2px solid orange; margin: 10px 0 10px 0; padding: 15px;'>
+                    <label class='blue-hover' for='siac-rb-1'>
+                        <input id='siac-rb-1' type='radio' {rem_cl} name='del' data-pycmd="1">
+                        <span>Remove from Queue</span>
+                    </label><br>
+                    <label class='blue-hover' for='siac-rb-2'>
+                        <input id='siac-rb-2' type='radio' {del_cl} name='del' data-pycmd="2">
+                        <span>Delete Note</span>
+                    </label><br>
+
+                </div>
+                <div style='text-align: right;'>
+                    <div class='siac-btn siac-btn-dark' style='margin-right: 10px;' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Cancel</div>
+                    <div class='siac-btn siac-btn-dark' onclick='removeDialogOk()'>Ok</div>
+                </div>
+
+            </div>
+        """
+        return """modalShown=true;
+            $('#siac-timer-popup').hide();
+            $('#siac-rm-greyout').show(); 
+            $('#siac-reading-modal-center').append(`%s`);
+            """ % (modal)
+
+    @js
+    def show_schedule_change_modal(self):
+
+        body = f"""
+                Set a new Schedule 
+                <div style='text-align: left; border-top: 2px solid orange; user-select: none; cursor: pointer; border-bottom: 2px solid orange; margin: 10px 0 10px 0; padding: 15px;'>
+
+                    <label class='blue-hover' for='siac-rb-4'>
+                        <input id='siac-rb-4' type='radio' data-pycmd='4' checked name='sched'>
+                        <span>Show again in [n] days:</span>
+                    </label><br>
+                    <div class='w-100' style='margin: 10px 0 10px 0;'>
+                        <input id='siac-sched-td-inp' type='number' min='1' style='width: 70px; color: lightgrey; border: 2px outset #b2b2a0; background: transparent;'/>
+                        <div class='siac-btn siac-btn-dark' style='margin-left: 15px;' onclick='document.getElementById("siac-sched-td-inp").value = 1;'>Tomorrow</div>
+                        <div class='siac-btn siac-btn-dark' style='margin-left: 5px;' onclick='document.getElementById("siac-sched-td-inp").value = 7;'>In 7 Days</div>
+                    </div>
+                    <label class='blue-hover' for='siac-rb-5'>
+                        <input id='siac-rb-5' type='radio'  data-pycmd='5' name='sched'>
+                        <span>Show on Weekday(s):</span>
+                    </label><br>
+                    <div class='w-100' style='margin: 10px 0 10px 0;' id='siac-sched-wd'>
+                        <label><input type='checkbox' style='vertical-align: middle;'/>M</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>T</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>W</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>T</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>F</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>S</label>
+                        <label style='margin: 0 0 0 4px;'><input style='vertical-align: middle;' type='checkbox'/>S</label>
+                    </div>
+
+                    <label class='blue-hover' for='siac-rb-6'>
+                        <input id='siac-rb-6' type='radio'  data-pycmd='6' name='sched'>
+                        <span>Show every [n]th Day</span>
+                    </label><br>
+                    <div class='w-100' style='margin: 10px 0 10px 0;'>
+                        <input id='siac-sched-id-inp' type='number' min='1' style='width: 70px; color: lightgrey; border: 2px outset #b2b2a0; background: transparent;'/>
+                    </div>
+
+                </div>
+                <div style='text-align: left;'>
+                    <a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.display_schedule_dialog()")'>Back</a>
+                    <div class='siac-btn siac-btn-dark' style='float: right;' onclick='updateSchedule()'>Set Schedule</div>
+                </div>
+        """
+        return f"""
+            document.getElementById("siac-schedule-dialog").innerHTML = `{body}`;
+        """
+
+    def schedule_note(self, option: int):
+        delta = self.note.due_days_delta()
+        now = utility.date.date_now_stamp()
+        new_prio = get_priority(self.note_id)
+        if option == 1:
+            if delta < 0:
+                # keep schedule & requeue
+                new_reminder = self.note.reminder
+            else:
+                if self.note.schedule_type() == "td":
+                    # show again in n days
+                    days_delta = int(self.note.reminder.split("|")[2][3:])
+                    next_date_due = dt.now() + timedelta(days=days_delta)
+                    new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|td:{days_delta}"
+
+                elif self.note.schedule_type() == "wd":
+                    # show again on next weekday instance
+                    wd_part = self.note.reminder.split("|")[2]
+                    weekdays_due = [int(d) for d in wd_part[3:]]
+                    next_date_due = utility.date.next_instance_of_weekdays(weekdays_due)
+                    new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|{wd_part}"
+                elif self.note.schedule_type() == "id":
+                    # show again according to interval
+                    days_delta = int(self.note.reminder.split("|")[2][3:])
+                    next_date_due = dt.now() + timedelta(days=days_delta)
+                    new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|id:{days_delta}"
+        elif option == 2:
+            #remove schedule & requeue
+            new_reminder = ""
+        elif option == 3:
+            # remove entirely from queue
+            new_reminder = ""
+            new_prio = 0
+        
+        update_reminder(self.note_id, new_reminder)
+        update_priority_list(self.note_id, new_prio)
+        nid = get_head_of_queue()
+        if nid is not None and nid >= 0:
+            self.display(nid)
+        else:
+            self._editor.web.eval("""
+                onReadingModalClose();
+            """)
+
+
+        
 
     @js
     def show_img_field_picker_modal(self, img_src):
@@ -397,7 +626,8 @@ class ReadingModal:
             except:
                 pos = -1
             pos_lbl = "Priority: " + get_priority_as_str(nid)
-            pos_lbl_btn = "In Queue" if pos >= 0 else "Unqueued"
+            # pos_lbl_btn = f"Queue [{pos + 1}]" if pos >= 0 else "Unqueued"
+            pos_lbl_btn = f"Priority" if pos >= 0 else "Unqueued"
         else:
             pos_lbl = "Unqueued"
             pos_lbl_btn = "<b>Unqueued</b>"
@@ -526,7 +756,7 @@ class ReadingModal:
         return f"""
             document.getElementById('siac-queue-lbl').innerHTML = 'Priority: {priority_str}';
             $('#siac-queue-lbl').fadeIn('slow');
-            $('.siac-queue-sched-btn:first').html('In Queue');
+            $('.siac-queue-sched-btn:first').html('Priority');
             $('#siac-queue-readings-list').replaceWith(`{queue_readings_list}`);
         """
 
@@ -550,7 +780,7 @@ class ReadingModal:
             Read <b>%s</b> %s today.<br>
             Added <b>%s</b> %s today.
         </div>
-        <div style='text-align: center; margin-bottom: 5px;'>
+        <div style='text-align: center; margin-bottom: 8px;'>
             Start:
         </div>
         <div style='text-align: center;'>
@@ -559,8 +789,8 @@ class ReadingModal:
             <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(30);'>&nbsp;30m&nbsp;</div>
             <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(60);'>&nbsp;60m&nbsp;</div>
         </div>
-        <div style='text-align: center; margin-top: 10px;'>
-            <div class='siac-btn siac-btn-dark' style='width: 60px;' onclick='this.parentNode.parentNode.style.display="none";'>Ok</div>
+        <div style='text-align: center; margin-top: 20px;'>
+            <div class='siac-btn siac-btn-dark' style='width: 60px;' onclick='this.parentNode.parentNode.style.display="none";'>Don't Start</div>
         </div>
         """ % (read_today_count, "page" if read_today_count == 1 else "pages", added_today_count, "card" if added_today_count == 1 else "cards")
         return "$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html

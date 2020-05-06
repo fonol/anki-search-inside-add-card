@@ -108,6 +108,8 @@
 "highlighting": true,
 "pdf.onOpen.autoFillTagsWithPDFsTags" : true,
 "pdf.onOpen.autoFillFieldsWithPDFName": [],
-"pdf.import.folders_to_search" : []
+"pdf.import.folders_to_search" : [],
+"notes.queue.priorityScaleFactor": 5,
+"notes.queue.missedNotesHandling": "remove-schedule"
 
 }
