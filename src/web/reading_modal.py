@@ -780,7 +780,7 @@ class ReadingModal:
             Read <b>%s</b> %s today.<br>
             Added <b>%s</b> %s today.
         </div>
-        <div style='text-align: center; margin-bottom: 5px;'>
+        <div style='text-align: center; margin-bottom: 8px;'>
             Start:
         </div>
         <div style='text-align: center;'>
@@ -789,8 +789,8 @@ class ReadingModal:
             <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(30);'>&nbsp;30m&nbsp;</div>
             <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(60);'>&nbsp;60m&nbsp;</div>
         </div>
-        <div style='text-align: center; margin-top: 10px;'>
-            <div class='siac-btn siac-btn-dark' style='width: 60px;' onclick='this.parentNode.parentNode.style.display="none";'>Ok</div>
+        <div style='text-align: center; margin-top: 20px;'>
+            <div class='siac-btn siac-btn-dark' style='width: 60px;' onclick='this.parentNode.parentNode.style.display="none";'>Don't Start</div>
         </div>
         """ % (read_today_count, "page" if read_today_count == 1 else "pages", added_today_count, "card" if added_today_count == 1 else "cards")
         return "$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html
