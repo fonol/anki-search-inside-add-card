@@ -975,7 +975,7 @@ def get_pdf_viewer_html(nid, source, title, priority):
                 </div>
             </div>
             <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
-            <div id="text-layer" onmousedown='pdfMouseDown(event)' onkeydown='pdfMouseDown(event)' onmouseup='pdfKeyup(event);' onclick='textlayerClicked(event, this);' class="textLayer"></div>
+            <div id="text-layer" onmousedown='pdfMouseDown(event)' onkeydown='pdfMouseDown(event)' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
         </div>
         <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
         <div class='siac-reading-modal-button-bar-wrapper' style="">

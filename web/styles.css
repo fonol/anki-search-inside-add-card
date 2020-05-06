@@ -889,7 +889,7 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
     transition: all 0.3s;
 }
 .siac-btn-small:hover .siac-btn-small-dropdown.hover,.siac-btn-small.expanded .siac-btn-small-dropdown.click {
-    max-height: 320px;
+    max-height: 340px;
     border-top: 1px solid $buttonBorderColor$;
 }
 .siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {

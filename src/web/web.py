@@ -208,6 +208,7 @@ def setup_ui_after_index_built(editor, index, init_time=None):
         #plot.js is already loaded if a note was just added, so this is a lazy solution for now
         index.ui.plotjsLoaded = False
     if config["notes.sidebar.visible"]:
+        index.ui.set_editor(editor)
         index.ui.sidebar.display()
         
 
