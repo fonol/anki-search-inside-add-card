@@ -257,7 +257,7 @@ var Highlighting = {
         if (!el.dataset.id) {
             return;
         }
-        if (event.ctrlKey) {
+        if (event.ctrlKey || event.metaKey) {
             $(el).remove();
             pycmd("siac-hl-del " + el.dataset.id);
         }

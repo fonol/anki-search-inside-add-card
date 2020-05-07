@@ -69,10 +69,10 @@ def get_new_reminder(stype: str, svalue: str) -> str:
         # show again on next weekday instance
         weekdays_due = [int(d) for d in svalue]
         next_date_due = next_instance_of_weekdays(weekdays_due)
-        new_reminder = f"{now}|{dt_to_stamp(next_date_due)}|wd:{svalue}"
+        return f"{now}|{dt_to_stamp(next_date_due)}|wd:{svalue}"
     elif stype == "id":
         # show again according to interval
         next_date_due = datetime.now() + timedelta(days=int(svalue))
-        new_reminder = f"{now}|{dt_to_stamp(next_date_due)}|id:{svalue}"
+        return f"{now}|{dt_to_stamp(next_date_due)}|id:{svalue}"
         
 

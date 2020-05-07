@@ -790,7 +790,7 @@ class ReadingModal:
             <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(60);'>&nbsp;60m&nbsp;</div>
         </div>
         <div style='text-align: center; margin-top: 20px;'>
-            <div class='siac-btn siac-btn-dark' style='width: 60px;' onclick='this.parentNode.parentNode.style.display="none";'>Don't Start</div>
+            <div class='siac-btn siac-btn-dark' onclick='this.parentNode.parentNode.style.display="none";'>Don't Start</div>
         </div>
         """ % (read_today_count, "page" if read_today_count == 1 else "pages", added_today_count, "card" if added_today_count == 1 else "cards")
         return "$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html

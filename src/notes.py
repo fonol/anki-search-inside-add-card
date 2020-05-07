@@ -387,85 +387,87 @@ def recalculate_priority_queue():
         If schedule mode dynamic, calculate the priority queue again, without writing anything to the 
         priority log. Has to be done at least once on startup to incorporate the changed difference in days.
     """
-    current = _get_priority_list_with_last_prios()
-    scores = []
-    to_update_in_log = []
-    to_remove_schedules = []
-    to_reschedule = []
-    now = datetime.now()
-    for nid, last_prio, last_prio_creation, current_position, reminder in current:
-        # last prio might be null, because of legacy queue system
-        if last_prio is None:
-            # lazy solution: set to average priority
-            last_prio = 50
-            now += timedelta(seconds=1)
-            ds = now.strftime('%Y-%m-%d-%H-%M-%S')
-            last_prio_creation = ds
-            to_update_in_log.append((nid, ds, last_prio))
+    for i in range(0,2):
+        current = _get_priority_list_with_last_prios()
+        scores = []
+        to_update_in_log = []
+        to_remove_schedules = []
+        to_reschedule = []
+        now = datetime.now()
+        for nid, last_prio, last_prio_creation, current_position, reminder in current:
+            # last prio might be null, because of legacy queue system
+            if last_prio is None:
+                # lazy solution: set to average priority
+                last_prio = 50
+                now += timedelta(seconds=1)
+                ds = now.strftime('%Y-%m-%d-%H-%M-%S')
+                last_prio_creation = ds
+                to_update_in_log.append((nid, ds, last_prio))
+                
+            # assert(current_position >= 0)
+            days_delta = max(0, (datetime.now() - _dt_from_date_str(last_prio_creation)).total_seconds() / 86400.0)
             
-        # assert(current_position >= 0)
-        days_delta = max(0, (datetime.now() - _dt_from_date_str(last_prio_creation)).total_seconds() / 86400.0)
+            # assert(days_delta >= 0)
+            # assert(days_delta < 10000)
+            score = _calc_score(last_prio, days_delta)
+            scores.append((nid, last_prio_creation, last_prio, score, reminder))
+        sorted_by_scores = sorted(scores, key=lambda x: x[3], reverse=True)
+        final_list = [s for s in sorted_by_scores if s[4] is None or len(s[4].strip()) == 0 or not _specific_schedule_is_due_today(s[4])]
+        due_today = [s for s in sorted_by_scores if s[4] is not None and len(s[4].strip()) > 0 and _specific_schedule_is_due_today(s[4])]
+        if len(due_today) > 0:
+            due_today = sorted(due_today, key=lambda x : x[3], reverse=True)
+            final_list = due_today + final_list
         
-        # assert(days_delta >= 0)
-        # assert(days_delta < 10000)
-        score = _calc_score(last_prio, days_delta)
-        scores.append((nid, last_prio_creation, last_prio, score, reminder))
-    sorted_by_scores = sorted(scores, key=lambda x: x[3], reverse=True)
-    final_list = [s for s in sorted_by_scores if s[4] is None or len(s[4].strip()) == 0 or not _specific_schedule_is_due_today(s[4])]
-    due_today = [s for s in sorted_by_scores if s[4] is not None and len(s[4].strip()) > 0 and _specific_schedule_is_due_today(s[4])]
-    if len(due_today) > 0:
-        due_today = sorted(due_today, key=lambda x : x[3], reverse=True)
-        final_list = due_today + final_list
-    
-    if MISSED_NOTES_HANDLING != "place-front":
-        for f in final_list:
-            if f[4] is None or len(f[4].strip()) == 0:
-                continue
-            if _specific_schedule_was_due_before_today(f[4]):
-                if MISSED_NOTES_HANDLING == "remove-schedule":
-                    to_remove_schedules.append(f[0])
-                elif MISSED_NOTES_HANDLING == "new-schedule":
+        if MISSED_NOTES_HANDLING != "place-front":
+            for f in final_list:
+                if f[4] is None or len(f[4].strip()) == 0:
+                    continue
+                if _specific_schedule_was_due_before_today(f[4]):
                     n = Note([None for i in range(12)])
                     n.reminder = f[4]
-                    delta = n.due_days_delta()
-                    now = _date_now_str()
-                    if n.schedule_type() == "td":
-                        # show again in n days
-                        days_delta = int(n.reminder.split("|")[2][3:])
-                        next_date_due = datetime.now() + timedelta(days=days_delta)
-                        new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|td:{days_delta}"
+                    if MISSED_NOTES_HANDLING == "remove-schedule" and n.schedule_type() == "td":
+                        to_remove_schedules.append(f[0])
+                    elif MISSED_NOTES_HANDLING == "new-schedule" or (n.schedule_type() == "wd" or n.schedule_type() == "id"):
+                        delta = n.due_days_delta()
+                        now = _date_now_str()
+                        if n.schedule_type() == "td":
+                            # show again in n days
+                            days_delta = int(n.reminder.split("|")[2][3:])
+                            next_date_due = datetime.now() + timedelta(days=days_delta)
+                            new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|td:{days_delta}"
 
-                    elif n.schedule_type() == "wd":
-                        # show again on next weekday instance
-                        wd_part = n.reminder.split("|")[2]
-                        weekdays_due = [int(d) for d in wd_part[3:]]
-                        next_date_due = utility.date.next_instance_of_weekdays(weekdays_due)
-                        new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|{wd_part}"
-                    elif n.schedule_type() == "id":
-                        # show again according to interval
-                        days_delta = int(n.reminder.split("|")[2][3:])
-                        next_date_due = datetime.now() + timedelta(days=days_delta)
-                        new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|id:{days_delta}"
-                    to_reschedule.append((f[0], new_reminder))
-    
-    # assert(len(scores) == 0 or len(final_list)  >0)
-    # for s in scores:
-        # assert(s[3] >= 0)
-        # assert(s[1] is not None and len(s[1]) > 0)
-    # assert(len(final_list) == len(set([f[0] for f in final_list])))
-    conn = _get_connection()
-    c = conn.cursor()
-    c.execute(f"update notes set position = NULL where position is not NULL;")
-    for ix, f in enumerate(final_list):
-        c.execute(f"update notes set position = {ix} where id = {f[0]};")
-    for nid, created, prio in to_update_in_log:
-        c.execute(f"insert into queue_prio_log (nid, prio, created) values ({nid}, {prio}, '{created}');")
-    for nid in to_remove_schedules:
-        c.execute(f"update notes set reminder = '' where id = {nid};")
-    for nid, new_rem in to_reschedule:
-        c.execute(f"update notes set reminder = '{new_rem}' where id = {nid};")
-    conn.commit()
-    conn.close()
+                        elif n.schedule_type() == "wd":
+                            # show again on next weekday instance
+                            wd_part = n.reminder.split("|")[2]
+                            weekdays_due = [int(d) for d in wd_part[3:]]
+                            next_date_due = utility.date.next_instance_of_weekdays(weekdays_due)
+                            new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|{wd_part}"
+                        elif n.schedule_type() == "id":
+                            # show again according to interval
+                            days_delta = int(n.reminder.split("|")[2][3:])
+                            next_date_due = datetime.now() + timedelta(days=days_delta)
+                            new_reminder = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|id:{days_delta}"
+                        to_reschedule.append((f[0], new_reminder))
+        
+        # assert(len(scores) == 0 or len(final_list)  >0)
+        # for s in scores:
+            # assert(s[3] >= 0)
+            # assert(s[1] is not None and len(s[1]) > 0)
+        # assert(len(final_list) == len(set([f[0] for f in final_list])))
+        conn = _get_connection()
+        c = conn.cursor()
+        c.execute(f"update notes set position = NULL where position is not NULL;")
+        for ix, f in enumerate(final_list):
+            c.execute(f"update notes set position = {ix} where id = {f[0]};")
+        for nid, created, prio in to_update_in_log:
+            c.execute(f"insert into queue_prio_log (nid, prio, created) values ({nid}, {prio}, '{created}');")
+        for nid in to_remove_schedules:
+            c.execute(f"update notes set reminder = '' where id = {nid};")
+        for nid, new_rem in to_reschedule:
+            c.execute(f"update notes set reminder = '{new_rem}' where id = {nid};")
+        conn.commit()
+        conn.close()
+
 
 
 def mark_page_as_read(nid, page, pages_total):
