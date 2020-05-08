@@ -123,6 +123,9 @@ class QtPrioritySlider(QWidget):
 
     def value(self):
         return self.slider.value()
+    
+    def has_changed_value(self):
+        return self.value() != self.prio_default
 
     def schedule(self):
         new = self._get_schedule()

@@ -662,7 +662,7 @@ def update_note_tags(id, tags):
     if index is not None:
         index.update_user_note((id, note[0], note[3], note[1], tags, -1, ""))
 
-def update_note(id, title, text, source, tags, reminder, queue_schedule):
+def update_note(id, title, text, source, tags, reminder, priority):
 
     text = utility.text.clean_user_note_text(text)
     tags = " %s " % tags.strip()
@@ -672,7 +672,9 @@ def update_note(id, title, text, source, tags, reminder, queue_schedule):
     conn.execute(sql, (title, text, source, tags, reminder, id))
     conn.commit()
     conn.close()
-    update_priority_list(id, queue_schedule)
+    # a prio of -1 means unchanged, so don't update
+    if priority != -1:
+        update_priority_list(id, priority)
     index = get_index()
     if index is not None:
         index.update_user_note((id, title, text, source, tags, -1, ""))

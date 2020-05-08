@@ -282,9 +282,11 @@ class NoteEditor(QDialog):
                 text = self.create_tab.text.toHtml()
         source = self.create_tab.source.text()
         tags = self.create_tab.tag.text()
-        queue_schedule = self.create_tab.slider.value()
+        priority = self.create_tab.slider.value()
+        if not self.create_tab.slider.has_changed_value():
+            priority = -1
         specific_schedule = self.create_tab.slider.schedule()
-        update_note(self.note_id, title, text, source, tags, specific_schedule, queue_schedule)
+        update_note(self.note_id, title, text, source, tags, specific_schedule, priority)
         run_hooks("user-note-edited")
 
         self.reject()
