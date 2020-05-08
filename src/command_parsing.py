@@ -1521,6 +1521,9 @@ def write_config():
     mw.addonManager.writeConfig(__name__, config)
     return "$('.modal-close').unbind('click')"
 
+def update_config(key, value):
+    config[key] = value
+    mw.addonManager.writeConfig(__name__, config)
 
 @requires_index_loaded
 def after_index_rebuilt():

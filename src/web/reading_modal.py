@@ -57,8 +57,6 @@ class ReadingModal:
 
         self.sidebar = ReadingModalSidebar()
 
-        self.sep_color = mw.addonManager.getConfig(__name__)["styling"]["general"]["windowColumnSeparatorColor"]
-
     def set_editor(self, editor):
         self._editor = editor
         self.sidebar.set_editor(editor)
@@ -85,14 +83,14 @@ class ReadingModal:
             if (!document.getElementById('siac-reading-modal-tabs-left')) {
                 $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
                 document.getElementById('leftSide').innerHTML += `
-                    <div id='siac-reading-modal-tabs-left' style='border-color: %s'>
+                    <div id='siac-reading-modal-tabs-left'>
                         <div class='siac-btn siac-btn-dark active' onclick='modalTabsLeftClicked("flds", this);'>Fields</div> 
                         <div class='siac-btn siac-btn-dark' onclick='modalTabsLeftClicked("browse", this);'>Browse</div>
                         <div class='siac-btn siac-btn-dark' onclick='modalTabsLeftClicked("pdfs", this);'>PDFs</div>  
                     </div> 
                 `;
             }
-        """ % self.sep_color)
+        """)
 
         # if source is a pdf file path, try to display it
         if note.is_pdf():
@@ -118,14 +116,14 @@ class ReadingModal:
     @js
     def show_width_picker(self):
         html = """
-            <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 10")'><b>10 - 90</b></div>
-            <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 15")'><b>15 - 85</b></div>
-            <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 25")'><b>25 - 75</b></div>
-            <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 33")'><b>33 - 67</b></div>
-            <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 40")'><b>40 - 60</b></div>
-            <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 50")'><b>50 - 50</b></div>
-            <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 60")'><b>60 - 40</b></div>
-            <div class='w-100 siac-orange-hover' onclick='pycmd("siac-left-side-width 67")'><b>67 - 33</b></div>
+            <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 10")'><b>10 - 90</b></div>
+            <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 15")'><b>15 - 85</b></div>
+            <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 25")'><b>25 - 75</b></div>
+            <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 33")'><b>33 - 67</b></div>
+            <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 40")'><b>40 - 60</b></div>
+            <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 50")'><b>50 - 50</b></div>
+            <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 60")'><b>60 - 40</b></div>
+            <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 67")'><b>67 - 33</b></div>
         """
 
         modal = """
@@ -364,7 +362,7 @@ class ReadingModal:
             <div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">
                 {header}
 
-                <div style='text-align: left; border-top: 2px solid orange; user-select: none; cursor: pointer; border-bottom: 2px solid orange; margin: 10px 0 10px 0; padding: 15px;'>
+                <div class='siac-pdf-main-color-border-bottom siac-pdf-main-color-border-top' style='text-align: left; user-select: none; cursor: pointer; margin: 10px 0 10px 0; padding: 15px;'>
                   {options} 
 
                 </div>
@@ -398,7 +396,7 @@ class ReadingModal:
                 Remove / delete this note?<br><br>
                 {title}
 
-                <div style='text-align: left; border-top: 2px solid orange; user-select: none; cursor: pointer; border-bottom: 2px solid orange; margin: 10px 0 10px 0; padding: 15px;'>
+                <div class='siac-pdf-main-color-border-bottom siac-pdf-main-color-border-top' style='text-align: left; user-select: none; cursor: pointer; margin: 10px 0 10px 0; padding: 15px;'>
                     <label class='blue-hover' for='siac-rb-1'>
                         <input id='siac-rb-1' type='radio' {rem_cl} name='del' data-pycmd="1">
                         <span>Remove from Queue</span>
@@ -427,7 +425,7 @@ class ReadingModal:
 
         body = f"""
                 Set a new Schedule 
-                <div style='text-align: left; border-top: 2px solid orange; user-select: none; cursor: pointer; border-bottom: 2px solid orange; margin: 10px 0 10px 0; padding: 15px;'>
+                <div class='siac-pdf-main-color-border-bottom siac-pdf-main-color-border-top' style='text-align: left; user-select: none; cursor: pointer; margin: 10px 0 10px 0; padding: 15px;'>
 
                     <label class='blue-hover' for='siac-rb-4'>
                         <input id='siac-rb-4' type='radio' data-pycmd='4' checked name='sched'>
@@ -514,6 +512,35 @@ class ReadingModal:
                 onReadingModalClose();
             """)
 
+    @js
+    def show_theme_dialog(self):
+        modal = f"""
+            <div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">
+                Change the main color of the reader.<br><br>
+                <div style='user-select: none;'>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader.css")'>Orange</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightblue.css")'>Lightblue</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_khaki.css")'>Khaki</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_darkseagreen.css")'>Darkseagreen</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_tan.css")'>Tan</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightgreen.css")'>Lightgreen</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightsalmon.css")'>Lightsalmon</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_yellow.css")'>Yellow</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_crimson.css")'>Crimson</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_steelblue.css")'>Steelblue</a><br>
+                </div>
+                <br>
+                <div style='text-align: right;'>
+                    <div class='siac-btn siac-btn-dark' style='margin-right: 10px;' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Ok</div>
+                </div>
+
+            </div>
+        """
+        return """modalShown=true;
+            $('#siac-timer-popup').hide();
+            $('#siac-rm-greyout').show(); 
+            $('#siac-reading-modal-center').append(`%s`);
+            """ % (modal)
 
         
 
@@ -715,7 +742,7 @@ class ReadingModal:
 
                 sentence = re.sub(" ([\"“”])([?!.])$", r"\1\2", sentence)
                 
-                s_html += "<tr class='siac-cl-row'><td><div contenteditable style='color: darkorange;'>%s</div></td><td><input type='checkbox' checked/></td></tr>" % (sentence.replace("`", "&#96;"))
+                s_html += "<tr class='siac-cl-row'><td><div contenteditable class='siac-pdf-main-color'>%s</div></td><td><input type='checkbox' checked/></td></tr>" % (sentence.replace("`", "&#96;"))
             s_html += "</table>"
             btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
                                 <div style='margin-top: 8px;'>
@@ -845,8 +872,6 @@ class ReadingModalSidebar():
         self.browse_tab_last_results = None
         self.pdfs_tab_last_results = None
 
-        self.sep_color = mw.addonManager.getConfig(__name__)["styling"]["general"]["windowColumnSeparatorColor"]
-
         #
         # Pagination
         #
@@ -895,7 +920,7 @@ class ReadingModalSidebar():
             $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
             $(`
                 <div id='siac-left-tab-browse' style='display: flex; flex-direction: column;'>
-                    <div style='flex: 0 auto; padding: 5px 0 5px 0; border-bottom: 2px solid {self.sep_color}; user-select: none;'>
+                    <div class='siac-pdf-main-color-border-bottom' style='flex: 0 auto; padding: 5px 0 5px 0; user-select: none;'>
                         <strong style='color: grey;'>Last: </strong>
                         <strong class='blue-hover' style='color: grey; margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-last-addon")'>Add-on</strong>
                         <strong class='blue-hover' style='color: grey; margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-last-anki")'>Anki</strong>
@@ -920,7 +945,7 @@ class ReadingModalSidebar():
             $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
             $(`
                 <div id='siac-left-tab-pdfs' style='display: flex; flex-direction: column;'>
-                    <div style='flex: 0 auto; padding: 5px 0 5px 0; border-bottom: 2px solid {self.sep_color}; user-select: none;'>
+                    <div class='siac-pdf-main-color-border-bottom' style='flex: 0 auto; padding: 5px 0 5px 0; user-select: none;'>
                         <strong class='blue-hover' style='color: grey; margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-pdfs-in-progress")'>In Progress</strong>
                         <strong class='blue-hover' style='color: grey; margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-pdfs-unread")'>Unread</strong>
                     </div>

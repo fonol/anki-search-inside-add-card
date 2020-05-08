@@ -257,10 +257,7 @@
 .tagLbl:hover {
     filter: brightness(150%);
 }
-.siac-orange-hover:hover {
-    color: darkorange;
-    cursor: pointer;
-}
+
 #tagContainer .tagLbl {
     float: left;
     margin-bottom: 5px;
@@ -874,20 +871,7 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
     z-index: 5;
     transition: max-height 0.3s;
 }
-.siac-btn-small-dropdown-inverted {
-    display: none;
-    position: absolute;
-    color: white;
-    background-color: #2f2f31;
-    width: 200px;
-    padding: 0px 4px 0px 4px;
-    height: 135px;
-    top: -114px;
-    left: -181px;
-    border: 2px outset darkorange; 
-    z-index: 5;
-    transition: all 0.3s;
-}
+
 .siac-btn-small:hover .siac-btn-small-dropdown.hover,.siac-btn-small.expanded .siac-btn-small-dropdown.click {
     max-height: 340px;
     border-top: 1px solid $buttonBorderColor$;
@@ -899,18 +883,7 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
     margin: 3px 0 2px 0;
     text-align: left;
 }
-.siac-dropdown-inverted-item {
-    margin: 3px 0 2px 0;
-    text-align: left;
-    width: 100%;
-    color: darkorange;
-    text-align: center;
-    height: 16px;
-    font-size: 13px !important;
-}
-.siac-dropdown-inverted-item:hover {
-    filter: brightness(1.4);
-}
+
 .siac-btn-small-dropdown .siac-dropdown-item:hover {
     color: #2496dc;
     transform: scale(1.04);
@@ -1311,19 +1284,6 @@ span.tag-symbol {
     color: white;
 }
 
-.siac-notification {
-    position: absolute;
-    right: 15px;
-    bottom: 15px;
-    padding: 20px;
-    background: #2f2f31;
-    color: beige;
-    border: 3px outset darkorange;
-    border-radius: 4px;
-    z-index: 1000000000;
-    width: 200px;
-    
-}
 .siac-tag-info-box {
     position: absolute;
     z-index: 9999;
@@ -1476,7 +1436,12 @@ span.tag-symbol {
 #outerWr.onesided .reading-modal-close-icn {
     right: 27px;
 }
-
+#siac-pdf-tooltip {
+    max-width: $pdfTooltipMaxWidth$px;
+}
+#siac-pdf-tooltip-results-area {
+    max-height: $pdfTooltipMaxHeight$px;
+}
 .siac-modal-small {
     z-index: 9999999;
     background: $modalBackgroundColor$;
@@ -1489,11 +1454,6 @@ span.tag-symbol {
     width: 280px;
     border: 2px solid $modalBorderColor$;
     text-align: center;
-}
-.siac-modal-small.dark, #siac-reading-modal .siac-modal-small {
-    border: 3px outset darkorange;
-    background: #2f2f31;
-    color: white;
 }
 
 hr.siac-modal-sep {
@@ -1630,6 +1590,7 @@ body.siac-reading-modal-displayed #fields {
 body.siac-reading-modal-displayed #siac-reading-modal-tabs-left {
     flex: 0 0 auto;
 }
+
 @media (max-width: 600px) {
     #sortCol {
         display: none;

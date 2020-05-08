@@ -1192,6 +1192,12 @@ function modalTabsLeftClicked(tab, elem) {
     pycmd("siac-reading-modal-tabs-left-" + tab);
 }
 
+function setPdfTheme(theme) {
+    let style_tag = document.getElementById("siac-pdf-css");
+    style_tag.href = style_tag.href.substring(0, style_tag.href.lastIndexOf("/") + 1) + theme;
+    pycmd("siac-eval update_config('pdf.theme', '" + theme + "')");
+}
+
 function schedChange(slider) {
     document.getElementById('siac-sched-prio-val').innerHTML = prioVerbose(slider.value);
 }

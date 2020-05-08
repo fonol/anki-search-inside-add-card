@@ -485,13 +485,14 @@ def get_reading_modal_html(note):
                         <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}toggle_bars.png");' onclick='toggleReadingModalBars();'></div>
                         <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}close.png");' onclick='onReadingModalClose({note_id});'></div>
                     </div>
+                  
                     <div id='siac-pdf-tooltip' onclick='event.stopPropagation();' onkeyup='event.stopPropagation();'>
                         <div id='siac-pdf-tooltip-top'></div>
                         <div id='siac-pdf-tooltip-results-area' onkeyup="pdfTooltipClozeKeyup(event);"></div>
                         <div id='siac-pdf-tooltip-bottom'></div>
                         <input id='siac-pdf-tooltip-searchbar' onkeyup='if (event.keyCode === 13) {{pycmd("siac-pdf-tooltip-search " + this.value);}}'></input>
                     </div>
-                    <div id='siac-reading-modal-top-bar' data-nid='{note_id}' style='min-height: 77px; width: 100%; flex: 0 0 77px; display: flex; flex-wrap: nowrap; border-bottom: 2px solid darkorange; margin-bottom: 5px; white-space: nowrap;'>
+                    <div id='siac-reading-modal-top-bar' data-nid='{note_id}' style=''>
                         <div style='flex: 1 1; overflow: hidden;'>
                             <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; vertical-align:middle;'>{title}</h2>
                             <h4 style='whitespace: nowrap; margin: 5px 0 8px 0; color: lightgrey;'>Source: <i>{source}</i></h4>
@@ -501,13 +502,18 @@ def get_reading_modal_html(note):
                             <span class='siac-timer-btn' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn active' onclick='resetTimer(this)'>30</span><br>
                             <span id='siac-reading-modal-timer'>30 : 00</span><br>
                             <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
+                        
                         </div>
+                        <div id='siac-reading-modal-change-theme'>
+                            <a onclick='pycmd("siac-eval index.ui.reading_modal.show_theme_dialog()")'>Change Theme</a>
+                        </div>
+                        
                     </div>
                     <div id='siac-reading-modal-center' style='flex: 1 1 auto; overflow-y: {overflow}; font-size: 13px; padding: 0 20px 0 24px; position: relative; display: flex; flex-direction: column;' >
                         <div id='siac-rm-greyout'></div>
                         {text}
                     </div>
-                    <div id='siac-reading-modal-bottom-bar' style='flex: 0 0 auto; position: relative; width: 100%; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden; user-select: none;'>
+                    <div id='siac-reading-modal-bottom-bar'>
                         <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
                             <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
                             {schedule_btns}
@@ -732,7 +738,7 @@ def get_reading_modal_bottom_bar(note):
         queue_btn_text = "First in Queue"
         queue_btn_action = "siac-user-note-queue-read-head"
     html = """
-            <div id='siac-reading-modal-bottom-bar' style='width: 100%; flex: 0 0 auto; position: relative; border-top: 2px solid darkorange; margin-top: 5px; padding: 2px 0 0 5px; overflow: hidden; user-select: none;'>
+            <div id='siac-reading-modal-bottom-bar' style=''>
                 <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap; display: relative;'>
 
                     <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
@@ -1338,7 +1344,7 @@ def default_night_mode_styles():
             "selectBackgroundColor": "#2f2f31",
             "selectForegroundColor": "white",
             "timelineBoxBackgroundColor": "#2b2b30",
-            "timelineBoxBorderColor": "DarkOrange"
+            "timelineBoxBorderColor": "darkorange"
         },
         "general": {
             "buttonBackgroundColor": "#2f2f31",
@@ -1353,16 +1359,16 @@ def default_night_mode_styles():
             "noteFontSize": 12,
             "noteForegroundColor": "beige",
             "noteHoverBorderColor": "#62C9C3",
-            "rankingLabelBackgroundColor": "DarkOrange",
+            "rankingLabelBackgroundColor": "darkorange",
             "rankingLabelForegroundColor": "Black",
-            "tagBackgroundColor": "DarkOrange",
+            "tagBackgroundColor": "darkorange",
             "tagFontSize": 12,
             "tagForegroundColor": "Black",
-            "windowColumnSeparatorColor": "DarkOrange"
+            "windowColumnSeparatorColor": "darkorange"
         },
         "modal": {
             "modalBackgroundColor": "#2f2f31",
-            "modalBorderColor": "DarkOrange",
+            "modalBorderColor": "darkorange",
             "modalForegroundColor": "beige",
             "stripedTableBackgroundColor": "#2b2b30"
         },
@@ -1374,7 +1380,7 @@ def default_night_mode_styles():
             "deckSelectCheckmarkColor": "LawnGreen",
             "deckSelectFontSize": 11,
             "deckSelectForegroundColor": "beige",
-            "deckSelectHoverBackgroundColor": "DarkOrange",
+            "deckSelectHoverBackgroundColor": "darkorange",
             "deckSelectHoverForegroundColor": "Black"
         }
     }

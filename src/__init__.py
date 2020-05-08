@@ -186,6 +186,7 @@ def insert_scripts():
     """
     addon_id = utility.misc.get_addon_id()
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf)$")
+    pdf_theme = get_config_value_or_default("pdf.theme", "pdf_reader.css")
     port = mw.mediaServer.getPort()
     aqt.editor._html += f"""
     <script>
@@ -214,6 +215,13 @@ def insert_scripts():
         script.type = 'text/css';
         script.rel = 'stylesheet';
         script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/textlayer.css';
+        document.body.appendChild(script);
+
+        script = document.createElement('link');
+        script.type = 'text/css';
+        script.id ='siac-pdf-css';
+        script.rel = 'stylesheet';
+        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/{pdf_theme}';
         document.body.appendChild(script);
 
         var css = `@font-face {{

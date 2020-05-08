@@ -66,8 +66,8 @@ def getScriptPlatformSpecific():
         script = f.read()
     with open(dir + "styles.css") as f:
         css = f.read().replace("%", "%%")
-    with open(dir + "pdf_reader.css") as f:
-        css += f.read().replace("%", "%%")
+    # with open(dir + "pdf_reader.css") as f:
+    #     css += f.read().replace("%", "%%")
 
     deckSelectFontSize = get_config_value_or_default(["styling", "topBar", "deckSelectFontSize"], 11)
     noteFontSize = get_config_value_or_default(["styling", "general", "noteFontSize"], 12)
@@ -431,23 +431,3 @@ def addToDecklist(dmap, id, name):
         if not d in found:
             found.update({d : {}})
     return dmap
-
-@js
-def show_notification(html):
-
-    return """
-        $('.siac-notification').remove();
-        let target = $('#siac-reading-modal').is(':visible') ? "#reading-modal" : "#siac-right-side";
-        $(target).append(`
-            <div class='siac-notification'>
-                %s
-            </div> 
-         `);
-
-        window.setTimeout(function() {
-            $('.siac-notification').fadeOut(5000);
-            $('.siac-notification').remove();
-         }, 5000);
-    
-    
-    """ % html
