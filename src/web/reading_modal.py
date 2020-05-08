@@ -79,15 +79,15 @@ class ReadingModal:
 
         # wrap fields in tabs
         index.ui.js("""
-            $(document.body).addClass('siac-reading-modal-displayed'); 
+            $(document.body).addClass('siac-reading-modal-displayed');
             if (!document.getElementById('siac-reading-modal-tabs-left')) {
                 $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
                 document.getElementById('leftSide').innerHTML += `
                     <div id='siac-reading-modal-tabs-left'>
-                        <div class='siac-btn siac-btn-dark active' onclick='modalTabsLeftClicked("flds", this);'>Fields</div> 
+                        <div class='siac-btn siac-btn-dark active' onclick='modalTabsLeftClicked("flds", this);'>Fields</div>
                         <div class='siac-btn siac-btn-dark' onclick='modalTabsLeftClicked("browse", this);'>Browse</div>
-                        <div class='siac-btn siac-btn-dark' onclick='modalTabsLeftClicked("pdfs", this);'>PDFs</div>  
-                    </div> 
+                        <div class='siac-btn siac-btn-dark' onclick='modalTabsLeftClicked("pdfs", this);'>PDFs</div>
+                    </div>
                 `;
             }
         """)
@@ -99,7 +99,7 @@ class ReadingModal:
             else:
                 message = "Could not load the given PDF.<br>Are you sure the path is correct?"
                 self.notification(message)
-        
+
         # auto fill tag entry if pdf has tags and config option is set
         if note.tags is not None and len(note.tags.strip()) > 0 and get_config_value_or_default("pdf.onOpen.autoFillTagsWithPDFsTags", True):
             self._editor.tags.setText(" ".join(mw.col.tags.canonify(mw.col.tags.split(note.tags))))
@@ -134,15 +134,15 @@ class ReadingModal:
                 <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
                     <br><br>
                 <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Close</div>
-            </div> 
+            </div>
         """ % html
         return "$('#siac-reading-modal-center').append(`%s`)" % modal
 
     @js
     def display_read_range_input(self, note_id, num_pages):
         on_confirm= """ if (document.getElementById('siac-range-input-min').value && document.getElementById('siac-range-input-max').value) {
-        pycmd('siac-user-note-mark-range %s ' + document.getElementById('siac-range-input-min').value 
-                + ' ' + document.getElementById('siac-range-input-max').value 
+        pycmd('siac-user-note-mark-range %s ' + document.getElementById('siac-range-input-min').value
+                + ' ' + document.getElementById('siac-range-input-max').value
                 + ' ' + pdfDisplayed.numPages
                 + ' ' + pdfDisplayedCurrentPage);
         }
@@ -169,26 +169,26 @@ class ReadingModal:
             html = get_reading_modal_bottom_bar(note)
             html = html.replace("`", "\\`")
             return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks();" % html
-        
+
         else:
-            return """if (document.getElementById('siac-reading-modal').style.display !== 'none' && document.getElementById('siac-reading-modal-top-bar')) { 
-                        pycmd('siac-reload-reading-modal-bottom '+ $('#siac-reading-modal-top-bar').data('nid')); 
+            return """if (document.getElementById('siac-reading-modal').style.display !== 'none' && document.getElementById('siac-reading-modal-top-bar')) {
+                        pycmd('siac-reload-reading-modal-bottom '+ $('#siac-reading-modal-top-bar').data('nid'));
                     }"""
-    
+
 
     def _display_pdf(self, full_path, note_id):
         base64pdf = utility.misc.pdf_to_base64(full_path)
         blen = len(base64pdf)
 
         #pages read are stored in js array [int]
-        pages_read = get_read_pages(note_id)        
+        pages_read = get_read_pages(note_id)
         pages_read_js = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
-        
+
         #marks are stored in two js maps, one with pages as keys, one with mark types (ints) as keys
         marks = get_pdf_marks(note_id)
         js_maps = utility.misc.marks_to_js_map(marks)
-        marks_js = "pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s;" % (js_maps[0], js_maps[1]) 
-        
+        marks_js = "pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s;" % (js_maps[0], js_maps[1])
+
         # pages read are ordered by date, so take last
         last_page_read = pages_read[-1] if len(pages_read) > 0 else 1
 
@@ -200,7 +200,7 @@ class ReadingModal:
             var bstr = atob(b64);
             var n = bstr.length;
             var arr = new Uint8Array(n);
-            while(n--){ 
+            while(n--){
                 arr[n] = bstr.charCodeAt(n);
             }
             var file = new File([arr], "placeholder.pdf", {type : "application/pdf" });
@@ -281,7 +281,7 @@ class ReadingModal:
             """ % (base64pdf, init_code))
 
     def show_fields_tab(self):
-        self.sidebar.show_fields_tab() 
+        self.sidebar.show_fields_tab()
 
     def show_browse_tab(self):
         self.sidebar.show_browse_tab()
@@ -294,9 +294,19 @@ class ReadingModal:
         """
             Called when the currently opened note has a schedule and after it is finished reading.
         """
-        delta = self.note.due_days_delta()
+
+        if self.note.is_due_sometime():
+            delta = self.note.due_days_delta()
+            notscheduled_previously = False
+        else:
+            delta = 0
+            notscheduled_previously = True
+
         if delta == 0:
-            header = "This note was scheduled for <b>today</b>."
+            if notscheduled_previously:
+                header = "This note <b>wasn't yet</b> scheduled!"
+            else:
+                header = "This note was scheduled for <b>today</b>."
         elif delta == 1:
             header = "This note was scheduled for <b>yesterday</b>, but not marked as done."
         elif delta  == -1:
@@ -308,62 +318,67 @@ class ReadingModal:
 
         header +="<br>How do you want to proceed?"
         options = ""
-            
-        if delta < 0:
+
+        if notscheduled_previously:
             options += """
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Keep that Schedule</span>
-                    </label><br>
-            """
+                    <a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.show_schedule_change_modal()")'>Change Scheduling</a>
+                    """
         else:
-            if self.note.schedule_type() == "td":
-                days_delta = int(self.note.reminder.split("|")[2][3:])
-                s = "s" if days_delta > 1 else ""
-                options += f"""
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Show again in <b>{days_delta}</b> day{s}</span>
-                    </label><br>
+            if delta < 0:
+                options += """
+                        <label class='blue-hover' for='siac-rb-1'>
+                            <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                            <span>Keep that Schedule</span>
+                        </label><br>
                 """
-            elif self.note.schedule_type() == "wd":
-                weekdays_due = [int(d) for d in self.note.reminder.split("|")[2][3:]]
-                next_date_due = utility.date.next_instance_of_weekdays(weekdays_due)
-                weekday_name = utility.date.weekday_name(next_date_due.weekday() + 1)
-                options += f"""
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Show again next <b>{weekday_name}</b></span>
+            else:
+                if self.note.schedule_type() == "td":
+                    days_delta = int(self.note.reminder.split("|")[2][3:])
+                    s = "s" if days_delta > 1 else ""
+                    options += f"""
+                        <label class='blue-hover' for='siac-rb-1'>
+                            <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                            <span>Show again in <b>{days_delta}</b> day{s}</span>
+                        </label><br>
+                    """
+                elif self.note.schedule_type() == "wd":
+                    weekdays_due = [int(d) for d in self.note.reminder.split("|")[2][3:]]
+                    next_date_due = utility.date.next_instance_of_weekdays(weekdays_due)
+                    weekday_name = utility.date.weekday_name(next_date_due.weekday() + 1)
+                    options += f"""
+                        <label class='blue-hover' for='siac-rb-1'>
+                            <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                            <span>Show again next <b>{weekday_name}</b></span>
+                        </label><br>
+                    """
+                elif self.note.schedule_type() == "id":
+                    days_delta = int(self.note.reminder.split("|")[2][3:])
+                    s = "s" if days_delta > 1 else ""
+                    options += f"""
+                        <label class='blue-hover' for='siac-rb-1'>
+                            <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
+                            <span>Show again in <b>{days_delta}</b> day{s}</span>
+                        </label><br>
+                    """
+
+
+            options += """
+                    <label class='blue-hover' for='siac-rb-2'>
+                        <input id='siac-rb-2' type='radio' name='sched' data-pycmd="2">
+                        <span>Rem. Schedule, but keep in Queue</span>
                     </label><br>
-                """
-            elif self.note.schedule_type() == "id":
-                days_delta = int(self.note.reminder.split("|")[2][3:])
-                s = "s" if days_delta > 1 else ""
-                options += f"""
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Show again in <b>{days_delta}</b> day{s}</span>
+                    <label class='blue-hover' for='siac-rb-3'>
+                        <input id='siac-rb-3' type='radio' name='sched' data-pycmd="3">
+                        <span>Remove from Queue</span>
                     </label><br>
                 """
 
-
-        options += """
-                <label class='blue-hover' for='siac-rb-2'>
-                    <input id='siac-rb-2' type='radio' name='sched' data-pycmd="2">
-                    <span>Rem. Schedule, but keep in Queue</span>
-                </label><br>
-                <label class='blue-hover' for='siac-rb-3'>
-                    <input id='siac-rb-3' type='radio' name='sched' data-pycmd="3">
-                    <span>Remove from Queue</span>
-                </label><br>
-            """
-        
         modal = f"""
             <div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">
                 {header}
 
                 <div class='siac-pdf-main-color-border-bottom siac-pdf-main-color-border-top' style='text-align: left; user-select: none; cursor: pointer; margin: 10px 0 10px 0; padding: 15px;'>
-                  {options} 
+                  {options}
 
                 </div>
                 <div style='text-align: left;'>
@@ -374,14 +389,14 @@ class ReadingModal:
             </div>
         """
         return """modalShown=true;
-            $('#siac-rm-greyout').show(); 
+            $('#siac-rm-greyout').show();
             if (document.getElementById('siac-schedule-dialog')) {
                 $('#siac-schedule-dialog').replaceWith(`%s`);
             } else {
                 $('#siac-reading-modal-center').append(`%s`);
             }
             """ % (modal, modal)
-    
+
 
     @js
     def show_remove_dialog(self):
@@ -416,7 +431,7 @@ class ReadingModal:
         """
         return """modalShown=true;
             $('#siac-timer-popup').hide();
-            $('#siac-rm-greyout').show(); 
+            $('#siac-rm-greyout').show();
             $('#siac-reading-modal-center').append(`%s`);
             """ % (modal)
 
@@ -424,7 +439,7 @@ class ReadingModal:
     def show_schedule_change_modal(self):
 
         body = f"""
-                Set a new Schedule 
+                Set a new Schedule
                 <div class='siac-pdf-main-color-border-bottom siac-pdf-main-color-border-top' style='text-align: left; user-select: none; cursor: pointer; margin: 10px 0 10px 0; padding: 15px;'>
 
                     <label class='blue-hover' for='siac-rb-4'>
@@ -501,7 +516,7 @@ class ReadingModal:
             # remove entirely from queue
             new_reminder = ""
             new_prio = 0
-        
+
         update_reminder(self.note_id, new_reminder)
         update_priority_list(self.note_id, new_prio)
         nid = get_head_of_queue()
@@ -538,11 +553,11 @@ class ReadingModal:
         """
         return """modalShown=true;
             $('#siac-timer-popup').hide();
-            $('#siac-rm-greyout').show(); 
+            $('#siac-rm-greyout').show();
             $('#siac-reading-modal-center').append(`%s`);
             """ % (modal)
 
-        
+
 
     @js
     def show_img_field_picker_modal(self, img_src):
@@ -553,7 +568,7 @@ class ReadingModal:
         # if Image Occlusion add-on is there and enabled, add a button to directly open the IO dialog
         io = ""
         if hasattr(self._editor, 'onImgOccButton') and mw.addonManager.isEnabled("1374772155"):
-            io = f"<div class='siac-btn siac-btn-dark' style='margin-right: 9px;' onclick='pycmd(`siac-cutout-io {img_src}`); $(this.parentNode).remove();'>Image Occlusion</div>" 
+            io = f"<div class='siac-btn siac-btn-dark' style='margin-right: 9px;' onclick='pycmd(`siac-cutout-io {img_src}`); $(this.parentNode).remove();'>Image Occlusion</div>"
         modal = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br>%s<div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
         flds = ""
         for i, f in enumerate(self._editor.note.model()['flds']):
@@ -630,15 +645,15 @@ class ReadingModal:
                     search_sources += """<div class="siac-url-ch" onclick='pycmd("siac-url-srch $$$" + document.getElementById("siac-tt-ws-inp").value + "$$$%s"); $(this.parentNode.parentNode).remove();'>%s</div>""" % (url, name)
 
         modal = """ <div class="siac-modal-small dark" style="text-align:center;">
-                        <input style="width: 100%%; border-radius: 3px; padding-left: 4px; box-sizing: border-box; background: #2f2f31; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input> 
+                        <input style="width: 100%%; border-radius: 3px; padding-left: 4px; box-sizing: border-box; background: #2f2f31; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input>
                         <br/>
                         <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden; cursor: pointer; margin-top: 15px;">%s</div><br><br>
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
                     </div> """% (inp, search_sources)
-        
+
         js = """
-        $('#siac-iframe-btn').removeClass('expanded'); 
-        $('#siac-pdf-tooltip').hide(); 
+        $('#siac-iframe-btn').removeClass('expanded');
+        $('#siac-pdf-tooltip').hide();
         $('#siac-reading-modal-center').append('%s');
         """ % modal.replace("\n", "").replace("'", "\\'")
         return js
@@ -741,7 +756,7 @@ class ReadingModal:
                 sentence = re.sub("^\\d+ ?[:\\-.,;] ([A-ZÖÄÜ])", r"\1", sentence)
 
                 sentence = re.sub(" ([\"“”])([?!.])$", r"\1\2", sentence)
-                
+
                 s_html += "<tr class='siac-cl-row'><td><div contenteditable class='siac-pdf-main-color'>%s</div></td><td><input type='checkbox' checked/></td></tr>" % (sentence.replace("`", "&#96;"))
             s_html += "</table>"
             btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
@@ -752,9 +767,9 @@ class ReadingModal:
                     `;"""
 
         else:
-            s_html = "<br><center>Sorry, could not extract any sentences.</center>" 
+            s_html = "<br><center>Sorry, could not extract any sentences.</center>"
             btn_html = ""
-        
+
         return """
                 document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`;
                 document.getElementById('siac-pdf-tooltip-top').innerHTML = `Found <b>%s</b> sentence(s) around selection: <br/><span style='color: lightgrey;'>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)</span>`;
@@ -772,7 +787,7 @@ class ReadingModal:
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); $('#siac-rm-greyout').hide(); {on_ok}">&nbsp; Ok &nbsp;</div>
                     </div> """
         return """$('#siac-pdf-tooltip').hide();
-                $('.siac-modal-small').remove(); 
+                $('.siac-modal-small').remove();
                 $('#siac-rm-greyout').show();
                 $('#siac-reading-modal-center').append('%s');""" % modal.replace("\n", "").replace("'", "\\'")
 
@@ -840,14 +855,14 @@ class ReadingModal:
                         pdfDisplayedCurrentPage = i;
                         rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
                         break;
-                    } 
+                    }
                 }
             }
         """
 
     #
     # highlights
-    # 
+    #
 
     def show_highlights_for_page(self, page):
         highlights = get_highlights(self.note_id, page)
@@ -861,7 +876,7 @@ class ReadingModal:
 
 
 
-    
+
 
 class ReadingModalSidebar():
     def __init__(self):
@@ -887,7 +902,7 @@ class ReadingModalSidebar():
         self.last_results = results
         self.last_stamp = stamp
         self.last_query_set = query_set
-        self.show_page(1)        
+        self.show_page(1)
 
     def show_page(self, page):
         self.page = page
@@ -909,7 +924,7 @@ class ReadingModalSidebar():
             $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
             document.getElementById("fields").style.display = 'block';
         """)
-        
+
 
     def show_browse_tab(self):
         if self.tab_displayed == "browse":
@@ -930,7 +945,7 @@ class ReadingModalSidebar():
                     <div style='flex: 0 auto; padding: 5px 0 5px 0;'>
                         <input type='text' style='width: 100%; box-sizing: border-box;' onkeyup='pdfLeftTabAnkiSearchKeyup(this.value, event);'/>
                     </div>
-                </div> 
+                </div>
             `).insertBefore('#siac-reading-modal-tabs-left');
         """)
         if self.browse_tab_last_results is not None:
@@ -954,7 +969,7 @@ class ReadingModalSidebar():
                     <div style='flex: 0 auto; padding: 5px 0 5px 0;'>
                         <input type='text' style='width: 100%; box-sizing: border-box;' onkeyup='pdfLeftTabPdfSearchKeyup(this.value, event);'/>
                     </div>
-                </div> 
+                </div>
             `).insertBefore('#siac-reading-modal-tabs-left');
         """)
         if self.pdfs_tab_last_results is not None:
@@ -995,7 +1010,7 @@ class ReadingModalSidebar():
         html = html.replace("`", "\\`")
         self._editor.web.eval(f"document.getElementById('siac-left-tab-browse-results').innerHTML = `{html}`;")
 
-        
+
 
     def _sidebar_search_results(self, db_list, query_set):
         html = ""
@@ -1041,11 +1056,11 @@ class ReadingModalSidebar():
             text = utility.text.newline_before_images(text)
             template = noteTemplateSimple if res.note_type == "index" else noteTemplateUserNoteSimple
             newNote = template.format(
-                counter=counter+1, 
-                nid=res.id, 
+                counter=counter+1,
+                nid=res.id,
                 edited="",
                 mouseup="",
-                text=text, 
+                text=text,
                 ret=retInfo,
                 tags=utility.tags.build_tag_string(res.tags, False, False, maxLength = 25, maxCount = 2),
                 creation="")
