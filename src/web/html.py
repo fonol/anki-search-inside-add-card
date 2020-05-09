@@ -803,7 +803,7 @@ def get_queue_head_display(note_id, queue = None, should_save = False):
         hover_actions = "onmouseenter='showQueueInfobox(this, %s);' onmouseleave='leaveQueueItem(this);'" % (queue_item.id) if not hide else ""
         #if the note is a pdf or feed, show a loader on click
         pdf_or_feed = queue_item.is_feed() or queue_item.is_pdf()
-        clock = "<img class='siac-sched-icn' src='%s' style='height: 12px; width: 12px; margin-left: 4px;'/>" % (utility.misc.img_src("clock.png" if len(should_greyout) > 0 else "clock-orange.png")) if queue_item.is_scheduled() else ""
+        clock = clock_svg(len(should_greyout) > 0) if queue_item.is_scheduled() else ""
         should_show_loader = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if pdf_or_feed else ""
         queue_head_readings +=  "<a onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s.%s %s</a><br>" % (should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
         if ix > 3:
@@ -1219,16 +1219,18 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <fieldset>
-                <span>This is the absolute path to the folder where the addon should store its notes. If not present already, the addon will create a file named "siac-notes.db" in that folder. If empty, user_files will be used.</span>
+                <span>This is the absolute path to the folder where the addon should store its notes. If not present already, the addon will create a file named <i>siac-notes.db</i> in that folder. If empty, user_files will be used.
+                <br>If you have existing data, after changing this value, you should close Anki, copy your existing <i>siac-notes.db</i> to that new location, and then start again.
+                </span>
                 <table style="width: 100%%">
-                    <tr><td><b>Addon Note DB Folder Path</b></td><td style='text-align: right;'><input type="text" onfocusout="pycmd('styling addonNoteDBFolderPath ' + this.value)" value="%s"/></tr>
+                    <tr><td><b>Addon Note DB Folder Path</b></td><td style='text-align: right;'><input type="text"  style='min-width: 250px;' onfocusout="pycmd('styling addonNoteDBFolderPath ' + this.value)" value="%s"/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>This is the location where PDFs generated from URLs will be saved. This needs to be set for the URL import to work.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>PDF Url-Import Save Path</b></td><td style='text-align: right;'><input type="text" onfocusout="pycmd('styling pdfUrlImportSavePath ' + this.value)" value="%s"/></tr>
+                    <tr><td><b>PDF Url-Import Save Path</b></td><td style='text-align: right;'><input type="text" style='min-width: 250px;' onfocusout="pycmd('styling pdfUrlImportSavePath ' + this.value)" value="%s"/></tr>
                 </table>
             </fieldset>
             <br/>
@@ -1477,6 +1479,21 @@ l422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120
 </svg>
     """ % (w, h)
 
+def clock_svg(greyout):
+    greyout = "grey" if greyout else ""
+    return f"""
+<svg  class='siac-sched-icn {greyout}'  width="12" height="12" xmlns="http://www.w3.org/2000/svg">
+ <g>
+  <rect fill="none" id="canvas_background" height="14" width="14" y="-1" x="-1"/>
+ </g>
+ <g>
+  <ellipse stroke="#000" ry="4.97339" rx="4.88163" id="svg_2" cy="5.91646" cx="6.192696" fill="none"/>
+  <line stroke-linecap="null" stroke-linejoin="null" id="svg_3" y2="6.338556" x2="6.009176" y1="2.961789" x1="6.009176" fill-opacity="null" stroke-opacity="null" stroke="#000" fill="none"/>
+  <line stroke-linecap="null" stroke-linejoin="null" id="svg_4" y2="6.522076" x2="9.606167" y1="6.55878" x1="6.04588" fill-opacity="null" stroke-opacity="null" stroke="#000" fill="none"/>
+  <line stroke-linecap="null" stroke-linejoin="null" id="svg_5" y2="6.999228" x2="5.788952" y1="6.37526" x1="6.009176" fill-opacity="null" stroke-opacity="null" stroke="#000" fill="none"/>
+ </g>
+</svg>
+    """
 
 def tiny_mce_init_code():
     return """

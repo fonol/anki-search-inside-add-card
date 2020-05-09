@@ -60,6 +60,7 @@ class PDFMark(Enum):
 
 def create_db_file_if_not_exists():
     file_path = _get_db_path()
+    existed = False
     if not os.path.isfile(file_path):
         conn = sqlite3.connect(file_path)
 
@@ -81,6 +82,7 @@ def create_db_file_if_not_exists():
         """
         conn.execute(creation_sql)
     else:
+        existed = True
         conn = sqlite3.connect(file_path)
     
     # disable for now
@@ -136,23 +138,6 @@ def create_db_file_if_not_exists():
         ); 
     """)
 
-    # temporary, drop fk
-    if not _table_exists("_queue_prio_log_old"):
-        conn.executescript("""
-        PRAGMA foreign_keys=off;
-        ALTER TABLE queue_prio_log RENAME TO _queue_prio_log_old;
-        CREATE TABLE queue_prio_log
-        (
-            nid INTEGER,
-            prio INTEGER,
-            type TEXT,
-            created TEXT
-        );
-        INSERT INTO queue_prio_log SELECT * FROM _queue_prio_log_old;
-        PRAGMA foreign_keys=on; 
-        
-        """)
-
     conn.execute("CREATE INDEX if not exists read_nid ON read (nid);")
     conn.execute("CREATE INDEX if not exists mark_nid ON marks (nid);")
     conn.execute("CREATE INDEX if not exists prio_nid ON queue_prio_log (nid);")
@@ -160,7 +145,8 @@ def create_db_file_if_not_exists():
     conn.close()
 
     # store a timestamp in /user_files/data.json to check next time, so we don't have to do this on every startup
-    persist_notes_db_checked()
+    # persist_notes_db_checked()
+    return existed
 
 
 def create_note(title, text, source, tags, nid, reminder, queue_schedule):
@@ -1020,6 +1006,7 @@ def _get_db_path():
     if file_path is None or len(file_path) == 0:
         file_path = utility.misc.get_user_files_folder_path()
     file_path += "siac-notes.db"
+    file_path.strip()
     db_path = file_path
     return file_path
 

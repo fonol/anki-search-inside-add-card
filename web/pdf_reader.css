@@ -570,6 +570,12 @@ body.siac-reading-modal-displayed #siac-right-side {
 .siac-sched-icn.siac-disabled {
     opacity: 0.3;
 }
+.siac-sched-icn line, .siac-sched-icn ellipse {
+    stroke: darkorange !important;
+}
+.siac-sched-icn.grey line, .siac-sched-icn.grey ellipse {
+    stroke: lightgrey !important;
+}
 .siac-queue-sched-btn.siac-disabled {
     border-color: grey !important;
 }
@@ -833,4 +839,10 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
   }
 label input:checked ~ span {
     font-weight: bold;
+}
+body.siac-left-right-switched #siac-right-side {
+    border-right: 2px solid darkorange;
+}
+#siac-right-side {
+    border-left: 2px solid darkorange;
 }

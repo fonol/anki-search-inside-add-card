@@ -1464,7 +1464,17 @@ def update_styling(cmd):
             value = value.replace("\\", "/")
             if not value.endswith("/"):
                 value += "/"
+            old_val = config["addonNoteDBFolderPath"]
             config["addonNoteDBFolderPath"] = value
+            if value != old_val:
+                write_config()
+                existed = create_db_file_if_not_exists()
+                if existed:
+                    ex = "Created no new file, because there was already a <i>siac-notes.db</i> in that location."
+                else:
+                    ex = "Created an empty file there."
+                tooltip(f"Updated path to note .db file to <b>{value}</b>.<br>{ex}<br>If you have existing notes, replace that new file with your old file.", period=9000)
+
 
     elif name == "leftSideWidthInPercent":
         config[name] = int(value)

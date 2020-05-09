@@ -153,13 +153,10 @@ def on_load_note(editor):
                 corpus = get_notes_in_collection()
                 set_corpus(corpus)
 
-         
-
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
         editor.web.evalWithCallback(right_side_html(index is not None), cb)
-        
       
 
     if get_edit() is None and editor is not None:

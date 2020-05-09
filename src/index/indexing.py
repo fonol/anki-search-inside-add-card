@@ -160,6 +160,8 @@ def _should_rebuild():
     """
 
     info = get_index_info()
+    if info is None:
+        return True
     corpus = get_corpus()
     config = mw.addonManager.getConfig(__name__)
 

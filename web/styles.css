@@ -934,7 +934,6 @@ width: 48%; display: inline-block; text-align: center;
     color: #2496dc;
 }
 #siac-right-side {
-    border-left: 2px solid $windowColumnSeparatorColor$;
     padding: 0px 20px 4px 20px;
     margin-left: 8px;
     position: relative;
@@ -1570,8 +1569,7 @@ body.siac-fullscreen-show-right #outerWr {
     height: calc(100vh - 3px) !important;
 }
 body.siac-left-right-switched #siac-right-side {
-    border-right: 2px solid $windowColumnSeparatorColor$;
-    border-left: 0px solid white;
+    border-left: 0px solid white !important;
     padding-left: 0px;
     padding-right: 10px;
 }

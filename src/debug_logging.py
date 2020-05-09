@@ -50,6 +50,8 @@ def persist_index_info(search_index):
     config = mw.addonManager.getConfig(__name__)
 
     c_json = _get_data_file_content() 
+    if c_json is None:
+        c_json = { "index": {}, "notes": {} }
     c_json["index"]["timestamp"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     c_json["index"]["type"] = search_index.type 
     c_json["index"]["size"] = search_index.get_number_of_notes()
@@ -77,7 +79,9 @@ def persist_notes_db_checked():
 
 
 def get_index_info():
-    c_json = _get_data_file_content() 
+    c_json = _get_data_file_content()
+    if c_json is None:
+        return None
     return c_json["index"]
 
 def get_notes_info():
@@ -88,12 +92,14 @@ def get_notes_info():
 
 def _get_data_file_content():
     dir = utility.misc.get_user_files_folder_path()
-    with open(dir + "data.json", "r") as json_file:
+    if not utility.misc.file_exists(dir + "data.json"):
+        return None
+    with open(dir + "data.json", "r", encoding="utf-8") as json_file:
         return json.load(json_file)
 
 def _write_to_data_file(c_json):
-    dir = utility.misc.get_user_files_folder_path() + "data.json"
-    with open(dir, "w") as json_file:
+    f = utility.misc.get_user_files_folder_path() + "data.json"
+    with open(f, "w", encoding="utf-8") as json_file:
         json.dump(c_json, json_file, indent=2)
         
 def toggle_should_rebuild():
