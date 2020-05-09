@@ -114,17 +114,6 @@ class ZoteroImporter(QDialog):
         """ % btn_styles
         self.setStyleSheet(styles)
         
-
-    def queue_selected(self, queue_schedule):
-        lbls = [self.q_lbl_1, self.q_lbl_6, self.q_lbl_5, self.q_lbl_4, self.q_lbl_3, self.q_lbl_2]
-        self.queue_schedule = queue_schedule
-        for lbl in lbls:
-            if self.dark_mode_used:
-                lbl.setStyleSheet("QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }")
-            else:
-                lbl.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey; font-weight: normal;")
-        lbls[queue_schedule].setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
-
     def accept_clicked(self):
         csv_path = self.file_path_disp.text()
         assert(csv_path is not None and len(csv_path.strip()) > 0)
@@ -150,10 +139,6 @@ class ZoteroImporter(QDialog):
             return name
         name = utility.text.clean_file_name(self._chosen_name)
         return name
-
-    
-  
-
 
     def scan_csv(self):
         total_count = 0
@@ -181,6 +166,10 @@ class ZoteroImporter(QDialog):
                 return originalstring
 
         tags = self.tags.text()
+        prio = self.slider.value()
+        schedule = ""
+        if prio is not None and prio > 0:
+            schedule = self.slider.schedule()
         add_oi_to_title = self.oi_cb.isChecked()
         with open(self.file_path_disp.text(), newline='', encoding="utf-8") as zotero_csv:
             # initialize the csv reader module
@@ -250,7 +239,7 @@ class ZoteroImporter(QDialog):
                         note_text = append_to_string(note_text, entry_mantags, "<b>Manual Tags:</b><br>", "<br><br>")
                         note_text = append_to_string(note_text, entry_autotags, "<b>Auto Tags:</b><br>", "<br><br>")
 
-                        create_note(note_title, note_text, attachment, tags, None, "", self.queue_schedule)
+                        create_note(note_title, note_text, attachment, tags, None, schedule, prio)
                         self.total_count += 1
 
 
