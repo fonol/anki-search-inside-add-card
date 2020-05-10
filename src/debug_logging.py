@@ -92,10 +92,16 @@ def get_notes_info():
 
 def _get_data_file_content():
     dir = utility.misc.get_user_files_folder_path()
-    if not utility.misc.file_exists(dir + "data.json"):
+    f = dir + "data.json"
+    if not utility.misc.file_exists(f):
         return None
-    with open(dir + "data.json", "r", encoding="utf-8") as json_file:
-        return json.load(json_file)
+    try:
+        with open(f, "r", encoding="utf-8") as json_file:
+            return json.load(json_file)
+    except:
+        # if it failed to read, probably for some encoding reason, create the file again
+        os.remove(f)
+        return None
 
 def _write_to_data_file(c_json):
     f = utility.misc.get_user_files_folder_path() + "data.json"
