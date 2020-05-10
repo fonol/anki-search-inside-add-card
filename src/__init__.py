@@ -42,6 +42,7 @@ import utility.tags
 import utility.misc
 
 from .state import check_index, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit
+import state
 from .index.indexing import build_index, get_notes_in_collection
 from .debug_logging import log
 from .web.web import *
@@ -64,7 +65,7 @@ def init_addon():
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
     #todo: Find out if there is a better moment to start index creation
     
-    create_db_file_if_not_exists()
+    state.db_file_existed = create_db_file_if_not_exists()
 
     gui_hooks.profile_did_open.append(build_index)
     gui_hooks.profile_did_open.append(insert_scripts)
@@ -78,7 +79,7 @@ def init_addon():
 
     setup_tagedit_timer()
 
-    # add new notes to search index when addin
+    # add new notes to search index when adding
     gui_hooks.add_cards_did_add_note.append(add_note_to_index)
     # update notes in index when changed through the "Edit" button
     EditDialog.saveAndClose = wrap(EditDialog.saveAndClose, editor_save_with_index_update, "around")
