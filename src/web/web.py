@@ -28,6 +28,8 @@ from aqt.utils import showInfo
 import utility.tags
 import utility.text
 import utility.misc
+import state
+
 
 from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
@@ -253,12 +255,18 @@ def printStartingInfo(editor):
         html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
         html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
+    
+    if not state.db_file_existed:
+        html += "<br><br><b><i>siac-notes.db</i> was not existing, created a new one.</b>"
 
     if index is None or index.ui is None:
         html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
 
 
-    editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
+    editor.web.eval("""document.getElementById('searchResults').innerHTML = `
+            <div id='startInfo'>
+                %s
+            </div>`;""" % html)
 
 @requires_index_loaded
 def display_model_dialog():
