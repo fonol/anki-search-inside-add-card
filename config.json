@@ -111,6 +111,7 @@
 "pdf.import.folders_to_search" : [],
 "notes.queue.priorityScaleFactor": 5,
 "notes.queue.missedNotesHandling": "remove-schedule",
+"notes.queue.scheduleDialogOnDoneUnscheduledNotes": false,
 "pdf.theme": "pdf_reader.css"
 
 }
