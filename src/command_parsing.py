@@ -515,7 +515,8 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         else:
             if get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
                 add_to_prio_log(nid, new_prio)
-                index.ui.reading_modal.display_schedule_dialog()
+                # update_priority_list(nid, new_prio)
+                index.ui.reading_modal.show_schedule_change_modal(unscheduled=True)
             else:
                 update_priority_list(nid, new_prio)
                 nid = get_head_of_queue()
@@ -574,11 +575,12 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         if index.ui.reading_modal.note.is_due_sometime():
             index.ui.reading_modal.display_schedule_dialog()
         else:
+            nid = index.ui.reading_modal.note_id
+            prio = get_priority(nid)
             if get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
-                index.ui.reading_modal.show_schedule_dialog()
+                add_to_prio_log(nid, prio)
+                index.ui.reading_modal.show_schedule_change_modal(unscheduled=True)
             else:
-                nid = index.ui.reading_modal.note_id
-                prio = get_priority(nid)
                 update_priority_list(nid, prio)
                 nid = get_head_of_queue()
                 index.ui.reading_modal.display(nid)
