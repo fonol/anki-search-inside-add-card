@@ -16,6 +16,12 @@
 
 from aqt import mw
 
+
+# set after create_db_file_if_not_exists has been called
+db_file_existed = None
+
+
+
 search_index = None
 contextEvt = None
 corpus = None
