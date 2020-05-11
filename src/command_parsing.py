@@ -509,15 +509,17 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         nid = int(cmd.split()[1])
         new_prio = int(cmd.split()[2])
         note = get_note(nid)
-        if note.is_due_sometime():
+        if note.is_due_sometime() and note.schedule_type() == "td":
             add_to_prio_log(nid, new_prio)
             index.ui.reading_modal.display_schedule_dialog()
         else:
-            if get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
+            if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
                 add_to_prio_log(nid, new_prio)
                 # update_priority_list(nid, new_prio)
                 index.ui.reading_modal.show_schedule_change_modal(unscheduled=True)
             else:
+                if note.is_due_sometime():
+                    update_reminder(nid, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
                 update_priority_list(nid, new_prio)
                 nid = get_head_of_queue()
                 index.ui.reading_modal.display(nid)
@@ -572,15 +574,20 @@ def expanded_on_bridge_cmd(handled, cmd, self):
             tooltip("Queue is Empty! Add some items first.", period=4000)
 
     elif cmd == "siac-user-note-done":
-        if index.ui.reading_modal.note.is_due_sometime():
+        note = index.ui.reading_modal.note
+        # if note is scheduled for today or some point in the future, show the schedule dialog,
+        # but only if type is 'td', i.e. the note was not scheduled for a regular interval.
+        if note.is_due_sometime() and note.schedule_type() == "td":
             index.ui.reading_modal.display_schedule_dialog()
         else:
             nid = index.ui.reading_modal.note_id
             prio = get_priority(nid)
-            if get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
+            if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
                 add_to_prio_log(nid, prio)
                 index.ui.reading_modal.show_schedule_change_modal(unscheduled=True)
             else:
+                if note.is_due_sometime():
+                    update_reminder(nid, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
                 update_priority_list(nid, prio)
                 nid = get_head_of_queue()
                 index.ui.reading_modal.display(nid)
