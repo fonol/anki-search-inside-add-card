@@ -111,6 +111,9 @@ class SiacNote(Printable):
         
     def schedule_type(self):
         return self.reminder.split("|")[2][:2]
+    
+    def schedule_value(self):
+        return self.reminder.split("|")[2][3:]
 
     def _build_non_anki_note_html(self):
         """
