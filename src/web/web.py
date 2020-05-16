@@ -285,7 +285,7 @@ def showStylingModal(editor):
     html = stylingModal(config)
     index = get_index()
     index.ui.showInModal(html)
-    return "$('.modal-close').on('click', function() {pycmd(`writeConfig`) })"
+    return "$('.modal-close').on('click', function() {pycmd(`siac-write-config`) })"
 
 @js
 def show_unsuspend_modal(nid):
@@ -332,7 +332,7 @@ def fillTagSelect(editor = None, expanded = False) :
             html = "<ul class='deck-sub-list'>"
         for key, value in tmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('searchTag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-search-tag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
         html += "</ul>"
         return html
 
