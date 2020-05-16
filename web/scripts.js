@@ -275,7 +275,7 @@ function getSelectionText() {
     }
     if (text.length > 0 && text != "&nbsp;") {
         showLoading("Selection");
-        pycmd('fldSlctd ' + siacState.selectedDecks.toString() + ' ~ ' + text);
+        pycmd('siac-fld-selected ' + siacState.selectedDecks.toString() + ' ~ ' + text);
     }
 }
 function searchForUserNote(event, elem) {
@@ -374,12 +374,12 @@ function deleteNote(id) {
 
 function synInputKeyup(event, elem) {
     if (event.keyCode == 13 && elem.value)
-        pycmd("saveSynonyms " + elem.value);
+        pycmd("siac-save-synonyms " + elem.value);
 }
 
 function synonymSetKeydown(event, elem, index) {
     if (event.keyCode == 13 && elem.innerHTML.length) {
-        pycmd("editSynonyms " + index + " " + elem.innerHTML);
+        pycmd("siac-edit-synonyms " + index + " " + elem.innerHTML);
         event.preventDefault();
         $(elem).blur();
     }
@@ -519,7 +519,7 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
         if (stamp > -1 && document.getElementById("info-took")) {
             if (printTiming) {
                 let took = new Date().getTime() - stamp;
-                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("lastTiming ${new Date().getTime() - rStart}")'>&#9432;</b>`;
+                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'>&#9432;</b>`;
             } else {
                 document.getElementById("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
             }
@@ -531,7 +531,7 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
         if (stamp > -1 && document.getElementById("info-took")) {
             if (printTiming) {
                 let took = new Date().getTime() - stamp;
-                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("lastTiming ${new Date().getTime() - rStart}")'>&#9432;</b>`;
+                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'>&#9432;</b>`;
             } else {
                 document.getElementById("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
             }
@@ -680,7 +680,7 @@ function predefSearch() {
 function sort() {
     let e = document.getElementById("sortSelect");
     let sort = e.options[e.selectedIndex].value;
-    pycmd("pSort " + sort);
+    pycmd("siac-p-sort " + sort);
 
 }
 function addFloatingNote(nid) {
@@ -816,7 +816,7 @@ function displayCalInfo(elem) {
     }
     $('#cal-info').css("left", offsetLeft + "px").css("top", (offset.top - 275) + "px");
     document.getElementById('cal-info').style.display = "block";
-    pycmd("calInfo " + $(elem.children[0]).data("index"));
+    pycmd("siac-cal-info " + $(elem.children[0]).data("index"));
 }
 
 function calMouseLeave() {
