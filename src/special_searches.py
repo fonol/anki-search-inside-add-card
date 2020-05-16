@@ -61,7 +61,7 @@ def get_cal_info_context(day_of_year : int):
             color = "cal-one"
         else: 
             color = ""
-        html_content += """<div class='cal-block-week %s %s' data-index='%s' onclick='pycmd("calInfo %s")'>%s</div>""" % (color, "cal-lg" if i == 3 else "", day_of_year - (3 - i),day_of_year - (3 - i), cnt)
+        html_content += """<div class='cal-block-week %s %s' data-index='%s' onclick='pycmd("siac-cal-info %s")'>%s</div>""" % (color, "cal-lg" if i == 3 else "", day_of_year - (3 - i),day_of_year - (3 - i), cnt)
     html = """
     
     <div style='text-align: center; margin-bottom: 4px;'>
