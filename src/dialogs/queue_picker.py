@@ -309,7 +309,10 @@ class PDFsTab(QWidget):
         self.t_view_right = QListWidget()
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
-     
+        
+        lbl = QLabel("Drag slider to assign priority to selected item.")
+        lbl.setAlignment(Qt.AlignCenter)
+        self.vbox_right.addWidget(lbl)
         self.slider = QtPrioritySlider(0, show_spec_sched=False)
         self.slider.set_released_fn(self.enqueue)
         btn_hbox = QHBoxLayout()
@@ -381,6 +384,9 @@ class TextNotesTab(QWidget):
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
     
+        lbl = QLabel("Drag slider to assign priority to selected item.")
+        lbl.setAlignment(Qt.AlignCenter)
+        self.vbox_right.addWidget(lbl)
         self.slider = QtPrioritySlider(0, show_spec_sched=False)
         self.slider.set_released_fn(self.enqueue)
         btn_hbox = QHBoxLayout()
@@ -586,6 +592,9 @@ class TagsTab(QWidget):
         self.vbox_right.addWidget(self.enqueue_all_btn)
         self.vbox_right.addWidget(self.empty_and_enqueue_all_btn)
      
+        plbl = QLabel("Drag slider to assign priority to selected item.")
+        plbl.setAlignment(Qt.AlignCenter)
+        self.vbox_right.addWidget(plbl)
         self.slider = QtPrioritySlider(0, show_spec_sched=False)
         self.slider.set_released_fn(self.enqueue)
         btn_hbox = QHBoxLayout()
