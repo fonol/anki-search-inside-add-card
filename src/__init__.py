@@ -292,6 +292,7 @@ def setup_hooks():
     add_hook("user-note-deleted", lambda: recalculate_priority_queue())
     add_hook("user-note-edited", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+    add_hook("updated-schedule", lambda: get_index().ui.reading_modal.reload_bottom_bar())
 
 
 def add_hide_show_shortcut(shortcuts, editor):
