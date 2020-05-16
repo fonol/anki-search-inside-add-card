@@ -55,7 +55,7 @@ def getSynonymEditor():
                         <div contenteditable='true' onkeydown='synonymSetKeydown(event, this, %s)'>%s</div>
                     </td>
                     <td style='text-align: right; height: 20px;'>
-                        <div class='siac-btn-smaller' onclick='pycmd(\"deleteSynonyms %s\")'>Del</div>
+                        <div class='siac-btn-smaller' onclick='pycmd(\"siac-delete-synonyms %s\")'>Del</div>
                         <div class='siac-btn-smaller' style='margin-left: 4px;' onclick='searchSynset(this)'>Search</div>
                     </td>
                 </tr>""" % (c, ", ".join(sList), c)
@@ -251,9 +251,9 @@ def right_side_html(indexIsLoaded = False):
                                                 <br>
                                                 <span>Menus</span>
                                                 <hr>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("indexInfo");'>&nbsp;Info</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("synonyms");'>&nbsp;Synonyms</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("styling");'>&nbsp;Settings</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-index-info");'>&nbsp;Info</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-synonyms");'>&nbsp;Synonyms</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-styling");'>&nbsp;Settings</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
                                         </div>
                             </div>
@@ -472,9 +472,12 @@ def get_reading_modal_html(note):
         if note.is_in_queue():
             queue_btn_text = "Done!"
             queue_btn_action = "siac-user-note-done"
+            active = "active" if note.is_due_sometime() else ""
+            schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
         else:
             queue_btn_text = "First in Queue"
             queue_btn_action = "siac-user-note-queue-read-head"
+            schedule_dialog_btn = ""
         html = """
             <script>destroyTinyMCE();</script>
             <div style='width: 100%; display: flex; flex-direction: column;'>
@@ -520,7 +523,7 @@ def get_reading_modal_html(note):
                             <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                                 <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                 <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                                <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span>{schedule_dialog_btn}</div><br>
                                 <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("{queue_btn_action}");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a><br>
                                 <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
                                 <a onclick='if (!pdfLoading && !modalShown) {{ modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}}' class='siac-clickable-anchor'>Remove</a>
@@ -582,7 +585,8 @@ def get_reading_modal_html(note):
 
         queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info, queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow)
+        params = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info, 
+        queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn)
         html = html.format_map(params)
         return html
     return ""
@@ -734,9 +738,12 @@ def get_reading_modal_bottom_bar(note):
     if note.is_in_queue():
         queue_btn_text = "Done!"
         queue_btn_action = "siac-user-note-done"
+        active = "active" if note.is_due_sometime() else ""
+        schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
     else:
         queue_btn_text = "First in Queue"
         queue_btn_action = "siac-user-note-queue-read-head"
+        schedule_dialog_btn = ""
     html = """
             <div id='siac-reading-modal-bottom-bar' style=''>
                 <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap; display: relative;'>
@@ -746,7 +753,7 @@ def get_reading_modal_bottom_bar(note):
                     <div  id='siac-queue-actions'  style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                         <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                         <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span></div><br>
+                        <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span>{schedule_dialog_btn}</div><br>
                         <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("{queue_btn_action}") }}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a><br>
                         <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random") }}' class='siac-clickable-anchor'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
                         <a onclick='if (!pdfLoading && !modalShown) {{ modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}}' class='siac-clickable-anchor'>Remove</a>
@@ -773,7 +780,8 @@ def get_reading_modal_bottom_bar(note):
    
     queue_readings_list = get_queue_head_display(note_id, queue, editable)
 
-    params = dict(note_id = note_id, time_str = time_str, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, queue_info = queue_info, queue_info_short = queue_info_short, queue_readings_list = queue_readings_list, schedule_btns=schedule_btns )
+    params = dict(note_id = note_id, time_str = time_str, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, queue_info = queue_info, queue_info_short = queue_info_short, 
+    queue_readings_list = queue_readings_list, schedule_btns=schedule_btns, schedule_dialog_btn=schedule_dialog_btn )
     html = html.format_map(params)
     return html
 
@@ -878,6 +886,10 @@ def get_note_info_html(note_id):
     """
     note = get_note(note_id)
     created = note.created
+    if note.reminder is None or len(note.reminder.strip()) == 0:
+        schedule = "No Schedule"
+    else:
+        schedule = utility.date.schedule_verbose(note.reminder)
     tags = note.tags
     if tags.startswith(" "):
         tags = tags[1:]
@@ -885,10 +897,11 @@ def get_note_info_html(note_id):
         <table style='color: grey; min-width: 190px;'>
             <tr><td>ID</td><td><b>{note.id}</b></td></tr>
             <tr><td>Created</td><td><b>{created}</b></td></tr>
+            <tr><td>Schedule</td><td><b>{schedule}</b></td></tr>
+            <tr><td>Tags</td><td>
+                <input type='text' style='width: 210px; background: #2f2f31; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px; color: lightgrey;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
+            </td></tr>
         </table>
-        <br>
-        <label style='color: grey;'>Tags:</label>
-        <input type='text' style='width: 210px; background: #2f2f31; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px; color: lightgrey;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
     """
     return html
 
@@ -925,7 +938,7 @@ def get_pdf_viewer_html(nid, source, title, priority):
     marks_grey_img_src = utility.misc.img_src("mark-star-lightgrey-24px.png")
     pdf_search_img_src = utility.misc.img_src("magnify-24px.png")
     quick_sched = quick_sched_btn(nid, priority)
-
+    # schedule_icn = clock_svg(False)
     html = """
         <div id='siac-pdf-overlay'>PAGE READ</div>
         <div id='siac-pdf-overlay-top'>
@@ -1034,7 +1047,8 @@ def get_pdf_viewer_html(nid, source, title, priority):
             $('.siac-pdf-color-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
             $('.siac-pdf-ul-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
         </script>
-    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, quick_sched_btn=quick_sched, search_sources=search_sources, marks_img_src=marks_img_src, marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src))
+    """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, quick_sched_btn=quick_sched, search_sources=search_sources, marks_img_src=marks_img_src, 
+    marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src))
     return html
 
 
@@ -1262,12 +1276,12 @@ def stylingModal(config):
     <br/> <br/>
     If you want to use the add-on with Anki's <b>built-in night mode</b> the <b>night mode</b> add-on, you have to adapt the styling section.
     <br/> <br/>
-    <b>Sample night mode color scheme:</b> <div class='siac-btn' style='margin-left: 15px;' onclick='pycmd("styling default night");'>Apply</div><br/><br/>
+    <b>Sample night mode color scheme:</b> <div class='siac-btn' style='margin-left: 15px;' onclick='pycmd("siac-styling default night");'>Apply</div><br/><br/>
     <div style='width: 100%%; overflow-y: auto; max-height: 150px; opacity: 0.7;'>
     "styling": %s,
     </div>
     <br/> <br/>
-    <b>Default color scheme:</b><div class='siac-btn' style='margin-left: 15px;' onclick='pycmd("styling default day")'>Apply</div><br/><br/>
+    <b>Default color scheme:</b><div class='siac-btn' style='margin-left: 15px;' onclick='pycmd("siac-styling default day")'>Apply</div><br/><br/>
     <div style='width: 100%%; overflow-y: auto; max-height: 150px; opacity: 0.7;'>
     "styling": %s,
     </div>
