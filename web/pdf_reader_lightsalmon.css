@@ -219,6 +219,16 @@ body.siac-reading-modal-displayed #siac-right-side {
     left: 0px;
     top: 50px;
 }
+#siac-schedule-dialog-btn {
+    margin-left: 8px;
+}
+#siac-schedule-dialog-btn > svg {
+    vertical-align: middle;
+    margin-bottom: 2px;
+}
+#siac-schedule-dialog-btn.active > svg {
+    filter: brightness(1.4);
+}
 #siac-close-iframe-btn {
     z-index: 4;
     position: absolute;
@@ -756,7 +766,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
 }
 .siac-hl {
     position: absolute;
-    mix-blend-mode: multiply;
+    mix-blend-mode: multiply !important;
     z-index: 2;
     border-radius: 7px;
 }
