@@ -44,6 +44,7 @@ from .dialogs.queue_picker import QueuePicker
 from .dialogs.quick_schedule import QuickScheduler
 from .dialogs.url_import import UrlImporter
 from .dialogs.zotero_import import ZoteroImporter
+from .dialogs.schedule_dialog import ScheduleDialog
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 from .models import SiacNote
@@ -82,9 +83,9 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         else:
             rerender_info(self, cmd[13:], searchDB = True)
 
-    elif cmd.startswith("fldSlctd ") and index is not None:
+    elif cmd.startswith("siac-fld-selected ") and index is not None:
         # selection in field or note
-        rerender_info(self, cmd[9:])
+        rerender_info(self, cmd[18:])
 
     elif (cmd.startswith("siac-note-stats ")):
         # note "Info" button clicked
@@ -121,8 +122,8 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         fillDeckSelect(self, expanded=True)
     elif cmd == "siac-fill-tag-select":
         fillTagSelect(expanded=True)
-    elif cmd.startswith("searchTag "):
-        rerender_info(self, cmd[10:].strip(), searchByTags=True)
+    elif cmd.startswith("siac-search-tag "):
+        rerender_info(self, cmd[16:].strip(), searchByTags=True)
 
     elif cmd.startswith("siac-tag-info "):
         #this renders the popup
@@ -283,7 +284,19 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         if dialog.exec_():
             tooltip(f"Created {dialog.total_count} notes.")
 
-
+    elif cmd == "siac-schedule-dialog":
+        original_sched = index.ui.reading_modal.note.reminder
+        dialog = ScheduleDialog(index.ui.reading_modal.note, self.parentWindow)
+        if dialog.exec_():
+            schedule = dialog.schedule()
+            if schedule is not None and schedule != original_sched:
+                update_reminder(index.ui.reading_modal.note_id, schedule)
+                index.ui.reading_modal.note.reminder = schedule
+                if schedule == "":
+                    tooltip(f"Removed schedule.")
+                else:
+                    tooltip(f"Updated schedule.")
+                run_hooks("updated-schedule")
 
 
     elif cmd.startswith("siac-pdf-mark "):
@@ -327,28 +340,28 @@ def expanded_on_bridge_cmd(handled, cmd, self):
             notes = find_pdf_notes_by_title(inp)
             index.ui.reading_modal.sidebar.print(notes)
 
-    elif cmd.startswith("pSort "):
+    elif cmd.startswith("siac-p-sort "):
         if check_index():
-            parseSortCommand(cmd[6:])
+            parseSortCommand(cmd[12:])
 
     elif cmd == "siac-model-dialog":
         display_model_dialog()
 
-    elif cmd.startswith("addedSameDay "):
+    elif cmd.startswith("siac-added-same-day "):
         if check_index():
-            getCreatedSameDay(index, self, int(cmd[13:]))
+            getCreatedSameDay(index, self, int(cmd[20:]))
 
-    elif cmd == "lastTiming":
+    elif cmd == "siac-last-timing":
         if index is not None and index.lastResDict is not None:
             show_timing_modal()
-    elif cmd.startswith("lastTiming "):
+    elif cmd.startswith("siac-last-timing "):
         render_time = int(cmd.split()[1])
         if index is not None and index.lastResDict is not None:
             show_timing_modal(render_time)
-    elif cmd.startswith("calInfo "):
+    elif cmd.startswith("siac-cal-info "):
         if check_index():
-            context_html = get_cal_info_context(int(cmd[8:]))
-            res = get_notes_added_on_day_of_year(int(cmd[8:]), min(index.limit, 100))
+            context_html = get_cal_info_context(int(cmd[14:]))
+            res = get_notes_added_on_day_of_year(int(cmd[14:]), min(index.limit, 100))
             index.ui.print_timeline_info(context_html, res)
 
     elif cmd == "siac_rebuild_index":
@@ -712,19 +725,19 @@ def expanded_on_bridge_cmd(handled, cmd, self):
     #   Synonyms
     #
 
-    elif cmd == "synonyms":
+    elif cmd == "siac-synonyms":
         if check_index():
             index.ui.showInModal(getSynonymEditor())
-    elif cmd.startswith("saveSynonyms "):
-        newSynonyms(cmd[13:])
+    elif cmd.startswith("siac-save-synonyms "):
+        newSynonyms(cmd[19:])
         index.ui.showInModal(getSynonymEditor())
         index.synonyms = loadSynonyms()
-    elif cmd.startswith("editSynonyms "):
-        editSynonymSet(cmd[13:])
+    elif cmd.startswith("siac-edit-synonyms "):
+        editSynonymSet(cmd[19:])
         index.ui.showInModal(getSynonymEditor())
         index.synonyms = loadSynonyms()
-    elif cmd.startswith("deleteSynonyms "):
-        deleteSynonymSet(cmd[15:])
+    elif cmd.startswith("siac-delete-synonyms "):
+        deleteSynonymSet(cmd[21:])
         index.ui.showInModal(getSynonymEditor())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-synset-search "):
@@ -732,13 +745,13 @@ def expanded_on_bridge_cmd(handled, cmd, self):
             index.ui.hideModal()
             default_search_with_decks(self, cmd.split()[1], ["-1"])
 
-    elif cmd == "styling":
+    elif cmd == "siac-styling":
         showStylingModal(self)
 
-    elif cmd.startswith("styling "):
-        update_styling(cmd[8:])
+    elif cmd.startswith("siac-styling "):
+        update_styling(cmd[13:])
 
-    elif cmd == "writeConfig":
+    elif cmd == "siac-write-config":
         write_config()
 
     elif cmd.startswith("siac-add-image "):
