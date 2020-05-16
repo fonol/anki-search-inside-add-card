@@ -21,7 +21,6 @@ import aqt
 import functools
 import re
 import random
-from aqt.utils import showInfo
 
 import csv
 
