@@ -47,3 +47,8 @@ def get_config_value_or_default(key, default):
     except KeyError:
         return default
 
+
+def update_config(key, value):
+    config = _get_config(_get_cache_key())
+    config[key] = value
+    mw.addonManager.writeConfig(__name__, config)
