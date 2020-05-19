@@ -102,6 +102,8 @@ def init_addon():
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
 
+    gui_hooks.add_cards_did_init.append(on_add_cards_init)
+
 
 def editor_save_with_index_update(dialog, _old):
     _old(dialog)
@@ -163,6 +165,9 @@ def on_load_note(editor):
     if get_edit() is None and editor is not None:
         set_edit(editor)
 
+def on_add_cards_init(add_cards):
+    if get_index() is not None and add_cards.editor is not None:
+        get_index().ui.set_editor(add_cards.editor)
 
 
 def editorContextMenuEventWrapper(view, evt):
@@ -293,6 +298,7 @@ def setup_hooks():
     add_hook("user-note-edited", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
     add_hook("updated-schedule", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+    add_hook("reading-modal-closed", lambda: get_index().ui.sidebar.refresh_tab(1))
 
 
 def add_hide_show_shortcut(shortcuts, editor):
