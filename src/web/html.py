@@ -1177,63 +1177,63 @@ def stylingModal(config):
             <fieldset>
             <span><mark>Important:</mark> Modify this value to scale the whole search pane. Useful e.g. when working on a small screen.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>Zoom</b></td><td style='text-align: right;'><input placeholder="" type="number" step="0.1" style='width: 60px;' onchange="pycmd('styling searchpane.zoom ' + this.value)" value="%s"/></td></tr>
+                    <tr><td><b>Zoom</b></td><td style='text-align: right;'><input placeholder="" type="number" step="0.1" style='width: 60px;' onchange="pycmd('siac-styling searchpane.zoom ' + this.value)" value="%s"/></td></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>Controls whether the results are faded in or not.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>Render Immediately</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling renderImmediately ' + this.checked)" %s/></td></tr>
+                    <tr><td><b>Render Immediately</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling renderImmediately ' + this.checked)" %s/></td></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>This controls how the window is split into search pane and field input. A value of 40 means the left side will take 40%% and the right side will take 60%%.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>Left Side Width</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" min="0" max="100" style='width: 60px;' onchange="pycmd('styling leftSideWidthInPercent ' + this.value)" value="%s"/> %%</td></tr>
+                    <tr><td><b>Left Side Width</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" min="0" max="100" style='width: 60px;' onchange="pycmd('siac-styling leftSideWidthInPercent ' + this.value)" value="%s"/> %%</td></tr>
                 </table>
             </fieldset>
              <br/>
             <fieldset>
                 <span>This controls whether the sidebar (containing the tags and found keywords) is visible or not.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>Hide Sidebar</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling hideSidebar ' + this.checked)" %s/></tr>
+                    <tr><td><b>Hide Sidebar</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling hideSidebar ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
              <br/>
               <fieldset>
                 <span>This controls whether the timeline row (added notes over the year) is visible or not.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>Show Timeline</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling showTimeline ' + this.checked)" %s/></tr>
+                    <tr><td><b>Show Timeline</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling showTimeline ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
               <fieldset>
                 <span>This controls whether the small info box will be shown when a tag is hovered over with the mouse. Currently only works with the default scaling.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>Show Tag Info on Hover</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling showTagInfoOnHover ' + this.checked)" %s/></tr>
+                    <tr><td><b>Show Tag Info on Hover</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling showTagInfoOnHover ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>This controls how long you have to hover over a tag until the info box is shown. Allowed values are 0 (not recommended) to 10000.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>Tag Hover Delay in Miliseconds</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="10000" style='width: 60px;' onchange="pycmd('styling tagHoverDelayInMiliSec ' + this.value)" value="%s"/></tr>
+                    <tr><td><b>Tag Hover Delay in Miliseconds</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="10000" style='width: 60px;' onchange="pycmd('siac-styling tagHoverDelayInMiliSec ' + this.value)" value="%s"/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>If the number of notes that would go into the index (only notes from the included decks are counted) is lower than this value the index should always be rebuilt.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>Always Rebuild Index If Smaller Than</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="100000" style='width: 60px;' onchange="pycmd('styling alwaysRebuildIndexIfSmallerThan ' + this.value)" value="%s"/></tr>
+                    <tr><td><b>Always Rebuild Index If Smaller Than</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="100000" style='width: 60px;' onchange="pycmd('siac-styling alwaysRebuildIndexIfSmallerThan ' + this.value)" value="%s"/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>If you have problems with the display of search results (e.g. notes nested into each other), most likely, your note's html contains at least one unmatched opening/closing &lt;div&gt; tag. If set to true, this setting will remove all div tags from the note html before displaying.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>Remove &lt;div&gt; Tags from Output</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling removeDivsFromOutput ' + this.checked)" %s/></tr>
+                    <tr><td><b>Remove &lt;div&gt; Tags from Output</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling removeDivsFromOutput ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
@@ -1242,21 +1242,28 @@ def stylingModal(config):
                 <br>If you have existing data, after changing this value, you should close Anki, copy your existing <i>siac-notes.db</i> to that new location, and then start again.
                 </span>
                 <table style="width: 100%%">
-                    <tr><td><b>Addon Note DB Folder Path</b></td><td style='text-align: right;'><input type="text"  style='min-width: 250px;' onfocusout="pycmd('styling addonNoteDBFolderPath ' + this.value)" value="%s"/></tr>
+                    <tr><td><b>Addon Note DB Folder Path</b></td><td style='text-align: right;'><input type="text"  style='min-width: 250px;' onfocusout="pycmd('siac-styling addonNoteDBFolderPath ' + this.value)" value="%s"/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>This is the location where PDFs generated from URLs will be saved. This needs to be set for the URL import to work.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>PDF Url-Import Save Path</b></td><td style='text-align: right;'><input type="text" style='min-width: 250px;' onfocusout="pycmd('styling pdfUrlImportSavePath ' + this.value)" value="%s"/></tr>
+                    <tr><td><b>PDF Url-Import Save Path</b></td><td style='text-align: right;'><input type="text" style='min-width: 250px;' onfocusout="pycmd('siac-styling pdfUrlImportSavePath ' + this.value)" value="%s"/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>This controls if the addon's notes shall be displayed with their source field (on the bottom: "Source: ..."), or not.</span>
                 <table style="width: 100%%">
-                    <tr><td><b>Notes - Show Source</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('styling notes.showSource ' + this.checked)" %s/></tr>
+                    <tr><td><b>Notes - Show Source</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling notes.showSource ' + this.checked)" %s/></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <fieldset>
+                <span>This controls if the add-on is displayed in the edit dialog ("Edit Current" from the reviewer) too.</span>
+                <table style="width: 100%%">
+                    <tr><td><b>Use in Edit</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling useInEdit ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
@@ -1273,7 +1280,8 @@ def stylingModal(config):
                        "checked='true'" if config["removeDivsFromOutput"] else "",
                        config["addonNoteDBFolderPath"],
                        config["pdfUrlImportSavePath"],
-                       "checked='true'" if config["notes.showSource"] else ""
+                       "checked='true'" if config["notes.showSource"] else "",
+                       "checked='true'" if config["useInEdit"] else ""
                         )
     html += """
     <br/> <br/>

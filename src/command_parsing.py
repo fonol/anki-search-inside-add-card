@@ -1563,10 +1563,8 @@ def update_styling(cmd):
                 value += "/"
             config["pdfUrlImportSavePath"] = value
 
-    elif name == "notes.showSource":
+    elif name == "notes.showSource" or name == "useInEdit":
         config[name] = value == "true"
-
-
 
 
 @js
