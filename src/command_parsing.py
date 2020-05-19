@@ -170,6 +170,16 @@ def expanded_on_bridge_cmd(handled, cmd, self):
             stamp = setStamp()
             notes = get_in_progress_pdf_notes()
             index.ui.print_search_results(notes, stamp)
+    
+    elif cmd == "siac-show-due-today":
+        stamp = setStamp()
+        notes = get_notes_scheduled_for_today()
+        index.ui.print_search_results(notes, stamp)
+
+    elif cmd == "siac-show-last-done":
+        stamp = setStamp()
+        notes = get_last_done_notes()
+        index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-pdf-last-read":
         stamp = setStamp()
@@ -570,6 +580,10 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         else:
             index.ui.reading_modal.display(nid)
         tooltip(f"<center>Removed from Queue.</center>")
+
+    elif cmd == "siac-on-reading-modal-close":
+        index.ui.reading_modal.note_id = None
+        run_hooks("reading-modal-closed")
 
     elif cmd == "siac-user-note-queue-read-random":
         rand_id = get_random_id_from_queue()
