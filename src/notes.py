@@ -296,6 +296,7 @@ def update_priority_list(nid_to_update, schedule):
             index = ix
     for nid in to_remove_from_log:
         c.execute(f"delete from queue_prio_log where nid = {nid};")
+        c.execute(f"update notes set reminder = '' where nid = {nid};")
     for nid, created, prio in to_update_in_log:
         c.execute(f"insert into queue_prio_log (nid, prio, created) values ({nid}, {prio}, '{created}');")
     c.execute("commit")
@@ -454,6 +455,19 @@ def recalculate_priority_queue():
         conn.commit()
         conn.close()
 
+
+def get_notes_scheduled_for_today():
+    today_dt = _date_now_str()[:4] + _date_now_str()[5:7] + _date_now_str()[8:10]
+    conn = _get_connection()
+    res = conn.execute(f"select * from notes where reminder like '%|%' and cast((substr(reminder, 21, 4) || substr(reminder, 26,2) || substr(reminder, 29,2)) as integer) <= {today_dt}").fetchall()
+    conn.close()
+    return _to_notes(res)
+
+def get_last_done_notes():
+    conn = _get_connection()
+    res = conn.execute("select notes.* from (select distinct nid from queue_prio_log group by nid order by max(created) desc) as p join notes on p.nid = notes.id").fetchall()
+    conn.close()
+    return _to_notes(res)
 
 
 def mark_page_as_read(nid, page, pages_total):
