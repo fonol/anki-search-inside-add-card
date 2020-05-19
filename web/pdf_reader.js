@@ -25,6 +25,7 @@ var pdfDisplayedViewPort;
 var pdfPageRendering = false;
 var pdfDisplayedCurrentPage;
 var pdfDisplayedScale = 2.0;
+var pdfHighDPIWasUsed = false;
 var pdfColorMode = "Day";
 var pageNumPending = null;
 var pagesRead = [];
@@ -140,8 +141,13 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 pdfDisplayedScale = (canvas.parentNode.clientWidth - 23) / viewport.width;
             }
             var viewport = page.getViewport({ scale: pdfDisplayedScale });
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
+            canvas.height = viewport.height * window.devicePixelRatio;
+            canvas.width = viewport.width * window.devicePixelRatio;
+            if (window.devicePixelRatio !== 1 || pdfHighDPIWasUsed) {
+                pdfHighDPIWasUsed = true;
+                canvas.style.height = viewport.height + "px";
+                canvas.style.width = viewport.width + "px";
+            }
             if (pdfColorMode !== "Day")
                 canvas.style.display = "none";
             var ctx = canvas.getContext('2d');
@@ -150,6 +156,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
             var renderTask = page.render({
                 canvasContext: ctx,
                 viewport: viewport,
+                transform: window.devicePixelRatio !== 1 ? [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0] : null, 
                 continueCallback: function (cont) {
                     if (timestamp != pageTimestamp) {
                         return;
@@ -169,7 +176,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 }
                 return lPage.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false });
             }).then(function (textContent) {
-                $("#text-layer").css({ height: canvas.height, width: canvas.width, left: canvas.offsetLeft }).html('');
+                $("#text-layer").css({ height: canvas.height / window.devicePixelRatio , width: canvas.width / window.devicePixelRatio, left: canvas.offsetLeft }).html('');
                 pdfjsLib.renderTextLayer({
                     textContent: textContent,
                     container: document.getElementById("text-layer"),
@@ -313,7 +320,7 @@ function saveTextNote(nid, remove = true) {
             tinymce.remove();
         }
     }
-    showPDFBottomRightNotification("Note Saved.", 4000);
+    showPDFBottomRightNotification("&nbsp;Note saved.&nbsp;", 4000);
     pycmd("siac-update-note-text " + nid + " " + html);
 }
 function destroyTinyMCE() {
@@ -1163,7 +1170,7 @@ function onReadingModalClose() {
     if (siacState.searchOnTyping) {
         setSearchOnTyping(true);
     }
-    pycmd("siac-exec index.ui.reading_modal.note_id = None")
+    pycmd("siac-on-reading-modal-close")
 }
 function tryExtractTextFromTextNote() {
     saveTextNote($('#siac-reading-modal-top-bar').data('nid'), remove = false);
