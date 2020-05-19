@@ -17,6 +17,7 @@ from aqt.qt import *
 import aqt
 from ..notes import dynamic_sched_to_str
 from ..config import get_config_value_or_default, update_config
+from ..models import SiacNote
 
 from datetime import datetime, timedelta
 import utility.date
@@ -202,6 +203,7 @@ class ScheduleSettingsTab(QWidget):
         else:
             new_val = "new-schedule"
         update_config("notes.queue.missedNotesHandling", new_val)
+        SiacNote.MISSED_NOTES = new_val
 
 
 class ScheduleEditTab(QWidget):
