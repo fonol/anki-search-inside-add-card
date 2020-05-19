@@ -63,7 +63,7 @@ function cropSelection(canvasSrc, offsetX, offsetY, width, height, callback) {
     let tctx = temp.getContext('2d');
     temp.width = width;
     temp.height = height;
-    tctx.drawImage(canvasSrc, offsetX, offsetY, width, height, 0, 0, temp.width, temp.height);
+    tctx.drawImage(canvasSrc, offsetX * window.devicePixelRatio, offsetY * window.devicePixelRatio, width * window.devicePixelRatio, height * window.devicePixelRatio, 0, 0, temp.width, temp.height);
     callback(temp.toDataURL());
 }
 function insertImage(data) {
@@ -88,7 +88,7 @@ function initImageSelection() {
     pdfImgSel.canvas = document.getElementById("siac-pdf-canvas");
     var lCanvasOverlay = document.createElement("canvas");
     pdfImgSel.canvas.parentNode.insertBefore(lCanvasOverlay, pdfImgSel.canvas.nextSibling);
-    $(lCanvasOverlay).css({ "width": pdfImgSel.canvas.width + "px", "height": pdfImgSel.canvas.height + "px", "top": "0", "left": document.getElementById('text-layer').style.left, "position": "absolute", "z-index": 999999, "opacity": 0.3, "cursor": "crosshair" });
+    $(lCanvasOverlay).css({ "width": (pdfImgSel.canvas.width / window.devicePixelRatio) + "px", "height": (pdfImgSel.canvas.height / window.devicePixelRatio) + "px", "top": "0", "left": document.getElementById('text-layer').style.left, "position": "absolute", "z-index": 999999, "opacity": 0.3, "cursor": "crosshair" });
     lCanvasOverlay.setAttribute('width', pdfImgSel.canvas.width);
     lCanvasOverlay.setAttribute('height', pdfImgSel.canvas.height);
     pdfImgSel.context = lCanvasOverlay.getContext("2d");
@@ -106,7 +106,7 @@ function pdfImgMouseXY(event) {
 }
 function drawSquare() {
     pdfImgSel.context.clearRect(0, 0, pdfImgSel.context.canvas.width, pdfImgSel.context.canvas.height);
-    pdfImgSel.context.fillRect(pdfImgSel.startX, pdfImgSel.startY, Math.abs(pdfImgSel.startX - pdfImgSel.endX), Math.abs(pdfImgSel.startY - pdfImgSel.endY));
+    pdfImgSel.context.fillRect(pdfImgSel.startX * window.devicePixelRatio, pdfImgSel.startY * window.devicePixelRatio, Math.abs(pdfImgSel.startX - pdfImgSel.endX) * window.devicePixelRatio, Math.abs(pdfImgSel.startY - pdfImgSel.endY) * window.devicePixelRatio);
     pdfImgSel.context.fillStyle = "yellow";
     pdfImgSel.context.fill();
 }
