@@ -824,7 +824,7 @@ def expanded_on_bridge_cmd(handled, cmd, self):
     #  Index info modal
     #
 
-    elif cmd == "indexInfo":
+    elif cmd == "siac-index-info":
         if check_index():
             index.ui.showInModal(get_index_info())
 
