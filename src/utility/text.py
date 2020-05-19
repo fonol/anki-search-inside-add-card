@@ -319,12 +319,19 @@ def try_find_sentence(text, selection):
     
     def _try_find_closing(text):
         found = False
-        for c in [".", "!", "?", "•", ":", "=", "#", "-", "§", "Ø", "*"]:
+        for c in ["\\.\\B", "!", "\\?", "•", ":", "=", "#", "-", "§", "Ø", "\\*"]:
             try:
-                if text.rindex(c) >= 0 and text.rindex(c) < len(text) -1:
-                    text = text[text.rindex(c) + 1:]
-                    found = True
-                    break
+                found = [(i.start()) for i in re.finditer(c,text)]
+                if len(found) > 0:
+                    last_index = found[-1]
+                    if last_index < len(text) - 1:
+                        text = text[last_index + 1]
+                        found = True
+                        break
+                # if text.rindex(c) >= 0 and text.rindex(c) < len(text) -1:
+                #     text = text[text.rindex(c) + 1:]
+                #     found = True
+                #     break
             except:
                 continue
         if not found: 
