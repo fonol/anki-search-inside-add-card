@@ -112,6 +112,8 @@ class ReadingModal:
                 if f in self._editor.note:
                     i = self._editor.note._fieldOrd(f)
                     self._editor.web.eval(f"$('.field').eq({i}).text(`{title}`);")
+        
+
 
     def display_head_of_queue(self):
         recalculate_priority_queue()
@@ -200,6 +202,7 @@ class ReadingModal:
         # pages read are ordered by date, so take last
         last_page_read = pages_read[-1] if len(pages_read) > 0 else 1
 
+        title = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
         addon_id = utility.misc.get_addon_id()
         port = mw.mediaServer.getPort()
 
@@ -253,6 +256,7 @@ class ReadingModal:
                 loadingTask.promise.then(function(pdf) {
                         pdfDisplayed = pdf;
                         pdfDisplayedCurrentPage = %s;
+                        pdfHighDPIWasUsed = false;
                         $('#siac-pdf-loader-wrapper').remove();
                         document.getElementById('siac-pdf-top').style.overflowY = 'auto';
 
@@ -263,6 +267,9 @@ class ReadingModal:
                             queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
                         }
                         updatePdfProgressBar();
+                        if (pdfBarsHidden) {
+                            showPDFBottomRightNotification("%s", 4000);
+                        }
                         if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + pdf.numPages); }
                         fileReader = null;
                 });
@@ -271,7 +278,7 @@ class ReadingModal:
 
             fileReader.readAsArrayBuffer(file);
             b64 = ""; arr = null; bstr = null; file = null;
-        """ % (pages_read_js, marks_js, port, addon_id, last_page_read, note_id)
+        """ % (pages_read_js, marks_js, port, addon_id, last_page_read, title, note_id)
         #send large files in multiple packets
         page = self._editor.web.page()
         chunk_size = 10000000
