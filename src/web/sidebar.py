@@ -1,4 +1,4 @@
-from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority_as_str
+from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority_as_str, get_notes_scheduled_for_today
 from ..config import get_config_value_or_default as conf_or_def
 import utility.misc
 import utility.tags
@@ -42,12 +42,22 @@ class Sidebar:
 
             tag_html = iterateMap(tmap, "", True)
             tag_len = len(tmap) if tmap is not None else 0
+
+            # check if there are any notes scheduled for today
+            scheduled_for_today = get_notes_scheduled_for_today()
+            if scheduled_for_today is not None and len(scheduled_for_today) > 0:
+                sched_today_menu_item = f"""<div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-due-today")'>Due today ({len(scheduled_for_today)})</div>"""
+            else:
+                sched_today_menu_item = ""
+
             tab_html = f"""
                     <div style='flex: 0 1 auto;'>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-newest");'>Newest</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs")'>PDFs</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-unread")'>PDFs - Unread</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-in-progress")'>PDFs - In Progress</div>
+                      <!--  <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-last-done")'>Last Done</div>
+                        {sched_today_menu_item} -->
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-untagged")'>Untagged</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-random");'>Random</div>
                         <input type='text' class='siac-sidebar-inp' style='width: calc(100% - 35px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>

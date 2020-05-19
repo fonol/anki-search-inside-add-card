@@ -605,6 +605,8 @@ def get_text_note_html(text, nid, editable, priority):
     if urls is not None and len(urls) > 0:
         search_sources = iframe_dialog(urls)
     is_content_editable = "true" if editable else "false"
+    title = utility.text.trim_if_longer_than(get_index().ui.reading_modal.note.get_title(), 50).replace('"', "")
+
     quick_sched = quick_sched_btn(nid, priority)
     # editable_notification = "<span style='margin-left: 30px; color: grey;'>(i) Note content too long to edit here.</span>" if not editable else ""
     html = """
@@ -636,9 +638,12 @@ def get_text_note_html(text, nid, editable, priority):
         <div id='siac-pdf-br-notify'>
         </div>
         <script>
+            if (pdfBarsHidden) {{
+                showPDFBottomRightNotification("{title}", 4000);
+            }}
             {tiny_mce} 
         </script>
-    """.format_map(dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, tiny_mce=tiny_mce_init_code()))
+    """.format_map(dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, title=title, tiny_mce=tiny_mce_init_code()))
     return html
 
 def quick_sched_btn(nid, priority):
