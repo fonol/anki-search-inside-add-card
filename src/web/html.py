@@ -844,7 +844,7 @@ def get_schedule_btns(note_id, priority):
     return f"""
     <div id='siac-queue-sched-wrapper'>
         <div class='w-100' style='text-align: center; color: lightgrey;'>
-            Release to mark as <b>done</b> & recalc queue<br>
+            Release to mark as <b>done.</b><br>
             <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 12px;'/>
         </div>
         <div class='w-100' style='text-align: center; padding-top: 10px;'>
