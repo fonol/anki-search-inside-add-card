@@ -16,6 +16,8 @@
 
 import os
 import sqlite3
+import typing
+from typing import Optional, Tuple, List, Dict, Set, Any
 from enum import Enum, unique
 from datetime import datetime, time, date, timedelta
 from aqt import mw
@@ -38,16 +40,16 @@ import utility.tags
 import utility.text
 import utility.date
 
-db_path = None
+db_path: Optional[str] = None
 
 # How many times more important is a priority 100 item than a priority 1 item?
-PRIORITY_SCALE_FACTOR = get_config_value_or_default("notes.queue.priorityScaleFactor", 5)
+PRIORITY_SCALE_FACTOR: int = get_config_value_or_default("notes.queue.priorityScaleFactor", 5)
 
 # if a note was scheduled for some time point in the past, but not done, 
 # 1. schedule can be removed ('remove-schedule'), 
 # 2. note can be placed in front of the queue ('place-front') or
 # 3. note can be scheduled again from the missed due date on ('new-schedule')
-MISSED_NOTES_HANDLING = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
+MISSED_NOTES_HANDLING: str = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
 
 @unique
 class PDFMark(Enum):
@@ -58,7 +60,7 @@ class PDFMark(Enum):
     BOOKMARK = 5
 
 
-def create_db_file_if_not_exists():
+def create_db_file_if_not_exists() -> bool:
     file_path = _get_db_path()
     existed = False
     if not os.path.isfile(file_path):
@@ -149,7 +151,7 @@ def create_db_file_if_not_exists():
     return existed
 
 
-def create_note(title, text, source, tags, nid, reminder, queue_schedule):
+def create_note(title: str, text: str, source: str, tags: str, nid: int, reminder: str, queue_schedule: Optional[int]):
 
     #clean the text
     text = utility.text.clean_user_note_text(text)
@@ -174,11 +176,12 @@ def create_note(title, text, source, tags, nid, reminder, queue_schedule):
     if index is not None:
         index.add_user_note((id, title, text, source, tags, nid, ""))
 
-def remove_from_priority_list(nid_to_remove):
+def remove_from_priority_list(nid_to_remove: int) -> Tuple[int, int]:
+    """ Sets the position field of the given note to null and recalculates queue. """
     return update_priority_list(nid_to_remove, 0)
 
 
-def update_priority_without_timestamp(nid_to_update, new_prio):
+def update_priority_without_timestamp(nid_to_update: int, new_prio: int):
     """
     Updates the priority for the given note, without adding a new entry in 
     queue_prio_log, if there is already one.
@@ -195,14 +198,14 @@ def update_priority_without_timestamp(nid_to_update, new_prio):
     conn.commit()
     conn.close()
 
-def add_to_prio_log(nid, prio):
+def add_to_prio_log(nid: int, prio: int):
     created = _date_now_str()
     conn = _get_connection()
     conn.execute(f"insert into queue_prio_log (nid, prio, type, created) values ({nid}, {prio}, '', '{created}')")
     conn.commit()
     conn.close()
 
-def update_priority_list(nid_to_update, schedule):
+def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
     """
     Call this after a note has been added or updated. 
     Will read the current priority queue and update it.
@@ -268,11 +271,6 @@ def update_priority_list(nid_to_update, schedule):
         due_today = sorted(due_today, key=lambda x : x[3], reverse=True)
         final_list = due_today + final_list
 
-
-
-
-        
-    
     # now account for specific schedules
     
     
@@ -305,7 +303,7 @@ def update_priority_list(nid_to_update, schedule):
     return (index, len(final_list))
     
 
-def _specific_schedule_is_due_today(sched_str):
+def _specific_schedule_is_due_today(sched_str: str) -> bool:
     if not "|" in sched_str:
         return False
     dt = _dt_from_date_str(sched_str.split("|")[1])
@@ -313,7 +311,7 @@ def _specific_schedule_is_due_today(sched_str):
         return dt.date() == datetime.today().date()
     return dt.date() <= datetime.today().date()
 
-def _specific_schedule_was_due_before_today(sched_str):
+def _specific_schedule_was_due_before_today(sched_str: str) -> bool:
     if not "|" in sched_str:
         return False
     dt = _dt_from_date_str(sched_str.split("|")[1])
@@ -321,11 +319,11 @@ def _specific_schedule_was_due_before_today(sched_str):
         
         
 
-def _calc_score(priority, days_delta):
+def _calc_score(priority: int, days_delta: float) -> float:
     prio_factor = 1 + ((priority - 1)/99) * (PRIORITY_SCALE_FACTOR - 1)
     return days_delta * prio_factor
 
-def get_reminder(nid):
+def get_reminder(nid: int) -> str:
     conn = _get_connection()
     res = conn.execute(f"select reminder from notes where id = {nid} limit 1").fetchone()
     if res is None:
@@ -333,7 +331,7 @@ def get_reminder(nid):
     conn.close()
     return res[0]
 
-def get_priority(nid):
+def get_priority(nid: int) -> int:
     conn = _get_connection()
     res = conn.execute(f"select prio from queue_prio_log where nid = {nid} order by created desc limit 1").fetchone()
     if res is None:
@@ -341,7 +339,8 @@ def get_priority(nid):
     conn.close()
     return res[0]
 
-def get_priority_as_str(nid):
+def get_priority_as_str(nid: int) -> str:
+    """ Get a str representation of the priority of the given note, e.g. 'Very high' """
     conn = _get_connection()
     res = conn.execute(f"select prio from queue_prio_log where nid = {nid} order by created desc limit 1").fetchone()
     conn.close()
@@ -349,7 +348,8 @@ def get_priority_as_str(nid):
         return "No priority yet"
     return dynamic_sched_to_str(res[0])
 
-def dynamic_sched_to_str(sched):
+def dynamic_sched_to_str(sched: int) -> str:
+    """ Get a str representation of the given priority value, e.g. 'Very high' """
     if sched >= 85 :
         return f"Very high ({sched})"
     if sched >= 70:
@@ -362,7 +362,7 @@ def dynamic_sched_to_str(sched):
         return f"Very low ({sched})"
     return "Not in Queue (0)"
 
-def update_reminder(nid, rem):
+def update_reminder(nid: int, rem: str):
     conn = _get_connection()
     sql = "update notes set reminder=?, modified=datetime('now', 'localtime') where id=? "
     conn.execute(sql, (rem, nid))
@@ -371,7 +371,7 @@ def update_reminder(nid, rem):
         
 def recalculate_priority_queue():
     """
-        If schedule mode dynamic, calculate the priority queue again, without writing anything to the 
+        Calculate the priority queue again, without writing anything to the 
         priority log. Has to be done at least once on startup to incorporate the changed difference in days.
     """
     for i in range(0,2):
@@ -456,21 +456,21 @@ def recalculate_priority_queue():
         conn.close()
 
 
-def get_notes_scheduled_for_today():
+def get_notes_scheduled_for_today() -> List[SiacNote]:
     today_dt = _date_now_str()[:4] + _date_now_str()[5:7] + _date_now_str()[8:10]
     conn = _get_connection()
-    res = conn.execute(f"select * from notes where reminder like '%|%' and cast((substr(reminder, 21, 4) || substr(reminder, 26,2) || substr(reminder, 29,2)) as integer) <= {today_dt}").fetchall()
+    res = conn.execute(f"select * from notes where position is not null and reminder like '%|%' and cast((substr(reminder, 21, 4) || substr(reminder, 26,2) || substr(reminder, 29,2)) as integer) <= {today_dt}").fetchall()
     conn.close()
     return _to_notes(res)
 
-def get_last_done_notes():
+def get_last_done_notes() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select notes.* from (select distinct nid from queue_prio_log group by nid order by max(created) desc) as p join notes on p.nid = notes.id").fetchall()
     conn.close()
     return _to_notes(res)
 
 
-def mark_page_as_read(nid, page, pages_total):
+def mark_page_as_read(nid: int, page: int, pages_total: int):
     now = _date_now_str()
     conn = _get_connection()
     conn.execute("insert or ignore into read (page, nid) values (%s, %s)" % (page, nid))
@@ -478,13 +478,13 @@ def mark_page_as_read(nid, page, pages_total):
     conn.commit()
     conn.close()
 
-def mark_page_as_unread(nid, page):
+def mark_page_as_unread(nid: int, page: int):
     conn = _get_connection()
     conn.execute("delete from read where nid = %s and page = %s" % (nid, page))
     conn.commit()
     conn.close()
 
-def mark_range_as_read(nid, start, end, pages_total):
+def mark_range_as_read(nid: int, start: int, end: int, pages_total: int):
     now = _date_now_str()
     conn = _get_connection()
     res = conn.execute(f"select page from read where nid={nid} and page > -1").fetchall()
@@ -497,7 +497,7 @@ def mark_range_as_read(nid, start, end, pages_total):
     conn.commit()
     conn.close()
 
-def create_pdf_mark(nid, page, pages_total, mark_type):
+def create_pdf_mark(nid: int, page: int, pages_total: int, mark_type: int):
     now = _date_now_str()
     conn = _get_connection()
     conn.execute("delete from marks where nid = %s and page = %s and marktype = %s" % (nid, page, mark_type))
@@ -505,7 +505,7 @@ def create_pdf_mark(nid, page, pages_total, mark_type):
     conn.commit()
     conn.close()
 
-def toggle_pdf_mark(nid, page, pages_total, mark_type):
+def toggle_pdf_mark(nid: int, page: int, pages_total: int, mark_type: int) -> List[Tuple[Any]]:
     conn = _get_connection()
     if conn.execute("select nid from marks where nid = %s and page = %s and marktype = %s" % (nid, page, mark_type)).fetchone() is not None:
         conn.execute("delete from marks where nid = %s and page = %s and marktype = %s" % (nid, page, mark_type))
@@ -517,19 +517,19 @@ def toggle_pdf_mark(nid, page, pages_total, mark_type):
     conn.close()
     return res 
 
-def delete_pdf_mark(nid, page, mark_type):
+def delete_pdf_mark(nid: int, page: int, mark_type: int):
     conn = _get_connection()
     conn.execute("delete from marks where nid = %s and page %s and marktype = %s" % (nid, page, mark_type))
     conn.commit()
     conn.close()
 
-def get_pdf_marks(nid):
+def get_pdf_marks(nid: int) -> List[Tuple[Any]]:
     conn = _get_connection()
     res = conn.execute("select * from marks where nid = %s" % nid).fetchall()
     conn.close()
     return res
 
-def get_pdfs_by_sources(sources):
+def get_pdfs_by_sources(sources: List[str]) -> List[str]:
     """
     Takes a list of (full) paths, and gives back those for whom a pdf note exists with the given path.
     """
@@ -539,7 +539,7 @@ def get_pdfs_by_sources(sources):
     conn.close()
     return [r[0] for r in res]
 
-def get_pdf_id_for_source(source):
+def get_pdf_id_for_source(source: str) -> int:
     """
     Takes a source and returns the id of the first note with the given source, if existing, else -1
     """
@@ -548,7 +548,7 @@ def get_pdf_id_for_source(source):
     conn.close()
     return -1 if res is None or len(res) == 0 else res[0]
 
-def get_unqueued_notes_for_tag(tag):
+def get_unqueued_notes_for_tag(tag: str) -> List[SiacNote]:
     if len(tag.strip()) == 0:
         return []
     query = ""
@@ -562,7 +562,8 @@ def get_unqueued_notes_for_tag(tag):
     res = conn.execute("select * from notes where (%s) and position is null order by id desc" %(query)).fetchall()
     return _to_notes(res)
 
-def get_read_pages(nid):
+def get_read_pages(nid: int) -> List[int]:
+    """ Get read pages for the given note as list. """
     conn = _get_connection()
     res = conn.execute("select page from read where nid = %s and page > -1 order by created asc" % nid).fetchall()
     conn.close()
@@ -570,7 +571,7 @@ def get_read_pages(nid):
         return []
     return [r[0] for r in res]
 
-def get_note_tree_data():
+def get_note_tree_data() -> Dict[str, List[Tuple[int, str]]]:
     """
         Fills a map with the data for the QTreeWidget in the Create dialog.
     """
@@ -599,25 +600,26 @@ def get_note_tree_data():
             n_map[str(diff_in_days) + " days ago"].append((id, utility.text.trim_if_longer_than(title, 100)))
     return n_map
 
-def get_all_notes():
+def get_all_notes() -> List[Tuple[Any]]:
+    """ Fetch all add-on notes, used in indexing. """
     conn = _get_connection()
     res = list(conn.execute("select * from notes"))
     conn.close()
     return res
 
-def get_untagged_notes():
+def get_untagged_notes() -> List[SiacNote]:
     conn = _get_connection()
     res = list(conn.execute("select * from notes where tags is null or trim(tags) = ''"))
     conn.close()
     return _to_notes(res)
 
-def get_note(id):
+def get_note(id: int) -> SiacNote:
     conn = _get_connection()
     res = conn.execute("select * from notes where id=" + str(id)).fetchone()
     conn.close()
     return _to_notes([res])[0]
 
-def get_random_id_from_queue():
+def get_random_id_from_queue() -> int:
     conn = _get_connection()
     res = conn.execute("select id from notes where position >= 0 order by random() limit 1").fetchone()
     conn.close()
@@ -625,7 +627,7 @@ def get_random_id_from_queue():
         return -1
     return res[0]
 
-def get_head_of_queue():
+def get_head_of_queue() -> int:
     conn = _get_connection()
     res = conn.execute("select id from notes where position >= 0 order by position asc limit 1").fetchone()
     conn.close()
@@ -633,7 +635,7 @@ def get_head_of_queue():
         return -1
     return res[0]
 
-def update_note_text(id, text):
+def update_note_text(id: int, text: str):
     conn = _get_connection()
     sql = """
         update notes set text=?, modified=datetime('now', 'localtime') where id=?
@@ -647,7 +649,7 @@ def update_note_text(id, text):
     if index is not None:
         index.update_user_note((id, note[0], text, note[1], note[2], -1, ""))
 
-def update_note_tags(id, tags):
+def update_note_tags(id: int, tags: str):
     if not tags.endswith(" "):
         tags += " "
     if not tags.startswith(" "):
@@ -662,7 +664,7 @@ def update_note_tags(id, tags):
     if index is not None:
         index.update_user_note((id, note[0], note[3], note[1], tags, -1, ""))
 
-def update_note(id, title, text, source, tags, reminder, priority):
+def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int):
 
     text = utility.text.clean_user_note_text(text)
     tags = " %s " % tags.strip()
@@ -679,7 +681,7 @@ def update_note(id, title, text, source, tags, reminder, priority):
     if index is not None:
         index.update_user_note((id, title, text, source, tags, -1, ""))
 
-def get_read_stats(nid):
+def get_read_stats(nid: int):
     conn = _get_connection()
     res = conn.execute("select count(*), max(created), pagestotal from read where page > -1 and nid = %s" % nid).fetchall()
     res = res[0]
@@ -691,10 +693,10 @@ def get_read_stats(nid):
     return res
 
 #
-# highlights
+# highlights / annotation
 #
 
-def insert_highlights(highlights):
+def insert_highlights(highlights: List[Tuple[Any]]):
     """
         [(nid,page,group,type,text,x0,y0,x1,y1)]
     """
@@ -706,25 +708,25 @@ def insert_highlights(highlights):
     conn.commit()
     conn.close()
 
-def delete_highlight(id):
+def delete_highlight(id: int):
     conn = _get_connection()
     conn.execute(f"delete from highlights where rowid = {id}")
     conn.commit()
     conn.close()
 
-def get_highlights(nid, page):
+def get_highlights(nid: int, page: int) -> List[Tuple[Any]]:
     conn = _get_connection()
     res = conn.execute(f"select rowid, * from highlights where nid = {nid} and page = {page}").fetchall()
     conn.close()
     return res
 
-def update_text_comment_coords(id, x0, y0, x1, y1):
+def update_text_comment_coords(id: int, x0: float, y0: float, x1: float, y1: float):
     conn = _get_connection()
     conn.execute(f"update highlights set x0 = {x0}, y0 = {y0}, x1 = {x1}, y1 = {y1} where rowid = {id}")
     conn.commit()
     conn.close()
 
-def update_text_comment_text(id, text):
+def update_text_comment_text(id: int, text: str):
     conn = _get_connection()
     conn.execute("update highlights set text = ? where rowid = ?", (text, id))
     conn.commit()
@@ -736,7 +738,7 @@ def update_text_comment_text(id, text):
 #
 
 
-def get_all_tags():
+def get_all_tags() -> Set[str]:
     """
         Returns a set containing all tags (str) that appear in the user's notes.
     """
@@ -773,11 +775,11 @@ def find_by_tag(tag_str, to_output_list=True):
         return res
     return _to_notes(res, pinned)
 
-def find_by_text(text):
+def find_by_text(text: str):
     index = get_index()
     index.search(text, [])
 
-def find_notes(text):
+def find_notes(text: str) -> List[SiacNote]:
     q = ""
     for token in text.lower().split():
         if len(token) > 1:
@@ -790,7 +792,7 @@ def find_notes(text):
     conn.close()
     return _to_notes(res)
 
-def find_pdf_notes_by_title(text):
+def find_pdf_notes_by_title(text: str) -> List[SiacNote]:
     q = ""
     for token in text.lower().split():
         if len(token) > 0:
@@ -804,7 +806,7 @@ def find_pdf_notes_by_title(text):
     conn.close()
     return _to_notes(res)
 
-def find_unqueued_pdf_notes(text):
+def find_unqueued_pdf_notes(text: str) -> Optional[List[SiacNote]]:
     q = ""
     for token in text.lower().split():
         if len(token) > 0:
@@ -818,7 +820,7 @@ def find_unqueued_pdf_notes(text):
     conn.close()
     return _to_notes(res)
 
-def find_unqueued_non_pdf_notes(text):
+def find_unqueued_non_pdf_notes(text: str) -> Optional[List[SiacNote]]:
     q = ""
     for token in text.lower().split():
         if len(token) > 0:
@@ -832,7 +834,7 @@ def find_unqueued_non_pdf_notes(text):
     conn.close()
     return _to_notes(res)
 
-def get_most_used_pdf_folders():
+def get_most_used_pdf_folders() -> List[str]:
     sql = """
         select replace(source, replace(source, rtrim(source, replace(source, '/', '')), ''), '') from notes where lower(source) like '%.pdf' 
         group by replace(source, replace(source, rtrim(source, replace(source, '/', '')), ''), '') order by count(*) desc limit 50
@@ -842,7 +844,7 @@ def get_most_used_pdf_folders():
     conn.close()
     return [r[0] for r in res]
 
-def get_position(nid):
+def get_position(nid: int) -> Optional[int]:
     conn = _get_connection()
     res = conn.execute("select position from notes where id = %s" % nid).fetchone()
     conn.close()
@@ -850,7 +852,7 @@ def get_position(nid):
         return None 
     return res[0]
 
-def delete_note(id):
+def delete_note(id: int):
     update_priority_list(id, 0)
     # s = time.time() * 1000
     conn = _get_connection()
@@ -863,7 +865,7 @@ def delete_note(id):
     conn.commit()
     conn.close()
 
-def get_read_today_count():
+def get_read_today_count() -> int:
     now = datetime.today().strftime('%Y-%m-%d')
     conn = _get_connection()
     c = conn.execute("select count(*) from read where page > -1 and created like '%s%%'" % now).fetchone()
@@ -872,24 +874,24 @@ def get_read_today_count():
         return 0
     return c[0]
 
-def get_avg_pages_read(delta_days):
+def get_avg_pages_read(delta_days: int) -> float:
     dt = date.today() - timedelta(delta_days)
     stamp = dt.strftime('%Y-%m-%d')
     conn = _get_connection()
     c = conn.execute("select count(*) from read where page > -1 and created >= '%s'" % stamp).fetchone()
     conn.close()
     if c is None:
-        return 0
+        return 0.0
     return float("{0:.1f}".format(c[0] / delta_days))
 
 
-def get_queue_count():
+def get_queue_count() -> int:
     conn = _get_connection()
     c = conn.execute("select count(*) from notes where position is not null and position >= 0").fetchone()
     conn.close()
     return c
 
-def get_invalid_pdfs():
+def get_invalid_pdfs() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where lower(source) like '%.pdf'").fetchall()
     conn.close()
@@ -901,7 +903,7 @@ def get_invalid_pdfs():
         c += 1
     return _to_notes(filtered) 
 
-def get_recently_used_tags():
+def get_recently_used_tags() -> List[str]:
     """
         Returns a [str] of max 10 tags, ordered by their usage desc.
     """
@@ -909,7 +911,7 @@ def get_recently_used_tags():
     ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:10]
     return ordered
 
-def get_recently_used_tags_with_counts():
+def get_recently_used_tags_with_counts() -> Dict[str, int]:
     """
         Returns a {str, int} of max 10 tags, ordered by their usage desc.
     """
@@ -917,7 +919,7 @@ def get_recently_used_tags_with_counts():
     ordered = dict(sorted(counts.items(), key=lambda item: item[1], reverse = True))
     return ordered
 
-def _get_recently_used_tags_counts(limit):
+def _get_recently_used_tags_counts(limit: int) -> Dict[str, int]:
     conn = _get_connection()
     res = conn.execute("select tags from notes where tags is not null order by id desc limit %s" % limit).fetchall()
     conn.close()
@@ -933,7 +935,7 @@ def _get_recently_used_tags_counts(limit):
                 counts[tag] = 1
     return counts
 
-def _get_priority_list(nid_to_exclude = None):
+def _get_priority_list(nid_to_exclude: int = None) -> List[SiacNote]:
     if nid_to_exclude is not None:
         sql = """
             select * from notes where position >= 0 and id != %s order by position asc
@@ -947,7 +949,7 @@ def _get_priority_list(nid_to_exclude = None):
     conn.close()
     return _to_notes(res)
 
-def _get_priority_list_with_last_prios():
+def _get_priority_list_with_last_prios() -> List[Tuple[Any]]:
     """
         Returns (nid, last prio, last prio creation, current position, schedule)
     """
@@ -958,7 +960,7 @@ def _get_priority_list_with_last_prios():
     return res
 
 
-def get_priority_list():
+def get_priority_list() -> List[SiacNote]:
     """
         Returns all notes that have a position set.
         Result is in the form that Output.print_search_results wants.
@@ -971,7 +973,7 @@ def get_priority_list():
     conn.close()
     return _to_notes(res)
 
-def get_newest(limit, pinned):
+def get_newest(limit: int, pinned: List[int]) -> List[SiacNote]:
     """
         Returns newest user notes ordered by created date desc.
         Result is in the form that Output.print_search_results wants.
@@ -984,19 +986,19 @@ def get_newest(limit, pinned):
     conn.close()
     return _to_notes(res, pinned)
 
-def get_random(limit, pinned):
+def get_random(limit: int, pinned: List[int]) -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes order by random() limit %s" % limit).fetchall()
     conn.close()
     return _to_notes(res, pinned)
 
-def get_queue_in_random_order():
+def get_queue_in_random_order() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where position is not null order by random()").fetchall()
     conn.close()
     return _to_notes(res)
 
-def set_priority_list(ids):
+def set_priority_list(ids: List[int]):
     ulist = list()
     for ix,id in enumerate(ids):
         ulist.append((ix, id))
@@ -1012,23 +1014,7 @@ def empty_priority_list():
     conn.commit()
     conn.close()
 
-def _get_db_path():
-    global db_path
-    if db_path is not None:
-        return db_path
-    file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
-    if file_path is None or len(file_path) == 0:
-        file_path = utility.misc.get_user_files_folder_path()
-    file_path += "siac-notes.db"
-    file_path.strip()
-    db_path = file_path
-    return file_path
-
-def _get_connection():
-    file_path = _get_db_path()
-    return sqlite3.connect(file_path)
-
-def get_all_tags_as_hierarchy(include_anki_tags):
+def get_all_tags_as_hierarchy(include_anki_tags: bool) -> Dict:
     tags = None
     if include_anki_tags:
         tags = mw.col.tags.all()
@@ -1039,50 +1025,50 @@ def get_all_tags_as_hierarchy(include_anki_tags):
     return utility.tags.to_tag_hierarchy(tags)
 
 
-def get_all_pdf_notes():
+def get_all_pdf_notes() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where lower(source) like '%.pdf'").fetchall()
     conn.close()
     return _to_notes(res)
 
-def get_all_unread_pdf_notes():
+def get_all_unread_pdf_notes() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where lower(source) like '%.pdf' and id not in (select distinct nid from read where page >= 0) order by created desc").fetchall()
     conn.close()
     return _to_notes(res)
 
-def get_in_progress_pdf_notes():
+def get_in_progress_pdf_notes() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where lower(source) like '%.pdf' and id in (select nid from (select nid, pagestotal, max(created) from read where page > -1  group by nid having count(nid) < pagestotal)) order by created desc").fetchall()
     conn.close()
     return _to_notes(res)
 
 
-def get_pdf_notes_last_added_first():
+def get_pdf_notes_last_added_first() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where lower(source) like '%.pdf' order by id desc").fetchall()
     conn.close()
     return _to_notes(res)
 
-def get_pdf_notes_last_read_first():
+def get_pdf_notes_last_read_first() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select notes.id,notes.title,notes.text,notes.source,notes.tags,notes.nid,notes.created,notes.modified,notes.reminder,notes.lastscheduled,notes.position from notes join read on notes.id == read.nid where lower(notes.source) like '%.pdf' group by notes.id order by max(read.created) desc").fetchall()
     conn.close()
     return _to_notes(res)
 
-def get_pdf_notes_not_in_queue():
+def get_pdf_notes_not_in_queue() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where lower(source) like '%.pdf' and position is null order by id desc").fetchall()
     conn.close()
     return _to_notes(res)
 
-def get_non_pdf_notes_not_in_queue():
+def get_non_pdf_notes_not_in_queue() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where not lower(source) like '%.pdf' and position is null order by id desc").fetchall()
     conn.close()
     return _to_notes(res)
 
-def get_pdf_quick_open_suggestions():
+def get_pdf_quick_open_suggestions() -> List[SiacNote]:
     conn = _get_connection()
     last_added = conn.execute("select * from notes where lower(source) like '%.pdf' order by id desc limit 8").fetchall()
     last_read = conn.execute("select notes.id,notes.title,notes.text,notes.source,notes.tags,notes.nid,notes.created,notes.modified,notes.reminder,notes.lastscheduled,notes.position from notes join read on notes.id == read.nid where lower(notes.source) like '%.pdf' group by notes.id order by max(read.created) desc limit 8").fetchall()
@@ -1100,7 +1086,7 @@ def get_pdf_quick_open_suggestions():
             break 
     return _to_notes(res)
 
-def get_pdf_info(nids):
+def get_pdf_info(nids: List[int]) -> List[Tuple[int, int, int]]:
     sql = "select nid, pagestotal, count(*), max(created) from read where nid in (%s) and page > -1 group by nid" % (",".join([str(n) for n in nids]))
     conn = _get_connection()
     res = conn.execute(sql).fetchall()
@@ -1110,7 +1096,7 @@ def get_pdf_info(nids):
         ilist.append([r[0], r[2], r[1]])
     return ilist
 
-def get_related_notes(id):
+def get_related_notes(id: int) -> NoteRelations:
     note = get_note(id)
     title = note.title
     if title is not None and len(title.strip()) > 1:
@@ -1137,7 +1123,7 @@ def get_related_notes(id):
     return NoteRelations(related_by_title, related_by_tags)
 
 
-def mark_all_pages_as_read(nid, num_pages):
+def mark_all_pages_as_read(nid: int, num_pages: int):
     now = _date_now_str()
     conn = _get_connection()
     existing = [r[0] for r in conn.execute("select page from read where page > -1 and nid = %s" % nid).fetchall()]
@@ -1146,7 +1132,7 @@ def mark_all_pages_as_read(nid, num_pages):
     conn.commit()
     conn.close()
 
-def mark_as_read_up_to(nid, page, num_pages):
+def mark_as_read_up_to(nid: int, page: int, num_pages: int):
     now = _date_now_str()
     conn = _get_connection()
     existing = [r[0] for r in conn.execute("select page from read where page > -1 and nid = %s" % nid).fetchall()]
@@ -1155,13 +1141,13 @@ def mark_as_read_up_to(nid, page, num_pages):
     conn.commit()
     conn.close()
 
-def mark_all_pages_as_unread(nid):
+def mark_all_pages_as_unread(nid: int):
     conn = _get_connection()
     conn.execute("delete from read where nid = %s and page > -1" % nid)
     conn.commit()
     conn.close()
 
-def insert_pages_total(nid, pages_total):
+def insert_pages_total(nid: int, pages_total: int):
     """
         Inserts a special page entry (page = -1), that is used to save the number of pages even if no page has been read yet.
     """
@@ -1177,21 +1163,37 @@ def insert_pages_total(nid, pages_total):
 # helpers
 #
 
+def _get_connection() -> sqlite3.Connection:
+    file_path = _get_db_path()
+    return sqlite3.connect(file_path)
 
-def _to_notes(db_list, pinned=[]):
+
+def _get_db_path() -> str:
+    global db_path
+    if db_path is not None:
+        return db_path
+    file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
+    if file_path is None or len(file_path) == 0:
+        file_path = utility.misc.get_user_files_folder_path()
+    file_path += "siac-notes.db"
+    file_path.strip()
+    db_path = file_path
+    return file_path
+
+def _to_notes(db_list: List[Tuple[Any]], pinned: List[int] = []) -> List[SiacNote]:
     notes = list()
     for tup in db_list:
         if not str([tup[0]]) in pinned:
             notes.append(SiacNote(tup))
     return notes
 
-def _date_now_str():
+def _date_now_str() -> str:
     return datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
-def _dt_from_date_str(dtst):
+def _dt_from_date_str(dtst) -> datetime:
     return datetime.strptime(dtst, '%Y-%m-%d-%H-%M-%S')
 
-def _table_exists(name):
+def _table_exists(name) -> bool:
     conn = _get_connection()
     res = conn.execute(f"SELECT count(name) FROM sqlite_master WHERE type='table' AND name='{name}'").fetchone()
     conn.close()
@@ -1200,7 +1202,7 @@ def _table_exists(name):
     return False
     
 
-def _convert_manual_prio_to_dynamic(prio):
+def _convert_manual_prio_to_dynamic(prio: int) -> int:
     if prio == 2 or prio == 7:
         return 5
     if prio == 3:
