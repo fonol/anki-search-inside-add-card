@@ -156,7 +156,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
             var renderTask = page.render({
                 canvasContext: ctx,
                 viewport: viewport,
-                transform: window.devicePixelRatio !== 1 ? [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0] : null, 
+                transform: window.devicePixelRatio !== 1 ? [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0] : null,
                 continueCallback: function (cont) {
                     if (timestamp != pageTimestamp) {
                         return;
@@ -176,7 +176,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 }
                 return lPage.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false });
             }).then(function (textContent) {
-                $("#text-layer").css({ height: canvas.height / window.devicePixelRatio , width: canvas.width / window.devicePixelRatio, left: canvas.offsetLeft }).html('');
+                $("#text-layer").css({ height: canvas.height / window.devicePixelRatio, width: canvas.width / window.devicePixelRatio, left: canvas.offsetLeft }).html('');
                 pdfjsLib.renderTextLayer({
                     textContent: textContent,
                     container: document.getElementById("text-layer"),
@@ -216,7 +216,7 @@ function invertCanvas(ctx) {
     var data = imgData.data;
     var mapped;
     var fn;
-    switch(pdfColorMode) {
+    switch (pdfColorMode) {
         case "Sand": fn = pxToSandScheme; break;
         case "Night": fn = pxToNightScheme; break;
         case "Peach": fn = pxToPeachScheme; break;
@@ -660,7 +660,7 @@ function togglePDFNightMode(elem) {
         pdfColorMode = "Sand";
     } else if (pdfColorMode === "Sand") {
         pdfColorMode = "Peach";
-    }else {
+    } else {
         pdfColorMode = "Day";
     }
     elem.innerHTML = pdfColorMode;
@@ -709,7 +709,7 @@ function pdfKeyup(e) {
         // clicked with ctrl, text insert btn is active -> insert text area at coordinates
         Highlighting.insertText(e);
     }
-       
+
 
 }
 
@@ -903,12 +903,12 @@ function pxToPeachScheme(red, green, blue) {
     return { r: red, g: green, b: blue };
 }
 function pxToNightScheme(red, green, blue) {
-    if (red >= 250 && green >= 250 && blue >= 250) {
-        red = 47; green = 47; blue = 49;
+    if (red >= 160 && green >= 160 && blue >= 160) {
+        red = 17; green = 36; blue = 53;
     } else {
-        red = Math.min(255 - red + 30, 255);
-        green = Math.min(255 - green + 30, 255);
-        blue = Math.min(255 - blue + 30, 255);
+        red = red ^ 255;
+        green = green ^ 255;
+        blue = blue ^ 255;
     }
     return { r: red, g: green, b: blue };
 }
@@ -1246,12 +1246,12 @@ function removeDialogOk() {
 function updateSchedule() {
     let checked = $("input[name=sched]:checked").data("pycmd");
     if (checked == "4") {
-        let td = document.getElementById("siac-sched-td-inp").value;    
+        let td = document.getElementById("siac-sched-td-inp").value;
         if (!td) { pycmd('siac-notification Value is empty!'); return; }
         pycmd("siac-update-schedule td " + td);
     } else if (checked == "5") {
         let w = '';
-        $('#siac-sched-wd input').each(function(ix) {
+        $('#siac-sched-wd input').each(function (ix) {
             if ($(this).is(":checked")) {
                 w += (ix + 1).toString();
             }
@@ -1259,7 +1259,7 @@ function updateSchedule() {
         if (!w.length) { pycmd('siac-notification Value is empty!'); return; }
         pycmd("siac-update-schedule wd " + w);
     } else {
-        let id = document.getElementById("siac-sched-id-inp").value;    
+        let id = document.getElementById("siac-sched-id-inp").value;
         if (!id) { pycmd('siac-notification Value is empty!'); return; }
         pycmd("siac-update-schedule id " + id);
     }
