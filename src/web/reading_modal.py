@@ -685,7 +685,8 @@ class ReadingModal:
         if not note.is_pdf() and not note.is_feed():
             should_save     = True
 
-        hide                = get_config_value_or_default("pdf.queue.hide", False)
+        config              = mw.addonManager.getConfig(__name__)
+        hide                = config["pdf.queue.hide"]
         queue_head_readings = ""
 
         for ix, queue_item in enumerate(queue):
