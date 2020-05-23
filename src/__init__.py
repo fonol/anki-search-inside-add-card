@@ -77,6 +77,7 @@ def init_addon():
 
     # add new notes to search index when adding
     gui_hooks.add_cards_did_add_note.append(add_note_to_index)
+
     # update notes in index when changed through the "Edit" button
     EditDialog.saveAndClose = wrap(EditDialog.saveAndClose, editor_save_with_index_update, "around")
 
@@ -97,8 +98,6 @@ def init_addon():
     aqt.editor._html += getScriptPlatformSpecific()
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
-
-    gui_hooks.add_cards_did_init.append(on_add_cards_init)
 
 
 def editor_save_with_index_update(dialog, _old):
