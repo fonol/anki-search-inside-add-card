@@ -26,6 +26,8 @@ from aqt.utils import tooltip, showInfo
 import os
 import urllib.parse
 import json
+import typing
+from typing import List, Dict, Any, Optional, Tuple
 
 
 from .state import check_index, get_index, set_index, set_corpus
@@ -54,12 +56,13 @@ import utility.text
 
 config = mw.addonManager.getConfig(__name__)
 
-def expanded_on_bridge_cmd(handled, cmd, self):
+def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tuple[bool, Any]:
     """
     Process the various commands coming from the ui -
     this includes users clicks on option checkboxes, on rendered results, on special searches, etc.
 
-    todo: needs some serious cleanup
+    Todo: needs some serious cleanup / splitting up.
+    Todo: maybe move cmd handling to components (reading_modal, sidebar, index)
     """
     if not isinstance(self, aqt.editor.Editor):
         return handled
@@ -67,6 +70,8 @@ def expanded_on_bridge_cmd(handled, cmd, self):
     # just to make sure
     if index is not None and index.ui._editor is None:
         index.ui.set_editor(self)
+
+    # there has to be a more elegant way of processing the cmds than a giant if else...
 
     if cmd.startswith("siac-fld "):
         # keyup in fields -> search
@@ -214,7 +219,7 @@ def expanded_on_bridge_cmd(handled, cmd, self):
                 document.getElementById('siac-queue-infobox').style.display = "block";
                 document.getElementById('siac-queue-infobox').innerHTML =`%s`;
             }
-        """ % get_queue_infobox(note, read_stats))
+        """ % index.ui.reading_modal.get_queue_infobox(note, read_stats))
 
     elif cmd.startswith("siac-pdf-selection "):
         stamp = setStamp()
@@ -271,7 +276,7 @@ def expanded_on_bridge_cmd(handled, cmd, self):
     elif cmd == "siac-url-dialog":
         dialog = UrlImporter(self.parentWindow)
         if dialog.exec_():
-            if dialog.chosen_url is not None and len(dialog.chosen_url) >= 0:
+            if dialog.chosen_url:
                 sched = dialog.queue_schedule
                 name = dialog.get_name()
                 path = config["pdfUrlImportSavePath"]
@@ -346,7 +351,7 @@ def expanded_on_bridge_cmd(handled, cmd, self):
     elif cmd.startswith("siac-pdf-left-tab-pdf-search "):
         # search input coming from the "PDFs" tab in the pdf viewer
         inp = " ".join(cmd.split(" ")[1:])
-        if inp is not None and len(inp) > 0:
+        if inp: 
             notes = find_pdf_notes_by_title(inp)
             index.ui.reading_modal.sidebar.print(notes)
 
@@ -454,7 +459,6 @@ def expanded_on_bridge_cmd(handled, cmd, self):
             """)
         else:
             index.ui.reading_modal.display(head)
-
 
     elif cmd.startswith("siac-read-user-note "):
         id = int(cmd.split()[1])
@@ -564,15 +568,6 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
 
     elif cmd.startswith("siac-remove-from-queue"):
-        # called from the buttons on the left of the reading modal bottom bar
-        # if not " " in cmd:
-        #     nid = index.ui.reading_modal.note_id
-        # else:
-        #     nid = int(cmd.split()[1])
-        # remove_from_priority_list(nid)
-        # queue_readings_list = get_queue_head_display(nid)
-        # index.ui.js("afterRemovedFromQueue();")
-        # index.ui.js("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)
         update_priority_list(index.ui.reading_modal.note_id, 0)
         nid = get_head_of_queue()
         if nid is None or nid < 0:
@@ -794,7 +789,6 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         cloze_text = " ".join(cmd.split()[1:])
         index.ui.reading_modal.show_cloze_field_picker_modal(cloze_text)
 
-
     elif cmd.startswith("siac-url-srch "):
         search_term = cmd.split("$$$")[1]
         url = cmd.split("$$$")[2]
@@ -818,7 +812,6 @@ def expanded_on_bridge_cmd(handled, cmd, self):
     elif cmd.startswith("siac-timer-elapsed "):
         nid = int(cmd.split()[1])
         index.ui.reading_modal.show_timer_elapsed_popup(nid)
-
 
     #
     #  Index info modal
@@ -1013,6 +1006,8 @@ def expanded_on_bridge_cmd(handled, cmd, self):
         index.ui.sidebar.show_tab(index.ui.sidebar.ADDON_NOTES_TAB)
     elif cmd == "siac-sidebar-show-import-tab":
         index.ui.sidebar.show_tab(index.ui.sidebar.PDF_IMPORT_TAB)
+    elif cmd == "siac-sidebar-show-special-tab":
+        index.ui.sidebar.show_tab(index.ui.sidebar.SPECIAL_SEARCHES_TAB)
 
 
 
@@ -1043,7 +1038,7 @@ def parseSortCommand(cmd):
     elif cmd == "remReviewed":
         index.ui.removeReviewed()
 
-def parse_predef_search_cmd(cmd, editor):
+def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
     """
     Helper function to parse the various predefined searches (last added/longest text/...)
     """
@@ -1090,6 +1085,11 @@ def parse_predef_search_cmd(cmd, editor):
         index.lastSearch = (None, decks, "randomUntagged")
         res = getRandomUntagged(decks, limit)
         index.ui.print_search_results(res, stamp)
+    elif searchtype == "lastUntagged":
+        stamp = setStamp()
+        index.lastSearch = (None, decks, "lastUntagged")
+        res = get_last_untagged(decks, limit)
+        index.ui.print_search_results(res, stamp)
     elif searchtype == "highestInterval":
         stamp = setStamp()
         index.lastSearch = (None, decks, "highestInterval", limit)
@@ -1122,7 +1122,7 @@ def parse_predef_search_cmd(cmd, editor):
         index.ui.print_search_results(res, stamp)
 
 
-def setStamp():
+def setStamp() -> Optional[str]:
     """
     Generate a milisec stamp and give it to the index.
     The result of a search is not printed if it has a non-matching stamp.
@@ -1134,14 +1134,12 @@ def setStamp():
         return stamp
     return None
 
-def setStats(nid, stats):
-    """
-    Insert the statistics into the given card.
-    """
+def setStats(nid: int, stats: Tuple[Any, ...]):
+    """ Insert the statistics into the given card. """
     if check_index():
-        get_index().ui.showStats(stats[0], stats[1], stats[2], stats[3])
+        get_index().ui.show_stats(stats[0], stats[1], stats[2], stats[3])
 
-def rerender_info(editor, content="", searchDB = False, searchByTags = False):
+def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool = False, searchByTags: bool = False):
     """
     Main function that is executed when a user has typed or manually entered a search.
     Args:
@@ -1185,7 +1183,7 @@ def rerender_info(editor, content="", searchDB = False, searchByTags = False):
                 index.ui.empty_result("No results found")
 
 
-def rerenderNote(nid):
+def rerenderNote(nid: int):
     res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid)
     if res is not None and len(res) > 0:
         res = res[0]
@@ -1194,7 +1192,7 @@ def rerenderNote(nid):
             index.ui.updateSingle(res)
 
 @requires_index_loaded
-def default_search_with_decks(editor, textRaw, decks):
+def default_search_with_decks(editor: aqt.editor.Editor, textRaw: Optional[str], decks: List[int]):
     """
     Uses the index to clean the input and find notes.
 
@@ -1216,7 +1214,7 @@ def default_search_with_decks(editor, textRaw, decks):
     searchRes = index.search(cleaned, decks)
 
 @requires_index_loaded
-def search_for_user_notes_only(editor, text):
+def search_for_user_notes_only(editor: aqt.editor.Editor, text: str):
     """
     Uses the index to clean the input and find user notes.
     """
@@ -1233,23 +1231,14 @@ def search_for_user_notes_only(editor, text):
     index.lastSearch = (cleaned, ["-1"], "user notes")
     searchRes = index.search(cleaned, ["-1"], only_user_notes = True)
 
-
-
-def getCurrentContent(editor):
-    text = ""
-    for f in editor.note.fields:
-        text += f
-    return text
-
 @requires_index_loaded
-def add_note_to_index(note):
+def add_note_to_index(note: Note):
     get_index().addNote(note)
 
 @requires_index_loaded
-def add_tag(tag):
-    """
-    Insert the given tag in the tag field at bottom if not already there.
-    """
+def add_tag(tag: str):
+    """ Insert the given tag in the tag field at bottom if not already there. """
+
     index = get_index()
     if tag == "" or index is None or index.ui._editor is None:
         return
@@ -1261,7 +1250,7 @@ def add_tag(tag):
     index.ui._editor.saveTags()
 
 @requires_index_loaded
-def set_pinned(cmd):
+def set_pinned(cmd: str):
     """
     Update the pinned search results.
     This is important because they should not be contained in the search results.
@@ -1275,9 +1264,7 @@ def set_pinned(cmd):
     if index.logging:
         log("Updated pinned: " + str(index.pinned))
 
-
-
-def update_field_to_hide_in_results(mid, fldOrd, value):
+def update_field_to_hide_in_results(mid: int, fldOrd: int, value: bool):
     if not value:
         config["fieldsToHideInResults"][mid].remove(fldOrd)
         if len(config["fieldsToHideInResults"][mid]) == 0:
@@ -1292,7 +1279,7 @@ def update_field_to_hide_in_results(mid, fldOrd, value):
     mw.addonManager.writeConfig(__name__, config)
 
 
-def update_field_to_exclude(mid, fldOrd, value):
+def update_field_to_exclude(mid: int, fldOrd: int, value: bool):
     if not value:
         config["fieldsToExclude"][mid].remove(fldOrd)
         if len(config["fieldsToExclude"][mid]) == 0:
@@ -1305,7 +1292,7 @@ def update_field_to_exclude(mid, fldOrd, value):
     mw.addonManager.writeConfig(__name__, config)
 
 @requires_index_loaded
-def try_repeat_last_search(editor = None):
+def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
     """
     Sometimes it is useful if we can simply repeat the last search,
     e.g. the user has clicked another deck in the deck select.
@@ -1426,7 +1413,8 @@ def get_index_info():
                <tr><td>PDF: Page Right + Mark Page as Read</td><td>  <b>Ctrl+Shift+Space</b></td></tr>
                <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl+K</b></td></tr>
                <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
-               <tr><td>Confirm New Note</td><td>  <b>Ctrl+Enter</b></td></tr>
+               <tr><td>Confirm new note</td><td>  <b>Ctrl+Enter</b></td></tr>
+               <tr><td>Confirm new note and keep open</td><td>  <b>Ctrl+Shift+Enter</b></td></tr>
                <tr><td>PDF: Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
                <tr><td>PDF: Toggle Top & Bottom Bar</td><td>  <b>F11</b></td></tr>
              </table>

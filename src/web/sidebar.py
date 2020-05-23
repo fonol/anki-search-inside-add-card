@@ -1,27 +1,31 @@
+import typing
+from typing import List, Optional, Tuple, Any
+from aqt.editor import Editor
+from anki.utils import isMac, isLin
+
+
 from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority_as_str, get_notes_scheduled_for_today
 from ..config import get_config_value_or_default as conf_or_def
 import utility.misc
 import utility.tags
 import utility.text
-from anki.utils import isMac, isLin
 
 class Sidebar:
-    """
-        The toggle-able sidebar that is displayed left of the results.
-    """
+    """ The toggle-able sidebar that is displayed left of the results. """
 
     def __init__(self):
 
-        self.ADDON_NOTES_TAB = 1
-        self.PDF_IMPORT_TAB = 2
+        self.ADDON_NOTES_TAB        : int       = 1
+        self.PDF_IMPORT_TAB         : int       = 2
+        self.SPECIAL_SEARCHES_TAB   : int       = 3
 
-        self.tab = self.ADDON_NOTES_TAB
-        self._editor = None
+        self.tab                    : int       = self.ADDON_NOTES_TAB
+        self._editor                : Editor    = None
 
-    def set_editor(self, editor):
+    def set_editor(self, editor: Editor):
         self._editor = editor
 
-    def _html(self):
+    def _html(self) -> str:
 
         tab_displayed_name = self._tab_displayed_name()
 
@@ -40,8 +44,8 @@ class Sidebar:
                 html += "</ul>"
                 return html
 
-            tag_html = iterateMap(tmap, "", True)
-            tag_len = len(tmap) if tmap is not None else 0
+            tag_html            = iterateMap(tmap, "", True)
+            tag_len             = len(tmap) if tmap is not None else 0
 
             # check if there are any notes scheduled for today
             scheduled_for_today = get_notes_scheduled_for_today()
@@ -51,7 +55,7 @@ class Sidebar:
                 sched_today_menu_item = ""
 
             tab_html = f"""
-                    <div style='flex: 0 1 auto;'>
+                    <div style='flex: 0 1 auto; margin-top: 10px;'>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-newest");'>Newest</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs")'>PDFs</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-unread")'>PDFs - Unread</div>
@@ -117,13 +121,13 @@ class Sidebar:
                         else:
                             html = "<ul class='deck-sub-list'>"
                         for key, value in tmap.items():
-                            full = prefix + "/" + key if prefix else key
+                            full        = prefix + "/" + key if prefix else key
                             if isMac or isLin and not full.startswith("/"):
                                 full = f"/{full}"
-                            click = f"pycmd(\"siac-create-note-source-prefill {full}\")" if full.endswith(".pdf") else ""
-                            exp = "[+]" if value else ""
+                            click       = f"pycmd(\"siac-create-note-source-prefill {full}\")" if full.endswith(".pdf") else ""
+                            exp         = "[+]" if value else ""
                             should_bold = "style='font-weight: bold;'" if value else ""
-                            html = f"{html}<li class='deck-list-item' onclick='event.stopPropagation(); {click}'><div class='list-item-inner' {should_bold}><b class='exp'>{exp}</b> {utility.text.trim_if_longer_than(key, 35)}</div>{iterateMap(value, full, False)}</li>"
+                            html        = f"{html}<li class='deck-list-item' onclick='event.stopPropagation(); {click}'><div class='list-item-inner' {should_bold}><b class='exp'>{exp}</b> {utility.text.trim_if_longer_than(key, 35)}</div>{iterateMap(value, full, False)}</li>"
                         html += "</ul>"
                         return html
                     folders = iterateMap(map, "", True)
@@ -146,6 +150,33 @@ class Sidebar:
                 </div>
             """
 
+        elif self.tab == self.SPECIAL_SEARCHES_TAB:
+
+            tab_html = f"""
+                    <div style='flex: 1 1 auto; margin-top: 15px; margin-right: 10px; overflow-y: auto; overflow-x: hidden;'>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastAdded")'>Last Added</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("firstAdded")'>First Added</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastModified")'>Last Modified</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastReviewed")'>Last Reviewed</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastLapses")'>Last Lapses</div>
+                        <br><br>
+
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("highestPerf")'>Best Performance</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestPerf")'>Worst Performance</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestRet")'>Worst Pass Rate</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("highestRet")'>Best Pass Rate</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("longestTime")'>Time Taken (desc.)</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("shortestTime")'>Time Taken (asc.)</div>
+                        <br><br>
+
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("longestText")'>Longest HTML</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("randomUntagged")'>Random Untagged</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastUntagged")'>Newest Untagged</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("highestInterval")'>Highest Interval</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestInterval")'>Lowest Interval</div>
+                    </div>
+            """
+
         html = f"""
             <div id='siac-notes-sidebar'>
                 <div style='display: flex; flex-direction: column; height: 100%;'>
@@ -155,6 +186,9 @@ class Sidebar:
                             <div class='siac-btn-small-dropdown click' style='text-align: center; z-index: 3;' onclick='event.stopPropagation();'>
                                 <div class='blue-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-notes-tab")'>
                                     <b>Add-on Notes</b>
+                                </div>
+                                <div class='blue-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-special-tab")'>
+                                    <b>Anki Notes</b><br>
                                 </div>
                                 <div class='blue-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-import-tab")'>
                                     <b>PDF Import</b><br>
@@ -192,7 +226,7 @@ class Sidebar:
     def hide(self):
         self._editor.web.eval("$('#siac-notes-sidebar').remove(); $('#resultsWrapper').css('padding-left', 0);")
 
-    def refresh_tab(self, tab):
+    def refresh_tab(self, tab: int):
         if self.tab == tab:
             self.refresh()
 
@@ -217,13 +251,15 @@ class Sidebar:
         """ % html)
     
 
-    def show_tab(self, tab):
+    def show_tab(self, tab: int):
         self.tab = tab
         self.refresh()
 
 
-    def _tab_displayed_name(self):
+    def _tab_displayed_name(self) -> str:
         if self.tab == self.PDF_IMPORT_TAB:
             return "PDF Import"
         elif self.tab == self.ADDON_NOTES_TAB:
             return "Add-on Notes"
+        elif self.tab == self.SPECIAL_SEARCHES_TAB:
+            return "Anki Notes"

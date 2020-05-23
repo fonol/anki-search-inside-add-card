@@ -122,6 +122,14 @@
     font-size: 20px;
     color: #2496dc;
 }
+.siac-search-loader {
+    width: 250px; 
+    padding: 15px; 
+    text-align: center;
+    border: 3px outset $noteBorderColor$;
+    background: $modalBackgroundColor$;
+    color: $modalForegroundColor$;
+}
 #searchResults {
     display: none;
     height: calc(100% - 15px);
@@ -129,6 +137,7 @@
     padding: 10px 10px 5px 10px;
     overflow-x: hidden;
     max-width: 100%;
+    position: relative;
     flex: 1 1 auto;
 }
 .editedStamp {
@@ -1163,6 +1172,7 @@ span.tag-symbol {
     cursor:pointer;
     width: 17px;
     height: 17px;
+    font-size: 9px;
     background: white;
     margin-right: 3px; margin-left: 3px;
     text-align: center;

@@ -49,38 +49,41 @@ import utility.text
 import utility.misc
 
 class Output:
+    """
+        Component which is mainly responsible for rendering search results.
+    """
 
     def __init__(self):
 
         #
-        # components
+        # Components
         #
-        self._editor = None
-        self.reading_modal = ReadingModal()
-        self.sidebar = Sidebar()
+        self._editor                = None
+        self.reading_modal          = ReadingModal()
+        self.sidebar                = Sidebar()
        
-        # todo: move to text utils
-        self.SEP_END = re.compile(r'</div>\u001f$')
-        self.EXCLUDE_KEYWORDS = re.compile(r'(?:sound|mp3|c[0-9]+)')
+        # Todo: move to text utils
+        self.EXCLUDE_KEYWORDS       = re.compile(r'(?:sound|mp3|c[0-9]+)')
        
         #
-        # state
+        # State
         #
-        self.latest = -1
-        self.gridView = False
-        self.stopwords = []
-        self.plotjsLoaded = False
-        self.showRetentionScores = True
-        self.lastResults = None
-        self.hideSidebar = False
-        self.uiVisible = True
+        self.latest                 = -1
+        self.gridView               = False
+        self.stopwords              = []
+        self.plotjsLoaded           = False
+        self.showRetentionScores    = True
+        self.lastResults            = None
+        self.hideSidebar            = False
+        self.uiVisible              = True
+
         # saved to display the same time taken when clicking on a page other than 1
-        self.last_took = None
-        self.last_had_timing_info = False
+        self.last_took              = None
+        self.last_had_timing_info   = False
         #determines the zoom factor of rendered notes
-        self.scale = 1.0
+        self.scale                  = 1.0
         #cache previous calls
-        self.previous_calls = []
+        self.previous_calls         = []
 
 
     def set_editor(self, editor):
@@ -109,56 +112,59 @@ class Output:
         This is the html that gets rendered in the search results div.
         This will always print the first page.
         """
+
         if logging:
             log("Entering print_search_results")
             log("Length (searchResults): " + str(len(notes)))
+
         if stamp is not None:
             if stamp != self.latest:
                 return
-        if not is_cached and not len(notes) == 0:
+
+        if not is_cached and len(notes) > 0:
             self.previous_calls.append([notes, None, editor, logging, printTimingInfo, page, query_set, is_queue])
             if len(self.previous_calls) > 11:
                 self.previous_calls.pop(0)
 
-        html = ""
-        allText = ""
-        tags = []
-        epochTime = int(time.time() * 1000)
-        timeDiffString = ""
-        newNote = ""
-        lastNote = ""
-        self.last_had_timing_info = printTimingInfo
+        html                        = ""
+        allText                     = ""
+        tags                        = []
+        epochTime                   = int(time.time() * 1000)
+        timeDiffString              = ""
+        newNote                     = ""
+        lastNote                    = ""
+        ret = 0
+        self.last_had_timing_info   = printTimingInfo
 
         if notes is not None and len(notes) > 0:
-            self.lastResults = notes
-            self.last_query_set = query_set
+            self.lastResults        = notes
+            self.last_query_set     = query_set
 
-        searchResults = notes[(page- 1) * 50: page * 50]
-        nids = [r.id for r in searchResults]
+        searchResults               = notes[(page- 1) * 50: page * 50]
+        nids                        = [r.id for r in searchResults]
 
         if self.showRetentionScores:
-            retsByNid = getRetentions(nids)
-        ret = 0
+            retsByNid               = getRetentions(nids)
 
         # various time stamps to collect information about rendering performance
-        start = time.time()
-        highlight_start = None
-        build_user_note_start = None
+        start                       = time.time()
+        highlight_start             = None
+        build_user_note_start       = None
 
-        highlight_total = 0.0
-        build_user_note_total = 0.0
+        highlight_total             = 0.0
+        build_user_note_total       = 0.0
 
-        remaining_to_highlight = {}
-        highlight_boundary = 15 if self.gridView else 10
+        remaining_to_highlight      = {}
+        highlight_boundary          = 15 if self.gridView else 10
 
         # for better performance, collect all notes that are .pdfs, and
         # query their reading progress after they have been rendered
-        pdfs = []
+        pdfs                        = []
 
-        check_for_suspended = []
+        check_for_suspended         = []
 
         for counter, res in enumerate(searchResults):
-            nid = res.id
+            nid     = res.id
             counter += (page - 1)* 50
             try:
                 timeDiffString = self._getTimeDifferenceString(nid, epochTime)
@@ -181,42 +187,42 @@ class Output:
             #non-anki notes should be displayed differently, we distinguish between title, text and source here
             #confusing: 'source' on notes from the index means the original note content (without stopwords removed etc.),
             #on SiacNotes, it means the source field.
-            build_user_note_start = time.time()
-            text = res.get_content()
-            progress = ""
-            pdf_class = ""
+            build_user_note_start   = time.time()
+            text                    = res.get_content()
+            progress                = ""
+            pdf_class               = ""
             if res.note_type == "user" and res.is_pdf():
                 pdfs.append(nid)
-                p_html = "<div class='siac-prog-sq'></div>" * 10
-                progress = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div>"
-                pdf_class = "pdf"
+                p_html              = "<div class='siac-prog-sq'></div>" * 10
+                progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div>"
+                pdf_class           = "pdf"
             elif res.note_type == "index" and res.did > 0:
                 check_for_suspended.append(res.id)
 
-            build_user_note_total += time.time() - build_user_note_start
+            build_user_note_total   += time.time() - build_user_note_start
 
             # hide fields that should not be shown
             if str(res.mid) in self.fields_to_hide_in_results:
-                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res.mid)]])
+                text                = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res.mid)]])
 
             #remove double fields separators
-            text = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\")
+            text                    = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\")
 
             #try to remove image occlusion fields
-            text = utility.text.try_hide_image_occlusion(text)
+            text                    = utility.text.try_hide_image_occlusion(text)
 
             #try to put fields that consist of a single image in their own line
-            text = utility.text.newline_before_images(text)
+            text                    = utility.text.newline_before_images(text)
 
             #remove <div> tags if set in config
             if self.remove_divs and res.note_type != "user":
-                text = utility.text.remove_divs(text, " ")
+                text                = utility.text.remove_divs(text, " ")
 
             #highlight
-            highlight_start = time.time()
+            highlight_start         = time.time()
             if query_set is not None:
                 if counter - (page -1) * 50 < highlight_boundary:
-                    text = utility.text.mark_highlights(text, query_set)
+                    text            = utility.text.mark_highlights(text, query_set)
                 else:
                     remaining_to_highlight[nid] = ""
             highlight_total += time.time() - highlight_start
@@ -349,9 +355,7 @@ class Output:
         self._editor.web.evalWithCallback(js, cb)
 
     def _js(self, js, editor):
-        """
-            Try to eval the given js, prefer if editor ref is given (through cmd parsing).
-        """
+        """ Try to eval the given js, prefer if editor ref is given (through cmd parsing). """
         if editor is None or editor.web is None:
             if self._editor is not None and self._editor.web is not None:
                 self._editor.web.eval(js)
@@ -359,9 +363,7 @@ class Output:
             editor.web.eval(js)
 
     def sortByDate(self, mode):
-        """
-            Rerenders the last search results, but sorted by creation date.
-        """
+        """ Rerenders the last search results, but sorted by creation date. """
         if self.lastResults is None:
             return
         stamp = utility.misc.get_milisec_stamp()
@@ -414,17 +416,21 @@ class Output:
     def removeReviewed(self):
         if self.lastResults is None:
             return
-        stamp = utility.misc.get_milisec_stamp()
+
+        stamp       = utility.misc.get_milisec_stamp()
         self.latest = stamp
-        filtered = []
-        nids = []
+        filtered    = []
+        nids        = []
+
         for r in self.lastResults:
             nids.append(str(r.id))
-        nidStr =  "(%s)" % ",".join(nids)
-        reviewed = [r[0] for r in mw.col.db.all("select nid from cards where nid in %s and reps > 0" % nidStr)]
+        nidStr      = "(%s)" % ",".join(nids)
+        reviewed    = [r[0] for r in mw.col.db.all("select nid from cards where nid in %s and reps > 0" % nidStr)]
+
         for r in self.lastResults:
             if int(r.id) not in reviewed:
                 filtered.append(r)
+
         self.print_search_results(filtered, stamp)
 
    
@@ -442,8 +448,8 @@ class Output:
         """
             Helper function that builds the string that is displayed when clicking on the result number of a note.
         """
-        diffInMinutes = (now - int(nid)) / 1000 / 60
-        diffInDays = diffInMinutes / 60 / 24
+        diffInMinutes   = (now - int(nid)) / 1000 / 60
+        diffInDays      = diffInMinutes / 60 / 24
 
         if diffInDays < 1:
             if diffInMinutes < 2:
@@ -461,13 +467,17 @@ class Output:
 
 
     def build_info_table(self, infoMap, tags, allText):
-        infoStr = "<table>"
+        """ Right hand side of the result pane, shows some information about the current results (tags, keywords, time taken). """
+
+        infoStr             = "<table>"
+
         for key, value in infoMap.items():
-            infoStr =f"{infoStr}<tr><td>{key}</td><td id='info-{key}'>{value}</td></tr>"
-        infoStr = f"{infoStr}</table><div class='searchInfoTagSep'><span class='tag-symbol'>&#9750;</span>&nbsp;Tags:</div><div id='tagContainer'>"
-        tagStr = ""
+            infoStr         = f"{infoStr}<tr><td>{key}</td><td id='info-{key}'>{value}</td></tr>"
+
+        infoStr             = f"{infoStr}</table><div class='searchInfoTagSep'><span class='tag-symbol'>&#9750;</span>&nbsp;Tags:</div><div id='tagContainer'>"
+        tagStr              = ""
         if len(tags) == 0:
-            infoStr += "No tags in the results."
+            infoStr         += "No tags in the results."
             infoMap["Tags"] = "No tags in the results."
         else:
             for key, value in utility.tags.to_tag_hierarchy(tags).items():
@@ -484,22 +494,23 @@ class Output:
             infoStr += tagStr
             infoMap["Tags"] = tagStr
 
-        infoStr = f"{infoStr}</div><div class='searchInfoTagSep bottom' >Keywords:</div><div id='keywordContainer'>"
-        mostCommonWords = self._most_common_words(allText)
-        infoStr = f"{infoStr}{mostCommonWords}</div>"
+        infoStr             = f"{infoStr}</div><div class='searchInfoTagSep bottom' >Keywords:</div><div id='keywordContainer'>"
+        mostCommonWords     = self._most_common_words(allText)
+        infoStr             = f"{infoStr}{mostCommonWords}</div>"
         infoMap["Keywords"] = mostCommonWords
+
         return (infoStr, infoMap)
     
 
 
     def _most_common_words(self, text):
-        """
-        Returns the html that is displayed in the right sidebar containing the clickable keywords.
-        """
+        """ Returns the html that is displayed in the right sidebar containing the clickable keywords. """
+
         if text is None or len(text) == 0:
             return "No keywords for empty result."
-        text = utility.text.clean(text, self.stopwords)
-        counts = {}
+
+        text            = utility.text.clean(text, self.stopwords)
+        counts          = {}
         for token in text.split():
             if token == "" or len(token) == 1 or self.EXCLUDE_KEYWORDS.match(token):
                 continue
@@ -507,26 +518,33 @@ class Output:
                 counts[token.lower()][1] += 1
             else:
                 counts[token.lower()] = [token, 1]
-        sortedCounts = sorted(counts.items(), key=lambda kv: kv[1][1], reverse=True)
-        html = ""
+
+        sortedCounts    = sorted(counts.items(), key=lambda kv: kv[1][1], reverse=True)
+        html            = ""
+
         for entry in sortedCounts[:15]:
-            k = utility.text.trim_if_longer_than(entry[1][0], 25)
-            kd = entry[1][0].replace("'", "")
-            html = f"{html}<a class='keyword' href='#' data-keyword='{kd}' onclick='event.preventDefault(); searchFor($(this).data(\"keyword\"));'>{k}</a>, "
+            k       = utility.text.trim_if_longer_than(entry[1][0], 25)
+            kd      = entry[1][0].replace("'", "")
+            html    = f"{html}<a class='keyword' href='#' data-keyword='{kd}' onclick='event.preventDefault(); searchFor($(this).data(\"keyword\"));'>{k}</a>, "
+
         if len(html) == 0:
             return "No keywords for empty result."
+
         return html[:-2]
 
     def get_result_html_simple(self, db_list, tag_hover = True, search_on_selection = True):
-        html = ""
-        epochTime = int(time.time() * 1000)
-        timeDiffString = ""
-        newNote = ""
-        lastNote = ""
-        nids = [r.id for r in db_list]
+
+        html            = ""
+        epochTime       = int(time.time() * 1000)
+        timeDiffString  = ""
+        newNote         = ""
+        lastNote        = ""
+        ret             = 0
+        nids            = [r.id for r in db_list]
+
         if self.showRetentionScores:
-            retsByNid = getRetentions(nids)
-        ret = 0
+            retsByNid   = getRetentions(nids)
+
         for counter, res in enumerate(db_list):
             try:
                 timeDiffString = self._getTimeDifferenceString(res[3], epochTime)
@@ -555,12 +573,12 @@ class Output:
             if self.remove_divs and res.note_type != "user":
                 text = utility.text.remove_divs(text)
 
-            text = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
-            text = utility.text.try_hide_image_occlusion(text)
+            text        = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
+            text        = utility.text.try_hide_image_occlusion(text)
             #try to put fields that consist of a single image in their own line
-            text = utility.text.newline_before_images(text)
-            template = noteTemplateSimple if res.note_type == "index" else noteTemplateUserNoteSimple
-            newNote = template.format(
+            text        = utility.text.newline_before_images(text)
+            template    = noteTemplateSimple if res.note_type == "index" else noteTemplateUserNoteSimple
+            newNote     = template.format(
                 counter=counter+1, 
                 nid=res.id, 
                 edited="" if str(res.id) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res.id)]),
@@ -569,11 +587,13 @@ class Output:
                 ret=retInfo,
                 tags=utility.tags.build_tag_string(res.tags, tag_hover, maxLength = 25, maxCount = 2),
                 creation="&nbsp;&#128336; " + timeDiffString)
-            html += newNote
+            html        += newNote
+
         return html
 
 
     def print_timeline_info(self, context_html, db_list):
+
         html = self.get_result_html_simple(db_list, tag_hover= False)
 
         if len(html) == 0:
@@ -581,8 +601,9 @@ class Output:
         else:
             html = """
                 %s
-                <div id='cal-info-notes' style='overflow-y: auto; overflow-x: hidden; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div>
+                <div id='cal-jinfo-notes' style='overflow-y: auto; overflow-x: hidden; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div>
             """ % (context_html, html)
+
         self._editor.web.eval("document.getElementById('cal-info').innerHTML = `%s`;" % html)
 
 
@@ -616,13 +637,13 @@ class Output:
 
     def show_search_modal(self, on_enter_attr, header):
         self._editor.web.eval("""
-        document.getElementById('siac-search-modal').style.display = 'block';
-        document.getElementById('siac-search-modal-header').innerHTML = `%s`;
-        document.getElementById('siac-search-modal-inp').setAttribute('onkeyup', '%s');
-        document.getElementById('siac-search-modal-inp').focus();
+            document.getElementById('siac-search-modal').style.display = 'block';
+            document.getElementById('siac-search-modal-header').innerHTML = `%s`;
+            document.getElementById('siac-search-modal-inp').setAttribute('onkeyup', '%s');
+            document.getElementById('siac-search-modal-inp').focus();
         """ % (header,on_enter_attr))
 
-    def showStats(self, text, reviewPlotData, ivlPlotData, timePlotData):
+    def show_stats(self, text, reviewPlotData, ivlPlotData, timePlotData):
 
         self._loadPlotJsIfNotLoaded()
 
@@ -730,8 +751,8 @@ class Output:
         self.js(cmd)
 
     def buildTagHierarchy(self, tags):
-        tmap = utility.tags.to_tag_hierarchy(tags)
-        config = mw.addonManager.getConfig(__name__)
+        tmap    = utility.tags.to_tag_hierarchy(tags)
+        config  = mw.addonManager.getConfig(__name__)
         def iterateMap(tmap, prefix, start=False):
             if start:
                 html = "<ul class='tag-list outer'>"
@@ -777,18 +798,19 @@ class Output:
         """
         if self._editor is None or self._editor.web is None:
             return
-        tags = note[2]
-        tagStr = utility.tags.build_tag_string(tags, self.gridView)
-        nid = note[0]
-        text = note[1]
+
+        tags    = note[2]
+        tagStr  = utility.tags.build_tag_string(tags, self.gridView)
+        nid     = note[0]
+        text    = note[1]
 
         # hide fields that should not be shown
         if len(note) > 4 and str(note[4]) in self.fields_to_hide_in_results:
             text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(note[4])]])
 
-        text = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
-        text = utility.text.try_hide_image_occlusion(text)
-        text = utility.text.newline_before_images(text)
+        text    = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
+        text    = utility.text.try_hide_image_occlusion(text)
+        text    = utility.text.newline_before_images(text)
 
         #find rendered note and replace text and tags
         self._editor.web.eval("""
@@ -821,9 +843,9 @@ class Output:
                 }
         """
         if results is not None and len(results) > 0:
-            limit = get_config_value_or_default("pdfTooltipResultLimit", 50)
-            html = self.get_result_html_simple(results[:limit], False, False)
-            qhtml = """
+            limit   = get_config_value_or_default("pdfTooltipResultLimit", 50)
+            html    = self.get_result_html_simple(results[:limit], False, False)
+            qhtml   = """
                 <div id='siac-tooltip-center' onclick='centerTooltip();'></div>
                 <div class='siac-search-icn-dark' id='siac-tt-web-btn' onclick='pycmd("siac-show-web-search-tooltip " + $("#siac-pdf-tooltip").data("selection"));'></div>
                     <span id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</span>

@@ -479,7 +479,7 @@ function clearSearchResults() {
         document.getElementById("greyout").style.display = "none";
     } catch(e) {}
 
-    $('.siac-tag-info-box').remove();
+    $('.siac-tag-info-box,#siac-results-loader-wrapper').remove();
     $('.tagLbl').css("z-index", "999");
 }
 
@@ -668,14 +668,24 @@ function activateGridView() {
         $('#gridCb').prop("checked", true);
     }, 400);
 }
+function predefSearchFromSidebar(type) {
+    showSearchLoader();
+    setTimeout(function() {
+        let decks = siacState.selectedDecks.toString();
+        pycmd('predefSearch ' + type + ' 200 ' + decks);
+    }, 110);
 
+}
 function predefSearch() {
-    let e = document.getElementById("predefSearchSelect");
-    let search = e.options[e.selectedIndex].value;
-    let c = document.getElementById("predefSearchNumberSel");
-    let count = c.options[c.selectedIndex].value;
-    let decks = siacState.selectedDecks.toString();
-    pycmd("predefSearch " + search + " " + count + " " + decks);
+    showSearchLoader();
+    setTimeout(function() {
+        let e = document.getElementById("predefSearchSelect");
+        let search = e.options[e.selectedIndex].value;
+        let c = document.getElementById("predefSearchNumberSel");
+        let count = c.options[c.selectedIndex].value;
+        let decks = siacState.selectedDecks.toString();
+        pycmd("predefSearch " + search + " " + count + " " + decks);
+    }, 110);
 }
 function sort() {
     let e = document.getElementById("sortSelect");
@@ -857,10 +867,22 @@ function hideModalSubpage() {
 function showLoader(target, text, voffset) {
     voffset = voffset ? voffset : 0;
     $('#' + target).append(`
-    <div id='siac-loader-modal' class='siac-modal-small' contenteditable=false style='position: relative; text-align: center; margin-top: ${voffset}px;'>
+    <div id='siac-loader-modal' class='siac-modal-small' contenteditable=false style='position-relative; text-align: center; margin-top: ${voffset}px;'>
         <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>${text}</div></div>
     </div>
     `);
+}
+function showSearchLoader(text) {
+    if (document.getElementById('siac-results-loader-wrapper')) {
+        return;
+    }
+    text = text ? text : "Computing ...";
+    document.getElementById("searchResults").innerHTML += `
+    <div id='siac-results-loader-wrapper' style='position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5; height: 100%%; text-align: center; background: rgba(0,0,0,0.4); display:flex; align-items: center; justify-content: center; border-radius: 5px;'>
+        <div class='siac-search-loader' style='display: inline-block; vertical-align: middle;'>
+            <b>${text}</b>
+        </div>
+    </div>`;
 }
 
 function toggleSearchbarMode(elem) {

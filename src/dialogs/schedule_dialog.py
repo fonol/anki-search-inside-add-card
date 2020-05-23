@@ -29,14 +29,15 @@ import utility.misc
 import utility.date
 
 class ScheduleDialog(QDialog):
-    """
-       Edit the schedule of a note.
-    """
+    """ Edit the schedule of a note. """
+
     def __init__(self, note, parent):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
-        self.mw = aqt.mw
+
+        self.mw     = aqt.mw
         self.parent = parent
-        self.note = note
+        self.note   = note
+
         self.setup_ui()
         self.setWindowTitle("Edit Schedule")
     

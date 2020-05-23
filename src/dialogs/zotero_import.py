@@ -31,15 +31,16 @@ import utility.misc
 from .components import QtPrioritySlider
 
 class ZoteroImporter(QDialog):
-    """
-        Create pdf notes from a Zotero exported CSV file.
-    """
+    """ Create pdf notes from a Zotero exported CSV file. """
+
     def __init__(self, parent):
-        self.queue_schedule = 0
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
-        self.mw = aqt.mw
-        self.parent = parent
-        self.total_count = 0
+
+        self.queue_schedule = 0
+        self.mw             = aqt.mw
+        self.parent         = parent
+        self.total_count    = 0
+
         self.setup_ui()
         self.setWindowTitle("Zotero Import")
 
@@ -78,12 +79,6 @@ class ZoteroImporter(QDialog):
         self.gb.setLayout(gb_vbox)
         self.vbox.addWidget(self.gb)
 
-        # hbox_check = QHBoxLayout() 
-        # replace_ws_cb = QCheckBox("Replace in file name")
-        # replace_regex = QLineEdit()
-        # replace_repl = QLineEdit()
-        # hbox_check.
-       
         self.slider = QtPrioritySlider(0)
         self.vbox.addWidget(self.slider)
         self.vbox.addSpacing(15)
@@ -176,13 +171,12 @@ class ZoteroImporter(QDialog):
             # loop through the entries of the exported list
             for zot_entry in csvreader:
                 # get out attachments
-                attachment_string = zot_entry["File Attachments"]
-                attachment_array = re.split(";", attachment_string)
+                attachment_string   = zot_entry["File Attachments"]
+                attachment_array    = re.split(";", attachment_string)
 
                 # lets loop through our attachments, and if we got a PDF be happy :)
                 for attachment in attachment_array:
                     #search for PDFs
-
                     if re.match(".*?.pdf", attachment):                       
 
                         id = get_pdf_id_for_source(attachment.strip())

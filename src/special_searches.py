@@ -26,6 +26,12 @@ except:
     from state import check_index
     from models import SiacNote, IndexNote
 
+
+"""
+Various functions to retrieve (Anki) notes based on special search criteria.
+Todo: add typing annotation
+"""
+
 def get_notes_added_on_day_of_year(day_of_year : int, limit: int):
     
     day_now = datetime.datetime.now().timetuple().tm_yday
@@ -34,7 +40,7 @@ def get_notes_added_on_day_of_year(day_of_year : int, limit: int):
     date_then = date_year_begin + datetime.timedelta(day_of_year)
     nid_midnight = int(date_then.timestamp() * 1000)
     nid_next_midnight = nid_midnight + 24 * 60 * 60 * 1000
-    res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" % (nid_midnight, nid_next_midnight))
+    res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc limit 200" % (nid_midnight, nid_next_midnight))
     return to_notes(res)
 
 
@@ -68,7 +74,6 @@ def get_cal_info_context(day_of_year : int):
         <span>%s</span> 
     </div>
     <div style='width: 100%%; text-align: center;'>%s</div>""" % (date_then_str, html_content)    
-
 
     return html
 
@@ -201,6 +206,16 @@ def getRandomUntagged(decks, limit):
         res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by random() limit %s" % limit)
     return to_notes(res) 
     
+def get_last_untagged(decks, limit):
+    if not "-1" in decks:
+        deckQ =  "(%s)" % ",".join(decks)
+    else:
+        deckQ = ""
+    if deckQ:
+        res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s and (tags is null or tags = '') order by notes.id desc limit %s" % (deckQ, limit))
+    else:
+        res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by notes.id desc limit %s" % limit)
+    return to_notes(res) 
 
 def findNotesWithLongestText(decks, limit, pinned):
     if not "-1" in decks and len(decks) > 0:

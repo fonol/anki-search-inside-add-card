@@ -27,13 +27,14 @@ import utility.text
 import utility.misc
 
 class URLInputDialog(QDialog):
-    """
-        Fetch a URL to load the page into the note text.
-    """
+    """ Fetch a URL to load the page into the note text. """
+
     def __init__(self, parent):
-        self.chosen_url = None
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
-        self.parent = parent
+
+        self.chosen_url = None
+        self.parent     = parent
+
         self.setup_ui()
         self.setWindowTitle("URL Input")
 

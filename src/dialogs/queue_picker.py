@@ -30,18 +30,20 @@ import utility.misc
 import utility.tags
 
 class QueuePicker(QDialog):
-    """
-    Can be used to select a single note from the queue or to move pdf notes in/out of the queue.
-    """
+    """ Can be used to select a single note from the queue or to move pdf notes in/out of the queue. """
+
     def __init__(self, parent, note_list, note_list_right):
-        self.chosen_id = None 
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
-        self.mw = aqt.mw
-        self.parent = parent
+
+        self.chosen_id  = None 
+        self.mw         = aqt.mw
+        self.parent     = parent
+
         try:
             self.dark_mode_used = utility.misc.dark_mode_is_used(aqt.mw.addonManager.getConfig(__name__))
         except:
             self.dark_mode_used = False
+
         self.setup_ui(note_list, note_list_right)
         self.setWindowTitle("Queue Manager")
         

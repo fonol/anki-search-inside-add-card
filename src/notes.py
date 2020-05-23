@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import glob
 import sqlite3
 import typing
 from typing import Optional, Tuple, List, Dict, Set, Any
@@ -505,7 +506,7 @@ def create_pdf_mark(nid: int, page: int, pages_total: int, mark_type: int):
     conn.commit()
     conn.close()
 
-def toggle_pdf_mark(nid: int, page: int, pages_total: int, mark_type: int) -> List[Tuple[Any]]:
+def toggle_pdf_mark(nid: int, page: int, pages_total: int, mark_type: int) -> List[Tuple[Any, ...]]:
     conn = _get_connection()
     if conn.execute("select nid from marks where nid = %s and page = %s and marktype = %s" % (nid, page, mark_type)).fetchone() is not None:
         conn.execute("delete from marks where nid = %s and page = %s and marktype = %s" % (nid, page, mark_type))
@@ -523,7 +524,7 @@ def delete_pdf_mark(nid: int, page: int, mark_type: int):
     conn.commit()
     conn.close()
 
-def get_pdf_marks(nid: int) -> List[Tuple[Any]]:
+def get_pdf_marks(nid: int) -> List[Tuple[Any, ...]]:
     conn = _get_connection()
     res = conn.execute("select * from marks where nid = %s" % nid).fetchall()
     conn.close()
@@ -600,7 +601,7 @@ def get_note_tree_data() -> Dict[str, List[Tuple[int, str]]]:
             n_map[str(diff_in_days) + " days ago"].append((id, utility.text.trim_if_longer_than(title, 100)))
     return n_map
 
-def get_all_notes() -> List[Tuple[Any]]:
+def get_all_notes() -> List[Tuple[Any, ...]]:
     """ Fetch all add-on notes, used in indexing. """
     conn = _get_connection()
     res = list(conn.execute("select * from notes"))
@@ -681,7 +682,7 @@ def update_note(id: int, title: str, text: str, source: str, tags: str, reminder
     if index is not None:
         index.update_user_note((id, title, text, source, tags, -1, ""))
 
-def get_read_stats(nid: int):
+def get_read_stats(nid: int) -> Tuple[Any, ...]:
     conn = _get_connection()
     res = conn.execute("select count(*), max(created), pagestotal from read where page > -1 and nid = %s" % nid).fetchall()
     res = res[0]
@@ -696,7 +697,7 @@ def get_read_stats(nid: int):
 # highlights / annotation
 #
 
-def insert_highlights(highlights: List[Tuple[Any]]):
+def insert_highlights(highlights: List[Tuple[Any, ...]]):
     """
         [(nid,page,group,type,text,x0,y0,x1,y1)]
     """
@@ -714,7 +715,7 @@ def delete_highlight(id: int):
     conn.commit()
     conn.close()
 
-def get_highlights(nid: int, page: int) -> List[Tuple[Any]]:
+def get_highlights(nid: int, page: int) -> List[Tuple[Any, ...]]:
     conn = _get_connection()
     res = conn.execute(f"select rowid, * from highlights where nid = {nid} and page = {page}").fetchall()
     conn.close()
@@ -949,7 +950,7 @@ def _get_priority_list(nid_to_exclude: int = None) -> List[SiacNote]:
     conn.close()
     return _to_notes(res)
 
-def _get_priority_list_with_last_prios() -> List[Tuple[Any]]:
+def _get_priority_list_with_last_prios() -> List[Tuple[Any, ...]]:
     """
         Returns (nid, last prio, last prio creation, current position, schedule)
     """
@@ -1097,13 +1098,19 @@ def get_pdf_info(nids: List[int]) -> List[Tuple[int, int, int]]:
     return ilist
 
 def get_related_notes(id: int) -> NoteRelations:
-    note = get_note(id)
-    title = note.title
+    """ Find note suggestions for the given note. """
+
+    note    = get_note(id)
+    title   = note.title
+
     if title is not None and len(title.strip()) > 1:
         related_by_title = find_notes(title)
     else:
         related_by_title = []
-    related_by_tags = []
+
+    related_by_tags     = []
+    related_by_folder   = []
+
     if note.tags is not None and len(note.tags.strip()) > 0:
         tags = note.tags.strip().split(" ")
         tags = sorted(tags, key=lambda x: x.count("::"), reverse=True)
@@ -1118,10 +1125,18 @@ def get_related_notes(id: int) -> NoteRelations:
                     related_by_tags += res
                 if len(related_by_tags) >= 10:
                     break
-        related_by_tags = _to_notes(related_by_tags)
         conn.close()
-    return NoteRelations(related_by_title, related_by_tags)
+        related_by_tags = _to_notes(related_by_tags)
 
+    if note.is_pdf() and note.get_containing_folder():
+        conn    = _get_connection()
+        res     = conn.execute(f"select * from notes where id != {id} and source glob '{note.get_containing_folder()}[^/]*' order by created desc limit 5").fetchall()
+        conn.close()
+        if res:
+            related_by_folder += res
+            related_by_folder = _to_notes(related_by_folder)
+
+    return NoteRelations(related_by_title, related_by_tags, related_by_folder)
 
 def mark_all_pages_as_read(nid: int, num_pages: int):
     now = _date_now_str()
@@ -1180,7 +1195,7 @@ def _get_db_path() -> str:
     db_path = file_path
     return file_path
 
-def _to_notes(db_list: List[Tuple[Any]], pinned: List[int] = []) -> List[SiacNote]:
+def _to_notes(db_list: List[Tuple[Any, ...]], pinned: List[int] = []) -> List[SiacNote]:
     notes = list()
     for tup in db_list:
         if not str([tup[0]]) in pinned:

@@ -44,19 +44,24 @@ def openEditor(mw, nid):
     dialog = EditDialog(mw, note)
 
 class EditDialog(QDialog):
+    """ Edit dialog for Anki notes. """
 
     def __init__(self, mw, note):
+
         QDialog.__init__(self, None, Qt.Window)
         mw.setupDialogGC(self)
-        self.mw = mw
-        self.form = aqt.forms.editcurrent.Ui_Dialog()
+
+        self.mw         = mw
+        self.form       = aqt.forms.editcurrent.Ui_Dialog()
+
         self.form.setupUi(self)
+        self.form.buttonBox.button(QDialogButtonBox.Close).setShortcut(QKeySequence("Ctrl+Return"))
+        self.editor     = aqt.editor.Editor(self.mw, self.form.fieldsArea, self)
+
         self.setWindowTitle(_("Edit Note"))
         self.setMinimumHeight(400)
         self.setMinimumWidth(500)
         self.resize(500, 850)
-        self.form.buttonBox.button(QDialogButtonBox.Close).setShortcut(QKeySequence("Ctrl+Return"))
-        self.editor = aqt.editor.Editor(self.mw, self.form.fieldsArea, self)
         self.editor.setNote(note, focusTo=0)
         addHook("reset", self.onReset)
         self.mw.requireReset()
@@ -97,21 +102,24 @@ class EditDialog(QDialog):
         self.editor.saveNow(callback)
 
 class NoteEditor(QDialog):
-    """
-    The editor window for non-anki notes.
-    Has a text field and a tag field.
-    """
+    """ The editor window for non-anki notes. """
+
     def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None, text_prefill = None, title_prefill = None, prio_prefill = None):
 
-        self.note_id = note_id
-        self.note = None
-        self.add_only = add_only
-        self.read_note_id = read_note_id
-        self.tag_prefill = tag_prefill
+        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMaximizeButtonHint)
+
+        self.mw             = aqt.mw
+        self.parent         = parent
+
+        self.note_id        = note_id
+        self.note           = None
+        self.add_only       = add_only
+        self.read_note_id   = read_note_id
+        self.tag_prefill    = tag_prefill
         self.source_prefill = source_prefill
-        self.text_prefill = text_prefill
-        self.title_prefill = title_prefill
-        self.prio_prefill = prio_prefill
+        self.text_prefill   = text_prefill
+        self.title_prefill  = title_prefill
+        self.prio_prefill   = prio_prefill
         try:
             self.dark_mode_used = utility.misc.dark_mode_is_used(mw.addonManager.getConfig(__name__))
         except Exception as err:
@@ -119,9 +127,6 @@ class NoteEditor(QDialog):
 
         if self.note_id is not None:
             self.note = get_note(note_id)
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMaximizeButtonHint)
-        self.mw = aqt.mw
-        self.parent = parent
         #self.mw.setupDialogGC(self)
         #self.setWindowModality(Qt.WindowModal)
         #self.setAttribute(Qt.WA_DeleteOnClose)
@@ -303,40 +308,38 @@ class CreateTab(QWidget):
 
     def __init__(self, parent):
         QWidget.__init__(self)
-        self.queue_schedule = 0
-        self.parent = parent
-        tmap = get_all_tags_as_hierarchy(False)
-        self.tree = QTreeWidget()
+
+        self.queue_schedule     = 0
+        self.parent             = parent
+        self.tree               = QTreeWidget()
+        self.original_bg        = None
+        self.original_fg        = None
+        web_path                = utility.misc.get_web_folder_path()
+
         self.tree.setColumnCount(1)
         self.tree.setIconSize(QSize(0,0))
-        self.build_tree(tmap)
+        self.build_tree(get_all_tags_as_hierarchy(False))
         self.tree.itemClicked.connect(self.tree_item_clicked)
         self.tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.tree.setMinimumHeight(150)
         self.tree.setMinimumWidth(220)
         self.tree.setHeaderHidden(True)
-        self.original_bg = None
-        self.original_fg = None
-        web_path = utility.misc.get_web_folder_path()
 
-        self.highlight_map = {
+        self.highlight_map      = {
             "ob": [0,0,0,232,151,0],
             "rw": [255, 255, 255, 209, 46, 50],
             "yb": [0,0,0,235, 239, 69],
             "bw": [255,255,255,2, 119,189],
             "gb": [255,255,255,34,177,76]
         }
-
          
-        recently_used_tags = get_recently_used_tags()
+        recently_used_tags      = get_recently_used_tags()
         
-        config = mw.addonManager.getConfig(__name__)
-        tag_bg = config["styling"]["general"]["tagBackgroundColor"]
-        tag_fg = config["styling"]["general"]["tagForegroundColor"]
+        config                  = mw.addonManager.getConfig(__name__)
+        tag_bg                  = config["styling"]["general"]["tagBackgroundColor"]
+        tag_fg                  = config["styling"]["general"]["tagForegroundColor"]
 
-         
-
-        self.recent_tbl = QWidget()
+        self.recent_tbl         = QWidget()
         self.recent_tbl.setObjectName("recentDisp")
         self.recent_tbl.setStyleSheet("background-color: transparent;")
         bs = f"""
@@ -467,9 +470,6 @@ class CreateTab(QWidget):
         self.green_black = self.vtb.addAction(QIcon(web_path + "icons/icon-green-black.png"), "Highlight 5")
         self.green_black.triggered.connect(self.on_highlight_gb_clicked)
 
-        
-
-         
         bold =  self.tb.addAction("b")
         f = bold.font()
         f.setBold(True)
@@ -528,8 +528,6 @@ class CreateTab(QWidget):
                 QMenu:item:selected { background: #2496dc; color: white; }
             """)
         
-
-         
         header_a = clean_menu.addAction("Remove Headers")
         header_a.triggered.connect(self.on_remove_headers_clicked)
         header_a1 = clean_menu.addAction("Remove All Bold Formatting")
@@ -563,16 +561,16 @@ class CreateTab(QWidget):
         p_hb.addSpacing(35)
         vbox.addLayout(p_hb)
 
-        source_lbl = QLabel("Source")
-        self.source = QLineEdit()
-        source_hb = QHBoxLayout()
+        source_lbl          = QLabel("Source")
+        self.source         = QLineEdit()
+        source_hb           = QHBoxLayout()
         source_hb.addWidget(self.source)
         if self.parent.source_prefill is not None:
             self.source.setText(self.parent.source_prefill.replace("\\", "/"))
-        pdf_btn = QPushButton("PDF")
+        pdf_btn             = QPushButton("PDF")
         pdf_btn.clicked.connect(self.on_pdf_clicked)
         source_hb.addWidget(pdf_btn)
-        pdf_from_url_btn = QPushButton("PDF from Webpage")
+        pdf_from_url_btn    = QPushButton("PDF from Webpage")
         pdf_from_url_btn.clicked.connect(self.on_pdf_from_url_clicked)
         source_hb.addWidget(pdf_from_url_btn)
 
@@ -581,17 +579,6 @@ class CreateTab(QWidget):
 
         if self.parent.text_prefill is not None:
             self.text.setText(self.parent.text_prefill)
-        if self.parent.prio_prefill is not None:
-            if self.parent.prio_prefill == 1:
-                self.q_lbl_6.animateClick()
-            elif self.parent.prio_prefill == 2:
-                self.q_lbl_5.animateClick()
-            elif self.parent.prio_prefill == 3:
-                self.q_lbl_4.animateClick()
-            elif self.parent.prio_prefill == 4:
-                self.q_lbl_3.animateClick()
-            elif self.parent.prio_prefill == 5:
-                self.q_lbl_2.animateClick()
 
         btn_styles = """
         QPushButton#q_1 { padding-left: 20px; padding-right: 20px; }
@@ -632,8 +619,6 @@ class CreateTab(QWidget):
         # vbox.addStretch(1)
         tag_lbl2 = QLabel()
         tag_lbl2.setPixmap(tag_icn)
-
-        
          
         tag_hb2 = QHBoxLayout()
         tag_hb2.setAlignment(Qt.AlignLeft)
@@ -871,12 +856,14 @@ class PriorityTab(QWidget):
 
     def __init__(self, priority_list, parent):
         
-         
         QWidget.__init__(self)
-        self.parent = parent
-        model = self.get_model(priority_list)
-        self.t_view = QTableView()
-        html_delegate = HTMLDelegate()
+
+        self.parent     = parent
+        self.t_view     = QTableView()
+
+        html_delegate   = HTMLDelegate()
+        model           = self.get_model(priority_list)
+
         self.t_view.setItemDelegateForColumn(0, html_delegate)
         self.t_view.setItemDelegateForColumn(1, html_delegate)
         self.t_view.setModel(model)
@@ -999,6 +986,7 @@ class PriorityTab(QWidget):
         self.set_remove_btns(priority_list)
 
 class PriorityListModel(QStandardItemModel):
+
     def __init__(self, parent):
         super(PriorityListModel, self).__init__()
         self.parent = parent
@@ -1091,66 +1079,6 @@ class HTMLDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         return QSize(self.doc.idealWidth(), self.doc.size().height())
-
-class ExpandableSection(QWidget):
-    def __init__(self, title="", parent=None):
-        super(ExpandableSection, self).__init__(parent)
-
-        self.toggle_button = QToolButton( text=title, checkable=True, checked=False)
-        self.toggle_button.setStyleSheet("QToolButton { border: none; }")
-        self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.toggle_button.setArrowType(Qt.RightArrow)
-        self.toggle_button.pressed.connect(self.on_pressed)
-
-        self.toggle_animation = QParallelAnimationGroup(self)
-
-        self.content_area = QScrollArea(maximumHeight=0, minimumHeight=0)
-        self.content_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.content_area.setFrameShape(QFrame.NoFrame)
-
-        lay = QVBoxLayout(self)
-        lay.setSpacing(0)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.addWidget(self.toggle_button)
-        lay.addWidget(self.content_area)
-
-        self.toggle_animation.addAnimation( QPropertyAnimation(self, b"minimumHeight"))
-        self.toggle_animation.addAnimation( QPropertyAnimation(self, b"maximumHeight"))
-        self.toggle_animation.addAnimation( QPropertyAnimation(self.content_area, b"maximumHeight"))
-
-    @pyqtSlot()
-    def on_pressed(self):
-        checked = self.toggle_button.isChecked()
-        self.toggle_button.setArrowType(
-            Qt.DownArrow if not checked else Qt.RightArrow
-        )
-        self.toggle_animation.setDirection(
-            QAbstractAnimation.Forward
-            if not checked
-            else QAbstractAnimation.Backward
-        )
-        self.toggle_animation.start()
-
-    def setContentLayout(self, layout):
-        lay = self.content_area.layout()
-        del lay
-        self.content_area.setLayout(layout)
-        collapsed_height = (
-            self.sizeHint().height() - self.content_area.maximumHeight()
-        )
-        content_height = layout.sizeHint().height()
-        for i in range(self.toggle_animation.animationCount()):
-            animation = self.toggle_animation.animationAt(i)
-            animation.setDuration(500)
-            animation.setStartValue(collapsed_height)
-            animation.setEndValue(collapsed_height + content_height)
-
-        content_animation = self.toggle_animation.animationAt(
-            self.toggle_animation.animationCount() - 1
-        )
-        content_animation.setDuration(500)
-        content_animation.setStartValue(0)
-        content_animation.setEndValue(content_height)
 
 class FlowLayout(QLayout):
     def __init__(self, parent=None, margin=0, spacing=-1):

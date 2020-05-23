@@ -17,12 +17,11 @@
 import time
 from aqt import mw
 from .state import get_index, check_index
+import typing
+from typing import Callable
 
-
-def perf_time(fn):
-    """
-        Decorator to measure function execution time.
-    """
+def perf_time(fn: Callable) -> Callable:
+    """ Decorator to measure function execution time. """
     def _perf_wrapper(*args, **kwargs):
         start = time.time() * 1000
         res = fn(*args, **kwargs)
@@ -30,10 +29,8 @@ def perf_time(fn):
         return res
     return _perf_wrapper
 
-def js(fn):
-    """
-        Decorator to execute the returned javascript of a function.
-    """
+def js(fn: Callable) -> Callable:
+    """ Decorator to execute the returned javascript of a function. """
     def _eval_js_dec(*args, **kwargs):
         ix = get_index()
         if ix is not None and ix.ui is not None and ix.ui._editor is not None and ix.ui._editor.web is not None:
@@ -44,10 +41,8 @@ def js(fn):
                 w.editor.web.eval(fn(*args, **kwargs))
     return _eval_js_dec
 
-def requires_index_loaded(fn):
-    """
-        Decorator to only enter a function if the index has been loaded.
-    """
+def requires_index_loaded(fn: Callable) -> Callable:
+    """ Decorator to only enter a function if the index has been loaded. """
     def _check_ix(*args, **kwargs):
         if not check_index():
             return

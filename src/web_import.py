@@ -21,14 +21,18 @@ from requests import get
 
 
 def _fetch(url):
-    html = ""
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'}) 
+    html    = ""
+    req     = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'}) 
+
     with urllib.request.urlopen(req) as response:
         html = response.read()
-    page = BeautifulSoup(html, "html.parser")
+
+    page    = BeautifulSoup(html, "html.parser")
+
     for ignored_tag in ["script", "img", "input", "button", "style", "font", "iframe", "object", "embed"]:
         for tag in page.find_all(ignored_tag):
             tag.decompose()
+
     for tag in page.find_all(recursive=True):
         for attribute in ["class", "id", "name", "style", "role", "lang", "dir", "href", "src"]:
             del tag[attribute]
@@ -38,6 +42,7 @@ def _fetch(url):
 
     for node in page.find_all(text=lambda s: isinstance(s, Comment)):
         node.extract()
+
     return page
 
 def import_webpage(url):
