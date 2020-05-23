@@ -877,8 +877,10 @@ function showSearchLoader(text) {
         return;
     }
     text = text ? text : "Computing ...";
-    document.getElementById("searchResults").scrollTop = 0;
-    document.getElementById("searchResults").innerHTML += `
+    let sr = document.getElementById("searchResults");
+    sr.scrollTop = 0;
+    sr.style.overflowY = 'hidden';
+    sr.innerHTML += `
     <div id='siac-results-loader-wrapper' style='position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5; height: 100%%; text-align: center; background: rgba(0,0,0,0.4); display:flex; align-items: center; justify-content: center; border-radius: 5px;'>
         <div class='siac-search-loader' style='display: inline-block; vertical-align: middle;'>
             <b>${text}</b>
