@@ -298,11 +298,7 @@ def show_unsuspend_modal(nid):
 @js
 def display_note_del_confirm_modal(editor, nid):
     html = get_note_delete_confirm_modal_html(nid)
-    return "$('#greyout').show();$('#searchResults').append(`%s`);" % html
-
-
-
-
+    return "$('#searchResults').scrollTop(0).append(`%s`);" % html
    
 
 def fillTagSelect(editor = None, expanded = False) :

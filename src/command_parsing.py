@@ -440,7 +440,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             index.deleteNote(id)
         run_hooks("user-note-deleted")
         index.ui.js("""
-            $("#greyout").hide();
             $('#siac-del-modal').remove();
         """)
 

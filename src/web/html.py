@@ -490,17 +490,18 @@ def get_note_delete_confirm_modal_html(nid):
     creation_date = note.created
     title = utility.text.trim_if_longer_than(note.get_title(), 100) 
     return """
-       <div class='siac-modal-small' id='siac-del-modal'>
+
+    <div id='siac-del-modal' style='position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5; height: 100%%; text-align: center; background: rgba(0,0,0,0.4); display:flex; align-items: center; justify-content: center; border-radius: 5px;'>
+       <div class='siac-modal-small'>
             <p style='text-align: center; font-size: 14px;'><b>Delete the following note?</b></p>
             <hr class='siac-modal-sep'/>
             <br>
             <div style='text-align: center; font-size: 14px; margin-bottom: 4px;'><b>%s</b></div>
             <div style='text-align: center; font-size: 14px;'><i>%s</i></div>
             <br><br>
-            <div style='text-align: center;'><div class='siac-btn' onclick='removeNote(%s);deleteNote(%s);' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn' onclick='$(this.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
+            <div style='text-align: center;'><div class='siac-btn' onclick='removeNote(%s);deleteNote(%s);' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn' onclick='$(this.parentNode.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
        </div>
-
-
+    </div>
     """ % (title, creation_date, nid, nid)
 
 
