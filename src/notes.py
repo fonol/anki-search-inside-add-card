@@ -411,7 +411,7 @@ def recalculate_priority_queue():
                 if f[4] is None or len(f[4].strip()) == 0:
                     continue
                 if _specific_schedule_was_due_before_today(f[4]):
-                    n = Note([None for i in range(12)])
+                    n = SiacNote([None for i in range(12)])
                     n.reminder = f[4]
                     if MISSED_NOTES_HANDLING == "remove-schedule" and n.schedule_type() == "td":
                         to_remove_schedules.append(f[0])
