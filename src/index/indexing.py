@@ -22,10 +22,9 @@ import time
 import os
 import sqlite3
 
-
 from ..state import get_index, set_index, set_corpus, get_corpus, corpus_is_loaded, get_edit
 from ..debug_logging import *
-from ..web.web import showSearchResultArea, printStartingInfo, fillDeckSelect, setup_ui_after_index_built
+from ..web.web import show_search_result_area, print_starting_info, fillDeckSelect, setup_ui_after_index_built
 from ..web.html import loadSynonyms
 from .fts_index import FTSIndex
 from ..notes import get_all_notes
@@ -33,28 +32,30 @@ import utility.misc
 
 
 def get_notes_in_collection():
-    """
-    Reads the collection and builds a list of tuples (note id, note fields as string, note tags, deck id, model id)
-    """
-    config = mw.addonManager.getConfig(__name__)
-    deckList = config['decks']
-    deckStr = ""
+    """ Reads the collection and builds a list of tuples (note id, note fields as string, note tags, deck id, model id) """
+
+    config              = mw.addonManager.getConfig(__name__)
+    deckList            = config['decks']
+    deckStr             = ""
+
     for d in list(mw.col.decks.decks.values()):
         if d['name'] in deckList:
             deckStr += str(d['id']) + ","
+
     if len(deckStr) > 0:
-        deckStr = "(%s)" % (deckStr[:-1])
+        deckStr         = "(%s)" % (deckStr[:-1])
 
     if deckStr:
-        oList = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s" %(deckStr))
+        oList           = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s" %(deckStr))
     else:
-        oList = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid")
+        oList           = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid")
 
-    index_notes = list()
+    index_notes         = list()
 
     #load addon notes
-    other_notes = get_all_notes()
-    other_notes_id_map = dict()
+    other_notes         = get_all_notes()
+    other_notes_id_map  = dict()
+
     for (id, title, text, source, tags, nid, created, modified, reminder, _, _) in other_notes:
 
         if nid in other_notes_id_map:
@@ -73,15 +74,19 @@ def get_notes_in_collection():
     return index_notes
 
 def build_index(force_rebuild = False, execute_after_end = None):
+
     config = mw.addonManager.getConfig(__name__)
     if get_index() is None:
         if not corpus_is_loaded():
             corpus = get_notes_in_collection()
             set_corpus(corpus)
+
         #check if we have to rebuild the index
         index_already_there = not force_rebuild and not _should_rebuild()
+
         #build index in background to prevent ui from freezing
-        p = ProcessRunnable(_build_index, index_already_there)
+        p                   = ProcessRunnable(_build_index, index_already_there)
+
         if execute_after_end is not None:
             p.after_end = execute_after_end
         p.start()
@@ -92,30 +97,31 @@ def _build_index(index_up_to_date):
     Builds the index. Result is stored in global var index.
     The index.type is either "Whoosh"/"SQLite FTS3"/"SQLite FTS4"/"SQLite FTS5"
     """
-    start = time.time()
-    config = mw.addonManager.getConfig(__name__)
+    start                               = time.time()
+    config                              = mw.addonManager.getConfig(__name__)
     
-    corpus = get_corpus()
+    corpus                              = get_corpus()
   
-    index = FTSIndex(corpus, index_up_to_date)
-    end = time.time()
-    initializationTime = round(end - start)
+    index                               = FTSIndex(corpus, index_up_to_date)
+    end                                 = time.time()
+    initializationTime                  = round(end - start)
  
-    index.ui.stopwords = index.stopWords
-    index.ui.remove_divs = config["removeDivsFromOutput"]
-    index.ui.gridView = config["gridView"]
-    index.ui.scale = config["noteScale"]
-    index.ui.fields_to_hide_in_results = config["fieldsToHideInResults"]
-    index.selectedDecks = ["-1"]
-    index.lastSearch = None
-    index.lastResDict = None
-    index.topToggled = True
-    index.highlighting = config["highlighting"]
-    index.ui.edited = {}
-    index.initializationTime = initializationTime
-    index.synonyms = loadSynonyms()
-    index.logging = config["logging"]
-    index.searchbar_mode = "Add-on"
+    index.ui.stopwords                  = index.stopWords
+    index.ui.remove_divs                = config["removeDivsFromOutput"]
+    index.ui.gridView                   = config["gridView"]
+    index.ui.scale                      = config["noteScale"]
+    index.ui.fields_to_hide_in_results  = config["fieldsToHideInResults"]
+    index.selectedDecks                 = ["-1"]
+    index.lastSearch                    = None
+    index.lastResDict                   = None
+    index.topToggled                    = True
+    index.highlighting                  = config["highlighting"]
+    index.ui.edited                     = {}
+    index.initializationTime            = initializationTime
+    index.synonyms                      = loadSynonyms()
+    index.logging                       = config["logging"]
+    index.searchbar_mode                = "Add-on"
+
     try:
         limit = config['numberOfResults']
         if limit <= 0:
@@ -124,53 +130,44 @@ def _build_index(index_up_to_date):
             limit = 5000
     except KeyError:
         limit = 500
-    index.limit = limit
+    index.limit                         = limit
 
     try:
-        showRetentionScores = config["showRetentionScores"]
+        showRetentionScores             = config["showRetentionScores"]
     except KeyError:
-        showRetentionScores = True
-    index.ui.showRetentionScores = showRetentionScores
+        showRetentionScores             = True
+    index.ui.showRetentionScores        = showRetentionScores
+
     try:
-        hideSidebar = config["hideSidebar"]
+        hideSidebar                     = config["hideSidebar"]
     except KeyError:
-        hideSidebar = False
-    index.ui.hideSidebar = hideSidebar
+        hideSidebar                     = False
+    index.ui.hideSidebar                = hideSidebar
 
     if index.logging:
         log("\n--------------------\nInitialized index:")
         log("""Type: %s\n# Stopwords: %s \n# Synonyms: %s \nLimit: %s \n""" % (index.type, len(index.stopWords), len(index.synonyms), limit))
 
-    editor = aqt.mw.app.activeWindow().editor if hasattr(aqt.mw.app.activeWindow(), "editor") else None
+    editor                              = aqt.mw.app.activeWindow().editor if hasattr(aqt.mw.app.activeWindow(), "editor") else None
     if editor is not None and editor.addMode:
         index.ui.set_editor(editor)
+
     set_index(index)
     set_corpus(None)
-    editor = editor if editor is not None else get_edit()
+    editor                              = editor if editor is not None else get_edit()
     setup_ui_after_index_built(editor, index)
-    # showSearchResultArea(editor, initializationTime=initializationTime)
     fillDeckSelect(editor)
-    printStartingInfo(editor)
+    print_starting_info(editor)
 
 
 def _should_rebuild():
-    """
-    Check if the index has to be rebuilt.
-    Will not catch all cases, but better than nothing.
-    """
+    """ Check if the index should be rebuilt. """
 
-    info = get_index_info()
+    info    = get_index_info()
     if info is None:
         return True
-    corpus = get_corpus()
-    config = mw.addonManager.getConfig(__name__)
-
-    # if the index type changed, rebuild
-    # 23-01-19: Whoosh support removed 
-    #useFTS = config["useFTS"]
-    useFTS = True
-    if (info["type"] == "Whoosh" and useFTS) or (info["type"] != "Whoosh" and not useFTS):
-         return True
+    corpus  = get_corpus()
+    config  = mw.addonManager.getConfig(__name__)
 
     # not used atm, so always false
     if info["shouldRebuild"]:
@@ -178,22 +175,17 @@ def _should_rebuild():
         return True
 
     #if db file / index dir is not existing, rebuild
-    if useFTS:
-        file_path = utility.misc.get_user_files_folder_path()  + "search-data.db"
-        if not os.path.isfile(file_path):
+    file_path = utility.misc.get_user_files_folder_path()  + "search-data.db"
+    if not os.path.isfile(file_path):
+        return True
+    try:
+        conn    = sqlite3.connect(file_path)
+        row     = conn.cursor().execute("SELECT * FROM notes_content ORDER BY id ASC LIMIT 1").fetchone()
+        conn.close()
+        if row is not None and len(row) != 8:
             return True
-        try:
-            conn = sqlite3.connect(file_path)
-            row = conn.cursor().execute("SELECT * FROM notes_content ORDER BY id ASC LIMIT 1").fetchone()
-            conn.close()
-            if row is not None and len(row) != 8:
-                return True
-        except:
-            return True
-    else:
-        file_path = utility.misc.get_whoosh_index_folder_path()
-        if not os.path.exists(file_path):
-            return True
+    except:
+        return True
 
     if info["size"] != len(corpus):
         return True
@@ -230,14 +222,13 @@ def _should_rebuild():
 
 
 class ProcessRunnable(QRunnable):
-    """
-    Only used to build the index in background atm.
-    """
+    """ Only used to build the index in background atm. """
+
     def __init__(self, target, *args):
         QRunnable.__init__(self)
-        self.t = target
-        self.args = args
-        self.after_end = None
+        self.t          = target
+        self.args       = args
+        self.after_end  = None
 
     def run(self):
         self.t(*self.args)

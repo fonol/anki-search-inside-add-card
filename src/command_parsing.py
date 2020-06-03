@@ -754,7 +754,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             default_search_with_decks(self, cmd.split()[1], ["-1"])
 
     elif cmd == "siac-styling":
-        showStylingModal(self)
+        show_settings_modal(self)
 
     elif cmd.startswith("siac-styling "):
         update_styling(cmd[13:])
@@ -1127,8 +1127,8 @@ def setStamp() -> Optional[str]:
     The result of a search is not printed if it has a non-matching stamp.
     """
     if check_index():
-        index = get_index()
-        stamp = utility.misc.get_milisec_stamp()
+        index           = get_index()
+        stamp           = utility.misc.get_milisec_stamp()
         index.ui.latest = stamp
         return stamp
     return None
@@ -1154,25 +1154,25 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
     if index is not None:
 
         if searchDB:
-            content = content[content.index('~ ') + 2:].strip()
+            content             = content[content.index('~ ') + 2:].strip()
             if len(content) == 0:
                 index.ui.empty_result("No results found for empty string")
                 return
-            index.lastSearch = (content, decks, "db")
-            searchRes = index.searchDB(content, decks)
+            index.lastSearch    = (content, decks, "db")
+            searchRes           = index.searchDB(content, decks)
 
         elif searchByTags:
-            stamp = utility.misc.get_milisec_stamp()
-            index.ui.latest = stamp
-            index.lastSearch = (content, ["-1"], "tags")
-            searchRes = findBySameTag(content, index.limit, [], index.pinned)
+            stamp               = utility.misc.get_milisec_stamp()
+            index.ui.latest     = stamp
+            index.lastSearch    = (content, ["-1"], "tags")
+            searchRes           = findBySameTag(content, index.limit, [], index.pinned)
 
         else:
             if len(content[content.index('~ ') + 2:]) > 2000:
                 index.ui.empty_result("Query was <b>too long</b>")
                 return
-            content = content[content.index('~ ') + 2:]
-            searchRes = index.search(content, decks)
+            content             = content[content.index('~ ') + 2:]
+            searchRes           = index.search(content, decks)
 
 
         if (searchDB or searchByTags) and editor is not None and editor.web is not None:
@@ -1214,9 +1214,8 @@ def default_search_with_decks(editor: aqt.editor.Editor, textRaw: Optional[str],
 
 @requires_index_loaded
 def search_for_user_notes_only(editor: aqt.editor.Editor, text: str):
-    """
-    Uses the index to clean the input and find user notes.
-    """
+    """ Uses the index to clean the input and find user notes. """
+
     if text is None:
         return
     index = get_index()
@@ -1227,8 +1226,8 @@ def search_for_user_notes_only(editor: aqt.editor.Editor, text: str):
     if len(cleaned) == 0:
         index.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(text, 100).replace("\u001f", ""))
         return
-    index.lastSearch = (cleaned, ["-1"], "user notes")
-    searchRes = index.search(cleaned, ["-1"], only_user_notes = True)
+    index.lastSearch    = (cleaned, ["-1"], "user notes")
+    searchRes           = index.search(cleaned, ["-1"], only_user_notes = True)
 
 @requires_index_loaded
 def add_note_to_index(note: Note):
@@ -1312,47 +1311,52 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
 def generate_clozes(sentences, pdf_path, pdf_title, page):
     try:
         # (optional) field that full path to pdf doc goes into
-        path_fld = config["pdf.clozegen.field.pdfpath"]
+        path_fld        = config["pdf.clozegen.field.pdfpath"]
         # (optional) field that title of pdf note goes into
-        note_title_fld = config["pdf.clozegen.field.pdftitle"]
+        note_title_fld  = config["pdf.clozegen.field.pdftitle"]
         # (optional) field that page of the pdf where the cloze was generated goes into
-        page_fld = config["pdf.clozegen.field.page"]
+        page_fld        = config["pdf.clozegen.field.page"]
 
         # name of cloze note type to use
-        model_name = config["pdf.clozegen.notetype"]
+        model_name      = config["pdf.clozegen.notetype"]
         # name of field that clozed text has to go into
-        fld_name = config["pdf.clozegen.field.clozedtext"]
+        fld_name        = config["pdf.clozegen.field.clozedtext"]
 
         # default cloze note type and fld
         if model_name is None or len(model_name) == 0:
-            model_name = "Cloze"
+            model_name  = "Cloze"
         if fld_name is None or len(fld_name) == 0:
-            fld_name = "Text"
+            fld_name    = "Text"
 
-        model = mw.col.models.byName(model_name)
-        index = get_index()
+        model           = mw.col.models.byName(model_name)
+        index           = get_index()
         if model is None:
             tooltip("Could not resolve note model.", period=3000)
             return
-        deck_chooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
+        deck_chooser    = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deck_chooser is None:
             tooltip("Could not determine chosen deck.", period=3000)
             return
         did = deck_chooser.selectedId()
         if check_index():
-            tags = index.ui._editor.tags.text()
-            tags = mw.col.tags.canonify(mw.col.tags.split(tags))
+            tags        = index.ui._editor.tags.text()
+            tags        = mw.col.tags.canonify(mw.col.tags.split(tags))
         else:
-            tags = []
-        added = 0
+            tags        = []
+
+        added           = 0
+
         for sentence in sentences:
             if not "{{c1::" in sentence or not "}}" in sentence:
                 continue
-            note = Note(mw.col, model)
+
+            note                = Note(mw.col, model)
             note.model()['did'] = did
-            note.tags = tags
+            note.tags           = tags
+
             if not fld_name in note:
                 return
+
             note[fld_name] = sentence
             if path_fld is not None and len(path_fld) > 0:
                 note[path_fld] = pdf_path
@@ -1361,13 +1365,14 @@ def generate_clozes(sentences, pdf_path, pdf_title, page):
             if page_fld is not None and len(page_fld) > 0:
                 note[page_fld] = page
 
-            a = mw.col.addNote(note)
+            a                   = mw.col.addNote(note)
             if a > 0:
                 add_note_to_index(note)
-            added += a
-        tags_str = " ".join(tags) if len(tags) > 0 else "<i>No tags</i>"
-        deck_name = mw.col.decks.get(did)["name"]
-        s = "" if added == 1 else "s"
+            added               += a
+
+        tags_str            = " ".join(tags) if len(tags) > 0 else "<i>No tags</i>"
+        deck_name           = mw.col.decks.get(did)["name"]
+        s                   = "" if added == 1 else "s"
         tooltip(f"""<center>Added {added} Cloze{s}.</center><br>
                   <center>Deck: <b>{deck_name}</b></center>
                   <center>Tags: <b>{tags_str}</b></center>""", period=3000)
@@ -1376,16 +1381,16 @@ def generate_clozes(sentences, pdf_path, pdf_title, page):
 
 @requires_index_loaded
 def get_index_info():
-    """
-    Returns the html that is rendered in the popup that appears on clicking the "info" button
-    """
-    index = get_index()
+    """ Returns the html that is rendered in the popup that appears on clicking the "info" button """
+
+    index           = get_index()
     excluded_fields = config["fieldsToExclude"]
-    field_c = 0
+    field_c         = 0
+
     for k,v in excluded_fields.items():
         field_c += len(v)
 
-    html = """
+    html            = """
             <table class="striped" style='width: 100%%; margin-bottom: 18px;'>
                <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
                <tr><td>SQLite Version</td><td> <b>%s</b></td></tr>
@@ -1434,18 +1439,18 @@ def get_index_info():
             ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db"
             )
 
-
     return html
 
 @requires_index_loaded
 def show_timing_modal(render_time = None):
-    """
-    Builds the html and shows the modal which gives some info about the last executed search (timing, query after stopwords etc.)
-    """
-    index = get_index()
-    html = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % index.lastResDict["query"]
+    """ Builds the html and shows the modal which gives some info about the last executed search (timing, query after stopwords etc.) """
+
+    index   = get_index()
+    html    = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % index.lastResDict["query"]
+
     if "decks" in index.lastResDict:
         html += "<h4>Decks:</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % ", ".join([str(d) for d in index.lastResDict["decks"]])
+
     html += "<h4>Execution time:</h4><table style='width: 100%'>"
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", index.lastResDict["time-stopwords"] if index.lastResDict["time-stopwords"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", index.lastResDict["time-synonyms"] if index.lastResDict["time-synonyms"] > 0 else "< 1")
@@ -1453,16 +1458,21 @@ def show_timing_modal(render_time = None):
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML", index.lastResDict["time-html"] if index.lastResDict["time-html"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Highlighting", index.lastResDict["time-html-highlighting"] if index.lastResDict["time-html-highlighting"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Formatting SIAC Notes", index.lastResDict["time-html-build-user-note"] if index.lastResDict["time-html-build-user-note"] > 0 else "< 1")
+
     if render_time is not None:
         html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Rendering", render_time)
+
     html += "</table>"
+
     index.ui.showInModal(html)
 
 @requires_index_loaded
 def update_styling(cmd):
-    index = get_index()
-    name = cmd.split()[0]
-    value = " ".join(cmd.split()[1:])
+
+    index   = get_index()
+    name    = cmd.split()[0]
+    value   = " ".join(cmd.split()[1:])
+
     if name == "default" and value == "day":
         config["styling"] = json.loads(default_styles())
         tooltip("Styling updated. Restart to apply changes.", period=4000)
@@ -1480,8 +1490,8 @@ def update_styling(cmd):
 
     elif name == "hideSidebar":
         m = value == "true" or value == "on"
-        config["hideSidebar"] = m
-        index.ui.hideSidebar = m
+        config["hideSidebar"]   = m
+        index.ui.hideSidebar    = m
         index.ui.js("document.getElementById('searchInfo').classList.%s('hidden');"  % ("add" if m else "remove"))
 
     elif name == "removeDivsFromOutput":
@@ -1507,8 +1517,8 @@ def update_styling(cmd):
 
 
     elif name == "leftSideWidthInPercent":
-        config[name] = int(value)
-        right = 100 - int(value)
+        config[name]    = int(value)
+        right           = 100 - int(value)
         if check_index():
             index.ui.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('siac-right-side').style.width = '%s%%';" % (value, right) )
 
@@ -1565,8 +1575,10 @@ def update_config(key, value):
 
 @requires_index_loaded
 def after_index_rebuilt():
-    search_index = get_index()
-    editor = search_index.ui._editor
+
+    search_index    = get_index()
+    editor          = search_index.ui._editor
+
     editor.web.eval("""
         $('.freeze-icon').removeClass('frozen');
         siacState.isFrozen = false;

@@ -36,7 +36,7 @@ import time as t
 import webbrowser
 import functools
 import typing
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Dict, Any, List, Tuple, Optional, Callable
 import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -60,7 +60,9 @@ from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, 
 config = mw.addonManager.getConfig(__name__)
 
 def init_addon():
+    """ Executed once on Anki startup. """
     global origEditorContextMenuEvt
+
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
     
     #todo: Find out if there is a better moment to start index creation
@@ -93,14 +95,14 @@ def init_addon():
             document.addEventListener("keydown", function (e) {globalKeydown(e); }, false);
     </script>"""
     
-    
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific()
+
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
 
 
-def editor_save_with_index_update(dialog, _old):
+def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
     _old(dialog)
     # update index
     index = get_index()
@@ -122,13 +124,14 @@ def on_load_note(editor: Editor):
     if editor.addMode or (get_config_value_or_default("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
         index = get_index()
 
-        zoom = get_config_value_or_default("searchpane.zoom", 1.0)
-        typing_delay = max(500, get_config_value_or_default('delayWhileTyping', 1000))
-        show_tag_info_on_hover = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
+        zoom                    = get_config_value_or_default("searchpane.zoom", 1.0)
+        typing_delay            = max(500, get_config_value_or_default('delayWhileTyping', 1000))
+        show_tag_info_on_hover  = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
+
         editor.web.eval(f"""
-            var showTagInfoOnHover = {show_tag_info_on_hover}; 
-            tagHoverTimeout = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
-            var delayWhileTyping = {typing_delay};
+            var showTagInfoOnHover  = {show_tag_info_on_hover}; 
+            tagHoverTimeout         = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
+            var delayWhileTyping    = {typing_delay};
         """)
 
         def cb(was_already_rendered):
@@ -146,11 +149,10 @@ def on_load_note(editor: Editor):
 
             fillDeckSelect(editor)
             if index is not None and index.lastSearch is None:
-                printStartingInfo(editor)
+                print_starting_info(editor)
             if not corpus_is_loaded():
                 corpus = get_notes_in_collection()
                 set_corpus(corpus)
-
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
@@ -171,10 +173,12 @@ def insert_scripts():
         styles.css and pdf_reader.css are not included that way, because they 
         are processed ($<config value>$ placeholders are replaced) and inserted via <style> tags.
     """
-    addon_id = utility.misc.get_addon_id()
+
+    addon_id    = utility.misc.get_addon_id()
+    pdf_theme   = get_config_value_or_default("pdf.theme", "pdf_reader.css")
+    port        = mw.mediaServer.getPort()
+
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf)$")
-    pdf_theme = get_config_value_or_default("pdf.theme", "pdf_reader.css")
-    port = mw.mediaServer.getPort()
     aqt.editor._html += f"""
     <script>
         var script = document.createElement('script');
@@ -238,6 +242,7 @@ def insert_scripts():
 
 def setup_hooks():
     """ Todo: move more add-on code to hooks. """
+
     add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-deleted", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-deleted", lambda: recalculate_priority_queue())
@@ -248,6 +253,8 @@ def setup_hooks():
 
 
 def add_hide_show_shortcut(shortcuts, editor):
+    """ Register a shortcut to toggle the add-on pane. """
+
     if not "toggleShortcut" in config:
         return
     QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
@@ -255,8 +262,10 @@ def add_hide_show_shortcut(shortcuts, editor):
 
 def show_quick_open_pdf():
     """ Ctrl + O pressed -> show small dialog to quickly open a PDF. """
-    ix = get_index()
-    dialog = QuickOpenPDF(ix.ui._editor.parentWindow)
+
+    ix      = get_index()
+    dialog  = QuickOpenPDF(ix.ui._editor.parentWindow)
+
     if dialog.exec_():
         if dialog.chosen_id is not None and dialog.chosen_id > 0:
             def cb(can_load):

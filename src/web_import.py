@@ -16,11 +16,12 @@
 
 
 import urllib.request
+import typing
 from bs4 import BeautifulSoup, Comment
 from requests import get
 
 
-def _fetch(url):
+def _fetch(url: str) -> BeautifulSoup:
     html    = ""
     req     = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'}) 
 
@@ -45,7 +46,7 @@ def _fetch(url):
 
     return page
 
-def import_webpage(url):
+def import_webpage(url: str) -> str:
     if url is None or len(url.strip()) == 0:
         return None
     try:

@@ -1,5 +1,5 @@
 import typing
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timedelta
 import calendar
 
@@ -15,8 +15,6 @@ def next_instance_of_weekdays(wd: List[int]) -> datetime:
         if weekday in wd:
             return today
     
-    
-
 def weekday_name(wd: int) -> str:
     return list(calendar.day_name)[wd - 1]
 
@@ -35,21 +33,30 @@ def dt_to_stamp(dt : datetime) -> str:
 def dt_from_stamp(stamp: str) -> datetime:
     return datetime.strptime(stamp, '%Y-%m-%d-%H-%M-%S')
 
+def get_last_schedule_date(schedule: str) -> Optional[datetime]:
+    if len(schedule.split("|")[0]) == 0:
+        return None
+    return dt_from_stamp(schedule.split("|")[0])
+
 def schedule_verbose(sched: str) -> str:
-    created = sched.split("|")[0]
-    due = sched.split("|")[1]
-    stype = sched.split("|")[2][0:2]
-    stype_val = sched.split("|")[2][3:]
+    """ Returns a natural language representation of the given schedule string. """
+
+    created     = sched.split("|")[0]
+    due         = sched.split("|")[1]
+    stype       = sched.split("|")[2][0:2]
+    stype_val   = sched.split("|")[2][3:]
 
     if stype == "wd":
         days = ", ".join([weekday_name_abbr(int(c)) for c in stype_val])
         return f"This note is scheduled for every {days}."
+
     if stype == "id":
         if stype_val == "2":
             return f"This note is scheduled for every second day."
         if stype_val == "1":
             return f"This note is scheduled to appear everyday."
         return f"This note is scheduled to appear every {stype_val} days."
+
     if stype == "td":
         delta_days = (datetime.now().date() - dt_from_stamp(created).date()).days
         if delta_days == 0:

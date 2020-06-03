@@ -665,6 +665,7 @@ function togglePDFNightMode(elem) {
     }
     elem.innerHTML = pdfColorMode;
     rerenderPDFPage(pdfDisplayedCurrentPage, false);
+    $('#siac-pdf-top').removeClass("siac-pdf-sand siac-pdf-night siac-pdf-peach siac-pdf-day").addClass("siac-pdf-" + pdfColorMode.toLowerCase());
 }
 
 

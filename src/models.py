@@ -35,8 +35,8 @@ class Printable():
 
 class SiacNote(Printable):
 
-    note_type = "user"
-    MISSED_NOTES = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
+    note_type       = "user"
+    MISSED_NOTES    = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
 
     def __init__(self, props: Tuple[Any, ...]):
         self.id             : int = props[0]
@@ -141,13 +141,15 @@ class SiacNote(Printable):
             body                = body[:3000]
             body                = utility.text.remove_tags(body, ["div", "span", "a"])
             last_open_bracket   = body.rfind("<")
+
             if last_open_bracket >= len(body) - 500 or body.rfind(" ") < len(body) - 500:
                 last_close_bracket = body.rfind(">")
                 if last_close_bracket < last_open_bracket:
                     body = body[:last_open_bracket]
+
             body += "<br></ul></b></i></em></span></p></a></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
         
-        title = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
+        title   = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
 
         # add the source, separated by a line
         if src is not None and len(src) > 0 and get_config_value_or_default("notes.showSource", True):

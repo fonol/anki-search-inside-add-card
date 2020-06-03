@@ -771,12 +771,17 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     border-radius: 7px;
 }
 .siac-text-hl {
-    mix-blend-mode: normal;
+    mix-blend-mode: normal !important;
     z-index: 3;
     border: 3px outset #2496dc;
     font-family: 'Open Sans', sans-serif;
     white-space: pre-wrap;
     outline: none;
+}
+#siac-pdf-top.siac-pdf-night .siac-text-hl {
+    /* color: lightgrey; */
+    background: beige !important;
+    border-color: #44fdb0 !important;
 }
 .siac-pdf-ul-btn {
     height: 5px; 

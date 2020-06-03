@@ -309,9 +309,8 @@ class ReadingModal:
         self.sidebar.show_pdfs_tab()
 
     def html(self) -> str:
-        """
-            Main function to render the reading modal and its contents.
-        """
+        """ Builds the html which has to be inserted into the webview to display the reading modal. """
+
         index       = get_index()
         note        = self.note
         note_id     = self.note_id
@@ -319,12 +318,10 @@ class ReadingModal:
         tags        = note.tags
         created_dt  = datetime.datetime.strptime(note.created, '%Y-%m-%d %H:%M:%S')
         diff        = datetime.datetime.now() - created_dt
+        queue       = _get_priority_list()
+        queue_len   = len(queue)
+        time_str    = "Added %s ago." % utility.misc.date_diff_to_string(diff)
 
-        queue = _get_priority_list()
-        queue_len = len(queue)
-
-        time_str = "Added %s ago." % utility.misc.date_diff_to_string(diff)
-        # height: calc(90% - 170px); max-height: calc(100% - 260px)
         if check_index():
 
             title           = note.get_title()
@@ -450,12 +447,12 @@ class ReadingModal:
         
             queue_info          = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
             queue_info_short    = f"Priority" if note.is_in_queue() else "Unqueued"
-
             queue_readings_list = self.get_queue_head_display(queue, editable)
 
-            params = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info, 
-            queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn)
-            html = html.format_map(params)
+            params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info, 
+            queue_info_short    = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn)
+            html                = html.format_map(params)
+
             return html
         return ""
 
@@ -467,12 +464,13 @@ class ReadingModal:
             pdf_viewer_html is used instead.
         """
 
-        nid             = self.note_id
-        dir             = utility.misc.get_web_folder_path()
-        text            = self.note.text
-        search_sources  = ""
-        config          = mw.addonManager.getConfig(__name__)
-        urls            = config["searchUrls"]
+        nid                     = self.note_id
+        dir                     = utility.misc.get_web_folder_path()
+        text                    = self.note.text
+        search_sources          = ""
+        config                  = mw.addonManager.getConfig(__name__)
+        urls                    = config["searchUrls"]
+
         if urls is not None and len(urls) > 0:
             search_sources = self.iframe_dialog(urls)
 
@@ -480,7 +478,7 @@ class ReadingModal:
         title                   = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
         quick_sched             = self.quick_sched_btn(priority)
 
-        html = """
+        html                    = """
             <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
                 <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center; color: grey;'>Note: Not all sites allow embedding!</div>
                 <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
@@ -604,9 +602,8 @@ class ReadingModal:
 
 
     def bottom_bar(self, note):
-        """
-            Returns only the html for the bottom bar, useful if the currently displayed pdf should not be reloaded, but the queue display has to be refreshed.
-        """
+        """ Returns only the html for the bottom bar, useful if the currently displayed pdf should not be reloaded, but the queue display has to be refreshed. """
+
         index           = get_index()
         text            = note.text
         note_id         = note.id
@@ -682,6 +679,7 @@ class ReadingModal:
 
         note_id             = self.note_id
         note                = self.note
+
         if not note.is_pdf() and not note.is_feed():
             should_save     = True
 
@@ -690,6 +688,7 @@ class ReadingModal:
         queue_head_readings = ""
 
         for ix, queue_item in enumerate(queue):
+
             should_greyout = "greyedout" if queue_item.id == int(note_id) else ""
             if not hide or queue_item.id == int(note_id) :
                 qi_title = utility.text.trim_if_longer_than(queue_item.get_title(), 40) 

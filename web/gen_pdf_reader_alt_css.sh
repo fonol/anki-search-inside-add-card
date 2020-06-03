@@ -7,14 +7,12 @@ cp 'pdf_reader.css' 'pdf_reader_lightblue.css'
 sed -i 's/darkorange/#41b3a3/' 'pdf_reader_lightblue.css' 
 sed -i 's/orange/#85cdca/' 'pdf_reader_lightblue.css' 
 
-
 # khaki theme
 rm -f 'pdf_reader_khaki.css'
 cp 'pdf_reader.css' 'pdf_reader_khaki.css'
 # replace styles
 sed -i 's/darkorange/#f6d198/' 'pdf_reader_khaki.css' 
 sed -i 's/orange/#f6d198/' 'pdf_reader_khaki.css' 
-
 
 # tan theme
 rm -f 'pdf_reader_tan.css'

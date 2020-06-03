@@ -1182,7 +1182,6 @@ def _get_connection() -> sqlite3.Connection:
     file_path = _get_db_path()
     return sqlite3.connect(file_path)
 
-
 def _get_db_path() -> str:
     global db_path
     if db_path is not None:
@@ -1215,7 +1214,6 @@ def _table_exists(name) -> bool:
     if res[0]==1:
         return True
     return False
-    
 
 def _convert_manual_prio_to_dynamic(prio: int) -> int:
     if prio == 2 or prio == 7:

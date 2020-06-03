@@ -48,7 +48,8 @@ if loadWhoosh:
 
 class WhooshSearchIndex:
     """
-    Wraps the whoosh index object, provides method to query.
+    NOT USED ANYMORE!
+    Wraps the whoosh index object, provides methods to query.
     """
     def __init__(self, corpus, searchingDisabled, index_up_to_date):
         self.initializationTime = 0

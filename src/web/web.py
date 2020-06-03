@@ -190,7 +190,7 @@ def setup_ui_after_index_built(editor, index, init_time=None):
     if editor is None:
         return
     config = mw.addonManager.getConfig(__name__)
-    showSearchResultArea(editor, init_time)
+    show_search_result_area(editor, init_time)
     #restore previous settings
     cmd = ""
     if not index.highlighting:
@@ -214,10 +214,9 @@ def setup_ui_after_index_built(editor, index, init_time=None):
         index.ui.sidebar.display()
         
 
-def showSearchResultArea(editor=None, initializationTime=0):
-    """
-    Toggle between the loader and search result area when the index has finished building.
-    """
+def show_search_result_area(editor=None, initializationTime=0):
+    """ Toggle between the loader and search result area when the index has finished building. """
+
     js = """
         if (document.getElementById('searchResults')) {
             document.getElementById('searchResults').style.display = 'block';
@@ -225,6 +224,7 @@ def showSearchResultArea(editor=None, initializationTime=0):
         if (document.getElementById('loader')) {
             document.getElementById('loader').style.display = 'none';
         }"""
+
     if check_index():
         get_index().ui.js(js)
     elif editor is not None and editor.web is not None:
@@ -232,15 +232,16 @@ def showSearchResultArea(editor=None, initializationTime=0):
 
 
 
-def printStartingInfo(editor):
-    """
-        Displays the information that is visible after the first start of the add-on.
-    """
+def print_starting_info(editor):
+    """ Displays the information that is visible after the first start of the add-on. """
+
     if editor is None or editor.web is None:
         return
-    config = mw.addonManager.getConfig(__name__)
-    index = get_index()
-    html = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
+
+    config  = mw.addonManager.getConfig(__name__)
+    index   = get_index()
+    html    = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
+
     if index is not None:
         html += "Initalized in <b>%s</b> s." % index.initializationTime
         if not index.creation_info["index_was_rebuilt"]:
@@ -270,33 +271,38 @@ def printStartingInfo(editor):
 
 @requires_index_loaded
 def display_model_dialog():
-    """
-        Called after clicking on "Set Fields" in the settings modal.
-    """
+    """ Called after clicking on "Set Fields" in the settings modal. """
+
     if check_index():
         html = get_model_dialog_html()
         get_index().ui.show_in_modal_subpage(html)
 
-
-
 @js
-def showStylingModal(editor):
-    config = mw.addonManager.getConfig(__name__)
-    html = stylingModal(config)
-    index = get_index()
+def show_settings_modal(editor):
+    """ Display the Settings modal. """
+
+    config  = mw.addonManager.getConfig(__name__)
+    html    = stylingModal(config)
+    index   = get_index()
+
     index.ui.showInModal(html)
     return "$('.modal-close').on('click', function() {pycmd(`siac-write-config`) })"
 
 @js
 def show_unsuspend_modal(nid):
-    html = get_unsuspend_modal(nid)
-    index = get_index()
+    """ Display the modal to unsuspend cards of a note. """
+
+    html    = get_unsuspend_modal(nid)
+    index   = get_index()
+
     index.ui.showInModal(html)
     return "$('.modal-close').on('click', function() {pycmd(`siac-rerender`);$('.modal-close').off('click'); })"
 
 
 @js
 def display_note_del_confirm_modal(editor, nid):
+    """ Display the modal that asks to confirm a (add-on) note deletion. """
+
     html = get_note_delete_confirm_modal_html(nid)
     return "$('#searchResults').scrollTop(0).append(`%s`);" % html
    
@@ -306,20 +312,20 @@ def fillTagSelect(editor = None, expanded = False) :
     Builds the html for the "browse tags" mode in the deck select.
     Also renders the html.
     """
-    tags = mw.col.tags.all()
-    user_note_tags = get_all_tags()
+    tags            = mw.col.tags.all()
+    user_note_tags  = get_all_tags()
     tags.extend(user_note_tags)
-    tags = set(tags)
-    tmap = utility.tags.to_tag_hierarchy(tags)
+    tags            = set(tags)
+    tmap            = utility.tags.to_tag_hierarchy(tags)
 
-    most_active = get_most_active_tags(5)
+    most_active     = get_most_active_tags(5)
     most_active_map = dict()
+
     for t in most_active:
         if t in tmap:
             most_active_map[t] = tmap[t]
         else:
             most_active_map[t] = {}
-
 
     def iterateMap(tmap, prefix, start=False):
         if start:
@@ -332,13 +338,13 @@ def fillTagSelect(editor = None, expanded = False) :
         html += "</ul>"
         return html
 
-    most_active_html = iterateMap(most_active_map, "", True)
-    html = iterateMap(tmap, "", True)
+    most_active_html    = iterateMap(most_active_map, "", True)
+    html                = iterateMap(tmap, "", True)
 
     # the dropdown should only be expanded on user click, not on initial render
-    expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
+    expanded_js         = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
 
-    cmd = """
+    cmd                 = """
     document.getElementById('deck-sel-info-lbl').style.display = 'none';
     document.getElementById('deckSelQuickWrapper').style.display = '%s';
     document.getElementById('deckSelQuick').innerHTML = `%s`;
@@ -363,14 +369,12 @@ def fillTagSelect(editor = None, expanded = False) :
         get_index().ui.js(cmd)
 
 def fillDeckSelect(editor = None, expanded= False):
-    """
-    Fill the selection with user's decks
-    """
+    """ Fill the selection with user's decks """
 
-    deckMap = dict()
-    config = mw.addonManager.getConfig(__name__)
-    deckList = config['decks']
-    index = get_index()
+    deckMap     = dict()
+    config      = mw.addonManager.getConfig(__name__)
+    deckList    = config['decks']
+    index       = get_index()
     if editor is None:
         if index is not None and index.ui is not None and index.ui._editor is not None:
             editor = index.ui._editor
@@ -384,11 +388,11 @@ def fillDeckSelect(editor = None, expanded= False):
            continue
        deckMap[d['name']] = d['id']
     set_deck_map(deckMap)
-    dmap = {}
+    dmap        = {}
     for name, id in deckMap.items():
         dmap = addToDecklist(dmap, id, name)
 
-    dmap = dict(sorted(dmap.items(), key=lambda item: item[0].lower()))
+    dmap        = dict(sorted(dmap.items(), key=lambda item: item[0].lower()))
     def iterateMap(dmap, prefix, start=False):
         decks = index.selectedDecks if index is not None else []
         if start:
@@ -401,10 +405,10 @@ def fillDeckSelect(editor = None, expanded= False):
         html += "</ul>"
         return html
 
-    html = iterateMap(dmap, "", True)
+    html        = iterateMap(dmap, "", True)
     expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
 
-    cmd = """
+    cmd         = """
     document.getElementById('deck-sel-info-lbl').style.display = 'block';
     document.getElementById('deckSelQuickWrapper').style.display = 'none';
     document.getElementById('deckSel').innerHTML = `%s`;
