@@ -28,15 +28,16 @@ class QtPrioritySlider(QWidget):
     def __init__(self, prio_default, show_spec_sched=True, schedule=None):
         QWidget.__init__(self)
 
-        self.prio_default = prio_default
-        self.released_fn = None
-        self.has_schedule = schedule is not None and len(schedule.strip()) > 0
-        self.show_spec_sched = show_spec_sched
+        self.prio_default       = prio_default
+        self.released_fn        = None
+        self.has_schedule       = schedule is not None and len(schedule.strip()) > 0
+        self.show_spec_sched    = show_spec_sched
 
-        box = QGroupBox("Priority and Scheduling" if self.show_spec_sched else "Priority")
-        vbox = QVBoxLayout()
+        box                     = QGroupBox("Priority and Scheduling" if self.show_spec_sched else "Priority")
+        vbox                    = QVBoxLayout()
 
-        self.slider = QSlider(Qt.Horizontal)
+        self.slider             = QSlider(Qt.Horizontal)
+
         if prio_default is not None and prio_default >= 0:
             self.slider.setValue(prio_default)
         else:
@@ -46,7 +47,7 @@ class QtPrioritySlider(QWidget):
         self.slider.setSingleStep(1)
         vbox.addWidget(self.slider)
 
-        self.value_lbl = QLabel(str(prio_default))
+        self.value_lbl          = QLabel(str(prio_default))
         self.value_lbl.setAlignment(Qt.AlignCenter)
         vbox.addWidget(self.value_lbl)
 
@@ -56,7 +57,7 @@ class QtPrioritySlider(QWidget):
 
         box.setLayout(vbox)
 
-        vbox_outer = QVBoxLayout()
+        vbox_outer              = QVBoxLayout()
         vbox_outer.addWidget(box)
         self.setLayout(vbox_outer)
     
@@ -111,19 +112,21 @@ class QtScheduleComponent(QWidget):
 
     def __init__(self, schedule):
         QWidget.__init__(self)
-        self.initial_schedule = schedule
-        self.has_schedule = self.initial_schedule is not None and len(self.initial_schedule.strip()) > 0
+
+        self.initial_schedule   = schedule
+        self.has_schedule       = self.initial_schedule is not None and len(self.initial_schedule.strip()) > 0
         self.setup_ui()
             
         
     def setup_ui(self):
-        self.tabs = QTabWidget()
-         
-        self.edit_tab = ScheduleEditTab(self)
-        self.settings_tab = ScheduleSettingsTab()
+
+        self.tabs           = QTabWidget()
+        self.edit_tab       = ScheduleEditTab(self)
+        self.settings_tab   = ScheduleSettingsTab()
         
         self.tabs.addTab(self.edit_tab, "Edit")
         self.tabs.addTab(self.settings_tab, "Settings")
+
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(self.tabs)
 
@@ -156,13 +159,15 @@ class ScheduleSettingsTab(QWidget):
         QWidget.__init__(self)
         self.setLayout(QVBoxLayout())
         
-        header = QLabel("General scheduling settings")
+        header          = QLabel("General scheduling settings")
         header.setAlignment(Qt.AlignCenter)
         self.layout().addWidget(header)
-        line = QFrame()
+
+        line            = QFrame()
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Sunken)
         self.layout().addWidget(line)
+
         self.layout().addWidget(QLabel("How to deal with <b>missed schedules</b>?"))
         self.missed_rb_1 = QRadioButton("Place in front of queue")
         self.missed_rb_2 = QRadioButton("Remove schedule, keep in queue")
@@ -192,8 +197,18 @@ class ScheduleSettingsTab(QWidget):
         self.show_sched_cb.setChecked(get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False))
         self.show_sched_cb.clicked.connect(self.show_sched_cb_clicked)
 
+        self.ivl_includes_today_cb = QCheckBox("Periodic schedules start on the current day")
+        self.layout().addWidget(self.ivl_includes_today_cb)
+        self.ivl_includes_today_cb.setChecked(get_config_value_or_default("notes.queue.intervalSchedulesStartToday", True))
+        self.ivl_includes_today_cb.clicked.connect(self.ivl_includes_today_cb_checked)
+
+
+
     def show_sched_cb_clicked(self):
         update_config("notes.queue.scheduleDialogOnDoneUnscheduledNotes", self.show_sched_cb.isChecked())
+    
+    def ivl_includes_today_cb_checked(self):
+        update_config("notes.queue.intervalSchedulesStartToday", self.ivl_includes_today_cb.isChecked())
 
     def missed_rb_clicked(self):
         if self.missed_rb_1.isChecked():
@@ -211,23 +226,27 @@ class ScheduleEditTab(QWidget):
     def __init__(self, parent):
         QWidget.__init__(self)
         self.parent = parent
-        self.vbox = QVBoxLayout()
-        self.group = QButtonGroup()
+        self.vbox   = QVBoxLayout()
+        self.group  = QButtonGroup()
         if self.parent.has_schedule:
-            s_rep_label = QLabel(utility.date.schedule_verbose(self.parent.initial_schedule))
+
+            s_rep_label         = QLabel(utility.date.schedule_verbose(self.parent.initial_schedule))
             s_rep_label.setAlignment(Qt.AlignCenter)
             self.vbox.addWidget(s_rep_label)
-            line = QFrame()
+
+            line                = QFrame()
             line.setFrameShape(QFrame.HLine)
             line.setFrameShadow(QFrame.Sunken)
             self.vbox.addWidget(line)
-            self.no_sched_rb = QRadioButton("Keep schedule")
+
+            self.no_sched_rb    = QRadioButton("Keep schedule")
         else:
             self.no_sched_rb = QRadioButton("No specific schedule")
+
         self.no_sched_rb.setChecked(True)
-        self.td_rb = QRadioButton("Show in ")
-        self.tpwd_rb = QRadioButton("Show on weekday(s):")
-        self.tpd_rb = QRadioButton("Show every ")
+        self.td_rb      = QRadioButton("Show in ")
+        self.tpwd_rb    = QRadioButton("Show on weekday(s):")
+        self.tpd_rb     = QRadioButton("Show every ")
         self.group.addButton(self.no_sched_rb, 0)
         self.group.addButton(self.td_rb, 1)
         self.group.addButton(self.tpwd_rb, 2)
@@ -347,6 +366,8 @@ class ScheduleEditTab(QWidget):
         if self.parent.has_schedule and self.remove_sched_rb.isChecked():
             return ""
         now = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+
+        # in x days
         if self.td_rb.isChecked():
             val = self.td_inp.value()
             if val is None or int(val) <= 0:
@@ -354,13 +375,21 @@ class ScheduleEditTab(QWidget):
             val = int(val)
             due = (datetime.now() + timedelta(days=int(val))).strftime('%Y-%m-%d-%H-%M-%S')
             return f"{now}|{due}|td:{val}"
+
+        # every x days
         if self.tpd_rb.isChecked():
             val = self.tpd_inp.value()
             if val is None or int(val) <= 0:
                 return None
             val = int(val)
-            due = (datetime.now() + timedelta(days=int(val))).strftime('%Y-%m-%d-%H-%M-%S')
+
+            if get_config_value_or_default("notes.queue.intervalSchedulesStartToday", True):
+                due = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+            else:
+                due = (datetime.now() + timedelta(days=int(val))).strftime('%Y-%m-%d-%H-%M-%S')
             return f"{now}|{due}|id:{val}"
+
+        # weekday checkboxes
         if self.tpwd_rb.isChecked():
             wds = ""
             if self.mon_cb.isChecked(): wds += "1"
@@ -374,7 +403,10 @@ class ScheduleEditTab(QWidget):
                 return None
 
             today = datetime.now().weekday()
-            next = [int(d) for d in wds if int(d) > today + 1]
+            if get_config_value_or_default("notes.queue.intervalSchedulesStartToday", True):
+                next = [int(d) for d in wds if int(d) >= today + 1]
+            else:
+                next = [int(d) for d in wds if int(d) > today + 1]
             if len(next) > 0:
                 next_date = next[0]
             else:
