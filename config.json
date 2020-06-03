@@ -112,6 +112,7 @@
 "notes.queue.priorityScaleFactor": 5,
 "notes.queue.missedNotesHandling": "remove-schedule",
 "notes.queue.scheduleDialogOnDoneUnscheduledNotes": false,
+"notes.queue.intervalSchedulesStartToday": true,
 "pdf.theme": "pdf_reader.css"
 
 }
