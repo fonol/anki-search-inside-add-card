@@ -26,6 +26,8 @@ from aqt.utils import tooltip, showInfo
 import os
 import urllib.parse
 import json
+import typing
+from typing import List, Dict, Any, Optional, Tuple
 
 
 from .state import check_index, get_index, set_index, set_corpus
@@ -43,46 +45,54 @@ from .dialogs.editor import openEditor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
 from .dialogs.quick_schedule import QuickScheduler
 from .dialogs.url_import import UrlImporter
+from .dialogs.zotero_import import ZoteroImporter
+from .dialogs.schedule_dialog import ScheduleDialog
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 from .models import SiacNote
 import utility.misc
 import utility.text
+import state
 
 
 config = mw.addonManager.getConfig(__name__)
 
-def expanded_on_bridge_cmd(self, cmd, _old):
+def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tuple[bool, Any]:
     """
     Process the various commands coming from the ui -
     this includes users clicks on option checkboxes, on rendered results, on special searches, etc.
 
-    todo: needs some serious cleanup
+    Todo: needs some serious cleanup / splitting up.
+    Todo: maybe move cmd handling to components (reading_modal, sidebar, index)
     """
+    if not isinstance(self, aqt.editor.Editor):
+        return handled
     index = get_index()
     # just to make sure
     if index is not None and index.ui._editor is None:
         index.ui.set_editor(self)
 
+    # there has to be a more elegant way of processing the cmds than a giant if else...
+
     if cmd.startswith("siac-fld "):
         # keyup in fields -> search
         rerender_info(self, cmd[8:])
-    
+
     elif cmd.startswith("siac-page "):
         # page in results clicked
         index.ui.show_page(self, int(cmd.split()[1]))
-    
+
     elif cmd.startswith("siac-srch-db "):
         # bottom search input used
         if index.searchbar_mode == "Add-on":
             rerender_info(self, cmd[13:])
         else:
             rerender_info(self, cmd[13:], searchDB = True)
-    
-    elif cmd.startswith("fldSlctd ") and index is not None:
+
+    elif cmd.startswith("siac-fld-selected ") and index is not None:
         # selection in field or note
-        rerender_info(self, cmd[9:])
-    
+        rerender_info(self, cmd[18:])
+
     elif (cmd.startswith("siac-note-stats ")):
         # note "Info" button clicked
         setStats(cmd[16:], calculateStats(cmd[16:], index.ui.gridView))
@@ -98,6 +108,13 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         # "Edit" clicked on a normal note
         openEditor(mw, int(cmd[15:]))
 
+    elif cmd.startswith("siac-eval "):
+        # direct eval, saves code
+        eval(cmd[10:])
+    elif cmd.startswith("siac-exec "):
+        # direct exec, saves code
+        exec(cmd[10:])
+
     elif cmd.startswith("siac-pin"):
         set_pinned(cmd[9:])
 
@@ -111,8 +128,8 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         fillDeckSelect(self, expanded=True)
     elif cmd == "siac-fill-tag-select":
         fillTagSelect(expanded=True)
-    elif cmd.startswith("searchTag "):
-        rerender_info(self, cmd[10:].strip(), searchByTags=True)
+    elif cmd.startswith("siac-search-tag "):
+        rerender_info(self, cmd[16:].strip(), searchByTags=True)
 
     elif cmd.startswith("siac-tag-info "):
         #this renders the popup
@@ -124,8 +141,8 @@ def expanded_on_bridge_cmd(self, cmd, _old):
             index.ui.print_search_results(*index.ui.previous_calls[ix] + [True])
 
     elif cmd == "siac-rerender":
-        index.ui.try_rerender_last()      
-    
+        index.ui.try_rerender_last()
+
     elif cmd.startswith("siac-notification "):
         tooltip(cmd[18:])
 
@@ -138,7 +155,7 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         cids = [int(cid) for cid in cmd.split()[2:]]
         mw.col.sched.unsuspendCards(cids)
         show_unsuspend_modal(nid)
-        
+
     elif cmd == "siac-show-pdfs":
         if check_index():
             stamp = setStamp()
@@ -153,12 +170,22 @@ def expanded_on_bridge_cmd(self, cmd, _old):
             stamp = setStamp()
             notes = get_all_unread_pdf_notes()
             index.ui.print_search_results(notes, stamp)
-    
+
     elif cmd == "siac-show-pdfs-in-progress":
         if check_index():
             stamp = setStamp()
             notes = get_in_progress_pdf_notes()
             index.ui.print_search_results(notes, stamp)
+    
+    elif cmd == "siac-show-due-today":
+        stamp = setStamp()
+        notes = get_notes_scheduled_for_today()
+        index.ui.print_search_results(notes, stamp)
+
+    elif cmd == "siac-show-last-done":
+        stamp = setStamp()
+        notes = get_last_done_notes()
+        index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-pdf-last-read":
         stamp = setStamp()
@@ -173,7 +200,7 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
         index.ui.print_search_results(notes, stamp)
-    
+
     elif cmd == "siac-pdf-find-invalid":
         stamp = setStamp()
         notes = get_invalid_pdfs()
@@ -186,14 +213,14 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         note = get_note(nid)
         read_stats = get_read_stats(nid)
         index.ui.js("""
-            if (pdfLoading || noteLoading) {
+            if (pdfLoading || noteLoading || modalShown) {
                 hideQueueInfobox();
             } else {
                 document.getElementById('siac-pdf-bottom-tabs').style.visibility = "hidden";
                 document.getElementById('siac-queue-infobox').style.display = "block";
                 document.getElementById('siac-queue-infobox').innerHTML =`%s`;
             }
-        """ % get_queue_infobox(note, read_stats))
+        """ % index.ui.reading_modal.get_queue_infobox(note, read_stats))
 
     elif cmd.startswith("siac-pdf-selection "):
         stamp = setStamp()
@@ -250,13 +277,13 @@ def expanded_on_bridge_cmd(self, cmd, _old):
     elif cmd == "siac-url-dialog":
         dialog = UrlImporter(self.parentWindow)
         if dialog.exec_():
-            if dialog.chosen_url is not None and len(dialog.chosen_url) >= 0:
+            if dialog.chosen_url:
                 sched = dialog.queue_schedule
                 name = dialog.get_name()
                 path = config["pdfUrlImportSavePath"]
                 if path is None or len(path) == 0:
                     tooltip("""You have to set a save path for imported URLs first.
-                        <center>Config value: <i>pdfUrlImportSavePath</i></center> 
+                        <center>Config value: <i>pdfUrlImportSavePath</i></center>
                     """, period=4000)
                     return
                 path = utility.misc.get_pdf_save_full_path(path, name)
@@ -267,10 +294,27 @@ def expanded_on_bridge_cmd(self, cmd, _old):
                 create_note(title, "", path, "", "", "", sched)
             else:
                 pass
-        else:
-            pass
 
-    
+    elif cmd == "siac-zotero-import":
+        dialog = ZoteroImporter(self.parentWindow)
+        if dialog.exec_():
+            tooltip(f"Created {dialog.total_count} notes.")
+
+    elif cmd == "siac-schedule-dialog":
+        original_sched = index.ui.reading_modal.note.reminder
+        dialog = ScheduleDialog(index.ui.reading_modal.note, self.parentWindow)
+        if dialog.exec_():
+            schedule = dialog.schedule()
+            if schedule is not None and schedule != original_sched:
+                update_reminder(index.ui.reading_modal.note_id, schedule)
+                index.ui.reading_modal.note.reminder = schedule
+                if schedule == "":
+                    tooltip(f"Removed schedule.")
+                else:
+                    tooltip(f"Updated schedule.")
+                run_hooks("updated-schedule")
+
+
     elif cmd.startswith("siac-pdf-mark "):
         mark_type = int(cmd.split()[1])
         nid = int(cmd.split()[2])
@@ -288,29 +332,52 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         sentences = [s for s in cmd.split("$$$")[4:] if len(s) > 0]
         generate_clozes(sentences, pdf_path, pdf_title, page)
 
+    elif cmd == "siac-reading-modal-tabs-left-browse":
+        # clicked on "Browse" in the tabs on the fields' side.
+        index.ui.reading_modal.show_browse_tab()
 
-    elif cmd.startswith("pSort "):
+    elif cmd == "siac-reading-modal-tabs-left-flds":
+        # clicked on "Fields" in the tabs on the fields' side.
+        index.ui.reading_modal.show_fields_tab()
+
+    elif cmd == "siac-reading-modal-tabs-left-pdfs":
+        # clicked on "Fields" in the tabs on the fields' side.
+        index.ui.reading_modal.show_pdfs_tab()
+
+    elif cmd.startswith("siac-pdf-left-tab-anki-search "):
+        # search input coming from the "Browse" tab in the pdf viewer
+        inp = " ".join(cmd.split(" ")[1:])
+        index.search(inp, ["-1"], only_user_notes = False, print_mode = "pdf.left")
+
+    elif cmd.startswith("siac-pdf-left-tab-pdf-search "):
+        # search input coming from the "PDFs" tab in the pdf viewer
+        inp = " ".join(cmd.split(" ")[1:])
+        if inp: 
+            notes = find_pdf_notes_by_title(inp)
+            index.ui.reading_modal.sidebar.print(notes)
+
+    elif cmd.startswith("siac-p-sort "):
         if check_index():
-            parseSortCommand(cmd[6:])
+            parseSortCommand(cmd[12:])
 
     elif cmd == "siac-model-dialog":
         display_model_dialog()
 
-    elif cmd.startswith("addedSameDay "):
+    elif cmd.startswith("siac-added-same-day "):
         if check_index():
-            getCreatedSameDay(index, self, int(cmd[13:]))
+            getCreatedSameDay(index, self, int(cmd[20:]))
 
-    elif cmd == "lastTiming":
+    elif cmd == "siac-last-timing":
         if index is not None and index.lastResDict is not None:
             show_timing_modal()
-    elif cmd.startswith("lastTiming "):
+    elif cmd.startswith("siac-last-timing "):
         render_time = int(cmd.split()[1])
         if index is not None and index.lastResDict is not None:
             show_timing_modal(render_time)
-    elif cmd.startswith("calInfo "):
+    elif cmd.startswith("siac-cal-info "):
         if check_index():
-            context_html = get_cal_info_context(int(cmd[8:]))
-            res = get_notes_added_on_day_of_year(int(cmd[8:]), min(index.limit, 100))
+            context_html = get_cal_info_context(int(cmd[14:]))
+            res = get_notes_added_on_day_of_year(int(cmd[14:]), min(index.limit, 100))
             index.ui.print_timeline_info(context_html, res)
 
     elif cmd == "siac_rebuild_index":
@@ -333,26 +400,42 @@ def expanded_on_bridge_cmd(self, cmd, _old):
     #
 
     elif cmd == "siac-create-note":
-        NoteEditor(self.parentWindow)
+        if not state.note_editor_shown:
+            NoteEditor(self.parentWindow)
 
     elif cmd.startswith("siac-create-note-add-only "):
-        nid = int(cmd.split()[1])
-        NoteEditor(self.parentWindow, add_only=True, read_note_id=nid)
+        if not state.note_editor_shown:
+            nid = int(cmd.split()[1])
+            NoteEditor(self.parentWindow, add_only=True, read_note_id=nid)
 
     elif cmd.startswith("siac-create-note-tag-prefill "):
-        tag = cmd.split()[1]
-        NoteEditor(self.parentWindow, add_only=False, read_note_id=None, tag_prefill = tag)
+        if not state.note_editor_shown:
+            tag = cmd.split()[1]
+            NoteEditor(self.parentWindow, add_only=False, read_note_id=None, tag_prefill = tag)
+
+    elif cmd.startswith("siac-create-note-source-prefill "):
+        source = " ".join(cmd.split()[1:])
+        existing = get_pdf_id_for_source(source)
+        if existing > 0:
+            index.ui.reading_modal.display(existing)
+        else:
+            if not state.note_editor_shown:
+                NoteEditor(self.parentWindow, add_only=False, read_note_id=None, tag_prefill = None, source_prefill=source)
+            else:
+                tooltip("Close the opened note dialog first!")
 
     elif cmd.startswith("siac-edit-user-note "):
-        id = int(cmd.split()[1])
-        if id > -1:
-            NoteEditor(self.parentWindow, id)
-    
+        if not state.note_editor_shown:
+            id = int(cmd.split()[1])
+            if id > -1:
+                NoteEditor(self.parentWindow, id)
+
     elif cmd.startswith("siac-edit-user-note-from-modal "):
-        id = int(cmd.split()[1])
-        read_note_id = int(cmd.split()[2])
-        if id > -1:
-            NoteEditor(self.parentWindow, note_id=id, add_only=False, read_note_id=read_note_id)
+        if not state.note_editor_shown:
+            id = int(cmd.split()[1])
+            read_note_id = int(cmd.split()[2])
+            if id > -1:
+                NoteEditor(self.parentWindow, note_id=id, add_only=False, read_note_id=read_note_id)
 
     elif cmd.startswith("siac-delete-user-note-modal "):
         nid = int(cmd.split()[1])
@@ -366,10 +449,24 @@ def expanded_on_bridge_cmd(self, cmd, _old):
             index.deleteNote(id)
         run_hooks("user-note-deleted")
         index.ui.js("""
-            $("#greyout").hide(); 
             $('#siac-del-modal').remove();
         """)
 
+    elif cmd == "siac-delete-current-user-note":
+        # delete the currently opened note in the reading modal
+        id = index.ui.reading_modal.note_id
+        delete_note(id)
+        if index is not None:
+            index.deleteNote(id)
+        run_hooks("user-note-deleted")
+        head = get_head_of_queue()
+        tooltip("Deleted note.")
+        if head is None or head < 0:
+            index.ui.js("""
+                onReadingModalClose();
+            """)
+        else:
+            index.ui.reading_modal.display(head)
 
     elif cmd.startswith("siac-read-user-note "):
         id = int(cmd.split()[1])
@@ -387,7 +484,7 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         notes = get_queue_in_random_order()
         if check_index():
             index.ui.print_search_results(notes, stamp)
-    
+
     elif cmd == "siac-user-note-untagged":
         stamp = setStamp()
         notes = get_untagged_notes()
@@ -405,7 +502,7 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         if check_index():
             notes = get_random(index.limit, index.pinned)
             index.ui.print_search_results(notes, stamp)
-    
+
     elif cmd.startswith("siac-user-note-search-tag "):
         stamp = setStamp()
         if check_index():
@@ -420,7 +517,7 @@ def expanded_on_bridge_cmd(self, cmd, _old):
             index.ui.reading_modal.display(picker.chosen_id)
         else:
             index.ui.reading_modal.reload_bottom_bar(nid)
-    
+
     elif cmd.startswith("siac-reload-reading-modal-bottom "):
         nid = int(cmd.split()[1])
         index.ui.reading_modal.reload_bottom_bar(nid)
@@ -443,86 +540,109 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         update_note_text(id, text)
 
     elif cmd.startswith("siac-requeue "):
-        # queue btn pressed 
+        # priority slider released
         nid = int(cmd.split()[1])
-        queue_sched = int(cmd.split()[2])
-        inserted_index = update_priority_list(nid, queue_sched)
-        index.ui.reading_modal.update_bottom_bar_positions(nid, inserted_index[0], inserted_index[1])
-        tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(queue_sched)}</b></center><center>Recalculated Priority Queue.</center>")
-
-    elif cmd.startswith("siac-requeue-tt "):
-        # queue btn pressed in tooltip
-        nid = int(cmd.split()[1])
-        nid_displayed = cmd.split()[3]
-        queue_sched = int(cmd.split()[2])
-        inserted_index = update_priority_list(nid, queue_sched)
-        if nid_displayed != nid:
-            pos_displayed = get_position(nid_displayed)
-            index.ui.reading_modal.update_bottom_bar_positions(nid_displayed, pos_displayed, inserted_index[1])
+        new_prio = int(cmd.split()[2])
+        note = get_note(nid)
+        if note.is_due_sometime() and note.schedule_type() == "td":
+            add_to_prio_log(nid, new_prio)
+            index.ui.reading_modal.display_schedule_dialog()
         else:
-            index.ui.reading_modal.update_bottom_bar_positions(nid, inserted_index[0], inserted_index[1])
-        tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(queue_sched)}</b></center><center>Recalculated Priority Queue.</center>")
-        
+            if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
+                add_to_prio_log(nid, new_prio)
+                # update_priority_list(nid, new_prio)
+                index.ui.reading_modal.show_schedule_change_modal(unscheduled=True)
+            else:
+                if note.is_due_sometime():
+                    update_reminder(nid, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
+                update_priority_list(nid, new_prio)
+                nid = get_head_of_queue()
+                index.ui.reading_modal.display(nid)
+                if new_prio == 0:
+                    tooltip(f"<center>Removed from Queue.</center>")
+                else:
+                    tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
 
-    elif cmd.startswith("siac-remove-from-queue "):
-        # called from the buttons on the left of the reading modal bottom bar 
+
+    elif cmd.startswith("siac-update-prio "):
+        # prio slider in bottom bar released on value != 0
+        # not used atm
         nid = int(cmd.split()[1])
-        remove_from_priority_list(nid)
-        queue_readings_list = get_queue_head_display(nid)
-        index.ui.js("afterRemovedFromQueue();")
-        index.ui.js("$('#siac-queue-lbl').hide(); document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued'; $('#siac-queue-lbl').fadeIn();$('#siac-queue-readings-list').replaceWith(`%s`)" % queue_readings_list)
-    
-    elif cmd.startswith("siac-remove-from-queue-tt "):
-        # called from the tooltip
-        nid = int(cmd.split()[1])
-        nid_displayed = cmd.split()[2]
-        ix = remove_from_priority_list(nid)
-        pos = get_position(nid_displayed)
-        queue_len = ix[1]
-        queue_readings_list = get_queue_head_display(nid)
-        if pos is None:
-            pos_js = """
-                document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued';
-                $('.siac-queue-sched-btn:first').html('Unqueued');
-                """
-        else: 
-            pos_js = """
-                document.getElementById('siac-queue-lbl').innerHTML = 'Position: %s / %s';
-                $('.siac-queue-sched-btn:first').html('%s / %s');
-            """ % (pos + 1, queue_len, pos + 1, queue_len)
-        js = """
-        if ($('#siac-reading-modal-top-bar').data('nid') === '%s')  {
-            document.getElementById('siac-queue-lbl').innerHTML = 'Unqueued';
-             $('.siac-queue-sched-btn:first').html('Unqueued');
-        } else {
-            %s
-        }
-        $('#siac-queue-readings-list').replaceWith(`%s`)""" % (nid, pos_js, queue_readings_list)
-        index.ui.js(js)
+        new_prio = int(cmd.split()[2])
+        update_priority_without_timestamp(nid, new_prio)
+        # todo: find a better solution
+        recalculate_priority_queue()
+        index.ui.reading_modal.update_reading_bottom_bar(nid)
+        tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
+
+    elif cmd.startswith("siac-remove-from-queue"):
+        update_priority_list(index.ui.reading_modal.note_id, 0)
+        nid = get_head_of_queue()
+        if nid is None or nid < 0:
+            index.ui.eval("onReadingModalClose();")
+        else:
+            index.ui.reading_modal.display(nid)
+        tooltip(f"<center>Removed from Queue.</center>")
+
+    elif cmd == "siac-on-reading-modal-close":
+        index.ui.reading_modal.note_id = None
+        run_hooks("reading-modal-closed")
 
     elif cmd == "siac-user-note-queue-read-random":
         rand_id = get_random_id_from_queue()
         if rand_id >= 0:
             index.ui.reading_modal.display(rand_id)
         else:
-            index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;")
+            index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
             tooltip("Queue is Empty! Add some items first.", period=4000)
-
 
     elif cmd == "siac-user-note-queue-read-head":
         nid = get_head_of_queue()
-        if nid >= 0:
+        if nid is not None and nid >= 0:
             index.ui.reading_modal.display(nid)
         else:
-            index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;")
             tooltip("Queue is Empty! Add some items first.", period=4000)
+
+    elif cmd == "siac-user-note-done":
+        note = index.ui.reading_modal.note
+        # if note is scheduled for today or some point in the future, show the schedule dialog,
+        # but only if type is 'td', i.e. the note was not scheduled for a regular interval.
+        if note.is_due_sometime() and note.schedule_type() == "td":
+            index.ui.reading_modal.display_schedule_dialog()
+        else:
+            nid = index.ui.reading_modal.note_id
+            prio = get_priority(nid)
+            if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
+                add_to_prio_log(nid, prio)
+                index.ui.reading_modal.show_schedule_change_modal(unscheduled=True)
+            else:
+                if note.is_due_sometime():
+                    update_reminder(nid, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
+                update_priority_list(nid, prio)
+                nid = get_head_of_queue()
+                index.ui.reading_modal.display(nid)
+
+    elif cmd.startswith("siac-update-schedule "):
+        stype = cmd.split()[1]
+        svalue = cmd.split()[2]
+        new_reminder = utility.date.get_new_reminder(stype, svalue)
+        update_reminder(index.ui.reading_modal.note_id, new_reminder)
+        nid = index.ui.reading_modal.note_id
+        prio = get_priority(nid)
+        update_priority_list(nid, prio)
+        nid = get_head_of_queue()
+        if nid is not None and nid >= 0:
+            index.ui.reading_modal.display(nid)
+        else:
+            tooltip("Queue is Empty! Add some items first.", period=4000)
+
 
     elif cmd.startswith("siac-update-note-tags "):
         nid = int(cmd.split()[1])
         tags = " ".join(cmd.split()[2:])
         tags = utility.text.clean_tags(tags)
         update_note_tags(nid, tags)
-        reload_note_sidebar()
+        index.ui.sidebar.refresh()
 
     elif cmd == "siac-try-copy-text-note":
         # copy to new note button clicked in reading modal
@@ -533,7 +653,10 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         if html is None or len(html) == 0:
             tooltip("Note text seems to be empty.")
         else:
-            NoteEditor(self.parentWindow, add_only=True, read_note_id=None, tag_prefill =note.tags, source_prefill=note.source, text_prefill=html, title_prefill = note.title, prio_prefill = prio)
+            if not state.note_editor_shown:
+                NoteEditor(self.parentWindow, add_only=True, read_note_id=None, tag_prefill =note.tags, source_prefill=note.source, text_prefill=html, title_prefill = note.title, prio_prefill = prio)
+            else:
+                tooltip("Close the opened note dialog first!")
 
     elif cmd.startswith("siac-scale "):
         factor = float(cmd.split()[1])
@@ -562,7 +685,7 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         config["pdf.queue.hide"] = False
         write_config()
         index.ui.reading_modal.update_reading_bottom_bar(nid)
-    
+
     elif cmd.startswith("siac-hide-pdf-queue "):
         nid = int(cmd.split()[1])
         config["pdf.queue.hide"] = True
@@ -580,32 +703,6 @@ def expanded_on_bridge_cmd(self, cmd, _old):
             update_priority_list(nid, scheduler.queue_schedule)
             index.ui.reading_modal.reload_bottom_bar(nid)
 
-    elif cmd.startswith("siac-move-end-read-next "):
-        # quick schedule btn clicked when in manual schedule mode
-        nid = int(cmd.split()[1])
-        update_priority_list(nid, QueueSchedule.END.value)
-        nid = get_head_of_queue()
-        index.ui.reading_modal.display(nid)
-    
-    elif cmd.startswith("siac-reschedule-read-next "):
-        # quick schedule btn clicked when in dynamic schedule mode
-        nid = int(cmd.split()[1])
-        sched = int(cmd.split()[2])
-        # sched is 0 when "current" btn is clicked
-        if sched == 0:
-            sched = get_priority(nid)
-            if sched is None:
-                tooltip("Item has no priority yet.", period=3500)
-                return
-        try:
-            update_priority_list(nid, sched)
-            tooltip(f"""Note moved back in queue.<br>
-                    <center>Priority: <b>{dynamic_sched_to_str(sched)}</b></center>""")
-        except:
-            tooltip("Something went wrong during queue recalculation.")
-        nid = get_head_of_queue()
-        index.ui.reading_modal.display(nid)
-
     elif cmd.startswith("siac-left-side-width "):
         value = int(cmd.split()[1])
         if value > 70:
@@ -614,8 +711,8 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         config["leftSideWidthInPercent"] = value
         right = 100 - value
         if check_index():
-            index.ui.js("""document.getElementById('leftSide').style.width = '%s%%'; 
-                        document.getElementById('siac-right-side').style.width = '%s%%'; 
+            index.ui.js("""document.getElementById('leftSide').style.width = '%s%%';
+                        document.getElementById('siac-right-side').style.width = '%s%%';
                         document.getElementById('siac-partition-slider').value = '%s';
                         if (pdfDisplayed) {pdfFitToPage();}""" % (value, right, value) )
         write_config()
@@ -629,32 +726,38 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         nid = int(cmd.split()[1])
         tab = cmd.split()[2]
         index.ui.reading_modal.show_pdf_bottom_tab(nid, tab)
-    
+
     elif cmd == "siac-quick-schedule-fill":
         # when the quick schedule button in the reading modal is clicked and expanded
         nid = index.ui.reading_modal.note_id
         prio = get_priority(nid)
         if prio is None:
-            index.ui.js("$('#siac-quick-sched-btn .siac-btn-dark-smaller').last().hide();$('#siac-quick-sched-btn').toggleClass('expanded');")
+            index.ui.js(f"""$('#siac-quick-sched-btn .siac-btn-dark-smaller').last().hide();
+                        $('#siac-prio-slider-small').val(0);
+                        $('#siac-slider-small-lbl').html('0');
+                        $('#siac-quick-sched-btn').toggleClass('expanded');""")
         else:
-            index.ui.js(f"$('#siac-quick-sched-btn .siac-btn-dark-smaller').last().show().text('Current ({prio})');$('#siac-quick-sched-btn').toggleClass('expanded');")
+            index.ui.js(f"""$('#siac-quick-sched-btn .siac-btn-dark-smaller').last().show().text('Current ({prio})');
+                            $('#siac-prio-slider-small').val({prio});
+                            $('#siac-slider-small-lbl').html('{prio}');
+                            $('#siac-quick-sched-btn').toggleClass('expanded');""")
     #
     #   Synonyms
     #
 
-    elif cmd == "synonyms":
+    elif cmd == "siac-synonyms":
         if check_index():
             index.ui.showInModal(getSynonymEditor())
-    elif cmd.startswith("saveSynonyms "):
-        newSynonyms(cmd[13:])
+    elif cmd.startswith("siac-save-synonyms "):
+        newSynonyms(cmd[19:])
         index.ui.showInModal(getSynonymEditor())
         index.synonyms = loadSynonyms()
-    elif cmd.startswith("editSynonyms "):
-        editSynonymSet(cmd[13:])
+    elif cmd.startswith("siac-edit-synonyms "):
+        editSynonymSet(cmd[19:])
         index.ui.showInModal(getSynonymEditor())
         index.synonyms = loadSynonyms()
-    elif cmd.startswith("deleteSynonyms "):
-        deleteSynonymSet(cmd[15:])
+    elif cmd.startswith("siac-delete-synonyms "):
+        deleteSynonymSet(cmd[21:])
         index.ui.showInModal(getSynonymEditor())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-synset-search "):
@@ -662,13 +765,13 @@ def expanded_on_bridge_cmd(self, cmd, _old):
             index.ui.hideModal()
             default_search_with_decks(self, cmd.split()[1], ["-1"])
 
-    elif cmd == "styling":
-        showStylingModal(self)
+    elif cmd == "siac-styling":
+        show_settings_modal(self)
 
-    elif cmd.startswith("styling "):
-        update_styling(cmd[8:])
+    elif cmd.startswith("siac-styling "):
+        update_styling(cmd[13:])
 
-    elif cmd == "writeConfig":
+    elif cmd == "siac-write-config":
         write_config()
 
     elif cmd.startswith("siac-add-image "):
@@ -697,16 +800,15 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         cloze_text = " ".join(cmd.split()[1:])
         index.ui.reading_modal.show_cloze_field_picker_modal(cloze_text)
 
-
     elif cmd.startswith("siac-url-srch "):
         search_term = cmd.split("$$$")[1]
         url = cmd.split("$$$")[2]
         if search_term == "":
             return
         if url is None or len(url) == 0:
-            return 
+            return
         url_enc = urllib.parse.quote_plus(search_term)
-        
+
         index.ui.reading_modal.show_iframe_overlay(url=url.replace("[QUERY]", url_enc))
 
     elif cmd == "siac-close-iframe":
@@ -717,17 +819,16 @@ def expanded_on_bridge_cmd(self, cmd, _old):
         if inp == "":
             return
         index.ui.reading_modal.show_web_search_tooltip(inp)
-    
+
     elif cmd.startswith("siac-timer-elapsed "):
         nid = int(cmd.split()[1])
         index.ui.reading_modal.show_timer_elapsed_popup(nid)
-
 
     #
     #  Index info modal
     #
 
-    elif cmd == "indexInfo":
+    elif cmd == "siac-index-info":
         if check_index():
             index.ui.showInModal(get_index_info())
 
@@ -744,6 +845,87 @@ def expanded_on_bridge_cmd(self, cmd, _old):
             res_and_html = similar_cards(cid, min_sim, 20)
             index.ui.show_in_modal_subpage(res_and_html[1])
 
+    elif cmd == "siac-pdf-sidebar-last-addon":
+        # last add-on notes button clicked in the pdf sidebar
+        notes = get_newest(get_config_value_or_default("pdfTooltipResultLimit", 50), [])
+        index.ui.reading_modal.sidebar.print(notes, "", [])
+
+    elif cmd == "siac-pdf-sidebar-last-anki":
+        # last anki notes button clicked in the pdf sidebar
+        notes = get_last_added_anki_notes(get_config_value_or_default("pdfTooltipResultLimit", 50))
+        index.ui.reading_modal.sidebar.print(notes, "", [])
+
+    elif cmd == "siac-pdf-sidebar-pdfs-in-progress":
+        # pdfs in progress button clicked in the pdf sidebar
+        notes = get_in_progress_pdf_notes()
+        index.ui.reading_modal.sidebar.print(notes)
+
+    elif cmd == "siac-pdf-sidebar-pdfs-unread":
+        # pdfs unread button clicked in the pdf sidebar
+        notes = get_all_unread_pdf_notes()
+        index.ui.reading_modal.sidebar.print(notes)
+
+
+    #
+    # highlights
+    #
+
+    elif cmd.startswith("siac-hl-clicked "):
+        # highlight btn clicked -> store current highlight color in reading modal
+        id = int(cmd.split()[1])
+        color = " ".join(cmd.split()[2:])
+        index.ui.reading_modal.highlight_color = color
+        index.ui.reading_modal.highlight_type = id
+
+    elif cmd.startswith("siac-pdf-page-loaded "):
+        # page loaded, so load highlights from db
+        page = int(cmd.split()[1])
+        index.ui.reading_modal.show_highlights_for_page(page)
+
+    elif cmd.startswith("siac-hl-new "):
+        # highlights created, save to db
+        # order is page group type [x0,y0,x1,y1]+ # text
+        page = int(cmd.split(" ")[1])
+        group = int(cmd.split(" ")[2])
+        type = int(cmd.split(" ")[3])
+        nid = index.ui.reading_modal.note_id
+        all = []
+        # [(nid,page,group,type,text,x0,y0,x1,y1)]
+        text = cmd[cmd.index("#") + 1:]
+        for ix, i in enumerate(cmd.split(" ")[4:]):
+            if i == "#":
+                break
+            if ix % 4 == 0:
+                x0 = float(i[:10])
+            elif ix % 4 == 1:
+                y0 = float(i[:10])
+            elif ix % 4 == 2:
+                x1 = float(i[:10])
+            else:
+                y1 = float(i[:10])
+                all.append((nid,page,group,type,text,x0,y0,x1,y1))
+        insert_highlights(all)
+        index.ui.reading_modal.show_highlights_for_page(page)
+
+    elif cmd.startswith("siac-hl-del "):
+        # delete highlight with given id
+        id = int(cmd.split()[1])
+        delete_highlight(id)
+
+    elif cmd.startswith("siac-hl-text-update-coords "):
+        # text comment was resized, so update coords in db
+        id = int(cmd.split()[1])
+        x0 = float(cmd.split()[2])
+        y0 = float(cmd.split()[3])
+        x1 = float(cmd.split()[4])
+        y1 = float(cmd.split()[5])
+        update_text_comment_coords(id, x0, y0, x1, y1)
+
+    elif cmd.startswith("siac-hl-text-update-text "):
+        # text comment content has changed, so update in db
+        id = int(cmd.split()[1])
+        text = " ".join(cmd.split(" ")[2:])
+        update_text_comment_text(id, text)
 
     #
     #   Checkboxes
@@ -752,6 +934,8 @@ def expanded_on_bridge_cmd(self, cmd, _old):
     elif (cmd.startswith("highlight ")):
         if check_index():
             index.highlighting = cmd[10:] == "on"
+            config["highlighting"] = cmd[10:] == "on"
+            mw.addonManager.writeConfig(__name__, config)
     elif cmd.startswith("searchWhileTyping "):
         config["searchOnTyping"] = cmd[18:] == "on"
         mw.addonManager.writeConfig(__name__, config)
@@ -821,14 +1005,30 @@ def expanded_on_bridge_cmd(self, cmd, _old):
 
     elif cmd == "siac-show-note-sidebar":
         config["notes.sidebar.visible"] = True
-        display_notes_sidebar(self)
+        index.ui.sidebar.display()
         mw.addonManager.writeConfig(__name__, config)
+
     elif cmd == "siac-hide-note-sidebar":
         config["notes.sidebar.visible"] = False
-        self.web.eval("$('#siac-notes-sidebar').remove(); $('#resultsWrapper').css('padding-left', 0);")
+        index.ui.sidebar.hide()
         mw.addonManager.writeConfig(__name__, config)
+
+    elif cmd == "siac-sidebar-show-notes-tab":
+        index.ui.sidebar.show_tab(index.ui.sidebar.ADDON_NOTES_TAB)
+    elif cmd == "siac-sidebar-show-import-tab":
+        index.ui.sidebar.show_tab(index.ui.sidebar.PDF_IMPORT_TAB)
+    elif cmd == "siac-sidebar-show-special-tab":
+        index.ui.sidebar.show_tab(index.ui.sidebar.SPECIAL_SEARCHES_TAB)
+
+
+
     else:
-        return _old(self, cmd)
+        return handled
+
+    # If we are here, else didn't return. So an (el)if did suceed, the
+    # action was done, so we can return message to state that the
+    # command is handled.
+    return (True, None)
 
 
 def parseSortCommand(cmd):
@@ -849,7 +1049,7 @@ def parseSortCommand(cmd):
     elif cmd == "remReviewed":
         index.ui.removeReviewed()
 
-def parse_predef_search_cmd(cmd, editor):
+def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
     """
     Helper function to parse the various predefined searches (last added/longest text/...)
     """
@@ -896,6 +1096,11 @@ def parse_predef_search_cmd(cmd, editor):
         index.lastSearch = (None, decks, "randomUntagged")
         res = getRandomUntagged(decks, limit)
         index.ui.print_search_results(res, stamp)
+    elif searchtype == "lastUntagged":
+        stamp = setStamp()
+        index.lastSearch = (None, decks, "lastUntagged")
+        res = get_last_untagged(decks, limit)
+        index.ui.print_search_results(res, stamp)
     elif searchtype == "highestInterval":
         stamp = setStamp()
         index.lastSearch = (None, decks, "highestInterval", limit)
@@ -928,26 +1133,24 @@ def parse_predef_search_cmd(cmd, editor):
         index.ui.print_search_results(res, stamp)
 
 
-def setStamp():
+def setStamp() -> Optional[str]:
     """
     Generate a milisec stamp and give it to the index.
     The result of a search is not printed if it has a non-matching stamp.
     """
     if check_index():
-        index = get_index()
-        stamp = utility.misc.get_milisec_stamp()
+        index           = get_index()
+        stamp           = utility.misc.get_milisec_stamp()
         index.ui.latest = stamp
         return stamp
     return None
 
-def setStats(nid, stats):
-    """
-    Insert the statistics into the given card.
-    """
+def setStats(nid: int, stats: Tuple[Any, ...]):
+    """ Insert the statistics into the given card. """
     if check_index():
-        get_index().ui.showStats(stats[0], stats[1], stats[2], stats[3])
+        get_index().ui.show_stats(stats[0], stats[1], stats[2], stats[3])
 
-def rerender_info(editor, content="", searchDB = False, searchByTags = False):
+def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool = False, searchByTags: bool = False):
     """
     Main function that is executed when a user has typed or manually entered a search.
     Args:
@@ -963,25 +1166,25 @@ def rerender_info(editor, content="", searchDB = False, searchByTags = False):
     if index is not None:
 
         if searchDB:
-            content = content[content.index('~ ') + 2:].strip()
+            content             = content[content.index('~ ') + 2:].strip()
             if len(content) == 0:
                 index.ui.empty_result("No results found for empty string")
                 return
-            index.lastSearch = (content, decks, "db")
-            searchRes = index.searchDB(content, decks)
+            index.lastSearch    = (content, decks, "db")
+            searchRes           = index.searchDB(content, decks)
 
         elif searchByTags:
-            stamp = utility.misc.get_milisec_stamp()
-            index.ui.latest = stamp
-            index.lastSearch = (content, ["-1"], "tags")
-            searchRes = findBySameTag(content, index.limit, [], index.pinned)
+            stamp               = utility.misc.get_milisec_stamp()
+            index.ui.latest     = stamp
+            index.lastSearch    = (content, ["-1"], "tags")
+            searchRes           = findBySameTag(content, index.limit, [], index.pinned)
 
         else:
             if len(content[content.index('~ ') + 2:]) > 2000:
                 index.ui.empty_result("Query was <b>too long</b>")
                 return
-            content = content[content.index('~ ') + 2:]
-            searchRes = index.search(content, decks)
+            content             = content[content.index('~ ') + 2:]
+            searchRes           = index.search(content, decks)
 
 
         if (searchDB or searchByTags) and editor is not None and editor.web is not None:
@@ -991,15 +1194,16 @@ def rerender_info(editor, content="", searchDB = False, searchByTags = False):
                 index.ui.empty_result("No results found")
 
 
-def rerenderNote(nid):
-    res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid).fetchone()
+def rerenderNote(nid: int):
+    res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid)
     if res is not None and len(res) > 0:
+        res = res[0]
         index = get_index()
         if index is not None and index.ui is not None:
             index.ui.updateSingle(res)
 
 @requires_index_loaded
-def default_search_with_decks(editor, textRaw, decks):
+def default_search_with_decks(editor: aqt.editor.Editor, textRaw: Optional[str], decks: List[int]):
     """
     Uses the index to clean the input and find notes.
 
@@ -1021,10 +1225,9 @@ def default_search_with_decks(editor, textRaw, decks):
     searchRes = index.search(cleaned, decks)
 
 @requires_index_loaded
-def search_for_user_notes_only(editor, text):
-    """
-    Uses the index to clean the input and find user notes.
-    """
+def search_for_user_notes_only(editor: aqt.editor.Editor, text: str):
+    """ Uses the index to clean the input and find user notes. """
+
     if text is None:
         return
     index = get_index()
@@ -1035,26 +1238,17 @@ def search_for_user_notes_only(editor, text):
     if len(cleaned) == 0:
         index.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(text, 100).replace("\u001f", ""))
         return
-    index.lastSearch = (cleaned, ["-1"], "user notes")
-    searchRes = index.search(cleaned, ["-1"], only_user_notes = True)
-
-
-
-def getCurrentContent(editor):
-    text = ""
-    for f in editor.note.fields:
-        text += f
-    return text
+    index.lastSearch    = (cleaned, ["-1"], "user notes")
+    searchRes           = index.search(cleaned, ["-1"], only_user_notes = True)
 
 @requires_index_loaded
-def add_note_to_index(note):
+def add_note_to_index(note: Note):
     get_index().addNote(note)
 
 @requires_index_loaded
-def add_tag(tag):
-    """
-    Insert the given tag in the tag field at bottom if not already there.
-    """
+def add_tag(tag: str):
+    """ Insert the given tag in the tag field at bottom if not already there. """
+
     index = get_index()
     if tag == "" or index is None or index.ui._editor is None:
         return
@@ -1066,7 +1260,7 @@ def add_tag(tag):
     index.ui._editor.saveTags()
 
 @requires_index_loaded
-def set_pinned(cmd):
+def set_pinned(cmd: str):
     """
     Update the pinned search results.
     This is important because they should not be contained in the search results.
@@ -1080,9 +1274,7 @@ def set_pinned(cmd):
     if index.logging:
         log("Updated pinned: " + str(index.pinned))
 
-
-
-def update_field_to_hide_in_results(mid, fldOrd, value):
+def update_field_to_hide_in_results(mid: int, fldOrd: int, value: bool):
     if not value:
         config["fieldsToHideInResults"][mid].remove(fldOrd)
         if len(config["fieldsToHideInResults"][mid]) == 0:
@@ -1097,7 +1289,7 @@ def update_field_to_hide_in_results(mid, fldOrd, value):
     mw.addonManager.writeConfig(__name__, config)
 
 
-def update_field_to_exclude(mid, fldOrd, value):
+def update_field_to_exclude(mid: int, fldOrd: int, value: bool):
     if not value:
         config["fieldsToExclude"][mid].remove(fldOrd)
         if len(config["fieldsToExclude"][mid]) == 0:
@@ -1110,7 +1302,7 @@ def update_field_to_exclude(mid, fldOrd, value):
     mw.addonManager.writeConfig(__name__, config)
 
 @requires_index_loaded
-def try_repeat_last_search(editor = None):
+def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
     """
     Sometimes it is useful if we can simply repeat the last search,
     e.g. the user has clicked another deck in the deck select.
@@ -1131,47 +1323,52 @@ def try_repeat_last_search(editor = None):
 def generate_clozes(sentences, pdf_path, pdf_title, page):
     try:
         # (optional) field that full path to pdf doc goes into
-        path_fld = config["pdf.clozegen.field.pdfpath"]
+        path_fld        = config["pdf.clozegen.field.pdfpath"]
         # (optional) field that title of pdf note goes into
-        note_title_fld = config["pdf.clozegen.field.pdftitle"]
+        note_title_fld  = config["pdf.clozegen.field.pdftitle"]
         # (optional) field that page of the pdf where the cloze was generated goes into
-        page_fld = config["pdf.clozegen.field.page"]
+        page_fld        = config["pdf.clozegen.field.page"]
 
         # name of cloze note type to use
-        model_name = config["pdf.clozegen.notetype"]
+        model_name      = config["pdf.clozegen.notetype"]
         # name of field that clozed text has to go into
-        fld_name = config["pdf.clozegen.field.clozedtext"]
+        fld_name        = config["pdf.clozegen.field.clozedtext"]
 
         # default cloze note type and fld
         if model_name is None or len(model_name) == 0:
-            model_name = "Cloze"
+            model_name  = "Cloze"
         if fld_name is None or len(fld_name) == 0:
-            fld_name = "Text"
-        
-        model = mw.col.models.byName(model_name)
-        index = get_index()
+            fld_name    = "Text"
+
+        model           = mw.col.models.byName(model_name)
+        index           = get_index()
         if model is None:
             tooltip("Could not resolve note model.", period=3000)
             return
-        deck_chooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
-        if deck_chooser is None: 
+        deck_chooser    = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
+        if deck_chooser is None:
             tooltip("Could not determine chosen deck.", period=3000)
             return
         did = deck_chooser.selectedId()
         if check_index():
-            tags = index.ui._editor.tags.text()
-            tags = mw.col.tags.canonify(mw.col.tags.split(tags))
+            tags        = index.ui._editor.tags.text()
+            tags        = mw.col.tags.canonify(mw.col.tags.split(tags))
         else:
-            tags = []
-        added = 0 
+            tags        = []
+
+        added           = 0
+
         for sentence in sentences:
             if not "{{c1::" in sentence or not "}}" in sentence:
                 continue
-            note = Note(mw.col, model)
+
+            note                = Note(mw.col, model)
             note.model()['did'] = did
-            note.tags = tags
+            note.tags           = tags
+
             if not fld_name in note:
                 return
+
             note[fld_name] = sentence
             if path_fld is not None and len(path_fld) > 0:
                 note[path_fld] = pdf_path
@@ -1180,13 +1377,14 @@ def generate_clozes(sentences, pdf_path, pdf_title, page):
             if page_fld is not None and len(page_fld) > 0:
                 note[page_fld] = page
 
-            a = mw.col.addNote(note)
+            a                   = mw.col.addNote(note)
             if a > 0:
                 add_note_to_index(note)
-            added += a
-        tags_str = " ".join(tags) if len(tags) > 0 else "<i>No tags</i>"
-        deck_name = mw.col.decks.get(did)["name"]
-        s = "" if added == 1 else "s"
+            added               += a
+
+        tags_str            = " ".join(tags) if len(tags) > 0 else "<i>No tags</i>"
+        deck_name           = mw.col.decks.get(did)["name"]
+        s                   = "" if added == 1 else "s"
         tooltip(f"""<center>Added {added} Cloze{s}.</center><br>
                   <center>Deck: <b>{deck_name}</b></center>
                   <center>Tags: <b>{tags_str}</b></center>""", period=3000)
@@ -1195,18 +1393,19 @@ def generate_clozes(sentences, pdf_path, pdf_title, page):
 
 @requires_index_loaded
 def get_index_info():
-    """
-    Returns the html that is rendered in the popup that appears on clicking the "info" button
-    """
-    index = get_index()
+    """ Returns the html that is rendered in the popup that appears on clicking the "info" button """
+
+    index           = get_index()
     excluded_fields = config["fieldsToExclude"]
-    field_c = 0
+    field_c         = 0
+
     for k,v in excluded_fields.items():
         field_c += len(v)
 
-    html = """
+    html            = """
             <table class="striped" style='width: 100%%; margin-bottom: 18px;'>
                <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
+               <tr><td>SQLite Version</td><td> <b>%s</b></td></tr>
                <tr><td>Initialization:</td><td>  <b>%s s</b></td></tr>
                <tr><td>Index Size:</td><td>  <b>%s</b> notes</td></tr>
                <tr><td>Index is always rebuilt if smaller than:</td><td>  <b>%s</b> notes</td></tr>
@@ -1230,12 +1429,14 @@ def get_index_info():
                <tr><td>PDF: Page Right + Mark Page as Read</td><td>  <b>Ctrl+Shift+Space</b></td></tr>
                <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl+K</b></td></tr>
                <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
-               <tr><td>Confirm New Note</td><td>  <b>Ctrl+Enter</b></td></tr>
+               <tr><td>Confirm new note</td><td>  <b>Ctrl+Enter</b></td></tr>
+               <tr><td>Confirm new note and keep open</td><td>  <b>Ctrl+Shift+Enter</b></td></tr>
                <tr><td>PDF: Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
                <tr><td>PDF: Toggle Top & Bottom Bar</td><td>  <b>F11</b></td></tr>
              </table>
 
-            """ % (index.type, str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
+            """ % (index.type, sqlite3.sqlite_version,
+            str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if index.logging else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["renderImmediately"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
             "Search" if config["tagClickShouldSearch"] else "Add",
@@ -1250,18 +1451,18 @@ def get_index_info():
             ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db"
             )
 
-
     return html
 
 @requires_index_loaded
 def show_timing_modal(render_time = None):
-    """
-    Builds the html and shows the modal which gives some info about the last executed search (timing, query after stopwords etc.)
-    """
-    index = get_index()
-    html = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % index.lastResDict["query"]
+    """ Builds the html and shows the modal which gives some info about the last executed search (timing, query after stopwords etc.) """
+
+    index   = get_index()
+    html    = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % index.lastResDict["query"]
+
     if "decks" in index.lastResDict:
         html += "<h4>Decks:</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % ", ".join([str(d) for d in index.lastResDict["decks"]])
+
     html += "<h4>Execution time:</h4><table style='width: 100%'>"
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", index.lastResDict["time-stopwords"] if index.lastResDict["time-stopwords"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", index.lastResDict["time-synonyms"] if index.lastResDict["time-synonyms"] > 0 else "< 1")
@@ -1269,23 +1470,28 @@ def show_timing_modal(render_time = None):
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML", index.lastResDict["time-html"] if index.lastResDict["time-html"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Highlighting", index.lastResDict["time-html-highlighting"] if index.lastResDict["time-html-highlighting"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Formatting SIAC Notes", index.lastResDict["time-html-build-user-note"] if index.lastResDict["time-html-build-user-note"] > 0 else "< 1")
+
     if render_time is not None:
         html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Rendering", render_time)
+
     html += "</table>"
+
     index.ui.showInModal(html)
 
 @requires_index_loaded
 def update_styling(cmd):
-    index = get_index()
-    name = cmd.split()[0]
-    value = " ".join(cmd.split()[1:])
+
+    index   = get_index()
+    name    = cmd.split()[0]
+    value   = " ".join(cmd.split()[1:])
+
     if name == "default" and value == "day":
         config["styling"] = json.loads(default_styles())
         tooltip("Styling updated. Restart to apply changes.", period=4000)
     elif name == "default" and value == "night":
         config["styling"] = json.loads(default_night_mode_styles())
         tooltip("Styling updated. Restart to apply changes.", period=4000)
-   
+
     elif name == "searchpane.zoom":
         config[name] = float(value)
         index.ui.js("document.getElementById('siac-right-side').style.zoom = '%s'; showTagInfoOnHover = %s;" % (value, "false" if float(value) != 1.0 else "true"))
@@ -1296,8 +1502,8 @@ def update_styling(cmd):
 
     elif name == "hideSidebar":
         m = value == "true" or value == "on"
-        config["hideSidebar"] = m
-        index.ui.hideSidebar = m
+        config["hideSidebar"]   = m
+        index.ui.hideSidebar    = m
         index.ui.js("document.getElementById('searchInfo').classList.%s('hidden');"  % ("add" if m else "remove"))
 
     elif name == "removeDivsFromOutput":
@@ -1310,11 +1516,21 @@ def update_styling(cmd):
             value = value.replace("\\", "/")
             if not value.endswith("/"):
                 value += "/"
+            old_val = config["addonNoteDBFolderPath"]
             config["addonNoteDBFolderPath"] = value
+            if value != old_val:
+                write_config()
+                existed = create_db_file_if_not_exists()
+                if existed:
+                    ex = "Created no new file, because there was already a <i>siac-notes.db</i> in that location."
+                else:
+                    ex = "Created an empty file there."
+                tooltip(f"Updated path to note .db file to <b>{value}</b>.<br>{ex}<br>If you have existing notes, replace that new file with your old file.", period=9000)
+
 
     elif name == "leftSideWidthInPercent":
-        config[name] = int(value)
-        right = 100 - int(value)
+        config[name]    = int(value)
+        right           = 100 - int(value)
         if check_index():
             index.ui.js("document.getElementById('leftSide').style.width = '%s%%'; document.getElementById('siac-right-side').style.width = '%s%%';" % (value, right) )
 
@@ -1355,11 +1571,9 @@ def update_styling(cmd):
             if not value.endswith("/"):
                 value += "/"
             config["pdfUrlImportSavePath"] = value
-    
-    elif name == "notes.showSource":
+
+    elif name == "notes.showSource" or name == "useInEdit":
         config[name] = value == "true"
-    
-        
 
 
 @js
@@ -1367,11 +1581,16 @@ def write_config():
     mw.addonManager.writeConfig(__name__, config)
     return "$('.modal-close').unbind('click')"
 
+def update_config(key, value):
+    config[key] = value
+    mw.addonManager.writeConfig(__name__, config)
 
 @requires_index_loaded
 def after_index_rebuilt():
-    search_index = get_index()
-    editor = search_index.ui._editor
+
+    search_index    = get_index()
+    editor          = search_index.ui._editor
+
     editor.web.eval("""
         $('.freeze-icon').removeClass('frozen');
         siacState.isFrozen = false;
@@ -1383,4 +1602,3 @@ def after_index_rebuilt():
     """)
     fillDeckSelect(editor)
     setup_ui_after_index_built(editor, search_index)
-

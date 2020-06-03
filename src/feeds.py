@@ -18,6 +18,9 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import re
 
+"""
+Not used atm.
+"""
 
 class FeedMessage:
 

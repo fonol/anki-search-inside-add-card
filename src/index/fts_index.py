@@ -35,35 +35,38 @@ class FTSIndex:
 
     def __init__(self, corpus, index_up_to_date):
 
-        self.limit = 20
-        self.pinned = []
-        self.highlighting = True
-        self.dir = utility.misc.get_user_files_folder_path()
-        self.stopWords = []
-        # mid : [fld_ord]
-        self.fields_to_exclude = {}
-        # stores values useful to determine whether the index has to be rebuilt on restart or not
-        self.creation_info = {}
-        self.threadPool = QThreadPool()
-        self.ui = Output()
+        self.limit              = 20
+        self.pinned             = []
+        self.highlighting       = True
+        self.dir                = utility.misc.get_user_files_folder_path()
+        self.stopWords          = []
+        self.fields_to_exclude  = {}
 
-        config = mw.addonManager.getConfig(__name__)
+        # stores values useful to determine whether the index has to be rebuilt on restart or not
+        self.creation_info      = {}
+
+        self.threadPool         = QThreadPool()
+        self.ui                 = Output()
+
+        config                  = mw.addonManager.getConfig(__name__)
         try:
-            self.stopWords = set(config['stopwords'])
+            self.stopWords      = set(config['stopwords'])
         except KeyError:
-            self.stopWords = []
-        self.creation_info["stopwords_size"] = len(self.stopWords)
-        self.creation_info["decks"] = config["decks"]
-        self.porter = config["usePorterStemmer"]
+            self.stopWords      = []
+
+        self.creation_info["stopwords_size"]    = len(self.stopWords)
+        self.creation_info["decks"]             = config["decks"]
+        self.porter                             = config["usePorterStemmer"]
         #exclude fields
         try:
-            self.fields_to_exclude = config['fieldsToExclude']
-            self.creation_info["fields_to_exclude_original"] = self.fields_to_exclude
+            self.fields_to_exclude                              = config['fieldsToExclude']
+            self.creation_info["fields_to_exclude_original"]    = self.fields_to_exclude
         except KeyError:
-            self.fields_to_exclude = {}
-        self.ui.fields_to_exclude = self.fields_to_exclude
+            self.fields_to_exclude                              = {}
 
+        self.ui.fields_to_exclude               = self.fields_to_exclude
         self.creation_info["index_was_rebuilt"] = not index_up_to_date
+
         if not index_up_to_date:
             if self.porter:
                 sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs, tokenize=porter)"
@@ -113,24 +116,34 @@ class FTSIndex:
 
 
     def _cleanText(self, corpus):
-        filtered = list()
-        text = ""
+        """ Prepare notes for indexing (cut stopwords, remove fields, remove special characters). """
+
+        filtered    = list()
+        text        = ""
+
         for row in corpus:
             text = row[1]
+
             #if the notes model id is in our filter dict, that means we want to exclude some field(s)
             if row[4] in self.fields_to_exclude:
                 text = utility.text.remove_fields(text, self.fields_to_exclude[row[4]])
+
             text = utility.text.clean(text, self.stopWords)
             filtered.append((row[0], text, row[2], row[3], row[1], row[4], row[5]))
+
         return filtered
 
     def removeStopwords(self, text):
+
         cleaned = ""
+
         for token in text.split(" "):
             if token.lower() not in self.stopWords:
                 cleaned += token + " "
+
         if len(cleaned) > 0:
             return cleaned[:-1]
+
         return ""
 
 
@@ -141,30 +154,35 @@ class FTSIndex:
         text - string to search, typically fields content
         decks - list of deck ids, if -1 is contained, all decks are searched
         """
-        worker = Worker(self.searchProc, text, decks, only_user_notes, print_mode)
-        worker.stamp = utility.misc.get_milisec_stamp()
-        self.ui.latest = worker.stamp
+        worker          = Worker(self.searchProc, text, decks, only_user_notes, print_mode)
+        worker.stamp    = utility.misc.get_milisec_stamp()
+        self.ui.latest  = worker.stamp
+
         if print_mode == "default":
             worker.signals.result.connect(self.printOutput)
         elif print_mode == "pdf":
             worker.signals.result.connect(self.print_pdf)
+        elif print_mode == "pdf.left":
+            worker.signals.result.connect(self.print_pdf_left)
 
         worker.signals.tooltip.connect(self.ui.show_tooltip)
         self.threadPool.start(worker)
 
 
     def searchProc(self, text, decks, only_user_notes, print_mode):
-        resDict = {}
-        start = time.time()
-        orig = text
-        text = self.clean(text)
-        resDict["time-stopwords"] = int((time.time() - start) * 1000)
+        resDict                     = {}
+        start                       = time.time()
+        orig                        = text
+        text                        = self.clean(text)
+        resDict["time-stopwords"]   = int((time.time() - start) * 1000)
+        self.lastSearch             = (text, decks, "default")
+
         if self.logging:
             log("\nFTS index - Received query: " + text)
             log("Decks (arg): " + str(decks))
             log("Self.pinned: " + str(self.pinned))
             log("Self.limit: " +str(self.limit))
-        self.lastSearch = (text, decks, "default")
+
 
         if len(text) == 0:
             if print_mode == "default":
@@ -175,18 +193,20 @@ class FTSIndex:
             elif print_mode == "pdf":
                 return None
 
-        start = time.time()
-        text = utility.text.expand_by_synonyms(text, self.synonyms)
-        resDict["time-synonyms"] = int((time.time() - start) * 1000)
-        resDict["query"] = text
+        start                       = time.time()
+        text                        = utility.text.expand_by_synonyms(text, self.synonyms)
+        resDict["time-synonyms"]    = int((time.time() - start) * 1000)
+        resDict["query"]            = text
+
         if utility.text.text_too_small(text):
             if self.logging:
                 log("Returning - Text was < 2 chars: " + text)
             return { "results" : [] }
 
-        tokens = text.split(" ")
+        tokens                      = text.split(" ")
         if len(tokens) > 10:
-            tokens = set(tokens)
+            tokens                  = set(tokens)
+
         if self.type == "SQLite FTS5":
             query = u" OR ".join(["tags:" + s.strip().replace("OR", "or") for s in tokens if not utility.text.text_too_small(s) ])
             query += " OR " + " OR ".join(["text:" + s.strip().replace("OR", "or") for s in tokens if not utility.text.text_too_small(s) ])
@@ -197,13 +217,16 @@ class FTSIndex:
                 log("Returning. Query was: " + query)
             return { "results" : [] }
 
-        c = 0
-        resDict["decks"] = decks
-        allDecks = "-1" in decks
+        c                           = 0
+        resDict["decks"]            = decks
+        allDecks                    = "-1" in decks
+
         decks.append("-1")
-        rList = list()
-        user_note_filter = "AND mid='-1'" if only_user_notes else ""
-        conn = sqlite3.connect(self.dir + "search-data.db")
+
+        rList                       = list()
+        user_note_filter            = "AND mid='-1'" if only_user_notes else ""
+        conn                        = sqlite3.connect(self.dir + "search-data.db")
+
         if self.type == "SQLite FTS5":
             dbStr = "select nid, text, tags, did, source, bm25(notes) as score, mid, refs from notes where notes match '%s' %s order by score" %(query, user_note_filter)
 
@@ -212,17 +235,16 @@ class FTSIndex:
             dbStr = "select nid, text, tags, did, source, simple_rank(matchinfo(notes)) as score, mid, refs from notes where text match '%s' %s order by score desc" %(query, user_note_filter)
 
         try:
-            start = time.time()
-            res = conn.execute(dbStr).fetchall()
-            resDict["time-query"] = int((time.time() - start) * 1000)
+            start                   = time.time()
+            res                     = conn.execute(dbStr).fetchall()
+            resDict["time-query"]   = int((time.time() - start) * 1000)
         except Exception as e:
             if self.logging:
                 log("Executing db query threw exception: " + str(e))
-            res = []
+            res                     = []
         if self.logging:
             log("dbStr was: " + dbStr)
             log("Result length of db query: " + str(len(res)))
-
 
         resDict["highlighting"] = self.highlighting
         # if self.type == "SQLite FTS5":
@@ -242,8 +264,10 @@ class FTSIndex:
         if self.logging:
             log("Query was: " + query)
             log("Result length (after removing pinned and unselected decks): " + str(len(rList)))
-        resDict["results"] = rList[:min(self.limit, len(rList))]
-        self.lastResDict = resDict
+
+        resDict["results"]          = rList[:min(self.limit, len(rList))]
+        self.lastResDict            = resDict
+
         return resDict
 
     def printOutput(self, result, stamp):
@@ -258,6 +282,9 @@ class FTSIndex:
 
 
     def print_pdf(self, result, stamp):
+        """
+            Results printed in the tooltip in the pdf modal.
+        """
         query_set = None
         if self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
             query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
@@ -266,15 +293,27 @@ class FTSIndex:
         else:
             self.ui.print_pdf_search_results([], stamp, self.lastSearch[0])
 
+    def print_pdf_left(self, result, stamp):
+        """
+            Results printed on the fields pane when the pdf modal is opened.
+        """
+        query_set = None
+
+        if self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
+            query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
+        if result is not None:
+            self.ui.reading_modal.sidebar.print(result["results"], stamp, query_set)
+        else:
+            self.ui.reading_modal.sidebar.print([], stamp, self.lastSearch[0])
 
     def searchDB(self, text, decks):
         """
         Used for searches in the search mask,
         doesn't use the index, instead use the traditional anki search 
         """
-        stamp = utility.misc.get_milisec_stamp()
-        self.ui.latest = stamp
-        found = self.finder.findNotes(text)
+        stamp           = utility.misc.get_milisec_stamp()
+        self.ui.latest  = stamp
+        found           = mw.col.find_notes(text)
 
         if len (found) > 0:
             if not "-1" in decks:
@@ -284,9 +323,9 @@ class FTSIndex:
             #query db with found ids
             foundQ = "(%s)" % ",".join([str(f) for f in found])
             if deckQ:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ)).fetchall()
+                res = mw.col.db.all("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s and did in %s" %(foundQ, deckQ))
             else:
-                res = mw.col.db.execute("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ)).fetchall()
+                res = mw.col.db.all("select distinct notes.id, flds, tags, did, notes.mid from notes left join cards on notes.id = cards.nid where nid in %s" %(foundQ))
             rList = []
             for r in res:
                 #pinned items should not appear in the results
@@ -331,10 +370,10 @@ class FTSIndex:
         content = " \u001f ".join(note.fields)
         tags = " ".join(note.tags)
         #did = note.model()['did']
-        did = mw.col.db.execute("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id).fetchone()
+        did = mw.col.db.all("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id)
         if did is None or len(did) == 0:
             return
-        did = did[0]
+        did = did[0][0]
         if str(note.mid) in self.fields_to_exclude:
             content = utility.text.remove_fields(content, self.fields_to_exclude[str(note.mid)])
         conn = sqlite3.connect(self.dir + "search-data.db")
@@ -368,34 +407,35 @@ def _parseMatchInfo(buf):
     return [struct.unpack('@I', buf[i:i+4])[0] for i in range(0, bufsize, 4)]
 
 def simple_rank(rawMatchInfo):
-    """
-    Based on https://github.com/saaj/sqlite-fts-python/blob/master/sqlitefts/ranking.py
-    """
-    match_info = _parseMatchInfo(rawMatchInfo)
-    score = 0.0
-    p, c = match_info[:2]
+    """ Based on https://github.com/saaj/sqlite-fts-python/blob/master/sqlitefts/ranking.py """
+
+    match_info  = _parseMatchInfo(rawMatchInfo)
+    score       = 0.0
+    p, c        = match_info[:2]
+
     for phrase_num in range(p):
         phrase_info_idx = 2 + (phrase_num * c * 3)
         for col_num in range(c):
             col_idx = phrase_info_idx + (col_num * 3)
-            x1, x2 = match_info[col_idx:col_idx + 2]
+            x1, x2  = match_info[col_idx:col_idx + 2]
             if x1 > 0:
                 score += float(x1) / x2
+
     return score
 
 
 def bm25(rawMatchInfo):
-    match_info = _parseMatchInfo(rawMatchInfo)
-    K = 0.5
-    B = 0.75
-    score = 0.0
+    match_info          = _parseMatchInfo(rawMatchInfo)
+    K                   = 0.5
+    B                   = 0.75
+    score               = 0.0
 
-    P_O, C_O, N_O, A_O = range(4)
-    term_count = match_info[P_O]
-    col_count = match_info[C_O]
-    total_docs = match_info[N_O]
-    L_O = A_O + col_count
-    X_O = L_O + col_count
+    P_O, C_O, N_O, A_O  = range(4)
+    term_count          = match_info[P_O]
+    col_count           = match_info[C_O]
+    total_docs          = match_info[N_O]
+    L_O                 = A_O + col_count
+    X_O                 = L_O + col_count
 
     weights = [1] * col_count
     #collect number of different matched terms
@@ -442,16 +482,13 @@ class Worker(QRunnable):
 
     def __init__(self, fn, *args):
         super(Worker, self).__init__()
-        self.fn = fn
-        self.args = args
-        self.signals = WorkerSignals()
+
+        self.fn         = fn
+        self.args       = args
+        self.signals    = WorkerSignals()
 
     @pyqtSlot()
     def run(self):
-        '''
-        Initialise the runner function with passed args, kwargs.
-        '''
-
         try:
             result = self.fn(*self.args)
         except:
@@ -466,8 +503,8 @@ class Worker(QRunnable):
 
 class WorkerSignals(QObject):
 
-    finished = pyqtSignal()
-    error = pyqtSignal(tuple)
-    result = pyqtSignal(object, object)
-    progress = pyqtSignal(int)
-    tooltip = pyqtSignal(str)
+    finished    = pyqtSignal()
+    error       = pyqtSignal(tuple)
+    result      = pyqtSignal(object, object)
+    progress    = pyqtSignal(int)
+    tooltip     = pyqtSignal(str)

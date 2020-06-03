@@ -28,6 +28,8 @@ from aqt.utils import showInfo
 import utility.tags
 import utility.text
 import utility.misc
+import state
+
 
 from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
@@ -41,7 +43,7 @@ def toggleAddon():
     return "toggleAddon();"
 
 
-def getScriptPlatformSpecific(delayWhileTyping):
+def getScriptPlatformSpecific():
     """
         Returns the css and js used by the add-on in <style>/<script> tags. 
         Some placeholders in the scripts.js file and in the styles.css file are replaced 
@@ -66,9 +68,8 @@ def getScriptPlatformSpecific(delayWhileTyping):
         script = f.read()
     with open(dir + "styles.css") as f:
         css = f.read().replace("%", "%%")
-    with open(dir + "pdf_reader.css") as f:
-        css += f.read().replace("%", "%%")
-    script = script.replace("$del$", str(delayWhileTyping))
+    # with open(dir + "pdf_reader.css") as f:
+    #     css += f.read().replace("%", "%%")
 
     deckSelectFontSize = get_config_value_or_default(["styling", "topBar", "deckSelectFontSize"], 11)
     noteFontSize = get_config_value_or_default(["styling", "general", "noteFontSize"], 12)
@@ -189,7 +190,7 @@ def setup_ui_after_index_built(editor, index, init_time=None):
     if editor is None:
         return
     config = mw.addonManager.getConfig(__name__)
-    showSearchResultArea(editor, init_time)
+    show_search_result_area(editor, init_time)
     #restore previous settings
     cmd = ""
     if not index.highlighting:
@@ -201,7 +202,7 @@ def setup_ui_after_index_built(editor, index, init_time=None):
     if not index.topToggled:
         cmd += "hideTop();"
     if index.ui is not None and not index.ui.uiVisible:
-        cmd += "$('#siac-right-side').addClass('addon-hidden')"
+        cmd += "$('#siac-right-side').addClass('addon-hidden');"
     if config["gridView"]:
         cmd += "activateGridView();" 
     editor.web.eval(cmd)
@@ -209,13 +210,13 @@ def setup_ui_after_index_built(editor, index, init_time=None):
         #plot.js is already loaded if a note was just added, so this is a lazy solution for now
         index.ui.plotjsLoaded = False
     if config["notes.sidebar.visible"]:
-        display_notes_sidebar(editor)
+        index.ui.set_editor(editor)
+        index.ui.sidebar.display()
         
 
-def showSearchResultArea(editor=None, initializationTime=0):
-    """
-    Toggle between the loader and search result area when the index has finished building.
-    """
+def show_search_result_area(editor=None, initializationTime=0):
+    """ Toggle between the loader and search result area when the index has finished building. """
+
     js = """
         if (document.getElementById('searchResults')) {
             document.getElementById('searchResults').style.display = 'block';
@@ -223,6 +224,7 @@ def showSearchResultArea(editor=None, initializationTime=0):
         if (document.getElementById('loader')) {
             document.getElementById('loader').style.display = 'none';
         }"""
+
     if check_index():
         get_index().ui.js(js)
     elif editor is not None and editor.web is not None:
@@ -230,15 +232,16 @@ def showSearchResultArea(editor=None, initializationTime=0):
 
 
 
-def printStartingInfo(editor):
-    """
-        Displays the information that is visible after the first start of the add-on.
-    """
+def print_starting_info(editor):
+    """ Displays the information that is visible after the first start of the add-on. """
+
     if editor is None or editor.web is None:
         return
-    config = mw.addonManager.getConfig(__name__)
-    index = get_index()
-    html = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
+
+    config  = mw.addonManager.getConfig(__name__)
+    index   = get_index()
+    html    = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
+
     if index is not None:
         html += "Initalized in <b>%s</b> s." % index.initializationTime
         if not index.creation_info["index_was_rebuilt"]:
@@ -253,88 +256,55 @@ def printStartingInfo(editor):
         html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
         html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
+    
+    if not state.db_file_existed:
+        html += "<br><br><b><i>siac-notes.db</i> was not existing, created a new one.</b>"
 
     if index is None or index.ui is None:
         html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
 
 
-    editor.web.eval("document.getElementById('searchResults').innerHTML = `<div id='startInfo'>%s</div>`;" % html)
+    editor.web.eval("""document.getElementById('searchResults').innerHTML = `
+            <div id='startInfo'>
+                %s
+            </div>`;""" % html)
 
 @requires_index_loaded
 def display_model_dialog():
-    """
-        Called after clicking on "Set Fields" in the settings modal.
-    """
+    """ Called after clicking on "Set Fields" in the settings modal. """
+
     if check_index():
         html = get_model_dialog_html()
         get_index().ui.show_in_modal_subpage(html)
 
-
-
 @js
-def showStylingModal(editor):
-    config = mw.addonManager.getConfig(__name__)
-    html = stylingModal(config)
-    index = get_index()
+def show_settings_modal(editor):
+    """ Display the Settings modal. """
+
+    config  = mw.addonManager.getConfig(__name__)
+    html    = stylingModal(config)
+    index   = get_index()
+
     index.ui.showInModal(html)
-    return "$('.modal-close').on('click', function() {pycmd(`writeConfig`) })"
+    return "$('.modal-close').on('click', function() {pycmd(`siac-write-config`) })"
 
 @js
 def show_unsuspend_modal(nid):
-    html = get_unsuspend_modal(nid)
-    index = get_index()
+    """ Display the modal to unsuspend cards of a note. """
+
+    html    = get_unsuspend_modal(nid)
+    index   = get_index()
+
     index.ui.showInModal(html)
     return "$('.modal-close').on('click', function() {pycmd(`siac-rerender`);$('.modal-close').off('click'); })"
 
 
 @js
 def display_note_del_confirm_modal(editor, nid):
+    """ Display the modal that asks to confirm a (add-on) note deletion. """
+
     html = get_note_delete_confirm_modal_html(nid)
-    return "$('#greyout').show();$('#searchResults').append(`%s`);" % html
-
-
-
-@js
-def display_notes_sidebar(editor):
-    html = get_notes_sidebar_html()
-    return """
-    if (!document.getElementById('siac-notes-sidebar')) {
-        document.getElementById('resultsWrapper').insertAdjacentHTML("afterbegin", `%s`); 
-        $('#siac-notes-sidebar .exp').click(function(e) {
-            e.stopPropagation();
-            let icn = $(this);
-            if (icn.text()) {
-                if (icn.text() === '[+]')
-                    icn.text('[-]');
-                else
-                    icn.text('[+]');
-            }
-            $(this).parent().parent().children('ul').toggle();
-        });
-    }
-    """ % html
-
-@js
-def reload_note_sidebar():
-    html = get_notes_sidebar_html()
-    return """
-        if (document.getElementById('siac-notes-sidebar')) {
-            $('#siac-notes-sidebar').remove();
-            document.getElementById('resultsWrapper').insertAdjacentHTML("afterbegin", `%s`); 
-            $('#siac-notes-sidebar .exp').click(function(e) {
-            e.stopPropagation();
-            let icn = $(this);
-            if (icn.text()) {
-                if (icn.text() === '[+]')
-                    icn.text('[-]');
-                else
-                    icn.text('[+]');
-            }
-            $(this).parent().parent().children('ul').toggle();
-            });
-        }
-    """ % html
-    
+    return "$('#searchResults').scrollTop(0).append(`%s`);" % html
    
 
 def fillTagSelect(editor = None, expanded = False) :
@@ -342,20 +312,20 @@ def fillTagSelect(editor = None, expanded = False) :
     Builds the html for the "browse tags" mode in the deck select.
     Also renders the html.
     """
-    tags = mw.col.tags.all()
-    user_note_tags = get_all_tags()
+    tags            = mw.col.tags.all()
+    user_note_tags  = get_all_tags()
     tags.extend(user_note_tags)
-    tags = set(tags)
-    tmap = utility.tags.to_tag_hierarchy(tags)
+    tags            = set(tags)
+    tmap            = utility.tags.to_tag_hierarchy(tags)
 
-    most_active = get_most_active_tags(5)
+    most_active     = get_most_active_tags(5)
     most_active_map = dict()
+
     for t in most_active:
         if t in tmap:
             most_active_map[t] = tmap[t]
         else:
             most_active_map[t] = {}
-
 
     def iterateMap(tmap, prefix, start=False):
         if start:
@@ -364,17 +334,17 @@ def fillTagSelect(editor = None, expanded = False) :
             html = "<ul class='deck-sub-list'>"
         for key, value in tmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('searchTag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-search-tag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
         html += "</ul>"
         return html
 
-    most_active_html = iterateMap(most_active_map, "", True)
-    html = iterateMap(tmap, "", True)
+    most_active_html    = iterateMap(most_active_map, "", True)
+    html                = iterateMap(tmap, "", True)
 
     # the dropdown should only be expanded on user click, not on initial render
-    expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
+    expanded_js         = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
 
-    cmd = """
+    cmd                 = """
     document.getElementById('deck-sel-info-lbl').style.display = 'none';
     document.getElementById('deckSelQuickWrapper').style.display = '%s';
     document.getElementById('deckSelQuick').innerHTML = `%s`;
@@ -399,14 +369,12 @@ def fillTagSelect(editor = None, expanded = False) :
         get_index().ui.js(cmd)
 
 def fillDeckSelect(editor = None, expanded= False):
-    """
-    Fill the selection with user's decks
-    """
+    """ Fill the selection with user's decks """
 
-    deckMap = dict()
-    config = mw.addonManager.getConfig(__name__)
-    deckList = config['decks']
-    index = get_index()
+    deckMap     = dict()
+    config      = mw.addonManager.getConfig(__name__)
+    deckList    = config['decks']
+    index       = get_index()
     if editor is None:
         if index is not None and index.ui is not None and index.ui._editor is not None:
             editor = index.ui._editor
@@ -420,11 +388,11 @@ def fillDeckSelect(editor = None, expanded= False):
            continue
        deckMap[d['name']] = d['id']
     set_deck_map(deckMap)
-    dmap = {}
+    dmap        = {}
     for name, id in deckMap.items():
         dmap = addToDecklist(dmap, id, name)
 
-    dmap = dict(sorted(dmap.items(), key=lambda item: item[0].lower()))
+    dmap        = dict(sorted(dmap.items(), key=lambda item: item[0].lower()))
     def iterateMap(dmap, prefix, start=False):
         decks = index.selectedDecks if index is not None else []
         if start:
@@ -437,10 +405,10 @@ def fillDeckSelect(editor = None, expanded= False):
         html += "</ul>"
         return html
 
-    html = iterateMap(dmap, "", True)
+    html        = iterateMap(dmap, "", True)
     expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
 
-    cmd = """
+    cmd         = """
     document.getElementById('deck-sel-info-lbl').style.display = 'block';
     document.getElementById('deckSelQuickWrapper').style.display = 'none';
     document.getElementById('deckSel').innerHTML = `%s`;
@@ -471,23 +439,3 @@ def addToDecklist(dmap, id, name):
         if not d in found:
             found.update({d : {}})
     return dmap
-
-@js
-def show_notification(html):
-
-    return """
-        $('.siac-notification').remove();
-        let target = $('#siac-reading-modal').is(':visible') ? "#reading-modal" : "#siac-right-side";
-        $(target).append(`
-            <div class='siac-notification'>
-                %s
-            </div> 
-         `);
-
-        window.setTimeout(function() {
-            $('.siac-notification').fadeOut(5000);
-            $('.siac-notification').remove();
-         }, 5000);
-    
-    
-    """ % html

@@ -20,24 +20,34 @@ from datetime import datetime
 import time
 import random
 
-cleanWordReg = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]*$", re.I |re.U)    
-ignoreReg = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+$", re.I | re.U)
-nonWordReg = re.compile(u"[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U) 
-tagReg = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
-spaceReg = re.compile('\s{2,}')
-normalChar = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.I | re.U) 
-chineseChar = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]", re.U)
-non_weird_char = re.compile(u"[.;,-:_+*#?!\"'a-z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě]", re.I | re.U)
+cleanWordReg    = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]*$", re.I |re.U)    
+ignoreReg       = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]+$", re.I | re.U)
+nonWordReg      = re.compile(u"[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U) 
+wordToken       = re.compile(u"[a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U)
+
+# used to merge multiple field separator signs into singles 
+SEP_RE          = re.compile(r'(?:\u001f){2,}|(?:\u001f[\s\r\n]+\u001f)')
+# used to hide IO fields
+IO_REPLACE      = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>)?-[OA]|-(<mark>)?ao(</mark>)?-[OA])\.svg" ?/?>(</img>)?')
+# move images in own line
+IMG_FLD         = re.compile('\\|</span> ?(<img[^>]+/?>)( ?<span class=\'fldSep\'>|$)')
+
+tagReg          = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
+spaceReg        = re.compile('\s{2,}')
+normalChar      = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U) 
+asianChar       = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.U)
 
 def clean(text, stopWords):
-    filtered = ""
-    text = text.replace("\r\n", " ").replace("\n", " ")
-    text = text.replace("\t", " ")
-    text = text.replace("\u001f", " ")
-    text = tagReg.sub(" ", text)
-    text = nonWordReg.sub(" ", text)
-    text = spaceReg.sub(" ", text)
-    stopWords = [s.lower() for s in stopWords]
+
+    filtered    = ""
+    text        = text.replace("\r\n", " ").replace("\n", " ")
+    text        = text.replace("\t", " ")
+    text        = text.replace("\u001f", " ")
+    text        = tagReg.sub(" ", text)
+    text        = nonWordReg.sub(" ", text)
+    text        = spaceReg.sub(" ", text)
+    stopWords   = [s.lower() for s in stopWords]
+
     for token in tokenize(text):
         #this will prevent indexing / searching for base64 data urls
         if len(token) > 200:
@@ -45,9 +55,10 @@ def clean(text, stopWords):
         if ignoreReg.match(token) is not None:
             continue
         cleaned = cleanWordReg.sub(r'\1', token.strip())
-        if (len(cleaned) <= 1 and not chineseChar.search(cleaned)) or cleaned.lower() in stopWords:
+        if (len(cleaned) <= 1 and not asianChar.search(cleaned)) or cleaned.lower() in stopWords:
             continue
         filtered += cleaned + " "
+
     if len(filtered) > 0:
         return filtered[:-1]
     return ""
@@ -94,7 +105,7 @@ def tokenize(text):
     result = []
     spl = text.split(" ")
     for token in spl:
-        if re.search(u'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]', token):
+        if re.search(u'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]', token):
             for char in token:
                 result.append(str(char))
         else:
@@ -106,12 +117,13 @@ def text_too_small(text):
         return False
     if len(text) == 0:
         return True
-    if chineseChar.search(text):
+    if asianChar.search(text):
         return False
     return True
 
-def is_chinese_char(char):
-    return chineseChar.match(char)
+def is_asian_char(char):
+    """ Supported atm: chinese, japanese, korean """
+    return asianChar.match(char)
 
 
 def ascii_fold_char(char):
@@ -272,6 +284,24 @@ def clean_user_note_title(title):
     title = title.replace("\t", "")
     return title
 
+def cleanFieldSeparators(text):
+    text = SEP_RE.sub("\u001f", text)
+    if text.endswith("\u001f"):
+        text = text[:-1]
+    text = text.replace("\u001f", "<span class='fldSep'>|</span>")
+    return text
+
+def newline_before_images(text):
+    return IMG_FLD.sub("|</span><br/>\\1<br/>\\2", text)
+
+def try_hide_image_occlusion(text):
+    """
+    Image occlusion cards take up too much space, so we try to hide all images except for the first.
+    """
+    if not text.count("<img ") > 1:
+        return text
+    text = IO_REPLACE.sub("(IO - image hidden)", text)
+    return text
 
 def clean_file_name(name):
     name = re.sub("[^a-zA-Z0-9]", "-", name)
@@ -284,19 +314,23 @@ def remove_special_chars(text):
 def try_find_sentence(text, selection):
     if not selection in text:
         return None
-    selection = re.sub("  +", " ", selection).strip()
-    text = re.sub("  +", " ", text).strip()
-    last = text.rindex(selection)
-    pre = text[:last]
+
+    selection   = re.sub("  +", " ", selection).strip()
+    text        = re.sub("  +", " ", text).strip()
+    last        = text.rindex(selection)
+    pre         = text[:last]
     
     def _try_find_closing(text):
         found = False
-        for c in [".", "!", "?", "•", ":", "=", "#", "-", "§", "Ø", "*"]:
+        for c in ["\\.\\B", "!", "\\?", "•", ":", "=", "#", "-", "§", "Ø", "\\*"]:
             try:
-                if text.rindex(c) >= 0 and text.rindex(c) < len(text) -1:
-                    text = text[text.rindex(c) + 1:]
-                    found = True
-                    break
+                found = [(i.start()) for i in re.finditer(c,text)]
+                if len(found) > 0:
+                    last_index = found[-1]
+                    if last_index < len(text) - 1:
+                        text = text[last_index + 1]
+                        found = True
+                        break
             except:
                 continue
         if not found: 
@@ -306,13 +340,14 @@ def try_find_sentence(text, selection):
         return text
     
     
-    pre = _try_find_closing(pre)
+    pre         = _try_find_closing(pre)
     if pre is None:
         return None
-    after = text[last:]
-    after = _try_find_closing(after[::-1])
+    after       = text[last:]
+    after       = _try_find_closing(after[::-1])
     if after is None: 
         return None
+
     return pre + after[::-1] + "."
 
    
@@ -322,3 +357,56 @@ def clean_tags(tags):
     
     tags = re.sub("[`'\"]", "", tags)
     return tags
+
+
+def mark_highlights(text, querySet):
+
+    currentWord             = ""
+    currentWordNormalized   = ""
+    textMarked              = ""
+    lastIsMarked            = False
+    # c = 0
+    for char in text:
+        # c += 1
+        if wordToken.match(char):
+            currentWordNormalized = ''.join((currentWordNormalized, ascii_fold_char(char).lower()))
+            # currentWordNormalized = ''.join((currentWordNormalized, char.lower()))
+            if is_asian_char(char) and str(char) in querySet:
+                currentWord = ''.join((currentWord, "<MARK>%s</MARK>" % char))
+            else:
+                currentWord = ''.join((currentWord, char))
+
+        else:
+            #we have reached a word boundary
+            #check if word is empty
+            if currentWord == "":
+                textMarked = ''.join((textMarked, char))
+            else:
+                #if the word before the word boundary is in the query, we want to highlight it
+                if currentWordNormalized in querySet:
+                    #we check if the word before has been marked too, if so, we want to enclose both, the current word and
+                    # the word before in the same <mark></mark> tag (looks better)
+                    if lastIsMarked and not "\u001f" in textMarked[textMarked.rfind("<MARK>"):]:
+                    # if lastIsMarked:
+                        closing_index   = textMarked.rfind("</MARK>")
+                        textMarked      = ''.join((textMarked[0: closing_index], textMarked[closing_index + 7 :]))
+                        textMarked      = ''.join((textMarked, currentWord, "</MARK>", char))
+                    else:
+                        textMarked      = ''.join((textMarked, "<MARK>", currentWord, "</MARK>", char))
+                        # c += 13
+                    lastIsMarked = True
+                #if the word is not in the query, we simply append it unhighlighted
+                else:
+                    textMarked      = ''.join((textMarked, currentWord, char))
+                    lastIsMarked    = False
+
+                currentWord             = ""
+                currentWordNormalized   = ""
+
+    if currentWord != "":
+        if currentWord != "MARK" and currentWordNormalized in querySet:
+            textMarked = ''.join((textMarked, "<MARK>", currentWord, "</MARK>"))
+        else:
+            textMarked = ''.join((textMarked, currentWord))
+
+    return textMarked

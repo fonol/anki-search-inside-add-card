@@ -14,9 +14,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-hooks = dict()
+import typing
+from typing import Callable, Dict
 
-def add_hook(name, fn):
+hooks: Dict[str, Callable] = dict()
+
+def add_hook(name: str, fn: Callable):
     name = name.lower()
     if name in hooks:
         hooks[name].append(fn)
@@ -24,7 +27,7 @@ def add_hook(name, fn):
         hooks[name] = [fn]
 
 
-def run_hooks(name):
+def run_hooks(name: str):
     name = name.lower()
     if name in hooks:
         for fn in hooks[name]:

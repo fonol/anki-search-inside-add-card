@@ -35,11 +35,14 @@ import re
 import time as t
 import webbrowser
 import functools
+import typing
+from typing import Dict, Any, List, Tuple, Optional, Callable
 import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
 import utility.tags
 import utility.misc
+import state
 
 from .state import check_index, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit
 from .index.indexing import build_index, get_notes_in_collection
@@ -54,26 +57,20 @@ from .internals import requires_index_loaded
 from .config import get_config_value_or_default
 from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index
 
-
-
-
 config = mw.addonManager.getConfig(__name__)
 
 def init_addon():
+    """ Executed once on Anki startup. """
     global origEditorContextMenuEvt
 
-    # wrap js -> py bridge to include the add-ons commands, see command_parsing.py
-    Editor.onBridgeCmd = wrap(Editor.onBridgeCmd, expanded_on_bridge_cmd, "around")
-    #todo: Find out if there is a better moment to start index creation
+    gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
     
-    create_db_file_if_not_exists()
+    #todo: Find out if there is a better moment to start index creation
+    state.db_file_existed = create_db_file_if_not_exists()
 
     gui_hooks.profile_did_open.append(build_index)
     gui_hooks.profile_did_open.append(insert_scripts)
     gui_hooks.profile_did_open.append(recalculate_priority_queue)
-    #disabled for now, to be able to use Occlude Image in the context menu
-    #origEditorContextMenuEvt = EditorWebView.contextMenuEvent
-    #EditorWebView.contextMenuEvent = editorContextMenuEventWrapper
 
     if get_config_value_or_default("searchOnTagEntry", True):
         TagEdit.keyPressEvent = wrap(TagEdit.keyPressEvent, tag_edit_keypress, "around")
@@ -81,12 +78,15 @@ def init_addon():
     setup_tagedit_timer()
 
     # add new notes to search index when adding
-    AddCards.addNote = wrap(AddCards.addNote, add_note_and_update_index, "around")
+    gui_hooks.add_cards_did_add_note.append(add_note_to_index)
+
     # update notes in index when changed through the "Edit" button
     EditDialog.saveAndClose = wrap(EditDialog.saveAndClose, editor_save_with_index_update, "around")
 
     # shortcut to toggle add-on pane 
     gui_hooks.editor_did_init_shortcuts.append(add_hide_show_shortcut) 
+    # reset state after the add/edit dialog is opened
+    gui_hooks.editor_did_init_shortcuts.append(reset_state) 
 
     # add-on internal hooks
     setup_hooks()
@@ -97,24 +97,14 @@ def init_addon():
             document.addEventListener("keydown", function (e) {globalKeydown(e); }, false);
     </script>"""
     
-    typing_delay = max(500, config['delayWhileTyping'])
     #this inserts all the javascript functions in scripts.js into the editor webview
-    aqt.editor._html += getScriptPlatformSpecific(typing_delay)
+    aqt.editor._html += getScriptPlatformSpecific()
+
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
 
 
-
-
-def add_note_and_update_index(dialog, note, _old):
-    """
-        Wrapper around the note adding method, to update the index with the new created note.
-    """
-    res = _old(dialog, note)
-    add_note_to_index(note)
-    return res
-
-def editor_save_with_index_update(dialog, _old):
+def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
     _old(dialog)
     # update index
     index = get_index()
@@ -126,7 +116,7 @@ def editor_save_with_index_update(dialog, _old):
         index.ui.edited[str(dialog.editor.note.id)] = t.time()
 
 
-def on_load_note(editor):
+def on_load_note(editor: Editor):
     """
     Executed everytime a note is created/loaded in the add cards dialog.
     Wraps the normal editor html in a flex layout to render a second column for the searching ui.
@@ -134,18 +124,26 @@ def on_load_note(editor):
 
     #only display in add cards dialog or in the review edit dialog (if enabled)
     if editor.addMode or (get_config_value_or_default("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
-        index = get_index()
 
-        zoom = get_config_value_or_default("searchpane.zoom", 1.0)
-        show_tag_info_on_hover = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
+        index                   = get_index()
+        zoom                    = get_config_value_or_default("searchpane.zoom", 1.0)
+        typing_delay            = max(500, get_config_value_or_default('delayWhileTyping', 1000))
+        show_tag_info_on_hover  = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
+
         editor.web.eval(f"""
-            var showTagInfoOnHover = {show_tag_info_on_hover}; 
-            tagHoverTimeout = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
+            var showTagInfoOnHover  = {show_tag_info_on_hover}; 
+            tagHoverTimeout         = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
+            var delayWhileTyping    = {typing_delay};
         """)
 
         def cb(was_already_rendered):
             if was_already_rendered:
                 return
+
+            if index is not None and index.ui is not None:
+                index.ui.set_editor(editor)
+                index.ui._loadPlotJsIfNotLoaded()
+
             if index is not None:
                 setup_ui_after_index_built(editor, index)
 
@@ -153,37 +151,23 @@ def on_load_note(editor):
 
             fillDeckSelect(editor)
             if index is not None and index.lastSearch is None:
-                printStartingInfo(editor)
+                print_starting_info(editor)
             if not corpus_is_loaded():
                 corpus = get_notes_in_collection()
                 set_corpus(corpus)
 
-            if index is not None and index.ui is not None:
-                index.ui.set_editor(editor)
-                index.ui._loadPlotJsIfNotLoaded()
-
-
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
         editor.web.evalWithCallback(right_side_html(index is not None), cb)
-        
       
 
     if get_edit() is None and editor is not None:
         set_edit(editor)
 
+def on_add_cards_init(add_cards: AddCards):
+    if get_index() is not None and add_cards.editor is not None:
+        get_index().ui.set_editor(add_cards.editor)
 
-
-def editorContextMenuEventWrapper(view, evt):
-    global contextEvt
-    win = aqt.mw.app.activeWindow()
-    if isinstance(win, Browser):
-        origEditorContextMenuEvt(view, evt)
-        return
-    contextEvt = evt
-    pos = evt.pos()
-    determineClickTarget(pos)
-    #origEditorContextMenuEvt(view, evt)
 
 def insert_scripts():
     """
@@ -191,9 +175,12 @@ def insert_scripts():
         styles.css and pdf_reader.css are not included that way, because they 
         are processed ($<config value>$ placeholders are replaced) and inserted via <style> tags.
     """
-    addon_id = utility.misc.get_addon_id()
-    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|ttf)$")
-    port = mw.mediaServer.getPort()
+
+    addon_id    = utility.misc.get_addon_id()
+    pdf_theme   = get_config_value_or_default("pdf.theme", "pdf_reader.css")
+    port        = mw.mediaServer.getPort()
+
+    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf)$")
     aqt.editor._html += f"""
     <script>
         var script = document.createElement('script');
@@ -208,6 +195,11 @@ def insert_scripts():
 
         script = document.createElement('script');
         script.type = 'text/javascript';
+        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf_highlighting.js';
+        document.body.appendChild(script);
+
+        script = document.createElement('script');
+        script.type = 'text/javascript';
         script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf_reader.js';
         document.body.appendChild(script);
 
@@ -215,6 +207,13 @@ def insert_scripts():
         script.type = 'text/css';
         script.rel = 'stylesheet';
         script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/textlayer.css';
+        document.body.appendChild(script);
+
+        script = document.createElement('link');
+        script.type = 'text/css';
+        script.id ='siac-pdf-css';
+        script.rel = 'stylesheet';
+        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/{pdf_theme}';
         document.body.appendChild(script);
 
         var css = `@font-face {{
@@ -243,89 +242,44 @@ def insert_scripts():
     </script>
     """
 
-@requires_index_loaded
-def determineClickTarget(pos):
-    get_index().ui._editor.web.page().runJavaScript("sendClickedInformation(%s, %s)" % (pos.x(), pos.y()), addOptionsToContextMenu)
-
-
-def addOptionsToContextMenu(clickInfo):
-    index = get_index()
-
-    if clickInfo is not None and clickInfo.startswith("img "):
-        try:
-            src = clickInfo[4:]
-            m = QMenu(index.ui._editor.web)
-            a = m.addAction("Open Image in Browser")
-            a.triggered.connect(lambda: openImgInBrowser(src))
-            cpSubMenu = m.addMenu("Copy Image To Field...")
-            for key in index.ui._editor.note.keys():
-                cpSubMenu.addAction("Append to %s" % key).triggered.connect(functools.partial(appendImgToField, src, key))
-            m.popup(QCursor.pos())
-        except:
-            origEditorContextMenuEvt(index.ui._editor.web, contextEvt)
-    elif clickInfo is not None and clickInfo.startswith("note "):
-        try:
-            content = " ".join(clickInfo.split()[2:])
-            nid = int(clickInfo.split()[1])
-            m = QMenu(index.ui._editor.web)
-            a = m.addAction("Find Notes Added On The Same Day")
-            a.triggered.connect(lambda: getCreatedSameDay(index, index.ui._editor, nid))
-            m.popup(QCursor.pos())
-        except:
-            origEditorContextMenuEvt(index.ui._editor.web, contextEvt)
-
-    # elif clickInfo is not None and clickInfo.startswith("span "):
-    #     content = clickInfo.split()[1]
-
-    else:
-        origEditorContextMenuEvt(index.ui._editor.web, contextEvt)
-
-
 def setup_hooks():
-    add_hook("user-note-created", reload_note_sidebar)
-    add_hook("user-note-deleted", reload_note_sidebar)
-    add_hook("user-note-edited", reload_note_sidebar)
+    """ Todo: move more add-on code to hooks. """
+
+    add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("user-note-deleted", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("user-note-deleted", lambda: recalculate_priority_queue())
+    add_hook("user-note-edited", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+    add_hook("updated-schedule", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+    add_hook("reading-modal-closed", lambda: get_index().ui.sidebar.refresh_tab(1))
 
 
-def add_hide_show_shortcut(shortcuts, editor):
+def reset_state(shortcuts: List[Tuple], editor: Editor):
+    """ After the Add Card / Edit Current dialog is opened, some state variables need to be reset. """
+    
+    # might still be true if Create Note dialog was closed by closing its parent window, so reset it
+    state.note_editor_shown = False
+
+def add_hide_show_shortcut(shortcuts: List[Tuple], editor: Editor):
+    """ Register a shortcut to toggle the add-on pane. """
+
     if not "toggleShortcut" in config:
         return
     QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
     QShortcut(QKeySequence("Ctrl+o"), editor.widget, activated=show_quick_open_pdf)
 
-def openImgInBrowser(url):
-    if len(url) > 0:
-        webbrowser.open(url)
-
 def show_quick_open_pdf():
-    ix = get_index()
-    dialog = QuickOpenPDF(ix.ui._editor.parentWindow)
+    """ Ctrl + O pressed -> show small dialog to quickly open a PDF. """
+
+    ix      = get_index()
+    dialog  = QuickOpenPDF(ix.ui._editor.parentWindow)
+
     if dialog.exec_():
         if dialog.chosen_id is not None and dialog.chosen_id > 0:
             def cb(can_load):
                 if can_load:
                     ix.ui.reading_modal.display(dialog.chosen_id)
             ix.ui.js_with_cb("beforeNoteQuickOpen();", cb)
-
-def appendNoteToField(content, key):
-    if not check_index():
-        return
-    index = get_index()
-    note = index.ui._editor.note
-    note.fields[note._fieldOrd(key)] += content
-    note.flush()
-    index.ui._editor.loadNote()
-
-def appendImgToField(src, key):
-    if src is None or len(src) == 0:
-        return
-    index = get_index()
-    note = index.ui._editor.note
-    src = re.sub("https?://[0-9.]+:\\d+/", "", src)
-    note.fields[note._fieldOrd(key)] += "<img src='%s'/>" % src
-    note.flush()
-    index.ui._editor.loadNote()
 
 def setup_tagedit_timer():
     global tagEditTimer

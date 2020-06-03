@@ -122,6 +122,14 @@
     font-size: 20px;
     color: #2496dc;
 }
+.siac-search-loader {
+    width: 250px; 
+    padding: 15px; 
+    text-align: center;
+    border: 3px outset $modalBorderColor$;
+    background: $modalBackgroundColor$;
+    color: $modalForegroundColor$;
+}
 #searchResults {
     display: none;
     height: calc(100% - 15px);
@@ -129,6 +137,7 @@
     padding: 10px 10px 5px 10px;
     overflow-x: hidden;
     max-width: 100%;
+    position: relative;
     flex: 1 1 auto;
 }
 .editedStamp {
@@ -231,7 +240,7 @@
     flex-wrap: nowrap;
     height: 30px;
 }
-#siac-right-side mark {
+#siac-right-side mark, #siac-left-tab-browse mark {
     background-color: $highlightBackgroundColor$;
     color: $highlightForegroundColor$;
     border-radius: 4px;
@@ -257,10 +266,7 @@
 .tagLbl:hover {
     filter: brightness(150%);
 }
-.siac-orange-hover:hover {
-    color: darkorange;
-    cursor: pointer;
-}
+
 #tagContainer .tagLbl {
     float: left;
     margin-bottom: 5px;
@@ -819,13 +825,19 @@ table.striped tr:nth-child(even) {
     border: 2px outset #b2b2a0;
     border-radius: 3px;
 }
+body:not(.nightMode) #leftSide .siac-btn-dark {
+    color: $buttonForegroundColor$;
+    background: $buttonBackgroundColor$;
+    border: 1px solid  $buttonBorderColor$;
+}
+
 .siac-btn-dark-smaller {
     font-size: 10px !important;
 }
 .siac-btn:hover {
     color: #2496dc;
 }
-.siac-btn-dark:hover {
+.siac-btn-dark:hover, .siac-btn-dark-smaller:hover {
     color: white;
     border-color: white;
 }
@@ -837,7 +849,7 @@ table.striped tr:nth-child(even) {
     border: 1px solid  $buttonBorderColor$;
     cursor: pointer;
     user-select: none;
-    font-size: 11px !important;
+    font-size: 12px !important;
     outline: none;
     box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.3);
 }
@@ -862,28 +874,15 @@ table.striped tr:nth-child(even) {
     width: calc(100% - 8px);
     margin-left: -5px;
     padding: 0px 4px 0px 4px;
-    font-size: 11px !important;
+    font-size: 12px !important;
     border: 1px solid  $buttonBorderColor$;
     border-top: 0px solid white;
     z-index: 5;
     transition: max-height 0.3s;
 }
-.siac-btn-small-dropdown-inverted {
-    display: none;
-    position: absolute;
-    color: white;
-    background-color: #2f2f31;
-    width: 200px;
-    padding: 0px 4px 0px 4px;
-    height: 135px;
-    top: -114px;
-    left: -181px;
-    border: 2px outset darkorange; 
-    z-index: 5;
-    transition: all 0.3s;
-}
+
 .siac-btn-small:hover .siac-btn-small-dropdown.hover,.siac-btn-small.expanded .siac-btn-small-dropdown.click {
-    max-height: 320px;
+    max-height: 340px;
     border-top: 1px solid $buttonBorderColor$;
 }
 .siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {
@@ -893,18 +892,7 @@ table.striped tr:nth-child(even) {
     margin: 3px 0 2px 0;
     text-align: left;
 }
-.siac-dropdown-inverted-item {
-    margin: 3px 0 2px 0;
-    text-align: left;
-    width: 100%;
-    color: darkorange;
-    text-align: center;
-    height: 16px;
-    font-size: 13px !important;
-}
-.siac-dropdown-inverted-item:hover {
-    filter: brightness(1.4);
-}
+
 .siac-btn-small-dropdown .siac-dropdown-item:hover {
     color: #2496dc;
     transform: scale(1.04);
@@ -955,7 +943,6 @@ width: 48%; display: inline-block; text-align: center;
     color: #2496dc;
 }
 #siac-right-side {
-    border-left: 2px solid $windowColumnSeparatorColor$;
     padding: 0px 20px 4px 20px;
     margin-left: 8px;
     position: relative;
@@ -988,11 +975,12 @@ select {
 #modal-content > fieldset {
     font-size: 1.9em;
 }
-#synonymInput {
-    width: 97%;
+#siac-syn-inp {
+    width: 100%;
     margin-top: 5px;
     background: $modalBackgroundColor$;
     color: $modalForegroundColor$;
+    border-radius: 5px;
 }
 #synTable tr td:first-child {
     max-width: 150px;
@@ -1184,6 +1172,7 @@ span.tag-symbol {
     cursor:pointer;
     width: 17px;
     height: 17px;
+    font-size: 9px;
     background: white;
     margin-right: 3px; margin-left: 3px;
     text-align: center;
@@ -1304,19 +1293,6 @@ span.tag-symbol {
     color: white;
 }
 
-.siac-notification {
-    position: absolute;
-    right: 15px;
-    bottom: 15px;
-    padding: 20px;
-    background: #2f2f31;
-    color: beige;
-    border: 3px outset darkorange;
-    border-radius: 4px;
-    z-index: 1000000000;
-    width: 200px;
-    
-}
 .siac-tag-info-box {
     position: absolute;
     z-index: 9999;
@@ -1347,7 +1323,7 @@ span.tag-symbol {
 .siac-tag-info-box-left .cardR {
     user-select: text;
 }
-.siac-tag-info-box-left .editLbl {
+.siac-tag-info-box-left .editLbl, #siac-left-tab-browse .editLbl {
     border-right: 2px solid $noteBorderColor$;
     border-radius: 4px;
 }
@@ -1455,8 +1431,6 @@ span.tag-symbol {
     text-align: center;
     margin-bottom: 4px;
 }
-
-
 #outerWr.onesided {
     display: flex !important;
 }
@@ -1469,7 +1443,12 @@ span.tag-symbol {
 #outerWr.onesided .reading-modal-close-icn {
     right: 27px;
 }
-
+#siac-pdf-tooltip {
+    max-width: $pdfTooltipMaxWidth$px;
+}
+#siac-pdf-tooltip-results-area {
+    max-height: $pdfTooltipMaxHeight$px;
+}
 .siac-modal-small {
     z-index: 9999999;
     background: $modalBackgroundColor$;
@@ -1479,16 +1458,10 @@ span.tag-symbol {
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 15px;
-    width: 250px;
+    width: 280px;
     border: 2px solid $modalBorderColor$;
     text-align: center;
 }
-.siac-modal-small.dark, #siac-reading-modal .siac-modal-small {
-    border: 3px outset darkorange;
-    background: #2f2f31;
-    color: white;
-}
-
 hr.siac-modal-sep {
     border-color: $modalBorderColor$;
 }
@@ -1526,7 +1499,10 @@ hr.siac-modal-sep {
     font-weight: bold; 
     text-decoration: none;
 }
-
+#siac-sidebar-selected {
+    text-align: center;
+    font-weight: bold;
+}
 @media (max-width: 1000px) , (max-height: 500px) {
     #siac-right-side {
         display: none;
@@ -1600,8 +1576,7 @@ body.siac-fullscreen-show-right #outerWr {
     height: calc(100vh - 3px) !important;
 }
 body.siac-left-right-switched #siac-right-side {
-    border-right: 2px solid $windowColumnSeparatorColor$;
-    border-left: 0px solid white;
+    border-left: 0px solid white !important;
     padding-left: 0px;
     padding-right: 10px;
 }
@@ -1609,6 +1584,18 @@ body.siac-left-right-switched #fields {
     padding-right: 0px;
     padding-left: 8px
 }
+body.siac-reading-modal-displayed #leftSide {
+    display: flex;
+    flex-direction: column;
+}
+body.siac-reading-modal-displayed #fields {
+    flex: 1 1 auto;
+    height: auto !important;
+}
+body.siac-reading-modal-displayed #siac-reading-modal-tabs-left {
+    flex: 0 0 auto;
+}
+
 @media (max-width: 600px) {
     #sortCol {
         display: none;

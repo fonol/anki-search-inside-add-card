@@ -37,16 +37,20 @@ def findBySameTag(tagStr, limit, decks, pinned):
         deckQ =  "(%s)" % ",".join(decks)
     else:
         deckQ = ""
+
     if deckQ:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s and did in %s" %(query, deckQ)).fetchall()
+        res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s and did in %s" %(query, deckQ))
     else:
-        res = mw.col.db.execute("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s" %(query)).fetchall()
+        res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s" %(query))
+
     rList = []
     rList.extend(find_by_tag(tagStr))
+
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in pinned:
             rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
+
     return { "result" : rList[:limit]}
 
 def display_tag_info(editor, stamp, tag, index):
@@ -62,8 +66,8 @@ def display_tag_info(editor, stamp, tag, index):
             if tag.lower() in synsetNorm:
                 tag += " " + " ".join(synset)
                 break
-    searchRes = findBySameTag(tag, 30000, [], [])
-    tagsfound = _extract_tags(searchRes["result"], tag)
+    searchRes               = findBySameTag(tag, 30000, [], [])
+    tagsfound               = _extract_tags(searchRes["result"], tag)
 
     if len(tagsfound) <= 2 and "::" in tag:
         for s in tag.split("::"):
@@ -72,12 +76,12 @@ def display_tag_info(editor, stamp, tag, index):
             if len(tagsfound) > 0:
                 break
 
-    sortedCounts = sorted(tagsfound.items(), key=lambda kv: kv[1], reverse=True)
-    time_stamp_for_graph = utility.text.get_stamp()
-    
-    window = mw.app.activeWindow()
-    should_hide_left_side = window is not None and window.width() < 1000
-    html = ""
+    sortedCounts            = sorted(tagsfound.items(), key=lambda kv: kv[1], reverse=True)
+    time_stamp_for_graph    = utility.text.get_stamp()
+    window                  = mw.app.activeWindow()
+    should_hide_left_side   = window is not None and window.width() < 1000
+    html                    = ""
+
     if should_hide_left_side:
         html = """
                 <span id='siac-tag-graph-lbl-%s'>Retention for this Topic / Reviews</span>
@@ -122,7 +126,9 @@ def display_tag_info(editor, stamp, tag, index):
                     else:
                         tagsfound[s] = 1
         sortedCounts = sorted(tagsfound.items(), key=lambda kv: kv[1], reverse=True)
+
     total_length = 0
+
     for k in sortedCounts[:10]:
         if should_hide_left_side:
             tags += "<div data-stamp='siac-tg-%s' class='tagLbl smallMarginBottom' data-name='%s' onclick='tagClick(this); event.stopPropagation();'>%s</div>" % (utility.text.get_stamp(), k[0], utility.text.trim_if_longer_than(k[0], 40))
@@ -135,41 +141,41 @@ def display_tag_info(editor, stamp, tag, index):
     if len(tags) == 0:
         tags = "Could not find any related tags. Related tags are determined by looking for tags that appear on the same notes as the given tag."
 
-
     nids = [r.id for r in searchRes["result"]]
     tret = getAvgTrueRetention(nids)
+
     if tret is not None:
-        color = utility.misc._retToColor(tret)    
-        tret = "<span style='background: %s; color: black;'>&nbsp;%s&nbsp;</span>" % (color, tret)
+        color   = utility.misc._retToColor(tret)    
+        tret    = "<span style='background: %s; color: black;'>&nbsp;%s&nbsp;</span>" % (color, tret)
 
     if not should_hide_left_side:
-        sorted_db_list = sorted(searchRes["result"], key=lambda x: x.id, reverse=True)
-        note_html = index.ui.get_result_html_simple(sorted_db_list[:100])
-        enlarge_note_area_height = "max-height: 320px" if total_length > 120 and tret is not None else ""
-        tag_name = tag
-        if " " in tag_name:
-            base = tag_name.split()[0]
-            tag_name = utility.text.trim_if_longer_than(base, 25) + " (+%s)" % len(tag_name.split()[1:])
-        else:
-            tag_name = utility.text.trim_if_longer_than(tag_name, 28)
+        sorted_db_list              = sorted(searchRes["result"], key=lambda x: x.id, reverse=True)
+        note_html                   = index.ui.get_result_html_simple(sorted_db_list[:100])
+        enlarge_note_area_height    = "max-height: 320px" if total_length > 120 and tret is not None else ""
+        tag_name                    = tag
 
-        html = html % (tag_name, enlarge_note_area_height, stamp, note_html, time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)
+        if " " in tag_name:
+            base                    = tag_name.split()[0]
+            tag_name                = utility.text.trim_if_longer_than(base, 25) + " (+%s)" % len(tag_name.split()[1:])
+        else:
+            tag_name                = utility.text.trim_if_longer_than(tag_name, 28)
+
+        html                        = html % (tag_name, enlarge_note_area_height, stamp, note_html, time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)
 
     else:
-        html = html % (time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)
+        html    = html % (time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)
 
     index.ui._loadPlotJsIfNotLoaded()
 
-    ret_data = getTrueRetentionOverTime(nids)
-    graph_js = retention_stats_for_tag(ret_data, "siac-tag-graph-" + time_stamp_for_graph, "siac-tag-graph-lbl-" + time_stamp_for_graph)
+    ret_data    = getTrueRetentionOverTime(nids)
+    graph_js    = retention_stats_for_tag(ret_data, "siac-tag-graph-" + time_stamp_for_graph, "siac-tag-graph-lbl-" + time_stamp_for_graph)
    
-    id_for_box = "siac-tag-info-box-" + stamp
-    params = {          "stamp": stamp,
+    id_for_box  = "siac-tag-info-box-" + stamp
+    params      = {      "stamp": stamp,
                          "id" : id_for_box, 
                          "html" : html,
                          "graph_js": graph_js,
                          "should_be_small": "siac-tag-info-box-small" if should_hide_left_side else ""
-
                      }
     # we have to adjust the 'top' css property if the element has the class '.siac-tag-info-box-inverted'
     # we can only do this after the content has been rendered since we have to know the actual height.
@@ -203,11 +209,12 @@ def get_most_active_tags(max_count):
     Looks into the 100 last edited/created notes.
     Returns an ordered list of max max_count items.
     """
-    res = mw.col.db.execute("select tags from notes order by mod desc limit 100").fetchall()
+    res = mw.col.db.all("select tags from notes order by mod desc limit 100")
     if res is None or len(res) == 0:
         return []
-    counts = dict()
-    tag = ""
+
+    counts  = dict()
+    tag     = ""
     for r in res:
         spl = r[0].split()
         for t in spl:
@@ -220,7 +227,9 @@ def get_most_active_tags(max_count):
                 counts[tag] += 1
             else:
                 counts[tag] = 1
+
     user_tags = get_recently_used_tags_with_counts() 
+
     for t, c in user_tags.items():
         if "::" in t:
             tag = t.split("::")[0]
@@ -231,6 +240,7 @@ def get_most_active_tags(max_count):
         else:
             counts[tag] = c
     ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:max_count]
+
     return ordered
 
             

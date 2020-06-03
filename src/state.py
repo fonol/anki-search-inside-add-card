@@ -15,42 +15,54 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from aqt import mw
+import typing
+from typing import List, Tuple, Any, Optional, Dict
+from aqt.editor import Editor
 
-search_index = None
-contextEvt = None
-corpus = None
-deck_map = None
-edit = None
+# set after create_db_file_if_not_exists has been called
+db_file_existed: Optional[bool] = None
 
-old_on_bridge = None
+#
+# Globals
+#
+search_index        : "FTSIndex"                        = None
+note_editor_shown   : bool                              = False
+contextEvt          : Any                               = None
+corpus              : Optional[List[Tuple[Any, ...]]]   = None
+deck_map            : Optional[Dict[str, int]]          = None
+edit                : Optional[Editor]                  = None
 
-def check_index():
-    return search_index is not None and search_index.ui is not None and search_index.ui._editor is not None and search_index.ui._editor.web is not None
+def check_index() -> bool:
+    """ Returns True if index and ui are ready to use. """
+    return (search_index is not None 
+            and search_index.ui is not None 
+            and search_index.ui._editor is not None 
+            and search_index.ui._editor.web is not None)
 
-def set_index(index):
+def set_index(index: "FTSIndex"):
     global search_index
     search_index = index
 
-def get_index():
+def get_index() -> "FTSIndex":
     return search_index
 
-def corpus_is_loaded():
+def corpus_is_loaded() -> bool:
     return corpus is not None
 
-def set_corpus(c):
+def set_corpus(c: List[Tuple[Any, ...]]):
     global corpus
     corpus = c
 
-def get_corpus():
+def get_corpus() -> Optional[List[Tuple[Any, ...]]]:
     return corpus
 
-def set_edit(e):
+def set_edit(e: Editor):
     global edit
     edit = e
 
-def get_edit():
+def get_edit() -> Editor:
     return edit
 
-def set_deck_map(dm):
+def set_deck_map(dm: Dict[str, int]):
     global deck_map
     deck_map = dm

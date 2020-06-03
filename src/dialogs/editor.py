@@ -33,29 +33,36 @@ from ..state import get_index
 from ..config import get_config_value_or_default
 from ..web_import import import_webpage
 from .url_import import UrlImporter
+from .components import QtPrioritySlider
 from .url_input_dialog import URLInputDialog
 
 import utility.text
 import utility.misc
+import state
 
 def openEditor(mw, nid):
     note = mw.col.getNote(nid)
     dialog = EditDialog(mw, note)
 
 class EditDialog(QDialog):
+    """ Edit dialog for Anki notes. """
 
     def __init__(self, mw, note):
+
         QDialog.__init__(self, None, Qt.Window)
         mw.setupDialogGC(self)
-        self.mw = mw
-        self.form = aqt.forms.editcurrent.Ui_Dialog()
+
+        self.mw         = mw
+        self.form       = aqt.forms.editcurrent.Ui_Dialog()
+
         self.form.setupUi(self)
+        self.form.buttonBox.button(QDialogButtonBox.Close).setShortcut(QKeySequence("Ctrl+Return"))
+        self.editor     = aqt.editor.Editor(self.mw, self.form.fieldsArea, self)
+
         self.setWindowTitle(_("Edit Note"))
         self.setMinimumHeight(400)
         self.setMinimumWidth(500)
         self.resize(500, 850)
-        self.form.buttonBox.button(QDialogButtonBox.Close).setShortcut(QKeySequence("Ctrl+Return"))
-        self.editor = aqt.editor.Editor(self.mw, self.form.fieldsArea, self)
         self.editor.setNote(note, focusTo=0)
         addHook("reset", self.onReset)
         self.mw.requireReset()
@@ -96,21 +103,24 @@ class EditDialog(QDialog):
         self.editor.saveNow(callback)
 
 class NoteEditor(QDialog):
-    """
-    The editor window for non-anki notes.
-    Has a text field and a tag field.
-    """
+    """ The editor window for non-anki notes. """
+
     def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None, text_prefill = None, title_prefill = None, prio_prefill = None):
 
-        self.note_id = note_id
-        self.note = None
-        self.add_only = add_only
-        self.read_note_id = read_note_id
-        self.tag_prefill = tag_prefill
+        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
+
+        self.mw             = aqt.mw
+        self.parent         = parent
+
+        self.note_id        = note_id
+        self.note           = None
+        self.add_only       = add_only
+        self.read_note_id   = read_note_id
+        self.tag_prefill    = tag_prefill
         self.source_prefill = source_prefill
-        self.text_prefill = text_prefill
-        self.title_prefill = title_prefill
-        self.prio_prefill = prio_prefill
+        self.text_prefill   = text_prefill
+        self.title_prefill  = title_prefill
+        self.prio_prefill   = prio_prefill
         try:
             self.dark_mode_used = utility.misc.dark_mode_is_used(mw.addonManager.getConfig(__name__))
         except Exception as err:
@@ -118,9 +128,6 @@ class NoteEditor(QDialog):
 
         if self.note_id is not None:
             self.note = get_note(note_id)
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMaximizeButtonHint)
-        self.mw = aqt.mw
-        self.parent = parent
         #self.mw.setupDialogGC(self)
         #self.setWindowModality(Qt.WindowModal)
         #self.setAttribute(Qt.WA_DeleteOnClose)
@@ -128,15 +135,23 @@ class NoteEditor(QDialog):
 
     def setup_ui(self):
         
-         
+        # editing an existing note
         if self.note_id is not None:
             self.save = QPushButton("\u2714 Save")
             self.setWindowTitle('Edit Note')
             self.save.clicked.connect(self.on_update_clicked)
+            self.priority = get_priority(self.note_id)
+        # creating a new note
         else:
             self.save = QPushButton("\u2714 Create")
             self.setWindowTitle('New Note  (Ctrl/Cmd+Shift+N)')
             self.save.clicked.connect(self.on_create_clicked)
+            self.priority = 0
+        
+            self.save_and_stay = QPushButton(" \u2714 Create && Keep Open ")
+            self.save_and_stay.clicked.connect(self.on_create_and_keep_open_clicked)
+            self.save_and_stay.setShortcut("Ctrl+Shift+Return")
+
         self.save.setShortcut("Ctrl+Return")
         self.cancel = QPushButton("Cancel")
         self.cancel.clicked.connect(self.reject)
@@ -144,8 +159,6 @@ class NoteEditor(QDialog):
         self.priority_list = priority_list
 
         self.tabs = QTabWidget()
-        
-        
          
         self.create_tab = CreateTab(self)
         
@@ -200,10 +213,35 @@ class NoteEditor(QDialog):
         self.setStyleSheet(styles)
         self.create_tab.title.setFocus()
 
-        self.exec_()
+        # self.exec_()
+        state.note_editor_shown = True
+        self.show()
 
 
     def on_create_clicked(self):
+        
+        success = self._create_note()
+        if not success:
+            return
+        #aqt.dialogs.close("UserNoteEditor")
+        run_hooks("user-note-created")
+        self.reject()
+
+        # if reading modal is open, we might have to update the bottom bar
+        if self.read_note_id is not None:
+            get_index().ui.reading_modal.update_reading_bottom_bar(self.read_note_id)
+
+    def on_create_and_keep_open_clicked(self):
+        success = self._create_note()
+        if not success:
+            return
+        run_hooks("user-note-created")
+        if self.read_note_id is not None:
+            get_index().ui.reading_modal.update_reading_bottom_bar(self.read_note_id)
+
+        self._reset()
+
+    def _create_note(self):
         title = self.create_tab.title.text()
         title = utility.text.clean_user_note_title(title) 
         if self.create_tab.plain_text_cb.checkState() == Qt.Checked:
@@ -215,22 +253,29 @@ class NoteEditor(QDialog):
             else:
                 text = self.create_tab.text.toHtml()
 
-        source = self.create_tab.source.text()
-        tags = self.create_tab.tag.text()
-        queue_schedule = self.create_tab.queue_schedule
+        source              = self.create_tab.source.text()
+        tags                = self.create_tab.tag.text()
+        queue_schedule      = self.create_tab.slider.value()
+        specific_schedule   = self.create_tab.slider.schedule()
 
         # don't allow for completely empty fields
         if len(title.strip()) + len(text.strip()) == 0:
-            return
+            return False
 
-        create_note(title, text, source, tags, None, "", queue_schedule)
-        #aqt.dialogs.close("UserNoteEditor")
-        run_hooks("user-note-created")
-        self.reject()
+        create_note(title, text, source, tags, None, specific_schedule, queue_schedule)
+        return True
 
-        # if reading modal is open, we might have to update the bottom bar
-        if self.read_note_id is not None:
-            get_index().ui.reading_modal.update_reading_bottom_bar(self.read_note_id)
+    def _reset(self):
+        """
+            Called after a note is created with the save_and_stay button.
+            Clear the fields for the next note.
+        """
+        self.create_tab.title.setText("")
+        self.create_tab.text.setText("")
+        if self.create_tab.source.text().endswith(".pdf"):
+            self.create_tab.source.setText("")
+        self.create_tab.title.setFocus()
+        
 
     def on_update_clicked(self):
         title = self.create_tab.title.text()
@@ -243,10 +288,14 @@ class NoteEditor(QDialog):
                 text = ""
             else:
                 text = self.create_tab.text.toHtml()
-        source = self.create_tab.source.text()
-        tags = self.create_tab.tag.text()
-        queue_schedule = self.create_tab.queue_schedule
-        update_note(self.note_id, title, text, source, tags, "", queue_schedule)
+        source              = self.create_tab.source.text()
+        tags                = self.create_tab.tag.text()
+        priority            = self.create_tab.slider.value()
+        if not self.create_tab.slider.has_changed_value():
+            priority = -1
+        specific_schedule   = self.create_tab.slider.schedule()
+
+        update_note(self.note_id, title, text, source, tags, specific_schedule, priority)
         run_hooks("user-note-edited")
 
         self.reject()
@@ -254,49 +303,49 @@ class NoteEditor(QDialog):
     def reject(self):
         if not self.add_only:
             self.priority_tab.t_view.setModel(None)
+        state.note_editor_shown = False
         QDialog.reject(self)
 
     def accept(self):
+        state.note_editor_shown = False
         self.reject()
 
 class CreateTab(QWidget):
 
     def __init__(self, parent):
         QWidget.__init__(self)
-        self.queue_schedule = 0
-        self.parent = parent
-        tmap = get_all_tags_as_hierarchy(False)
-        self.tree = QTreeWidget()
+
+        self.queue_schedule     = 0
+        self.parent             = parent
+        self.tree               = QTreeWidget()
+        self.original_bg        = None
+        self.original_fg        = None
+        web_path                = utility.misc.get_web_folder_path()
+
         self.tree.setColumnCount(1)
         self.tree.setIconSize(QSize(0,0))
-        self.build_tree(tmap)
+        self.build_tree(get_all_tags_as_hierarchy(False))
         self.tree.itemClicked.connect(self.tree_item_clicked)
         self.tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.tree.setMinimumHeight(150)
         self.tree.setMinimumWidth(220)
         self.tree.setHeaderHidden(True)
-        self.original_bg = None
-        self.original_fg = None
-        web_path = utility.misc.get_web_folder_path()
 
-        self.highlight_map = {
+        self.highlight_map      = {
             "ob": [0,0,0,232,151,0],
             "rw": [255, 255, 255, 209, 46, 50],
             "yb": [0,0,0,235, 239, 69],
             "bw": [255,255,255,2, 119,189],
             "gb": [255,255,255,34,177,76]
         }
-
          
-        recently_used_tags = get_recently_used_tags()
+        recently_used_tags      = get_recently_used_tags()
         
-        config = mw.addonManager.getConfig(__name__)
-        tag_bg = config["styling"]["general"]["tagBackgroundColor"]
-        tag_fg = config["styling"]["general"]["tagForegroundColor"]
+        config                  = mw.addonManager.getConfig(__name__)
+        tag_bg                  = config["styling"]["general"]["tagBackgroundColor"]
+        tag_fg                  = config["styling"]["general"]["tagForegroundColor"]
 
-         
-
-        self.recent_tbl = QWidget()
+        self.recent_tbl         = QWidget()
         self.recent_tbl.setObjectName("recentDisp")
         self.recent_tbl.setStyleSheet("background-color: transparent;")
         bs = f"""
@@ -315,109 +364,9 @@ class CreateTab(QWidget):
         self.recent_tbl.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.recent_tbl.setMaximumHeight(100)
 
-        self.queue_section = QGroupBox("Queue")
-        self.queue_section.setStyleSheet("background-color: transparent;")
-        ex_v = QVBoxLayout()
         queue_len = len(parent.priority_list)
-        if parent.note_id is None:
-            queue_lbl = QLabel("Add to Queue? (<b>%s</b> items)" % queue_len)
-        else:
-            #check if note has position (is in queue)
-            if not parent.note.is_in_queue():
-                queue_lbl = QLabel("<b>Not</b> in Queue (<b>%s</b> items)" % queue_len)
-            else:
-                queue_lbl = QLabel("Position: <b>%s</b> / <b>%s</b>" % (parent.note.position + 1, queue_len))
-
-        queue_lbl.setAlignment(Qt.AlignCenter)
-        ex_v.addWidget(queue_lbl, Qt.AlignCenter)
-        ex_v.addSpacing(5)
-
-        if parent.note_id is None:
-            self.q_lbl_1 = QPushButton(" Don't Add ")
-        else:
-            if not parent.note.is_in_queue():
-                self.q_lbl_1 = QPushButton(" Don't Add ")
-            else:
-                self.q_lbl_1 = QPushButton("Keep Priority")
-
-        if parent.dark_mode_used:
-            btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }"
-            btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: lightgrey; font-weight: bold; } QPushButton:hover { border: 2px solid #2496dc; color: black; }"
-        else:
-            btn_style = "QPushButton { border: 2px solid lightgrey; padding: 3px; color: grey; }"
-            btn_style_active = "QPushButton { border: 2px solid #2496dc; padding: 3px; color: black; font-weight: bold;}"
-
-       
-        self.q_lbl_1.setObjectName("q_1")
-        self.q_lbl_1.setFlat(True)
-        self.q_lbl_1.setStyleSheet(btn_style_active)
-        self.q_lbl_1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_1.clicked.connect(lambda: self.queue_selected(0))
-        ex_v.addWidget(self.q_lbl_1)
-        ex_v.setAlignment(self.q_lbl_1, Qt.AlignCenter)
-
-        ex_v.addSpacing(5)
-        line_sep = QFrame()
-        line_sep.setFrameShape(QFrame.HLine)
-        line_sep.setFrameShadow(QFrame.Sunken)
-        ex_v.addWidget(line_sep)
-        ex_v.addSpacing(5)
-
-        lbl = QLabel("Priority")
-        lbl.setAlignment(Qt.AlignCenter)
-        ex_v.addWidget(lbl)
-
-        self.q_lbl_2 = QPushButton("5 - Very High")
-        self.q_lbl_2.setObjectName("q_2")
-        self.q_lbl_2.setMinimumWidth(220)
-        self.q_lbl_2.setFlat(True)
-        self.q_lbl_2.setStyleSheet(btn_style)
-        self.q_lbl_2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_2.clicked.connect(lambda: self.queue_selected(5))
-        ex_v.addWidget(self.q_lbl_2)
-        ex_v.setAlignment(self.q_lbl_2, Qt.AlignCenter)
-
-        self.q_lbl_3 = QPushButton("4 - High")
-        self.q_lbl_3.setObjectName("q_3")
-        self.q_lbl_3.setMinimumWidth(185)
-        self.q_lbl_3.setFlat(True)
-        self.q_lbl_3.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_3.setStyleSheet(btn_style)
-        self.q_lbl_3.clicked.connect(lambda: self.queue_selected(4))
-        ex_v.addWidget(self.q_lbl_3)
-        ex_v.setAlignment(self.q_lbl_3, Qt.AlignCenter)
-
-        self.q_lbl_4 = QPushButton("3 - Medium")
-        self.q_lbl_4.setMinimumWidth(150)
-        self.q_lbl_4.setObjectName("q_4")
-        self.q_lbl_4.setFlat(True)
-        self.q_lbl_4.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_4.setStyleSheet(btn_style)
-        self.q_lbl_4.clicked.connect(lambda: self.queue_selected(3))
-        ex_v.addWidget(self.q_lbl_4)
-        ex_v.setAlignment(self.q_lbl_4, Qt.AlignCenter)
-
-        self.q_lbl_5 = QPushButton("2 - Low")
-        self.q_lbl_5.setMinimumWidth(115)
-        self.q_lbl_5.setObjectName("q_5")
-        self.q_lbl_5.setFlat(True)
-        self.q_lbl_5.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_5.setStyleSheet(btn_style)
-        self.q_lbl_5.clicked.connect(lambda: self.queue_selected(2))
-        ex_v.addWidget(self.q_lbl_5)
-        ex_v.setAlignment(self.q_lbl_5, Qt.AlignCenter)
-
-        self.q_lbl_6 = QPushButton("1 - Very Low")
-        self.q_lbl_6.setMinimumWidth(80)
-        self.q_lbl_6.setObjectName("q_6")
-        self.q_lbl_6.setFlat(True)
-        self.q_lbl_6.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.q_lbl_6.setStyleSheet(btn_style)
-        self.q_lbl_6.clicked.connect(lambda: self.queue_selected(1))
-        ex_v.addWidget(self.q_lbl_6)
-        ex_v.setAlignment(self.q_lbl_6, Qt.AlignCenter)
-
-        self.queue_section.setLayout(ex_v)
+        schedule = None if self.parent.note is None else self.parent.note.reminder
+        self.slider = QtPrioritySlider(self.parent.priority, schedule=schedule)
 
         self.layout = QHBoxLayout()
         vbox_left = QVBoxLayout()
@@ -456,12 +405,21 @@ class CreateTab(QWidget):
             qs.setWidget(self.recent_tbl)
             vbox_left.addWidget(qs)
 
-        vbox_left.addWidget(self.queue_section)
 
-        self.layout.addLayout(vbox_left, 7)
+        vbox_left.addWidget(self.slider)
+        self.left_pane = QWidget()
+        self.left_pane.setLayout(vbox_left)
+        self.layout.addWidget(self.left_pane, 7)
 
         hbox = QHBoxLayout()
+
+        self.toggle_btn = QPushButton("<")
+        self.toggle_btn.clicked.connect(self.toggle_left_pane)
+        hbox.addWidget(self.toggle_btn)
+
         hbox.addStretch(1)
+        if parent.note_id is None:
+            hbox.addWidget(parent.save_and_stay)
         hbox.addWidget(parent.save)
         hbox.addWidget(parent.cancel)
 
@@ -525,9 +483,6 @@ class CreateTab(QWidget):
         self.green_black = self.vtb.addAction(QIcon(web_path + "icons/icon-green-black.png"), "Highlight 5")
         self.green_black.triggered.connect(self.on_highlight_gb_clicked)
 
-        
-
-         
         bold =  self.tb.addAction("b")
         f = bold.font()
         f.setBold(True)
@@ -586,8 +541,6 @@ class CreateTab(QWidget):
                 QMenu:item:selected { background: #2496dc; color: white; }
             """)
         
-
-         
         header_a = clean_menu.addAction("Remove Headers")
         header_a.triggered.connect(self.on_remove_headers_clicked)
         header_a1 = clean_menu.addAction("Remove All Bold Formatting")
@@ -621,16 +574,16 @@ class CreateTab(QWidget):
         p_hb.addSpacing(35)
         vbox.addLayout(p_hb)
 
-        source_lbl = QLabel("Source")
-        self.source = QLineEdit()
-        source_hb = QHBoxLayout()
+        source_lbl          = QLabel("Source")
+        self.source         = QLineEdit()
+        source_hb           = QHBoxLayout()
         source_hb.addWidget(self.source)
         if self.parent.source_prefill is not None:
             self.source.setText(self.parent.source_prefill.replace("\\", "/"))
-        pdf_btn = QPushButton("PDF")
+        pdf_btn             = QPushButton("PDF")
         pdf_btn.clicked.connect(self.on_pdf_clicked)
         source_hb.addWidget(pdf_btn)
-        pdf_from_url_btn = QPushButton("PDF from Webpage")
+        pdf_from_url_btn    = QPushButton("PDF from Webpage")
         pdf_from_url_btn.clicked.connect(self.on_pdf_from_url_clicked)
         source_hb.addWidget(pdf_from_url_btn)
 
@@ -639,17 +592,6 @@ class CreateTab(QWidget):
 
         if self.parent.text_prefill is not None:
             self.text.setText(self.parent.text_prefill)
-        if self.parent.prio_prefill is not None:
-            if self.parent.prio_prefill == 1:
-                self.q_lbl_6.animateClick()
-            elif self.parent.prio_prefill == 2:
-                self.q_lbl_5.animateClick()
-            elif self.parent.prio_prefill == 3:
-                self.q_lbl_4.animateClick()
-            elif self.parent.prio_prefill == 4:
-                self.q_lbl_3.animateClick()
-            elif self.parent.prio_prefill == 5:
-                self.q_lbl_2.animateClick()
 
         btn_styles = """
         QPushButton#q_1 { padding-left: 20px; padding-right: 20px; }
@@ -690,8 +632,6 @@ class CreateTab(QWidget):
         # vbox.addStretch(1)
         tag_lbl2 = QLabel()
         tag_lbl2.setPixmap(tag_icn)
-
-        
          
         tag_hb2 = QHBoxLayout()
         tag_hb2.setAlignment(Qt.AlignLeft)
@@ -705,6 +645,7 @@ class CreateTab(QWidget):
             self.tag.setText(self.parent.tag_prefill)
 
         vbox.setAlignment(Qt.AlignTop)
+        vbox.addSpacing(10)
         vbox.addLayout(hbox)
         self.layout.addSpacing(5)
         self.layout.addLayout(vbox, 73)
@@ -762,16 +703,12 @@ class CreateTab(QWidget):
             ti.addChildren(self._add_to_tree(children, t + "::"))
             self.tree.addTopLevelItem(ti)
 
-    def queue_selected(self, queue_schedule):
-        self.queue_schedule = queue_schedule
-        lbls = [self.q_lbl_1, self.q_lbl_6, self.q_lbl_5, self.q_lbl_4, self.q_lbl_3, self.q_lbl_2]
-
-        for lbl in lbls:
-            if self.parent.dark_mode_used:
-                lbl.setStyleSheet("QPushButton { border: 2px solid lightgrey; padding: 3px; color: lightgrey; } QPushButton:hover { border: 2px solid #2496dc; color: black; }")
-            else:
-                lbl.setStyleSheet("border: 2px solid lightgrey; padding: 3px; color: grey; font-weight: normal;")
-            lbls[queue_schedule].setStyleSheet("border: 2px solid #2496dc; padding: 3px; font-weight: bold;")
+    def toggle_left_pane(self):
+        self.left_pane.setVisible(not self.left_pane.isVisible())
+        if self.left_pane.isVisible():
+            self.toggle_btn.setText("<")
+        else:
+            self.toggle_btn.setText(">")
 
     def on_pdf_clicked(self):
         fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"PDF (*.pdf)")
@@ -940,12 +877,14 @@ class PriorityTab(QWidget):
 
     def __init__(self, priority_list, parent):
         
-         
         QWidget.__init__(self)
-        self.parent = parent
-        model = self.get_model(priority_list)
-        self.t_view = QTableView()
-        html_delegate = HTMLDelegate()
+
+        self.parent     = parent
+        self.t_view     = QTableView()
+
+        html_delegate   = HTMLDelegate()
+        model           = self.get_model(priority_list)
+
         self.t_view.setItemDelegateForColumn(0, html_delegate)
         self.t_view.setItemDelegateForColumn(1, html_delegate)
         self.t_view.setModel(model)
@@ -954,14 +893,14 @@ class PriorityTab(QWidget):
 
         self.t_view.resizeColumnsToContents()
         self.t_view.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.t_view.setDragEnabled(True)
-        self.t_view.setDropIndicatorShown(True)
-        self.t_view.setAcceptDrops(True)
-        self.t_view.viewport().setAcceptDrops(True)
-        self.t_view.setDragDropOverwriteMode(False)
+        # self.t_view.setDragEnabled(True)
+        # self.t_view.setDropIndicatorShown(True)
+        # self.t_view.setAcceptDrops(True)
+        # self.t_view.viewport().setAcceptDrops(True)
+        # self.t_view.setDragDropOverwriteMode(False)
 
-        self.t_view.setDragDropMode(QAbstractItemView.InternalMove)
-        self.t_view.setDefaultDropAction(Qt.MoveAction)
+        # self.t_view.setDragDropMode(QAbstractItemView.InternalMove)
+        # self.t_view.setDefaultDropAction(Qt.MoveAction)
         if priority_list is not None and len(priority_list) > 0:
             self.t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
             self.t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -971,16 +910,16 @@ class PriorityTab(QWidget):
         self.t_view.setSelectionMode(QAbstractItemView.SingleSelection)
 
         self.vbox = QVBoxLayout()
-        lbl = QLabel("Drag & Drop to reorder.\n'Remove' will only remove the item from the queue, not delete it.")
+        lbl = QLabel("'Remove' will only remove the item from the queue, not delete it.")
         self.vbox.addWidget(lbl)
         self.vbox.addWidget(self.t_view)
 
-        bottom_box = QHBoxLayout()
-        self.shuffle_btn = QPushButton("Shuffle")
-        self.shuffle_btn.clicked.connect(self.on_shuffle_btn_clicked)
-        bottom_box.addWidget(self.shuffle_btn)
-        bottom_box.addStretch(1)
-        self.vbox.addLayout(bottom_box)
+        # bottom_box = QHBoxLayout()
+        # # self.shuffle_btn = QPushButton("Shuffle")
+        # # # self.shuffle_btn.clicked.connect(self.on_shuffle_btn_clicked)
+        # # bottom_box.addWidget(self.shuffle_btn)
+        # # bottom_box.addStretch(1)
+        # self.vbox.addLayout(bottom_box)
 
         self.setLayout(self.vbox)
         if parent.dark_mode_used:
@@ -1068,6 +1007,7 @@ class PriorityTab(QWidget):
         self.set_remove_btns(priority_list)
 
 class PriorityListModel(QStandardItemModel):
+
     def __init__(self, parent):
         super(PriorityListModel, self).__init__()
         self.parent = parent
@@ -1160,66 +1100,6 @@ class HTMLDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         return QSize(self.doc.idealWidth(), self.doc.size().height())
-
-class ExpandableSection(QWidget):
-    def __init__(self, title="", parent=None):
-        super(ExpandableSection, self).__init__(parent)
-
-        self.toggle_button = QToolButton( text=title, checkable=True, checked=False)
-        self.toggle_button.setStyleSheet("QToolButton { border: none; }")
-        self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.toggle_button.setArrowType(Qt.RightArrow)
-        self.toggle_button.pressed.connect(self.on_pressed)
-
-        self.toggle_animation = QParallelAnimationGroup(self)
-
-        self.content_area = QScrollArea(maximumHeight=0, minimumHeight=0)
-        self.content_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.content_area.setFrameShape(QFrame.NoFrame)
-
-        lay = QVBoxLayout(self)
-        lay.setSpacing(0)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.addWidget(self.toggle_button)
-        lay.addWidget(self.content_area)
-
-        self.toggle_animation.addAnimation( QPropertyAnimation(self, b"minimumHeight"))
-        self.toggle_animation.addAnimation( QPropertyAnimation(self, b"maximumHeight"))
-        self.toggle_animation.addAnimation( QPropertyAnimation(self.content_area, b"maximumHeight"))
-
-    @pyqtSlot()
-    def on_pressed(self):
-        checked = self.toggle_button.isChecked()
-        self.toggle_button.setArrowType(
-            Qt.DownArrow if not checked else Qt.RightArrow
-        )
-        self.toggle_animation.setDirection(
-            QAbstractAnimation.Forward
-            if not checked
-            else QAbstractAnimation.Backward
-        )
-        self.toggle_animation.start()
-
-    def setContentLayout(self, layout):
-        lay = self.content_area.layout()
-        del lay
-        self.content_area.setLayout(layout)
-        collapsed_height = (
-            self.sizeHint().height() - self.content_area.maximumHeight()
-        )
-        content_height = layout.sizeHint().height()
-        for i in range(self.toggle_animation.animationCount()):
-            animation = self.toggle_animation.animationAt(i)
-            animation.setDuration(500)
-            animation.setStartValue(collapsed_height)
-            animation.setEndValue(collapsed_height + content_height)
-
-        content_animation = self.toggle_animation.animationAt(
-            self.toggle_animation.animationCount() - 1
-        )
-        content_animation.setDuration(500)
-        content_animation.setStartValue(0)
-        content_animation.setEndValue(content_height)
 
 class FlowLayout(QLayout):
     def __init__(self, parent=None, margin=0, spacing=-1):

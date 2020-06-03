@@ -5,22 +5,23 @@
      right: 0;
      bottom: 0;
      overflow: hidden;
-     opacity: 0.2;
+     opacity: 0.3;
      line-height: 1.0;
+     z-index: 3;
  }
 .textLayer > span {
     color: transparent;
     position: absolute;
     white-space: pre;
+    z-index: 3;
     cursor: text;
     transform-origin: 0% 0%;
   }
-.textLayer > div {height:200px;}
+.textLayer > span {height:200px;}
   .textLayer .highlight {
     margin: -1px;
     padding: 1px;
     background-color: rgb(180, 0, 170);
-    /* background-color: yellow; */
     border-radius: 4px;
   }
 

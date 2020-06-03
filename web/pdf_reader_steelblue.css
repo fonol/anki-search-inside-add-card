@@ -1,5 +1,5 @@
 body.siac-reading-modal-displayed #siac-right-side {
-    border-left: 2px solid darkorange;
+    border-left: 2px solid #2496dc;
 }
 #siac-reading-modal {
     display: none;
@@ -19,7 +19,7 @@ body.siac-reading-modal-displayed #siac-right-side {
 }
 
 #siac-reading-modal a:not(.siac-disabled) {
-    color: darkorange !important;
+    color: #2496dc !important;
 }
 #siac-reading-modal a.greyedout, #siac-reading-modal a.active {
     color: lightgray !important;
@@ -28,14 +28,14 @@ body.siac-reading-modal-displayed #siac-right-side {
     text-decoration: underline;
 }
 .siac-pdf-main-color {
-    color: darkorange;
+    color: #2496dc;
 }
 .siac-rm-main-color-hover:hover {
-    color: darkorange;
+    color: #2496dc;
     cursor: pointer;
 }
 .siac-modal-small.dark, #siac-reading-modal .siac-modal-small {
-    border: 3px outset darkorange;
+    border: 3px outset #2496dc;
     background: #2f2f31;
     color: white;
 }
@@ -43,7 +43,7 @@ body.siac-reading-modal-displayed #siac-right-side {
 #siac-cloze-btn {
     margin-bottom: 7px;
     text-align: center;
-    color:darkorange;
+    color:#2496dc;
     cursor:pointer;
     user-select: none;
 }
@@ -61,7 +61,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     height: 135px;
     top: -114px;
     left: -181px;
-    border: 2px outset darkorange; 
+    border: 2px outset #2496dc; 
     z-index: 5;
     transition: all 0.3s;
 }
@@ -69,7 +69,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     margin: 3px 0 2px 0;
     text-align: left;
     width: 100%;
-    color: darkorange;
+    color: #2496dc;
     text-align: center;
     height: 16px;
     font-size: 13px !important;
@@ -78,7 +78,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     filter: brightness(1.4);
 }
 #siac-tt-web-btn {
-    color:darkorange;
+    color:#2496dc;
     cursor:pointer;
     position: absolute;
     top: 5px;
@@ -99,7 +99,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     z-index: 4; 
     bottom: 50px; 
     right: 45px; 
-    border: 3px outset darkorange; 
+    border: 3px outset #2496dc; 
     border-radius: 3px; 
     color: lightgrey; 
     background: #2f2f31; 
@@ -181,7 +181,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     user-select: none;
 }
 .siac-pdf-mark-lbl > b:hover {
-    color: darkorange;
+    color: #2496dc;
     cursor: pointer;
 }
 #siac-pdf-overlay-top {
@@ -313,11 +313,11 @@ body.siac-reading-modal-displayed #siac-right-side {
     max-width: 400px;
 }
 #siac-iframe-btn label:hover {
-    color: darkorange;
+    color: #2496dc;
     cursor: pointer;
 }
 .siac-url-ch {
-   color: orange; 
+   color: #2496dc; 
    margin-bottom: 4px;
 }
 .siac-url-ch:hover {
@@ -331,7 +331,7 @@ body.siac-reading-modal-displayed #siac-right-side {
 	color: white;
     padding: 9px;
 	border-radius: 5px;
-    border: 4px outset darkorange;
+    border: 4px outset #2496dc;
     transition: all 0.5s;
 }
 
@@ -367,8 +367,8 @@ body.siac-reading-modal-displayed #siac-right-side {
     left: 7px;
     cursor: pointer;
     display: inline-block;
-    color: darkorange;
-    border: 3px solid darkorange;
+    color: #2496dc;
+    border: 3px solid #2496dc;
     border-radius: 2px;
     width: 9px;
     height: 9px;
@@ -400,7 +400,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     width: 100%; 
     flex: 0 0 auto; 
     position: relative; 
-    border-top: 2px solid darkorange; 
+    border-top: 2px solid #2496dc; 
     margin-top: 5px; 
     padding: 2px 0 0 5px; 
     overflow: hidden; 
@@ -445,7 +445,7 @@ body.siac-reading-modal-displayed #siac-right-side {
 .siac-page-mark-link {
     display: inline-block;
     cursor: pointer;
-    color: darkorange;
+    color: #2496dc;
     font-weight: bold;
 }
 .siac-page-mark-link:hover {
@@ -455,7 +455,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     display: inline-block;
     font-size: 15px;
     line-height: 18px;;
-    color: darkorange;
+    color: #2496dc;
     cursor: pointer;
     user-select: none;
 }
@@ -497,7 +497,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     color:lightgrey !important;
 }
 .siac-queue-picker-icn {
-    margin-left: 25px; cursor: pointer; font-weight: bold; color: darkorange;
+    margin-left: 25px; cursor: pointer; font-weight: bold; color: #2496dc;
     display: inline-block;
 }
 .siac-queue-picker-icn:not(.siac-disabled):hover {
@@ -553,7 +553,7 @@ body.siac-reading-modal-displayed #siac-right-side {
 }
 .siac-queue-sched-btn.active, .siac-queue-sched-btn-hor.active {
     color: white;
-    border-color: darkorange;
+    border-color: #2496dc;
 }
 .siac-queue-sched-btn.active:hover, .siac-queue-sched-btn-hor.active:hover {
    filter: brightness(140%);
@@ -581,7 +581,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     opacity: 0.3;
 }
 .siac-sched-icn line, .siac-sched-icn ellipse {
-    stroke: darkorange !important;
+    stroke: #2496dc !important;
 }
 .siac-sched-icn.grey line, .siac-sched-icn.grey ellipse {
     stroke: lightgrey !important;
@@ -606,7 +606,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     display: none;
     width: 300px;
     height: 102px;
-    border: 3px outset darkorange;
+    border: 3px outset #2496dc;
 }
 #siac-queue-infobox:after {
     content: " ";
@@ -616,7 +616,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     margin-top: -11px;
     border-width: 11px;
     border-style: solid;
-    border-color: transparent darkorange transparent transparent;
+    border-color: transparent #2496dc transparent transparent;
     transition: all ease 0.2s;
 }
 #siac-reading-modal-timer {
@@ -637,7 +637,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     user-select: none;
 }
 .siac-timer-btn.active {
-    color: darkorange;
+    color: #2496dc;
     font-weight: bold;
 }
 #siac-timer-play-btn {
@@ -665,7 +665,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     transform: translate(-50%, -50%);
     padding: 15px;
     width: 300px;
-    border: 4px outset darkorange;
+    border: 4px outset #2496dc;
     border-radius: 5px;
     display: none;
 }
@@ -686,7 +686,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     padding: 15px; 
     position: relative; 
     text-align: center;
-    border: 3px outset darkorange;
+    border: 3px outset #2496dc;
     background: #2f2f31;
     color: white;
 }
@@ -720,7 +720,7 @@ body.night_mode .siac-note-title-only {
     padding: 10px 15px 5px 0;
     border-top: 2px solid;
     margin-top: 10px;
-    border-top: 2px solid darkorange;
+    border-top: 2px solid #2496dc;
 }
 #siac-reading-modal-tabs-left .siac-btn {
     color: #b2b2a0;
@@ -732,10 +732,10 @@ body.night_mode .siac-note-title-only {
     border-color: #2496dc !important;
 }
 .siac-pdf-main-color-border-bottom {
-    border-bottom: 2px solid darkorange;
+    border-bottom: 2px solid #2496dc;
 }
 .siac-pdf-main-color-border-top {
-    border-top: 2px solid darkorange;
+    border-top: 2px solid #2496dc;
 }
 #siac-left-tab-browse,#siac-left-tab-pdfs {
     font-family: 'Open Sans', sans-serif;
@@ -806,7 +806,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     flex: 0 0 77px; 
     display: flex; 
     flex-wrap: nowrap; 
-    border-bottom: 2px solid darkorange; 
+    border-bottom: 2px solid #2496dc; 
     margin-bottom: 5px; 
     white-space: nowrap;
     position: relative;
@@ -856,8 +856,8 @@ label input:checked ~ span {
     font-weight: bold;
 }
 body.siac-left-right-switched #siac-right-side {
-    border-right: 2px solid darkorange;
+    border-right: 2px solid #2496dc;
 }
 #siac-right-side {
-    border-left: 2px solid darkorange;
+    border-left: 2px solid #2496dc;
 }

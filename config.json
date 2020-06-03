@@ -104,6 +104,15 @@
 "notes.sidebar.visible": false,
 "notes.showSource": true,
 "searchpane.zoom" : 1.0,
-"switchLeftRight": false
+"switchLeftRight": false,
+"highlighting": true,
+"pdf.onOpen.autoFillTagsWithPDFsTags" : true,
+"pdf.onOpen.autoFillFieldsWithPDFName": [],
+"pdf.import.folders_to_search" : [],
+"notes.queue.priorityScaleFactor": 5,
+"notes.queue.missedNotesHandling": "remove-schedule",
+"notes.queue.scheduleDialogOnDoneUnscheduledNotes": false,
+"notes.queue.intervalSchedulesStartToday": true,
+"pdf.theme": "pdf_reader.css"
 
 }

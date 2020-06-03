@@ -91,7 +91,7 @@ function selectDeckWithId(did) {
     updateSelectedDecks();
 }
 function fixRetMarkWidth(elem) {
-    if (elem.parentElement.getElementsByClassName("retMark").length > 0 && elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth.length == 0)
+    if (elem && elem.parentElement.getElementsByClassName("retMark").length > 0 && elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth.length == 0)
         elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth = elem.offsetWidth + "px";
 }
 function expandRankingLbl(elem) {
@@ -275,7 +275,7 @@ function getSelectionText() {
     }
     if (text.length > 0 && text != "&nbsp;") {
         showLoading("Selection");
-        pycmd('fldSlctd ' + siacState.selectedDecks.toString() + ' ~ ' + text);
+        pycmd('siac-fld-selected ' + siacState.selectedDecks.toString() + ' ~ ' + text);
     }
 }
 function searchForUserNote(event, elem) {
@@ -318,7 +318,7 @@ function onWindowResize() {
         document.getElementById("outerWr").style.height = `calc(100vh - ${offsetTop}px)`;
 
     if (!$('#switchBtn').is(":visible")) {
-        $('#leftSide').show();
+        $('#leftSide').css("display", "flex");
         $('#outerWr').css('display', 'flex').removeClass('onesided');
         document.getElementById('switchBtn').innerHTML = "&#10149; Search";
     }
@@ -374,12 +374,12 @@ function deleteNote(id) {
 
 function synInputKeyup(event, elem) {
     if (event.keyCode == 13 && elem.value)
-        pycmd("saveSynonyms " + elem.value);
+        pycmd("siac-save-synonyms " + elem.value);
 }
 
 function synonymSetKeydown(event, elem, index) {
     if (event.keyCode == 13 && elem.innerHTML.length) {
-        pycmd("editSynonyms " + index + " " + elem.innerHTML);
+        pycmd("siac-edit-synonyms " + index + " " + elem.innerHTML);
         event.preventDefault();
         $(elem).blur();
     }
@@ -407,9 +407,9 @@ function updateFieldToHideInResult(checkbox, mid, fldOrd) {
 function setSearchOnTyping(active) {
     siacState.searchOnTyping = active;
     if (!active)
-        $('.field').off('keyup', fieldKeypress);
+        $('.field').off('keyup.siac', fieldKeypress);
     else {
-        $('.field').on('keyup', fieldKeypress);
+        $('.field').on('keyup.siac', fieldKeypress);
         sendContent();
     }
     sendSearchOnTyping();
@@ -421,14 +421,14 @@ function sendSearchOnSelection() {
     pycmd("searchOnSelection " + (siacState.searchOnSelection ? "on" : "off"));
 }
 function fieldKeypress(event) {
-    if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 32 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
+    if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
         if (siacState.timeout) {
             clearTimeout(siacState.timeout);
             siacState.timeout = null;
         }
         siacState.timeout = setTimeout(function () {
             sendContent(event);
-        }, $del$);
+        }, delayWhileTyping);
     }
 }
 function searchMaskKeypress(event) {
@@ -479,7 +479,7 @@ function clearSearchResults() {
         document.getElementById("greyout").style.display = "none";
     } catch(e) {}
 
-    $('.siac-tag-info-box').remove();
+    $('.siac-tag-info-box,#siac-results-loader-wrapper').remove();
     $('.tagLbl').css("z-index", "999");
 }
 
@@ -519,7 +519,7 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
         if (stamp > -1 && document.getElementById("info-took")) {
             if (printTiming) {
                 let took = new Date().getTime() - stamp;
-                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("lastTiming ${new Date().getTime() - rStart}")'>&#9432;</b>`;
+                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'>&#9432;</b>`;
             } else {
                 document.getElementById("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
             }
@@ -531,7 +531,7 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
         if (stamp > -1 && document.getElementById("info-took")) {
             if (printTiming) {
                 let took = new Date().getTime() - stamp;
-                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("lastTiming ${new Date().getTime() - rStart}")'>&#9432;</b>`;
+                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'>&#9432;</b>`;
             } else {
                 document.getElementById("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
             }
@@ -564,7 +564,7 @@ function displayPagination(page, pageMax, total, resultsFound, cacheSize) {
     if (cacheSize !== -1) {
         let c_html = "";
         if (cacheSize > 1) {
-            c_html += "<div style='display: inline;'>Last Results: &nbsp;</div>"
+            c_html += `<div onclick='pycmd("siac-rerender ${cacheSize - 2}")' style='display: inline; cursor: pointer;'>Last Results: &nbsp;</div>`;
             for (var i = 0; i < cacheSize - 1; i++) {
                 c_html += `<span onclick='pycmd("siac-rerender ${cacheSize - i - 2}")'>${i+1}</span>`;
             }
@@ -668,19 +668,29 @@ function activateGridView() {
         $('#gridCb').prop("checked", true);
     }, 400);
 }
+function predefSearchFromSidebar(type) {
+    showSearchLoader();
+    setTimeout(function() {
+        let decks = siacState.selectedDecks.toString();
+        pycmd('predefSearch ' + type + ' 200 ' + decks);
+    }, 110);
 
+}
 function predefSearch() {
-    let e = document.getElementById("predefSearchSelect");
-    let search = e.options[e.selectedIndex].value;
-    let c = document.getElementById("predefSearchNumberSel");
-    let count = c.options[c.selectedIndex].value;
-    let decks = siacState.selectedDecks.toString();
-    pycmd("predefSearch " + search + " " + count + " " + decks);
+    showSearchLoader();
+    setTimeout(function() {
+        let e = document.getElementById("predefSearchSelect");
+        let search = e.options[e.selectedIndex].value;
+        let c = document.getElementById("predefSearchNumberSel");
+        let count = c.options[c.selectedIndex].value;
+        let decks = siacState.selectedDecks.toString();
+        pycmd("predefSearch " + search + " " + count + " " + decks);
+    }, 110);
 }
 function sort() {
     let e = document.getElementById("sortSelect");
     let sort = e.options[e.selectedIndex].value;
-    pycmd("pSort " + sort);
+    pycmd("siac-p-sort " + sort);
 
 }
 function addFloatingNote(nid) {
@@ -816,7 +826,7 @@ function displayCalInfo(elem) {
     }
     $('#cal-info').css("left", offsetLeft + "px").css("top", (offset.top - 275) + "px");
     document.getElementById('cal-info').style.display = "block";
-    pycmd("calInfo " + $(elem.children[0]).data("index"));
+    pycmd("siac-cal-info " + $(elem.children[0]).data("index"));
 }
 
 function calMouseLeave() {
@@ -857,10 +867,25 @@ function hideModalSubpage() {
 function showLoader(target, text, voffset) {
     voffset = voffset ? voffset : 0;
     $('#' + target).append(`
-    <div id='siac-loader-modal' class='siac-modal-small' contenteditable=false style='position: relative; text-align: center; margin-top: ${voffset}px;'>
+    <div id='siac-loader-modal' class='siac-modal-small' contenteditable=false style='position-relative; text-align: center; margin-top: ${voffset}px;'>
         <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>${text}</div></div>
     </div>
     `);
+}
+function showSearchLoader(text) {
+    if (document.getElementById('siac-results-loader-wrapper')) {
+        return;
+    }
+    text = text ? text : "Computing ...";
+    let sr = document.getElementById("searchResults");
+    sr.scrollTop = 0;
+    sr.style.overflowY = 'hidden';
+    sr.innerHTML += `
+    <div id='siac-results-loader-wrapper' style='position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5; height: 100%%; text-align: center; background: rgba(0,0,0,0.4); display:flex; align-items: center; justify-content: center; border-radius: 5px;'>
+        <div class='siac-search-loader' style='display: inline-block; vertical-align: middle;'>
+            <b>${text}</b>
+        </div>
+    </div>`;
 }
 
 function toggleSearchbarMode(elem) {
@@ -874,6 +899,12 @@ function toggleSearchbarMode(elem) {
 }
 
 function globalKeydown(e) {
+    // if (e.keyCode === 65 && event.button) {
+    //     pdfTextLayerMetaKey = true;
+    // } else {
+    //     setTimeout(function() { pdfTextLayerMetaKey = false;}, 100);
+    //     pdfTextLayerMetaKey = false;
+    // }
     if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode === 78) {
         e.preventDefault();
         if ($('#siac-rd-note-btn').length) {
@@ -881,11 +912,7 @@ function globalKeydown(e) {
         } else {
             pycmd('siac-create-note');
         }
-    } else if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode === 83 && $('#siac-reading-modal-top-bar').is(":visible")) {
-       // pycmd("siac-quick-schedule " + $('#siac-reading-modal-top-bar').data('nid'));
-    }
-    
-    
+    } 
     else if (pdfDisplayed && !$('.field').is(':focus')) {
         pdfViewerKeyup(e);
     }

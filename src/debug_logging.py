@@ -44,40 +44,50 @@ def stop_watch(t_start):
     return time.time() * 1000 - t_start
 
 def persist_index_info(search_index):
+    """ Save some info on the search index in data.json, 
+    which can be used on next startup to determine if the index should be rebuilt. """
+
     if search_index is None:
         return
 
-    config = mw.addonManager.getConfig(__name__)
+    config                              = mw.addonManager.getConfig(__name__)
+    c_json                              = _get_data_file_content() 
 
-    c_json = _get_data_file_content() 
-    c_json["index"]["timestamp"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    c_json["index"]["type"] = search_index.type 
-    c_json["index"]["size"] = search_index.get_number_of_notes()
+    if c_json is None:
+        c_json                          = { "index": {}, "notes": {} }
+
+    c_json["index"]["timestamp"]        = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    c_json["index"]["type"]             = search_index.type 
+    c_json["index"]["size"]             = search_index.get_number_of_notes()
     # not used yet
-    c_json["index"]["lastInsertedId"] = -1
-    c_json["index"]["fieldsToExclude"] = search_index.creation_info["fields_to_exclude_original"]
-    c_json["index"]["decks"] = search_index.creation_info["decks"]
-    c_json["index"]["stopwordsSize"] = search_index.creation_info["stopwords_size"]
+    c_json["index"]["lastInsertedId"]   = -1
+    c_json["index"]["fieldsToExclude"]  = search_index.creation_info["fields_to_exclude_original"]
+    c_json["index"]["decks"]            = search_index.creation_info["decks"]
+    c_json["index"]["stopwordsSize"]    = search_index.creation_info["stopwords_size"]
     # not used yet
-    c_json["index"]["shouldRebuild"] = False
+    c_json["index"]["shouldRebuild"]    = False
 
     _write_to_data_file(c_json)
 
 
 def persist_notes_db_checked():
-    """
-        Update "notes" - "db_last_checked" with current timestamp
-    """
-    stamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-    c_json = _get_data_file_content()
+    """ Update "notes" - "db_last_checked" with current timestamp. """
+
+    stamp                               = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    c_json                              = _get_data_file_content()
+
     if not "notes" in c_json:
         c_json["notes"] = {}
-    c_json["notes"]["db_last_checked"] = stamp
+
+    c_json["notes"]["db_last_checked"]  = stamp
+
     _write_to_data_file(c_json)
 
 
 def get_index_info():
-    c_json = _get_data_file_content() 
+    c_json = _get_data_file_content()
+    if c_json is None:
+        return None
     return c_json["index"]
 
 def get_notes_info():
@@ -88,17 +98,25 @@ def get_notes_info():
 
 def _get_data_file_content():
     dir = utility.misc.get_user_files_folder_path()
-    with open(dir + "data.json", "r") as json_file:
-        return json.load(json_file)
+    f = dir + "data.json"
+    if not utility.misc.file_exists(f):
+        return None
+    try:
+        with open(f, "r", encoding="utf-8") as json_file:
+            return json.load(json_file)
+    except:
+        # if it failed to read, probably for some encoding reason, create the file again
+        os.remove(f)
+        return None
 
 def _write_to_data_file(c_json):
-    dir = utility.misc.get_user_files_folder_path() + "data.json"
-    with open(dir, "w") as json_file:
+    f = utility.misc.get_user_files_folder_path() + "data.json"
+    with open(f, "w", encoding="utf-8") as json_file:
         json.dump(c_json, json_file, indent=2)
         
 def toggle_should_rebuild():
-    c_json = _get_data_file_content() 
-    c_json["index"]["shouldRebuild"] = not c_json["index"]["shouldRebuild"]
+    c_json                              = _get_data_file_content() 
+    c_json["index"]["shouldRebuild"]    = not c_json["index"]["shouldRebuild"]
     _write_to_data_file(c_json)
 
 

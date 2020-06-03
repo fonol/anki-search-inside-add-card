@@ -1,7 +1,7 @@
 {
   "index": {
-    "timestamp": "14/03/2020 07:16:18",
-    "size": 11081,
+    "timestamp": "02/04/2020 08:58:06",
+    "size": 11124,
     "decks": [],
     "shouldRebuild": false,
     "lastInsertedId": -1,
@@ -11,6 +11,6 @@
   },
   "synsets": [],
   "notes": {
-    "db_last_checked": "2020-03-14-07-03-05"
+    "db_last_checked": "2020-04-04-17-07-52"
   }
 }
