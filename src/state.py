@@ -25,11 +25,12 @@ db_file_existed: Optional[bool] = None
 #
 # Globals
 #
-search_index: "FTSIndex" = None
-contextEvt = None
-corpus: Optional[List[Tuple[Any, ...]]] = None
-deck_map: Optional[Dict[str, int]] = None
-edit: Optional[Editor] = None
+search_index        : "FTSIndex"                        = None
+note_editor_shown   : bool                              = False
+contextEvt          : Any                               = None
+corpus              : Optional[List[Tuple[Any, ...]]]   = None
+deck_map            : Optional[Dict[str, int]]          = None
+edit                : Optional[Editor]                  = None
 
 def check_index() -> bool:
     """ Returns True if index and ui are ready to use. """

@@ -38,6 +38,7 @@ from .url_input_dialog import URLInputDialog
 
 import utility.text
 import utility.misc
+import state
 
 def openEditor(mw, nid):
     note = mw.col.getNote(nid)
@@ -106,7 +107,7 @@ class NoteEditor(QDialog):
 
     def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None, text_prefill = None, title_prefill = None, prio_prefill = None):
 
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMaximizeButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
 
         self.mw             = aqt.mw
         self.parent         = parent
@@ -147,7 +148,7 @@ class NoteEditor(QDialog):
             self.save.clicked.connect(self.on_create_clicked)
             self.priority = 0
         
-            self.save_and_stay = QPushButton("\u2714 Create && Keep Open")
+            self.save_and_stay = QPushButton(" \u2714 Create && Keep Open ")
             self.save_and_stay.clicked.connect(self.on_create_and_keep_open_clicked)
             self.save_and_stay.setShortcut("Ctrl+Shift+Return")
 
@@ -212,7 +213,9 @@ class NoteEditor(QDialog):
         self.setStyleSheet(styles)
         self.create_tab.title.setFocus()
 
-        self.exec_()
+        # self.exec_()
+        state.note_editor_shown = True
+        self.show()
 
 
     def on_create_clicked(self):
@@ -250,10 +253,10 @@ class NoteEditor(QDialog):
             else:
                 text = self.create_tab.text.toHtml()
 
-        source = self.create_tab.source.text()
-        tags = self.create_tab.tag.text()
-        queue_schedule = self.create_tab.slider.value()
-        specific_schedule = self.create_tab.slider.schedule()
+        source              = self.create_tab.source.text()
+        tags                = self.create_tab.tag.text()
+        queue_schedule      = self.create_tab.slider.value()
+        specific_schedule   = self.create_tab.slider.schedule()
 
         # don't allow for completely empty fields
         if len(title.strip()) + len(text.strip()) == 0:
@@ -285,12 +288,13 @@ class NoteEditor(QDialog):
                 text = ""
             else:
                 text = self.create_tab.text.toHtml()
-        source = self.create_tab.source.text()
-        tags = self.create_tab.tag.text()
-        priority = self.create_tab.slider.value()
+        source              = self.create_tab.source.text()
+        tags                = self.create_tab.tag.text()
+        priority            = self.create_tab.slider.value()
         if not self.create_tab.slider.has_changed_value():
             priority = -1
-        specific_schedule = self.create_tab.slider.schedule()
+        specific_schedule   = self.create_tab.slider.schedule()
+
         update_note(self.note_id, title, text, source, tags, specific_schedule, priority)
         run_hooks("user-note-edited")
 
@@ -299,9 +303,11 @@ class NoteEditor(QDialog):
     def reject(self):
         if not self.add_only:
             self.priority_tab.t_view.setModel(None)
+        state.note_editor_shown = False
         QDialog.reject(self)
 
     def accept(self):
+        state.note_editor_shown = False
         self.reject()
 
 class CreateTab(QWidget):
@@ -401,9 +407,16 @@ class CreateTab(QWidget):
 
 
         vbox_left.addWidget(self.slider)
-        self.layout.addLayout(vbox_left, 7)
+        self.left_pane = QWidget()
+        self.left_pane.setLayout(vbox_left)
+        self.layout.addWidget(self.left_pane, 7)
 
         hbox = QHBoxLayout()
+
+        self.toggle_btn = QPushButton("<")
+        self.toggle_btn.clicked.connect(self.toggle_left_pane)
+        hbox.addWidget(self.toggle_btn)
+
         hbox.addStretch(1)
         if parent.note_id is None:
             hbox.addWidget(parent.save_and_stay)
@@ -632,6 +645,7 @@ class CreateTab(QWidget):
             self.tag.setText(self.parent.tag_prefill)
 
         vbox.setAlignment(Qt.AlignTop)
+        vbox.addSpacing(10)
         vbox.addLayout(hbox)
         self.layout.addSpacing(5)
         self.layout.addLayout(vbox, 73)
@@ -688,6 +702,13 @@ class CreateTab(QWidget):
             ti.setData(0, 1, QVariant(t))
             ti.addChildren(self._add_to_tree(children, t + "::"))
             self.tree.addTopLevelItem(ti)
+
+    def toggle_left_pane(self):
+        self.left_pane.setVisible(not self.left_pane.isVisible())
+        if self.left_pane.isVisible():
+            self.toggle_btn.setText("<")
+        else:
+            self.toggle_btn.setText(">")
 
     def on_pdf_clicked(self):
         fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"PDF (*.pdf)")
@@ -872,14 +893,14 @@ class PriorityTab(QWidget):
 
         self.t_view.resizeColumnsToContents()
         self.t_view.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.t_view.setDragEnabled(True)
-        self.t_view.setDropIndicatorShown(True)
-        self.t_view.setAcceptDrops(True)
-        self.t_view.viewport().setAcceptDrops(True)
-        self.t_view.setDragDropOverwriteMode(False)
+        # self.t_view.setDragEnabled(True)
+        # self.t_view.setDropIndicatorShown(True)
+        # self.t_view.setAcceptDrops(True)
+        # self.t_view.viewport().setAcceptDrops(True)
+        # self.t_view.setDragDropOverwriteMode(False)
 
-        self.t_view.setDragDropMode(QAbstractItemView.InternalMove)
-        self.t_view.setDefaultDropAction(Qt.MoveAction)
+        # self.t_view.setDragDropMode(QAbstractItemView.InternalMove)
+        # self.t_view.setDefaultDropAction(Qt.MoveAction)
         if priority_list is not None and len(priority_list) > 0:
             self.t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
             self.t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -889,7 +910,7 @@ class PriorityTab(QWidget):
         self.t_view.setSelectionMode(QAbstractItemView.SingleSelection)
 
         self.vbox = QVBoxLayout()
-        lbl = QLabel("Drag & Drop to reorder.\n'Remove' will only remove the item from the queue, not delete it.")
+        lbl = QLabel("'Remove' will only remove the item from the queue, not delete it.")
         self.vbox.addWidget(lbl)
         self.vbox.addWidget(self.t_view)
 

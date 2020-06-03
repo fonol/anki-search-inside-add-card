@@ -28,6 +28,7 @@ from ..internals import perf_time
 import utility.text
 import utility.misc
 import utility.tags
+import state
 
 class QueuePicker(QDialog):
     """ Can be used to select a single note from the queue or to move pdf notes in/out of the queue. """
@@ -549,11 +550,15 @@ class FoldersTab(QWidget):
 
     def add_pdf_note(self, item_clicked):
         full_path = item_clicked.data(Qt.UserRole)
-        e = NoteEditor(self.parent, add_only=True, source_prefill=full_path)
-        if self.path_displayed is not None:
-            self.load_folders_unused_pdfs(self.path_displayed) 
-            self.parent.refresh_queue_list()
-            self.parent.pdfs_tab.refresh()
+
+        if not state.note_editor_shown:
+            e = NoteEditor(self.parent, add_only=True, source_prefill=full_path)
+            if self.path_displayed is not None:
+                self.load_folders_unused_pdfs(self.path_displayed) 
+                self.parent.refresh_queue_list()
+                self.parent.pdfs_tab.refresh()
+        else:
+            tooltip("Close the opened Note dialog first!")
 
 class TagsTab(QWidget):
     

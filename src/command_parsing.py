@@ -52,6 +52,7 @@ from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWith
 from .models import SiacNote
 import utility.misc
 import utility.text
+import state
 
 
 config = mw.addonManager.getConfig(__name__)
@@ -399,15 +400,18 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     #
 
     elif cmd == "siac-create-note":
-        NoteEditor(self.parentWindow)
+        if not state.note_editor_shown:
+            NoteEditor(self.parentWindow)
 
     elif cmd.startswith("siac-create-note-add-only "):
-        nid = int(cmd.split()[1])
-        NoteEditor(self.parentWindow, add_only=True, read_note_id=nid)
+        if not state.note_editor_shown:
+            nid = int(cmd.split()[1])
+            NoteEditor(self.parentWindow, add_only=True, read_note_id=nid)
 
     elif cmd.startswith("siac-create-note-tag-prefill "):
-        tag = cmd.split()[1]
-        NoteEditor(self.parentWindow, add_only=False, read_note_id=None, tag_prefill = tag)
+        if not state.note_editor_shown:
+            tag = cmd.split()[1]
+            NoteEditor(self.parentWindow, add_only=False, read_note_id=None, tag_prefill = tag)
 
     elif cmd.startswith("siac-create-note-source-prefill "):
         source = " ".join(cmd.split()[1:])
@@ -415,18 +419,23 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if existing > 0:
             index.ui.reading_modal.display(existing)
         else:
-            NoteEditor(self.parentWindow, add_only=False, read_note_id=None, tag_prefill = None, source_prefill=source)
+            if not state.note_editor_shown:
+                NoteEditor(self.parentWindow, add_only=False, read_note_id=None, tag_prefill = None, source_prefill=source)
+            else:
+                tooltip("Close the opened note dialog first!")
 
     elif cmd.startswith("siac-edit-user-note "):
-        id = int(cmd.split()[1])
-        if id > -1:
-            NoteEditor(self.parentWindow, id)
+        if not state.note_editor_shown:
+            id = int(cmd.split()[1])
+            if id > -1:
+                NoteEditor(self.parentWindow, id)
 
     elif cmd.startswith("siac-edit-user-note-from-modal "):
-        id = int(cmd.split()[1])
-        read_note_id = int(cmd.split()[2])
-        if id > -1:
-            NoteEditor(self.parentWindow, note_id=id, add_only=False, read_note_id=read_note_id)
+        if not state.note_editor_shown:
+            id = int(cmd.split()[1])
+            read_note_id = int(cmd.split()[2])
+            if id > -1:
+                NoteEditor(self.parentWindow, note_id=id, add_only=False, read_note_id=read_note_id)
 
     elif cmd.startswith("siac-delete-user-note-modal "):
         nid = int(cmd.split()[1])
@@ -644,7 +653,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if html is None or len(html) == 0:
             tooltip("Note text seems to be empty.")
         else:
-            NoteEditor(self.parentWindow, add_only=True, read_note_id=None, tag_prefill =note.tags, source_prefill=note.source, text_prefill=html, title_prefill = note.title, prio_prefill = prio)
+            if not state.note_editor_shown:
+                NoteEditor(self.parentWindow, add_only=True, read_note_id=None, tag_prefill =note.tags, source_prefill=note.source, text_prefill=html, title_prefill = note.title, prio_prefill = prio)
+            else:
+                tooltip("Close the opened note dialog first!")
 
     elif cmd.startswith("siac-scale "):
         factor = float(cmd.split()[1])

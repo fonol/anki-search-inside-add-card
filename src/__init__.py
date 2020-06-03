@@ -42,9 +42,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 import utility.tags
 import utility.misc
+import state
 
 from .state import check_index, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit
-import state
 from .index.indexing import build_index, get_notes_in_collection
 from .debug_logging import log
 from .web.web import *
@@ -85,6 +85,8 @@ def init_addon():
 
     # shortcut to toggle add-on pane 
     gui_hooks.editor_did_init_shortcuts.append(add_hide_show_shortcut) 
+    # reset state after the add/edit dialog is opened
+    gui_hooks.editor_did_init_shortcuts.append(reset_state) 
 
     # add-on internal hooks
     setup_hooks()
@@ -122,8 +124,8 @@ def on_load_note(editor: Editor):
 
     #only display in add cards dialog or in the review edit dialog (if enabled)
     if editor.addMode or (get_config_value_or_default("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
-        index = get_index()
 
+        index                   = get_index()
         zoom                    = get_config_value_or_default("searchpane.zoom", 1.0)
         typing_delay            = max(500, get_config_value_or_default('delayWhileTyping', 1000))
         show_tag_info_on_hover  = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
@@ -252,7 +254,13 @@ def setup_hooks():
     add_hook("reading-modal-closed", lambda: get_index().ui.sidebar.refresh_tab(1))
 
 
-def add_hide_show_shortcut(shortcuts, editor):
+def reset_state(shortcuts: List[Tuple], editor: Editor):
+    """ After the Add Card / Edit Current dialog is opened, some state variables need to be reset. """
+    
+    # might still be true if Create Note dialog was closed by closing its parent window, so reset it
+    state.note_editor_shown = False
+
+def add_hide_show_shortcut(shortcuts: List[Tuple], editor: Editor):
     """ Register a shortcut to toggle the add-on pane. """
 
     if not "toggleShortcut" in config:
