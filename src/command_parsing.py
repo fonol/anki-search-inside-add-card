@@ -1428,7 +1428,7 @@ def get_index_info():
                <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Space / Ctrl+Right / Ctrl+J</b></td></tr>
                <tr><td>PDF: Page Right + Mark Page as Read</td><td>  <b>Ctrl+Shift+Space</b></td></tr>
                <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl+K</b></td></tr>
-               <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
+               <tr><td>New Note</td><td>  <b>%s</b></td></tr>
                <tr><td>Confirm new note</td><td>  <b>Ctrl+Enter</b></td></tr>
                <tr><td>Confirm new note and keep open</td><td>  <b>Ctrl+Shift+Enter</b></td></tr>
                <tr><td>PDF: Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
@@ -1448,7 +1448,8 @@ def get_index_info():
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"],
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
-            ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db"
+            ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db",
+            config["notes.editor.shortcut"]
             )
 
     return html
