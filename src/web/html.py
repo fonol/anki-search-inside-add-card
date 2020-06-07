@@ -20,8 +20,10 @@ import re
 import datetime
 import time
 import io
+import typing
 from aqt import mw
 from aqt.utils import showInfo
+from typing import List, Tuple
 
 from ..state import get_index, check_index
 from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str
@@ -33,7 +35,7 @@ import utility.tags
 import utility.text
 
 
-def getSynonymEditor():
+def getSynonymEditor() -> str:
     synonymEditor = """
     <b>Sets (Click inside to edit)</b>
     <div style='max-height: 300px; overflow-y: auto; padding-right: 10px; margin-top: 4px;'>
@@ -46,8 +48,8 @@ def getSynonymEditor():
     <span>Input a set of terms, separated by ',' and hit enter.</span>
     <input type='text' id='siac-syn-inp' onkeyup='synInputKeyup(event, this)'/>
     """
-    synonyms = loadSynonyms()
-    st = ""
+    synonyms    = loadSynonyms()
+    st          = ""
     for c, sList in enumerate(synonyms):
         st += """<tr>
                     <td>
@@ -65,16 +67,18 @@ def getSynonymEditor():
     return synonymEditor % st
 
 def saveSynonyms(synonyms):
-    config = mw.addonManager.getConfig(__name__)
-    filtered = []
+    config              = mw.addonManager.getConfig(__name__)
+    filtered            = []
+
     for sList in synonyms:
         filtered.append(sorted(sList))
-    config["synonyms"] = filtered
+
+    config["synonyms"]  = filtered
     mw.addonManager.writeConfig(__name__, config)
 
 def newSynonyms(sListStr):
-    existing = loadSynonyms()
-    sList = [utility.text.clean_synonym(s) for s in sListStr.split(",") if len(utility.text.clean_synonym(s)) > 1]
+    existing    = loadSynonyms()
+    sList       = [utility.text.clean_synonym(s) for s in sListStr.split(",") if len(utility.text.clean_synonym(s)) > 1]
     if not sList:
         return
     found = []
@@ -91,22 +95,22 @@ def newSynonyms(sListStr):
         existing.append(sList)
     saveSynonyms(existing)
 
-def deleteSynonymSet(cmd):
+def deleteSynonymSet(cmd: str):
     index = int(cmd.strip())
     existing = loadSynonyms()
     if index >= 0 and index < len(existing):
         existing.pop(index)
     saveSynonyms(existing)
 
-def editSynonymSet(cmd):
-    index = int(cmd.strip().split()[0])
-    existing = loadSynonyms()
+def editSynonymSet(cmd: str):
+    index       = int(cmd.strip().split()[0])
+    existing    = loadSynonyms()
     existing.pop(index)
-    sList = [utility.text.clean_synonym(s) for s in cmd[len(cmd.strip().split()[0]):].split(",") if len(utility.text.clean_synonym(s)) > 1]
+    sList       = [utility.text.clean_synonym(s) for s in cmd[len(cmd.strip().split()[0]):].split(",") if len(utility.text.clean_synonym(s)) > 1]
     if not sList:
         return
-    found = []
-    foundIndex = []
+    found       = []
+    foundIndex  = []
     for c, eList in enumerate(existing):
         for s in sList:
             if s in eList:
@@ -119,7 +123,7 @@ def editSynonymSet(cmd):
         existing.append(sList)
     saveSynonyms(existing)
 
-def loadSynonyms():
+def loadSynonyms() -> List[List[str]]:
     config = mw.addonManager.getConfig(__name__)
     try:
         synonyms = config['synonyms']
@@ -128,16 +132,18 @@ def loadSynonyms():
     return synonyms
 
 
-def right_side_html(indexIsLoaded = False):
+def right_side_html(indexIsLoaded: bool = False) -> str:
     """
     Returns the javascript call that inserts the html that is essentially the right side of the add card dialog.
     The right side html is only inserted if not already present, so it is safe to call this function on every note load.
     """
-    leftSideWidth = conf_or_def("leftSideWidthInPercent", 40)
+    leftSideWidth       = conf_or_def("leftSideWidthInPercent", 40)
+
     if not isinstance(leftSideWidth, int) or leftSideWidth <= 0 or leftSideWidth > 100:
         leftSideWidth = 50
-    rightSideWidth = 100 - leftSideWidth
-    hideSidebar = conf_or_def("hideSidebar", False)
+
+    rightSideWidth      = 100 - leftSideWidth
+    hideSidebar         = conf_or_def("hideSidebar", False)
 
     if conf_or_def("switchLeftRight", False):
         insert_code = """
@@ -395,15 +401,14 @@ def right_side_html(indexIsLoaded = False):
     )
 
 
-def get_model_dialog_html():
-    """
-        Returns the html for the "Fields" section in the settings modal.
-    """
-    all_models = sorted(mw.col.models.all(), key=lambda m : m['name'])
-    index = get_index()
-    config = mw.addonManager.getConfig(__name__)
+def get_model_dialog_html() -> str:
+    """ Returns the html for the "Fields" section in the settings modal. """
 
-    html = """
+    all_models  = sorted(mw.col.models.all(), key=lambda m : m['name'])
+    index       = get_index()
+    config      = mw.addonManager.getConfig(__name__)
+
+    html        = """
     <div style='flex: 0 0 auto;'>
         <p>Changes in <i>Show Field in Results</i> take effect immediately, changes in <i>Search in Field</i> need a rebuild of the index.</p>
     </div>
@@ -439,19 +444,22 @@ def get_model_dialog_html():
     html += "</div></div>"
     return html
 
-def getCalendarHtml():
-    html = """<div id='cal-row' style="width: 100%%; height: 8px;" onmouseleave='calMouseLeave()'>%s</div> """
+def getCalendarHtml() -> str:
+    """ Html for the timeline at the bottom of the search pane. """
+
+    html                    = """<div id='cal-row' style="width: 100%%; height: 8px;" onmouseleave='calMouseLeave()'>%s</div> """
     #get notes created since the beginning of the year
-    day_of_year = datetime.datetime.now().timetuple().tm_yday
-    date_year_begin = datetime.datetime(year=datetime.datetime.utcnow().year, month=1, day=1, hour=0 ,minute=0)
-    nid_now = int(time.time()* 1000)
-    nid_minus_day_of_year = int(date_year_begin.timestamp() * 1000)
+    day_of_year             = datetime.datetime.now().timetuple().tm_yday
+    date_year_begin         = datetime.datetime(year=datetime.datetime.utcnow().year, month=1, day=1, hour=0, minute=0)
+    nid_now                 = int(time.time() * 1000)
+    nid_minus_day_of_year   = int(date_year_begin.timestamp() * 1000)
 
-    res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now))
+    res                     = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now))
 
-    counts = []
-    c = 1
-    notes_in_current_day = 0
+    counts                  = []
+    c                       = 1
+    notes_in_current_day    = 0
+
     for i, r in enumerate(res):
         c_day_of_year = time.localtime(r[0]/1000).tm_yday
         if c_day_of_year == c:
@@ -486,10 +494,13 @@ def getCalendarHtml():
     html = html % html_content
     return html
 
-def get_note_delete_confirm_modal_html(nid):
-    note = get_note(nid)
-    creation_date = note.created
-    title = utility.text.trim_if_longer_than(note.get_title(), 100) 
+def get_note_delete_confirm_modal_html(nid: int) -> str:
+    """ Html for the modal that pops up when clicking on the trash icon on an add-on note. """
+
+    note            = get_note(nid)
+    creation_date   = note.created
+    title           = utility.text.trim_if_longer_than(note.get_title(), 100) 
+
     return """
 
     <div id='siac-del-modal' style='position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5; height: 100%%; text-align: center; background: rgba(0,0,0,0.4); display:flex; align-items: center; justify-content: center; border-radius: 5px;'>

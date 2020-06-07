@@ -343,8 +343,8 @@ class ScheduleEditTab(QWidget):
 
     def parse_schedule(self, schedule):
         created = schedule.split("|")[0]
-        due = schedule.split("|")[1]
-        stype = schedule.split("|")[2]
+        due     = schedule.split("|")[1]
+        stype   = schedule.split("|")[2]
 
         if stype.startswith("td:"):
             self.td_inp.setValue(float(stype[3:]))
