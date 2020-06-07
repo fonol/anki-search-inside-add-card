@@ -51,7 +51,7 @@ from .web.web import *
 from .web.html import right_side_html
 from .notes import *
 from .hooks import add_hook
-from .dialogs.editor import EditDialog
+from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.quick_open_pdf import QuickOpenPDF
 from .internals import requires_index_loaded
 from .config import get_config_value_or_default
@@ -267,6 +267,12 @@ def add_hide_show_shortcut(shortcuts: List[Tuple], editor: Editor):
         return
     QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
     QShortcut(QKeySequence("Ctrl+o"), editor.widget, activated=show_quick_open_pdf)
+    QShortcut(QKeySequence(config["notes.editor.shortcut"]), editor.widget, activated=show_note_modal)
+
+def show_note_modal():
+    if not state.note_editor_shown:
+        ix      = get_index()
+        NoteEditor(ix.ui._editor.parentWindow)
 
 def show_quick_open_pdf():
     """ Ctrl + O pressed -> show small dialog to quickly open a PDF. """

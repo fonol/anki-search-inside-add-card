@@ -30,7 +30,7 @@ from ..notes import *
 from ..notes import _get_priority_list
 from ..hooks import run_hooks
 from ..state import get_index
-from ..config import get_config_value_or_default
+from ..config import get_config_value_or_default, update_config
 from ..web_import import import_webpage
 from .url_import import UrlImporter
 from .components import QtPrioritySlider
@@ -46,6 +46,7 @@ def openEditor(mw, nid):
 
 class EditDialog(QDialog):
     """ Edit dialog for Anki notes. """
+
 
     def __init__(self, mw, note):
 
@@ -104,6 +105,8 @@ class EditDialog(QDialog):
 
 class NoteEditor(QDialog):
     """ The editor window for non-anki notes. """
+
+    last_tags = ""
 
     def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None, text_prefill = None, title_prefill = None, prio_prefill = None):
 
@@ -167,6 +170,10 @@ class NoteEditor(QDialog):
         if not self.add_only:
             self.priority_tab = PriorityTab(priority_list, self)
             self.tabs.addTab(self.priority_tab, "Queue")
+        
+        self.settings_tab = SettingsTab(self)
+        self.tabs.addTab(self.settings_tab, "Settings")
+
         # tabs.addTab(self.browse_tab, "Browse")
         layout_main = QVBoxLayout()
         layout_main.addWidget(self.tabs)
@@ -258,10 +265,21 @@ class NoteEditor(QDialog):
         queue_schedule      = self.create_tab.slider.value()
         specific_schedule   = self.create_tab.slider.schedule()
 
-        # don't allow for completely empty fields
-        if len(title.strip()) + len(text.strip()) == 0:
+        # if source is a pdf, title must be given
+        if len(title.strip()) == 0 and source.lower().strip().endswith(".pdf"):
+            tooltip("Title must be set if source is PDF.")
             return False
 
+        if len(title.strip()) + len(text.strip()) == 0:
+            tooltip("Either Text or Title have to be filled out.")
+            return False
+        
+        if len(tags.strip()) == 0:
+            default_tags = get_config_value_or_default("notes.editor.defaultTagsIfEmpty", "")
+            if len(default_tags) > 0:
+                tags = default_tags
+
+        NoteEditor.last_tags = tags
         create_note(title, text, source, tags, None, specific_schedule, queue_schedule)
         return True
 
@@ -288,13 +306,14 @@ class NoteEditor(QDialog):
                 text = ""
             else:
                 text = self.create_tab.text.toHtml()
-        source              = self.create_tab.source.text()
-        tags                = self.create_tab.tag.text()
-        priority            = self.create_tab.slider.value()
+        source                  = self.create_tab.source.text()
+        tags                    = self.create_tab.tag.text()
+        priority                = self.create_tab.slider.value()
         if not self.create_tab.slider.has_changed_value():
             priority = -1
-        specific_schedule   = self.create_tab.slider.schedule()
+        specific_schedule       = self.create_tab.slider.schedule()
 
+        NoteEditor.last_tags    = tags
         update_note(self.note_id, title, text, source, tags, specific_schedule, priority)
         run_hooks("user-note-edited")
 
@@ -656,6 +675,18 @@ class CreateTab(QWidget):
             self.text.setHtml(parent.note.text)
             self.source.setText(parent.note.source)
 
+        # toggle left pane by default if enabled in settings
+        if get_config_value_or_default("notes.editor.autoHideLeftPaneOnOpen", False):
+            self.left_pane.setVisible(False)
+            self.toggle_btn.setText(">")
+
+        # fill tags with last tags if enabled in settings
+        if (parent.note is None 
+            and self.parent.tag_prefill is None 
+            and len(NoteEditor.last_tags.strip()) > 0
+            and get_config_value_or_default("notes.editor.autoFillWithLastTagsOnOpen", False)):
+            self.tag.setText(NoteEditor.last_tags.lstrip())
+            
         
 
     def _add_to_tree(self, map, prefix):
@@ -1005,6 +1036,119 @@ class PriorityTab(QWidget):
         set_priority_list(ids)
         self.t_view.setModel(model)
         self.set_remove_btns(priority_list)
+
+class SettingsTab(QWidget):
+
+    def __init__(self, parent):
+        QWidget.__init__(self)
+        self.parent = parent
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(QLabel("If note is created untagged, give it the following tag(s)"))
+        self.auto_tag_le = QLineEdit()
+        self.auto_tag_le.setText(get_config_value_or_default("notes.editor.defaultTagsIfEmpty", ""))
+        self.auto_tag_le.editingFinished.connect(self.update_default_tags)
+        self.layout.addWidget(self.auto_tag_le)
+
+        self.auto_fill_with_last_tag_cb = QCheckBox("Auto-fill with last tag(s) on open")
+        self.auto_fill_with_last_tag_cb.setChecked(get_config_value_or_default("notes.editor.autoFillWithLastTagsOnOpen", False))
+        self.auto_fill_with_last_tag_cb.clicked.connect(self.auto_fill_with_last_tag_cb_clicked)
+        self.layout.addWidget(self.auto_fill_with_last_tag_cb)
+        
+        self.auto_hide_left_pane_cb = QCheckBox("Hide left side by default on open")
+        self.auto_hide_left_pane_cb.setChecked(get_config_value_or_default("notes.editor.autoHideLeftPaneOnOpen", False))
+        self.auto_hide_left_pane_cb.clicked.connect(self.auto_hide_left_pane_cb_clicked)
+        self.layout.addWidget(self.auto_hide_left_pane_cb)
+
+        self.layout.addWidget(QLabel("Shortcut for this modal (default \"Ctrl+Shift+n\", requires Anki restart):"))
+        self.shortcut_le = QLineEdit()
+        self.shortcut_le.setText(get_config_value_or_default("notes.editor.shortcut", "Ctrl+Shift+n"))
+        self.layout.addWidget(self.shortcut_le)
+        self.shortcut_le.editingFinished.connect(self.update_shortcut)
+
+        self.layout.addSpacing(15)
+
+        lbl = QLabel("Queue Settings")
+        lbl.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(lbl)
+
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        self.layout.addWidget(line)
+
+        self.priority_mod_le = QDoubleSpinBox()
+        self.priority_mod_le.setMinimum(0.1)
+        self.priority_mod_le.setDecimals(1)
+        self.priority_mod_le.setSingleStep(0.1)
+        self.priority_mod_le.setValue(get_config_value_or_default("notes.queue.priorityMod", 1.0))
+        self.priority_mod_le.valueChanged.connect(self.priority_mod_changed)
+        hb = QHBoxLayout()
+        hb.addWidget(QLabel("Priority Weight (default: 1.0, requires Anki restart):"))
+        hb.addStretch(1)
+        hb.addWidget(self.priority_mod_le)
+        self.layout.addLayout(hb)
+
+        self.layout.addSpacing(15)
+        self.layout.addWidget(QLabel("Example queue calculation with current settings:"))
+        
+        self.qu_examples = [QLineEdit() for ix in range(0, 13)]
+        for le in self.qu_examples:
+            self.layout.addWidget(le)
+
+        self.layout.addStretch(1)
+        self.setLayout(self.layout)
+        self.update_queue_example()
+    
+    def auto_hide_left_pane_cb_clicked(self):
+        update_config("notes.editor.autoHideLeftPaneOnOpen", self.auto_hide_left_pane_cb.isChecked())
+
+    def auto_fill_with_last_tag_cb_clicked(self):
+        update_config("notes.editor.autoFillWithLastTagsOnOpen", self.auto_fill_with_last_tag_cb.isChecked())
+
+    def priority_mod_changed(self, new_val):
+        update_config("notes.queue.priorityMod", new_val)
+        self.update_queue_example()
+
+    def update_default_tags(self):
+        tags = self.auto_tag_le.text()
+        update_config("notes.editor.defaultTagsIfEmpty", tags)
+        self.update_queue_example
+
+    def update_shortcut(self):
+        text = self.shortcut_le.text()
+        if text is None or len(text.strip()) == 0:
+            return
+        update_config("notes.editor.shortcut", text)
+
+    def update_queue_example(self):
+        """ Example queue calculation with the current parameters. """
+
+        def _calc_score(priority, days_delta, prio_scale, prio_mod):
+            prio_score = 1 + ((priority - 1)/99) * (prio_scale - 1)
+            return days_delta + prio_mod * prio_score
+
+        prio_scale  = get_config_value_or_default("notes.queue.priorityScaleFactor", 5)
+        prio_mod    = get_config_value_or_default("notes.queue.priorityMod", 1.0)
+
+        items       = [(0.1, 50), (1, 20), (1, 80), (3, 40), (0.5, 90), (0.2, 30), (10, 30), (10, 60), (6.4, 10), (1.4, 20), (0.1, 100), (0.2, 90), (0.01, 90)]
+
+        scores      = []
+        for item in items:
+            score = _calc_score(item[1], item[0], prio_scale, prio_mod)
+            scores.append((score, item))
+        scores = sorted(scores, key=lambda x: x[0], reverse=True)
+        for ix, s in enumerate(scores):
+            self.qu_examples[ix].setText(f"{ix+1}. Score: {round(s[0], 2)}, Days since last seen: {s[1][0]}, Priority: {s[1][1]}")
+            self.qu_examples[ix].setReadOnly(True)
+
+
+            
+
+
+
 
 class PriorityListModel(QStandardItemModel):
 
