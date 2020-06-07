@@ -41,10 +41,13 @@ import utility.tags
 import utility.text
 import utility.date
 
-db_path: Optional[str] = None
+db_path                 : Optional[str] = None
 
 # How many times more important is a priority 100 item than a priority 1 item?
-PRIORITY_SCALE_FACTOR: int = get_config_value_or_default("notes.queue.priorityScaleFactor", 5)
+PRIORITY_SCALE_FACTOR   : int           = get_config_value_or_default("notes.queue.priorityScaleFactor", 5)
+
+# how should priority be weighted 
+PRIORITY_MOD            : float         = get_config_value_or_default("notes.queue.priorityMod", 1.0) 
 
 # if a note was scheduled for some time point in the past, but not done, 
 # 1. schedule can be removed ('remove-schedule'), 
@@ -302,27 +305,10 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
     conn.close()
     #return new position (0-based), and length of queue, some functions need that to update the ui
     return (index, len(final_list))
-    
-
-def _specific_schedule_is_due_today(sched_str: str) -> bool:
-    if not "|" in sched_str:
-        return False
-    dt = _dt_from_date_str(sched_str.split("|")[1])
-    if MISSED_NOTES_HANDLING != "place-front":
-        return dt.date() == datetime.today().date()
-    return dt.date() <= datetime.today().date()
-
-def _specific_schedule_was_due_before_today(sched_str: str) -> bool:
-    if not "|" in sched_str:
-        return False
-    dt = _dt_from_date_str(sched_str.split("|")[1])
-    return dt.date() < datetime.today().date()
-        
-        
 
 def _calc_score(priority: int, days_delta: float) -> float:
-    prio_factor = 1 + ((priority - 1)/99) * (PRIORITY_SCALE_FACTOR - 1)
-    return days_delta * prio_factor
+    prio_score = 1 + ((priority - 1)/99) * (PRIORITY_SCALE_FACTOR - 1)
+    return days_delta + PRIORITY_MOD * prio_score
 
 def get_reminder(nid: int) -> str:
     conn = _get_connection()
@@ -1200,6 +1186,21 @@ def _to_notes(db_list: List[Tuple[Any, ...]], pinned: List[int] = []) -> List[Si
         if not str([tup[0]]) in pinned:
             notes.append(SiacNote(tup))
     return notes
+
+def _specific_schedule_is_due_today(sched_str: str) -> bool:
+    if not "|" in sched_str:
+        return False
+    dt = _dt_from_date_str(sched_str.split("|")[1])
+    if MISSED_NOTES_HANDLING != "place-front":
+        return dt.date() == datetime.today().date()
+    return dt.date() <= datetime.today().date()
+
+def _specific_schedule_was_due_before_today(sched_str: str) -> bool:
+    if not "|" in sched_str:
+        return False
+    dt = _dt_from_date_str(sched_str.split("|")[1])
+    return dt.date() < datetime.today().date()
+
 
 def _date_now_str() -> str:
     return datetime.now().strftime('%Y-%m-%d-%H-%M-%S')

@@ -113,6 +113,10 @@
 "notes.queue.missedNotesHandling": "remove-schedule",
 "notes.queue.scheduleDialogOnDoneUnscheduledNotes": false,
 "notes.queue.intervalSchedulesStartToday": true,
-"pdf.theme": "pdf_reader.css"
-
+"notes.queue.priorityMod": 1.0,
+"pdf.theme": "pdf_reader.css",
+"notes.editor.autoFillWithLastTagsOnOpen": false,
+"notes.editor.autoHideLeftPaneOnOpen": false,
+"notes.editor.shortcut": "Ctrl+Shift+n",
+"notes.editor.defaultTagsIfEmpty": ""
 }
