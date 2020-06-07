@@ -367,8 +367,9 @@ def right_side_html(indexIsLoaded = False):
         } else {
            var there = true;
         }
-        
-        $('.field').off('siac').on('keyup.siac', fieldKeypress);
+        if (siacState.searchOnTyping) {
+            $('.field').off('siac').on('keyup.siac', fieldKeypress);
+        } 
         $('.field').attr('onmouseup', 'getSelectionText()');
         window.$fields = $('.field');
         window.$searchInfo = $('#searchInfo');
