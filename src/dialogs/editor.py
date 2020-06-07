@@ -147,7 +147,7 @@ class NoteEditor(QDialog):
         # creating a new note
         else:
             self.save = QPushButton("\u2714 Create")
-            self.setWindowTitle('New Note  (Ctrl/Cmd+Shift+N)')
+            self.setWindowTitle('New Note')
             self.save.clicked.connect(self.on_create_clicked)
             self.priority = 0
         
