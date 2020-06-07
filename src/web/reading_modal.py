@@ -191,24 +191,24 @@ class ReadingModal:
 
 
     def _display_pdf(self, full_path: str, note_id: int):
-        base64pdf = utility.misc.pdf_to_base64(full_path)
-        blen = len(base64pdf)
+        base64pdf       = utility.misc.pdf_to_base64(full_path)
+        blen            = len(base64pdf)
 
         #pages read are stored in js array [int]
-        pages_read = get_read_pages(note_id)
-        pages_read_js = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
+        pages_read      = get_read_pages(note_id)
+        pages_read_js   = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
 
         #marks are stored in two js maps, one with pages as keys, one with mark types (ints) as keys
-        marks = get_pdf_marks(note_id)
-        js_maps = utility.misc.marks_to_js_map(marks)
-        marks_js = "pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s;" % (js_maps[0], js_maps[1])
+        marks           = get_pdf_marks(note_id)
+        js_maps         = utility.misc.marks_to_js_map(marks)
+        marks_js        = "pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s;" % (js_maps[0], js_maps[1])
 
         # pages read are ordered by date, so take last
-        last_page_read = pages_read[-1] if len(pages_read) > 0 else 1
+        last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
 
-        title = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
-        addon_id = utility.misc.get_addon_id()
-        port = mw.mediaServer.getPort()
+        title           = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
+        addon_id        = utility.misc.get_addon_id()
+        port            = mw.mediaServer.getPort()
 
         init_code = """
             pdfLoading = true;
