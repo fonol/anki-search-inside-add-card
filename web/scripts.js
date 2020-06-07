@@ -905,15 +905,15 @@ function globalKeydown(e) {
     //     setTimeout(function() { pdfTextLayerMetaKey = false;}, 100);
     //     pdfTextLayerMetaKey = false;
     // }
-    if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode === 78) {
-        e.preventDefault();
-        if ($('#siac-rd-note-btn').length) {
-            $('#siac-rd-note-btn').trigger("click");
-        } else {
-            pycmd('siac-create-note');
-        }
-    } 
-    else if (pdfDisplayed && !$('.field').is(':focus')) {
+    // if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode === 78) {
+    //     e.preventDefault();
+    //     if ($('#siac-rd-note-btn').length) {
+    //         $('#siac-rd-note-btn').trigger("click");
+    //     } else {
+    //         pycmd('siac-create-note');
+    //     }
+    // } 
+    if (pdfDisplayed && !$('.field').is(':focus')) {
         pdfViewerKeyup(e);
     }
 }
