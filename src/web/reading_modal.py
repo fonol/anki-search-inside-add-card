@@ -157,7 +157,7 @@ class ReadingModal:
         on_confirm= """ if (document.getElementById('siac-range-input-min').value && document.getElementById('siac-range-input-max').value) {
         pycmd('siac-user-note-mark-range %s ' + document.getElementById('siac-range-input-min').value
                 + ' ' + document.getElementById('siac-range-input-max').value
-                + ' ' + pdfDisplayed.numPages
+                + ' ' + numPagesExtract()
                 + ' ' + pdfDisplayedCurrentPage);
         }
         """ % note_id
@@ -203,8 +203,18 @@ class ReadingModal:
         js_maps         = utility.misc.marks_to_js_map(marks)
         marks_js        = "pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s;" % (js_maps[0], js_maps[1])
 
+        # pdf might be an extract (should only show a range of pages)
+        extract_js      = f"pdfExtract = [{self.note.extract_start}, {self.note.extract_end}];" if self.note.extract_start is not None else "pdfExtract = null;"
+
         # pages read are ordered by date, so take last
-        last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
+        last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1 
+
+        if self.note.extract_start is not None:
+            if len(pages_read) > 0:
+                read_in_extract = [p for p in pages_read if p >= self.note.extract_start and p <= self.note.extract_end]
+                last_page_read = read_in_extract[-1] if len(read_in_extract) > 0 else self.note.extract_start
+            else:
+                last_page_read  = self.note.extract_start
 
         title           = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
         addon_id        = utility.misc.get_addon_id()
@@ -221,6 +231,7 @@ class ReadingModal:
             var file = new File([arr], "placeholder.pdf", {type : "application/pdf" });
             var fileReader = new FileReader();
             pagesRead = [%s];
+            %s
             %s
             var loadFn = function(retry) {
                 if (retry > 4) {
@@ -274,7 +285,7 @@ class ReadingModal:
                         if (pdfBarsHidden) {
                             showPDFBottomRightNotification("%s", 4000);
                         }
-                        if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + pdf.numPages); }
+                        if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
                         fileReader = null;
                 });
             };
@@ -282,7 +293,7 @@ class ReadingModal:
 
             fileReader.readAsArrayBuffer(file);
             b64 = ""; arr = null; bstr = null; file = null;
-        """ % (pages_read_js, marks_js, port, addon_id, last_page_read, title, note_id)
+        """ % (pages_read_js, marks_js, extract_js, port, addon_id, last_page_read, title, note_id)
         #send large files in multiple packets
         page = self._editor.web.page()
         chunk_size = 10000000
@@ -751,6 +762,13 @@ class ReadingModal:
         marks_grey_img_src  = utility.misc.img_src("mark-star-lightgrey-24px.png")
         pdf_search_img_src  = utility.misc.img_src("magnify-24px.png")
         quick_sched         = self.quick_sched_btn(priority)
+        extract             = ""
+        
+        if self.note.extract_start:
+            if self.note.extract_start == self.note.extract_end:
+                extract = f"<div class='siac-extract-marker'> Extract: P. {self.note.extract_start} </div>"
+            else:
+                extract = f"<div class='siac-extract-marker'> Extract: P. {self.note.extract_start} - {self.note.extract_end} </div>"
 
         html = """
             <div id='siac-pdf-overlay'>PAGE READ</div>
@@ -764,6 +782,7 @@ class ReadingModal:
                         <div class='siac-mark-btn-inner siac-mark-btn-inner-5' onclick='pycmd("siac-pdf-mark 5 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Bookmark</div>
                     </div> 
                 </div>
+                {extract}
                 <div style='display: inline-block; vertical-align: top;' id='siac-pdf-overlay-top-lbl-wrap'></div>
             </div>
             <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
@@ -830,15 +849,17 @@ class ReadingModal:
                     <div id="siac-pdf-night-btn" class='siac-btn siac-btn-dark' style='margin-right: 10px; width: 50px;' onclick='togglePDFNightMode(this);'>Day</div>
                     <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 65px;' onclick='togglePageRead({nid});'>\u2713&nbsp; Read</div>
                     <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
-                        <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'  onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
+                        <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
                             <div class='siac-btn-small-dropdown-inverted click'>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-create-pdf-extract " + pdfDisplayed.numPages); event.stopPropagation();'><b>Extract ...</b></div>
+                                <hr>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Jump to Last Read Page</b></div>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>Jump to First Unread Page</b></div>
                                 <hr>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); markReadUpToCurrent(); pdfShowPageReadMark();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + pdfDisplayed.numPages); event.stopPropagation();'><b>Mark Range ...</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + numPagesExtract()); markReadUpToCurrent();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + numPagesExtract()); event.stopPropagation();'><b>Mark Range ...</b></div>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pagesRead = []; pdfHidePageReadMark(); updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayed.numPages).keys()).map(x => ++x); pdfShowPageReadMark(); updatePdfProgressBar();event.stopPropagation();'>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + numPagesExtract()); setAllPagesRead(); updatePdfProgressBar();event.stopPropagation();'>
                                     <b>Mark all as Read</b>
                                 </div>
                             </div>
@@ -861,7 +882,7 @@ class ReadingModal:
                 $('.siac-pdf-ul-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
             </script>
         """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, quick_sched_btn=quick_sched, search_sources=search_sources, marks_img_src=marks_img_src, 
-        marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src))
+        marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src, extract=extract))
 
         return html
 
@@ -1464,9 +1485,13 @@ class ReadingModal:
     def mark_range(self, start: int, end: int, pages_total: int, current_page: int):
         if start <= 0:
             start = 1
-        if end > pages_total:
+        if self.note.extract_start is not None and start < self.note.extract_start:
+            start = self.note.extract_start
+        if self.note.extract_start is None and end > pages_total:
             end = pages_total
-        if end <= start or start >= pages_total:
+        if self.note.extract_start is not None and end > self.note.extract_end:
+            end = self.note.extract_end
+        if end <= start or (self.note.extract_start is None and start >= pages_total) or (self.note.extract_start is not None and start >= pages_total + self.note.extract_start):
             return
 
         mark_range_as_read(self.note_id, start, end, pages_total)
@@ -1599,7 +1624,7 @@ class ReadingModal:
 
 
     @js
-    def jump_to_last_read_page(self, nid: int):
+    def jump_to_last_read_page(self):
         return """
             if (pagesRead && pagesRead.length) {
                 pdfDisplayedCurrentPage = Math.max(...pagesRead);
@@ -1607,10 +1632,11 @@ class ReadingModal:
             }
         """
     @js
-    def jump_to_first_unread_page(self, nid: int):
+    def jump_to_first_unread_page(self):
         return """
             if (pdfDisplayed) {
-                for (var i = 1; i < pdfDisplayed.numPages + 1; i++) {
+                let start = pdfExtract ? pdfExtract[0] : 1;
+                for (var i = start; i < start + numPagesExtract(); i++) {
                     if (!pagesRead || pagesRead.indexOf(i) === -1) {
                         pdfDisplayedCurrentPage = i;
                         rerenderPDFPage(pdfDisplayedCurrentPage, false, true);

@@ -58,8 +58,8 @@ body.siac-reading-modal-displayed #siac-right-side {
     background-color: #2f2f31;
     width: 200px;
     padding: 0px 4px 0px 4px;
-    height: 135px;
-    top: -114px;
+    height: 165px;
+    top: -144px;
     left: -181px;
     border: 2px outset #cfb495; 
     z-index: 5;
@@ -199,6 +199,20 @@ body.siac-reading-modal-displayed #siac-right-side {
     overflow-y: auto; 
     text-align: center;
     margin-top: 20px;
+}
+#siac-pdf-top.extract #text-layer {
+    background-color: #2496dc !important;
+    opacity: 0.7;
+}
+.siac-extract-marker {
+    display: inline-block;
+    border: 3px outset #2496dc;
+    border-radius: 3px;
+    padding: 4px 3px 5px 4px;
+    background-color: #2f2f31;
+    color: beige;
+    vertical-align: top;
+    margin-right: 15px;
 }
 #siac-text-top-wr {
     flex: 1 1 auto;

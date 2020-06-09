@@ -83,8 +83,8 @@ def init_addon():
     # update notes in index when changed through the "Edit" button
     EditDialog.saveAndClose = wrap(EditDialog.saveAndClose, editor_save_with_index_update, "around")
 
-    # shortcut to toggle add-on pane 
-    gui_hooks.editor_did_init_shortcuts.append(add_hide_show_shortcut) 
+    # register add-on's shortcuts 
+    gui_hooks.editor_did_init_shortcuts.append(register_shortcuts) 
     # reset state after the add/edit dialog is opened
     gui_hooks.editor_did_init_shortcuts.append(reset_state) 
 
@@ -260,14 +260,18 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
     # might still be true if Create Note dialog was closed by closing its parent window, so reset it
     state.note_editor_shown = False
 
-def add_hide_show_shortcut(shortcuts: List[Tuple], editor: Editor):
-    """ Register a shortcut to toggle the add-on pane. """
+def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
+    """ Register shortcuts used by the add-on. """
 
-    if not "toggleShortcut" in config:
-        return
-    QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
+    try:
+        QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
+    except:
+        pass
     QShortcut(QKeySequence("Ctrl+o"), editor.widget, activated=show_quick_open_pdf)
-    QShortcut(QKeySequence(config["notes.editor.shortcut"]), editor.widget, activated=show_note_modal)
+    try:
+        QShortcut(QKeySequence(config["notes.editor.shortcut"]), editor.widget, activated=show_note_modal)
+    except:
+        pass
 
 def show_note_modal():
     if not state.note_editor_shown:
@@ -294,7 +298,7 @@ def setup_tagedit_timer():
 
 def tag_edit_keypress(self, evt, _old):
     """
-    Used if "search on tag entry" is enabled.
+    Used if "Search on Tag Entry" is enabled.
     Triggers a search if the user has stopped typing in the tag field.
     """
     _old(self, evt)

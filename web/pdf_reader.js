@@ -29,6 +29,7 @@ var pdfHighDPIWasUsed = false;
 var pdfColorMode = "Day";
 var pageNumPending = null;
 var pagesRead = [];
+var pdfExtract = null;
 var pdfDisplayedMarks = null;
 var pdfDisplayedMarksTable = null;
 var timestamp;
@@ -209,6 +210,13 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 document.getElementById('siac-pdf-overlay').style.display = 'none';
                 document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
             }
+            if (pdfExtract) {
+                if (pdfExtract[0] > pdfDisplayedCurrentPage || pdfExtract[1] < pdfDisplayedCurrentPage) {
+                    $('#siac-pdf-top').addClass("extract");
+                } else {
+                    $('#siac-pdf-top').removeClass("extract");
+                }
+            }
         });
 }
 function invertCanvas(ctx) {
@@ -230,25 +238,33 @@ function invertCanvas(ctx) {
     ctx.putImageData(imgData, 0, 0);
     ctx.canvas.style.display = "inline-block";
 }
+function numPagesExtract() {
+    if (!pdfExtract) {
+        return pdfDisplayed.numPages;
+    }
+    return pdfExtract[1] - pdfExtract[0] + 1;
+}
 
 function togglePageRead(nid) {
-
+    if (pdfExtract && (pdfDisplayedCurrentPage < pdfExtract[0] || pdfDisplayedCurrentPage > pdfExtract[1])) {
+        return;
+    }
     if (pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
         document.getElementById('siac-pdf-overlay').style.display = 'block';
         document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
-        pycmd("siac-pdf-page-read " + nid + " " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages);
+        pycmd("siac-pdf-page-read " + nid + " " + pdfDisplayedCurrentPage + " " + numPagesExtract());
         if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
     } else {
         document.getElementById('siac-pdf-overlay').style.display = 'none';
         document.getElementById('siac-pdf-read-btn').innerHTML = '\u2713&nbsp; Read';
-        pycmd("siac-pdf-page-unread " + nid + " " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages);
+        pycmd("siac-pdf-page-unread " + nid + " " + pdfDisplayedCurrentPage + " " + numPagesExtract());
         pagesRead.splice(pagesRead.indexOf(pdfDisplayedCurrentPage), 1);
     }
     updatePdfProgressBar();
 }
 function updatePdfProgressBar() {
-    let percs = Math.floor(pagesRead.length * 10 / pdfDisplayed.numPages);
-    let html = `<span style='margin-right: 10px;'>${Math.trunc(pagesRead.length * 100 / pdfDisplayed.numPages)} %</span>`;
+    let percs = Math.floor(pagesRead.length * 10 / numPagesExtract());
+    let html = `<span style='margin-right: 10px;'>${Math.trunc(pagesRead.length * 100 / numPagesExtract())} %</span>`;
     for (var c = 0; c < 10; c++) {
         if (c < percs) {
             html += `<div class='siac-prog-sq-filled'></div>`;
@@ -304,8 +320,26 @@ function pdfPageLeft() {
 function markReadUpToCurrent() {
     for (var i = 0; i < pdfDisplayedCurrentPage; i++) {
         if (pagesRead.indexOf(i + 1) === -1) {
-            pagesRead.push(i + 1);
+            if (!pdfExtract || ((i+1) >= pdfExtract[0] && (i+1) <= pdfExtract[1])) {
+                pagesRead.push(i + 1);
+            }
         }
+    }
+    if (pagesRead.indexOf(pdfDisplayedCurrentPage) !== -1) {
+        pdfShowPageReadMark();
+    }
+}
+function setAllPagesRead() {
+    if (!pdfExtract) {
+        pagesRead = Array.from(Array(pdfDisplayed.numPages).keys()).map(x => ++x)
+    } else {
+        pagesRead = [];
+        for (var i = pdfExtract[0]; i <= pdfExtract[1]; i++) {
+            pagesRead.push(i);
+        }
+    }
+    if (pagesRead.indexOf(pdfDisplayedCurrentPage) !== -1) {
+        pdfShowPageReadMark();
     }
 }
 function saveTextNote(nid, remove = true) {
@@ -969,8 +1003,8 @@ function markClicked(event) {
 }
 function pdfViewerKeyup(event) {
     if (event.ctrlKey && (event.keyCode === 32 || event.keyCode === 39)) {
-        if (event.shiftKey && pdfDisplayed && pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
-            pycmd("siac-pdf-page-read " + $('#siac-pdf-top').data("pdfid") + " " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages);
+        if (event.shiftKey && pdfDisplayed && pagesRead.indexOf(pdfDisplayedCurrentPage) === -1 && (!pdfExtract || (pdfExtract[0] <= pdfDisplayedCurrentPage && pdfExtract[1] >= pdfDisplayedCurrentPage))) {
+            pycmd("siac-pdf-page-read " + $('#siac-pdf-top').data("pdfid") + " " + pdfDisplayedCurrentPage + " " + numPagesExtract());
             if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
             updatePdfProgressBar();
         }

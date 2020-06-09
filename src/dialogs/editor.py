@@ -426,6 +426,7 @@ class CreateTab(QWidget):
 
 
         vbox_left.addWidget(self.slider)
+        vbox_left.setContentsMargins(0,0,0,0)
         self.left_pane = QWidget()
         self.left_pane.setLayout(vbox_left)
         self.layout.addWidget(self.left_pane, 7)

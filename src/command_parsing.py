@@ -45,6 +45,7 @@ from .dialogs.editor import openEditor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
 from .dialogs.quick_schedule import QuickScheduler
 from .dialogs.url_import import UrlImporter
+from .dialogs.pdf_extract import PDFExtractDialog
 from .dialogs.zotero_import import ZoteroImporter
 from .dialogs.schedule_dialog import ScheduleDialog
 from .tag_find import findBySameTag, display_tag_info
@@ -235,18 +236,21 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 index.search(inp, ["-1"], only_user_notes = False, print_mode = "pdf")
 
     elif cmd.startswith("siac-cutout-io "):
-        img_src = " ".join(cmd.split()[1:])
-        full_path = os.path.join(mw.col.media.dir(), img_src).replace("\\", "/")
+        img_src     = " ".join(cmd.split()[1:])
+        full_path   = os.path.join(mw.col.media.dir(), img_src).replace("\\", "/")
         self.onImgOccButton(image_path=full_path)
 
+    elif cmd.startswith("siac-create-pdf-extract "):
+        dialog = PDFExtractDialog(self.parentWindow, int(cmd.split(" ")[1]), index.ui.reading_modal.note)
+
     elif cmd.startswith("siac-jump-last-read"):
-        index.ui.reading_modal.jump_to_last_read_page(int(cmd.split()[1]))
+        index.ui.reading_modal.jump_to_last_read_page()
 
     elif cmd.startswith("siac-jump-first-unread"):
-        index.ui.reading_modal.jump_to_first_unread_page(int(cmd.split()[1]))
+        index.ui.reading_modal.jump_to_first_unread_page()
 
     elif cmd.startswith("siac-mark-read-up-to "):
-        mark_as_read_up_to(int(cmd.split()[1]), int(cmd.split()[2]), int(cmd.split()[3]))
+        mark_as_read_up_to(index.ui.reading_modal.note, int(cmd.split()[2]), int(cmd.split()[3]))
 
     elif cmd.startswith("siac-display-range-input "):
         nid = int(cmd.split()[1])
@@ -254,14 +258,14 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.ui.reading_modal.display_read_range_input(nid, num_pages)
 
     elif cmd.startswith("siac-user-note-mark-range "):
-        start = int(cmd.split()[2])
-        end = int(cmd.split()[3])
-        pages_total = int(cmd.split()[4])
-        current_page = int(cmd.split()[5])
+        start           = int(cmd.split()[2])
+        end             = int(cmd.split()[3])
+        pages_total     = int(cmd.split()[4])
+        current_page    = int(cmd.split()[5])
         index.ui.reading_modal.mark_range(start, end, pages_total, current_page)
 
     elif cmd.startswith("siac-mark-all-read "):
-        mark_all_pages_as_read(int(cmd.split()[1]), int(cmd.split()[2]))
+        mark_all_pages_as_read(index.ui.reading_modal.note, int(cmd.split()[2]))
 
     elif cmd.startswith("siac-mark-all-unread "):
         mark_all_pages_as_unread(int(cmd.split()[1]))
@@ -1319,6 +1323,7 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
             getCreatedNotesOrderedByDate(index, editor, index.selectedDecks, index.lastSearch[3], "desc")
         elif index.lastSearch[2] == "firstCreated":
             getCreatedNotesOrderedByDate(index, editor, index.selectedDecks, index.lastSearch[3], "asc")
+
 
 def generate_clozes(sentences, pdf_path, pdf_title, page):
     try:

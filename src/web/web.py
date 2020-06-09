@@ -230,8 +230,6 @@ def show_search_result_area(editor=None, initializationTime=0):
     elif editor is not None and editor.web is not None:
         editor.web.eval(js)
 
-
-
 def print_starting_info(editor):
     """ Displays the information that is visible after the first start of the add-on. """
 
