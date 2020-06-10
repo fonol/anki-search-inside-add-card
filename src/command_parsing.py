@@ -192,21 +192,21 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         stamp = setStamp()
         notes = get_pdf_notes_last_read_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-pdf-last-added":
         stamp = setStamp()
         notes = get_pdf_notes_last_added_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-pdf-find-invalid":
         stamp = setStamp()
         notes = get_invalid_pdfs()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-queue-info "):
