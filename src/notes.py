@@ -191,7 +191,7 @@ def create_note(title: str, text: str, source: str, tags: str, nid: int, reminde
                 values (?,?,?,?,?,datetime('now', 'localtime'),"",?,"", NULL, ?, ?)""", (title, text, source, tags, nid, reminder, extract_start, extract_end)).lastrowid
     conn.commit()
     conn.close()
-    if queue_schedule != 0:
+    if queue_schedule is not None and queue_schedule != 0:
         update_priority_list(id, queue_schedule)
     index = get_index()
     if index is not None:
@@ -263,8 +263,7 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
         
         if nid == nid_to_update:
             nid_was_included    = True
-            # initial score is 0 (delta_days is 0), but the note will climb up the queue faster if it has a high prio
-            score               = schedule * PRIORITY_MOD
+            score               = _calc_score(schedule, 0)
             if schedule == 0:
                 # if not in queue, remove from log
                 to_remove_from_log.append(nid)
@@ -288,7 +287,7 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
             now         += timedelta(seconds=1)
             ds          = now.strftime('%Y-%m-%d-%H-%M-%S')
             reminder    = get_reminder(nid_to_update)
-            scores.append((nid_to_update, ds, schedule, schedule * PRIORITY_MOD, reminder))
+            scores.append((nid_to_update, ds, schedule, _calc_score(schedule, 0), reminder))
             to_update_in_log.append((nid_to_update, ds, schedule))
 
     sorted_by_scores    = sorted(scores, key=lambda x: x[3], reverse=True)
@@ -335,8 +334,11 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
     return (index, len(final_list))
 
 def _calc_score(priority: int, days_delta: float) -> float:
-    prio_score = 1 + ((priority - 1)/99) * (PRIORITY_SCALE_FACTOR - 1)
-    return days_delta + PRIORITY_MOD * prio_score
+    prio_score = 1 + ((priority - 1) / 99) * (PRIORITY_SCALE_FACTOR - 1)
+    if days_delta < 0.5:
+        return days_delta + prio_score / (PRIORITY_MOD * 10000)
+    else:
+        return PRIORITY_SCALE_FACTOR * days_delta + PRIORITY_MOD * prio_score
 
 def get_reminder(nid: int) -> str:
     conn = _get_connection()
