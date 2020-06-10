@@ -32,7 +32,6 @@ class FeedMessage:
         self.categories = categories
 
 
-
 def read(url):
 
     xml = urlopen(url)
