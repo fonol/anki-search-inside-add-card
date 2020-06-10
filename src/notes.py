@@ -913,7 +913,7 @@ def get_invalid_pdfs() -> List[SiacNote]:
     conn.close()
     filtered    = list()
     c           = 0
-    for (_, _, _, source, _, _, _, _, _, _, _) in res:
+    for (_, _, _, source, _, _, _, _, _, _, _, _, _) in res:
         if not utility.misc.file_exists(source.strip()):
             filtered.append(res[c])
         c += 1
