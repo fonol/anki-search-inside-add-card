@@ -517,10 +517,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         nid = int(cmd.split()[1])
         picker = QueuePicker(self.parentWindow, [], [])
         if picker.exec_() and picker.chosen_id is not None and picker.chosen_id >= 0:
-            note = get_note(nid)
+            # note = get_note(nid)
             index.ui.reading_modal.display(picker.chosen_id)
         else:
-            index.ui.reading_modal.reload_bottom_bar(nid)
+            if nid >= 0:
+                index.ui.reading_modal.reload_bottom_bar(nid)
 
     elif cmd.startswith("siac-reload-reading-modal-bottom "):
         nid = int(cmd.split()[1])
