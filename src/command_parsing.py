@@ -163,7 +163,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             notes = get_all_pdf_notes()
             # add special note at front
             sp_body = get_pdf_list_first_card()
-            notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
+            notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
             index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-show-pdfs-unread":
