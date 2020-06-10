@@ -1129,6 +1129,8 @@ class SettingsTab(QWidget):
 
         def _calc_score(priority, days_delta, prio_scale, prio_mod):
             prio_score = 1 + ((priority - 1)/99) * (prio_scale - 1)
+            if days_delta < 1:
+                return days_delta + prio_score / 50000
             return days_delta + prio_mod * prio_score
 
         prio_scale  = get_config_value_or_default("notes.queue.priorityScaleFactor", 5)
