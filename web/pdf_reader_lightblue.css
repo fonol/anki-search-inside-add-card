@@ -200,9 +200,26 @@ body.siac-reading-modal-displayed #siac-right-side {
     text-align: center;
     margin-top: 20px;
 }
+#siac-pdf-top.siac-pdf-night #text-layer {
+    background-color: #2496dc;
+    opacity: 0.8;
+}
+#siac-pdf-top.siac-pdf-rose #text-layer {
+    background-color: red;
+    opacity: 0.2;
+}
+#siac-pdf-top.siac-pdf-moss #text-layer {
+    background-color: green;
+    opacity: 0.4;
+}
+#siac-pdf-top.siac-pdf-coral #text-layer {
+    background-color: coral;
+    opacity: 0.8;
+}
 #siac-pdf-top.extract #text-layer {
     background-color: #2496dc !important;
-    opacity: 0.7;
+    opacity: 0.7 !important;
+    mix-blend-mode: normal !important;
 }
 .siac-extract-marker {
     display: inline-block;
@@ -360,10 +377,6 @@ body.siac-reading-modal-displayed #siac-right-side {
     color: white;
     border: 3px outset #69B36C;
     background-color: #2f3030;
-}
-#siac-pdf-night-btn {
-    padding-left: 4px;
-    padding-right: 4px;
 }
 #siac-pdf-tooltip-results-area {
 	overflow-y: auto;

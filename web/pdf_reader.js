@@ -149,7 +149,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 canvas.style.height = viewport.height + "px";
                 canvas.style.width = viewport.width + "px";
             }
-            if (pdfColorMode !== "Day")
+            if (["Peach", "Sand"].indexOf(pdfColorMode) !== -1)
                 canvas.style.display = "none";
             var ctx = canvas.getContext('2d');
             var pageTimestamp = new Date().getTime();
@@ -171,13 +171,13 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                     rerenderPDFPage(pageNumPending, shouldScrollUp);
                     pageNumPending = null;
                 } else {
-                    if (pdfColorMode !== "Day") {
+                    if (["Sand", "Peach"].indexOf(pdfColorMode) !== -1) {
                         invertCanvas(ctx);
                     }
                 }
                 return lPage.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false });
             }).then(function (textContent) {
-                $("#text-layer").css({ height: canvas.height / window.devicePixelRatio, width: canvas.width / window.devicePixelRatio, left: canvas.offsetLeft }).html('');
+                $("#text-layer").css({ height: canvas.height / window.devicePixelRatio, width: canvas.width / window.devicePixelRatio + 1, left: canvas.offsetLeft }).html('');
                 pdfjsLib.renderTextLayer({
                     textContent: textContent,
                     container: document.getElementById("text-layer"),
@@ -226,7 +226,6 @@ function invertCanvas(ctx) {
     var fn;
     switch (pdfColorMode) {
         case "Sand": fn = pxToSandScheme; break;
-        case "Night": fn = pxToNightScheme; break;
         case "Peach": fn = pxToPeachScheme; break;
     }
     for (var i = 0; i < data.length; i += 4) {
@@ -687,19 +686,11 @@ function swapReadingModal() {
         document.getElementById("siac-right-side").appendChild(modal);
     }
 }
-function togglePDFNightMode(elem) {
-    if (pdfColorMode === "Day") {
-        pdfColorMode = "Night";
-    } else if (pdfColorMode === "Night") {
-        pdfColorMode = "Sand";
-    } else if (pdfColorMode === "Sand") {
-        pdfColorMode = "Peach";
-    } else {
-        pdfColorMode = "Day";
-    }
-    elem.innerHTML = pdfColorMode;
+function setPDFColorMode(mode) {
+    $('#siac-pdf-color-mode-btn > span').first().text(mode);
+    pdfColorMode = mode;
     rerenderPDFPage(pdfDisplayedCurrentPage, false);
-    $('#siac-pdf-top').removeClass("siac-pdf-sand siac-pdf-night siac-pdf-peach siac-pdf-day").addClass("siac-pdf-" + pdfColorMode.toLowerCase());
+    $('#siac-pdf-top').removeClass("siac-pdf-sand siac-pdf-night siac-pdf-peach siac-pdf-day siac-pdf-rose siac-pdf-moss siac-pdf-coral").addClass("siac-pdf-" + pdfColorMode.toLowerCase());
 }
 
 

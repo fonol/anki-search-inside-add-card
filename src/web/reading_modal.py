@@ -274,7 +274,7 @@ class ReadingModal:
                         pdfHighDPIWasUsed = false;
                         $('#siac-pdf-loader-wrapper').remove();
                         document.getElementById('siac-pdf-top').style.overflowY = 'auto';
-
+                        document.getElementById('text-layer').style.display = 'block'; 
                         if (pagesRead.length === pdf.numPages) {
                             pdfDisplayedCurrentPage = 1;
                             queueRenderPage(1, true, true, true);
@@ -820,13 +820,13 @@ class ReadingModal:
             {quick_sched_btn} 
             <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark' onclick='pycmd("siac-close-iframe")'>&times; &nbsp;Close Web</div>
             <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
-                <div id='siac-pdf-loader-wrapper' style='display: flex; justify-content: center; align-items: center; height: 100%;'>
+                <div id='siac-pdf-loader-wrapper' style='display: flex; justify-content: center; align-items: center; height: 100%; z-index: 7;'>
                     <div class='siac-pdf-loader' style=''>
                         <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>Loading PDF</div></div>
                     </div>
                 </div>
                 <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
-                <div id="text-layer"  onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
+                <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
             </div>
             <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
             <div class='siac-reading-modal-button-bar-wrapper' style="">
@@ -846,15 +846,28 @@ class ReadingModal:
                 </div>
 
                 <div style='position: absolute; right: 0; display: inline-block; user-select: none;'>
-                    <div id="siac-pdf-night-btn" class='siac-btn siac-btn-dark' style='margin-right: 10px; width: 50px;' onclick='togglePDFNightMode(this);'>Day</div>
+                    <div style='position: relative; display: inline-block; width: 70px; margin-right: 7px;'>
+                        <div id='siac-pdf-color-mode-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'><span>Day</span>
+                            <div class='siac-btn-small-dropdown-inverted click' style='height: 140px; top: -118px; left: -42px; width: 100px;'>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Day")'><b>Day</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Night")'><b>Night</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Sand")'><b>Sand</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Peach")'> <b>Peach</b> </div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Rose")'> <b>Rose</b> </div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Moss")'> <b>Moss</b> </div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Coral")'> <b>Coral</b> </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 65px;' onclick='togglePageRead({nid});'>\u2713&nbsp; Read</div>
                     <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
                         <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
                             <div class='siac-btn-small-dropdown-inverted click'>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-create-pdf-extract " + pdfDisplayed.numPages); event.stopPropagation();'><b>Extract ...</b></div>
                                 <hr>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Jump to Last Read Page</b></div>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>Jump to First Unread Page</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Last Read Page</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>First Unread Page</b></div>
                                 <hr>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + numPagesExtract()); markReadUpToCurrent();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + numPagesExtract()); event.stopPropagation();'><b>Mark Range ...</b></div>
@@ -872,7 +885,8 @@ class ReadingModal:
             </div>
             <script>
                 greyoutBottom();
-                document.getElementById('siac-pdf-night-btn').innerHTML = pdfColorMode;
+                $('#siac-pdf-color-mode-btn > span').first().text(pdfColorMode);
+                $('#siac-pdf-top').addClass("siac-pdf-" + pdfColorMode.toLowerCase());
                 if (pdfTooltipEnabled) {{
                     $('#siac-pdf-tooltip-toggle').addClass('active');
                 }} else {{

@@ -221,6 +221,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-head"); event.stopPropagation();'>&nbsp;<b>Read Next</b></div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-random"); event.stopPropagation();'>&nbsp;Read [Rnd]</div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-url-dialog"); event.stopPropagation();'>&nbsp;Url to PDF</div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-picker -1"); event.stopPropagation();'>&nbsp;Queue Man.</div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-zotero-import"); event.stopPropagation();'>&nbsp;Zotero Imp.</div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]</div>
                                 </div>

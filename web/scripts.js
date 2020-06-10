@@ -313,14 +313,22 @@ function switchLeftRight() {
 
 function onWindowResize() {
    
-        let offsetTop = document.getElementById("topbutsOuter").offsetHeight + 3;
-        document.getElementById("outerWr").style.marginTop = offsetTop + "px";
-        document.getElementById("outerWr").style.height = `calc(100vh - ${offsetTop}px)`;
+    let offsetTop = document.getElementById("topbutsOuter").offsetHeight + 3;
+    document.getElementById("outerWr").style.marginTop = offsetTop + "px";
+    document.getElementById("outerWr").style.height = `calc(100vh - ${offsetTop}px)`;
 
     if (!$('#switchBtn').is(":visible")) {
         $('#leftSide').css("display", "flex");
         $('#outerWr').css('display', 'flex').removeClass('onesided');
         document.getElementById('switchBtn').innerHTML = "&#10149; Search";
+    }
+    if (pdfDisplayed) {
+        if(this.resizeTimeout) clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = setTimeout(function() {
+                if (pdfDisplayed) {
+                    pdfFitToPage();
+                }
+            }, 300);
     }
 }
 function setHighlighting(elem) {
