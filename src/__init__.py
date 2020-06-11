@@ -54,7 +54,7 @@ from .hooks import add_hook
 from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.quick_open_pdf import QuickOpenPDF
 from .internals import requires_index_loaded
-from .config import get_config_value_or_default
+from .config import get_config_value_or_default as conf_or_def
 from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index
 
 config = mw.addonManager.getConfig(__name__)
@@ -72,7 +72,7 @@ def init_addon():
     gui_hooks.profile_did_open.append(insert_scripts)
     gui_hooks.profile_did_open.append(recalculate_priority_queue)
 
-    if get_config_value_or_default("searchOnTagEntry", True):
+    if conf_or_def("searchOnTagEntry", True):
         TagEdit.keyPressEvent = wrap(TagEdit.keyPressEvent, tag_edit_keypress, "around")
 
     setup_tagedit_timer()
@@ -123,16 +123,16 @@ def on_load_note(editor: Editor):
     """
 
     #only display in add cards dialog or in the review edit dialog (if enabled)
-    if editor.addMode or (get_config_value_or_default("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
+    if editor.addMode or (conf_or_def("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
 
         index                   = get_index()
-        zoom                    = get_config_value_or_default("searchpane.zoom", 1.0)
-        typing_delay            = max(500, get_config_value_or_default('delayWhileTyping', 1000))
-        show_tag_info_on_hover  = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
+        zoom                    = conf_or_def("searchpane.zoom", 1.0)
+        typing_delay            = max(500, conf_or_def('delayWhileTyping', 1000))
+        show_tag_info_on_hover  = "true" if conf_or_def("showTagInfoOnHover", True) and conf_or_def("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
 
         editor.web.eval(f"""
             var showTagInfoOnHover  = {show_tag_info_on_hover}; 
-            tagHoverTimeout         = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
+            tagHoverTimeout         = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
             var delayWhileTyping    = {typing_delay};
         """)
 
@@ -165,8 +165,10 @@ def on_load_note(editor: Editor):
         set_edit(editor)
 
 def on_add_cards_init(add_cards: AddCards):
+
     if get_index() is not None and add_cards.editor is not None:
         get_index().ui.set_editor(add_cards.editor)
+        
 
 
 def insert_scripts():
@@ -177,7 +179,7 @@ def insert_scripts():
     """
 
     addon_id    = utility.misc.get_addon_id()
-    pdf_theme   = get_config_value_or_default("pdf.theme", "pdf_reader.css")
+    pdf_theme   = conf_or_def("pdf.theme", "pdf_reader.css")
     port        = mw.mediaServer.getPort()
 
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf)$")
@@ -275,8 +277,9 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
 
 def show_note_modal():
     if not state.note_editor_shown:
-        ix      = get_index()
-        NoteEditor(ix.ui._editor.parentWindow)
+        ix              = get_index()
+        read_note_id    = ix.ui.reading_modal.note_id
+        NoteEditor(ix.ui._editor.parentWindow, note_id=None, add_only=False, read_note_id=read_note_id)
 
 def show_quick_open_pdf():
     """ Ctrl + O pressed -> show small dialog to quickly open a PDF. """
