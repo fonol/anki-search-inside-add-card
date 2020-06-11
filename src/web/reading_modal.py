@@ -712,7 +712,7 @@ class ReadingModal:
             pdf_or_feed         = queue_item.is_feed() or queue_item.is_pdf()
             clock               = clock_svg(len(should_greyout) > 0) if queue_item.is_scheduled() else ""
             should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if pdf_or_feed else ""
-            queue_head_readings +=  "<a onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s.%s %s</a><br>" % (should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
+            queue_head_readings +=  "<a oncontextmenu='queueLinkContextMenu(event, %s)' onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s.%s %s</a><br>" % (queue_item.id, should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
             if ix > 3:
                 break
 
@@ -1074,12 +1074,17 @@ class ReadingModal:
 
 
     @js
-    def show_remove_dialog(self):
+    def show_remove_dialog(self, nid: Optional[int] = None):
         """ Shows a dialog to either remove the current note from the queue or to delete it altogether. """
 
-        title   = utility.text.trim_if_longer_than(self.note.get_title(), 40).replace("`", "")
-        rem_cl  = "checked" if self.note.position is not None and self.note.position >= 0 else "disabled"
-        del_cl  = "checked" if self.note.position is None or self.note.position < 0 else ""
+        if nid:
+            note = get_note(nid)
+        else:
+            note = self.note
+
+        title   = utility.text.trim_if_longer_than(note.get_title(), 40).replace("`", "")
+        rem_cl  = "checked" if note.position is not None and note.position >= 0 else "disabled"
+        del_cl  = "checked" if note.position is None or note.position < 0 else ""
 
         modal   = f"""
             <div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">
@@ -1099,7 +1104,7 @@ class ReadingModal:
                 </div>
                 <div style='text-align: right;'>
                     <div class='siac-btn siac-btn-dark' style='margin-right: 10px;' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Cancel</div>
-                    <div class='siac-btn siac-btn-dark' onclick='removeDialogOk()'>Ok</div>
+                    <div class='siac-btn siac-btn-dark' onclick='removeDialogOk({note.id})'>Ok</div>
                 </div>
 
             </div>

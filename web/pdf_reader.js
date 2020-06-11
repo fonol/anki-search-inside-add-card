@@ -693,6 +693,21 @@ function setPDFColorMode(mode) {
     $('#siac-pdf-top').removeClass("siac-pdf-sand siac-pdf-night siac-pdf-peach siac-pdf-day siac-pdf-rose siac-pdf-moss siac-pdf-coral").addClass("siac-pdf-" + pdfColorMode.toLowerCase());
 }
 
+/**
+ * Right click on a queue item in the bottom bar of the reading modal. 
+ */
+function queueLinkContextMenu(event, nid) {
+    event.preventDefault();
+    document.body.style.overflowY = "hidden";
+    $(document.body).append(`
+        <div onmouseleave='$(this).remove();' style='position: absolute; z-index: 1000; left: ${event.pageX}px; top: ${event.pageY - 30}px; width: 100px; height: 20px; text-align: center;' class='siac-pdf-contextmenu'> 
+            <div>    
+                <a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.show_remove_dialog(${nid})")'>Remove / Delete</a>
+            </div>
+        </div>
+    `);
+    return false;
+}
 
 /**
  *  executed after keyup in the pdf pane
@@ -1262,12 +1277,15 @@ function scheduleDialogQuickAction() {
     let cmd = $("input[name=sched]:checked").data("pycmd");
     pycmd(`siac-eval index.ui.reading_modal.schedule_note(${cmd})`);
 }
-function removeDialogOk() {
+function removeDialogOk(nid) {
     if ($("input[name=del]:checked").data("pycmd") == "1") {
-        pycmd("siac-remove-from-queue");
+        pycmd("siac-remove-from-queue " + nid);
     } else {
-        pycmd("siac-delete-current-user-note");
+        pycmd("siac-delete-current-user-note " + nid);
     }
+    modalShown = false;
+    $('#siac-rm-greyout').hide();
+    $('#siac-schedule-dialog').hide();
 }
 function updateSchedule() {
     let checked = $("input[name=sched]:checked").data("pycmd");

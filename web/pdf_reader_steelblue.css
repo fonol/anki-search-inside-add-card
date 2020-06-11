@@ -34,10 +34,14 @@ body.siac-reading-modal-displayed #siac-right-side {
     color: #2496dc;
     cursor: pointer;
 }
-.siac-modal-small.dark, #siac-reading-modal .siac-modal-small {
+.siac-modal-small.dark, #siac-reading-modal .siac-modal-small, .siac-pdf-contextmenu {
     border: 3px outset #2496dc;
     background: #2f2f31;
     color: white;
+}
+.siac-pdf-contextmenu {
+    border-radius: 3px;
+    padding: 5px;
 }
 
 #siac-cloze-btn {
@@ -763,6 +767,10 @@ body.night_mode .siac-note-title-only {
 }
 .siac-pdf-main-color-border-top {
     border-top: 2px solid #2496dc;
+}
+.siac-pdf-main-color-border {
+    border: 3px outset #2496dc;
+    border-radius: 3px;
 }
 #siac-left-tab-browse,#siac-left-tab-pdfs {
     font-family: 'Open Sans', sans-serif;

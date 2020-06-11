@@ -456,21 +456,22 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             $('#siac-del-modal').remove();
         """)
 
-    elif cmd == "siac-delete-current-user-note":
-        # delete the currently opened note in the reading modal
-        id = index.ui.reading_modal.note_id
+    elif cmd.startswith("siac-delete-current-user-note "):
+        # Delete a note, invoked from the reading modal
+        id = int(cmd.split()[1])
         delete_note(id)
         if index is not None:
             index.deleteNote(id)
         run_hooks("user-note-deleted")
-        head = get_head_of_queue()
         tooltip("Deleted note.")
-        if head is None or head < 0:
-            index.ui.js("""
-                onReadingModalClose();
-            """)
+        if id == index.ui.reading_modal.note_id:
+            head = get_head_of_queue()
+            if head is None or head < 0:
+                index.ui.js(""" onReadingModalClose(); """)
+            else:
+                index.ui.reading_modal.display(head)
         else:
-            index.ui.reading_modal.display(head)
+            index.ui.reading_modal.reload_bottom_bar()
 
     elif cmd.startswith("siac-read-user-note "):
         id = int(cmd.split()[1])
@@ -580,13 +581,17 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.ui.reading_modal.update_reading_bottom_bar(nid)
         tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
 
-    elif cmd.startswith("siac-remove-from-queue"):
-        update_priority_list(index.ui.reading_modal.note_id, 0)
-        nid = get_head_of_queue()
-        if nid is None or nid < 0:
-            index.ui.eval("onReadingModalClose();")
+    elif cmd.startswith("siac-remove-from-queue "):
+        to_remove = int(cmd.split(" ")[1])
+        update_priority_list(to_remove, 0)
+        if to_remove == index.ui.reading_modal.note_id:
+            nid = get_head_of_queue()
+            if nid is None or nid < 0:
+                index.ui.eval("onReadingModalClose();")
+            else:
+                index.ui.reading_modal.display(nid)
         else:
-            index.ui.reading_modal.display(nid)
+            index.ui.reading_modal.reload_bottom_bar()
         tooltip(f"<center>Removed from Queue.</center>")
 
     elif cmd == "siac-on-reading-modal-close":
