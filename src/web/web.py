@@ -68,118 +68,21 @@ def getScriptPlatformSpecific():
         script = f.read()
     with open(dir + "styles.css") as f:
         css = f.read().replace("%", "%%")
-    # with open(dir + "pdf_reader.css") as f:
-    #     css += f.read().replace("%", "%%")
 
-    deckSelectFontSize = get_config_value_or_default(["styling", "topBar", "deckSelectFontSize"], 11)
-    noteFontSize = get_config_value_or_default(["styling", "general", "noteFontSize"], 12)
-    noteForegroundColor = get_config_value_or_default(["styling", "general", "noteForegroundColor"], "black")
-    noteBackgroundColor = get_config_value_or_default(["styling", "general", "noteBackgroundColor"], "white")
-    noteBorderColor = get_config_value_or_default(["styling", "general", "noteBorderColor"], "grey")
-    noteHoverBorderColor = get_config_value_or_default(["styling", "general", "noteHoverBorderColor"], "#2496dc")
-    tagBackgroundColor = get_config_value_or_default(["styling", "general", "tagBackgroundColor"], "#f0506e")
-    tagForegroundColor = get_config_value_or_default(["styling", "general", "tagForegroundColor"], "white")
-    tagFontSize = get_config_value_or_default(["styling", "general", "tagFontSize"], 12)
-    deckSelectForegroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectForegroundColor"], "black")
-    deckSelectBackgroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectBackgroundColor"], "white")
-    deckSelectHoverForegroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectHoverForegroundColor"], "white")
-    deckSelectHoverBackgroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectHoverBackgroundColor"], "#5f6468")
-    deckSelectButtonForegroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectButtonForegroundColor"], "grey")
-    deckSelectButtonBackgroundColor = get_config_value_or_default(["styling", "topBar", "deckSelectButtonBackgroundColor"], "white")
-    deckSelectButtonBorderColor = get_config_value_or_default(["styling", "topBar", "deckSelectButtonBorderColor"], "grey")
-    deckSelectCheckmarkColor = get_config_value_or_default(["styling", "topBar", "deckSelectCheckmarkColor"], "grey")
-    modalBackgroundColor = get_config_value_or_default(["styling", "modal", "modalBackgroundColor"], "white")
-    modalForegroundColor = get_config_value_or_default(["styling", "modal", "modalForegroundColor"], "black")
-    browserSearchButtonBorderColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchButtonBorderColor"], "#2496dc")
-    browserSearchButtonBackgroundColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchButtonBackgroundColor"], "white")
-    browserSearchButtonForegroundColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchButtonForegroundColor"], "#2496dc")
-    browserSearchInputBorderColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchInputBorderColor"], "#2496dc")
-    browserSearchInputBackgroundColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchInputBackgroundColor"], "white")
-    browserSearchInputForegroundColor = get_config_value_or_default(["styling", "bottomBar", "browserSearchInputForegroundColor"], "#2496dc")
-    infoButtonBorderColor = get_config_value_or_default(["styling", "general", "buttonBorderColor"], "#2496dc")
-    infoButtonBackgroundColor = get_config_value_or_default(["styling", "general", "buttonBackgroundColor"], "white")
-    infoButtonForegroundColor = get_config_value_or_default(["styling", "general", "buttonForegroundColor"], "#2496dc")
-    highlightBackgroundColor = get_config_value_or_default(["styling", "general", "highlightBackgroundColor"], "yellow")
-    highlightForegroundColor = get_config_value_or_default(["styling", "general", "highlightForegroundColor"], "black")
-    rankingLabelBackgroundColor = get_config_value_or_default(["styling", "general", "rankingLabelBackgroundColor"], "#2496dc")
-    rankingLabelForegroundColor = get_config_value_or_default(["styling", "general", "rankingLabelForegroundColor"], "white")
-    selectBackgroundColor = get_config_value_or_default(["styling", "bottomBar", "selectBackgroundColor"], "white")
-    selectForegroundColor = get_config_value_or_default(["styling", "bottomBar", "selectForegroundColor"], "black")
-    stripedTableBackgroundColor = get_config_value_or_default(["styling", "modal", "stripedTableBackgroundColor"], "#f2f2f2")
-    modalBorderColor = get_config_value_or_default(["styling", "modal", "modalBorderColor"], "#2496dc")
-    keywordColor = get_config_value_or_default(["styling", "general", "keywordColor"], "#2496dc")
-    fieldSeparatorColor = get_config_value_or_default(["styling", "general", "fieldSeparatorColor"], "#2496dc")
-    windowColumnSeparatorColor = get_config_value_or_default(["styling", "general", "windowColumnSeparatorColor"], "#2496dc")
-    timelineBoxBackgroundColor = get_config_value_or_default(["styling", "bottomBar", "timelineBoxBackgroundColor"], "#595959")
-    timelineBoxBorderColor = get_config_value_or_default(["styling", "bottomBar", "timelineBoxBorderColor"], "#595959")
-    imgMaxHeight = str(get_config_value_or_default("imageMaxHeight", 300)) + "px"
+    imgMaxHeight        = str(get_config_value_or_default("imageMaxHeight", 300)) + "px"
     pdfTooltipMaxHeight = str(get_config_value_or_default("pdfTooltipMaxHeight", 300))
-    pdfTooltipMaxWidth = str(get_config_value_or_default("pdfTooltipMaxWidth", 250))
+    pdfTooltipMaxWidth  = str(get_config_value_or_default("pdfTooltipMaxWidth", 250))
 
-    css = css.replace("$deckSelectFontSize$", str(deckSelectFontSize) + "px")
-    css = css.replace("$deckSelectForegroundColor$", deckSelectForegroundColor)
-    css = css.replace("$deckSelectBackgroundColor$", deckSelectBackgroundColor)
-    css = css.replace("$deckSelectHoverForegroundColor$", deckSelectHoverForegroundColor)
-    css = css.replace("$deckSelectHoverBackgroundColor$", deckSelectHoverBackgroundColor)
-    css = css.replace("$deckSelectButtonForegroundColor$", deckSelectButtonForegroundColor)
-    css = css.replace("$deckSelectButtonBackgroundColor$", deckSelectButtonBackgroundColor)
-    css = css.replace("$deckSelectButtonBorderColor$", deckSelectButtonBorderColor)
-    css = css.replace("$deckSelectCheckmarkColor$", deckSelectCheckmarkColor)
+    css                 = css.replace("$imgMaxHeight$", imgMaxHeight)
+    css                 = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
+    css                 = css.replace("$pdfTooltipMaxWidth$", pdfTooltipMaxWidth)
 
-    css = css.replace("$noteFontSize$", str(noteFontSize) + "px")
-    css = css.replace("$noteForegroundColor$", noteForegroundColor)
-    css = css.replace("$noteBackgroundColor$", noteBackgroundColor)
-    css = css.replace("$noteBorderColor$", noteBorderColor)
-    css = css.replace("$noteHoverBorderColor$", noteHoverBorderColor)
-    css = css.replace("$tagBackgroundColor$", tagBackgroundColor)
-    css = css.replace("$tagForegroundColor$", tagForegroundColor)
-    css = css.replace("$tagFontSize$", str(tagFontSize) + "px")
-
-    css = css.replace("$modalBackgroundColor$", modalBackgroundColor)
-    css = css.replace("$modalForegroundColor$", modalForegroundColor)
-
-    css = css.replace("$buttonBackgroundColor$", infoButtonBackgroundColor)
-    css = css.replace("$buttonBorderColor$", infoButtonBorderColor)
-    css = css.replace("$buttonForegroundColor$", infoButtonForegroundColor)
-
-    css = css.replace("$fieldSeparatorColor$", fieldSeparatorColor)
-    css = css.replace("$windowColumnSeparatorColor$", windowColumnSeparatorColor)
-
-    css = css.replace("$browserSearchButtonBackgroundColor$", browserSearchButtonBackgroundColor)
-    css = css.replace("$browserSearchButtonBorderColor$", browserSearchButtonBorderColor)
-    css = css.replace("$browserSearchButtonForegroundColor$", browserSearchButtonForegroundColor)
-
-    css = css.replace("$browserSearchInputBackgroundColor$", browserSearchInputBackgroundColor)
-    css = css.replace("$browserSearchInputBorderColor$", browserSearchInputBorderColor)
-    css = css.replace("$browserSearchInputForegroundColor$", browserSearchInputForegroundColor)
-
-    css = css.replace("$highlightBackgroundColor$", highlightBackgroundColor)
-    css = css.replace("$highlightForegroundColor$", highlightForegroundColor)
-
-    css = css.replace("$rankingLabelBackgroundColor$", rankingLabelBackgroundColor)
-    css = css.replace("$rankingLabelForegroundColor$", rankingLabelForegroundColor)
-
-    css = css.replace("$selectBackgroundColor$", selectBackgroundColor)
-    css = css.replace("$selectForegroundColor$", selectForegroundColor)
-
-    css = css.replace("$timelineBoxBackgroundColor$", timelineBoxBackgroundColor)
-    css = css.replace("$timelineBoxBorderColor$", timelineBoxBorderColor)
-
-
-    css = css.replace("$keywordColor$", keywordColor)
-    css = css.replace("$stripedTableBackgroundColor$", stripedTableBackgroundColor)
-    css = css.replace("$modalBorderColor$", modalBorderColor)
-
-    css = css.replace("$imgMaxHeight$", imgMaxHeight)
-    css = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
-    css = css.replace("$pdfTooltipMaxWidth$", pdfTooltipMaxWidth)
-
-    css = css.replace("$zoom$", str(get_config_value_or_default("searchpane.zoom", 1.0)))
-    renderImmediately = str(get_config_value_or_default("renderImmediately", False)).lower()
-    script = script.replace("$renderImmediately$", renderImmediately)
+    css                 = css.replace("$zoom$", str(get_config_value_or_default("searchpane.zoom", 1.0)))
+    renderImmediately   = str(get_config_value_or_default("renderImmediately", False)).lower()
+    script              = script.replace("$renderImmediately$", renderImmediately)
 
     #replace command key with meta key for mac
-    cplatform = platform.system().lower()
+    cplatform           = platform.system().lower()
     if cplatform == "darwin":
         script = script.replace("event.ctrlKey", "event.metaKey")
 
@@ -229,8 +132,6 @@ def show_search_result_area(editor=None, initializationTime=0):
         get_index().ui.js(js)
     elif editor is not None and editor.web is not None:
         editor.web.eval(js)
-
-
 
 def print_starting_info(editor):
     """ Displays the information that is visible after the first start of the add-on. """
@@ -343,10 +244,12 @@ def fillTagSelect(editor = None, expanded = False) :
 
     # the dropdown should only be expanded on user click, not on initial render
     expanded_js         = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
+    quick_disp          = "block" if len(most_active_map) > 0 else "none"
 
     cmd                 = """
     document.getElementById('deck-sel-info-lbl').style.display = 'none';
     document.getElementById('deckSelQuickWrapper').style.display = '%s';
+    document.getElementById('siac-deck-sel-q-sep').style.display = '%s';
     document.getElementById('deckSelQuick').innerHTML = `%s`;
     document.getElementById('deckSel').innerHTML = `%s`;
     $('#deckSelWrapper .exp').click(function(e) {
@@ -362,7 +265,7 @@ def fillTagSelect(editor = None, expanded = False) :
     });
     $("#siac-deck-sel-btn-wrapper").hide();
     %s
-    """ % ("block" if len(most_active_map) > 0 else "none", most_active_html, html, expanded_js)
+    """ % (quick_disp, quick_disp, most_active_html, html, expanded_js)
     if editor is not None:
         editor.web.eval(cmd)
     else:
@@ -411,6 +314,7 @@ def fillDeckSelect(editor = None, expanded= False):
     cmd         = """
     document.getElementById('deck-sel-info-lbl').style.display = 'block';
     document.getElementById('deckSelQuickWrapper').style.display = 'none';
+    document.getElementById('siac-deck-sel-q-sep').style.display = 'none';
     document.getElementById('deckSel').innerHTML = `%s`;
     $('#deckSelWrapper .exp').click(function(e) {
 		e.stopPropagation();

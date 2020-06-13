@@ -31,6 +31,7 @@ contextEvt          : Any                               = None
 corpus              : Optional[List[Tuple[Any, ...]]]   = None
 deck_map            : Optional[Dict[str, int]]          = None
 edit                : Optional[Editor]                  = None
+night_mode          : Optional[bool]                    = None
 
 def check_index() -> bool:
     """ Returns True if index and ui are ready to use. """

@@ -132,6 +132,7 @@ class ReadingModal:
         html = """
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 10")'><b>10 - 90</b></div>
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 15")'><b>15 - 85</b></div>
+            <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 20")'><b>20 - 80</b></div>
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 25")'><b>25 - 75</b></div>
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 33")'><b>33 - 67</b></div>
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 40")'><b>40 - 60</b></div>
@@ -147,7 +148,9 @@ class ReadingModal:
                     <br><br>
                 <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
                     <br><br>
-                <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Close</div>
+                <div style='width: 100%%; text-align: right;'>
+                    <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode.parentNode).remove();">Close</div>
+                </div>
             </div>
         """ % html
         return "$('#siac-reading-modal-center').append(`%s`)" % modal
@@ -157,7 +160,7 @@ class ReadingModal:
         on_confirm= """ if (document.getElementById('siac-range-input-min').value && document.getElementById('siac-range-input-max').value) {
         pycmd('siac-user-note-mark-range %s ' + document.getElementById('siac-range-input-min').value
                 + ' ' + document.getElementById('siac-range-input-max').value
-                + ' ' + pdfDisplayed.numPages
+                + ' ' + numPagesExtract()
                 + ' ' + pdfDisplayedCurrentPage);
         }
         """ % note_id
@@ -203,14 +206,25 @@ class ReadingModal:
         js_maps         = utility.misc.marks_to_js_map(marks)
         marks_js        = "pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s;" % (js_maps[0], js_maps[1])
 
+        # pdf might be an extract (should only show a range of pages)
+        extract_js      = f"pdfExtract = [{self.note.extract_start}, {self.note.extract_end}];" if self.note.extract_start is not None else "pdfExtract = null;"
+
         # pages read are ordered by date, so take last
-        last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
+        last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1 
+
+        if self.note.extract_start is not None:
+            if len(pages_read) > 0:
+                read_in_extract = [p for p in pages_read if p >= self.note.extract_start and p <= self.note.extract_end]
+                last_page_read = read_in_extract[-1] if len(read_in_extract) > 0 else self.note.extract_start
+            else:
+                last_page_read  = self.note.extract_start
 
         title           = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
         addon_id        = utility.misc.get_addon_id()
         port            = mw.mediaServer.getPort()
 
         init_code = """
+
             pdfLoading = true;
             var bstr = atob(b64);
             var n = bstr.length;
@@ -218,9 +232,8 @@ class ReadingModal:
             while(n--){
                 arr[n] = bstr.charCodeAt(n);
             }
-            var file = new File([arr], "placeholder.pdf", {type : "application/pdf" });
-            var fileReader = new FileReader();
             pagesRead = [%s];
+            %s
             %s
             var loadFn = function(retry) {
                 if (retry > 4) {
@@ -243,8 +256,7 @@ class ReadingModal:
                     pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/pdf.worker.min.js';
                 }
                 var canvas = document.getElementById("siac-pdf-canvas");
-                var typedarray = new Uint8Array(fileReader.result);
-                var loadingTask = pdfjsLib.getDocument(typedarray, {nativeImageDecoderSupport: 'display'});
+                var loadingTask = pdfjsLib.getDocument(arr, {nativeImageDecoderSupport: 'display'});
                 loadingTask.promise.catch(function(error) {
                         console.log(error);
                         $('#siac-pdf-loader-wrapper').remove();
@@ -263,7 +275,7 @@ class ReadingModal:
                         pdfHighDPIWasUsed = false;
                         $('#siac-pdf-loader-wrapper').remove();
                         document.getElementById('siac-pdf-top').style.overflowY = 'auto';
-
+                        document.getElementById('text-layer').style.display = 'block'; 
                         if (pagesRead.length === pdf.numPages) {
                             pdfDisplayedCurrentPage = 1;
                             queueRenderPage(1, true, true, true);
@@ -274,15 +286,13 @@ class ReadingModal:
                         if (pdfBarsHidden) {
                             showPDFBottomRightNotification("%s", 4000);
                         }
-                        if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + pdf.numPages); }
+                        if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
                         fileReader = null;
                 });
             };
-            fileReader.onload = (e) => { loadFn(0); };
-
-            fileReader.readAsArrayBuffer(file);
+            loadFn();
             b64 = ""; arr = null; bstr = null; file = null;
-        """ % (pages_read_js, marks_js, port, addon_id, last_page_read, title, note_id)
+        """ % (pages_read_js, marks_js, extract_js, port, addon_id, last_page_read, title, note_id)
         #send large files in multiple packets
         page = self._editor.web.page()
         chunk_size = 10000000
@@ -298,6 +308,7 @@ class ReadingModal:
                 var b64 = `%s`;
                     %s
             """ % (base64pdf, init_code))
+      
 
     def show_fields_tab(self):
         self.sidebar.show_fields_tab()
@@ -701,7 +712,7 @@ class ReadingModal:
             pdf_or_feed         = queue_item.is_feed() or queue_item.is_pdf()
             clock               = clock_svg(len(should_greyout) > 0) if queue_item.is_scheduled() else ""
             should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if pdf_or_feed else ""
-            queue_head_readings +=  "<a onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s.%s %s</a><br>" % (should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
+            queue_head_readings +=  "<a oncontextmenu='queueLinkContextMenu(event, %s)' onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s.%s %s</a><br>" % (queue_item.id, should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
             if ix > 3:
                 break
 
@@ -728,12 +739,12 @@ class ReadingModal:
 
         return f"""
         <div id='siac-queue-sched-wrapper'>
-            <div class='w-100' style='text-align: center; color: lightgrey;'>
+            <div class='w-100' style='text-align: center; color: lightgrey; margin-top: 5px;'>
                 Release to mark as <b>done.</b><br>
                 <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 12px;'/>
             </div>
             <div class='w-100' style='text-align: center; padding-top: 10px;'>
-                <span style='font-size: 21px;' id='siac-sched-prio-val'>{prio_verbose}</span><br>
+                <span style='font-size: 16px;' id='siac-sched-prio-val'>{prio_verbose}</span><br>
                 <span style='font-size: 12px; color: grey;' id='siac-sched-prio-lbl'></span>
             </div>
         </div>
@@ -751,6 +762,13 @@ class ReadingModal:
         marks_grey_img_src  = utility.misc.img_src("mark-star-lightgrey-24px.png")
         pdf_search_img_src  = utility.misc.img_src("magnify-24px.png")
         quick_sched         = self.quick_sched_btn(priority)
+        extract             = ""
+        
+        if self.note.extract_start:
+            if self.note.extract_start == self.note.extract_end:
+                extract = f"<div class='siac-extract-marker'> Extract: P. {self.note.extract_start} </div>"
+            else:
+                extract = f"<div class='siac-extract-marker'> Extract: P. {self.note.extract_start} - {self.note.extract_end} </div>"
 
         html = """
             <div id='siac-pdf-overlay'>PAGE READ</div>
@@ -764,6 +782,7 @@ class ReadingModal:
                         <div class='siac-mark-btn-inner siac-mark-btn-inner-5' onclick='pycmd("siac-pdf-mark 5 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Bookmark</div>
                     </div> 
                 </div>
+                {extract}
                 <div style='display: inline-block; vertical-align: top;' id='siac-pdf-overlay-top-lbl-wrap'></div>
             </div>
             <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
@@ -801,13 +820,13 @@ class ReadingModal:
             {quick_sched_btn} 
             <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark' onclick='pycmd("siac-close-iframe")'>&times; &nbsp;Close Web</div>
             <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
-                <div id='siac-pdf-loader-wrapper' style='display: flex; justify-content: center; align-items: center; height: 100%;'>
+                <div id='siac-pdf-loader-wrapper' style='display: flex; justify-content: center; align-items: center; height: 100%; z-index: 7;'>
                     <div class='siac-pdf-loader' style=''>
                         <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>Loading PDF</div></div>
                     </div>
                 </div>
                 <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
-                <div id="text-layer"  onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
+                <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
             </div>
             <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
             <div class='siac-reading-modal-button-bar-wrapper' style="">
@@ -827,18 +846,33 @@ class ReadingModal:
                 </div>
 
                 <div style='position: absolute; right: 0; display: inline-block; user-select: none;'>
-                    <div id="siac-pdf-night-btn" class='siac-btn siac-btn-dark' style='margin-right: 10px; width: 50px;' onclick='togglePDFNightMode(this);'>Day</div>
+                    <div style='position: relative; display: inline-block; width: 70px; margin-right: 7px;'>
+                        <div id='siac-pdf-color-mode-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'><span>Day</span>
+                            <div class='siac-btn-small-dropdown-inverted click' style='height: 140px; top: -118px; left: -42px; width: 100px;'>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Day")'><b>Day</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Night")'><b>Night</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Sand")'><b>Sand</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Peach")'> <b>Peach</b> </div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Rose")'> <b>Rose</b> </div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Moss")'> <b>Moss</b> </div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Coral")'> <b>Coral</b> </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 65px;' onclick='togglePageRead({nid});'>\u2713&nbsp; Read</div>
                     <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
-                        <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'  onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
+                        <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
                             <div class='siac-btn-small-dropdown-inverted click'>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Jump to Last Read Page</b></div>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>Jump to First Unread Page</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-create-pdf-extract " + pdfDisplayed.numPages); event.stopPropagation();'><b>Extract ...</b></div>
                                 <hr>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); markReadUpToCurrent(); pdfShowPageReadMark();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + pdfDisplayed.numPages); event.stopPropagation();'><b>Mark Range ...</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Last Read Page</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>First Unread Page</b></div>
+                                <hr>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + numPagesExtract()); markReadUpToCurrent();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + numPagesExtract()); event.stopPropagation();'><b>Mark Range ...</b></div>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pagesRead = []; pdfHidePageReadMark(); updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + pdfDisplayed.numPages); pagesRead = Array.from(Array(pdfDisplayed.numPages).keys()).map(x => ++x); pdfShowPageReadMark(); updatePdfProgressBar();event.stopPropagation();'>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + numPagesExtract()); setAllPagesRead(); updatePdfProgressBar();event.stopPropagation();'>
                                     <b>Mark all as Read</b>
                                 </div>
                             </div>
@@ -851,7 +885,8 @@ class ReadingModal:
             </div>
             <script>
                 greyoutBottom();
-                document.getElementById('siac-pdf-night-btn').innerHTML = pdfColorMode;
+                $('#siac-pdf-color-mode-btn > span').first().text(pdfColorMode);
+                $('#siac-pdf-top').addClass("siac-pdf-" + pdfColorMode.toLowerCase());
                 if (pdfTooltipEnabled) {{
                     $('#siac-pdf-tooltip-toggle').addClass('active');
                 }} else {{
@@ -861,7 +896,7 @@ class ReadingModal:
                 $('.siac-pdf-ul-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
             </script>
         """.format_map(dict(nid = nid, pdf_title = title, pdf_path = source, quick_sched_btn=quick_sched, search_sources=search_sources, marks_img_src=marks_img_src, 
-        marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src))
+        marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src, extract=extract))
 
         return html
 
@@ -912,13 +947,16 @@ class ReadingModal:
             tags = tags[1:]
 
         html = f"""
-            <table style='color: grey; min-width: 190px;'>
+            <table style='color: grey; min-width: 190px; line-height: 1.2;'>
                 <tr><td>ID</td><td><b>{note.id}</b></td></tr>
                 <tr><td>Created</td><td><b>{created}</b></td></tr>
                 <tr><td>Schedule</td><td><b>{schedule}</b></td></tr>
-                <tr><td>Tags</td><td>
-                    <input type='text' style='width: 210px; background: #2f2f31; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px; color: lightgrey;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
-                </td></tr>
+                <tr>
+                    <td style='padding-top: 10px;'>Tags</td>
+                    <td style='padding-top: 10px;'>
+                        <input type='text' style='width: 210px; background: #2f2f31; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px; color: lightgrey;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
+                    </td>
+                </tr>
             </table>
         """
         return html
@@ -1039,12 +1077,17 @@ class ReadingModal:
 
 
     @js
-    def show_remove_dialog(self):
+    def show_remove_dialog(self, nid: Optional[int] = None):
         """ Shows a dialog to either remove the current note from the queue or to delete it altogether. """
 
-        title   = utility.text.trim_if_longer_than(self.note.get_title(), 40).replace("`", "")
-        rem_cl  = "checked" if self.note.position is not None and self.note.position >= 0 else "disabled"
-        del_cl  = "checked" if self.note.position is None or self.note.position < 0 else ""
+        if nid:
+            note = get_note(nid)
+        else:
+            note = self.note
+
+        title   = utility.text.trim_if_longer_than(note.get_title(), 40).replace("`", "")
+        rem_cl  = "checked" if note.position is not None and note.position >= 0 else "disabled"
+        del_cl  = "checked" if note.position is None or note.position < 0 else ""
 
         modal   = f"""
             <div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">
@@ -1064,7 +1107,7 @@ class ReadingModal:
                 </div>
                 <div style='text-align: right;'>
                     <div class='siac-btn siac-btn-dark' style='margin-right: 10px;' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Cancel</div>
-                    <div class='siac-btn siac-btn-dark' onclick='removeDialogOk()'>Ok</div>
+                    <div class='siac-btn siac-btn-dark' onclick='removeDialogOk({note.id})'>Ok</div>
                 </div>
 
             </div>
@@ -1464,9 +1507,13 @@ class ReadingModal:
     def mark_range(self, start: int, end: int, pages_total: int, current_page: int):
         if start <= 0:
             start = 1
-        if end > pages_total:
+        if self.note.extract_start is not None and start < self.note.extract_start:
+            start = self.note.extract_start
+        if self.note.extract_start is None and end > pages_total:
             end = pages_total
-        if end <= start or start >= pages_total:
+        if self.note.extract_start is not None and end > self.note.extract_end:
+            end = self.note.extract_end
+        if end <= start or (self.note.extract_start is None and start >= pages_total) or (self.note.extract_start is not None and start >= pages_total + self.note.extract_start):
             return
 
         mark_range_as_read(self.note_id, start, end, pages_total)
@@ -1599,7 +1646,7 @@ class ReadingModal:
 
 
     @js
-    def jump_to_last_read_page(self, nid: int):
+    def jump_to_last_read_page(self):
         return """
             if (pagesRead && pagesRead.length) {
                 pdfDisplayedCurrentPage = Math.max(...pagesRead);
@@ -1607,10 +1654,11 @@ class ReadingModal:
             }
         """
     @js
-    def jump_to_first_unread_page(self, nid: int):
+    def jump_to_first_unread_page(self):
         return """
             if (pdfDisplayed) {
-                for (var i = 1; i < pdfDisplayed.numPages + 1; i++) {
+                let start = pdfExtract ? pdfExtract[0] : 1;
+                for (var i = start; i < start + numPagesExtract(); i++) {
                     if (!pagesRead || pagesRead.indexOf(i) === -1) {
                         pdfDisplayedCurrentPage = i;
                         rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
@@ -1619,6 +1667,7 @@ class ReadingModal:
                 }
             }
         """
+    
 
     #
     # highlights

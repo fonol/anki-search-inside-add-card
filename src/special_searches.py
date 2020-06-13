@@ -304,10 +304,10 @@ def _find_cards_with_one_more_rep(cid: int):
 
     for cid, rev_list in others.items():
         
-        ivl_diff = 0.0
-        ivl_diff_in_percent_total = 0.0
-        times_diff = 0.0
-        pass_rate_sum = 0.0
+        ivl_diff                    = 0.0
+        ivl_diff_in_percent_total   = 0.0
+        times_diff                  = 0.0
+        pass_rate_sum               = 0.0
         
         for i, rev_list_item in enumerate(rev_list):
             if i < len(rev_list) - 1:
@@ -329,20 +329,20 @@ def _find_cards_with_one_more_rep(cid: int):
 
 
 def find_similar_cards(cid : int, min_similarity: int, limit : int):
-    loaded = _find_cards_with_one_more_rep(cid)
-    similarities = loaded[1]
-    avg_similarity = 0.0
-    ivl_diff_in_percent_avg_sum = 0.0
+    loaded                              = _find_cards_with_one_more_rep(cid)
+    similarities                        = loaded[1]
+    avg_similarity                      = 0.0
+    ivl_diff_in_percent_avg_sum         = 0.0
 
-    next_success_sum = 0.0
-    current_ivl_sum = 0.0
-    pass_rate_sum = 0.0
+    next_success_sum                    = 0.0
+    current_ivl_sum                     = 0.0
+    pass_rate_sum                       = 0.0
 
-    avg_next_success_chance_up_to_now = 0.0
-    avg_current_ivl_up_to_now = 0.0
-    avg_pass_rate_up_to_now = 0.0
+    avg_next_success_chance_up_to_now   = 0.0
+    avg_current_ivl_up_to_now           = 0.0
+    avg_pass_rate_up_to_now             = 0.0
 
-    revlists = []
+    revlists                            = []
 
     for i, s in enumerate(similarities):
         

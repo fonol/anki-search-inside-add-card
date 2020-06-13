@@ -39,17 +39,19 @@ class SiacNote(Printable):
     MISSED_NOTES    = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
 
     def __init__(self, props: Tuple[Any, ...]):
-        self.id             : int = props[0]
-        self.title          : str = props[1]
-        self.text           : str = props[2]
-        self.source         : str = props[3]
-        self.tags           : str = props[4]
-        self.nid            : int = props[5]
-        self.created        : str = props[6]
-        self.modified       : str = props[7]
-        self.reminder       : str = props[8]
-        self.lastscheduled  : str = props[9]
-        self.position       : int = props[10]
+        self.id             : int           = props[0]
+        self.title          : str           = props[1]
+        self.text           : str           = props[2]
+        self.source         : str           = props[3]
+        self.tags           : str           = props[4]
+        self.nid            : int           = props[5]
+        self.created        : str           = props[6]
+        self.modified       : str           = props[7]
+        self.reminder       : str           = props[8]
+        self.lastscheduled  : str           = props[9]
+        self.position       : int           = props[10]
+        self.extract_start  : Optional[int] = props[11]
+        self.extract_end    : Optional[int] = props[12]
 
         self.mid            : int = -1
     
@@ -63,7 +65,7 @@ class SiacNote(Printable):
         body    = text.split("\u001f")[1]
         src     = text.split("\u001f")[2]
 
-        return SiacNote((id, title, body, src, index_props[2], -1, "", "", "", "", -1))
+        return SiacNote((id, title, body, src, index_props[2], -1, "", "", "", "", -1, None, None))
 
     def get_content(self) -> str:
         return self._build_non_anki_note_html()

@@ -34,10 +34,14 @@ body.siac-reading-modal-displayed #siac-right-side {
     color: #41b3a3;
     cursor: pointer;
 }
-.siac-modal-small.dark, #siac-reading-modal .siac-modal-small {
+.siac-modal-small.dark, #siac-reading-modal .siac-modal-small, .siac-pdf-contextmenu {
     border: 3px outset #41b3a3;
     background: #2f2f31;
     color: white;
+}
+.siac-pdf-contextmenu {
+    border-radius: 3px;
+    padding: 5px;
 }
 
 #siac-cloze-btn {
@@ -58,8 +62,8 @@ body.siac-reading-modal-displayed #siac-right-side {
     background-color: #2f2f31;
     width: 200px;
     padding: 0px 4px 0px 4px;
-    height: 135px;
-    top: -114px;
+    height: 165px;
+    top: -144px;
     left: -181px;
     border: 2px outset #41b3a3; 
     z-index: 5;
@@ -199,6 +203,37 @@ body.siac-reading-modal-displayed #siac-right-side {
     overflow-y: auto; 
     text-align: center;
     margin-top: 20px;
+}
+#siac-pdf-top.siac-pdf-night #text-layer {
+    background-color: #2496dc;
+    opacity: 0.8;
+}
+#siac-pdf-top.siac-pdf-rose #text-layer {
+    background-color: red;
+    opacity: 0.2;
+}
+#siac-pdf-top.siac-pdf-moss #text-layer {
+    background-color: green;
+    opacity: 0.4;
+}
+#siac-pdf-top.siac-pdf-coral #text-layer {
+    background-color: coral;
+    opacity: 0.8;
+}
+#siac-pdf-top.extract #text-layer {
+    background-color: #2496dc !important;
+    opacity: 0.7 !important;
+    mix-blend-mode: normal !important;
+}
+.siac-extract-marker {
+    display: inline-block;
+    border: 3px outset #2496dc;
+    border-radius: 3px;
+    padding: 4px 3px 5px 4px;
+    background-color: #2f2f31;
+    color: beige;
+    vertical-align: top;
+    margin-right: 15px;
 }
 #siac-text-top-wr {
     flex: 1 1 auto;
@@ -346,10 +381,6 @@ body.siac-reading-modal-displayed #siac-right-side {
     color: white;
     border: 3px outset #69B36C;
     background-color: #2f3030;
-}
-#siac-pdf-night-btn {
-    padding-left: 4px;
-    padding-right: 4px;
 }
 #siac-pdf-tooltip-results-area {
 	overflow-y: auto;
@@ -605,7 +636,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     left: 0;
     display: none;
     width: 300px;
-    height: 102px;
+    height: 106px;
     border: 3px outset #41b3a3;
 }
 #siac-queue-infobox:after {
@@ -737,6 +768,10 @@ body.night_mode .siac-note-title-only {
 .siac-pdf-main-color-border-top {
     border-top: 2px solid #41b3a3;
 }
+.siac-pdf-main-color-border {
+    border: 3px outset #41b3a3;
+    border-radius: 3px;
+}
 #siac-left-tab-browse,#siac-left-tab-pdfs {
     font-family: 'Open Sans', sans-serif;
     flex: 1 1 auto;
@@ -823,7 +858,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     z-index: 5;
 }
 .siac-prio-slider, .siac-prio-slider-small {
-    width: 250px;
+    width: 190px;
     -webkit-appearance: none; 
     appearance: none;
     background: #d3d3d3; 

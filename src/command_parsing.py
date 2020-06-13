@@ -45,6 +45,7 @@ from .dialogs.editor import openEditor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
 from .dialogs.quick_schedule import QuickScheduler
 from .dialogs.url_import import UrlImporter
+from .dialogs.pdf_extract import PDFExtractDialog
 from .dialogs.zotero_import import ZoteroImporter
 from .dialogs.schedule_dialog import ScheduleDialog
 from .tag_find import findBySameTag, display_tag_info
@@ -162,7 +163,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             notes = get_all_pdf_notes()
             # add special note at front
             sp_body = get_pdf_list_first_card()
-            notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
+            notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
             index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-show-pdfs-unread":
@@ -191,27 +192,27 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         stamp = setStamp()
         notes = get_pdf_notes_last_read_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-pdf-last-added":
         stamp = setStamp()
         notes = get_pdf_notes_last_added_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-pdf-find-invalid":
         stamp = setStamp()
         notes = get_invalid_pdfs()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1)))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-queue-info "):
-        nid = int(cmd.split()[1])
-        note = get_note(nid)
-        read_stats = get_read_stats(nid)
+        nid         = int(cmd.split()[1])
+        note        = get_note(nid)
+        read_stats  = get_read_stats(nid)
         index.ui.js("""
             if (pdfLoading || noteLoading || modalShown) {
                 hideQueueInfobox();
@@ -235,18 +236,21 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 index.search(inp, ["-1"], only_user_notes = False, print_mode = "pdf")
 
     elif cmd.startswith("siac-cutout-io "):
-        img_src = " ".join(cmd.split()[1:])
-        full_path = os.path.join(mw.col.media.dir(), img_src).replace("\\", "/")
+        img_src     = " ".join(cmd.split()[1:])
+        full_path   = os.path.join(mw.col.media.dir(), img_src).replace("\\", "/")
         self.onImgOccButton(image_path=full_path)
 
+    elif cmd.startswith("siac-create-pdf-extract "):
+        dialog = PDFExtractDialog(self.parentWindow, int(cmd.split(" ")[1]), index.ui.reading_modal.note)
+
     elif cmd.startswith("siac-jump-last-read"):
-        index.ui.reading_modal.jump_to_last_read_page(int(cmd.split()[1]))
+        index.ui.reading_modal.jump_to_last_read_page()
 
     elif cmd.startswith("siac-jump-first-unread"):
-        index.ui.reading_modal.jump_to_first_unread_page(int(cmd.split()[1]))
+        index.ui.reading_modal.jump_to_first_unread_page()
 
     elif cmd.startswith("siac-mark-read-up-to "):
-        mark_as_read_up_to(int(cmd.split()[1]), int(cmd.split()[2]), int(cmd.split()[3]))
+        mark_as_read_up_to(index.ui.reading_modal.note, int(cmd.split()[2]), int(cmd.split()[3]))
 
     elif cmd.startswith("siac-display-range-input "):
         nid = int(cmd.split()[1])
@@ -254,14 +258,14 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.ui.reading_modal.display_read_range_input(nid, num_pages)
 
     elif cmd.startswith("siac-user-note-mark-range "):
-        start = int(cmd.split()[2])
-        end = int(cmd.split()[3])
-        pages_total = int(cmd.split()[4])
-        current_page = int(cmd.split()[5])
+        start           = int(cmd.split()[2])
+        end             = int(cmd.split()[3])
+        pages_total     = int(cmd.split()[4])
+        current_page    = int(cmd.split()[5])
         index.ui.reading_modal.mark_range(start, end, pages_total, current_page)
 
     elif cmd.startswith("siac-mark-all-read "):
-        mark_all_pages_as_read(int(cmd.split()[1]), int(cmd.split()[2]))
+        mark_all_pages_as_read(index.ui.reading_modal.note, int(cmd.split()[2]))
 
     elif cmd.startswith("siac-mark-all-unread "):
         mark_all_pages_as_unread(int(cmd.split()[1]))
@@ -452,21 +456,22 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             $('#siac-del-modal').remove();
         """)
 
-    elif cmd == "siac-delete-current-user-note":
-        # delete the currently opened note in the reading modal
-        id = index.ui.reading_modal.note_id
+    elif cmd.startswith("siac-delete-current-user-note "):
+        # Delete a note, invoked from the reading modal
+        id = int(cmd.split()[1])
         delete_note(id)
         if index is not None:
             index.deleteNote(id)
         run_hooks("user-note-deleted")
-        head = get_head_of_queue()
         tooltip("Deleted note.")
-        if head is None or head < 0:
-            index.ui.js("""
-                onReadingModalClose();
-            """)
+        if id == index.ui.reading_modal.note_id:
+            head = get_head_of_queue()
+            if head is None or head < 0:
+                index.ui.js(""" onReadingModalClose(); """)
+            else:
+                index.ui.reading_modal.display(head)
         else:
-            index.ui.reading_modal.display(head)
+            index.ui.reading_modal.reload_bottom_bar()
 
     elif cmd.startswith("siac-read-user-note "):
         id = int(cmd.split()[1])
@@ -513,10 +518,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         nid = int(cmd.split()[1])
         picker = QueuePicker(self.parentWindow, [], [])
         if picker.exec_() and picker.chosen_id is not None and picker.chosen_id >= 0:
-            note = get_note(nid)
+            # note = get_note(nid)
             index.ui.reading_modal.display(picker.chosen_id)
         else:
-            index.ui.reading_modal.reload_bottom_bar(nid)
+            if nid >= 0:
+                index.ui.reading_modal.reload_bottom_bar(nid)
 
     elif cmd.startswith("siac-reload-reading-modal-bottom "):
         nid = int(cmd.split()[1])
@@ -575,13 +581,17 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.ui.reading_modal.update_reading_bottom_bar(nid)
         tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
 
-    elif cmd.startswith("siac-remove-from-queue"):
-        update_priority_list(index.ui.reading_modal.note_id, 0)
-        nid = get_head_of_queue()
-        if nid is None or nid < 0:
-            index.ui.eval("onReadingModalClose();")
+    elif cmd.startswith("siac-remove-from-queue "):
+        to_remove = int(cmd.split(" ")[1])
+        update_priority_list(to_remove, 0)
+        if to_remove == index.ui.reading_modal.note_id:
+            nid = get_head_of_queue()
+            if nid is None or nid < 0:
+                index.ui.eval("onReadingModalClose();")
+            else:
+                index.ui.reading_modal.display(nid)
         else:
-            index.ui.reading_modal.display(nid)
+            index.ui.reading_modal.reload_bottom_bar()
         tooltip(f"<center>Removed from Queue.</center>")
 
     elif cmd == "siac-on-reading-modal-close":
@@ -988,10 +998,15 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if check_index():
             index.ui.uiVisible = False
 
-    elif cmd == "selectCurrent":
+    elif cmd == "siac-decks-select-current":
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and index is not None:
             index.ui.js("selectDeckWithId(%s);" % deckChooser.selectedId())
+
+    elif cmd == "siac-decks-select-current-and-subdecks":
+        deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
+        if deckChooser is not None and index is not None:
+            index.ui.js("selectDeckAndSubdecksWithId(%s);" % deckChooser.selectedId())
 
     elif cmd.startswith("siac-update-field-to-hide-in-results "):
         if not check_index():
@@ -1320,6 +1335,7 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
         elif index.lastSearch[2] == "firstCreated":
             getCreatedNotesOrderedByDate(index, editor, index.selectedDecks, index.lastSearch[3], "asc")
 
+
 def generate_clozes(sentences, pdf_path, pdf_title, page):
     try:
         # (optional) field that full path to pdf doc goes into
@@ -1428,7 +1444,7 @@ def get_index_info():
                <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Space / Ctrl+Right / Ctrl+J</b></td></tr>
                <tr><td>PDF: Page Right + Mark Page as Read</td><td>  <b>Ctrl+Shift+Space</b></td></tr>
                <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl+K</b></td></tr>
-               <tr><td>New Note</td><td>  <b>Ctrl+Shift+N</b></td></tr>
+               <tr><td>New Note</td><td>  <b>%s</b></td></tr>
                <tr><td>Confirm new note</td><td>  <b>Ctrl+Enter</b></td></tr>
                <tr><td>Confirm new note and keep open</td><td>  <b>Ctrl+Shift+Enter</b></td></tr>
                <tr><td>PDF: Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
@@ -1448,7 +1464,8 @@ def get_index_info():
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"],
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
-            ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db"
+            ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db",
+            config["notes.editor.shortcut"]
             )
 
     return html

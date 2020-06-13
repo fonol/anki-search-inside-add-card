@@ -54,7 +54,7 @@ from .hooks import add_hook
 from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.quick_open_pdf import QuickOpenPDF
 from .internals import requires_index_loaded
-from .config import get_config_value_or_default
+from .config import get_config_value_or_default as conf_or_def
 from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index
 
 config = mw.addonManager.getConfig(__name__)
@@ -72,7 +72,7 @@ def init_addon():
     gui_hooks.profile_did_open.append(insert_scripts)
     gui_hooks.profile_did_open.append(recalculate_priority_queue)
 
-    if get_config_value_or_default("searchOnTagEntry", True):
+    if conf_or_def("searchOnTagEntry", True):
         TagEdit.keyPressEvent = wrap(TagEdit.keyPressEvent, tag_edit_keypress, "around")
 
     setup_tagedit_timer()
@@ -83,10 +83,13 @@ def init_addon():
     # update notes in index when changed through the "Edit" button
     EditDialog.saveAndClose = wrap(EditDialog.saveAndClose, editor_save_with_index_update, "around")
 
-    # shortcut to toggle add-on pane 
-    gui_hooks.editor_did_init_shortcuts.append(add_hide_show_shortcut) 
+    # register add-on's shortcuts 
+    gui_hooks.editor_did_init_shortcuts.append(register_shortcuts) 
     # reset state after the add/edit dialog is opened
     gui_hooks.editor_did_init_shortcuts.append(reset_state) 
+
+    # activate nighmode if Anki's nightmode is active
+    gui_hooks.editor_did_init_shortcuts.append(activate_nightmode) 
 
     # add-on internal hooks
     setup_hooks()
@@ -123,16 +126,16 @@ def on_load_note(editor: Editor):
     """
 
     #only display in add cards dialog or in the review edit dialog (if enabled)
-    if editor.addMode or (get_config_value_or_default("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
+    if editor.addMode or (conf_or_def("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
 
         index                   = get_index()
-        zoom                    = get_config_value_or_default("searchpane.zoom", 1.0)
-        typing_delay            = max(500, get_config_value_or_default('delayWhileTyping', 1000))
-        show_tag_info_on_hover  = "true" if get_config_value_or_default("showTagInfoOnHover", True) and get_config_value_or_default("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
+        zoom                    = conf_or_def("searchpane.zoom", 1.0)
+        typing_delay            = max(500, conf_or_def('delayWhileTyping', 1000))
+        show_tag_info_on_hover  = "true" if conf_or_def("showTagInfoOnHover", True) and conf_or_def("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
 
         editor.web.eval(f"""
             var showTagInfoOnHover  = {show_tag_info_on_hover}; 
-            tagHoverTimeout         = {get_config_value_or_default("tagHoverDelayInMiliSec", 1000)};
+            tagHoverTimeout         = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
             var delayWhileTyping    = {typing_delay};
         """)
 
@@ -165,9 +168,35 @@ def on_load_note(editor: Editor):
         set_edit(editor)
 
 def on_add_cards_init(add_cards: AddCards):
+
     if get_index() is not None and add_cards.editor is not None:
         get_index().ui.set_editor(add_cards.editor)
-
+        
+def activate_nightmode(shortcuts: List[Tuple], editor: Editor):
+    """ Activate dark theme if Anki's night mode is active. """
+    
+    editor.web.eval("""
+    if (document.body.classList.contains('nightMode')) {
+        var props = [];
+        for (var i = 0; i < document.styleSheets.length; i++){
+            try { 
+                for (var j = 0; j < document.styleSheets[i].cssRules.length; j++){
+                    try{
+                        for (var k = 0; k < document.styleSheets[i].cssRules[j].style.length; k++){
+                            let name = document.styleSheets[i].cssRules[j].style[k];
+                            if (name.startsWith('--c-') && !name.endsWith('-night') && props.indexOf(name) == -1) {
+                                props.push(name);
+                            }
+                        }
+                    } catch (error) {}
+                }
+            } catch (error) {}
+        }
+        for (const v of props) {
+            document.documentElement.style.setProperty(v, getComputedStyle(document.documentElement).getPropertyValue(v + '-night'));
+        }
+    }
+    """)
 
 def insert_scripts():
     """
@@ -177,7 +206,7 @@ def insert_scripts():
     """
 
     addon_id    = utility.misc.get_addon_id()
-    pdf_theme   = get_config_value_or_default("pdf.theme", "pdf_reader.css")
+    pdf_theme   = conf_or_def("pdf.theme", "pdf_reader.css")
     port        = mw.mediaServer.getPort()
 
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf)$")
@@ -260,19 +289,29 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
     # might still be true if Create Note dialog was closed by closing its parent window, so reset it
     state.note_editor_shown = False
 
-def add_hide_show_shortcut(shortcuts: List[Tuple], editor: Editor):
-    """ Register a shortcut to toggle the add-on pane. """
+    def cb(night_mode: bool):
+        state.night_mode = night_mode
 
-    if not "toggleShortcut" in config:
-        return
-    QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
+    editor.web.evalWithCallback("() => {  return document.body.classList.contains('nightMode'); }", cb)
+
+def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
+    """ Register shortcuts used by the add-on. """
+
+    try:
+        QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
+    except:
+        pass
     QShortcut(QKeySequence("Ctrl+o"), editor.widget, activated=show_quick_open_pdf)
-    QShortcut(QKeySequence(config["notes.editor.shortcut"]), editor.widget, activated=show_note_modal)
+    try:
+        QShortcut(QKeySequence(config["notes.editor.shortcut"]), editor.widget, activated=show_note_modal)
+    except:
+        pass
 
 def show_note_modal():
     if not state.note_editor_shown:
-        ix      = get_index()
-        NoteEditor(ix.ui._editor.parentWindow)
+        ix              = get_index()
+        read_note_id    = ix.ui.reading_modal.note_id
+        NoteEditor(ix.ui._editor.parentWindow, note_id=None, add_only=False, read_note_id=read_note_id)
 
 def show_quick_open_pdf():
     """ Ctrl + O pressed -> show small dialog to quickly open a PDF. """
@@ -294,7 +333,7 @@ def setup_tagedit_timer():
 
 def tag_edit_keypress(self, evt, _old):
     """
-    Used if "search on tag entry" is enabled.
+    Used if "Search on Tag Entry" is enabled.
     Triggers a search if the user has stopped typing in the tag field.
     """
     _old(self, evt)

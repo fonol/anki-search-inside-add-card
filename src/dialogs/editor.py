@@ -47,7 +47,6 @@ def openEditor(mw, nid):
 class EditDialog(QDialog):
     """ Edit dialog for Anki notes. """
 
-
     def __init__(self, mw, note):
 
         QDialog.__init__(self, None, Qt.Window)
@@ -124,10 +123,7 @@ class NoteEditor(QDialog):
         self.text_prefill   = text_prefill
         self.title_prefill  = title_prefill
         self.prio_prefill   = prio_prefill
-        try:
-            self.dark_mode_used = utility.misc.dark_mode_is_used(mw.addonManager.getConfig(__name__))
-        except Exception as err:
-            self.dark_mode_used = False
+        self.dark_mode_used = state.night_mode
 
         if self.note_id is not None:
             self.note = get_note(note_id)
@@ -147,7 +143,7 @@ class NoteEditor(QDialog):
         # creating a new note
         else:
             self.save = QPushButton("\u2714 Create")
-            self.setWindowTitle('New Note  (Ctrl/Cmd+Shift+N)')
+            self.setWindowTitle('New Note')
             self.save.clicked.connect(self.on_create_clicked)
             self.priority = 0
         
@@ -426,6 +422,7 @@ class CreateTab(QWidget):
 
 
         vbox_left.addWidget(self.slider)
+        vbox_left.setContentsMargins(0,0,0,0)
         self.left_pane = QWidget()
         self.left_pane.setLayout(vbox_left)
         self.layout.addWidget(self.left_pane, 7)
@@ -1127,7 +1124,9 @@ class SettingsTab(QWidget):
         """ Example queue calculation with the current parameters. """
 
         def _calc_score(priority, days_delta, prio_scale, prio_mod):
-            prio_score = 1 + ((priority - 1)/99) * (prio_scale - 1)
+            prio_score = 1 + ((priority - 1) / 99) * (prio_scale - 1)
+            if days_delta < 1:
+                return days_delta + prio_score / 50000
             return days_delta + prio_mod * prio_score
 
         prio_scale  = get_config_value_or_default("notes.queue.priorityScaleFactor", 5)

@@ -8,6 +8,7 @@
      opacity: 0.3;
      line-height: 1.0;
      z-index: 3;
+     mix-blend-mode: multiply;
  }
 .textLayer > span {
     color: transparent;
