@@ -193,24 +193,30 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                         <div class='siac-switch-deck-btn-inner right' onclick="pycmd('siac-fill-tag-select')"><b>Tags</b></div>
                             <div class='siac-btn-small-dropdown click'>
                                 <div id='deckSelWrapper'>
-                                    <div id='deck-sel-info-lbl' style='margin: 5px 0 4px 5px;'><i>Only selected decks are used when searching:</i></div>
-                                    <div id='deckSelQuickWrapper'>
+                                    <div id='deck-sel-info-lbl' style='flex: 0 1 auto; margin: 5px 0 4px 5px;'><b>Only selected decks are used when searching</b></div>
+                                    <div id='siac-deck-sel-btn-wrapper' style='flex: 0 1 auto; margin-top: 3px; margin-bottom: 5px; white-space: nowrap; font-size: 0;'>
+                                        <div class='deck-list-button' onclick='selectAllDecks(); event.stopPropagation();'>All</div>
+                                        <div class='deck-list-button' onclick='unselectAllDecks(); event.stopPropagation();'>None</div>
+                                        <div class='deck-list-button' onclick="pycmd('siac-decks-select-current'); event.stopPropagation();">Current</div>
+                                        <div class='deck-list-button' onclick="pycmd('siac-decks-select-current-and-subdecks'); event.stopPropagation();">Current and Subdecks</div>
+                                    </div>
+                                    <div id='deckSelQuickWrapper' style='flex: 0 0 auto; overflow-y: auto; max-height: 120px;'>
                                         <div style='font-weight: bold; margin: 4px 0 4px 4px;'>Recent:</div>
                                         <table id='deckSelQuick'></table>
+                                    </div>
+                                    <div id='siac-deck-sel-q-sep' style='display: none;'>
                                         <hr style='margin: 5px 5px 5px 5px'/>
                                     </div>
-                                    <table id='deckSel'></table>
+                                    <div style='flex: 1 1 auto; overflow-y: auto; margin-bottom: 10px;'>
+                                        <table id='deckSel'></table>
+                                    </div>
                                 </div>
-                                <div id='siac-deck-sel-btn-wrapper' style='margin-top: 3px; margin-bottom: 5px; white-space: nowrap; font-size: 0;'>
-                                    <div class='deck-list-button' onclick='selectAllDecks(); event.stopPropagation();'>All</div>
-                                    <div class='deck-list-button center' onclick='unselectAllDecks(); event.stopPropagation();'>None</div>
-                                    <div class='deck-list-button' onclick="pycmd('selectCurrent'); event.stopPropagation();">Current</div>
-                                </div>
+                             
                             </div>
                         </div>
                     </div>
                     <div class='flexCol right' style="position: relative; padding-bottom: 7px; padding-right: 0px; white-space: nowrap;">
-                            <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'>&nbsp;&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;&nbsp;
+                            <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'><b>&nbsp;&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;&nbsp;</b>
                                 <div class='siac-btn-small-dropdown click'>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
@@ -226,7 +232,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]</div>
                                 </div>
                             </div>
-                            <div id='siac-settings-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; min-width: 140px; text-align: center; '>&nbsp; Settings & Info &nbsp;
+                            <div id='siac-settings-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; min-width: 140px; text-align: center;'><b>&nbsp; Settings & Info &nbsp;</b>
                                         <div class='siac-btn-small-dropdown click' onclick='event.stopPropagation();' >
                                                 <table style='width: 100%%;'>
                                                     <tr><td class='tbLb'><label class='blue-hover' for='selectionCb'>Search on Selection</label></td><td><input type='checkbox' id='selectionCb' checked onchange='siacState.searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
@@ -637,20 +643,8 @@ def stylingModal(config):
     html += """
     <br/> <br/>
     <mark>&nbsp;Important:&nbsp;</mark> At the moment, if you reset your config.json to default, your custom stopwords and synsets will be deleted. If you want to do that, I recommend saving them somewhere first.
-    <br/> <br/>
-    If you want to use the add-on with Anki's <b>built-in night mode</b> the <b>night mode</b> add-on, you have to adapt the styling section.
-    <br/> <br/>
-    <b>Sample night mode color scheme:</b> <div class='siac-btn' style='margin-left: 15px;' onclick='pycmd("siac-styling default night");'>Apply</div><br/><br/>
-    <div style='width: 100%%; overflow-y: auto; max-height: 150px; opacity: 0.7;'>
-    "styling": %s,
     </div>
-    <br/> <br/>
-    <b>Default color scheme:</b><div class='siac-btn' style='margin-left: 15px;' onclick='pycmd("siac-styling default day")'>Apply</div><br/><br/>
-    <div style='width: 100%%; overflow-y: auto; max-height: 150px; opacity: 0.7;'>
-    "styling": %s,
-    </div>
-
-    """ % (default_night_mode_styles(), default_styles())
+    """
     return html
 
 
