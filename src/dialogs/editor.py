@@ -47,7 +47,6 @@ def openEditor(mw, nid):
 class EditDialog(QDialog):
     """ Edit dialog for Anki notes. """
 
-
     def __init__(self, mw, note):
 
         QDialog.__init__(self, None, Qt.Window)
@@ -124,10 +123,7 @@ class NoteEditor(QDialog):
         self.text_prefill   = text_prefill
         self.title_prefill  = title_prefill
         self.prio_prefill   = prio_prefill
-        try:
-            self.dark_mode_used = utility.misc.dark_mode_is_used(mw.addonManager.getConfig(__name__))
-        except Exception as err:
-            self.dark_mode_used = False
+        self.dark_mode_used = state.night_mode
 
         if self.note_id is not None:
             self.note = get_note(note_id)
