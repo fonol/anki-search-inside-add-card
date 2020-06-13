@@ -58,8 +58,6 @@ function searchFor(text) {
     text += "\u001f";
     pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
 }
-
-
 function updateSelectedDecks(elem) {
     siacState.selectedDecks = [];
     let str = "";
@@ -88,6 +86,12 @@ function selectDeckWithId(did) {
             $(this).addClass("selected");
         }
     });
+    updateSelectedDecks();
+}
+function selectDeckAndSubdecksWithId(did) {
+    $('.deck-list-item').removeClass('selected');
+    $(`.deck-list-item[data-id=${did}]`).addClass("selected");
+    $(`.deck-list-item[data-id=${did}] .deck-list-item`).addClass("selected");
     updateSelectedDecks();
 }
 function fixRetMarkWidth(elem) {

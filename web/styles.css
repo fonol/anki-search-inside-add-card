@@ -2,6 +2,69 @@
 :root {
     --tleft : 50%;
     --ttop : 50%;
+
+    --c-button-border: darkseagreen;
+    --c-button-background: whitesmoke;
+    --c-button-color: rgb(30, 44, 44);
+    --c-input-background: whitesmoke;
+    --c-input-foreground: rgb(30, 44, 44);
+    --c-input-border: rgb(30, 44, 43);
+    --c-timeline-background: #595959;
+    --c-timeline-border: #595959;
+    --c-modal-foreground: black;
+    --c-modal-background: whitesmoke;
+    --c-modal-border: #2496dc;
+    --c-ranking-lbl-foreground: white;
+    --c-ranking-lbl-background: lightseagreen;
+    --c-note-background: white;
+    --c-note-foreground: black;
+    --c-note-border: lightseagreen;
+    --c-note-hover-border: #2496dc;
+    --c-field-separator: #2496dc;
+    --c-highlight-foreground: black;
+    --c-highlight-background: yellow;
+    --c-tag-background: #f0506e;
+    --c-tag-foreground: white;
+    --c-keyword: #2496dc;
+    --c-striped-table-background: #d6d6d6;
+    --c-select-foreground: black;
+    --c-select-background: whitesmoke;
+    --c-deck-select-checkmark: green;
+    --c-search-icn: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='black' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='black' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+    --c-trash-icn: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cpath stroke='black' transform='rotate(179.51019287109375 6.166921615600586,6.9911985397338885) ' id='svg_4' d='m2.799955,10.675048l1.262613,-7.3677l4.208709,0l1.262612,7.3677l-6.733934,0z' fill-opacity='null' stroke-opacity='null' stroke-width='1.5' fill='none'/%3E%3Crect stroke='black' id='svg_7' height='0.638096' width='1.884984' y='0.823103' x='5.256614' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke='black' transform='rotate(2.7647311687469482 6.056345462799075,1.717745661735527) ' stroke-linecap='null' stroke-linejoin='null' id='svg_9' y2='1.451854' x2='10.882708' y1='1.983638' x1='1.229983' fill-opacity='null' stroke-opacity='null' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+    --c-pdf-icn: url("data:image/svg+xml,%3Csvg version='1.0' xmlns='http://www.w3.org/2000/svg' width='17px' height='17px' viewBox='0 0 225.000000 225.000000' preserveAspectRatio='xMidYMid meet'%3E%3Cg transform='translate(0.000000,225.000000) scale(0.100000,-0.100000)'%0Afill='black' stroke='none'%3E%3Cpath d='M690 2099 c-29 -12 -67 -45 -83 -74 -8 -14 -14 -134 -17 -380 l-5%0A-360 -120 -5 c-107 -4 -125 -8 -166 -32 -59 -35 -96 -90 -110 -163 -14 -76 -7%0A-389 10 -430 15 -37 75 -101 116 -123 21 -12 65 -18 150 -22 l120 -5 5 -125%0Ac3 -69 11 -136 17 -150 14 -32 51 -66 86 -79 19 -7 231 -11 639 -11 l610 0 40%0A22 c21 12 49 38 61 58 l22 35 0 695 c0 578 -2 699 -14 720 -29 50 -363 409%0A-396 424 -29 14 -92 16 -487 15 -276 0 -463 -4 -478 -10z m890 -268 c0 -226%0A-15 -210 205 -213 l170 -3 3 -664 c2 -607 1 -666 -14 -683 -16 -17 -48 -18%0A-619 -18 -548 0 -604 1 -616 17 -19 22 -26 208 -9 228 11 13 76 15 434 15%0Al422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120%0A133 l-51 24 -421 0 c-349 0 -424 2 -433 14 -18 22 -11 667 8 689 12 15 56 17%0A442 17 l429 0 0 -169z m-906 -765 c51 -21 76 -60 76 -118 0 -43 -5 -55 -33%0A-83 -19 -19 -46 -36 -60 -39 -15 -3 -38 -8 -52 -11 -23 -5 -25 -10 -25 -64 0%0A-53 -2 -59 -23 -65 -12 -3 -33 -3 -45 1 -22 5 -22 8 -22 192 0 103 3 191 7%0A194 12 13 143 7 177 -7z m400 -15 c96 -60 102 -247 11 -319 -55 -43 -198 -67%0A-246 -42 -18 10 -19 23 -19 188 0 129 3 182 13 191 9 9 39 12 107 9 79 -3 102%0A-8 134 -27z m366 14 c7 -8 10 -25 6 -39 -5 -22 -12 -25 -64 -28 l-57 -3 0 -35%0A0 -35 52 -3 c47 -3 54 -6 59 -27 11 -43 -1 -54 -58 -57 l-53 -3 -3 -72 c-3%0A-64 -5 -72 -25 -77 -13 -3 -33 -3 -45 1 -22 5 -22 8 -22 193 0 141 3 190 13%0A193 6 3 51 6 98 6 65 1 90 -3 99 -14z'/%3E%3Cpath d='M928 994 c-5 -4 -8 -56 -8 -116 l0 -108 36 0 c26 0 43 8 66 30 28 29%0A30 35 26 91 -3 42 -10 66 -24 80 -21 21 -84 36 -96 23z'/%3E%3C/g%3E%3C/svg%3E%0A"); 
+
+    --c-button-border-night: rgb(102,102,102);
+    --c-button-background-night: #2f2f31;
+    --c-button-color-night: lightgrey;
+    --c-input-background-night: #2f2f31;
+    --c-input-foreground-night: lightgrey;
+    --c-input-border-night: steelblue;
+    --c-timeline-background-night: #2b2b30;
+    --c-timeline-border-night: darkorange;
+    --c-modal-foreground-night: beige;
+    --c-modal-background-night: #2f2f31;
+    --c-modal-border-night: darkorange;
+    --c-ranking-lbl-foreground-night: black;
+    --c-ranking-lbl-background-night: darkorange;
+    --c-note-background-night: #2f2f31;
+    --c-note-foreground-night: beige;
+    --c-note-border-night: lightseagreen;
+    --c-note-hover-border-night: #62C9C3;
+    --c-field-separator-night: white;
+    --c-highlight-foreground-night: black;
+    --c-highlight-background-night: SpringGreen;
+    --c-tag-background-night: darkorange;
+    --c-tag-foreground-night: black;
+    --c-keyword-night: SpringGreen;
+    --c-striped-table-background-night: #2b2b30;
+    --c-select-foreground-night: white;
+    --c-select-background-night: #2f2f31;
+    --c-deck-select-checkmark-night: lawngreen;
+    --c-search-icn-night: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='white' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='white' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+    --c-trash-icn-night: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cpath stroke='white' transform='rotate(179.51019287109375 6.166921615600586,6.9911985397338885) ' id='svg_4' d='m2.799955,10.675048l1.262613,-7.3677l4.208709,0l1.262612,7.3677l-6.733934,0z' fill-opacity='null' stroke-opacity='null' stroke-width='1.5' fill='none'/%3E%3Crect stroke='white' id='svg_7' height='0.638096' width='1.884984' y='0.823103' x='5.256614' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke='black' transform='rotate(2.7647311687469482 6.056345462799075,1.717745661735527) ' stroke-linecap='null' stroke-linejoin='null' id='svg_9' y2='1.451854' x2='10.882708' y1='1.983638' x1='1.229983' fill-opacity='null' stroke-opacity='null' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+    --c-pdf-icn-night: url("data:image/svg+xml,%3Csvg version='1.0' xmlns='http://www.w3.org/2000/svg' width='17px' height='17px' viewBox='0 0 225.000000 225.000000' preserveAspectRatio='xMidYMid meet'%3E%3Cg transform='translate(0.000000,225.000000) scale(0.100000,-0.100000)'%0Afill='white' stroke='none'%3E%3Cpath d='M690 2099 c-29 -12 -67 -45 -83 -74 -8 -14 -14 -134 -17 -380 l-5%0A-360 -120 -5 c-107 -4 -125 -8 -166 -32 -59 -35 -96 -90 -110 -163 -14 -76 -7%0A-389 10 -430 15 -37 75 -101 116 -123 21 -12 65 -18 150 -22 l120 -5 5 -125%0Ac3 -69 11 -136 17 -150 14 -32 51 -66 86 -79 19 -7 231 -11 639 -11 l610 0 40%0A22 c21 12 49 38 61 58 l22 35 0 695 c0 578 -2 699 -14 720 -29 50 -363 409%0A-396 424 -29 14 -92 16 -487 15 -276 0 -463 -4 -478 -10z m890 -268 c0 -226%0A-15 -210 205 -213 l170 -3 3 -664 c2 -607 1 -666 -14 -683 -16 -17 -48 -18%0A-619 -18 -548 0 -604 1 -616 17 -19 22 -26 208 -9 228 11 13 76 15 434 15%0Al422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120%0A133 l-51 24 -421 0 c-349 0 -424 2 -433 14 -18 22 -11 667 8 689 12 15 56 17%0A442 17 l429 0 0 -169z m-906 -765 c51 -21 76 -60 76 -118 0 -43 -5 -55 -33%0A-83 -19 -19 -46 -36 -60 -39 -15 -3 -38 -8 -52 -11 -23 -5 -25 -10 -25 -64 0%0A-53 -2 -59 -23 -65 -12 -3 -33 -3 -45 1 -22 5 -22 8 -22 192 0 103 3 191 7%0A194 12 13 143 7 177 -7z m400 -15 c96 -60 102 -247 11 -319 -55 -43 -198 -67%0A-246 -42 -18 10 -19 23 -19 188 0 129 3 182 13 191 9 9 39 12 107 9 79 -3 102%0A-8 134 -27z m366 14 c7 -8 10 -25 6 -39 -5 -22 -12 -25 -64 -28 l-57 -3 0 -35%0A0 -35 52 -3 c47 -3 54 -6 59 -27 11 -43 -1 -54 -58 -57 l-53 -3 -3 -72 c-3%0A-64 -5 -72 -25 -77 -13 -3 -33 -3 -45 1 -22 5 -22 8 -22 193 0 141 3 190 13%0A193 6 3 51 6 98 6 65 1 90 -3 99 -14z'/%3E%3Cpath d='M928 994 c-5 -4 -8 -56 -8 -116 l0 -108 36 0 c26 0 43 8 66 30 28 29%0A30 35 26 91 -3 42 -10 66 -24 80 -21 21 -84 36 -96 23z'/%3E%3C/g%3E%3C/svg%3E%0A"); 
+
 }
 .siac-trash-icn,.siac-search-icn,.siac-search-icn-dark {
     width:12px; height:12px;
@@ -10,8 +73,9 @@
     background-size: 12px 12px;
 }
 .siac-trash-icn {
+    background-image: var(--c-trash-icn);
     margin-top: -3px;
-    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cpath stroke='$noteForegroundColor$' transform='rotate(179.51019287109375 6.166921615600586,6.9911985397338885) ' id='svg_4' d='m2.799955,10.675048l1.262613,-7.3677l4.208709,0l1.262612,7.3677l-6.733934,0z' fill-opacity='null' stroke-opacity='null' stroke-width='1.5' fill='none'/%3E%3Crect stroke='$noteForegroundColor$' id='svg_7' height='0.638096' width='1.884984' y='0.823103' x='5.256614' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke='$noteForegroundColor$' transform='rotate(2.7647311687469482 6.056345462799075,1.717745661735527) ' stroke-linecap='null' stroke-linejoin='null' id='svg_9' y2='1.451854' x2='10.882708' y1='1.983638' x1='1.229983' fill-opacity='null' stroke-opacity='null' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+    background-image: 
 }
 .siac-trash-icn:hover {
     background-image: url("data:image/svg+xml,%3Csvg width='11' height='11' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cpath stroke='%232496dc' transform='rotate(179.51019287109375 6.166921615600586,6.9911985397338885) ' id='svg_4' d='m2.799955,10.675048l1.262613,-7.3677l4.208709,0l1.262612,7.3677l-6.733934,0z' fill-opacity='null' stroke-opacity='null' stroke-width='1.5' fill='none'/%3E%3Crect stroke='%232496dc' id='svg_7' height='0.638096' width='1.884984' y='0.823103' x='5.256614' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke='%232496dc' transform='rotate(2.7647311687469482 6.056345462799075,1.717745661735527) ' stroke-linecap='null' stroke-linejoin='null' id='svg_9' y2='1.451854' x2='10.882708' y1='1.983638' x1='1.229983' fill-opacity='null' stroke-opacity='null' fill='none'/%3E%3C/g%3E%3C/svg%3E");
@@ -26,7 +90,7 @@
 }
 .siac-search-icn {
     margin-top: -2px;
-    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='$noteForegroundColor$' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='$noteForegroundColor$' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+    background-image: var(--c-search-icn);
 }
 .siac-search-icn-dark {
     background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='white' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='white' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3C/g%3E%3C/svg%3E");
@@ -38,7 +102,8 @@
     vertical-align: baseline;
 }
 .siac-pdf-icon {
-    background-image: url("data:image/svg+xml,%3Csvg version='1.0' xmlns='http://www.w3.org/2000/svg' width='17px' height='17px' viewBox='0 0 225.000000 225.000000' preserveAspectRatio='xMidYMid meet'%3E%3Cg transform='translate(0.000000,225.000000) scale(0.100000,-0.100000)'%0Afill='$noteForegroundColor$' stroke='none'%3E%3Cpath d='M690 2099 c-29 -12 -67 -45 -83 -74 -8 -14 -14 -134 -17 -380 l-5%0A-360 -120 -5 c-107 -4 -125 -8 -166 -32 -59 -35 -96 -90 -110 -163 -14 -76 -7%0A-389 10 -430 15 -37 75 -101 116 -123 21 -12 65 -18 150 -22 l120 -5 5 -125%0Ac3 -69 11 -136 17 -150 14 -32 51 -66 86 -79 19 -7 231 -11 639 -11 l610 0 40%0A22 c21 12 49 38 61 58 l22 35 0 695 c0 578 -2 699 -14 720 -29 50 -363 409%0A-396 424 -29 14 -92 16 -487 15 -276 0 -463 -4 -478 -10z m890 -268 c0 -226%0A-15 -210 205 -213 l170 -3 3 -664 c2 -607 1 -666 -14 -683 -16 -17 -48 -18%0A-619 -18 -548 0 -604 1 -616 17 -19 22 -26 208 -9 228 11 13 76 15 434 15%0Al422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120%0A133 l-51 24 -421 0 c-349 0 -424 2 -433 14 -18 22 -11 667 8 689 12 15 56 17%0A442 17 l429 0 0 -169z m-906 -765 c51 -21 76 -60 76 -118 0 -43 -5 -55 -33%0A-83 -19 -19 -46 -36 -60 -39 -15 -3 -38 -8 -52 -11 -23 -5 -25 -10 -25 -64 0%0A-53 -2 -59 -23 -65 -12 -3 -33 -3 -45 1 -22 5 -22 8 -22 192 0 103 3 191 7%0A194 12 13 143 7 177 -7z m400 -15 c96 -60 102 -247 11 -319 -55 -43 -198 -67%0A-246 -42 -18 10 -19 23 -19 188 0 129 3 182 13 191 9 9 39 12 107 9 79 -3 102%0A-8 134 -27z m366 14 c7 -8 10 -25 6 -39 -5 -22 -12 -25 -64 -28 l-57 -3 0 -35%0A0 -35 52 -3 c47 -3 54 -6 59 -27 11 -43 -1 -54 -58 -57 l-53 -3 -3 -72 c-3%0A-64 -5 -72 -25 -77 -13 -3 -33 -3 -45 1 -22 5 -22 8 -22 193 0 141 3 190 13%0A193 6 3 51 6 98 6 65 1 90 -3 99 -14z'/%3E%3Cpath d='M928 994 c-5 -4 -8 -56 -8 -116 l0 -108 36 0 c26 0 43 8 66 30 28 29%0A30 35 26 91 -3 42 -10 66 -24 80 -21 21 -84 36 -96 23z'/%3E%3C/g%3E%3C/svg%3E%0A");    width: 17px;
+    background-image: var(--c-pdf-icn); 
+    width: 17px;
     height: 20px;
     margin-right: 5px;
     display: inline-block;
@@ -124,11 +189,11 @@
 }
 .siac-search-loader {
     width: 250px; 
-    padding: 15px; 
+    padding: 25px; 
     text-align: center;
-    border: 3px outset $modalBorderColor$;
-    background: $modalBackgroundColor$;
-    color: $modalForegroundColor$;
+    border: 3px outset var(--c-modal-border);
+    background: var(--c-modal-background);
+    color: var(--c-modal-foregroundl;)
 }
 #searchResults {
     display: none;
@@ -144,13 +209,13 @@
     display: inline;
 }
 .cardR {
-  border: 3px outset $noteBorderColor$;
+  border: 3px outset var(--c-note-border);
   border-radius: 5px;
   padding: 8px 12px 17px 12px;
   position: relative;
-  font-size: $noteFontSize$ !important;
-  color: $noteForegroundColor$;
-  background: $noteBackgroundColor$;
+  font-size: 12px !important;
+  color: var(--c-note-foreground);
+  background: var(--c-note-background);
   overflow-x: hidden;
   overflow-y: hidden;
   max-height: 950px;
@@ -168,7 +233,7 @@
 }
 
 .cardR:hover {
-     border: 3px outset $noteHoverBorderColor$;
+     border: 3px outset var(--c-note-hover-border);
 }
 .w-100 {
     width: 100%;
@@ -228,7 +293,7 @@
 }
 .keyword {
     cursor: pointer;
-    color: $keywordColor$;
+    color: var(--c-keyword);
     background-color: inherit !important;
 }
 .keyword:hover {
@@ -241,27 +306,27 @@
     height: 30px;
 }
 #siac-right-side mark, #siac-left-tab-browse mark {
-    background-color: $highlightBackgroundColor$;
-    color: $highlightForegroundColor$;
+    background-color: var(--c-highlight-background);
+    color: var(--c-highlight-foreground);
     border-radius: 4px;
 }
 #siac-right-side select {
-    background-color: $selectBackgroundColor$;
-    color: $selectForegroundColor$;
+    background-color: var(--c-select-background);
+    color: var(--c-select-foreground);
 }
 .tagLbl {
     position: relative;
-    background: $tagBackgroundColor$;
-    color: $tagForegroundColor$;
+    background: var(--c-tag-background);
+    color: var(--c-tag-foreground);
     padding: 1px 4px 1px 4px;
     border-radius: 2px;
     margin-left: 5px;
     float: right;
-    font-size: $tagFontSize$ !important;
+    font-size: 12 !important;
     cursor: pointer;
     z-index: 4;
     user-select: none;
-    border: 1px solid $tagBackgroundColor$;
+    border: 1px solid var(--c-tag-background);
 }
 .tagLbl:hover {
     filter: brightness(150%);
@@ -309,8 +374,8 @@
     filter: brightness(1.2);
 }
 .rankingLbl {
-    background: $rankingLabelBackgroundColor$;
-    color: $rankingLabelForegroundColor$;
+    background: var(--c-ranking-lbl-background);
+    color: var(--c-ranking-lbl-foreground);
     padding: 2px 6px 2px 6px;
     font-size: 11px;
     user-select: none;
@@ -322,9 +387,9 @@
     user-select: none;
 }
 .remLbl, .floatLbl {
-    border: 2px solid $noteBorderColor$;
-    border-left: 0px solid  $noteBackgroundColor$;
-    color: $noteForegroundColor$;
+    border: 2px solid var(--c-note-border);
+    border-left: 0px solid  var(--c-note-background);
+    color: var(--c-note-foreground);
     padding: 2px 6px 2px 6px;
     flex: 1;
     font-size: 13px !important;
@@ -338,7 +403,7 @@
     font-weight: bold;
 }
 .srchLbl,.editLbl,.pinLbl,.remLbl,.floatLbl,.deleteLbl {
-    background:  $noteBackgroundColor$;
+    background:  var(--c-note-background);
     user-select: none;
     cursor: pointer;
     z-index:9999;
@@ -348,9 +413,9 @@
     border-bottom-left-radius: 4px;
 }
 .editLbl,.deleteLbl,.srchLbl {
-    color: $noteForegroundColor$;
-    border: 2px solid $noteBorderColor$;
-    border-right: 0px solid  $noteBackgroundColor$;
+    color: var(--c-note-foreground);
+    border: 2px solid var(--c-note-border);
+    border-right: 0px solid  var(--c-note-background);
     padding: 3px 5px 3px 5px;
     flex: 1;
     vertical-align: middle;
@@ -361,13 +426,13 @@
     flex: 1;
 }
 .pinLbl.unselected {
-    border: 2px solid $noteBorderColor$;
-    background: $noteBackgroundColor$;
+    border: 2px solid var(--c-note-border);
+    background: var(--c-note-background);
 }
 
 .pinLbl > span {
   color: transparent;
-  text-shadow: 0 0 0 $noteForegroundColor$;
+  text-shadow: 0 0 0 var(--c-note-foreground);
   font-size: 8px !important;
   user-select: none;
 }
@@ -383,7 +448,7 @@
 }
 .pinLbl.unselected > span {
    color: transparent;
-  text-shadow: 0 0 0 $noteForegroundColor$;
+  text-shadow: 0 0 0 var(--c-note-foreground);
   font-size: 7px !important;
 }
 .pinLbl.unselected:hover > span {
@@ -450,10 +515,10 @@
     bottom: 2px;
     left: 0px;
     z-index:3;
-    border: 3px outset $noteBorderColor$;
+    border: 3px outset var(--c-note-border);
     border-radius: 4px;
-    background:  $noteBackgroundColor$;
-    color: $noteForegroundColor$;
+    background:  var(--c-note-background);
+    color: var(--c-note-foreground);
     cursor: pointer;
     user-select: none;
     font-size: 10px !important;
@@ -462,7 +527,7 @@
     white-space: nowrap;
 }
 .cardLeftBot:hover {
-    border-color: $noteHoverBorderColor$;
+    border-color: var(--c-note-hover-border);
 }
 .cardLeftBot:hover :not(.siac-prog-tmp span) {
     color: #2496dc;
@@ -474,9 +539,9 @@
     margin-right: 5px;
 }
 #siac-browser-search-inp {
-    background: $browserSearchInputBackgroundColor$;
-    color: $browserSearchInputForegroundColor$;
-    border: 1px solid $browserSearchInputBorderColor$;
+    background: var(--c-input-background);
+    color: var(--c-input-foreground);
+    border: 1px solid var(--c-input-border);
     border-radius: 3px;
     box-sizing: border-box;
     width: calc(100% - 22px);
@@ -487,7 +552,7 @@
 }
 #siac-search-inp-mode-lbl {
     cursor: pointer;
-    color: $keywordColor$;
+    color: var(--c-keyword);
     user-select: none;
     overflow: hidden; 
     white-space: nowrap;
@@ -500,7 +565,7 @@
 }
 
 .fldSep {
-  color: $fieldSeparatorColor$;
+  color: var(--c-field-separator);
   margin: 0 5px 0 5px;
 }
 
@@ -511,20 +576,19 @@
 .red { background: #ff3300; color: white; padding: 0 3px 0 3px; }
 .lightRed { background:  #ff704d; color: white; padding: 0 3px 0 3px; }
 #deckSelWrapper {
-    max-height: 280px;
+    max-height: 300px;
     margin-bottom: 0px !important;
     margin-right: 1px;
     width: 100%;
-    overflow-y: auto;
-    background:  $deckSelectBackgroundColor$;
+    display: flex;
+    flex-direction: column;
     text-align: left;
 }
 #deckSel,#deckSelQuick {
     width: 100%;
-    background: $deckSelectBackgroundColor$;
-    color: $deckSelectForegroundColor$;
     font-size: 0;
 }
+/* body.nightMode # */
 #deckSelQuickWrapper {
     display: none;
 }
@@ -633,7 +697,7 @@
     user-select: none;
     height: 23px;
     border-top: 1px solid grey; 
-    margin: 5px 0 3px 0;
+    margin: 10px 0 3px 0;
 }
 #icns-large div, #icns-small div {
     margin-top: 3px;
@@ -657,43 +721,6 @@
 .freeze-icon.frozen {
     color:  #2496dc !important;
 }
-   /* tooltip */
-
-.tooltip {
-    position: relative !important;
-    display: inline-block;
-}
-.tooltip-blue {
-    color: $browserSearchButtonForegroundColor$;
-    background: $browserSearchButtonBackgroundColor$;
-    border: 1px solid  $browserSearchButtonBorderColor$;
-    cursor: pointer;
-    margin-right: 10px;
-    outline: none;
-}
-.tooltip .tooltiptext {
-    visibility:  hidden;
-    width: 300px;
-    background-color: $modalBackgroundColor$;
-    color: $modalForegroundColor$;
-    font-size: 12px;
-    text-align: center;
-    border: 2px solid #2496dc;
-    padding: 10px;
-    position: absolute;
-    z-index: 99999999;
-    bottom: 95%;
-    left: 50%;
-    margin-left: -12px;
-    margin-top: -5px;
-    user-select: none;
-}
-.tooltiptext td {
-      text-align: left;
-}
-.tooltip:hover .tooltiptext {
-    visibility: visible;
-}
   /* deck list*/
 .deck-list-item {
     list-style-type: none;
@@ -704,7 +731,7 @@
     width: calc(100% - 8px);
     position: relative;
     user-select: none;
-    font-size: $deckSelectFontSize$ !important;
+    font-size: 12px !important;
 }
 .deck-list-item .deck-list-item {
     width: 100%;
@@ -721,22 +748,24 @@
      padding: 1px 4px 1px 4px;
 }
 .deck-list-item:hover >.list-item-inner {
-    background: $deckSelectHoverBackgroundColor$;
-    color: $deckSelectHoverForegroundColor$;
+    background: lightseagreen;
+    color: white;
     border-radius: 4px;
 }
+
 .check {
     float: right;
-    color: $deckSelectCheckmarkColor$;
+    color: var(--c-deck-select-checkmark);
     display: none;
 }
+
 .siac-tl-plus {
     position: absolute;
     right: 3px;
     z-index: 2;
     padding-left: 2px;
-    background: $deckSelectHoverBackgroundColor$;
-    color: $deckSelectHoverForegroundColor$;
+    background: lightseagreen;
+    color: white;
     display: none;
 }
 .list-item-inner:hover .siac-tl-plus {
@@ -753,19 +782,17 @@
     color: $deckSelectHoverForegroundColor$;
 }
 .deck-list-button {
-border: 1px solid $deckSelectButtonBorderColor$;
-background: $deckSelectBackgroundColor$;
-color: $deckSelectButtonForegroundColor$;
-cursor: pointer;
-font-size: 12px !important;
-user-select: none;
-display: inline-block;
-padding: 1px 5px 1px 5px;
-outline: none;
-}
-.deck-list-button.center {
-    border-left: none;
-    border-right: none;
+    border: 3px outset var(--c-button-border);
+    background: var(--c-button-background);
+    color: var(--c-button-color);
+    cursor: pointer;
+    font-size: 12px !important;
+    user-select: none;
+    font-weight: bold;
+    display: inline-block;
+    padding: 1px 5px 1px 5px;
+    margin-right: 10px;
+    border-radius: 5px;
 }
 .deck-list-button:hover {
     color: #2496dc;
@@ -803,7 +830,7 @@ table.striped {
     border-collapse: collapse;
 }
 table.striped tr:nth-child(even) {
-    background-color: $stripedTableBackgroundColor$ !important;
+    background-color: var(--c-striped-table-background) !important;
 }
 .exp:empty {
     display: none;
@@ -811,9 +838,9 @@ table.striped tr:nth-child(even) {
 .siac-btn {
     display: inline-block;
     padding: 2px 5px 2px 5px;
-    color: $buttonForegroundColor$;
-    background: $buttonBackgroundColor$;
-    border: 1px solid  $buttonBorderColor$;
+    color: var(--c-button-foreground);
+    background: var(--c-button-background);
+    border: 1px solid  var(--c-button-border);
     cursor: pointer;
     user-select: none;
     font-size: 13px !important;
@@ -826,9 +853,9 @@ table.striped tr:nth-child(even) {
     border-radius: 3px;
 }
 body:not(.nightMode) #leftSide .siac-btn-dark {
-    color: $buttonForegroundColor$;
-    background: $buttonBackgroundColor$;
-    border: 1px solid  $buttonBorderColor$;
+    color: var(--c-button-foreground);
+    background: var(--c-button-background);
+    border: 1px solid  var(--c-button-border);
 }
 
 .siac-btn-dark-smaller {
@@ -844,21 +871,23 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
 .siac-btn-small {
     display: inline;
     padding: 1px 4px 2px 4px;
-    color: $buttonForegroundColor$;
-    background: $buttonBackgroundColor$;
-    border: 1px solid  $buttonBorderColor$;
+    color: var(--c-button-color);
+    background: var(--c-button-background);
+    border: 3px outset var(--c-button-border);
+    border-radius: 5px;
     cursor: pointer;
     user-select: none;
     font-size: 12px !important;
     outline: none;
-    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.3);
+    /* box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.3); */
 }
+
 .siac-btn-smaller {
     display: inline;
     padding: 1px 4px 1px 4px;
-    color: $buttonForegroundColor$;
-    background: $buttonBackgroundColor$;
-    border: 1px solid  $buttonBorderColor$;
+    color: var(--c-button-color);
+    background: var(--c-button-background);
+    border: 1px solid  var(--c-button-border);
     cursor: pointer;
     user-select: none;
     font-size: 10px !important;
@@ -869,22 +898,25 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
     display: block;
     max-height: 0px;
     position: absolute;
-    color: $buttonForegroundColor$;
-    background-color: $buttonBackgroundColor$;
+    color: var(--c-button-color); 
+    background-color: var(--c-button-background);
     width: calc(100% - 8px);
-    margin-left: -5px;
+    margin-left: -7px;
     padding: 0px 4px 0px 4px;
     font-size: 12px !important;
-    border: 1px solid  $buttonBorderColor$;
-    border-top: 0px solid white;
+    border: 0px solid white;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
     z-index: 5;
     transition: max-height 0.3s;
 }
 
 .siac-btn-small:hover .siac-btn-small-dropdown.hover,.siac-btn-small.expanded .siac-btn-small-dropdown.click {
+    border: 3px outset var(--c-button-border);
     max-height: 340px;
-    border-top: 1px solid $buttonBorderColor$;
+    /* border-top: 1px solid var(--c-button-border); */
 }
+
 .siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {
     display: block;
 }
@@ -905,13 +937,13 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
 }
 
 #siac-switch-deck-btn.expanded .siac-btn-small-dropdown{
-    border-top: 1px solid $buttonBorderColor$;
+    border-top: 1px solid var(--c-button-border);
 }
 .siac-switch-deck-btn-inner {
 width: 48%; display: inline-block; text-align: center;
 }
 .siac-switch-deck-btn-inner.right {
-  border-left:  1px solid  $buttonBorderColor$;
+  border-left:  1px solid  var(--c-button-border);
 }
 .siac-switch-deck-btn-inner:hover {
     color:#2496dc;
@@ -929,15 +961,16 @@ width: 48%; display: inline-block; text-align: center;
     vertical-align: top;
 }
 .siac-table-cell-btn {
-    color: $buttonForegroundColor$;
-    background: $buttonBackgroundColor$;
-    border: 1px solid $buttonBorderColor$;
+    color: var(--c-button-foreground);
+    background: var(--c-button-background);
+    border: 1px solid var(--c-button-border);
     cursor: pointer;
     user-select: none;
     outline: none;
     text-align: center !important;
     padding: 5px !important;
     overflow: hidden;
+    border-radius: 4px;
 }
 .siac-table-cell-btn:hover {
     color: #2496dc;
@@ -978,8 +1011,8 @@ select {
 #siac-syn-inp {
     width: 100%;
     margin-top: 5px;
-    background: $modalBackgroundColor$;
-    color: $modalForegroundColor$;
+    background: var(--c-modal-background);
+    color: var(--c-modal-foreground);
     border-radius: 5px;
 }
 #synTable tr td:first-child {
@@ -1015,8 +1048,8 @@ select {
 
   .modal-content {
     z-index: 99999999999;
-    background: $modalBackgroundColor$;
-    color: $modalForegroundColor$;
+    background: var(--c-modal-background);
+    color: var(--c-modal-foreground);
     position: absolute;
     top: 50%;
     left: 50%;
@@ -1024,21 +1057,21 @@ select {
     padding: 15px;
     width: 80%;
     max-height: 80%;
-    border: 4px outset $modalBorderColor$;
+    border: 4px outset var(--c-modal-border);
     border-radius: 5px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
 }
 #modalText {
-    color: $modalForegroundColor$;
+    color: var(--c-modal-foreground);
     flex: 1 1 auto;
     overflow-y: auto;
     padding-right: 10px;
 }
 #modal-subpage {
     display:none;
-    color: $modalForegroundColor$;
+    color: var(--c-modal-foreground);
     flex: 1 1 auto;
     flex-direction: column;
     overflow: hidden;
@@ -1051,9 +1084,9 @@ select {
     overflow: hidden;
 }
 .modal-close {
-    border: 1px solid $buttonBorderColor$;
-    background: $buttonBackgroundColor$;
-    color: $buttonForegroundColor$;
+    border: 1px solid var(--c-button-border);
+    background: var(--c-button-background);
+    color: var(--c-button-foreground);
     cursor: pointer;
     user-select: none;
 }
@@ -1076,13 +1109,13 @@ select {
     padding-top: 5px;
 }
 .tag-btn {
-    background: $tagBackgroundColor$;
-    color: $tagForegroundColor$;
+    background: var(--c-tag-background);
+    color: var(--c-tag-foreground);
     padding: 2px 5px 2px 5px;
     border-radius: 2px;
     cursor: pointer;
     user-select: none;
-    font-size: $tagFontSize$ !important;
+    font-size: 12px !important;
 }
 .tag-add {
     position: absolute;
@@ -1118,7 +1151,7 @@ span.tag-symbol {
 .noteFloating {
     position: absolute;
     z-index: 4;
-    border: 3px outset $noteBorderColor$;
+    border: 3px outset var(--c-note-border);
     border-radius: 4px;
     text-align: center;
 }
@@ -1128,8 +1161,8 @@ span.tag-symbol {
     max-width: 280px;
     max-height: 220px;
     overflow-y: auto;
-    background: $noteBackgroundColor$;
-    color: $noteForegroundColor$;
+    background: var(--c-note-background);
+    color: var(--c-note-foreground);
     font-size: $noteFontSize$;
     text-align: left;
 }
@@ -1140,7 +1173,7 @@ span.tag-symbol {
     padding-bottom: 2px;
     cursor: move;
     z-index: 9999999999;
-    background-color: $noteBorderColor$;
+    background-color: var(--c-note-border);
     color: #fff;
     user-select: none;
     font-size: 11px !important;
@@ -1160,7 +1193,7 @@ span.tag-symbol {
     width: calc(100% / 365);
 }
 .cal-block-outer:hover > .cal-block, .cal-block-outer:hover > .cal-block {
-    background-color: $tagBackgroundColor$;
+    background-color: var(--c-tag-background);
 }
 .cal-block {
     position: relative;
@@ -1213,10 +1246,10 @@ span.tag-symbol {
     width: 300px;
     height: 250px;
     padding: 5px;
-    background: $timelineBoxBackgroundColor$;
+    background: var(--c-timeline-background);
     color: white;
     border-radius: 3px;
-    border: 2px outset $timelineBoxBorderColor$;
+    border: 2px outset var(--c-timeline-border);
 }
 #cal-info:after {
     content: " ";
@@ -1226,13 +1259,15 @@ span.tag-symbol {
     margin-left: -8px;
     border-width: 8px;
     border-style: solid;
-    border-color: $timelineBoxBorderColor$ transparent transparent transparent;
+    border-color: var(--c-timeline-border) transparent transparent transparent;
 }
 
 #siac-notes-sidebar {
     flex: 0 230px;
     min-width: 230px;
-    border-right: 1px solid seagreen;
+    border: 3px outset lightseagreen;
+    border-radius: 5px;
+    padding: 10px;
 }
 .siac-notes-sidebar-item {
     font-weight: bold;
@@ -1247,8 +1282,8 @@ span.tag-symbol {
     transform: scale(1.05);
 }
 .siac-sidebar-inp {
-    background: $browserSearchInputBackgroundColor$;
-    color: $browserSearchInputForegroundColor$;
+    background: var(--c-input-background);
+    color: var(--c-input-foreground);
 }
 .flot-x-axis .flot-tick-label {
     white-space: nowrap;
@@ -1299,11 +1334,11 @@ span.tag-symbol {
     display: none;
     box-sizing: border-box;
     width: 600px;
-    background-color: $modalBackgroundColor$;
-    color: $modalForegroundColor$;
+    background-color: var(--c-modal-background);
+    color: var(--c-modal-foreground);
     font-size: 12px;
     text-align: center;
-    border: 2px solid $tagBackgroundColor$ !important;
+    border: 2px solid var(--c-tag-background) !important;
     padding: 10px;
     user-select: none;
     cursor: default;
@@ -1324,11 +1359,11 @@ span.tag-symbol {
     user-select: text;
 }
 .siac-tag-info-box-left .editLbl, #siac-left-tab-browse .editLbl {
-    border-right: 2px solid $noteBorderColor$;
+    border-right: 2px solid var(--c-note-border);
     border-radius: 4px;
 }
 #cal-info .editLbl, #siac-pdf-tooltip-results-area .editLbl {
-    border-right: 2px solid $noteBorderColor$;
+    border-right: 2px solid var(--c-note-border);
     border-radius: 4px;
 }
 .siac-tag-info-box .flot-y-axis {
@@ -1451,19 +1486,19 @@ span.tag-symbol {
 }
 .siac-modal-small {
     z-index: 9999999;
-    background: $modalBackgroundColor$;
-    color: $modalForegroundColor$;
+    background: var(--c-modal-background);
+    color: var(--c-modal-foreground);
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 15px;
     width: 280px;
-    border: 2px solid $modalBorderColor$;
+    border: 2px solid var(--c-modal-border);
     text-align: center;
 }
 hr.siac-modal-sep {
-    border-color: $modalBorderColor$;
+    border-color: var(--c-modal-border);
 }
 .siac-prog-sq-filled, .siac-prog-sq {
     vertical-align: middle;
@@ -1534,8 +1569,6 @@ hr.siac-modal-sep {
         display: flex;
     }
 }
-
-
 .cardLeftBot .siac-read-icn {
     vertical-align: middle;
     margin: 0;
@@ -1596,6 +1629,24 @@ body.siac-reading-modal-displayed #siac-reading-modal-tabs-left {
     flex: 0 0 auto;
 }
 
+/* body.nightMode .deck-list-item:hover > .list-item-inner {
+    background: darkorange;
+    color: black;
+}
+body.nightMode .check {
+    color: LawnGreen;
+}
+body.nightMode .siac-btn-small, body.nightMode .siac-btn-small-dropdown {
+    border-color: var(--c-button-border-night);
+    background: var(--c-button-background-night);
+    color: lightgrey;
+}
+body.nightMode .siac-btn-small:hover .siac-btn-small-dropdown.hover,body.nightMode .siac-btn-small.expanded .siac-btn-small-dropdown.click {
+    border: 3px outset var(--c-button-border-night);
+}
+ */
+
+
 @media (max-width: 600px) {
     #sortCol {
         display: none;
@@ -1608,6 +1659,3 @@ body.siac-reading-modal-displayed #siac-reading-modal-tabs-left {
     }
 
 }
-
-
-

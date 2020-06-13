@@ -636,7 +636,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     left: 0;
     display: none;
     width: 300px;
-    height: 102px;
+    height: 106px;
     border: 3px outset darkorange;
 }
 #siac-queue-infobox:after {
@@ -858,7 +858,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     z-index: 5;
 }
 .siac-prio-slider, .siac-prio-slider-small {
-    width: 250px;
+    width: 190px;
     -webkit-appearance: none; 
     appearance: none;
     background: #d3d3d3; 
