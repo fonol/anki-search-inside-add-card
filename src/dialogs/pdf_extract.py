@@ -56,12 +56,14 @@ class PDFExtractDialog(QDialog):
         self.start_inp = QSpinBox()
         self.start_inp.setMinimum(1)
         self.start_inp.setMaximum(self.pages_total - 1)
+        self.start_inp.valueChanged.connect(self.start_value_changed)
 
         self.end_inp    = QSpinBox()
         self.end_inp.setMinimum(1)
         self.end_inp.setMaximum(self.pages_total)
 
         hb = QHBoxLayout()
+        hb.addWidget(QLabel("Pages (start & end inclusive): "))
         hb.addStretch(1)
         hb.addWidget(self.start_inp)
         hb.addWidget(QLabel(" - "))
@@ -84,6 +86,9 @@ class PDFExtractDialog(QDialog):
         self.setLayout(self.vbox)
         self.show()
 
+    def start_value_changed(self, new_value: int):
+        if self.end_inp.value() < new_value:
+            self.end_inp.setValue(new_value)
     
     def accept_clicked(self):
         self.extract_start  = self.start_inp.value()
