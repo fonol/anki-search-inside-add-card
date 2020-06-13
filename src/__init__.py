@@ -88,6 +88,9 @@ def init_addon():
     # reset state after the add/edit dialog is opened
     gui_hooks.editor_did_init_shortcuts.append(reset_state) 
 
+    # activate nighmode if Anki's nightmode is active
+    gui_hooks.editor_did_init_shortcuts.append(activate_nightmode) 
+
     # add-on internal hooks
     setup_hooks()
 
@@ -169,7 +172,31 @@ def on_add_cards_init(add_cards: AddCards):
     if get_index() is not None and add_cards.editor is not None:
         get_index().ui.set_editor(add_cards.editor)
         
-
+def activate_nightmode(shortcuts: List[Tuple], editor: Editor):
+    """ Activate dark theme if Anki's night mode is active. """
+    
+    editor.web.eval("""
+    if (document.body.classList.contains('nightMode')) {
+        var props = [];
+        for (var i = 0; i < document.styleSheets.length; i++){
+            try { 
+                for (var j = 0; j < document.styleSheets[i].cssRules.length; j++){
+                    try{
+                        for (var k = 0; k < document.styleSheets[i].cssRules[j].style.length; k++){
+                            let name = document.styleSheets[i].cssRules[j].style[k];
+                            if (name.startsWith('--c-') && !name.endsWith('-night') && props.indexOf(name) == -1) {
+                                props.push(name);
+                            }
+                        }
+                    } catch (error) {}
+                }
+            } catch (error) {}
+        }
+        for (const v of props) {
+            document.documentElement.style.setProperty(v, getComputedStyle(document.documentElement).getPropertyValue(v + '-night'));
+        }
+    }
+    """)
 
 def insert_scripts():
     """
@@ -261,6 +288,11 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
     
     # might still be true if Create Note dialog was closed by closing its parent window, so reset it
     state.note_editor_shown = False
+
+    def cb(night_mode: bool):
+        state.night_mode = night_mode
+
+    editor.web.evalWithCallback("() => {  return document.body.classList.contains('nightMode'); }", cb)
 
 def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     """ Register shortcuts used by the add-on. """
