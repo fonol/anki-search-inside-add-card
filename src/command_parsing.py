@@ -210,9 +210,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.ui.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-queue-info "):
-        nid = int(cmd.split()[1])
-        note = get_note(nid)
-        read_stats = get_read_stats(nid)
+        nid         = int(cmd.split()[1])
+        note        = get_note(nid)
+        read_stats  = get_read_stats(nid)
         index.ui.js("""
             if (pdfLoading || noteLoading || modalShown) {
                 hideQueueInfobox();
@@ -998,10 +998,15 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if check_index():
             index.ui.uiVisible = False
 
-    elif cmd == "selectCurrent":
+    elif cmd == "siac-decks-select-current":
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and index is not None:
             index.ui.js("selectDeckWithId(%s);" % deckChooser.selectedId())
+
+    elif cmd == "siac-decks-select-current-and-subdecks":
+        deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
+        if deckChooser is not None and index is not None:
+            index.ui.js("selectDeckAndSubdecksWithId(%s);" % deckChooser.selectedId())
 
     elif cmd.startswith("siac-update-field-to-hide-in-results "):
         if not check_index():
