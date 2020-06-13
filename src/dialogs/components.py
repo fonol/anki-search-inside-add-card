@@ -128,6 +128,7 @@ class QtScheduleComponent(QWidget):
         self.tabs.addTab(self.settings_tab, "Settings")
 
         self.setLayout(QVBoxLayout())
+        self.layout().setContentsMargins(0,0,0,0)
         self.layout().addWidget(self.tabs)
 
     def _get_schedule(self):
