@@ -132,6 +132,7 @@ class ReadingModal:
         html = """
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 10")'><b>10 - 90</b></div>
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 15")'><b>15 - 85</b></div>
+            <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 20")'><b>20 - 80</b></div>
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 25")'><b>25 - 75</b></div>
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 33")'><b>33 - 67</b></div>
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 40")'><b>40 - 60</b></div>
@@ -147,7 +148,9 @@ class ReadingModal:
                     <br><br>
                 <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
                     <br><br>
-                <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Close</div>
+                <div style='width: 100%%; text-align: right;'>
+                    <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode.parentNode).remove();">Close</div>
+                </div>
             </div>
         """ % html
         return "$('#siac-reading-modal-center').append(`%s`)" % modal
@@ -221,6 +224,7 @@ class ReadingModal:
         port            = mw.mediaServer.getPort()
 
         init_code = """
+
             pdfLoading = true;
             var bstr = atob(b64);
             var n = bstr.length;
@@ -228,8 +232,6 @@ class ReadingModal:
             while(n--){
                 arr[n] = bstr.charCodeAt(n);
             }
-            var file = new File([arr], "placeholder.pdf", {type : "application/pdf" });
-            var fileReader = new FileReader();
             pagesRead = [%s];
             %s
             %s
@@ -254,8 +256,7 @@ class ReadingModal:
                     pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/pdf.worker.min.js';
                 }
                 var canvas = document.getElementById("siac-pdf-canvas");
-                var typedarray = new Uint8Array(fileReader.result);
-                var loadingTask = pdfjsLib.getDocument(typedarray, {nativeImageDecoderSupport: 'display'});
+                var loadingTask = pdfjsLib.getDocument(arr, {nativeImageDecoderSupport: 'display'});
                 loadingTask.promise.catch(function(error) {
                         console.log(error);
                         $('#siac-pdf-loader-wrapper').remove();
@@ -289,9 +290,7 @@ class ReadingModal:
                         fileReader = null;
                 });
             };
-            fileReader.onload = (e) => { loadFn(0); };
-
-            fileReader.readAsArrayBuffer(file);
+            loadFn();
             b64 = ""; arr = null; bstr = null; file = null;
         """ % (pages_read_js, marks_js, extract_js, port, addon_id, last_page_read, title, note_id)
         #send large files in multiple packets
@@ -309,6 +308,7 @@ class ReadingModal:
                 var b64 = `%s`;
                     %s
             """ % (base64pdf, init_code))
+      
 
     def show_fields_tab(self):
         self.sidebar.show_fields_tab()
@@ -739,12 +739,12 @@ class ReadingModal:
 
         return f"""
         <div id='siac-queue-sched-wrapper'>
-            <div class='w-100' style='text-align: center; color: lightgrey;'>
+            <div class='w-100' style='text-align: center; color: lightgrey; margin-top: 5px;'>
                 Release to mark as <b>done.</b><br>
                 <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 12px;'/>
             </div>
             <div class='w-100' style='text-align: center; padding-top: 10px;'>
-                <span style='font-size: 21px;' id='siac-sched-prio-val'>{prio_verbose}</span><br>
+                <span style='font-size: 16px;' id='siac-sched-prio-val'>{prio_verbose}</span><br>
                 <span style='font-size: 12px; color: grey;' id='siac-sched-prio-lbl'></span>
             </div>
         </div>
@@ -947,13 +947,16 @@ class ReadingModal:
             tags = tags[1:]
 
         html = f"""
-            <table style='color: grey; min-width: 190px;'>
+            <table style='color: grey; min-width: 190px; line-height: 1.2;'>
                 <tr><td>ID</td><td><b>{note.id}</b></td></tr>
                 <tr><td>Created</td><td><b>{created}</b></td></tr>
                 <tr><td>Schedule</td><td><b>{schedule}</b></td></tr>
-                <tr><td>Tags</td><td>
-                    <input type='text' style='width: 210px; background: #2f2f31; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px; color: lightgrey;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
-                </td></tr>
+                <tr>
+                    <td style='padding-top: 10px;'>Tags</td>
+                    <td style='padding-top: 10px;'>
+                        <input type='text' style='width: 210px; background: #2f2f31; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px; color: lightgrey;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
+                    </td>
+                </tr>
             </table>
         """
         return html
@@ -1664,6 +1667,7 @@ class ReadingModal:
                 }
             }
         """
+    
 
     #
     # highlights
