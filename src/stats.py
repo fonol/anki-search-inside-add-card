@@ -268,12 +268,12 @@ def _getScore(cards, onlyRet=False):
 def calculateStats(nid, gridView):
 
     tables = {
-        "Note": [],
-        "Cards": [],
-        "Stats": []
+        "Note"  : [],
+        "Cards" : [],
+        "Stats" : []
     }
     infoTable = {}
-    infoTable["Note ID"] = nid
+    infoTable["Note ID"] = f"""{nid} &nbsp;<span class='keyword' onclick='pycmd("siac-copy-to-cb {nid}")'>[Copy to Clipboard]</span>"""
 
     note        = mw.col.getNote(nid)
     model       = mw.col.models.get(note.mid)
@@ -281,13 +281,14 @@ def calculateStats(nid, gridView):
 
     try:
         infoTable["Created Date"] = time.strftime("%Y-%m-%d", time.localtime(int(nid)/1000)) + " &nbsp;&nbsp;<a class='keyword' href='#' style='float: right;' onclick='pycmd(\"siac-added-same-day %s\"); $(\"#a-modal\").hide(); return false;'>Added Same Day</a>" % nid
-        infoTable["Last Modified"] = time.strftime(
-            "%Y-%m-%d", time.localtime(note.mod))
+        infoTable["Last Modified"] = time.strftime("%Y-%m-%d", time.localtime(note.mod))
+ 
     except:
         pass
     if model is not None:
         infoTable["Note Type"] = model["name"]
     
+    infoTable["Tags"] = " ".join(note.tags) if note.tags else "-"
 
     # get card ids for note
     cards               = mw.col.db.all("select * from cards where nid = %s" % (nid))
@@ -341,8 +342,10 @@ def calculateStats(nid, gridView):
     timePlotData        = {}
     similar_res_by_cid  = {}
 
+    infoTable["Card ID(s)"]     = ", ".join([str(c[0]) + f" ({_cardTypeStr(c[6])}) <span class='keyword' onclick='pycmd(\"siac-copy-to-cb {c[0]}\")'>[Copy]</span>" for c in cards])
+
     if not entries or not hasReview:
-        infoTable["Result"] = "No cards have been reviewed yet for this note"
+        infoTable["[Stats]"]        = "Not enough reviews to compute statistics"
         tables["Note"].append(infoTable)
     else:
         cnt             = 0
@@ -665,11 +668,11 @@ def _calcPerformanceScore(retention, time, goodAndEasy, hard):
 
 def _cardTypeStr(typeNumber):
     if typeNumber == 0:
-        return "new"
+        return "New"
     if typeNumber == 1:
-        return "learning"
+        return "Learning"
     if typeNumber == 2:
-        return "due"
+        return "Due"
     if typeNumber == 3:
-        return "filtered"
+        return "Filtered"
     return "?"
