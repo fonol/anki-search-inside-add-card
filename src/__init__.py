@@ -292,7 +292,7 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
     def cb(night_mode: bool):
         state.night_mode = night_mode
 
-    editor.web.evalWithCallback("() => {  return document.body.classList.contains('nightMode'); }", cb)
+    editor.web.evalWithCallback("(() => {  return document.body.classList.contains('nightMode'); })();", cb)
 
 def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     """ Register shortcuts used by the add-on. """
