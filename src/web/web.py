@@ -197,7 +197,7 @@ def show_unsuspend_modal(nid):
     index   = get_index()
 
     index.ui.showInModal(html)
-    return "$('.modal-close').on('click', function() {pycmd(`siac-rerender`);$('.modal-close').off('click'); })"
+    return "siacState.keepPositionAtRendering = true; $('.modal-close').on('click', function() {pycmd(`siac-rerender`);$('.modal-close').off('click'); });"
 
 
 @js

@@ -21,6 +21,7 @@ var siacState = {
     isFrozen : false,
     searchOnSelection : true,
     searchOnTyping : true,
+    keepPositionAtRendering: false
 };
 
 var last = "";
@@ -502,8 +503,11 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
     sr.style.overflowY = 'hidden';
     sr.style.paddingRight = '24px';
     sr.innerHTML += html;
-    if (html.length > 0)
+    if (!siacState.keepPositionAtRendering && html.length > 0) {
         sr.scrollTop = 0;
+    } else if (siacState.keepPositionAtRendering) {
+        siacState.keepPositionAtRendering = false;
+    }
     let c = 1;
     clearTimeout(loadingTimer);
     if (infoMap && lastHadResults && document.getElementById("info-Took")) {
