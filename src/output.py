@@ -248,29 +248,29 @@ class Output:
             # use either the template for addon's notes or the normal
             if res.note_type == "user":
                 newNote = noteTemplateUserNote.format(
-                    grid_class=gridclass, 
-                    counter=counter+1, 
-                    nid=nid, 
-                    creation="&nbsp;&#128336; " + timeDiffString, 
-                    edited="" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
-                    mouseup= "getSelectionText()" if not is_queue else "",
-                    text=text, 
-                    tags=utility.tags.build_tag_string(res.tags, self.gridView),
-                    queue=": Q-%s&nbsp;" % (res.position + 1) if res.is_in_queue() else "",
-                    progress=progress,
-                    pdf_class=pdf_class,
-                    ret=retInfo)
+                    grid_class  = gridclass, 
+                    counter     = counter + 1, 
+                    nid         = nid, 
+                    creation    = "&nbsp;&#128336; " + timeDiffString, 
+                    edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
+                    mouseup     = "getSelectionText()" if not is_queue else "",
+                    text        = text, 
+                    tags        = utility.tags.build_tag_string(res.tags, self.gridView),
+                    queue       = ": Q-%s&nbsp;" % (res.position + 1) if res.is_in_queue() else "",
+                    progress    = progress,
+                    pdf_class   = pdf_class,
+                    ret         = retInfo)
             else:
                 newNote = noteTemplate.format(
-                    grid_class=gridclass, 
-                    counter=counter+1, 
-                    nid=nid, 
-                    creation="&nbsp;&#128336; " + timeDiffString, 
-                    edited="" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
-                    mouseup= "getSelectionText()" if not is_queue else "",
-                    text=text, 
-                    tags=utility.tags.build_tag_string(res.tags, self.gridView), 
-                    ret=retInfo)
+                    grid_class  = gridclass, 
+                    counter     = counter + 1, 
+                    nid         = nid, 
+                    creation    = "&nbsp;&#128336; " + timeDiffString, 
+                    edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
+                    mouseup     = "getSelectionText()" if not is_queue else "",
+                    text        = text, 
+                    tags        = utility.tags.build_tag_string(res.tags, self.gridView), 
+                    ret         = retInfo)
          
             html = f"{html}{newNote}"
             tags = self._addToTags(tags, res.tags)
