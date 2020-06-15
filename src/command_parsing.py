@@ -136,6 +136,14 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         #this renders the popup
         display_tag_info(self, cmd.split()[1], " ".join(cmd.split()[2:]), index)
 
+    elif cmd.startswith("siac-copy-to-cb "):
+        # copy to clipboard
+        try:
+            QApplication.clipboard().setText(cmd[16:])
+            tooltip("Copied to Clipboard!")
+        except: 
+            tooltip("Failed to copy to clipboard!")
+
     elif cmd.startswith("siac-rerender "):
         ix = int(cmd.split()[1])
         if check_index() and ix < len(index.ui.previous_calls):
