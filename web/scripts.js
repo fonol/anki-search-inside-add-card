@@ -327,7 +327,7 @@ function onWindowResize() {
         $('#outerWr').css('display', 'flex').removeClass('onesided');
         document.getElementById('switchBtn').innerHTML = "&#10149; Search";
     }
-    if (pdfDisplayed) {
+    if (typeof pdfDisplayed !== "undefined" && pdfDisplayed) {
         if(this.resizeTimeout) clearTimeout(this.resizeTimeout);
             this.resizeTimeout = setTimeout(function() {
                 if (pdfDisplayed) {
