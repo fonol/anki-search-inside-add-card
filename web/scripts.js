@@ -417,13 +417,15 @@ function updateFieldToHideInResult(checkbox, mid, fldOrd) {
         pycmd("siac-update-field-to-hide-in-results " + mid + " " + fldOrd + " true");
     }
 }
-function setSearchOnTyping(active) {
+function setSearchOnTyping(active, trigger=true) {
     siacState.searchOnTyping = active;
     if (!active)
         $('.field').off('keyup.siac', fieldKeypress);
     else {
         $('.field').on('keyup.siac', fieldKeypress);
-        sendContent();
+        if (trigger) {
+            sendContent();
+        }
     }
     sendSearchOnTyping();
 }
