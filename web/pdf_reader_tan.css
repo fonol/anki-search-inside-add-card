@@ -204,10 +204,10 @@ body.siac-reading-modal-displayed #siac-right-side {
     text-align: center;
     margin-top: 20px;
 }
-#siac-pdf-top.siac-pdf-night #text-layer {
+/* #siac-pdf-top.siac-pdf-night #text-layer {
     background-color: #2496dc;
     opacity: 0.8;
-}
+} */
 #siac-pdf-top.siac-pdf-rose #text-layer {
     background-color: red;
     opacity: 0.2;
