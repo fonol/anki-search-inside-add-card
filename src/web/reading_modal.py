@@ -286,6 +286,7 @@ class ReadingModal:
                         if (pdfBarsHidden) {
                             showPDFBottomRightNotification("%s", 4000);
                         }
+                        setTimeout(refreshCanvas, 50);
                         if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
                         fileReader = null;
                 });
