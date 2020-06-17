@@ -306,6 +306,10 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
         QShortcut(QKeySequence(config["notes.editor.shortcut"]), editor.widget, activated=show_note_modal)
     except:
         pass
+    try:
+        QShortcut(QKeySequence(config["pdf.shortcuts.toggle_search_on_select"]), editor.widget, activated=lambda: editor.web.eval("togglePDFSelect()"))
+    except:
+        pass
 
 def show_note_modal():
     if not state.note_editor_shown:
