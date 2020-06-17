@@ -22,8 +22,11 @@ import re
 import datetime
 import time
 import sys
+import typing
+from typing import List
 from aqt import mw
 from aqt.utils import showInfo
+
 
 import utility.tags
 import utility.text
@@ -157,6 +160,18 @@ def print_starting_info(editor):
         html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
         html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
+
+        changes = changelog()
+        if changes:
+            html += "<br/><br/><b>Changelog:</b><hr>"
+            for ix, c in enumerate(changes):
+                html += f"<br>{ix + 1}. {c}"
+
+        issues = known_issues()
+        if issues:
+            html += "<br/><br/><b>Known Issues:</b><hr>"
+            for ix, i in enumerate(issues):
+                html += f"<br>{ix + 1}. {i}"
     
     if not state.db_file_existed:
         html += "<br><br><b><i>siac-notes.db</i> was not existing, created a new one.</b>"
@@ -343,3 +358,23 @@ def addToDecklist(dmap, id, name):
         if not d in found:
             found.update({d : {}})
     return dmap
+
+
+def changelog() -> List[str]:
+    """ Returns recent add-on changes. """
+
+    return [
+        "Added <b>Changelog</b> and <b>Known Issues</b> to starting info and 'Info' dialog",
+        "Added shortcut to toggle Search on Select in the pdf reader, default Ctrl/Cmd + S, config key <i>pdf.shortcuts.toggle_search_on_select</i>",
+        "Fix search with current field contents being triggered after reading modal is closed",
+        "Fix Ctrl/Meta key + Mousewheel zooming in PDF in Anki 2.1.28 alpha",
+        "Fix some of the PDF color modes not working in Anki 2.1.28 alpha"
+    ]
+
+def known_issues() -> List[str]:
+    """ Returns currently known issues/bugs. """
+
+    return [
+        "PDF highlights seem to lose their opacity on 2.1.28 alpha",
+        "Some PDF color modes are not displayed correctly on 2.1.28 alpha"
+    ]
