@@ -1457,6 +1457,7 @@ def get_index_info():
                <tr><td>Confirm new note and keep open</td><td>  <b>Ctrl+Shift+Enter</b></td></tr>
                <tr><td>PDF: Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
                <tr><td>PDF: Toggle Top & Bottom Bar</td><td>  <b>F11</b></td></tr>
+               <tr><td>PDF: Toggle Search on Select</td><td>  <b>%s</b></td></tr>
              </table>
 
             """ % (index.type, sqlite3.sqlite_version,
@@ -1473,8 +1474,34 @@ def get_index_info():
             config["toggleShortcut"],
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
             ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db",
-            config["notes.editor.shortcut"]
+            config["notes.editor.shortcut"],
+            config["pdf.shortcuts.toggle_search_on_select"]
             )
+
+    changes = changelog()
+
+    if changes:
+        html += "<br/><br/><b>Changelog:</b><hr>"
+        for ix, c in enumerate(changes):
+            html += f"<br>{ix + 1}. {c}"
+
+    issues = known_issues()
+
+    if issues:
+        html += "<br/><br/><b>Known Issues:</b><hr>"
+        for ix, i in enumerate(issues):
+            html += f"<br>{ix + 1}. {i}"
+
+    html += """
+        <br><br>
+        <b>Contact:</b>
+        <hr>
+        <br>
+        For bug reports, feedback or suggestions: <a href='https://github.com/fonol/anki-search-inside-add-card'>Github Repository</a>
+        <br>
+        If you want to support this project: <a href='https://www.patreon.com/tomtomtom'>Patreon Site</a>
+
+    """
 
     return html
 
