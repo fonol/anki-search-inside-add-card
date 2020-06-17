@@ -149,7 +149,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 canvas.style.height = viewport.height + "px";
                 canvas.style.width = viewport.width + "px";
             }
-            if (["Peach", "Sand"].indexOf(pdfColorMode) !== -1)
+            if (["Peach", "Sand", "Night"].indexOf(pdfColorMode) !== -1)
                 canvas.style.display = "none";
             var ctx = canvas.getContext('2d');
             var pageTimestamp = new Date().getTime();
@@ -171,7 +171,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                     rerenderPDFPage(pageNumPending, shouldScrollUp);
                     pageNumPending = null;
                 } else {
-                    if (["Sand", "Peach"].indexOf(pdfColorMode) !== -1) {
+                    if (["Sand", "Peach", "Night"].indexOf(pdfColorMode) !== -1) {
                         invertCanvas(ctx);
                     }
                 }
@@ -220,22 +220,31 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
         });
 }
 function invertCanvas(ctx) {
-    var imgData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-    var data = imgData.data;
-    var mapped;
-    var fn;
-    switch (pdfColorMode) {
-        case "Sand": fn = pxToSandScheme; break;
-        case "Peach": fn = pxToPeachScheme; break;
+    if (pdfColorMode === "Night") {
+        colorize(ctx, '#2496dc', 0.4);
+    } else {
+        var imgData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+        var data = imgData.data;
+        var mapped;
+        var fn;
+
+        switch (pdfColorMode) {
+            case "Sand": fn = pxToSandScheme; break;
+            case "Peach": fn = pxToPeachScheme; break;
+        }
+        for (var i = 0; i < data.length; i += 4) {
+            mapped = fn(data[i], data[i + 1], data[i + 2]);
+            data[i] = mapped.r;
+            data[i + 1] = mapped.g;
+            data[i + 2] = mapped.b;
+        }
+        ctx.putImageData(imgData, 0, 0);
     }
-    for (var i = 0; i < data.length; i += 4) {
-        mapped = fn(data[i], data[i + 1], data[i + 2]);
-        data[i] = mapped.r;
-        data[i + 1] = mapped.g;
-        data[i + 2] = mapped.b;
-    }
-    ctx.putImageData(imgData, 0, 0);
-    ctx.canvas.style.display = "inline-block";
+   ctx.canvas.style.display = "inline-block";
+}
+function refreshCanvas() {
+    const ctx = document.getElementById("siac-pdf-canvas").getContext("2d");
+    ctx.putImageData(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height), 0, 0);
 }
 function numPagesExtract() {
     if (!pdfExtract) {
@@ -657,13 +666,14 @@ function startTimer(mins) {
     });
 }
 function pdfMouseWheel(event) {
-    if (!event.ctrlKey) { return; }
+    if (!event.ctrlKey && !event.metaKey) { return; }
     if (event.deltaY < 0) {
         pdfScaleChange("up");
     }
     else if (event.deltaY > 0) {
         pdfScaleChange("down");
     }
+    event.preventDefault();
 }
 function showPDFBottomRightNotification(html, fadeout = false) {
     document.getElementById('siac-pdf-br-notify').innerHTML = html;
@@ -943,15 +953,13 @@ function pxToPeachScheme(red, green, blue) {
     if (red < 100 && green < 100 && blue < 100) { return { r: 0, g: 0, b: 0 }; }
     return { r: red, g: green, b: blue };
 }
-function pxToNightScheme(red, green, blue) {
-    if (red >= 160 && green >= 160 && blue >= 160) {
-        red = 17; green = 36; blue = 53;
-    } else {
-        red = red ^ 255;
-        green = green ^ 255;
-        blue = blue ^ 255;
-    }
-    return { r: red, g: green, b: blue };
+function colorize(context, color, alpha) {
+    context.globalCompositeOperation = "source-atop";
+    context.globalAlpha = alpha;
+    context.fillStyle = color;
+    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+    context.globalCompositeOperation = "source-over";
+    context.globalAlpha = 1.0;
 }
 
 function updatePdfDisplayedMarks() {
@@ -1044,6 +1052,12 @@ function pdfTooltipClozeKeyup(event) {
     }
 }
 function togglePDFSelect(elem) {
+    if (!elem) {
+        elem = document.getElementById('siac-pdf-tooltip-toggle');
+    }
+    if (!elem) {
+        return;
+    }
     pdfTooltipEnabled = !pdfTooltipEnabled;
     if (pdfTooltipEnabled) {
         $(elem).addClass('active');
@@ -1209,7 +1223,7 @@ function onReadingModalClose() {
     onWindowResize();
     window.$fields = $('.field');
     if (siacState.searchOnTyping) {
-        setSearchOnTyping(true);
+        setSearchOnTyping(true, false);
     }
     pycmd("siac-on-reading-modal-close")
 }
