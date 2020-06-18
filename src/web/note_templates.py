@@ -27,7 +27,6 @@ noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                         <div class='editLbl' onclick='edit({nid})'>Edit</div>
                         <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
                         <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
-                        <div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>
                         <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
                     </div>
                     <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
@@ -62,14 +61,13 @@ noteTemplateUserNoteSimple = """<div class='cardWrapper' style="display: block;"
 
 noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {grid_class}' id='nWr-{counter}'>
                     <div class='topLeftWr'>
-                        <div id='cW-{nid}' class='rankingLbl'>{counter} &nbsp;SIAC<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
+                        <div id='cW-{nid}' class='rankingLbl' onclick='pycmd("siac-copy-to-cb {nid}")'>{counter} &nbsp;SIAC<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
                     </div>
                     <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                         <div class='deleteLbl' onclick='pycmd("siac-delete-user-note-modal {nid}"); '><div class='siac-trash-icn'></div></div>
                         <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'>Edit</div>
                         <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
                         <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
-                        <div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>
                         <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
                     </div>
                     <div class='cardR siac-user-note' onmouseup='{mouseup}' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
