@@ -220,7 +220,7 @@ def display_note_del_confirm_modal(editor, nid):
     """ Display the modal that asks to confirm a (add-on) note deletion. """
 
     html = get_note_delete_confirm_modal_html(nid)
-    return "$('#searchResults').scrollTop(0).append(`%s`);" % html
+    return "$('#resultsWrapper').append(`%s`);" % html
    
 
 def fillTagSelect(editor = None, expanded = False) :
