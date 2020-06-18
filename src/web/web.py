@@ -364,11 +364,11 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added <b>Changelog</b> and <b>Known Issues</b> to starting info and 'Info' dialog",
-        "Added shortcut to toggle Search on Select in the pdf reader, default Ctrl/Cmd + S, config key <i>pdf.shortcuts.toggle_search_on_select</i>",
-        "Fix search with current field contents being triggered after reading modal is closed",
-        "Fix Ctrl/Meta key + Mousewheel zooming in PDF in Anki 2.1.28 alpha",
-        "Fix some of the PDF color modes not working in Anki 2.1.28 alpha"
+        "Added click on SIAC label on a note to copy its ID",
+        "Fix searchbar mode (Add-on/Browser) not persisting after closing and reopening Add dialog",
+        "Fix delete add-on note modal scrolling the current results to the top",
+        "Fix PDF fit-to-page function being triggered after adding a card with opened PDF",
+        "Remove float note button"
     ]
 
 def known_issues() -> List[str]:
