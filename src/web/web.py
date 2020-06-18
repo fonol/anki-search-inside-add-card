@@ -366,7 +366,7 @@ def changelog() -> List[str]:
     return [
         "Added click on SIAC label on a note to copy its ID",
         "Fix searchbar mode (Add-on/Browser) not persisting after closing and reopening Add dialog",
-        "Fix delete add-on note modal scrolling the current results to the top",
+        "Fix \"delete add-on note\" modal scrolling the current results to the top",
         "Fix PDF fit-to-page function being triggered after adding a card with opened PDF",
         "Remove float note button"
     ]
