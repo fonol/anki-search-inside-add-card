@@ -144,6 +144,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
 
     rightSideWidth      = 100 - leftSideWidth
     hideSidebar         = conf_or_def("hideSidebar", False)
+    search_bar_mode     = "Add-on" if not get_index() else get_index().searchbar_mode
 
     if conf_or_def("switchLeftRight", False):
         insert_code = """
@@ -322,7 +323,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                                 </fieldset>
 
                                 <fieldset id="searchMaskCol" style="flex: 1 1 auto; font-size: 0.85em;">
-                                    <legend id="siac-search-inp-mode-lbl" onclick='toggleSearchbarMode(this);'>Mode: Add-on</legend>
+                                    <legend id="siac-search-inp-mode-lbl" onclick='toggleSearchbarMode(this);'>Mode: %s</legend>
                                     <span class='siac-search-icn' style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
                                     <input id='siac-browser-search-inp' placeholder='' onkeyup='searchMaskKeypress(event)'></input>
                                 </fieldset>
@@ -376,6 +377,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
         $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
         updatePinned();
         var there = false;
+        onWindowResize();
          
         } else {
            var there = true;
@@ -386,7 +388,6 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
         $('.field').attr('onmouseup', 'getSelectionText()');
         window.$fields = $('.field');
         window.$searchInfo = $('#searchInfo');
-        onWindowResize();
         window.addEventListener('resize', onWindowResize, true);
         $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
         $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
@@ -404,6 +405,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
     "display: none;" if indexIsLoaded else "",
     "hidden" if hideSidebar else "",
     getCalendarHtml() if conf_or_def("showTimeline", True) else "",
+    search_bar_mode,
     insert_code
     )
 
