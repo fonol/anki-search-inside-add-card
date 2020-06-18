@@ -272,7 +272,7 @@ class NoteEditor(QDialog):
 
         NoteEditor.last_tags    = tags
         update_note(self.note_id, title, text, source, tags, specific_schedule, priority)
-        run_hooks("user-note-edited")
+        run_hooks("user-note-edited", self.note_id)
 
         self.reject()
 
