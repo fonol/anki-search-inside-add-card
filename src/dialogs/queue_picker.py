@@ -41,7 +41,7 @@ class QueuePicker(QDialog):
         self.parent     = parent
 
         try:
-            self.dark_mode_used = utility.misc.dark_mode_is_used(aqt.mw.addonManager.getConfig(__name__))
+            self.dark_mode_used = state.night_mode
         except:
             self.dark_mode_used = False
 

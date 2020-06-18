@@ -175,45 +175,6 @@ class NoteEditor(QDialog):
         layout_main.addWidget(self.tabs)
         self.setLayout(layout_main)
 
-        styles = ""
-        if self.dark_mode_used:
-            styles += """
-                QTabBar {
-                background: #222;
-                color: #666;
-                border-radius: 0;
-                border: 2px solid #222;
-                }
-                 QTabWidget::pane {
-                border-color: black;
-                color: #666;
-                border-radius: 0;
-                border: 2px solid #222;
-                }
-                QTabBar::tab:top {
-                margin: 1px 1px 0 0;
-                padding: 4px 8px;
-                border-bottom: 3px solid transparent;
-                }
-
-                QTabBar::tab:selected {
-                color: white;
-                border: 0;
-                }
-
-                QTabBar::tab:top:hover {
-                border-bottom: 3px solid #444;
-                }
-                QTabBar::tab:top:selected {
-                border-bottom: 3px solid #1086e2;
-                }
-
-                QTabBar::tab:hover,
-                QTabBar::tab:focus {
-
-                }
-            """
-        self.setStyleSheet(styles)
         self.create_tab.title.setFocus()
 
         # self.exec_()
@@ -311,7 +272,7 @@ class NoteEditor(QDialog):
 
         NoteEditor.last_tags    = tags
         update_note(self.note_id, title, text, source, tags, specific_schedule, priority)
-        run_hooks("user-note-edited")
+        run_hooks("user-note-edited", self.note_id)
 
         self.reject()
 
@@ -1011,7 +972,7 @@ class PriorityTab(QWidget):
             if self.parent.dark_mode_used:
                 rem_btn.setStyleSheet("border: 1px solid darkgrey; border-style: outset; font-size: 10px; background: #313233; color: white; margin: 0px; padding: 3px;")
             else:
-                rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; margin: 0px; padding: 3px;")
+                rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; color: black; margin: 0px; padding: 3px;")
             rem_btn.setCursor(Qt.PointingHandCursor)
             rem_btn.setMinimumHeight(18)
             rem_btn.clicked.connect(functools.partial(self.on_remove_clicked, priority_list[r].id))

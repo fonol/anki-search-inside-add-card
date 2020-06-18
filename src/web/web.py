@@ -22,8 +22,11 @@ import re
 import datetime
 import time
 import sys
+import typing
+from typing import List
 from aqt import mw
 from aqt.utils import showInfo
+
 
 import utility.tags
 import utility.text
@@ -157,6 +160,18 @@ def print_starting_info(editor):
         html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
         html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
+
+        changes = changelog()
+        if changes:
+            html += "<br/><br/><b>Changelog:</b><hr>"
+            for ix, c in enumerate(changes):
+                html += f"<br>{ix + 1}. {c}"
+
+        issues = known_issues()
+        if issues:
+            html += "<br/><br/><b>Known Issues:</b><hr>"
+            for ix, i in enumerate(issues):
+                html += f"<br>{ix + 1}. {i}"
     
     if not state.db_file_existed:
         html += "<br><br><b><i>siac-notes.db</i> was not existing, created a new one.</b>"
@@ -197,7 +212,7 @@ def show_unsuspend_modal(nid):
     index   = get_index()
 
     index.ui.showInModal(html)
-    return "$('.modal-close').on('click', function() {pycmd(`siac-rerender`);$('.modal-close').off('click'); })"
+    return "siacState.keepPositionAtRendering = true; $('.modal-close').on('click', function() {pycmd(`siac-rerender`);$('.modal-close').off('click'); });"
 
 
 @js
@@ -205,7 +220,7 @@ def display_note_del_confirm_modal(editor, nid):
     """ Display the modal that asks to confirm a (add-on) note deletion. """
 
     html = get_note_delete_confirm_modal_html(nid)
-    return "$('#searchResults').scrollTop(0).append(`%s`);" % html
+    return "$('#resultsWrapper').append(`%s`);" % html
    
 
 def fillTagSelect(editor = None, expanded = False) :
@@ -343,3 +358,23 @@ def addToDecklist(dmap, id, name):
         if not d in found:
             found.update({d : {}})
     return dmap
+
+
+def changelog() -> List[str]:
+    """ Returns recent add-on changes. """
+
+    return [
+        "Added click on SIAC label on a note to copy its ID",
+        "Fix searchbar mode (Add-on/Browser) not persisting after closing and reopening Add dialog",
+        "Fix \"delete add-on note\" modal scrolling the current results to the top",
+        "Fix PDF fit-to-page function being triggered after adding a card with opened PDF",
+        "Remove float note button"
+    ]
+
+def known_issues() -> List[str]:
+    """ Returns currently known issues/bugs. """
+
+    return [
+        "PDF highlights seem to lose their opacity on 2.1.28 alpha",
+        "Some PDF color modes are not displayed correctly on 2.1.28 alpha"
+    ]

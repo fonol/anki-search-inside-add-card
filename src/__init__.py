@@ -292,7 +292,7 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
     def cb(night_mode: bool):
         state.night_mode = night_mode
 
-    editor.web.evalWithCallback("() => {  return document.body.classList.contains('nightMode'); }", cb)
+    editor.web.evalWithCallback("(() => {  return document.body.classList.contains('nightMode'); })();", cb)
 
 def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     """ Register shortcuts used by the add-on. """
@@ -304,6 +304,10 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     QShortcut(QKeySequence("Ctrl+o"), editor.widget, activated=show_quick_open_pdf)
     try:
         QShortcut(QKeySequence(config["notes.editor.shortcut"]), editor.widget, activated=show_note_modal)
+    except:
+        pass
+    try:
+        QShortcut(QKeySequence(config["pdf.shortcuts.toggle_search_on_select"]), editor.widget, activated=lambda: editor.web.eval("togglePDFSelect()"))
     except:
         pass
 

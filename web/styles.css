@@ -1276,7 +1276,7 @@ span.tag-symbol {
     transition: margin 0.15s ease;
 }
 .siac-notes-sidebar-item:hover {
-    border-left: 5px solid #2496dc;
+    border-left: 5px solid lightseagreen;
     padding-left: 5px;
     margin-left: 5px;
     transform: scale(1.05);

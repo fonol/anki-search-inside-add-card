@@ -21,9 +21,9 @@ var siacState = {
     isFrozen : false,
     searchOnSelection : true,
     searchOnTyping : true,
+    keepPositionAtRendering: false
 };
 
-var last = "";
 var lastHadResults = false;
 var loadingTimer;
 var calTimer;
@@ -326,7 +326,7 @@ function onWindowResize() {
         $('#outerWr').css('display', 'flex').removeClass('onesided');
         document.getElementById('switchBtn').innerHTML = "&#10149; Search";
     }
-    if (pdfDisplayed) {
+    if (typeof pdfDisplayed !== "undefined" && pdfDisplayed) {
         if(this.resizeTimeout) clearTimeout(this.resizeTimeout);
             this.resizeTimeout = setTimeout(function() {
                 if (pdfDisplayed) {
@@ -416,13 +416,15 @@ function updateFieldToHideInResult(checkbox, mid, fldOrd) {
         pycmd("siac-update-field-to-hide-in-results " + mid + " " + fldOrd + " true");
     }
 }
-function setSearchOnTyping(active) {
+function setSearchOnTyping(active, trigger=true) {
     siacState.searchOnTyping = active;
     if (!active)
         $('.field').off('keyup.siac', fieldKeypress);
     else {
         $('.field').on('keyup.siac', fieldKeypress);
-        sendContent();
+        if (trigger) {
+            sendContent();
+        }
     }
     sendSearchOnTyping();
 }
@@ -502,8 +504,11 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
     sr.style.overflowY = 'hidden';
     sr.style.paddingRight = '24px';
     sr.innerHTML += html;
-    if (html.length > 0)
+    if (!siacState.keepPositionAtRendering && html.length > 0) {
         sr.scrollTop = 0;
+    } else if (siacState.keepPositionAtRendering) {
+        siacState.keepPositionAtRendering = false;
+    }
     let c = 1;
     clearTimeout(loadingTimer);
     if (infoMap && lastHadResults && document.getElementById("info-Took")) {
@@ -514,6 +519,7 @@ function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total =
     } else {
         document.getElementById('searchInfo').innerHTML = infoStr;
     }
+  
     if (infoMap)
         lastHadResults = true;
     else
@@ -704,57 +710,6 @@ function sort() {
     let sort = e.options[e.selectedIndex].value;
     pycmd("siac-p-sort " + sort);
 
-}
-function addFloatingNote(nid) {
-    let onedit = $('#' + nid.toString()).hasClass('siac-user-note') ? `pycmd("siac-edit-user-note ${nid}")`  : `edit(${nid})`;
-    let content = document.getElementById(nid).innerHTML;
-    $('#cW-' + nid).parent().parent().remove();
-    let btnBar = `<div class='floatingBtnBar'>
-        <div class="floatingBtnBarItem" onclick='${onedit}'>Edit</div>&nbsp;&#65372;
-        <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>&nbsp;&#65372;
-        <div class="floatingBtnBarItem" id='rem-${nid}' onclick='document.getElementById("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div>
-    </div>`;
-    let floatingNote = `<div id="nF-${nid}" class='noteFloating'>
-            <div id="nFH-${nid}" class='noteFloatingHeader' onmousedown='dragElement(this.parentElement, "nFH-${nid}")'>&nbsp;${btnBar}</div>
-            <div id="nFC-${nid}" class='noteFloatingContent'>${content}</div>
-                </div>
-            `;
-    if ($('.field').length > 8)
-        $('.field').first().after(floatingNote);
-    else
-        $('.field').last().after(floatingNote);
-    dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
-    updatePinned();
-}
-function dragElement(elmnt, headerId, inModal=false) {
-    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0, lMYSum = 0, lMXSum = 0;
-    if (document.getElementById(headerId)) {
-        document.getElementById(headerId).onmousedown = dragMouseDown;
-    } else {
-        elmnt.onmousedown = dragMouseDown;
-    }
-    function dragMouseDown(e) {
-        e = e || window.event;
-        e.preventDefault();
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        document.onmouseup = closeDragElement;
-        document.onmousemove = elementDrag;
-    }
-    function elementDrag(e) {
-        e = e || window.event;
-        e.preventDefault();
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-    }
-    function closeDragElement() {
-        document.onmouseup = null;
-        document.onmousemove = null;
-    }
 }
 function toggleAddon() {
     try {
