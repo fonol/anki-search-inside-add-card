@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import typing
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional, Any
 
 hooks: Dict[str, Callable] = dict()
 
@@ -27,8 +27,14 @@ def add_hook(name: str, fn: Callable):
         hooks[name] = [fn]
 
 
-def run_hooks(name: str):
+def run_hooks(name: str, arg: Optional[Any] = None):
     name = name.lower()
     if name in hooks:
         for fn in hooks[name]:
-            fn()
+            if arg:
+                try:
+                    fn(arg)
+                except:
+                    fn()
+            else:
+                fn()
