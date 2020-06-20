@@ -17,6 +17,8 @@
 """
 HTML templates for search results.
 """
+from aqt import mw
+config = mw.addonManager.getConfig(__name__)
 
 noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                     <div class='topLeftWr'>
@@ -27,12 +29,13 @@ noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                         <div class='editLbl' onclick='edit({nid})'>Edit</div>
                         <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
                         <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
+                        %s
                         <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
                     </div>
                     <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
                     <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
                     <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;INFO&nbsp;</div>
-                </div>"""
+                </div>""" % ("<div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>" if config["results.showFloatButton"] else "")
 
 noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
                     <div class='topLeftWr'>
@@ -68,9 +71,10 @@ noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {gr
                         <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'>Edit</div>
                         <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
                         <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
+                        %s 
                         <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
                     </div>
                     <div class='cardR siac-user-note' onmouseup='{mouseup}' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
                     <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
                     <div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'><div class='siac-read-icn'></div>{progress}</div>
-                </div>"""
+                </div>""" % ("<div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>" if config["results.showFloatButton"] else "")
