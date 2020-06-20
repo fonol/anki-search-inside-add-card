@@ -32,8 +32,8 @@ sed -i 's/orange/#9dab86/' 'pdf_reader_darkseagreen.css'
 rm -f 'pdf_reader_lightgreen.css'
 cp 'pdf_reader.css' 'pdf_reader_lightgreen.css'
 # replace styles
-sed -i 's/darkorange/#9dab86/' 'pdf_reader_lightgreen.css' 
-sed -i 's/orange/#9dab86/' 'pdf_reader_lightgreen.css' 
+sed -i 's/darkorange/#90EE90/' 'pdf_reader_lightgreen.css' 
+sed -i 's/orange/#90EE90/' 'pdf_reader_lightgreen.css' 
 
 # lightsalmon theme
 rm -f 'pdf_reader_lightsalmon.css'
@@ -56,9 +56,25 @@ cp 'pdf_reader.css' 'pdf_reader_crimson.css'
 sed -i 's/darkorange/#c72c41/' 'pdf_reader_crimson.css' 
 sed -i 's/orange/#c72c41/' 'pdf_reader_crimson.css' 
 
+# coral theme
+rm -f 'pdf_reader_coral.css'
+cp 'pdf_reader.css' 'pdf_reader_coral.css'
+# replace styles
+sed -i 's/darkorange/#f87954/' 'pdf_reader_coral.css' 
+sed -i 's/orange/#f87954/' 'pdf_reader_coral.css'
+
 # steelblue theme
 rm -f 'pdf_reader_steelblue.css'
 cp 'pdf_reader.css' 'pdf_reader_steelblue.css'
 # replace styles
 sed -i 's/darkorange/#2496dc/' 'pdf_reader_steelblue.css' 
 sed -i 's/orange/#2496dc/' 'pdf_reader_steelblue.css' 
+
+# lightsteelblue theme
+rm -f 'pdf_reader_lightsteelblue.css'
+cp 'pdf_reader.css' 'pdf_reader_lightsteelblue.css'
+# replace styles
+sed -i 's/darkorange/#B0C4DE/' 'pdf_reader_lightsteelblue.css' 
+sed -i 's/orange/#B0C4DE/' 'pdf_reader_lightsteelblue.css' 
+
+#66CDAA
