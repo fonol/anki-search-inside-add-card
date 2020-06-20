@@ -626,6 +626,13 @@ def stylingModal(config):
                 </table>
             </fieldset>
             <br/>
+            <fieldset>
+                <span>Show the float note button (&#10063;) in the rendered search results. Needs a restart to apply.</span>
+                <table style="width: 100%%">
+                    <tr><td><b>Show Float Note Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showFloatButton ' + this.checked)" %s/></tr>
+                </table>
+            </fieldset>
+            <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
                         """ % (
                         config["searchpane.zoom"],
@@ -640,7 +647,8 @@ def stylingModal(config):
                        config["addonNoteDBFolderPath"],
                        config["pdfUrlImportSavePath"],
                        "checked='true'" if config["notes.showSource"] else "",
-                       "checked='true'" if config["useInEdit"] else ""
+                       "checked='true'" if config["useInEdit"] else "",
+                       "checked='true'" if config["results.showFloatButton"] else ""
                         )
     html += """
     <br/> <br/>
