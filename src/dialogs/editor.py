@@ -617,6 +617,11 @@ class CreateTab(QWidget):
 
         vbox.addLayout(tag_hb2)
         self.tag = QLineEdit()
+        tags = get_all_tags()
+        if tags:
+            completer = QCompleter(tags)
+            completer.setCaseSensitivity(Qt.CaseInsensitive)
+            self.tag.setCompleter(completer)
         vbox.addWidget(self.tag)
         if self.parent.tag_prefill is not None:
             self.tag.setText(self.parent.tag_prefill)
