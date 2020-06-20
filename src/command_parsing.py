@@ -171,7 +171,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             notes = get_all_pdf_notes()
             # add special note at front
             sp_body = get_pdf_list_first_card()
-            notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
+            notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
             index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-show-pdfs-unread":
@@ -200,21 +200,21 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         stamp = setStamp()
         notes = get_pdf_notes_last_read_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-pdf-last-added":
         stamp = setStamp()
         notes = get_pdf_notes_last_added_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-pdf-find-invalid":
         stamp = setStamp()
         notes = get_invalid_pdfs()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None)))
+        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-queue-info "):
@@ -326,6 +326,19 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                     tooltip(f"Updated schedule.")
                 run_hooks("updated-schedule")
 
+    elif cmd == "siac-delay-note":
+        # "Later" button pressed in the reading modal
+        qlen = len(_get_priority_list())
+        if qlen <= 2:
+            return
+        delay = int(qlen/3) 
+        if index.ui.reading_modal.note.position < 3:
+            delay += (3 - index.ui.reading_modal.note.position)
+        set_delay(index.ui.reading_modal.note_id, delay)
+        recalculate_priority_queue()
+        nid = get_head_of_queue()
+        index.ui.reading_modal.display(nid)
+        tooltip("Moved note back in queue")
 
     elif cmd.startswith("siac-pdf-mark "):
         mark_type = int(cmd.split()[1])
@@ -1624,7 +1637,7 @@ def update_styling(cmd):
                 value += "/"
             config["pdfUrlImportSavePath"] = value
 
-    elif name == "notes.showSource" or name == "useInEdit":
+    elif name in ["notes.showSource", "useInEdit", "results.showFloatButton"]:
         config[name] = value == "true"
 
 

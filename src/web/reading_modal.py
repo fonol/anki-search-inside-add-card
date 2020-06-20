@@ -350,10 +350,13 @@ class ReadingModal:
                 queue_btn_action    = "siac-user-note-done"
                 active              = "active" if note.is_due_sometime() else ""
                 schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
+                delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-clickable-anchor'>Later</a>"""
+
             else:
                 queue_btn_text      = "First in Queue"
                 queue_btn_action    = "siac-user-note-queue-read-head"
                 schedule_dialog_btn = ""
+                delay_btn           = ""
 
             html = """
                 <script>destroyTinyMCE();</script>
@@ -397,11 +400,12 @@ class ReadingModal:
                             <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
                                 <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
                                 {schedule_btns}
-                                <div id='siac-queue-actions' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
+                                <div id='siac-queue-actions' style='display: inline-block; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                                     <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                     <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
                                     <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span>{schedule_dialog_btn}</div><br>
-                                    <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("{queue_btn_action}");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a><br>
+                                    <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("{queue_btn_action}");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
+                                    {delay_btn}<br>
                                     <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
                                     <a onclick='if (!pdfLoading && !modalShown) {{ modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}}' class='siac-clickable-anchor'>Remove</a>
                                 </div>
@@ -462,7 +466,7 @@ class ReadingModal:
             queue_readings_list = self.get_queue_head_display(queue, editable)
 
             params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info, 
-            queue_info_short    = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn)
+            queue_info_short    = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn)
             html                = html.format_map(params)
 
             return html
@@ -633,10 +637,12 @@ class ReadingModal:
             queue_btn_action    = "siac-user-note-done"
             active              = "active" if note.is_due_sometime() else ""
             schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
+            delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-clickable-anchor'>Later</a>"""
         else:
             queue_btn_text      = "First in Queue"
             queue_btn_action    = "siac-user-note-queue-read-head"
             schedule_dialog_btn = ""
+            delay_btn           = ""
 
         html = """
                 <div id='siac-reading-modal-bottom-bar' style=''>
@@ -644,11 +650,12 @@ class ReadingModal:
 
                         <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
                         {schedule_btns} 
-                        <div  id='siac-queue-actions'  style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
+                        <div  id='siac-queue-actions'  style='display: inline-block; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
                             <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span>{schedule_dialog_btn}</div><br>
-                            <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("{queue_btn_action}") }}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a><br>
+                            <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("{queue_btn_action}") }}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
+                            {delay_btn}<br>
                             <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random") }}' class='siac-clickable-anchor'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
                             <a onclick='if (!pdfLoading && !modalShown) {{ modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}}' class='siac-clickable-anchor'>Remove</a>
                         </div>
@@ -675,7 +682,7 @@ class ReadingModal:
         queue_readings_list = self.get_queue_head_display(queue, editable)
 
         params              = dict(note_id = note_id, time_str = time_str, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, queue_info = queue_info, queue_info_short = queue_info_short, 
-        queue_readings_list = queue_readings_list, schedule_btns=schedule_btns, schedule_dialog_btn=schedule_dialog_btn )
+        queue_readings_list = queue_readings_list, schedule_btns=schedule_btns, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn )
 
         html                = html.format_map(params)
 
@@ -687,7 +694,7 @@ class ReadingModal:
         if queue is None:
             queue = _get_priority_list()
         if queue is None or len(queue) == 0:
-            return "<div id='siac-queue-readings-list' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; user-select: none;'></div>"
+            return "<div id='siac-queue-readings-list' style='display: inline-block; vertical-align: top; margin-left: 20px; user-select: none;'></div>"
 
         note_id             = self.note_id
         note                = self.note
@@ -723,8 +730,8 @@ class ReadingModal:
             hide_btn = """<div style='display: inline-block; margin-left: 12px; color: grey;' class='blue-hover' onclick='hideQueue(%s)'>(Hide Items)</div>""" % note_id
 
         html = """
-        <div id='siac-queue-readings-list' style='display: inline-block; height: 90px; vertical-align: top; margin-left: 20px; user-select: none;'>
-            <div style='margin: 0px 0 3px 0; display: inline-block; color: lightgrey;'>Queue Head:</div>%s<br>
+        <div id='siac-queue-readings-list' style='display: inline-block; vertical-align: top; margin-left: 20px; user-select: none;'>
+            <div style='margin: 0px 0 1px 0; display: inline-block; color: lightgrey;'>Queue Head:</div>%s<br>
                 %s
         </div>
         """ % (hide_btn, queue_head_readings)
@@ -1243,7 +1250,9 @@ class ReadingModal:
                     <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightsalmon.css")'>Lightsalmon</a><br>
                     <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_yellow.css")'>Yellow</a><br>
                     <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_crimson.css")'>Crimson</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_coral.css")'>Coral</a><br>
                     <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_steelblue.css")'>Steelblue</a><br>
+                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightsteelblue.css")'>Light Steelblue</a><br>
                 </div>
                 <br>
                 <div style='text-align: right;'>

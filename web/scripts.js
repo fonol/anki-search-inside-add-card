@@ -315,7 +315,7 @@ function switchLeftRight() {
     }
 }
 
-function onWindowResize() {
+function onWindowResize(fitPdfToPage = true) {
    
     let offsetTop = document.getElementById("topbutsOuter").offsetHeight + 3;
     document.getElementById("outerWr").style.marginTop = offsetTop + "px";
@@ -326,7 +326,7 @@ function onWindowResize() {
         $('#outerWr').css('display', 'flex').removeClass('onesided');
         document.getElementById('switchBtn').innerHTML = "&#10149; Search";
     }
-    if (typeof pdfDisplayed !== "undefined" && pdfDisplayed) {
+    if (fitPdfToPage && typeof pdfDisplayed !== "undefined" && pdfDisplayed) {
         if(this.resizeTimeout) clearTimeout(this.resizeTimeout);
             this.resizeTimeout = setTimeout(function() {
                 if (pdfDisplayed) {
@@ -731,7 +731,7 @@ function toggleAddon() {
             }
             pycmd("toggleAll " + ($('#siac-right-side').hasClass("addon-hidden") ? "off" : "on"));
         }
-        onWindowResize();
+        onWindowResize(false);
     } catch (e) {
         pycmd("siac-notification Failed to toggle: " + e.message);
     }
@@ -866,20 +866,6 @@ function toggleSearchbarMode(elem) {
 }
 
 function globalKeydown(e) {
-    // if (e.keyCode === 65 && event.button) {
-    //     pdfTextLayerMetaKey = true;
-    // } else {
-    //     setTimeout(function() { pdfTextLayerMetaKey = false;}, 100);
-    //     pdfTextLayerMetaKey = false;
-    // }
-    // if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.shiftKey && e.keyCode === 78) {
-    //     e.preventDefault();
-    //     if ($('#siac-rd-note-btn').length) {
-    //         $('#siac-rd-note-btn').trigger("click");
-    //     } else {
-    //         pycmd('siac-create-note');
-    //     }
-    // } 
     if (pdfDisplayed && !$('.field').is(':focus')) {
         pdfViewerKeyup(e);
     }
@@ -890,5 +876,59 @@ function toggleNoteSidebar(){
         pycmd("siac-hide-note-sidebar");
     } else {
         pycmd("siac-show-note-sidebar");
+    }
+}
+
+
+/** ############# Floating notes */
+function addFloatingNote(nid) {
+    let onedit = $('#' + nid.toString()).hasClass('siac-user-note') ? `pycmd("siac-edit-user-note ${nid}")`  : `edit(${nid})`;
+    let content = document.getElementById(nid).innerHTML;
+    $('#cW-' + nid).parent().parent().remove();
+    let btnBar = `<div class='floatingBtnBar'>
+        <div class="floatingBtnBarItem" onclick='${onedit}'>Edit</div>&nbsp;&#65372;
+        <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>&nbsp;&#65372;
+        <div class="floatingBtnBarItem" id='rem-${nid}' onclick='document.getElementById("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div>
+    </div>`;
+    let floatingNote = `<div id="nF-${nid}" class='noteFloating'>
+            <div id="nFH-${nid}" class='noteFloatingHeader' onmousedown='dragElement(this.parentElement, "nFH-${nid}")'>&nbsp;${btnBar}</div>
+            <div id="nFC-${nid}" class='noteFloatingContent'>${content}</div>
+                </div>
+            `;
+    if ($('.field').length > 8)
+        $('.field').first().after(floatingNote);
+    else
+        $('.field').last().after(floatingNote);
+    dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
+    updatePinned();
+}
+function dragElement(elmnt, headerId, inModal=false) {
+    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0, lMYSum = 0, lMXSum = 0;
+    if (document.getElementById(headerId)) {
+        document.getElementById(headerId).onmousedown = dragMouseDown;
+    } else {
+        elmnt.onmousedown = dragMouseDown;
+    }
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
     }
 }

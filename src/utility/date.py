@@ -33,6 +33,9 @@ def dt_to_stamp(dt : datetime) -> str:
 def dt_from_stamp(stamp: str) -> datetime:
     return datetime.strptime(stamp, '%Y-%m-%d-%H-%M-%S')
 
+def date_is_today(date_str: str) -> bool:
+    return datetime.today().date() == dt_from_stamp(date_str).date()
+
 def get_last_schedule_date(schedule: str) -> Optional[datetime]:
     if len(schedule.split("|")[0]) == 0:
         return None

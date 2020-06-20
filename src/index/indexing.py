@@ -56,7 +56,7 @@ def get_notes_in_collection():
     other_notes         = get_all_notes()
     other_notes_id_map  = dict()
 
-    for (id, title, text, source, tags, nid, created, modified, reminder, _, _, _, _) in other_notes:
+    for (id, title, text, source, tags, nid, created, modified, reminder, _, _, _, _, _) in other_notes:
 
         if nid in other_notes_id_map:
             other_notes_id_map[nid].append(id)

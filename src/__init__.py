@@ -70,7 +70,7 @@ def init_addon():
 
     gui_hooks.profile_did_open.append(build_index)
     gui_hooks.profile_did_open.append(insert_scripts)
-    gui_hooks.profile_did_open.append(recalculate_priority_queue)
+    gui_hooks.profile_did_open.append(lambda : recalculate_priority_queue(True))
 
     if conf_or_def("searchOnTagEntry", True):
         TagEdit.keyPressEvent = wrap(TagEdit.keyPressEvent, tag_edit_keypress, "around")
