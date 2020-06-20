@@ -119,5 +119,6 @@
 "notes.editor.autoFillWithLastTagsOnOpen": false,
 "notes.editor.autoHideLeftPaneOnOpen": false,
 "notes.editor.shortcut": "Ctrl+Shift+n",
-"notes.editor.defaultTagsIfEmpty": ""
+"notes.editor.defaultTagsIfEmpty": "",
+"results.showFloatButton": false
 }
