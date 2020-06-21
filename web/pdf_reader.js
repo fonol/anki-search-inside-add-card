@@ -1214,7 +1214,7 @@ function onReadingModalClose() {
     $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right").removeClass('siac-reading-modal-displayed');
     $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
     $('#fields').show();
-    $("#siac-reading-modal").hide();
+    $("#siac-reading-modal").hide().css({ "animation": "readingModalIn 0.7s" });
     document.getElementById('resultsArea').style.display = 'block';
     document.getElementById('bottomContainer').style.display = 'block';
     document.getElementById('topContainer').style.display = 'flex';
