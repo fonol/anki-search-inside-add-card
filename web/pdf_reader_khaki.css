@@ -1,4 +1,7 @@
 body.siac-reading-modal-displayed #siac-right-side {
+    border-left: 0px solid #f6d198;
+}
+body.nightMode.siac-reading-modal-displayed #siac-right-side {
     border-left: 2px solid #f6d198;
 }
 #siac-reading-modal {
@@ -496,7 +499,7 @@ body.siac-reading-modal-displayed #siac-right-side {
 }
 #siac-reading-modal-top-btns {
     position: absolute;
-    top: 7px; right: 25px;
+    top: 7px; right: 10px;
     text-align: center;
     vertical-align: middle;
     z-index: 6;
@@ -891,6 +894,12 @@ label input:checked ~ span {
     font-weight: bold;
 }
 body.siac-left-right-switched #siac-right-side {
+    border-right: 2px solid #f6d198;
+}
+body.siac-reading-modal-displayed.siac-left-right-switched #siac-right-side {
+    border-right: none;
+}
+body.nightMode.siac-reading-modal-displayed.siac-left-right-switched #siac-right-side {
     border-right: 2px solid #f6d198;
 }
 #siac-right-side {
