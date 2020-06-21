@@ -52,6 +52,8 @@ from ..stats import getRetentions
 class ReadingModal:
     """ Used to display text and PDF notes. """
 
+    last_opened : Optional[int] = None
+
     def __init__(self):
         self.note_id            : Optional[int]         = None
         self.note               : Optional[SiacNote]    = None
@@ -76,6 +78,9 @@ class ReadingModal:
         index                   = get_index()
         note                    = get_note(note_id)
 
+        if ReadingModal.last_opened is None or (self.note_id is not None and note_id != self.note_id):
+            ReadingModal.last_opened = self.note_id
+
         self.note_id            = note_id
         self.note               = note
 
@@ -86,6 +91,8 @@ class ReadingModal:
         # wrap fields in tabs
         index.ui.js("""
             $(document.body).addClass('siac-reading-modal-displayed');
+            //remove modal animation to prevent it from being triggered when switching left/right or CTRL+F-ing
+            setTimeout(() => { document.getElementById("siac-reading-modal").style.animation = "none"; }, 1000);
             if (!document.getElementById('siac-reading-modal-tabs-left')) {
                 $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
                 document.getElementById('leftSide').innerHTML += `
