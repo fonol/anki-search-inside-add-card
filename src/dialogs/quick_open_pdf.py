@@ -16,11 +16,14 @@
 
 
 from aqt.qt import *
+from aqt.utils import tooltip
 import aqt
 import random
+import typing
 import os
 from functools import partial
 from ..notes import *
+from ..web.reading_modal import ReadingModal
 from ..notes import _get_priority_list
 from ..internals import perf_time
 import utility.text
@@ -68,6 +71,10 @@ class QuickOpenPDF(QDialog):
 
         self.vbox.addWidget(self.sug_list)
 
+        self.vbox.addWidget(QLabel("<b>Ctrl + F</b>: Open First in Queue"))
+        self.vbox.addWidget(QLabel("<b>Ctrl + R</b>: Open Random Note"))
+        self.vbox.addWidget(QLabel("<b>Ctrl + L</b>: Open Last Opened Note"))
+
         self.accept_btn = QPushButton("Cancel")
         self.accept_btn.clicked.connect(self.accept)
         self.vbox.addWidget(self.accept_btn)
@@ -77,6 +84,33 @@ class QuickOpenPDF(QDialog):
         for i in range(min(9,len(self.suggestions))):
             QShortcut(QKeySequence(f"Ctrl+{i+1}"), self, activated=partial(self.accept_nth, i))
 
+        QShortcut(QKeySequence("Ctrl+F"), self, activated=self.open_head)
+        QShortcut(QKeySequence("Ctrl+R"), self, activated=self.open_random)
+        QShortcut(QKeySequence("Ctrl+L"), self, activated=self.open_last)
+
+
+    def open_head(self):
+        h = get_head_of_queue()
+        if h is None or h < 0:
+            tooltip("Queue is empty")
+        else:
+            self.chosen_id = h
+            self.accept()
+
+    def open_random(self):
+        id = get_random_id()
+        if id is None or id < 0:
+            tooltip("You have no notes")
+        else:
+            self.chosen_id = id
+            self.accept()
+
+    def open_last(self):
+        if ReadingModal.last_opened is None:
+            tooltip("No last opened note in this session!")
+        else:
+            self.chosen_id = ReadingModal.last_opened
+            self.accept()
 
     def accept_nth(self, n):
         self.chosen_id = self.displayed[n].id
