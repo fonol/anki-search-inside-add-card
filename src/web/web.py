@@ -364,11 +364,14 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added click on SIAC label on a note to copy its ID",
-        "Fix searchbar mode (Add-on/Browser) not persisting after closing and reopening Add dialog",
-        "Fix \"delete add-on note\" modal scrolling the current results to the top",
-        "Fix PDF fit-to-page function being triggered after adding a card with opened PDF",
-        "Remove float note button"
+        "Added <b>Later</b> button in reading modal",
+        "Added tag dropdown suggestions in the Create/Update Note dialog",
+        "Added option in the settings to enable the float note btn (&#10063;) in the results again",
+        "Added <i>Open First</i>, <i>Open Random</i> and <i>Open Last</i> shortcuts to CTRL+O dialog",
+        "Added animation when opening the reading modal",
+        "Fix <i>Lightgreen</i> theme in the reading modal, added some more themes",
+        "Fix slow PDF resizing after using toggle (CTRL+F)"
+
     ]
 
 def known_issues() -> List[str]:
@@ -376,5 +379,6 @@ def known_issues() -> List[str]:
 
     return [
         "PDF highlights seem to lose their opacity on 2.1.28 alpha",
-        "Some PDF color modes are not displayed correctly on 2.1.28 alpha"
+        "Some PDF color modes are not displayed correctly on 2.1.28 alpha",
+        "Tag autocomplete in Create/Update note modal only works on first tag"
     ]
