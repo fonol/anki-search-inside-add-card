@@ -364,14 +364,13 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added <b>Later</b> button in reading modal",
-        "Added tag dropdown suggestions in the Create/Update Note dialog",
-        "Added option in the settings to enable the float note btn (&#10063;) in the results again",
-        "Added <i>Open First</i>, <i>Open Random</i> and <i>Open Last</i> shortcuts to CTRL+O dialog",
-        "Added animation when opening the reading modal",
-        "Fix <i>Lightgreen</i> theme in the reading modal, added some more themes",
-        "Fix slow PDF resizing after using toggle (CTRL+F)"
-
+        "Added shortcut to toggle Page Read: CTRL/CMD + Space",
+        "Added shortcut to hit Done! on the current item: CTRL/CMD + Y",
+        "Added shortcuts to jump to first/last page in PDF: CTRL/CMD + HOME/END",
+        "Added setting to include an \"ID\" button in the results (can be clicked to copy note's ID)",
+        "Save last opened pages for PDFs (during a session), to show them by default when reopening the pdf",
+        "Updated pdf.js to latest version",
+        "Fix an error in the Unsuspend modal on Anki 2.1.28"
     ]
 
 def known_issues() -> List[str]:
