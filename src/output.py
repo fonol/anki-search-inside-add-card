@@ -614,7 +614,10 @@ class Output:
     def show_in_large_modal(self, html):
         html = html.replace("`", "&#96;")
         js = """
-            $('#siac-reading-modal').html(`%s`);
+            
+            if (!$('#siac-reading-modal').html(`%s`).is(':visible')) { 
+                $('#siac-reading-modal').addClass('rendering'); 
+            }
             document.getElementById('siac-reading-modal').style.display = 'flex';
             document.getElementById('resultsArea').style.display = 'none';
             document.getElementById('bottomContainer').style.display = 'none';
