@@ -297,19 +297,33 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
 def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     """ Register shortcuts used by the add-on. """
 
-    try:
-        QShortcut(QKeySequence(config["toggleShortcut"]), editor.widget, activated=toggleAddon)
-    except:
-        pass
-    QShortcut(QKeySequence("Ctrl+o"), editor.widget, activated=show_quick_open_pdf)
-    try:
-        QShortcut(QKeySequence(config["notes.editor.shortcut"]), editor.widget, activated=show_note_modal)
-    except:
-        pass
-    try:
-        QShortcut(QKeySequence(config["pdf.shortcuts.toggle_search_on_select"]), editor.widget, activated=lambda: editor.web.eval("togglePDFSelect()"))
-    except:
-        pass
+    def _try_register(shortcut: str, activated: Callable):
+        try:
+            QShortcut(QKeySequence(shortcut), editor.widget, activated=activated)
+        except: 
+            pass
+    
+    # toggle add-on pane 
+    _try_register(config["toggleShortcut"], toggleAddon)
+
+    # quick open dialog
+    _try_register("Ctrl+o", show_quick_open_pdf)
+
+    # open Create/Update note modal
+    _try_register(config["notes.editor.shortcut"], show_note_modal)
+
+    # toggle search on select in pdf reader
+    _try_register(config["pdf.shortcuts.toggle_search_on_select"], lambda: editor.web.eval("togglePDFSelect()"))
+
+    # toggle page read in pdf reader
+    _try_register(config["pdf.shortcuts.toggle_page_read"], lambda: editor.web.eval("togglePageRead()"))
+
+    # 'Done' in reading modal
+    _try_register(config["pdf.shortcuts.done"], lambda: editor.web.eval("doneShortcut()"))
+
+    # Jump to first/last page in pdf reader 
+    _try_register(config["pdf.shortcuts.jump_to_last_page"], lambda: editor.web.eval("jumpLastPageShortcut()"))
+    _try_register(config["pdf.shortcuts.jump_to_first_page"], lambda: editor.web.eval("jumpFirstPageShortcut()"))
 
 def show_note_modal():
     if not state.note_editor_shown:
