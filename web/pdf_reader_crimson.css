@@ -1,4 +1,7 @@
 body.siac-reading-modal-displayed #siac-right-side {
+    border-left: 0px solid #c72c41;
+}
+body.nightMode.siac-reading-modal-displayed #siac-right-side {
     border-left: 2px solid #c72c41;
 }
 #siac-reading-modal {
@@ -16,6 +19,9 @@ body.siac-reading-modal-displayed #siac-right-side {
     z-index: 7;
     border-radius: 5px;
     overflow: hidden;
+}
+body.nightMode #siac-reading-modal.rendering {
+    border: 2px solid #c72c41;
 }
 
 #siac-reading-modal a:not(.siac-disabled) {
@@ -265,7 +271,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     filter: brightness(1.4);
 }
 #siac-close-iframe-btn {
-    z-index: 4;
+    z-index: 7;
     position: absolute;
     right: 0px;
     top: 5px;
@@ -496,7 +502,7 @@ body.siac-reading-modal-displayed #siac-right-side {
 }
 #siac-reading-modal-top-btns {
     position: absolute;
-    top: 7px; right: 25px;
+    top: 7px; right: 10px;
     text-align: center;
     vertical-align: middle;
     z-index: 6;
@@ -526,6 +532,15 @@ body.siac-reading-modal-displayed #siac-right-side {
 }
 #siac-reading-modal-change-theme > a {
     color:lightgrey !important;
+}
+#siac-queue-actions {
+    display: inline-block; 
+    vertical-align: top; 
+    margin-left: 20px; 
+    margin-top: 3px; 
+    user-select: none; 
+    z-index: 1;
+    min-width: 125px;
 }
 .siac-queue-picker-icn {
     margin-left: 25px; cursor: pointer; font-weight: bold; color: #c72c41;
@@ -891,6 +906,12 @@ label input:checked ~ span {
     font-weight: bold;
 }
 body.siac-left-right-switched #siac-right-side {
+    border-right: 2px solid #c72c41;
+}
+body.siac-reading-modal-displayed.siac-left-right-switched #siac-right-side {
+    border-right: none;
+}
+body.nightMode.siac-reading-modal-displayed.siac-left-right-switched #siac-right-side {
     border-right: 2px solid #c72c41;
 }
 #siac-right-side {

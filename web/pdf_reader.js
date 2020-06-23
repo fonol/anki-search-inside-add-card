@@ -40,6 +40,8 @@ var pdfTooltipEnabled = true;
 var iframeIsDisplayed = false;
 var pdfFullscreen = false;
 var pdfBarsHidden = false;
+var pdfNoteId = null;
+var pdfLastReadPages = {};
 var pdfSearchOngoing = false;
 var pdfCurrentSearch = {
     query: null,
@@ -199,6 +201,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 } else {
                     displayHighlights();
                 }
+                setLastReadPage();
             });
             if (shouldScrollUp) {
                 canvas.parentElement.scrollTop = 0;
@@ -254,9 +257,21 @@ function numPagesExtract() {
 }
 
 function togglePageRead(nid) {
+
+    // function can be called from pyqt shortcut, so it might be that no PDF is displayed when shortcut is triggered
+    if (!pdfDisplayed) {
+        return;
+    }
+
+    // don't allow for blue'd out pages in pdf extracts to be marked as read
     if (pdfExtract && (pdfDisplayedCurrentPage < pdfExtract[0] || pdfDisplayedCurrentPage > pdfExtract[1])) {
         return;
     }
+
+    if (!nid) {
+        nid = pdfNoteId;
+    }
+
     if (pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
         document.getElementById('siac-pdf-overlay').style.display = 'block';
         document.getElementById('siac-pdf-read-btn').innerHTML = '&times; Unread';
@@ -460,7 +475,7 @@ async function getContents(s = 1, n = 10000) {
     for (var j = s; j <= pdfDisplayed.numPages && j <= s + n; j++) {
         var page = pdfDisplayed.getPage(j);
         countPromises.push(page.then(function (page) {
-            var n = page.pageIndex + 1;
+            var n = page._pageIndex + 1;
             var txt = "";
             var textContent = page.getTextContent();
             return textContent.then(function (page) {
@@ -547,7 +562,15 @@ async function nextPDFSearchResult(dir = "right") {
     pdfSearchOngoing = false;
 
 }
-
+function setLastReadPage() {
+    pdfLastReadPages[pdfNoteId] = pdfDisplayedCurrentPage;
+}
+function getLastReadPage() {
+    if (pdfNoteId && pdfNoteId in pdfLastReadPages) {
+        return pdfLastReadPages[pdfNoteId];
+    }
+    return null;
+}
 
 function getNextPagesToSearchIn(dir) {
     if (pdfCurrentSearch.breakOnNext) {
@@ -1015,8 +1038,31 @@ function markClicked(event) {
         queueRenderPage(pdfDisplayedCurrentPage, true);
     }
 }
+/**
+ * 'Done' Shortcut activated in qt.
+ */
+function doneShortcut() {
+    if (!pdfLoading && !noteLoading && !modalShown && document.body.classList.contains("siac-reading-modal-displayed")) {
+        $('#siac-first-in-queue-btn').trigger("click");
+    }
+}
+function jumpLastPageShortcut() {
+    if (pdfLoading || noteLoading || modalShown || !pdfDisplayed) {
+        return;
+    }
+    pdfDisplayedCurrentPage = pdfDisplayed.numPages;
+    queueRenderPage(pdfDisplayedCurrentPage, true);
+}
+function jumpFirstPageShortcut() {
+    if (pdfLoading || noteLoading || modalShown || !pdfDisplayed) {
+        return;
+    }
+    pdfDisplayedCurrentPage = 1;
+    queueRenderPage(1, true);
+}
+
 function pdfViewerKeyup(event) {
-    if (event.ctrlKey && (event.keyCode === 32 || event.keyCode === 39)) {
+    if (event.ctrlKey && (event.keyCode === 39 || (event.keyCode === 32 && event.shiftKey))) {
         if (event.shiftKey && pdfDisplayed && pagesRead.indexOf(pdfDisplayedCurrentPage) === -1 && (!pdfExtract || (pdfExtract[0] <= pdfDisplayedCurrentPage && pdfExtract[1] >= pdfDisplayedCurrentPage))) {
             pycmd("siac-pdf-page-read " + $('#siac-pdf-top').data("pdfid") + " " + pdfDisplayedCurrentPage + " " + numPagesExtract());
             if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
@@ -1214,7 +1260,7 @@ function onReadingModalClose() {
     $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right").removeClass('siac-reading-modal-displayed');
     $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
     $('#fields').show();
-    $("#siac-reading-modal").hide();
+    $("#siac-reading-modal").hide().css({ "animation": "readingModalIn 0.7s" });
     document.getElementById('resultsArea').style.display = 'block';
     document.getElementById('bottomContainer').style.display = 'block';
     document.getElementById('topContainer').style.display = 'flex';
@@ -1259,7 +1305,6 @@ function setPdfTheme(theme) {
     style_tag.href = style_tag.href.substring(0, style_tag.href.lastIndexOf("/") + 1) + theme;
     pycmd("siac-eval update_config('pdf.theme', '" + theme + "')");
 }
-
 function schedChange(slider) {
     document.getElementById('siac-sched-prio-val').innerHTML = prioVerbose(slider.value);
 }

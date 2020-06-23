@@ -364,11 +364,13 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added click on SIAC label on a note to copy its ID",
-        "Fix searchbar mode (Add-on/Browser) not persisting after closing and reopening Add dialog",
-        "Fix \"delete add-on note\" modal scrolling the current results to the top",
-        "Fix PDF fit-to-page function being triggered after adding a card with opened PDF",
-        "Remove float note button"
+        "Added shortcut to toggle Page Read: CTRL/CMD + Space",
+        "Added shortcut to hit Done! on the current item: CTRL/CMD + Y",
+        "Added shortcuts to jump to first/last page in PDF: CTRL/CMD + HOME/END",
+        "Added setting to include an \"ID\" button in the results (can be clicked to copy note's ID)",
+        "Save last opened pages for PDFs (during a session), to show them by default when reopening the pdf",
+        "Updated pdf.js to latest version",
+        "Fix an error in the Unsuspend modal on Anki 2.1.28"
     ]
 
 def known_issues() -> List[str]:
@@ -376,5 +378,6 @@ def known_issues() -> List[str]:
 
     return [
         "PDF highlights seem to lose their opacity on 2.1.28 alpha",
-        "Some PDF color modes are not displayed correctly on 2.1.28 alpha"
+        "Some PDF color modes are not displayed correctly on 2.1.28 alpha",
+        "Tag autocomplete in Create/Update note modal only works on first tag"
     ]

@@ -654,14 +654,14 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 index.ui.reading_modal.display(nid)
 
     elif cmd.startswith("siac-update-schedule "):
-        stype = cmd.split()[1]
-        svalue = cmd.split()[2]
-        new_reminder = utility.date.get_new_reminder(stype, svalue)
+        stype           = cmd.split()[1]
+        svalue          = cmd.split()[2]
+        new_reminder    = utility.date.get_new_reminder(stype, svalue)
         update_reminder(index.ui.reading_modal.note_id, new_reminder)
-        nid = index.ui.reading_modal.note_id
-        prio = get_priority(nid)
+        nid             = index.ui.reading_modal.note_id
+        prio            = get_priority(nid)
         update_priority_list(nid, prio)
-        nid = get_head_of_queue()
+        nid             = get_head_of_queue()
         if nid is not None and nid >= 0:
             index.ui.reading_modal.display(nid)
         else:
@@ -1462,7 +1462,7 @@ def get_index_info():
                <tr><td>Path to Note DB</td><td>  %s</td></tr>
 
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
-               <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Space / Ctrl+Right / Ctrl+J</b></td></tr>
+               <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Right / Ctrl+J</b></td></tr>
                <tr><td>PDF: Page Right + Mark Page as Read</td><td>  <b>Ctrl+Shift+Space</b></td></tr>
                <tr><td>PDF: Page Left</td><td>  <b>Ctrl+Left / Ctrl+K</b></td></tr>
                <tr><td>New Note</td><td>  <b>%s</b></td></tr>
@@ -1471,6 +1471,10 @@ def get_index_info():
                <tr><td>PDF: Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
                <tr><td>PDF: Toggle Top & Bottom Bar</td><td>  <b>F11</b></td></tr>
                <tr><td>PDF: Toggle Search on Select</td><td>  <b>%s</b></td></tr>
+               <tr><td>PDF: Jump to first Page</td><td>  <b>%s</b></td></tr>
+               <tr><td>PDF: Jump to last Page</td><td>  <b>%s</b></td></tr>
+               <tr><td>PDF: Toggle Page Read</td><td>  <b>%s</b></td></tr>
+               <tr><td>PDF: Done</td><td>  <b>%s</b></td></tr>
              </table>
 
             """ % (index.type, sqlite3.sqlite_version,
@@ -1488,7 +1492,11 @@ def get_index_info():
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
             ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db",
             config["notes.editor.shortcut"],
-            config["pdf.shortcuts.toggle_search_on_select"]
+            config["pdf.shortcuts.toggle_search_on_select"],
+            config["pdf.shortcuts.jump_to_first_page"],
+            config["pdf.shortcuts.jump_to_last_page"],
+            config["pdf.shortcuts.toggle_page_read"],
+            config["pdf.shortcuts.done"]
             )
 
     changes = changelog()
@@ -1637,7 +1645,7 @@ def update_styling(cmd):
                 value += "/"
             config["pdfUrlImportSavePath"] = value
 
-    elif name in ["notes.showSource", "useInEdit", "results.showFloatButton"]:
+    elif name in ["notes.showSource", "useInEdit", "results.showFloatButton", "results.showIDButton"]:
         config[name] = value == "true"
 
 

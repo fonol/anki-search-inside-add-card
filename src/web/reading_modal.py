@@ -52,6 +52,8 @@ from ..stats import getRetentions
 class ReadingModal:
     """ Used to display text and PDF notes. """
 
+    last_opened : Optional[int] = None
+
     def __init__(self):
         self.note_id            : Optional[int]         = None
         self.note               : Optional[SiacNote]    = None
@@ -76,6 +78,9 @@ class ReadingModal:
         index                   = get_index()
         note                    = get_note(note_id)
 
+        if ReadingModal.last_opened is None or (self.note_id is not None and note_id != self.note_id):
+            ReadingModal.last_opened = self.note_id
+
         self.note_id            = note_id
         self.note               = note
 
@@ -86,6 +91,9 @@ class ReadingModal:
         # wrap fields in tabs
         index.ui.js("""
             $(document.body).addClass('siac-reading-modal-displayed');
+            //remove modal animation to prevent it from being triggered when switching left/right or CTRL+F-ing
+            setTimeout(() => { document.getElementById("siac-reading-modal").style.animation = "none"; }, 1000);
+            setTimeout(() => { document.getElementById("siac-reading-modal").classList.remove('rendering'); }, 700);
             if (!document.getElementById('siac-reading-modal-tabs-left')) {
                 $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
                 document.getElementById('leftSide').innerHTML += `
@@ -271,14 +279,15 @@ class ReadingModal:
                 });
                 loadingTask.promise.then(function(pdf) {
                         pdfDisplayed = pdf;
-                        pdfDisplayedCurrentPage = %s;
+                        pdfNoteId = %s;
+                        pdfDisplayedCurrentPage = getLastReadPage() || %s;
                         pdfHighDPIWasUsed = false;
                         $('#siac-pdf-loader-wrapper').remove();
                         document.getElementById('siac-pdf-top').style.overflowY = 'auto';
                         document.getElementById('text-layer').style.display = 'block'; 
                         if (pagesRead.length === pdf.numPages) {
-                            pdfDisplayedCurrentPage = 1;
-                            queueRenderPage(1, true, true, true);
+                            pdfDisplayedCurrentPage = getLastReadPage() || 1;
+                            queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
                         } else {
                             queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
                         }
@@ -293,7 +302,7 @@ class ReadingModal:
             };
             loadFn();
             b64 = ""; arr = null; bstr = null; file = null;
-        """ % (pages_read_js, marks_js, extract_js, port, addon_id, last_page_read, title, note_id)
+        """ % (pages_read_js, marks_js, extract_js, port, addon_id, note_id, last_page_read, title, note_id)
         #send large files in multiple packets
         page = self._editor.web.page()
         chunk_size = 10000000
@@ -400,7 +409,7 @@ class ReadingModal:
                             <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
                                 <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
                                 {schedule_btns}
-                                <div id='siac-queue-actions' style='display: inline-block; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
+                                <div id='siac-queue-actions'>
                                     <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                     <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
                                     <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span>{schedule_dialog_btn}</div><br>
@@ -650,7 +659,7 @@ class ReadingModal:
 
                         <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
                         {schedule_btns} 
-                        <div  id='siac-queue-actions'  style='display: inline-block; vertical-align: top; margin-left: 20px; margin-top: 3px; user-select: none; z-index: 1;'>
+                        <div  id='siac-queue-actions'>
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
                             <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: <span class='siac-queue-picker-icn' onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'>\u2630</span>{schedule_dialog_btn}</div><br>

@@ -620,16 +620,23 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <fieldset>
-                <span>This controls if the add-on is displayed in the edit dialog ("Edit Current" from the reviewer) too.</span>
+                <span>This controls if the add-on is displayed in the edit dialog ("Edit" from the reviewer) too. <b>Please notice</b>: This add-on does not work with multiple instances. So if you have an Add Card dialog open while you are reviewing, and then open the Edit dialog, this add-on will not work properly anymore. So if you use this option, make sure the Add Card dialog is closed during review.</span>
                 <table style="width: 100%%">
                     <tr><td><b>Use in Edit</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling useInEdit ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
-                <span>Show the float note button (&#10063;) in the rendered search results. Needs a restart to apply.</span>
+                <span>Show the float note button (&#10063;) in the rendered search results. <b>Needs a restart to apply.</b></span>
                 <table style="width: 100%%">
                     <tr><td><b>Show Float Note Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showFloatButton ' + this.checked)" %s/></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <fieldset>
+                <span>Show ID button (to copy the note's ID on click) in the rendered search results. <b>Needs a restart to apply.</b></span>
+                <table style="width: 100%%">
+                    <tr><td><b>Show ID Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showIDButton ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
@@ -648,7 +655,8 @@ def stylingModal(config):
                        config["pdfUrlImportSavePath"],
                        "checked='true'" if config["notes.showSource"] else "",
                        "checked='true'" if config["useInEdit"] else "",
-                       "checked='true'" if config["results.showFloatButton"] else ""
+                       "checked='true'" if config["results.showFloatButton"] else "",
+                       "checked='true'" if config["results.showIDButton"] else ""
                         )
     html += """
     <br/> <br/>
@@ -789,22 +797,22 @@ def get_pdf_list_first_card():
     return html
 
 def get_unsuspend_modal(nid):
-    """
-        Returns the html content for the modal that is opened when clicking on a SUSPENDED label.
-    """
-    cards = mw.col.db.all(f"select id, ivl, queue, ord from cards where nid = {nid}")
-    note = mw.col.getNote(nid)
-    templates = mw.col.findTemplates(note)
-    cards_html = ""
-    unsuspend_all = ""
+    """ Returns the html content for the modal that is opened when clicking on a SUSPENDED label. """
+
+    cards           = mw.col.db.all(f"select id, ivl, queue, ord from cards where nid = {nid}")
+    note            = mw.col.getNote(int(nid))
+    cards_html      = ""
+    unsuspend_all   = ""
+
     for c in cards:
+        templates = mw.col.getCard(c[0]).model()["tmpls"]
         if c[2] == -1:
             unsuspend_all += str(c[0]) + " "
         for t in templates:
             if t["ord"] == c[3]:
                 temp_name = utility.text.trim_if_longer_than(t["name"], 60)
                 break
-        susp = "<span style='background: orange; color: black; border-radius: 3px; padding: 2px 3px 2px 3px;'>SUSPENDED</span>" if c[2] == -1 else ""
+        susp = "<span style='background: coral; color: black; border-radius: 3px; padding: 2px 3px 2px 3px; font-weight: bold;'>SUSPENDED</span>" if c[2] == -1 else ""
         btn = f"<div class='siac-btn' onclick='pycmd(\"siac-unsuspend {nid} {c[0]}\");'>Unsuspend</div>" if c[2] == -1 else ""
         ivl = f"{c[1]} days" if c[1] >= 0 else f"{c[1]} seconds"
         cards_html += f"""

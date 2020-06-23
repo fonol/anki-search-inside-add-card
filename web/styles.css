@@ -361,7 +361,7 @@
     border-radius: 3px;
     margin-left: 4px;
     user-select: none;
-    background: orange;
+    background: coral;
     color: black;
     padding: 2px 3px 2px 3px;
     font-size: 10px;
@@ -1659,3 +1659,15 @@ body.nightMode .siac-btn-small:hover .siac-btn-small-dropdown.hover,body.nightMo
     }
 
 }
+
+#siac-reading-modal {
+    animation: readingModalIn 0.7s; 
+}
+@keyframes readingModalIn {
+    0% {
+      transform: scale(0);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }

@@ -110,6 +110,10 @@
 "pdf.onOpen.autoFillFieldsWithPDFName": [],
 "pdf.import.folders_to_search" : [],
 "pdf.shortcuts.toggle_search_on_select": "CTRL+S",
+"pdf.shortcuts.toggle_page_read": "CTRL+Space",
+"pdf.shortcuts.done": "CTRL+Y",
+"pdf.shortcuts.jump_to_last_page": "CTRL+END",
+"pdf.shortcuts.jump_to_first_page": "CTRL+HOME",
 "notes.queue.priorityScaleFactor": 5,
 "notes.queue.missedNotesHandling": "remove-schedule",
 "notes.queue.scheduleDialogOnDoneUnscheduledNotes": false,
@@ -120,5 +124,6 @@
 "notes.editor.autoHideLeftPaneOnOpen": false,
 "notes.editor.shortcut": "Ctrl+Shift+n",
 "notes.editor.defaultTagsIfEmpty": "",
-"results.showFloatButton": false
+"results.showFloatButton": false,
+"results.showIDButton": false
 }
