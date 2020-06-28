@@ -17,7 +17,7 @@ var Highlighting = {
         $('#text-layer > span').css("height", "auto");
         let clientRects = r.getClientRects();
         if (clientRects.length > 100) {
-            showPDFBottomRightNotification("Selection too long to highlight.", true);
+            readerNotification("Selection too long to highlight.");
             return;
         }
         let rects = this._fuseOverlappingClientRects(clientRects);
@@ -203,9 +203,9 @@ var Highlighting = {
         $(elem).addClass("active");
         pycmd("siac-hl-clicked " + this.colorSelected.id + " " + this.colorSelected.color);
         if (this.colorSelected.id > 0) {
-            showPDFBottomRightNotification("CTRL + select to highlight", true);
+            readerNotification("CTRL + select to highlight");
         } else {
-            showPDFBottomRightNotification("CTRL + click to insert text", true);
+            readerNotification("CTRL + click to insert text");
         }
     },
 

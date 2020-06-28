@@ -293,7 +293,7 @@ class ReadingModal:
                         }
                         updatePdfProgressBar();
                         if (pdfBarsHidden) {
-                            showPDFBottomRightNotification("%s", 4000);
+                            readerNotification("%s");
                         }
                         setTimeout(refreshCanvas, 50);
                         if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
@@ -352,7 +352,7 @@ class ReadingModal:
             source_icn      = ""
             priority        = get_priority(note_id)
             schedule_btns   = self.schedule_btns(priority)
-            sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "showPDFBottomRightNotification(\"Note is scheduled for future date.\");"
+            sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
             img_folder      = utility.misc.img_src_base_path()
             active          = "active" if note.is_due_sometime() else ""
 
@@ -476,7 +476,7 @@ class ReadingModal:
             queue_info          = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
             if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
                 queue_info      = "Scheduled for future date."
-                notification    = f"showPDFBottomRightNotification('Scheduled for {note.due_date_str()}');"
+                notification    = f"readerNotification('Scheduled for {note.due_date_str()}');"
             queue_info_short    = f"Priority" if note.is_in_queue() else "Unqueued"
             queue_readings_list = self.get_queue_head_display(queue, editable)
 
@@ -539,7 +539,7 @@ class ReadingModal:
             </div>
             <script>
                 if (pdfBarsHidden) {{
-                    showPDFBottomRightNotification("{title}", 4000);
+                    readerNotification("{title}");
                 }}
                 pdfDisplayedMarks = null;   
                 pdfDisplayedMarksTable = null;
@@ -553,7 +553,7 @@ class ReadingModal:
 
         nid         = self.note_id
         value       = 0 if priority is None or priority < 0 else priority
-        onclick     = "onQuickSchedBtnClicked(this);" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not self.note.is_due_in_future() else "showPDFBottomRightNotification(\"Note is scheduled for future date.\");"
+        onclick     = "onQuickSchedBtnClicked(this);" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not self.note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
 
         if value == 0: 
             current_btn = ""
@@ -646,7 +646,7 @@ class ReadingModal:
         queue_len       = len(queue)
         priority        = get_priority(note_id)
         schedule_btns   = self.schedule_btns(priority)
-        sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "showPDFBottomRightNotification(\"Note is scheduled for future date.\");"
+        sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
         time_str        = "Added %s ago." % utility.misc.date_diff_to_string(diff)
         active          = "active" if note.is_due_sometime() else ""
 
@@ -839,8 +839,8 @@ class ReadingModal:
             <div class='siac-btn siac-btn-dark' id='siac-pdf-search-btn' onclick='$(this).toggleClass("expanded"); onPDFSearchBtnClicked(this);'><img src='{pdf_search_img_src}' style='width: 16px; height: 16px;'/>
                 <div id='siac-pdf-search-btn-inner' class='expanded-hidden white-hover' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'>
                     <input style='width: 200px; border:none; background-color: #2f2f31; color: lightgrey; padding-left: 2px;' onclick='event.stopPropagation();' onkeyup='onPDFSearchInput(this.value, event);'/>
-                    <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); showPDFBottomRightNotification("Searching..."); nextPDFSearchResult(dir="left");'><b>&lt;</b></div>
-                    <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); showPDFBottomRightNotification("Searching..."); nextPDFSearchResult(dir="right");'><b>&gt;</b></div>
+                    <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); readerNotification("Searching..."); nextPDFSearchResult(dir="left");'><b>&lt;</b></div>
+                    <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); readerNotification("Searching..."); nextPDFSearchResult(dir="right");'><b>&gt;</b></div>
                 </div>
             </div>
             <div class='siac-btn siac-btn-dark' id='siac-mark-jump-btn' onclick='$(this).toggleClass("expanded"); onMarkBtnClicked(this);'><img src='{marks_grey_img_src}' style='width: 16px; height: 16px;'/>

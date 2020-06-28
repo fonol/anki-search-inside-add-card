@@ -364,13 +364,14 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added shortcut to toggle Page Read: CTRL/CMD + Space",
-        "Added shortcut to hit Done! on the current item: CTRL/CMD + Y",
-        "Added shortcuts to jump to first/last page in PDF: CTRL/CMD + HOME/END",
-        "Added setting to include an \"ID\" button in the results (can be clicked to copy note's ID)",
-        "Save last opened pages for PDFs (during a session), to show them by default when reopening the pdf",
-        "Updated pdf.js to latest version",
-        "Fix an error in the Unsuspend modal on Anki 2.1.28"
+        "Added option to uninclude future scheduled notes in the queue until they are due",
+        "Added shortcut for Later button: CTRL/Cmd + Shift + Y",
+        "Added CID button for results to copy card IDs (can be activated in settings)",
+        "Store PDF reader color mode in config, to remember it on reopening the PDF reader",
+        "Added Qt version, chromium version to Info dialog",
+        "PDF extract dialog has current page as initial value",
+        "Changed github link to direct to issues page",
+        "Small improvement to highlighting (when a highlighted line has characters standing out)"
     ]
 
 def known_issues() -> List[str]:
@@ -379,5 +380,5 @@ def known_issues() -> List[str]:
     return [
         "PDF highlights seem to lose their opacity on 2.1.28 alpha",
         "Some PDF color modes are not displayed correctly on 2.1.28 alpha",
-        "Tag autocomplete in Create/Update note modal only works on first tag"
+        "Tag autocomplete in Create/Update note modal only works on first tag",
     ]
