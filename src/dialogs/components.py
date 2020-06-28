@@ -18,6 +18,7 @@ import aqt
 from ..notes import dynamic_sched_to_str
 from ..config import get_config_value_or_default, update_config
 from ..models import SiacNote
+from ..hooks import run_hooks
 
 from datetime import datetime, timedelta
 import utility.date
@@ -169,7 +170,7 @@ class ScheduleSettingsTab(QWidget):
         line.setFrameShadow(QFrame.Sunken)
         self.layout().addWidget(line)
 
-        self.layout().addWidget(QLabel("How to deal with <b>missed schedules</b>?"))
+        self.layout().addWidget(QLabel("How to deal with <b>missed schedules</b>? (Needs restart)"))
         self.missed_rb_1 = QRadioButton("Place in front of queue")
         self.missed_rb_2 = QRadioButton("Remove schedule, keep in queue")
         self.missed_rb_3 = QRadioButton("Reschedule based on previous schedule")
@@ -190,7 +191,6 @@ class ScheduleSettingsTab(QWidget):
         elif handling == "new-schedule":
             self.missed_rb_3.setChecked(True)
         
-        self.layout().addWidget(QLabel("Changes for this setting will take effect after a restart."))
         self.layout().addStretch()
         
         self.show_sched_cb = QCheckBox("Show schedule dialog after done with unsched. note")
@@ -203,6 +203,10 @@ class ScheduleSettingsTab(QWidget):
         self.ivl_includes_today_cb.setChecked(get_config_value_or_default("notes.queue.intervalSchedulesStartToday", True))
         self.ivl_includes_today_cb.clicked.connect(self.ivl_includes_today_cb_checked)
 
+        self.show_in_q_cb = QCheckBox("Items scheduled for future days should still appear in the queue")
+        self.layout().addWidget(self.show_in_q_cb)
+        self.show_in_q_cb.setChecked(get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True))
+        self.show_in_q_cb.clicked.connect(self.show_in_q_cb_checked)
 
 
     def show_sched_cb_clicked(self):
@@ -210,6 +214,12 @@ class ScheduleSettingsTab(QWidget):
     
     def ivl_includes_today_cb_checked(self):
         update_config("notes.queue.intervalSchedulesStartToday", self.ivl_includes_today_cb.isChecked())
+        run_hooks("updated-schedule")
+
+    def show_in_q_cb_checked(self):
+        update_config("notes.queue.include_future_scheduled_in_queue", self.show_in_q_cb.isChecked())
+        run_hooks("updated-schedule")
+        
 
     def missed_rb_clicked(self):
         if self.missed_rb_1.isChecked():
