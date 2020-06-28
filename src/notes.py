@@ -55,6 +55,9 @@ PRIORITY_MOD            : float         = get_config_value_or_default("notes.que
 # 3. note can be scheduled again from the missed due date on ('new-schedule')
 MISSED_NOTES_HANDLING   : str           = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
 
+
+
+
 @unique
 class PDFMark(Enum):
     REVISIT     = 1
@@ -249,21 +252,29 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
     Will also insert the given priority in queue_prio_log.
     """
     # priority log entries that have to be inserted in the log
-    to_update_in_log    = []
+    to_update_in_log        = []
     # priority log entries that have to be removed from the log, because item is no longer in the queue
-    to_remove_from_log  = []
+    to_remove_from_log      = []
     # notes whose delay will be decreased by one position
-    to_decrease_delay   = []
+    to_decrease_delay       = []
     # will contain the ids in priority order, highest first
-    final_list          = []
-    index               = -1
+    final_list              = []
+    index                   = -1
     
-    current             = _get_priority_list_with_last_prios()
-    scores              = []
-    nid_was_included    = False
-    now                 = datetime.now()
+    current                 = _get_priority_list_with_last_prios()
+    scores                  = []
+    nid_was_included        = False
+    now                     = datetime.now()
+
+    include_future_scheds   = get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True)
+
 
     for nid, last_prio, last_prio_creation, current_position, rem, delay in current:
+
+        # if a note is scheduled for the future and should not appear in the queue now, skip it
+        if not include_future_scheds and utility.date.schedule_is_due_in_the_future(rem):
+            continue
+
         # last prio might be null, because of legacy queue system
         if last_prio is None:
             # lazy solution: set to average priority
@@ -430,6 +441,8 @@ def recalculate_priority_queue(is_addon_start: bool = False):
         priority log. Has to be done at least once on startup to incorporate the changed difference in days.
     """
 
+    include_future_scheds   = get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True)
+
     for i in range(0,2):
         current             = _get_priority_list_with_last_prios()
         scores              = []
@@ -438,8 +451,14 @@ def recalculate_priority_queue(is_addon_start: bool = False):
         to_decrease_delay   = []
         to_reschedule       = []
         now                 = datetime.now()
+        
 
         for nid, last_prio, last_prio_creation, current_position, reminder, delay in current:
+
+            # if a note is scheduled for the future and should not appear in the queue now, skip it
+            if not include_future_scheds and utility.date.schedule_is_due_in_the_future(reminder):
+                continue
+
             # last prio might be null, because of legacy queue system
             if last_prio is None:
                 # lazy solution: set to average priority
@@ -1045,7 +1064,7 @@ def _get_priority_list_with_last_prios() -> List[Tuple[Any, ...]]:
     """
         Returns (nid, last prio, last prio creation, current position, schedule)
     """
-    sql     = """ select notes.id, prios.prio, prios.created, notes.position, notes.reminder, notes.delay from notes left join (select distinct nid, prio, max(created) as created, type from queue_prio_log group by nid) as prios on prios.nid = notes.id where notes.position >= 0 order by position asc """
+    sql     = f""" select notes.id, prios.prio, prios.created, notes.position, notes.reminder, notes.delay from notes left join (select distinct nid, prio, max(created) as created, type from queue_prio_log group by nid) as prios on prios.nid = notes.id where notes.position >= 0 or substr(notes.reminder, 21, 10) >= '{utility.date.date_x_days_ago_stamp(3)}' order by position asc """
     conn    = _get_connection()
     res     = conn.execute(sql).fetchall()
     conn.close()
