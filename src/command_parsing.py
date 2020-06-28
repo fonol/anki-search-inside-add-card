@@ -24,6 +24,7 @@ import aqt.stats
 from anki.notes import Note
 from aqt.utils import tooltip, showInfo
 import os
+import time
 import urllib.parse
 import json
 import typing
@@ -115,6 +116,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-exec "):
         # direct exec, saves code
         exec(cmd[10:])
+
+    elif cmd.startswith("siac-open-folder "):
+        QDesktopServices.openUrl(QUrl(" ".join(cmd.split()[1:])))
 
     elif cmd.startswith("siac-pin"):
         set_pinned(cmd[9:])
@@ -249,7 +253,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         self.onImgOccButton(image_path=full_path)
 
     elif cmd.startswith("siac-create-pdf-extract "):
-        dialog = PDFExtractDialog(self.parentWindow, int(cmd.split(" ")[1]), index.ui.reading_modal.note)
+        dialog = PDFExtractDialog(self.parentWindow, int(cmd.split(" ")[1]), int(cmd.split(" ")[2]), index.ui.reading_modal.note)
 
     elif cmd.startswith("siac-jump-last-read"):
         index.ui.reading_modal.jump_to_last_read_page()
@@ -322,6 +326,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 index.ui.reading_modal.note.reminder = schedule
                 if schedule == "":
                     tooltip(f"Removed schedule.")
+                    if not get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True):
+                        # removed schedule, and config was set to not show scheduled notes in the queue, so now we have to insert it again
+                        tooltip(str(get_priority(index.ui.reading_modal.note_id)))
+                        update_priority_list(index.ui.reading_modal.note_id, get_priority(index.ui.reading_modal.note_id))
                 else:
                     tooltip(f"Updated schedule.")
                 run_hooks("updated-schedule")
@@ -568,9 +576,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-requeue "):
         # priority slider released
-        nid = int(cmd.split()[1])
-        new_prio = int(cmd.split()[2])
-        note = get_note(nid)
+        nid         = int(cmd.split()[1])
+        new_prio    = int(cmd.split()[2])
+        note        = get_note(nid)
+
         if note.is_due_sometime() and note.schedule_type() == "td":
             add_to_prio_log(nid, new_prio)
             index.ui.reading_modal.display_schedule_dialog()
@@ -801,6 +810,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-styling "):
         update_styling(cmd[13:])
+
+    elif cmd.startswith("siac-update-config-str "):
+        key = cmd.split()[1]
+        val = cmd.split()[2]
+        update_config(key, val)
 
     elif cmd == "siac-write-config":
         write_config()
@@ -1439,11 +1453,44 @@ def get_index_info():
     for k,v in excluded_fields.items():
         field_c += len(v)
 
+    # qt and chromium version
+    chromium_v      = ""
+    qt_v            = ""
+    try:
+        user_agent      = QWebEngineProfile.defaultProfile().httpUserAgent()
+
+        for t in user_agent.split():
+            if t.startswith("Chrome/"):
+                chromium_v = t.split("/")[1]
+            elif t.startswith("QtWebEngine/"):
+                qt_v = t.split("/")[1]
+    except:
+        pass
+
+    full_path       = utility.misc.get_addon_base_folder_path()
+    dir_name        = utility.misc.get_addon_id()
+    notes_db_path   = ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db"
+    notes_db_folder = config["addonNoteDBFolderPath"] if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() 
+
+    # last update
+    last_mod        = ""
+    try:
+        id          = utility.misc.get_addon_id()
+        meta        = mw.addonManager.addon_meta(id)
+        last_mod    = time.strftime("%Y-%m-%dT%H:%M", time.localtime(meta.installed_at)) if meta.installed_at else "?"
+    except:
+        pass
+
     html            = """
             <table class="striped" style='width: 100%%; margin-bottom: 18px;'>
+                
+               <tr><td>Add-on Folder:</td><td> <a class='keyword' onclick='pycmd("siac-open-folder %s")'><b>%s</b></a></td></tr>
+               <tr><td>Last Update:</td><td> <b>%s</b></td></tr>
+               <tr><td>Qt Version:</td><td> <b>%s</b></td></tr>
+               <tr><td>Chromium Version:</td><td> <b>%s</b></td></tr>
                <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
                <tr><td>SQLite Version</td><td> <b>%s</b></td></tr>
-               <tr><td>Initialization:</td><td>  <b>%s s</b></td></tr>
+               <tr><td>Index Initialization:</td><td>  <b>%s s</b></td></tr>
                <tr><td>Index Size:</td><td>  <b>%s</b> notes</td></tr>
                <tr><td>Index is always rebuilt if smaller than:</td><td>  <b>%s</b> notes</td></tr>
                <tr><td>Stopwords:</td><td>  <b>%s</b></td></tr>
@@ -1459,7 +1506,7 @@ def get_index_info():
                <tr><td>Toggle Shortcut:</td><td>  <b>%s</b></td></tr>
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>Fields Excluded:</td><td>  %s</td></tr>
-               <tr><td>Path to Note DB</td><td>  %s</td></tr>
+               <tr><td>Path to Note DB</td><td>  <b>%s &nbsp;<a class='keyword' onclick='pycmd("siac-open-folder %s")'>[Open Folder]</a></b></td></tr>
 
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Right / Ctrl+J</b></td></tr>
@@ -1475,9 +1522,17 @@ def get_index_info():
                <tr><td>PDF: Jump to last Page</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Toggle Page Read</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Done</td><td>  <b>%s</b></td></tr>
+               <tr><td>PDF: Later</td><td>  <b>%s</b></td></tr>
              </table>
 
-            """ % (index.type, sqlite3.sqlite_version,
+            """ % (
+            full_path,
+            dir_name,
+            last_mod,
+            qt_v,
+            chromium_v,
+            index.type, 
+            sqlite3.sqlite_version,
             str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if index.logging else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
             "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["renderImmediately"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
@@ -1490,14 +1545,17 @@ def get_index_info():
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"],
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
-            ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db",
+            notes_db_path, notes_db_folder, 
             config["notes.editor.shortcut"],
             config["pdf.shortcuts.toggle_search_on_select"],
             config["pdf.shortcuts.jump_to_first_page"],
             config["pdf.shortcuts.jump_to_last_page"],
             config["pdf.shortcuts.toggle_page_read"],
-            config["pdf.shortcuts.done"]
+            config["pdf.shortcuts.done"],
+            config["pdf.shortcuts.later"]
             )
+
+ 
 
     changes = changelog()
 
@@ -1518,7 +1576,7 @@ def get_index_info():
         <b>Contact:</b>
         <hr>
         <br>
-        For bug reports, feedback or suggestions: <a href='https://github.com/fonol/anki-search-inside-add-card'>Github Repository</a>
+        For bug reports, feedback or suggestions: <a href='https://github.com/fonol/anki-search-inside-add-card/issues'>Github Repository</a>
         <br>
         If you want to support this project: <a href='https://www.patreon.com/tomtomtom'>Patreon Site</a>
 
