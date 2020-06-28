@@ -29,12 +29,13 @@ from .components import QtPrioritySlider
 class PDFExtractDialog(QDialog):
     """ Allows to specify a range of pages to create an pdf extract of. """
 
-    def __init__(self, parent, pages_total, note):
+    def __init__(self, parent, current_page, pages_total, note):
 
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
 
         self.extract_start  = None
         self.extract_end    = None
+        self.current_page   = current_page
         self.pages_total    = pages_total
         self.note           = note
         self.prio_default   = get_priority(note.id)
@@ -56,15 +57,19 @@ class PDFExtractDialog(QDialog):
         self.start_inp = QSpinBox()
         self.start_inp.setMinimum(1)
         self.start_inp.setMaximum(self.pages_total - 1)
-        self.start_inp.valueChanged.connect(self.start_value_changed)
+        self.start_inp.setValue(self.current_page)
 
         self.end_inp    = QSpinBox()
         self.end_inp.setMinimum(1)
         self.end_inp.setMaximum(self.pages_total)
+        self.end_inp.setValue(self.current_page)
+
+        self.start_inp.valueChanged.connect(self.start_value_changed)
+        self.end_inp.valueChanged.connect(self.end_value_changed)
 
         hb = QHBoxLayout()
-        hb.addWidget(QLabel("Pages (start & end inclusive): "))
         hb.addStretch(1)
+        hb.addWidget(QLabel("Pages (end inclusive): "))
         hb.addWidget(self.start_inp)
         hb.addWidget(QLabel(" - "))
         hb.addWidget(self.end_inp)
@@ -89,6 +94,10 @@ class PDFExtractDialog(QDialog):
     def start_value_changed(self, new_value: int):
         if self.end_inp.value() < new_value:
             self.end_inp.setValue(new_value)
+
+    def end_value_changed(self, new_value: int):
+        if self.start_inp.value() > new_value:
+            self.start_inp.setValue(new_value)
     
     def accept_clicked(self):
         self.extract_start  = self.start_inp.value()
