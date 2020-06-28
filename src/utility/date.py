@@ -24,8 +24,14 @@ def weekday_name_abbr(wd: int) -> str:
 def date_today_stamp() -> str:
     return datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
 
+def date_only_stamp() -> str:
+    return datetime.today().strftime('%Y-%m-%d')
+
 def date_now_stamp() -> str:
     return datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+
+def date_x_days_ago_stamp(x: int) -> str:
+    return (datetime.now() - timedelta(days=x)).strftime('%Y-%m-%d')
 
 def dt_to_stamp(dt : datetime) -> str:
     return dt.strftime('%Y-%m-%d-%H-%M-%S')
@@ -40,6 +46,13 @@ def get_last_schedule_date(schedule: str) -> Optional[datetime]:
     if len(schedule.split("|")[0]) == 0:
         return None
     return dt_from_stamp(schedule.split("|")[0])
+
+def schedule_is_due_in_the_future(schedule: str) -> bool:
+    if schedule is None or len(schedule) == 0 or not "|" in schedule:
+        return False
+    due         = schedule.split("|")[1]
+    return due[:10] > date_only_stamp()
+    
 
 def schedule_verbose(sched: str) -> str:
     """ Returns a natural language representation of the given schedule string. """
