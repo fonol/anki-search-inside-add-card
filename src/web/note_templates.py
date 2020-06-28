@@ -21,7 +21,8 @@ from aqt import mw
 config = mw.addonManager.getConfig(__name__)
 
 FLOAT_BTN   = "<div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>" if config["results.showFloatButton"] else ""
-ID_BTN      = "<div class='floatLbl' onclick='pycmd(\"siac-copy-to-cb {nid}\")'>ID</div>" if config["results.showIDButton"] else ""
+NID_BTN      = "<div class='floatLbl' onclick='pycmd(\"siac-copy-to-cb {nid}\")'>NID</div>" if config["results.showIDButton"] else ""
+CID_BTN      = "<div class='floatLbl' onclick='pycmd(\"siac-copy-cid-to-cb {nid}\")'>CID</div>" if config["results.showCIDButton"] else ""
 
 noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                     <div class='topLeftWr'>
@@ -34,12 +35,13 @@ noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                         <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
                         %s
                         %s
+                        %s
                         <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
                     </div>
                     <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
                     <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
                     <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;INFO&nbsp;</div>
-                </div>""" % (FLOAT_BTN, ID_BTN)
+                </div>""" % (FLOAT_BTN, NID_BTN, CID_BTN)
 
 noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
                     <div class='topLeftWr'>
@@ -82,4 +84,4 @@ noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {gr
                     <div class='cardR siac-user-note' onmouseup='{mouseup}' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
                     <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
                     <div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'><div class='siac-read-icn'></div>{progress}</div>
-                </div>""" % (FLOAT_BTN, ID_BTN)
+                </div>""" % (FLOAT_BTN, NID_BTN)
