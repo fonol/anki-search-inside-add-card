@@ -148,6 +148,16 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         except: 
             tooltip("Failed to copy to clipboard!")
 
+    elif cmd.startswith("siac-copy-cid-to-cb "):
+        # copy first cid for given nid to clipboard
+        cards = mw.col.findCards(f"nid:{cmd.split()[1]}")
+        if cards and len(cards) > 0:
+            try:
+                QApplication.clipboard().setText(str(cards[0]))
+                tooltip("Copied to Clipboard!")
+            except: 
+                tooltip("Failed to copy to clipboard!")
+
     elif cmd.startswith("siac-rerender "):
         ix = int(cmd.split()[1])
         if check_index() and ix < len(index.ui.previous_calls):
@@ -1703,7 +1713,7 @@ def update_styling(cmd):
                 value += "/"
             config["pdfUrlImportSavePath"] = value
 
-    elif name in ["notes.showSource", "useInEdit", "results.showFloatButton", "results.showIDButton"]:
+    elif name in ["notes.showSource", "useInEdit", "results.showFloatButton", "results.showIDButton", "results.showCIDButton"]:
         config[name] = value == "true"
 
 
