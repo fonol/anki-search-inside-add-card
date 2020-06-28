@@ -352,19 +352,20 @@ class ReadingModal:
             source_icn      = ""
             priority        = get_priority(note_id)
             schedule_btns   = self.schedule_btns(priority)
+            sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "showPDFBottomRightNotification(\"Note is scheduled for future date.\");"
             img_folder      = utility.misc.img_src_base_path()
+            active          = "active" if note.is_due_sometime() else ""
 
             if note.is_in_queue():
                 queue_btn_text      = "Done!"
                 queue_btn_action    = "siac-user-note-done"
-                active              = "active" if note.is_due_sometime() else ""
                 schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
-                delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-clickable-anchor'>Later</a>"""
+                delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-clickable-anchor'>Later</a>"""
 
             else:
                 queue_btn_text      = "First in Queue"
                 queue_btn_action    = "siac-user-note-queue-read-head"
-                schedule_dialog_btn = ""
+                schedule_dialog_btn = "" if not utility.date.schedule_is_due_in_the_future(note.reminder) else f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
                 delay_btn           = ""
 
             html = """
@@ -407,7 +408,7 @@ class ReadingModal:
                         </div>
                         <div id='siac-reading-modal-bottom-bar'>
                             <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
-                                <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
+                                <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='{sched_click}'>{queue_info_short}</div></div>
                                 {schedule_btns}
                                 <div id='siac-queue-actions'>
                                     <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
@@ -448,6 +449,7 @@ class ReadingModal:
                     pdfBarsHidden = false;
                     toggleReadingModalBars();
                 }}
+                {notification}
                 iframeIsDisplayed = false;
                 noteLoading = false;
                 modalShown = false;
@@ -455,7 +457,8 @@ class ReadingModal:
             """
 
             #check if it is a pdf or feed
-            overflow = "auto"
+            overflow        = "auto"
+            notification    = ""
             if note.is_pdf() and utility.misc.file_exists(source):
                 editable    = False
                 overflow    = "hidden" 
@@ -471,11 +474,14 @@ class ReadingModal:
             
         
             queue_info          = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
+            if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
+                queue_info      = "Scheduled for future date."
+                notification    = f"showPDFBottomRightNotification('Scheduled for {note.due_date_str()}');"
             queue_info_short    = f"Priority" if note.is_in_queue() else "Unqueued"
             queue_readings_list = self.get_queue_head_display(queue, editable)
 
             params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info, 
-            queue_info_short    = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn)
+            queue_info_short    = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, notification=notification, sched_click=sched_click)
             html                = html.format_map(params)
 
             return html
@@ -535,7 +541,7 @@ class ReadingModal:
                 if (pdfBarsHidden) {{
                     showPDFBottomRightNotification("{title}", 4000);
                 }}
-                pdfDisplayedMarks = null;
+                pdfDisplayedMarks = null;   
                 pdfDisplayedMarksTable = null;
                 {tiny_mce} 
             </script>
@@ -547,13 +553,14 @@ class ReadingModal:
 
         nid         = self.note_id
         value       = 0 if priority is None or priority < 0 else priority
+        onclick     = "onQuickSchedBtnClicked(this);" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not self.note.is_due_in_future() else "showPDFBottomRightNotification(\"Note is scheduled for future date.\");"
 
         if value == 0: 
             current_btn = ""
         else:
             current_btn = f"""<div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-user-note-done");'><b>Current</b></div>"""
         return f"""
-            <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='onQuickSchedBtnClicked(this);'><div class='siac-read-icn siac-read-icn-light'></div>
+            <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='{onclick}'><div class='siac-read-icn siac-read-icn-light'></div>
                 <div class='expanded-hidden white-hover' style='margin: 0 0 0 6px; color: lightgrey; text-align: center;'>
                     <input id='siac-prio-slider-small' type='range' class='siac-prio-slider-small' max='100' min='0' value='{value}' oninput='schedSmallChange(this)' onchange='schedSmallChanged(this, {nid})'/>
                     <span id='siac-slider-small-lbl' style='margin: 0 5px 0 5px;'>{value}</span>
@@ -639,25 +646,28 @@ class ReadingModal:
         queue_len       = len(queue)
         priority        = get_priority(note_id)
         schedule_btns   = self.schedule_btns(priority)
+        sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "showPDFBottomRightNotification(\"Note is scheduled for future date.\");"
         time_str        = "Added %s ago." % utility.misc.date_diff_to_string(diff)
+        active          = "active" if note.is_due_sometime() else ""
 
         if note.is_in_queue():
             queue_btn_text      = "Done!"
             queue_btn_action    = "siac-user-note-done"
-            active              = "active" if note.is_due_sometime() else ""
             schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
-            delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-clickable-anchor'>Later</a>"""
+            delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-clickable-anchor'>Later</a>"""
         else:
             queue_btn_text      = "First in Queue"
             queue_btn_action    = "siac-user-note-queue-read-head"
-            schedule_dialog_btn = ""
+            schedule_dialog_btn = "" if not utility.date.schedule_is_due_in_the_future(note.reminder) else f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
             delay_btn           = ""
+        
+
 
         html = """
                 <div id='siac-reading-modal-bottom-bar' style=''>
                     <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap; display: relative;'>
 
-                        <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='toggleQueue();'>{queue_info_short}</div></div>
+                        <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='{sched_click}'>{queue_info_short}</div></div>
                         {schedule_btns} 
                         <div  id='siac-queue-actions'>
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
@@ -686,12 +696,14 @@ class ReadingModal:
 
         editable            = not note.is_feed() and not note.is_pdf() and len(text) < 50000
         queue_info          = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
+        if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
+            queue_info      = "Scheduled for future date."
         # queue_info_short = f"Queue [{note.position + 1}]" if note.is_in_queue() else "Unqueued"
         queue_info_short    = f"Priority" if note.is_in_queue() else "Unqueued"
         queue_readings_list = self.get_queue_head_display(queue, editable)
 
         params              = dict(note_id = note_id, time_str = time_str, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, queue_info = queue_info, queue_info_short = queue_info_short, 
-        queue_readings_list = queue_readings_list, schedule_btns=schedule_btns, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn )
+        queue_readings_list = queue_readings_list, schedule_btns=schedule_btns, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, sched_click=sched_click )
 
         html                = html.format_map(params)
 
@@ -881,7 +893,7 @@ class ReadingModal:
                     <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
                         <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
                             <div class='siac-btn-small-dropdown-inverted click'>
-                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-create-pdf-extract " + pdfDisplayed.numPages); event.stopPropagation();'><b>Extract ...</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-create-pdf-extract " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); event.stopPropagation();'><b>Extract ...</b></div>
                                 <hr>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Last Read Page</b></div>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>First Unread Page</b></div>
