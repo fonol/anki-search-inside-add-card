@@ -636,9 +636,12 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <fieldset>
-                <span>Show ID button (to copy the note's ID on click) in the rendered search results. <b>Needs a restart to apply.</b></span>
+                <span>Show NID/CID button (to copy the note's ID / ID of its (first) card on click) in the rendered search results. <b>Needs a restart to apply</b></span>
                 <table style="width: 100%%">
-                    <tr><td><b>Show ID Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showIDButton ' + this.checked)" %s/></tr>
+                    <tr><td><b>Show NID Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showIDButton ' + this.checked)" %s/></tr>
+                </table>
+                <table style="width: 100%%">
+                    <tr><td><b>Show CID Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showCIDButton ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
@@ -658,7 +661,8 @@ def stylingModal(config):
                        "checked='true'" if config["notes.showSource"] else "",
                        "checked='true'" if config["useInEdit"] else "",
                        "checked='true'" if config["results.showFloatButton"] else "",
-                       "checked='true'" if config["results.showIDButton"] else ""
+                       "checked='true'" if config["results.showIDButton"] else "",
+                       "checked='true'" if config["results.showCIDButton"] else ""
                         )
     html += """
     <br/> <br/>
