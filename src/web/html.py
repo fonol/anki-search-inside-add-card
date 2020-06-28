@@ -171,12 +171,12 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                         <div id="modalText"></div>
                         <div id="modal-subpage">
                             <div style='flex: 0 0 auto;'>
-                                <button class='modal-close siac-btn' onclick='hideModalSubpage()'>&#8592; Back</button>
+                                <button class='modal-close siac-btn-small' onclick='hideModalSubpage()'>&#8592; Back</button>
                             </div>
                             <div id="modal-subpage-inner"></div>
                         </div>
                         <div style='flex: 0 0 auto; text-align: right; padding-top:15px;'>
-                            <button class='modal-close siac-btn' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
+                            <button class='modal-close siac-btn-small' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
                         </div>
                     </div>
                 </div>
@@ -184,7 +184,9 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                     <div id='siac-search-modal-wrapper'>
                         <div id='siac-search-modal-header'></div>
                         <input type='text' id='siac-search-modal-inp'/>
-                        <span id='siac-search-modal-close' onclick='document.getElementById("siac-search-modal").style.display = "none";'>&nbsp;Close &times;</span>
+                        <div style='text-align: center; margin-top: 10px;'>
+                            <span id='siac-search-modal-close' class='siac-btn-small' onclick='document.getElementById("siac-search-modal").style.display = "none";'>&nbsp;Close &times;</span>
+                        </div>
                     </div>
                 </div>
                 <div class="flexContainer" id="topContainer">
@@ -274,15 +276,15 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                     </div>
                 </div>
                 <div id="icns-large">
-                    <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
-                    <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
-                    <div class='rnd-icon' onclick='pycmd("siac-random-notes " + siacState.selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
-                    <div class='flds-icon' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
+                    <div class='siac-read-icn' onclick='pycmd("siac-user-note-queue-read-head")'></div>
                     <div class='pdf-icon' onclick='pycmd("siac-show-pdfs")'>
                         %s
                     </div>
                     <div class='rnd-icon' onclick='toggleNoteSidebar();'>NOTES</div>
-                    <div class='siac-read-icn' onclick='pycmd("siac-user-note-queue-read-head")'></div>
+                    <div class='flds-icon' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
+                    <div class='rnd-icon' onclick='pycmd("siac-random-notes " + siacState.selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
+                    <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
+                    <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                 </div>
                 <div id="resultsArea" style="">
                     <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
@@ -520,7 +522,7 @@ def get_note_delete_confirm_modal_html(nid: int) -> str:
             <div style='text-align: center; font-size: 14px; margin-bottom: 4px;'><b>%s</b></div>
             <div style='text-align: center; font-size: 14px;'><i>%s</i></div>
             <br><br>
-            <div style='text-align: center;'><div class='siac-btn' onclick='removeNote(%s);deleteNote(%s);' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn' onclick='$(this.parentNode.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
+            <div style='text-align: center;'><div class='siac-btn-small bold' onclick='removeNote(%s);deleteNote(%s);' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn-small bold' onclick='$(this.parentNode.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
        </div>
     </div>
     """ % (title, creation_date, nid, nid)
