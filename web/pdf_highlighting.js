@@ -166,8 +166,12 @@ var Highlighting = {
                             w = Math.max(clientRects[i1].w, w, clientRects[i1].x + clientRects[i1].w - Math.min(clientRects[i1].x, x), x + w - Math.min(clientRects[i1].x, x));
                             x = Math.min(clientRects[i1].x, x);
                             fused = true;
+                        }  else if (Math.abs(clientRects[i1].y - y) < h) {
+                            w = Math.max(clientRects[i1].w, w, clientRects[i1].x + clientRects[i1].w - Math.min(clientRects[i1].x, x), x + w - Math.min(clientRects[i1].x, x));
+                            y = Math.min(clientRects[i1].y, y);
+                            h = clientRects[i1].h + Math.abs(clientRects[i1].y - y);
+                            fused = true;
                         }
-
                         if (fused) {
                             if (i1 < i0) {
                                 out.splice(i1, 1);
