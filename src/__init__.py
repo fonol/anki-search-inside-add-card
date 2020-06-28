@@ -132,11 +132,13 @@ def on_load_note(editor: Editor):
         zoom                    = conf_or_def("searchpane.zoom", 1.0)
         typing_delay            = max(500, conf_or_def('delayWhileTyping', 1000))
         show_tag_info_on_hover  = "true" if conf_or_def("showTagInfoOnHover", True) and conf_or_def("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
+        pdf_color_mode          = conf_or_def("pdf.color_mode", "Day")
 
         editor.web.eval(f"""
             var showTagInfoOnHover  = {show_tag_info_on_hover}; 
             tagHoverTimeout         = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
             var delayWhileTyping    = {typing_delay};
+            pdfColorMode            = "{pdf_color_mode}";
         """)
 
         def cb(was_already_rendered):
@@ -279,6 +281,7 @@ def setup_hooks():
     add_hook("user-note-deleted", lambda: recalculate_priority_queue())
     add_hook("user-note-edited", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+    add_hook("updated-schedule", lambda: recalculate_priority_queue())
     add_hook("updated-schedule", lambda: get_index().ui.reading_modal.reload_bottom_bar())
     add_hook("reading-modal-closed", lambda: get_index().ui.sidebar.refresh_tab(1))
 
@@ -320,6 +323,9 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
 
     # 'Done' in reading modal
     _try_register(config["pdf.shortcuts.done"], lambda: editor.web.eval("doneShortcut()"))
+
+    # 'Later' in reading modal
+    _try_register(config["pdf.shortcuts.later"], lambda: editor.web.eval("laterShortcut()"))
 
     # Jump to first/last page in pdf reader 
     _try_register(config["pdf.shortcuts.jump_to_last_page"], lambda: editor.web.eval("jumpLastPageShortcut()"))
