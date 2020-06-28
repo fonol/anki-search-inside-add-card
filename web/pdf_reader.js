@@ -16,7 +16,18 @@
 
 
 
-var pdfImgSel = { canvas: null, context: null, startX: null, endX: null, startY: null, endY: null, cvsOffLeft: null, cvsOffTop: null, mouseIsDown: false, canvasDispl: null };
+var pdfImgSel = { 
+    canvas: null, 
+    context: null, 
+    startX: null, 
+    endX: null, 
+    startY: null, 
+    endY: null, 
+    cvsOffLeft: null, 
+    cvsOffTop: null, 
+    mouseIsDown: false, 
+    canvasDispl: null 
+};
 var remainingSeconds = 30 * 60;
 var readingTimer;
 var pdfTextLayerMetaKey = false;
@@ -40,6 +51,7 @@ var pdfTooltipEnabled = true;
 var iframeIsDisplayed = false;
 var pdfFullscreen = false;
 var pdfBarsHidden = false;
+var pdfNotifications = [];
 var pdfNoteId = null;
 var pdfLastReadPages = {};
 var pdfSearchOngoing = false;
@@ -143,13 +155,13 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 var viewport = page.getViewport({ scale: 1.0 });
                 pdfDisplayedScale = (canvas.parentNode.clientWidth - 23) / viewport.width;
             }
-            var viewport = page.getViewport({ scale: pdfDisplayedScale });
-            canvas.height = viewport.height * window.devicePixelRatio;
-            canvas.width = viewport.width * window.devicePixelRatio;
+            var viewport    = page.getViewport({ scale: pdfDisplayedScale });
+            canvas.height   = viewport.height * window.devicePixelRatio;
+            canvas.width    = viewport.width * window.devicePixelRatio;
             if (window.devicePixelRatio !== 1 || pdfHighDPIWasUsed) {
-                pdfHighDPIWasUsed = true;
+                pdfHighDPIWasUsed   = true;
                 canvas.style.height = viewport.height + "px";
-                canvas.style.width = viewport.width + "px";
+                canvas.style.width  = viewport.width + "px";
             }
             if (["Peach", "Sand", "Night"].indexOf(pdfColorMode) !== -1)
                 canvas.style.display = "none";
@@ -177,7 +189,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                         invertCanvas(ctx);
                     }
                 }
-                return lPage.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false });
+                return lPage.getTextContent({ normalizeWhitespace: false, disableCombineTextItems: false });
             }).then(function (textContent) {
                 $("#text-layer").css({ height: canvas.height / window.devicePixelRatio, width: canvas.width / window.devicePixelRatio + 1, left: canvas.offsetLeft }).html('');
                 pdfjsLib.renderTextLayer({
@@ -698,18 +710,31 @@ function pdfMouseWheel(event) {
     }
     event.preventDefault();
 }
-function showPDFBottomRightNotification(html, fadeout = false) {
+function showPDFBottomRightNotification(html, fadeout = true) {
+    if (document.getElementById('siac-pdf-br-notify').style.display == "block") {
+        if (pdfNotifications.length > 0) {
+            if (html === pdfNotifications[pdfNotifications.length-1]) {
+                return;
+            }
+        }
+        pdfNotifications.push(html);
+        return;
+    } 
     document.getElementById('siac-pdf-br-notify').innerHTML = html;
     document.getElementById('siac-pdf-br-notify').style.display = "block";
     // $('#siac-pdf-br-notify').html(html).show();
     if (fadeout) {
         window.setTimeout(() => {
-            removePDFBottomRightNotification();
+            document.getElementById('siac-pdf-br-notify').style.display = "none";
+            if (pdfNotifications.length) {
+                setTimeout(function() {
+                    let next = pdfNotifications.shift();
+                    showPDFBottomRightNotification(next);
+                }, 1000);
+            }
+
         }, 3000);
     }
-}
-function removePDFBottomRightNotification() {
-    $('#siac-pdf-br-notify').hide();
 }
 function swapReadingModal() {
     let modal = document.getElementById("siac-reading-modal");
@@ -723,6 +748,7 @@ function setPDFColorMode(mode) {
     $('#siac-pdf-color-mode-btn > span').first().text(mode);
     pdfColorMode = mode;
     rerenderPDFPage(pdfDisplayedCurrentPage, false);
+    pycmd('siac-update-config-str pdf.color_mode ' + mode);
     $('#siac-pdf-top').removeClass("siac-pdf-sand siac-pdf-night siac-pdf-peach siac-pdf-day siac-pdf-rose siac-pdf-moss siac-pdf-coral").addClass("siac-pdf-" + pdfColorMode.toLowerCase());
 }
 
@@ -1044,6 +1070,14 @@ function markClicked(event) {
 function doneShortcut() {
     if (!pdfLoading && !noteLoading && !modalShown && document.body.classList.contains("siac-reading-modal-displayed")) {
         $('#siac-first-in-queue-btn').trigger("click");
+    }
+}
+/**
+ * 'Later' Shortcut activated in qt.
+ */
+function laterShortcut() {
+    if (!pdfLoading && !noteLoading && !modalShown && document.body.classList.contains("siac-reading-modal-displayed") && document.getElementById('siac-later-btn')) {
+        $('#siac-later-btn').trigger("click");
     }
 }
 function jumpLastPageShortcut() {
