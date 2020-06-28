@@ -92,11 +92,19 @@ class SiacNote(Printable):
         return source
 
     def is_due_today(self) -> bool:
-        if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
+        if not self.has_schedule():
             return False
         dt = datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
         return dt.date() == datetime.today().date()
     
+    def has_schedule(self) -> bool:
+        if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
+            return False
+        return True
+
+    def is_due_in_future(self) -> bool:
+        return self.has_schedule() and utility.date.schedule_is_due_in_the_future(self.reminder)
+        
     def is_scheduled(self) -> bool:
         if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
             return False
@@ -105,15 +113,18 @@ class SiacNote(Printable):
         return self.is_or_was_due()
 
     def is_or_was_due(self) -> bool:
-        if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
+        if not self.has_schedule():
             return False
         dt = datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
         return dt.date() <= datetime.today().date()
     
     def is_due_sometime(self) -> bool:
+        return self.has_schedule()
+
+    def due_date_str(self) -> Optional[str]:
         if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
-            return False
-        return True
+            return None
+        return self.current_due_date().strftime('%Y-%m-%d')
     
     def current_due_date(self) -> Optional[datetime]:
         if not self.is_due_sometime():
