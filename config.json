@@ -128,5 +128,6 @@
 "notes.editor.shortcut": "Ctrl+Shift+n",
 "notes.editor.defaultTagsIfEmpty": "",
 "results.showFloatButton": false,
-"results.showIDButton": false
+"results.showIDButton": false,
+"results.showCIDButton": false
 }
