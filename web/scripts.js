@@ -686,24 +686,36 @@ function activateGridView() {
         $('#gridCb').prop("checked", true);
     }, 400);
 }
+/** Predefined searches, activated from the notes sidebar. */
 function predefSearchFromSidebar(type) {
-    showSearchLoader();
-    setTimeout(function() {
-        let decks = siacState.selectedDecks.toString();
+    let decks = siacState.selectedDecks.toString();
+    // show a loader for the longer-taking searches
+    if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(type) !== -1) {
+        showSearchLoader();
+        setTimeout(function() {
+            pycmd('predefSearch ' + type + ' 200 ' + decks);
+        }, 110);
+    } else {
         pycmd('predefSearch ' + type + ' 200 ' + decks);
-    }, 110);
+    }
 
 }
+/** Predefined searches, activated from the bottom row. */
 function predefSearch() {
-    showSearchLoader();
-    setTimeout(function() {
-        let e = document.getElementById("predefSearchSelect");
-        let search = e.options[e.selectedIndex].value;
-        let c = document.getElementById("predefSearchNumberSel");
-        let count = c.options[c.selectedIndex].value;
-        let decks = siacState.selectedDecks.toString();
+    let e       = document.getElementById("predefSearchSelect");
+    let search  = e.options[e.selectedIndex].value;
+    let c       = document.getElementById("predefSearchNumberSel");
+    let count   = c.options[c.selectedIndex].value;
+    let decks   = siacState.selectedDecks.toString();
+    // show a loader for the longer-taking searches
+    if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(search) !== -1) {
+        showSearchLoader();
+        setTimeout(function() {
+            pycmd("predefSearch " + search + " " + count + " " + decks);
+        }, 110);
+    } else {
         pycmd("predefSearch " + search + " " + count + " " + decks);
-    }, 110);
+    }
 }
 function sort() {
     let e = document.getElementById("sortSelect");
