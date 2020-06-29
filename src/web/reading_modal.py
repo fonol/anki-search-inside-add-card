@@ -79,7 +79,7 @@ class ReadingModal:
         note                    = get_note(note_id)
 
         if ReadingModal.last_opened is None or (self.note_id is not None and note_id != self.note_id):
-            ReadingModal.last_opened = self.note_id
+            ReadingModal.last_opened = self.note_id if ReadingModal.last_opened else note_id
 
         self.note_id            = note_id
         self.note               = note
