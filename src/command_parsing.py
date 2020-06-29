@@ -338,7 +338,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                     tooltip(f"Removed schedule.")
                     if not get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True):
                         # removed schedule, and config was set to not show scheduled notes in the queue, so now we have to insert it again
-                        tooltip(str(get_priority(index.ui.reading_modal.note_id)))
                         update_priority_list(index.ui.reading_modal.note_id, get_priority(index.ui.reading_modal.note_id))
                 else:
                     tooltip(f"Updated schedule.")
