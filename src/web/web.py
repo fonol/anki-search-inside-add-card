@@ -369,6 +369,7 @@ def changelog() -> List[str]:
         "Show extract pages in output if note is a PDF extract",
         "Fix: Error when having on item in the queue and then removing it",
         "Fix: Buttons not getting ungreyed after clicking 'First in Queue' when queue is empty",
+        "Fix: Start & end input in PDF extract dialog not allowing for values > 1 on PDF with only 1 page",
         "Fix: 'Cannot unpack non-iterable object' error that occurs sometimes"
     ]
 
