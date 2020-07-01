@@ -283,7 +283,7 @@ function getSelectionText() {
     }
 }
 function searchForUserNote(event, elem) {
-    if (!elem || elem.value.length === 0) {
+    if (!elem || elem.value.length === 0 || !elem.value.trim()) {
        return;
     }
     if (event.keyCode == 13) {
