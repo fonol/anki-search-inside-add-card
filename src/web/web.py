@@ -364,14 +364,12 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added option to uninclude future scheduled notes in the queue until they are due",
-        "Added shortcut for Later button: CTRL/Cmd + Shift + Y",
-        "Added CID button for results to copy card IDs (can be activated in settings)",
-        "Store PDF reader color mode in config, to remember it on reopening the PDF reader",
-        "Added Qt version, chromium version to Info dialog",
-        "PDF extract dialog has current page as initial value",
-        "Changed github link to direct to issues page",
-        "Small improvement to highlighting (when a highlighted line has characters standing out)"
+        "Experimental: Improve Copy-Paste from PDF (try to keep paragraphs, better whitespace separation)",
+        "Add Page Snapshot function, available in '...' menu.",
+        "Show extract pages in output if note is a PDF extract",
+        "Fix: Error when having on item in the queue and then removing it",
+        "Fix: Buttons not getting ungreyed after clicking 'First in Queue' when queue is empty",
+        "Fix: 'Cannot unpack non-iterable object' error that occurs sometimes"
     ]
 
 def known_issues() -> List[str]:
