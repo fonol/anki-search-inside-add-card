@@ -355,6 +355,8 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             nid = get_head_of_queue()
             index.ui.reading_modal.display(nid)
             tooltip("Moved note back in queue")
+        else:
+            tooltip("Later only works if 3+ items are in the queue.")
 
     elif cmd.startswith("siac-pdf-mark "):
         mark_type = int(cmd.split()[1])
