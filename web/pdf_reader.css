@@ -68,8 +68,8 @@ body.nightMode #siac-reading-modal.rendering {
     background-color: #2f2f31;
     width: 200px;
     padding: 0px 4px 0px 4px;
-    height: 165px;
-    top: -144px;
+    height: 185px; 
+    top: -164px;
     left: -181px;
     border: 2px outset darkorange; 
     z-index: 5;

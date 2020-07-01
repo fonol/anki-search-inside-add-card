@@ -538,6 +538,9 @@
 .cardLeftBot:hover :not(.siac-prog-tmp span) {
     color: #2496dc;
 }
+.siac-extract-mark {
+    vertical-align: middle;
+}
 #predefSearchSelect {
     margin-right: 5px;
 }
@@ -778,8 +781,7 @@
     display: inline-block;
 }
 .siac-tl-plus:hover {
-    color: #2496dc;
-    transform: scale(1.07);
+    transform: scale(1.1);
 }
 .deck-list-item.selected > .list-item-inner > .check {
     display: inline;
