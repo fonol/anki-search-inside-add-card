@@ -765,11 +765,12 @@ class ReadingModal:
         note_id         = self.note_id
         priority        = 0 if priority is None else priority
         prio_verbose    = dynamic_sched_to_str(priority).replace("(", "(<b>").replace(")", "</b>)")
+        text            = "Release to mark as <b>done.</b>" if priority > 0 else "Release to add to queue."
 
         return f"""
         <div id='siac-queue-sched-wrapper'>
             <div class='w-100' style='text-align: center; color: lightgrey; margin-top: 5px;'>
-                Release to mark as <b>done.</b><br>
+                {text}<br>
                 <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 12px;'/>
             </div>
             <div class='w-100' style='text-align: center; padding-top: 10px;'>
