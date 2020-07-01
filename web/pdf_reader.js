@@ -1159,6 +1159,7 @@ function togglePDFSelect(elem) {
         readerNotification("Search on select enabled.", true);
     } else {
         $(elem).removeClass('active');
+        $('#siac-pdf-tooltip').hide();
         readerNotification("Search on select disabled.", true);
     }
 }
