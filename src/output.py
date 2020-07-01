@@ -193,8 +193,9 @@ class Output:
             pdf_class               = ""
             if res.note_type == "user" and res.is_pdf():
                 pdfs.append(nid)
+                extract             = f"<span class='siac-extract-mark'> | P. {res.extract_start} - {res.extract_end}&nbsp;</span>" if res.extract_start else ""
                 p_html              = "<div class='siac-prog-sq'></div>" * 10
-                progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div>"
+                progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div><div style='display: inline-block;'>{extract}</div>"
                 pdf_class           = "pdf"
             elif res.note_type == "index" and res.did > 0:
                 check_for_suspended.append(res.id)
@@ -247,6 +248,7 @@ class Output:
 
             # use either the template for addon's notes or the normal
             if res.note_type == "user":
+
                 newNote = noteTemplateUserNote.format(
                     grid_class  = gridclass, 
                     counter     = counter + 1, 
@@ -260,6 +262,7 @@ class Output:
                     progress    = progress,
                     pdf_class   = pdf_class,
                     ret         = retInfo)
+
             else:
                 newNote = noteTemplate.format(
                     grid_class  = gridclass, 
@@ -329,8 +332,9 @@ class Output:
             if pdf_info_list is not None and len(pdf_info_list) > 0:
                 cmd = ""
                 for i in pdf_info_list:
-                    perc = int(i[1] * 10.0 / i[2])
-                    prog_bar = ""
+                    perc        = int(i[1] * 10.0 / i[2])
+                    prog_bar    = ""
+
                     for x in range(0, 10):
                         if x < perc:
                             prog_bar = ''.join((prog_bar, "<div class='siac-prog-sq-filled'></div>"))
