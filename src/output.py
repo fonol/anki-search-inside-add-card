@@ -197,6 +197,9 @@ class Output:
                 p_html              = "<div class='siac-prog-sq'></div>" * 10
                 progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div><div style='display: inline-block;'>{extract}</div>"
                 pdf_class           = "pdf"
+            elif res.note_type == "user" and res.id < 0:
+                # meta card
+                pdf_class           = "meta"
             elif res.note_type == "index" and res.did > 0:
                 check_for_suspended.append(res.id)
 
@@ -634,14 +637,6 @@ class Output:
             return
         self._editor.web.eval("setSearchResults('', `%s`, null, 1, 1, 50, %s)" % (message, len(self.previous_calls) + 1))
 
-    def _loadPlotJsIfNotLoaded(self):
-        if not self.plotjsLoaded:
-            with open(utility.misc.get_web_folder_path() + "plot.js") as f:
-                plotjs = f.read()
-            self._editor.web.eval(plotjs)
-            self.plotjsLoaded = True
-
-
     def show_search_modal(self, on_enter_attr, header):
         self._editor.web.eval("""
             document.getElementById('siac-search-modal').style.display = 'block';
@@ -651,8 +646,6 @@ class Output:
         """ % (header,on_enter_attr))
 
     def show_stats(self, text, reviewPlotData, ivlPlotData, timePlotData):
-
-        self._loadPlotJsIfNotLoaded()
 
         cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`; document.getElementById('modalText').scrollTop = 0; " % (text)
         c = 0
