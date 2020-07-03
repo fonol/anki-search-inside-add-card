@@ -186,7 +186,7 @@ class FTSIndex:
 
         if len(text) == 0:
             if print_mode == "default":
-                self.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", ""))
+                self.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", "").replace("`", "&#96;"))
                 if mw.addonManager.getConfig(__name__)["hideSidebar"]:
                     return "Found 0 notes. Query was empty after cleaning."
                 return None
