@@ -286,7 +286,7 @@ def fillTagSelect(editor = None, expanded = False) :
     else:
         get_index().ui.js(cmd)
 
-def fillDeckSelect(editor = None, expanded= False):
+def fillDeckSelect(editor = None, expanded= False, update = True):
     """ Fill the selection with user's decks """
 
     deckMap     = dict()
@@ -325,6 +325,7 @@ def fillDeckSelect(editor = None, expanded= False):
 
     html        = iterateMap(dmap, "", True)
     expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
+    update_js   = "updateSelectedDecks();" if update else ""
 
     cmd         = """
     document.getElementById('deck-sel-info-lbl').style.display = 'block';
@@ -344,9 +345,8 @@ def fillDeckSelect(editor = None, expanded= False):
     });
     %s
     $("#siac-deck-sel-btn-wrapper").show();
-    updateSelectedDecks();
-
-    """ % (html, expanded_js)
+    %s
+    """ % (html, expanded_js, update_js)
     editor.web.eval(cmd)
 
 def addToDecklist(dmap, id, name):
