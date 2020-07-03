@@ -896,6 +896,7 @@ function toggleNoteSidebar(){
 function addFloatingNote(nid) {
     let onedit = $('#' + nid.toString()).hasClass('siac-user-note') ? `pycmd("siac-edit-user-note ${nid}")`  : `edit(${nid})`;
     let content = document.getElementById(nid).innerHTML;
+    content = content.replace(/<\/?mark>/g, "");
     $('#cW-' + nid).parent().parent().remove();
     let btnBar = `<div class='floatingBtnBar'>
         <div class="floatingBtnBarItem" onclick='${onedit}'>Edit</div>&nbsp;&#65372;
