@@ -23,7 +23,7 @@ import io
 import typing
 from aqt import mw
 from aqt.utils import showInfo
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from ..state import get_index, check_index
 from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str
@@ -504,6 +504,53 @@ def getCalendarHtml() -> str:
 
     html = html % html_content
     return html
+
+def read_counts_card_body(counts: Dict[int, int]) -> str:
+    """ Html for the card that displays today's read pages. """
+
+    if counts is None or len(counts) == 0:
+        return """
+            <center style='margin-top: 15px;'>
+                <b>Nothing marked as read.</b>
+            </center>
+        """
+
+    ordered   = [(k, counts[k]) for k in sorted(counts, key=counts.get, reverse=True)]
+    html      = ""
+    for nid, tup in ordered:
+        row     = ""
+        title   = utility.text.trim_if_longer_than(tup[1], 70)
+        c       = tup[0]
+        if c < 100:
+            for i in range(c): 
+                row = f"{row}<span class='siac-read-box'></span>" 
+        else:
+            for i in range(100): 
+                row = f"{row}<span class='siac-read-box'></span>" 
+            row = f"{row}<span class='keyword'>&nbsp; (+ {c-100})</span>"
+
+        html = f"{html}<tr><td style='min-width: 200px;'><span class='keyword' onclick='pycmd(\"siac-read-user-note {nid}\")'>{title}</span></td><td style='padding-left: 5px; text-align: right;'><b style='vertical-align: middle;'>{c}</b></td><td style='padding-left: 5px;'>{row}</td></tr>"
+    html = f"<br><table>{html}</table>"
+
+    html += """
+    """
+
+
+    return html
+
+def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
+    """ Html for the card that displays read pages / day. """
+
+    if counts is None or len(counts) == 0:
+        return """
+            <center style='margin-top: 15px;'>
+                <b>Nothing marked as read.</b>
+            </center>
+        """
+
+    html = """<div id='siac-read-time-ch' style='width: 100%; margin: 15px auto 0 auto;'></div>"""
+    return html
+
 
 def get_note_delete_confirm_modal_html(nid: int) -> str:
     """ Html for the modal that pops up when clicking on the trash icon on an add-on note. """
