@@ -364,13 +364,11 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Experimental: Improve Copy-Paste from PDF (try to keep paragraphs, better whitespace separation)",
-        "Add Page Snapshot function, available in '...' menu.",
-        "Show extract pages in output if note is a PDF extract",
-        "Fix: Error when having on item in the queue and then removing it",
-        "Fix: Buttons not getting ungreyed after clicking 'First in Queue' when queue is empty",
-        "Fix: Start & end input in PDF extract dialog allowing for values > 1 on PDF with only 1 page",
-        "Fix: 'Cannot unpack non-iterable object' error that occurs sometimes"
+        "Added 'Read Stats' in sidebar",
+        "Hide PDF tooltip after toggle",
+        "Fix: Deck select repeating last search on open",
+        "Fix: Don't allow whitespace-only input in note search in sidebar",
+        "Fix: Search hanging when input has backticks (&#96;) in it."
     ]
 
 def known_issues() -> List[str]:
