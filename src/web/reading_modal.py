@@ -278,11 +278,11 @@ class ReadingModal:
                         noteLoading = false;
                 });
                 loadingTask.promise.then(function(pdf) {
+                        $('#siac-pdf-loader-wrapper').remove();
                         pdfDisplayed = pdf;
                         pdfNoteId = %s;
                         pdfDisplayedCurrentPage = getLastReadPage() || %s;
                         pdfHighDPIWasUsed = false;
-                        $('#siac-pdf-loader-wrapper').remove();
                         document.getElementById('siac-pdf-top').style.overflowY = 'auto';
                         document.getElementById('text-layer').style.display = 'block'; 
                         if (pagesRead.length === pdf.numPages) {
@@ -388,7 +388,7 @@ class ReadingModal:
                         <div id='siac-reading-modal-top-bar' data-nid='{note_id}' style=''>
                             <div style='flex: 1 1; overflow: hidden;'>
                                 <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; vertical-align:middle;'>{title}</h2>
-                                <h4 style='whitespace: nowrap; margin: 5px 0 8px 0; color: lightgrey;'>Source: <i>{source}</i></h4>
+                                <h4 style='whitespace: nowrap; margin: 5px 0 6px 0; color: lightgrey;'>Source: <i>{source}</i></h4>
                                 <div id='siac-prog-bar-wr'></div>
                             </div>
                             <div style='flex: 0 0; min-width: 130px; padding: 0 120px 0 10px;'>
@@ -765,11 +765,12 @@ class ReadingModal:
         note_id         = self.note_id
         priority        = 0 if priority is None else priority
         prio_verbose    = dynamic_sched_to_str(priority).replace("(", "(<b>").replace(")", "</b>)")
+        text            = "Release to mark as <b>done.</b>" if priority > 0 else "Release to add to queue."
 
         return f"""
         <div id='siac-queue-sched-wrapper'>
             <div class='w-100' style='text-align: center; color: lightgrey; margin-top: 5px;'>
-                Release to mark as <b>done.</b><br>
+                {text}<br>
                 <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 12px;'/>
             </div>
             <div class='w-100' style='text-align: center; padding-top: 10px;'>
@@ -848,7 +849,7 @@ class ReadingModal:
             </div>
             {quick_sched_btn} 
             <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark' onclick='pycmd("siac-close-iframe")'>&times; &nbsp;Close Web</div>
-            <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
+            <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" oncopy='onPDFCopy(event)' onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
                 <div id='siac-pdf-loader-wrapper' style='display: flex; justify-content: center; align-items: center; height: 100%; z-index: 7;'>
                     <div class='siac-pdf-loader' style=''>
                         <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>Loading PDF</div></div>
@@ -893,6 +894,7 @@ class ReadingModal:
                     <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
                         <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
                             <div class='siac-btn-small-dropdown-inverted click'>
+                                <div class='siac-dropdown-inverted-item' onclick='pageSnapshot()'><b>Page Snapshot</b></div>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-create-pdf-extract " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); event.stopPropagation();'><b>Extract ...</b></div>
                                 <hr>
                                 <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Last Read Page</b></div>

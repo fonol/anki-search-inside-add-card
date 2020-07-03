@@ -551,18 +551,29 @@ class CreateTab(QWidget):
         p_hb.addSpacing(35)
         vbox.addLayout(p_hb)
 
-        source_lbl          = QLabel("Source")
         self.source         = QLineEdit()
+        # if note is an extract, prevent source editing 
+        if self.parent.note is not None and self.parent.note.extract_end is not None:
+            source_lbl          = QLabel("Source - Note is an extract")
+            # self.source.setReadOnly(True)
+        else:
+            source_lbl          = QLabel("Source")
         source_hb           = QHBoxLayout()
         source_hb.addWidget(self.source)
         if self.parent.source_prefill is not None:
             self.source.setText(self.parent.source_prefill.replace("\\", "/"))
+
         pdf_btn             = QPushButton("PDF")
         pdf_btn.clicked.connect(self.on_pdf_clicked)
         source_hb.addWidget(pdf_btn)
         pdf_from_url_btn    = QPushButton("PDF from Webpage")
         pdf_from_url_btn.clicked.connect(self.on_pdf_from_url_clicked)
         source_hb.addWidget(pdf_from_url_btn)
+
+        # if note is an extract, prevent source editing 
+        # if self.parent.note is not None and self.parent.note.extract_end is not None:
+        #     pdf_btn.setDisabled(True)
+        #     pdf_from_url_btn.setDisabled(True)
 
         vbox.addWidget(source_lbl)
         vbox.addLayout(source_hb)

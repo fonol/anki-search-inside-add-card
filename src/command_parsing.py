@@ -130,7 +130,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         res = getRandomNotes(index, [s for s in cmd[17:].split(" ") if s != ""])
         index.ui.print_search_results(res["result"], res["stamp"])
     elif cmd == "siac-fill-deck-select":
-        fillDeckSelect(self, expanded=True)
+        fillDeckSelect(self, expanded=True, update=False)
     elif cmd == "siac-fill-tag-select":
         fillTagSelect(expanded=True)
     elif cmd.startswith("siac-search-tag "):
@@ -204,6 +204,32 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         stamp = setStamp()
         notes = get_notes_scheduled_for_today()
         index.ui.print_search_results(notes, stamp)
+
+    elif cmd == "siac-show-stats":
+        # Read Stats clicked in sidebar
+        stamp       = setStamp()
+        res         = []
+        t_counts    = get_read_last_n_days_by_day(365)
+        body        = read_counts_by_date_card_body(t_counts)
+        t_counts    = utility.date.counts_to_timestamps(t_counts)
+        res.append(SiacNote((-1, f"Pages read per day (this year)", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+
+        counts      = get_read(0)
+        body        = read_counts_card_body(counts)
+        res.append(SiacNote((-2, f"Pages read today ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        counts      = get_read(1)
+        body = read_counts_card_body(counts)
+        res.append(SiacNote((-3, f"Pages read yesterday ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        counts      = get_read_last_n_days(7)
+        body = read_counts_card_body(counts)
+        res.append(SiacNote((-4, f"Pages read last week ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        counts      = get_read_last_n_days(30)
+        body        = read_counts_card_body(counts)
+        res.append(SiacNote((-5, f"Pages read last 30 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        index.ui.print_search_results(res, stamp)
+        # fill plots
+        index.ui.js(f""" drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)}); """)
+
 
     elif cmd == "siac-show-last-done":
         stamp = setStamp()
@@ -311,7 +337,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                     tooltip("""You have to set a save path for imported URLs first.
                         <center>Config value: <i>pdfUrlImportSavePath</i></center>
                     """, period=4000)
-                    return
+                    return (True, None)
                 path = utility.misc.get_pdf_save_full_path(path, name)
                 utility.misc.url_to_pdf(dialog.chosen_url, path, lambda *args: tooltip("Generated PDF Note.", period=4000))
                 title = dialog._chosen_name
@@ -338,7 +364,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                     tooltip(f"Removed schedule.")
                     if not get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True):
                         # removed schedule, and config was set to not show scheduled notes in the queue, so now we have to insert it again
-                        tooltip(str(get_priority(index.ui.reading_modal.note_id)))
                         update_priority_list(index.ui.reading_modal.note_id, get_priority(index.ui.reading_modal.note_id))
                 else:
                     tooltip(f"Updated schedule.")
@@ -347,16 +372,17 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-delay-note":
         # "Later" button pressed in the reading modal
         qlen = len(_get_priority_list())
-        if qlen <= 2:
-            return
-        delay = int(qlen/3) 
-        if index.ui.reading_modal.note.position < 3:
-            delay += (3 - index.ui.reading_modal.note.position)
-        set_delay(index.ui.reading_modal.note_id, delay)
-        recalculate_priority_queue()
-        nid = get_head_of_queue()
-        index.ui.reading_modal.display(nid)
-        tooltip("Moved note back in queue")
+        if qlen > 2:
+            delay = int(qlen/3) 
+            if index.ui.reading_modal.note.position < 3:
+                delay += (3 - index.ui.reading_modal.note.position)
+            set_delay(index.ui.reading_modal.note_id, delay)
+            recalculate_priority_queue()
+            nid = get_head_of_queue()
+            index.ui.reading_modal.display(nid)
+            tooltip("Moved note back in queue")
+        else:
+            tooltip("Later only works if 3+ items are in the queue.")
 
     elif cmd.startswith("siac-pdf-mark "):
         mark_type = int(cmd.split()[1])
@@ -627,7 +653,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if to_remove == index.ui.reading_modal.note_id:
             nid = get_head_of_queue()
             if nid is None or nid < 0:
-                index.ui.eval("onReadingModalClose();")
+                index.ui.js("onReadingModalClose();")
             else:
                 index.ui.reading_modal.display(nid)
         else:
@@ -651,6 +677,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if nid is not None and nid >= 0:
             index.ui.reading_modal.display(nid)
         else:
+            index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
             tooltip("Queue is Empty! Add some items first.", period=4000)
 
     elif cmd == "siac-user-note-done":
@@ -834,13 +861,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         image = utility.misc.base64_to_file(b64)
         if image is None or len(image) == 0:
             tooltip("Failed to temporarily save file.", period=5000)
-            return
-        name = mw.col.media.addFile(image)
-        if name is None or len(name) == 0:
-            tooltip("Failed to add file to media col.", period=5000)
-            return
-        index.ui.reading_modal.show_img_field_picker_modal(name)
-        os.remove(image)
+        else:
+            name = mw.col.media.addFile(image)
+            if name is None or len(name) == 0:
+                tooltip("Failed to add file to media col.", period=5000)
+            else:
+                index.ui.reading_modal.show_img_field_picker_modal(name)
+                os.remove(image)
 
     # if the user clicked on cancel, the image is already added to the media folder, so we delete it
     elif cmd.startswith("siac-remove-snap-image "):
@@ -859,9 +886,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         search_term = cmd.split("$$$")[1]
         url = cmd.split("$$$")[2]
         if search_term == "":
-            return
+            return (True, None)
         if url is None or len(url) == 0:
-            return
+            return (True, None)
         url_enc = urllib.parse.quote_plus(search_term)
 
         index.ui.reading_modal.show_iframe_overlay(url=url.replace("[QUERY]", url_enc))
@@ -872,7 +899,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-show-web-search-tooltip "):
         inp = " ".join(cmd.split()[1:])
         if inp == "":
-            return
+            return (True, None)
         index.ui.reading_modal.show_web_search_tooltip(inp)
 
     elif cmd.startswith("siac-timer-elapsed "):
@@ -997,14 +1024,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif (cmd.startswith("searchOnSelection ")):
         config["searchOnSelection"] = cmd[18:] == "on"
         mw.addonManager.writeConfig(__name__, config)
-    elif (cmd.startswith("deckSelection")):
+    elif cmd.startswith("deckSelection"):
         if not check_index():
-            return
-        if index.logging:
-            if len(cmd) > 13:
-                log("Updating selected decks: " + str( [d for d in cmd[14:].split(" ") if d != ""]))
-            else:
-                log("Updating selected decks: []")
+            return (True, None)
         if len(cmd) > 13:
             index.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
         else:
@@ -1022,7 +1044,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "toggleGrid on":
         if not check_index():
-            return
+            return (True, None)
         config["gridView"] = True
         index.ui.gridView = True
         try_repeat_last_search(self)
@@ -1030,7 +1052,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "toggleGrid off":
         if not check_index():
-            return
+            return (True, None)
         config["gridView"] = False
         index.ui.gridView = False
         try_repeat_last_search(self)
@@ -1055,12 +1077,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-update-field-to-hide-in-results "):
         if not check_index():
-            return
+            return (True, None)
         update_field_to_hide_in_results(cmd.split()[1], int(cmd.split()[2]), cmd.split()[3] == "true")
 
     elif cmd.startswith("siac-update-field-to-exclude "):
         if not check_index():
-            return
+            return (True, None)
         update_field_to_exclude(cmd.split()[1], int(cmd.split()[2]), cmd.split()[3] == "true")
 
     elif cmd == "siac-show-note-sidebar":
@@ -1279,7 +1301,7 @@ def default_search_with_decks(editor: aqt.editor.Editor, textRaw: Optional[str],
         return
     cleaned = index.clean(textRaw)
     if len(cleaned) == 0:
-        index.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(textRaw, 100).replace("\u001f", ""))
+        index.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(textRaw, 100).replace("\u001f", "").replace("`", "&#96;"))
         return
     index.lastSearch = (cleaned, decks, "default")
     searchRes = index.search(cleaned, decks)
@@ -1296,7 +1318,7 @@ def search_for_user_notes_only(editor: aqt.editor.Editor, text: str):
         return
     cleaned = index.clean(text)
     if len(cleaned) == 0:
-        index.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(text, 100).replace("\u001f", ""))
+        index.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(text, 100).replace("\u001f", "").replace("`", "&#96;"))
         return
     index.lastSearch    = (cleaned, ["-1"], "user notes")
     searchRes           = index.search(cleaned, ["-1"], only_user_notes = True)

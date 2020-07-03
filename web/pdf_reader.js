@@ -63,6 +63,10 @@ var pdfCurrentSearch = {
     breakOnNext: null
 };
 
+/** Workaround for older chromium versions. */
+if (typeof globalThis === "undefined") {
+    var globalThis = window;
+}
 
 function pdfImgMouseUp(event) {
     if (pdfImgSel.mouseIsDown) {
@@ -73,6 +77,11 @@ function pdfImgMouseUp(event) {
         $(pdfImgSel.canvas).remove();
         $('#text-layer').show();
     }
+}
+/** Save whole page to image */
+function pageSnapshot() {
+    var pdfC = document.getElementById("siac-pdf-canvas");
+    cropSelection(pdfC, 0, 0, pdfC.offsetWidth, pdfC.offsetHeight, insertImage);
 }
 function cropSelection(canvasSrc, offsetX, offsetY, width, height, callback) {
     let temp = document.createElement('canvas');
@@ -1150,6 +1159,7 @@ function togglePDFSelect(elem) {
         readerNotification("Search on select enabled.", true);
     } else {
         $(elem).removeClass('active');
+        $('#siac-pdf-tooltip').hide();
         readerNotification("Search on select disabled.", true);
     }
 }
@@ -1407,6 +1417,95 @@ function updateSchedule() {
         pycmd("siac-update-schedule id " + id);
     }
 }
+
+/** Experimental function to improve copy+paste from the text layer. */
+function onPDFCopy(e) {
+    sel = getSelection();
+    let r = sel.getRangeAt(0);
+    let nodes = nodesInSelection(r);
+    if (!nodes) { return; }
+    let text = "";
+    let offsetLeftLast = 0;
+    let offsetTopLast = 0;
+    let widthLast = 0;
+    let insertedCount = 0;
+    let lastYDiffs = [];
+    let lastFontSize = null;
+    for (let i = 0; i < nodes.length; i++) {
+
+
+        // check for new line
+        if ((nodes[i].offsetLeft < offsetLeftLast || nodes[i].offsetTop > offsetTopLast + 5) && !nodes[i].innerText.startsWith(" ")) {
+            // check for last font size, if difference is large, insert newlines
+            if (lastFontSize && Math.abs(Number(nodes[i].style.fontSize.substring(0, nodes[i].style.fontSize.indexOf("px"))) - lastFontSize) > 4) {
+                text += "\n\n" + nodes[i].innerText; 
+                insertedCount += 2;
+            }
+
+            // check for line with larger vertical distance to the previous lines 
+            else if (lastYDiffs.length > 0 && (nodes[i].offsetTop - offsetTopLast) > lastYDiffs.slice(-1)[0] + 2) {
+                text += "\n\n" + nodes[i].innerText; 
+                insertedCount += 2;
+            }
+            // if last word in previous line was hyphenated, join them
+            else if (text.endsWith("-")) {
+                text = text.substring(0, text.length-1) + nodes[i].innerText;
+                insertedCount --;
+            // else insert a whitespace
+            } else {
+                text += " " + nodes[i].innerText;
+                insertedCount ++;
+            }
+            if (offsetTopLast !== 0) {
+                lastYDiffs.push(nodes[i].offsetTop - offsetTopLast);
+            }
+            lastFontSize = Number(nodes[i].style.fontSize.substring(0, nodes[i].style.fontSize.indexOf("px")));
+
+        // check for space between text divs, if there is enough space, we should probably insert a whitespace
+        } else if (offsetLeftLast + widthLast < nodes[i].offsetLeft - 2 && !nodes[i].innerText.startsWith(" ")) {
+            text += " " + nodes[i].innerText;
+            insertedCount ++;
+        } 
+        else {
+            text += nodes[i].innerText;
+        }
+     
+        offsetLeftLast = nodes[i].offsetLeft;
+        offsetTopLast = nodes[i].offsetTop;
+        widthLast = nodes[i].offsetWidth;
+    }
+    let original = sel.toString();
+    if (!text.length && original.length) {
+        text = original;
+    }
+    text = text.replace("  ", " ");
+    if (!original.startsWith(text.substring(0, Math.min(10, text.length)))) {
+        for (var y = 10; y > 0; y--) {
+            if (text.indexOf(original.substring(0, Math.min(y, original.length))) > 0) {
+                text = text.substring(text.indexOf(original.substring(0, Math.min(y, original.length))));
+                break;
+            }
+        }
+    }
+    if (text.length > original.length + insertedCount) {
+        for (var ce = 10; ce > 0; ce--) {
+            let lastOrig = original.substring(original.length - (Math.min(original.length, ce)));
+            if (text.lastIndexOf(lastOrig) >= 0) {
+                text = text.substring(0, text.lastIndexOf(lastOrig) + lastOrig.length);
+                break;
+            }
+        }
+    }
+
+    text = text.replace(/( |&nbsp;){2,}/g, " ");
+    text = text.replace(/ ([,.;:]) /g, "$1 ");
+    text = text.replace(/ ([)\].!?:])/g, "$1");
+    text = text.replace(/([(\[]) /g, "$1");
+    e.clipboardData.setData('text/plain', text);
+    e.preventDefault();
+}
+
+
 //
 // helpers
 //

@@ -165,8 +165,6 @@ def display_tag_info(editor, stamp, tag, index):
     else:
         html    = html % (time_stamp_for_graph, time_stamp_for_graph, tret if tret is not None else "Not enough Reviews", len(searchRes["result"]), tags)
 
-    index.ui._loadPlotJsIfNotLoaded()
-
     ret_data    = getTrueRetentionOverTime(nids)
     graph_js    = retention_stats_for_tag(ret_data, "siac-tag-graph-" + time_stamp_for_graph, "siac-tag-graph-lbl-" + time_stamp_for_graph)
    

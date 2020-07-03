@@ -40,6 +40,7 @@ asianChar       = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\u
 def clean(text, stopWords):
 
     filtered    = ""
+    text        = text.replace("`", "")
     text        = text.replace("\r\n", " ").replace("\n", " ")
     text        = text.replace("\t", " ")
     text        = text.replace("\u001f", " ")

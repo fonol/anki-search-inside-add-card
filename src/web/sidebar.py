@@ -40,7 +40,7 @@ class Sidebar:
                     html = "<ul class='deck-sub-list'>"
                 for key, value in tmap.items():
                     full = prefix + "::" + key if prefix else key
-                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-user-note-search-tag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='siac-tl-plus' onclick='pycmd(\"siac-create-note-tag-prefill %s\") '><b>NEW</b></span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), full, iterateMap(value, full, False))
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-user-note-search-tag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='siac-tl-plus' onclick='pycmd(\"siac-create-note-tag-prefill %s\") '><b> + &nbsp;</b></span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), full, iterateMap(value, full, False))
                 html += "</ul>"
                 return html
 
@@ -61,6 +61,7 @@ class Sidebar:
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-unread")'>PDFs - Unread</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-in-progress")'>PDFs - In Progress</div>
                       <!--  <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-last-done")'>Last Done</div>-->
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-stats")'>Read Stats</div>
                         {sched_today_menu_item}
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-untagged")'>Untagged</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-random");'>Random</div>

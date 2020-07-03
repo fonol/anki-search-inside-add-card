@@ -286,7 +286,7 @@ def fillTagSelect(editor = None, expanded = False) :
     else:
         get_index().ui.js(cmd)
 
-def fillDeckSelect(editor = None, expanded= False):
+def fillDeckSelect(editor = None, expanded= False, update = True):
     """ Fill the selection with user's decks """
 
     deckMap     = dict()
@@ -325,6 +325,7 @@ def fillDeckSelect(editor = None, expanded= False):
 
     html        = iterateMap(dmap, "", True)
     expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
+    update_js   = "updateSelectedDecks();" if update else ""
 
     cmd         = """
     document.getElementById('deck-sel-info-lbl').style.display = 'block';
@@ -344,9 +345,8 @@ def fillDeckSelect(editor = None, expanded= False):
     });
     %s
     $("#siac-deck-sel-btn-wrapper").show();
-    updateSelectedDecks();
-
-    """ % (html, expanded_js)
+    %s
+    """ % (html, expanded_js, update_js)
     editor.web.eval(cmd)
 
 def addToDecklist(dmap, id, name):
@@ -364,14 +364,11 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added option to uninclude future scheduled notes in the queue until they are due",
-        "Added shortcut for Later button: CTRL/Cmd + Shift + Y",
-        "Added CID button for results to copy card IDs (can be activated in settings)",
-        "Store PDF reader color mode in config, to remember it on reopening the PDF reader",
-        "Added Qt version, chromium version to Info dialog",
-        "PDF extract dialog has current page as initial value",
-        "Changed github link to direct to issues page",
-        "Small improvement to highlighting (when a highlighted line has characters standing out)"
+        "Added 'Read Stats' in sidebar",
+        "Hide PDF tooltip after toggle",
+        "Fix: Deck select repeating last search on open",
+        "Fix: Don't allow whitespace-only input in note search in sidebar",
+        "Fix: Search hanging when input has backticks (&#96;) in it."
     ]
 
 def known_issues() -> List[str]:

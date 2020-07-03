@@ -56,7 +56,7 @@ class PDFExtractDialog(QDialog):
 
         self.start_inp = QSpinBox()
         self.start_inp.setMinimum(1)
-        self.start_inp.setMaximum(self.pages_total - 1)
+        self.start_inp.setMaximum(max(1, self.pages_total - 1))
         self.start_inp.setValue(self.current_page)
 
         self.end_inp    = QSpinBox()

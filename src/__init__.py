@@ -147,7 +147,6 @@ def on_load_note(editor: Editor):
 
             if index is not None and index.ui is not None:
                 index.ui.set_editor(editor)
-                index.ui._loadPlotJsIfNotLoaded()
 
             if index is not None:
                 setup_ui_after_index_built(editor, index)
@@ -232,6 +231,34 @@ def insert_scripts():
         script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf_reader.js';
+        document.body.appendChild(script);
+
+        script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/plot.js';
+        document.body.appendChild(script);
+
+        setTimeout(function() {{
+            script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/plot.resize.js';
+            document.body.appendChild(script);
+
+            script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/cal-heatmap.min.js';
+            document.body.appendChild(script);
+        }}, 100);
+
+        script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/d3.min.js';
+        document.body.appendChild(script);
+
+        script = document.createElement('link');
+        script.type = 'text/css';
+        script.rel = 'stylesheet';
+        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/cal-heatmap.css';
         document.body.appendChild(script);
 
         script = document.createElement('link');

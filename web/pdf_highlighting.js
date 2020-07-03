@@ -28,13 +28,13 @@ var Highlighting = {
         rects.forEach((r) => {
             let x = r.x - rectCanvas.x;
             let y = r.y - rectCanvas.y;
-            let conv = pdfDisplayedViewPort.convertToPdfPoint(x, y + 3);
+            let conv = pdfDisplayedViewPort.convertToPdfPoint(x, y);
 
             cmd += conv[0] + " " + conv[1] + " ";
-            conv = pdfDisplayedViewPort.convertToPdfPoint(x + r.w, y + r.h + 3);
+            conv = pdfDisplayedViewPort.convertToPdfPoint(x + r.w, y + r.h);
             cmd += conv[0] + " " + conv[1] + " ";
             // text layer spans seem to be shifted to the top by some pixels, so add a small offset to the highlight div
-            this._createHighlightDiv(x + offset, y + 3, r.w, r.h, this.colorSelected.id);
+            this._createHighlightDiv(x + offset, y, r.w, r.h, this.colorSelected.id);
 
         });
         cmd += "# " + s.toString();
