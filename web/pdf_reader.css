@@ -16,7 +16,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     padding: 12px;
     padding-bottom: 6px;
     font-size: 12px;
-    z-index: 7;
+    z-index: 2;
     border-radius: 5px;
     overflow: hidden;
 }
