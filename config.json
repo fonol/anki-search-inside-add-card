@@ -70,7 +70,7 @@
 "logging": false,
 "renderImmediately": true,
 "tagClickShouldSearch": true,
-"leftSideWidthInPercent": 40,
+"leftSideWidthInPercent": 35,
 "showRetentionScores": true,
 "imageMaxHeight": 100,
 "hideSidebar": false,
