@@ -674,6 +674,39 @@ def get_read_pages(nid: int) -> List[int]:
         return []
     return [r[0] for r in res]
 
+def get_read(delta_days: int) -> Dict[int, Tuple[int, str]]:
+    """ Get # of read pages by note ID. """
+    stamp = utility.date.date_x_days_ago_stamp(abs(delta_days))
+    conn = _get_connection()
+    res  = conn.execute(f"select counts.c, counts.nid, notes.title from notes join (select count(*) as c, nid from read where page > -1 and created like '{stamp}%' group by nid) as counts on notes.id = counts.nid").fetchall()
+    conn.close()
+    d = dict()
+    for c, nid, title in res:
+        d[nid] = (c, title)
+    return d
+
+def get_read_last_n_days(delta_days: int) -> Dict[int, Tuple[int, str]]:
+    """ Get # of read pages by note ID for the last n days. """
+    stamp = utility.date.date_x_days_ago_stamp(abs(delta_days))
+    conn = _get_connection()
+    res  = conn.execute(f"select counts.c, counts.nid, notes.title from notes join (select count(*) as c, nid from read where page > -1 and created >= '{stamp}' group by nid) as counts on notes.id = counts.nid").fetchall()
+    conn.close()
+    d = dict()
+    for c, nid, title in res:
+        d[nid] = (c, title)
+    return d
+
+def get_read_last_n_days_by_day(delta_days: int) -> Dict[str, int]:
+    """ Get # of read pages by dates. """
+    stamp = utility.date.date_x_days_ago_stamp(abs(delta_days))
+    conn = _get_connection()
+    res  = conn.execute(f"select count(*) as c, substr(created, 0, 11) as date from read where page > -1 and created >= '{stamp}' group by substr(created, 0, 11)").fetchall()
+    conn.close()
+    d = dict()
+    for c, dt in res:
+        d[dt] = c
+    return d
+
 def get_note_tree_data() -> Dict[str, List[Tuple[int, str]]]:
     """
         Fills a map with the data for the QTreeWidget in the Create dialog.
