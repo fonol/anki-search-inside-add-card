@@ -149,7 +149,8 @@ class SiacNote(Printable):
         title   = html.escape(self.title)
         body    = self.text
         #trim very long texts:
-        if len(body) > 3000:
+        # id > 0 because meta cards should not be trimmed
+        if len(body) > 3000 and self.id >= 0:
             #there might be unclosed tags now, but parsing would be too much overhead, so simply remove div, a and span tags
             #there might be still problems with <p style='...'>
             body                = body[:3000]
