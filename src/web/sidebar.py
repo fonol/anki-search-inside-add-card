@@ -61,6 +61,7 @@ class Sidebar:
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-unread")'>PDFs - Unread</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-in-progress")'>PDFs - In Progress</div>
                       <!--  <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-last-done")'>Last Done</div>-->
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-stats")'>Read Stats</div>
                         {sched_today_menu_item}
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-untagged")'>Untagged</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-random");'>Random</div>
