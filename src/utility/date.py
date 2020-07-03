@@ -1,7 +1,8 @@
 import typing
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime, timedelta
 import calendar
+import locale
 
 def next_instance_of_weekdays(wd: List[int]) -> datetime:
     """
@@ -21,6 +22,17 @@ def weekday_name(wd: int) -> str:
 def weekday_name_abbr(wd: int) -> str:
     return list(calendar.day_abbr)[wd - 1]
 
+def weekday_name_from_dt(dt: datetime) -> str:
+    # return calendar.day_name[dt.weekday()]
+    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+    return dt.strftime("%A")
+
+def counts_to_timestamps(counts: Dict[str, int]) -> Dict[int, int]:
+    out = {}
+    for k,v in counts.items():
+        out[str(int(datetime.timestamp(dt_from_date_only_stamp(k))))] = v
+    return out
+
 def date_today_stamp() -> str:
     return datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
 
@@ -38,6 +50,9 @@ def dt_to_stamp(dt : datetime) -> str:
 
 def dt_from_stamp(stamp: str) -> datetime:
     return datetime.strptime(stamp, '%Y-%m-%d-%H-%M-%S')
+
+def dt_from_date_only_stamp(stamp: str) -> datetime:
+    return datetime.strptime(stamp, '%Y-%m-%d')
 
 def date_is_today(date_str: str) -> bool:
     return datetime.today().date() == dt_from_stamp(date_str).date()
