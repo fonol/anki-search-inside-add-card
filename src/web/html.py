@@ -548,7 +548,7 @@ def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
             </center>
         """
 
-    html = """<div id='siac-read-time-ch' style='width: 100%; margin: 15px auto 0 auto;'></div>"""
+    html = """<div id='siac-read-time-ch' style='width: 100%; margin: 25px auto 0 auto;'></div>"""
     return html
 
 
