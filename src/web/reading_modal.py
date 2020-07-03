@@ -78,10 +78,10 @@ class ReadingModal:
         index                   = get_index()
         note                    = get_note(note_id)
 
-        if ReadingModal.last_opened is None or (self.note_id is not None and note_id != self.note_id):
+        if ReadingModal.last_opened is None or (self.note_id is not None and int(note_id) != self.note_id):
             ReadingModal.last_opened = self.note_id if ReadingModal.last_opened else note_id
 
-        self.note_id            = note_id
+        self.note_id            = int(note_id)
         self.note               = note
 
         html                    = self.html()
@@ -295,7 +295,7 @@ class ReadingModal:
                         if (pdfBarsHidden) {
                             readerNotification("%s");
                         }
-                        setTimeout(refreshCanvas, 50);
+                        setTimeout(function() { refreshCanvas(); }, 250);
                         if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
                         fileReader = null;
                 });
@@ -855,7 +855,7 @@ class ReadingModal:
                         <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>Loading PDF</div></div>
                     </div>
                 </div>
-                <canvas id="siac-pdf-canvas" style='z-index: 99999; display:inline-block;'></canvas>
+                <canvas id="siac-pdf-canvas" style='z-index: 3; display:inline-block;'></canvas>
                 <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
             </div>
             <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
