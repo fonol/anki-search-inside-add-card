@@ -529,7 +529,7 @@ def read_counts_card_body(counts: Dict[int, int]) -> str:
                 row = f"{row}<span class='siac-read-box'></span>" 
             row = f"{row}<span class='keyword'>&nbsp; (+ {c-100})</span>"
 
-        html = f"{html}<tr><td style='min-width: 200px;'><span class='keyword' onclick='pycmd(\"siac-read-user-note {nid}\")'>{title}</span></td><td style='padding-left: 5px; text-align: right;'><b style='vertical-align: middle;'>{c}</b></td><td style='padding-left: 5px;'>{row}</td></tr>"
+        html = f"{html}<tr><td style='min-width: 240px;'><span class='keyword' onclick='pycmd(\"siac-read-user-note {nid}\")'>{title}</span></td><td style='padding-left: 5px; text-align: right;'><b style='vertical-align: middle;'>{c}</b></td><td style='padding-left: 5px;'>{row}</td></tr>"
     html = f"<br><table>{html}</table>"
 
     html += """
