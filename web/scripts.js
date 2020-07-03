@@ -944,3 +944,38 @@ function dragElement(elmnt, headerId, inModal=false) {
         document.onmousemove = null;
     }
 }
+
+
+/**
+ * Heatmap
+ */
+
+ function drawHeatmap(id, data) {
+    var cal = new CalHeatMap();
+    let legendColors = {
+        min: "#dae289",
+        max: "#3b6427",
+        empty: "lightgrey"
+    };
+    if (document.body.classList.contains("nightMode")) {
+        legendColors = {
+            min: "#fed976",     
+            max: "#800026",
+            empty: "black"
+        }
+    }
+	cal.init({
+        data,
+        legendColors,
+        itemSelector: id,
+        considerMissingDataAsZero: true,
+        dataType: "json",
+        start: new Date(new Date().getFullYear(), 0), 
+        maxDate: new Date(),
+        range: 12,
+        rowLimit: 7,
+        domain: "month",
+        subDomain: "day"
+    });
+
+ }
