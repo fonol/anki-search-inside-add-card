@@ -130,7 +130,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         res = getRandomNotes(index, [s for s in cmd[17:].split(" ") if s != ""])
         index.ui.print_search_results(res["result"], res["stamp"])
     elif cmd == "siac-fill-deck-select":
-        fillDeckSelect(self, expanded=True)
+        fillDeckSelect(self, expanded=True, update=False)
     elif cmd == "siac-fill-tag-select":
         fillTagSelect(expanded=True)
     elif cmd.startswith("siac-search-tag "):
@@ -204,6 +204,32 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         stamp = setStamp()
         notes = get_notes_scheduled_for_today()
         index.ui.print_search_results(notes, stamp)
+
+    elif cmd == "siac-show-stats":
+        # Read Stats clicked in sidebar
+        stamp       = setStamp()
+        res         = []
+        t_counts    = get_read_last_n_days_by_day(365)
+        body        = read_counts_by_date_card_body(t_counts)
+        t_counts    = utility.date.counts_to_timestamps(t_counts)
+        res.append(SiacNote((-1, f"Pages read per day (this year)", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+
+        counts      = get_read(0)
+        body        = read_counts_card_body(counts)
+        res.append(SiacNote((-2, f"Pages read today ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        counts      = get_read(1)
+        body = read_counts_card_body(counts)
+        res.append(SiacNote((-3, f"Pages read yesterday ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        counts      = get_read_last_n_days(7)
+        body = read_counts_card_body(counts)
+        res.append(SiacNote((-4, f"Pages read last week ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        counts      = get_read_last_n_days(30)
+        body        = read_counts_card_body(counts)
+        res.append(SiacNote((-5, f"Pages read last 30 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        index.ui.print_search_results(res, stamp)
+        # fill plots
+        index.ui.js(f""" drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)}); """)
+
 
     elif cmd == "siac-show-last-done":
         stamp = setStamp()
@@ -998,14 +1024,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif (cmd.startswith("searchOnSelection ")):
         config["searchOnSelection"] = cmd[18:] == "on"
         mw.addonManager.writeConfig(__name__, config)
-    elif (cmd.startswith("deckSelection")):
+    elif cmd.startswith("deckSelection"):
         if not check_index():
             return (True, None)
-        if index.logging:
-            if len(cmd) > 13:
-                log("Updating selected decks: " + str( [d for d in cmd[14:].split(" ") if d != ""]))
-            else:
-                log("Updating selected decks: []")
         if len(cmd) > 13:
             index.selectedDecks = [d for d in cmd[14:].split(" ") if d != ""]
         else:
@@ -1280,7 +1301,7 @@ def default_search_with_decks(editor: aqt.editor.Editor, textRaw: Optional[str],
         return
     cleaned = index.clean(textRaw)
     if len(cleaned) == 0:
-        index.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(textRaw, 100).replace("\u001f", ""))
+        index.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(textRaw, 100).replace("\u001f", "").replace("`", "&#96;"))
         return
     index.lastSearch = (cleaned, decks, "default")
     searchRes = index.search(cleaned, decks)
@@ -1297,7 +1318,7 @@ def search_for_user_notes_only(editor: aqt.editor.Editor, text: str):
         return
     cleaned = index.clean(text)
     if len(cleaned) == 0:
-        index.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(text, 100).replace("\u001f", ""))
+        index.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(text, 100).replace("\u001f", "").replace("`", "&#96;"))
         return
     index.lastSearch    = (cleaned, ["-1"], "user notes")
     searchRes           = index.search(cleaned, ["-1"], only_user_notes = True)
