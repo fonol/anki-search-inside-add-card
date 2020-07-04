@@ -13,55 +13,6 @@
     "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too",
     "very", "can", "will", "just", "done", "should", "no" ],
 
-"styling": {
-    "modal" : {
-        "stripedTableBackgroundColor": "#f2f2f2",
-        "modalForegroundColor": "black",
-        "modalBackgroundColor": "white",
-        "modalBorderColor": "#2496dc"
-    },
-    "general" : {
-        "tagForegroundColor": "white",
-        "tagBackgroundColor": "#f0506e",
-        "tagFontSize" : 12,
-        "buttonBackgroundColor": "white",
-        "buttonForegroundColor": "#404040",
-        "buttonBorderColor":"#404040",
-        "keywordColor": "#2496dc",
-        "highlightBackgroundColor": "yellow",
-        "highlightForegroundColor": "black",
-        "fieldSeparatorColor" : "#2496dc",
-        "windowColumnSeparatorColor" : "lightseagreen",
-        "rankingLabelBackgroundColor": "lightseagreen",
-        "rankingLabelForegroundColor": "white",
-        "noteFontSize": 12,
-        "noteForegroundColor": "black",
-        "noteBackgroundColor": "white",
-        "noteBorderColor": "lightseagreen",
-        "noteHoverBorderColor": "#2496dc"
-    },
-    "topBar": {
-        "deckSelectFontSize": 11,
-        "deckSelectForegroundColor": "black",
-        "deckSelectBackgroundColor": "white",
-        "deckSelectHoverForegroundColor": "white",
-        "deckSelectHoverBackgroundColor": "#5f6468",
-        "deckSelectButtonForegroundColor": "grey",
-        "deckSelectButtonBorderColor": "grey",
-        "deckSelectButtonBackgroundColor": "white",
-        "deckSelectCheckmarkColor" : "green"
-    },
-    "bottomBar" : {
-        "browserSearchInputForegroundColor": "black",
-        "browserSearchInputBackgroundColor": "white",
-        "browserSearchInputBorderColor": "grey",
-        "selectForegroundColor" : "black",
-        "selectBackgroundColor": "white",
-        "timelineBoxBackgroundColor": "#595959",
-        "timelineBoxBorderColor": "#595959"
-    }
-},
-
 "numberOfResults": 1000,
 "useFTS": true,
 "delayWhileTyping": 1000,
@@ -129,5 +80,9 @@
 "notes.editor.defaultTagsIfEmpty": "",
 "results.showFloatButton": false,
 "results.showIDButton": false,
-"results.showCIDButton": false
+"results.showCIDButton": false,
+"styles.night.tagBackgroundColor": "DarkOrange",
+"styles.night.tagForegroundColor": "Black",
+"styles.tagBackgroundColor": "#f0506e",
+"styles.tagForegroundColor": "white"
 }

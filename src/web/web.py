@@ -75,10 +75,18 @@ def getScriptPlatformSpecific():
     imgMaxHeight        = str(get_config_value_or_default("imageMaxHeight", 300)) + "px"
     pdfTooltipMaxHeight = str(get_config_value_or_default("pdfTooltipMaxHeight", 300))
     pdfTooltipMaxWidth  = str(get_config_value_or_default("pdfTooltipMaxWidth", 250))
+    tagFG               = str(get_config_value_or_default("styles.tagForegroundColor", "black"))
+    tagBG               = str(get_config_value_or_default("styles.tagBackgroundColor", "#f0506e"))
+    tagNightFG          = str(get_config_value_or_default("styles.night.tagForegroundColor", "black"))
+    tagNightBG          = str(get_config_value_or_default("styles.night.tagBackgroundColor", "DarkOrange"))
 
     css                 = css.replace("$imgMaxHeight$", imgMaxHeight)
     css                 = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
     css                 = css.replace("$pdfTooltipMaxWidth$", pdfTooltipMaxWidth)
+    css                 = css.replace("$styles.tagForegroundColor$", tagFG)
+    css                 = css.replace("$styles.tagBackgroundColor$", tagBG)
+    css                 = css.replace("$styles.night.tagForegroundColor$", tagNightFG)
+    css                 = css.replace("$styles.night.tagBackgroundColor$", tagNightBG)
 
     css                 = css.replace("$zoom$", str(get_config_value_or_default("searchpane.zoom", 1.0)))
     renderImmediately   = str(get_config_value_or_default("renderImmediately", False)).lower()
@@ -369,7 +377,9 @@ def changelog() -> List[str]:
         "Hide PDF tooltip after toggle",
         "Fix: Deck select repeating last search on open",
         "Fix: Don't allow whitespace-only input in note search in sidebar",
-        "Fix: Search hanging when input has backticks (&#96;) in it."
+        "Fix: Search hanging when input has backticks (&#96;) in it.",
+        "Fix: CTRL+O -> CTRL+L (last opened note) not working sometimes",
+        "Fix: Floating notes having highlights still on them"
     ]
 
 def known_issues() -> List[str]:

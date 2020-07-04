@@ -24,8 +24,8 @@
     --c-field-separator: #2496dc;
     --c-highlight-foreground: black;
     --c-highlight-background: yellow;
-    --c-tag-background: #f0506e;
-    --c-tag-foreground: white;
+    --c-tag-background: $styles.tagBackgroundColor$;
+    --c-tag-foreground: $styles.tagForegroundColor$;
     --c-keyword: #2496dc;
     --c-striped-table-background: #e6e6e6;
     --c-select-foreground: black;
@@ -57,8 +57,8 @@
     --c-field-separator-night: white;
     --c-highlight-foreground-night: black;
     --c-highlight-background-night: SpringGreen;
-    --c-tag-background-night: darkorange;
-    --c-tag-foreground-night: black;
+    --c-tag-background-night: $styles.night.tagBackgroundColor$;
+    --c-tag-foreground-night: $styles.night.tagForegroundColor$;
     --c-keyword-night: SpringGreen;
     --c-striped-table-background-night: #2b2b30;
     --c-select-foreground-night: white;
@@ -806,7 +806,7 @@
     display: inline;
 }
 .deck-list-item.selected:hover > .list-item-inner:hover > .check {
-    color: $deckSelectHoverForegroundColor$;
+    color: white;
 }
 .deck-list-button {
     border: 3px outset var(--c-button-border);
@@ -1190,7 +1190,7 @@ span.tag-symbol {
     overflow-y: auto;
     background: var(--c-note-background);
     color: var(--c-note-foreground);
-    font-size: $noteFontSize$;
+    font-size: 12;
     text-align: left;
 }
 
