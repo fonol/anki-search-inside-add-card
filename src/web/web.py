@@ -364,6 +364,7 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
+        "Newer add-on version should now run on 2.1.22 and 2.1.23 too, please report any bugs.",
         "Added 'Read Stats' in sidebar",
         "Hide PDF tooltip after toggle",
         "Fix: Deck select repeating last search on open",
