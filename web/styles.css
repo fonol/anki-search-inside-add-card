@@ -1039,7 +1039,9 @@ select {
     margin-top: 5px;
     background: var(--c-modal-background);
     color: var(--c-modal-foreground);
+    border-color: var(--c-modal-border);
     border-radius: 5px;
+    box-sizing: border-box; 
 }
 #synTable tr td:first-child {
     max-width: 150px;
