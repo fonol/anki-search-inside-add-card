@@ -217,11 +217,15 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 if (isInitial || query) {
                     ungreyoutBottom();
                 }
+                // if (isInitial) {
+                //    setTimeout(function() {  refreshCanvas(); }, 5000); 
+                // }
                 pdfDisplayedViewPort = viewport;
                 if (fetchHighlights) {
+                    Highlighting.current = [];  
                     pycmd("siac-pdf-page-loaded " + pdfDisplayedCurrentPage);
                 } else {
-                    displayHighlights();
+                    Highlighting.displayHighlights();
                 }
                 setLastReadPage();
             });
@@ -341,7 +345,7 @@ function pdfScaleChange(mode) {
         pdfDisplayedScale -= 0.1;
         pdfDisplayedScale = Math.max(0.1, pdfDisplayedScale);
     }
-    queueRenderPage(pdfDisplayedCurrentPage, shouldScrollUp = false, fetchHighlights = false);
+    queueRenderPage(pdfDisplayedCurrentPage, false, false, false, '', false);
 }
 
 function pdfPageRight() {
