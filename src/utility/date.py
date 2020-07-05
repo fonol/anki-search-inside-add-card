@@ -79,22 +79,22 @@ def schedule_verbose(sched: str) -> str:
 
     if stype == "wd":
         days = ", ".join([weekday_name_abbr(int(c)) for c in stype_val])
-        return f"This note is scheduled for every {days}."
+        return f"Scheduled for every {days}."
 
     if stype == "id":
         if stype_val == "2":
-            return f"This note is scheduled for every second day."
+            return f"Scheduled for every second day."
         if stype_val == "1":
-            return f"This note is scheduled to appear everyday."
-        return f"This note is scheduled to appear every {stype_val} days."
+            return f"Scheduled to appear everyday."
+        return f"Scheduled to appear every {stype_val} days."
 
     if stype == "td":
         delta_days = (datetime.now().date() - dt_from_stamp(created).date()).days
         if delta_days == 0:
-            return f"This note was scheduled today to appear in {stype_val} day(s)."
+            return f"Scheduled today to appear in {stype_val} day(s)."
         if delta_days == 1:
-            return f"This note was scheduled yesterday to appear in {stype_val} day(s)."
-        return f"This note was scheduled {delta_days} days ago to appear in {stype_val} day(s)."
+            return f"Scheduled yesterday to appear in {stype_val} day(s)."
+        return f"Scheduled {delta_days} days ago to appear in {stype_val} day(s)."
 
 
 def get_new_reminder(stype: str, svalue: str) -> str:
