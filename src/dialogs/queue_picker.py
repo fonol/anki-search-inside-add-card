@@ -33,10 +33,9 @@ import state
 class QueuePicker(QDialog):
     """ Can be used to select a single note from the queue or to move pdf notes in/out of the queue. """
 
-    def __init__(self, parent, note_list, note_list_right):
+    def __init__(self, parent):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
 
-        self.chosen_id  = None 
         self.mw         = aqt.mw
         self.parent     = parent
 
@@ -45,255 +44,39 @@ class QueuePicker(QDialog):
         except:
             self.dark_mode_used = False
 
-        self.setup_ui(note_list, note_list_right)
+        self.setup_ui()
         self.setWindowTitle("Queue Manager")
+    
+    def setup_ui(self):
+        self.setLayout(QVBoxLayout())
+        self.mode_sel = QComboBox()
+        self.mode_sel.addItem("Queue", QVariant(1))
+        self.mode_sel.addItem("Schedules", QVariant(2))
+        self.mode_sel.currentIndexChanged.connect(self.mode_change)
+
+        self.layout().addWidget(self.mode_sel)
+        self.layout().setAlignment(Qt.AlignTop)
+
+        self.queue_widget = QueueWidget(self)
+        self.sched_widget = ScheduleMWidget(self)
         
-        # self.refresh_queue_list()
-        queue = _get_priority_list()
-        self.fill_list(self.t_view_left, queue, with_nums = True, with_icons = True)
-        self.tabs_changed(0) 
-       
-    def setup_ui(self, note_list, note_list_right):
+        self.sched_widget.setVisible(False)
 
-        self.vbox_left = QVBoxLayout()
-        l_lbl = QLabel("Queue") 
-        l_lbl.setAlignment(Qt.AlignCenter)
-        self.vbox_left.addWidget(l_lbl)
-        self.t_view_left = QListWidget()
-        # self.t_view_left.setDragDropMode(QAbstractItemView.InternalMove)
-        # self.t_view_left.model().rowsMoved.connect(self.on_list_reorder)
-        self.tabs = QTabWidget()
-        self.tags_tab = TagsTab(self)
-        self.pdfs_tab = PDFsTab(self)
-        self.notes_tab = TextNotesTab(self)
-        self.folders_tab = FoldersTab(self)
-        self.tabs.currentChanged.connect(self.tabs_changed)
-        self.tabs.addTab(self.tags_tab, "PDFs + Text Notes, By Tag")
-        self.tabs.addTab(self.pdfs_tab, "PDFs, Unqueued")
-        self.tabs.addTab(self.notes_tab, "Text Notes, Unqueued")
-        self.tabs.addTab(self.folders_tab, "Folders - Import")
+        self.layout().addWidget(self.queue_widget)
+        self.layout().addWidget(self.sched_widget)
 
-        self.t_view_left.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.t_view_left.setMaximumWidth(370)
-        self.t_view_left.setUniformItemSizes(True)
-        self.t_view_left.itemClicked.connect(self.item_clicked)
-        self.vbox_left.addWidget(self.t_view_left)
-        self.unqueue_btn = QPushButton("Dequeue Selected")
-        self.unqueue_btn.clicked.connect(self.remove_from_queue)
-        self.vbox_left.addWidget(self.unqueue_btn)
+    def chosen_id(self):
+        return self.queue_widget.chosen_id
 
-        self.unqueue_all_btn = QPushButton("Empty Queue")
-        self.unqueue_all_btn.clicked.connect(self.remove_all_from_queue)
-
-        # self.shuffle_queue_btn = QPushButton("Shuffle")
-        # self.shuffle_queue_btn.clicked.connect(self.shuffle_queue)
-
-        btn_hbox_l = QHBoxLayout()
-        btn_hbox_l.addWidget(self.unqueue_all_btn)
-        # btn_hbox_l.addWidget(self.shuffle_queue_btn)
-        self.vbox_left.addLayout(btn_hbox_l)
-
-        # self.reorder_select = QComboBox()
-        # self.reorder_select.addItem("Reorder by Date Created (Asc.)")
-        # self.reorder_select.addItem("Reorder by Date Created (Desc.)")
-        # self.reorder_select.addItem("Reorder by Name (Asc.)")
-        # self.reorder_btn = QPushButton("Apply")
-        # self.reorder_btn.clicked.connect(self.on_reorder_clicked)
-        # h_r = QHBoxLayout()
-        # h_r.addWidget(self.reorder_select)
-        # h_r.addWidget(self.reorder_btn)
-        # self.vbox_left.addLayout(h_r)
-        self.vbox = QVBoxLayout()
-
-        self.hbox = QHBoxLayout()
-        self.hbox.addLayout(self.vbox_left)
-        self.hbox.addWidget(self.tabs)
-
-        self.vbox.addLayout(self.hbox)
-        
-        bottom_box = QHBoxLayout()
-        self.accept_btn = QPushButton("Read")
-        self.accept_btn.clicked.connect(self.accept)
-        self.accept_btn.setEnabled(False)
-        self.chosen_lbl = QLabel("")
-        boldf = QFont()
-        boldf.setBold(True)
-        self.chosen_lbl.setFont(boldf)
-        bottom_box.addWidget(self.chosen_lbl)
-        bottom_box.addStretch(1)
-        bottom_box.addWidget(self.accept_btn)
-        bottom_box.addSpacing(8)
-        self.reject_btn = QPushButton("Close")
-        self.reject_btn.clicked.connect(self.reject)
-        bottom_box.addWidget(self.reject_btn)
-        self.vbox.addSpacing(10)
-        self.vbox.addLayout(bottom_box)
-
-        self.setLayout(self.vbox)
-        # self.resize(770, 480)
-
-        if self.dark_mode_used:
-            styles = """
-                QTabBar {
-                background: #222;
-                color: #666;
-                border-radius: 0;
-                border: 2px solid #222;
-                }
-                 QTabWidget::pane {
-                border-color: black;
-                color: #666;
-                border-radius: 0;
-                border: 2px solid #222;
-                }
-                QTabBar::tab:top {
-                margin: 1px 1px 0 0;
-                padding: 4px 8px;
-                border-bottom: 3px solid transparent;
-                }
-
-                QTabBar::tab:selected {
-                color: white;
-                border: 0;
-                }
-
-                QTabBar::tab:top:hover {
-                border-bottom: 3px solid #444;
-                }
-                QTabBar::tab:top:selected {
-                border-bottom: 3px solid #1086e2;
-                }
-
-                QTabBar::tab:hover,
-                QTabBar::tab:focus { }
-
-                QComboBox {
-                    background-color: #222;
-                    color: lightgrey;
-                }
-            """
-            self.setStyleSheet(styles)
-
-    def tabs_changed(self, ix):
+    def mode_change(self, ix):
         if ix == 0:
-            self.tags_tab.fill_tree(get_all_tags())
-        elif ix == 1:
-            self.pdfs_tab.fill_list(get_pdf_notes_not_in_queue())
-        elif ix == 2:
-            self.notes_tab.fill_list(get_non_pdf_notes_not_in_queue())
-        elif ix == 3:
-            self.folders_tab.fill_tree(get_most_used_pdf_folders())
-        
-
-    def fill_list(self, t_view, db_res, with_nums = False, with_icons = True):
-        t_view.clear()
-        icon_provider = QFileIconProvider()
-        pdf_icon = None
-        icon = QApplication.style().standardIcon(QStyle.SP_FileIcon)
-        for ix, n in enumerate(db_res):
-            title = n.title if n.title is not None and len(n.title) > 0 else "Untitled"
-            if with_nums:
-                title = f"{ix+1}.  {title}"
-            if pdf_icon is None and n.is_pdf():
-                #pdf_icon = icon_provider.icon(QFileInfo(n.source))
-                pdf_icon = QIcon(utility.misc.get_web_folder_path() + "icons/pdf-icon.png")
-            i = pdf_icon if n.is_pdf() else icon
-            if with_icons:
-                title_i = QListWidgetItem(i, title)
-            else:
-                title_i = QListWidgetItem(title)
-            title_i.setData(Qt.UserRole, QVariant(n.id))
-            t_view.insertItem(ix, title_i)
-        
-    def item_clicked(self, item):
-        self.clear_selection("right")
-        self.set_chosen(item.data(Qt.UserRole), item.text()[item.text().index(".") + 2:])
-    
-    def on_list_reorder(self):
-        nids = []
-        for i in range(self.t_view_left.count()):
-            item = self.t_view_left.item(i)
-            nids.append(item.data(Qt.UserRole))
-            item.setText(str(i+1) + ". " + item.text()[item.text().index(".")+2:])
-        set_priority_list(nids)
-            
-
-    def set_chosen(self, id, name):
-        self.chosen_id = id
-        if len(name) > 0:
-            self.chosen_lbl.setText("Chosen:  " + name)
-            self.accept_btn.setEnabled(True)
-            self.accept_btn.setText(f" Read \"{utility.text.trim_if_longer_than(name.strip(), 30)}\" ")
-        else: 
-            self.chosen_lbl.setText("")
-            self.accept_btn.setText("Read")
-            self.accept_btn.setEnabled(False)
-
-    def clear_selection(self, list):
-        if list == "left":
-            lw = self.t_view_left
+            self.sched_widget.setVisible(False)
+            self.queue_widget.setVisible(True)
         else:
-            lw = self.pdfs_tab.t_view_right
-        for i in range(lw.count()):
-            lw.item(i).setSelected(False)
+            self.queue_widget.setVisible(False)
+            self.sched_widget.setVisible(True)
 
-    def refresh_queue_list(self):
-        self.fill_list(self.t_view_left, _get_priority_list(), with_nums = True)
-
-    def refill_list_views(self, left_list, right_list):
-        self.t_view_left.clear()
-        for ix, n in enumerate(left_list):
-            title = n.title if n.title is not None and len(n.title) > 0 else "Untitled"
-            title_i = QListWidgetItem(str(ix + 1) + ".  " + title)
-            title_i.setData(Qt.UserRole, QVariant(n.id))
-            self.t_view_left.insertItem(ix, title_i)
-
-        self.pdfs_tab.fill_list(right_list)
-
-    def shuffle_queue(self):
-        priority_list = _get_priority_list()
-        if priority_list is None or len(priority_list) == 0:
-            return
-        random.shuffle(priority_list)
-        self.fill_list(self.t_view_left, priority_list, with_nums = True)
-        ids = [p.id for p in priority_list]
-        #persist reordering to db
-        set_priority_list(ids)
-
-    def remove_all_from_queue(self):
-        empty_priority_list()
-        self.fill_list(self.t_view_left, [], with_nums = True)
-        self.tabs.currentWidget().refresh()
-        tooltip(f"Queue emptied.")
-
-    def remove_from_queue(self):
-        sels = self.t_view_left.selectedItems()
-        if sels is None or len(sels) == 0:
-            return
-        nid = sels[0].data(Qt.UserRole)
-        if self.chosen_id == nid:
-            self.set_chosen(-1, "")
-        remove_from_priority_list(nid)
-        self.refresh_queue_list()
-        self.tabs.currentWidget().refresh()
-        tooltip(f"Removed Note from Queue.")
     
-    # def on_reorder_clicked(self):
-    #     sel = self.reorder_select.currentIndex()
-    #     priority_list = _get_priority_list()
-    #     if sel == 0:
-    #         priority_list = sorted(priority_list, key=lambda x: x.created)
-    #     elif sel == 1:
-    #         priority_list = sorted(priority_list, key=lambda x: x.created, reverse=True)
-    #     elif sel == 2:
-    #         priority_list = sorted(priority_list, key=lambda x: x.title if x.title is not None else "")
-    #     self.fill_list(self.t_view_left, priority_list, with_nums = True)
-    #     set_priority_list([x.id for x in priority_list])
-
-
-
-       
-
 class PDFsTab(QWidget):
     
     def __init__(self, parent):
@@ -708,5 +491,243 @@ class TagsTab(QWidget):
         tooltip(f"Added all with tag <b>{self.tag_displayed}</b>")
 
 
+class ScheduleMWidget(QWidget):
+
+    def __init__(self, parent):
+        QWidget.__init__(self)
+        self.parent = parent
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.setLayout(QHBoxLayout())
+        self.table = QTableWidget()
+        self.layout().addWidget(QLabel("WIP"))
+        self.layout().addWidget(self.table)
+
+        
 
 
+
+
+class QueueWidget(QWidget):
+
+    def __init__(self, parent):
+        QWidget.__init__(self)
+        self.parent     = parent
+        self.chosen_id  = None
+        self.setup_ui()
+
+        queue           = _get_priority_list()
+
+        self.fill_list(self.t_view_left, queue, with_nums = True, with_icons = True)
+        self.tabs_changed(0) 
+    
+    def setup_ui(self):
+
+        self.vbox_left      = QVBoxLayout()
+        l_lbl               = QLabel("Queue") 
+        l_lbl.setAlignment(Qt.AlignCenter)
+        self.vbox_left.addWidget(l_lbl)
+        self.t_view_left    = QListWidget()
+        self.tabs           = QTabWidget()
+        self.tags_tab       = TagsTab(self)
+        self.pdfs_tab       = PDFsTab(self)
+        self.notes_tab      = TextNotesTab(self)
+        self.folders_tab    = FoldersTab(self)
+
+        self.tabs.currentChanged.connect(self.tabs_changed)
+        self.tabs.addTab(self.tags_tab, "PDFs + Text Notes, By Tag")
+        self.tabs.addTab(self.pdfs_tab, "PDFs, Unqueued")
+        self.tabs.addTab(self.notes_tab, "Text Notes, Unqueued")
+        self.tabs.addTab(self.folders_tab, "Folders - Import")
+
+        self.t_view_left.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.t_view_left.setMinimumWidth(470)
+        self.t_view_left.setUniformItemSizes(True)
+        self.t_view_left.itemClicked.connect(self.item_clicked)
+        self.vbox_left.addWidget(self.t_view_left)
+        self.unqueue_btn = QPushButton("Dequeue Selected")
+        self.unqueue_btn.clicked.connect(self.remove_from_queue)
+
+        self.unqueue_all_btn = QPushButton("Empty Queue")
+        self.unqueue_all_btn.clicked.connect(self.remove_all_from_queue)
+
+        btn_hbox_l = QHBoxLayout()
+        btn_hbox_l.addWidget(self.unqueue_btn)
+        btn_hbox_l.addWidget(self.unqueue_all_btn)
+        self.vbox_left.addLayout(btn_hbox_l)
+
+        self.vbox = QVBoxLayout()
+
+        self.hbox = QHBoxLayout()
+        self.hbox.addLayout(self.vbox_left)
+        self.hbox.addWidget(self.tabs)
+
+        self.vbox.addLayout(self.hbox)
+        
+        bottom_box = QHBoxLayout()
+        self.accept_btn = QPushButton("Read")
+        self.accept_btn.clicked.connect(self.parent.accept)
+        self.accept_btn.setEnabled(False)
+        self.chosen_lbl = QLabel("")
+        boldf = QFont()
+        boldf.setBold(True)
+        self.chosen_lbl.setFont(boldf)
+        bottom_box.addWidget(self.chosen_lbl)
+        bottom_box.addStretch(1)
+        bottom_box.addWidget(self.accept_btn)
+        bottom_box.addSpacing(8)
+        self.reject_btn = QPushButton("Close")
+        self.reject_btn.clicked.connect(self.parent.reject)
+        bottom_box.addWidget(self.reject_btn)
+        self.vbox.addSpacing(10)
+        self.vbox.addLayout(bottom_box)
+
+        self.setLayout(self.vbox)
+        # self.resize(770, 480)
+
+        if self.parent.dark_mode_used:
+            styles = """
+                QTabBar {
+                background: #222;
+                color: #666;
+                border-radius: 0;
+                border: 2px solid #222;
+                }
+                 QTabWidget::pane {
+                border-color: black;
+                color: #666;
+                border-radius: 0;
+                border: 2px solid #222;
+                }
+                QTabBar::tab:top {
+                margin: 1px 1px 0 0;
+                padding: 4px 8px;
+                border-bottom: 3px solid transparent;
+                }
+
+                QTabBar::tab:selected {
+                color: white;
+                border: 0;
+                }
+
+                QTabBar::tab:top:hover {
+                border-bottom: 3px solid #444;
+                }
+                QTabBar::tab:top:selected {
+                border-bottom: 3px solid #1086e2;
+                }
+
+                QTabBar::tab:hover,
+                QTabBar::tab:focus { }
+
+                QComboBox {
+                    background-color: #222;
+                    color: lightgrey;
+                }
+            """
+            self.setStyleSheet(styles)
+
+    def tabs_changed(self, ix):
+        if ix == 0:
+            self.tags_tab.fill_tree(get_all_tags())
+        elif ix == 1:
+            self.pdfs_tab.fill_list(get_pdf_notes_not_in_queue())
+        elif ix == 2:
+            self.notes_tab.fill_list(get_non_pdf_notes_not_in_queue())
+        elif ix == 3:
+            self.folders_tab.fill_tree(get_most_used_pdf_folders())
+        
+
+    def fill_list(self, t_view, db_res, with_nums = False, with_icons = True):
+        t_view.clear()
+        icon_provider = QFileIconProvider()
+        pdf_icon = None
+        icon = QApplication.style().standardIcon(QStyle.SP_FileIcon)
+        for ix, n in enumerate(db_res):
+            title = n.title if n.title is not None and len(n.title) > 0 else "Untitled"
+            if with_nums:
+                title = f"{ix+1}.  {title}"
+            if pdf_icon is None and n.is_pdf():
+                #pdf_icon = icon_provider.icon(QFileInfo(n.source))
+                pdf_icon = QIcon(utility.misc.get_web_folder_path() + "icons/pdf-icon.png")
+            i = pdf_icon if n.is_pdf() else icon
+            if with_icons:
+                title_i = QListWidgetItem(i, title)
+            else:
+                title_i = QListWidgetItem(title)
+            title_i.setData(Qt.UserRole, QVariant(n.id))
+            t_view.insertItem(ix, title_i)
+        
+    def item_clicked(self, item):
+        self.clear_selection("right")
+        self.set_chosen(item.data(Qt.UserRole), item.text()[item.text().index(".") + 2:])
+    
+    def on_list_reorder(self):
+        nids = []
+        for i in range(self.t_view_left.count()):
+            item = self.t_view_left.item(i)
+            nids.append(item.data(Qt.UserRole))
+            item.setText(str(i+1) + ". " + item.text()[item.text().index(".")+2:])
+        set_priority_list(nids)
+            
+
+    def set_chosen(self, id, name):
+        self.chosen_id = id
+        if len(name) > 0:
+            self.chosen_lbl.setText("Chosen:  " + name)
+            self.accept_btn.setEnabled(True)
+            self.accept_btn.setText(f" Read \"{utility.text.trim_if_longer_than(name.strip(), 30)}\" ")
+        else: 
+            self.chosen_lbl.setText("")
+            self.accept_btn.setText("Read")
+            self.accept_btn.setEnabled(False)
+
+    def clear_selection(self, list):
+        if list == "left":
+            lw = self.t_view_left
+        else:
+            lw = self.pdfs_tab.t_view_right
+        for i in range(lw.count()):
+            lw.item(i).setSelected(False)
+
+    def refresh_queue_list(self):
+        self.fill_list(self.t_view_left, _get_priority_list(), with_nums = True)
+
+    def refill_list_views(self, left_list, right_list):
+        self.t_view_left.clear()
+        for ix, n in enumerate(left_list):
+            title = n.title if n.title is not None and len(n.title) > 0 else "Untitled"
+            title_i = QListWidgetItem(str(ix + 1) + ".  " + title)
+            title_i.setData(Qt.UserRole, QVariant(n.id))
+            self.t_view_left.insertItem(ix, title_i)
+
+        self.pdfs_tab.fill_list(right_list)
+
+    def shuffle_queue(self):
+        priority_list = _get_priority_list()
+        if priority_list is None or len(priority_list) == 0:
+            return
+        random.shuffle(priority_list)
+        self.fill_list(self.t_view_left, priority_list, with_nums = True)
+        ids = [p.id for p in priority_list]
+        #persist reordering to db
+        set_priority_list(ids)
+
+    def remove_all_from_queue(self):
+        empty_priority_list()
+        self.fill_list(self.t_view_left, [], with_nums = True)
+        self.tabs.currentWidget().refresh()
+        tooltip(f"Queue emptied.")
+
+    def remove_from_queue(self):
+        sels = self.t_view_left.selectedItems()
+        if sels is None or len(sels) == 0:
+            return
+        nid = sels[0].data(Qt.UserRole)
+        if self.chosen_id == nid:
+            self.set_chosen(-1, "")
+        remove_from_priority_list(nid)
+        self.refresh_queue_list()
+        self.tabs.currentWidget().refresh()
+        tooltip(f"Removed Note from Queue.")
