@@ -318,8 +318,12 @@ class CreateTab(QWidget):
         recently_used_tags      = get_recently_used_tags()
         
         config                  = mw.addonManager.getConfig(__name__)
-        tag_bg                  = config["styling"]["general"]["tagBackgroundColor"]
-        tag_fg                  = config["styling"]["general"]["tagForegroundColor"]
+        if self.parent.dark_mode_used:
+            tag_bg                  = config["styles.night.tagBackgroundColor"]
+            tag_fg                  = config["styles.night.tagForegroundColor"]
+        else:
+            tag_bg                  = config["styles.tagBackgroundColor"]
+            tag_fg                  = config["styles.tagForegroundColor"]
 
         self.recent_tbl         = QWidget()
         self.recent_tbl.setObjectName("recentDisp")
@@ -952,8 +956,12 @@ class PriorityTab(QWidget):
         model = PriorityListModel(self)
 
         config = mw.addonManager.getConfig(__name__)
-        tag_bg = config["styling"]["general"]["tagBackgroundColor"]
-        tag_fg = config["styling"]["general"]["tagForegroundColor"]
+        if self.parent.dark_mode_used:
+            tag_bg                  = config["styles.night.tagBackgroundColor"]
+            tag_fg                  = config["styles.night.tagForegroundColor"]
+        else:
+            tag_bg                  = config["styles.tagBackgroundColor"]
+            tag_fg                  = config["styles.tagForegroundColor"]
 
         for c, pitem in enumerate(priority_list):
 
