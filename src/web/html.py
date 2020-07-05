@@ -35,20 +35,23 @@ import utility.tags
 import utility.text
 
 
-def getSynonymEditor() -> str:
-    synonymEditor = """
-    <b>Sets (Click inside to edit)</b>
-    <div style='max-height: 300px; overflow-y: auto; padding-right: 10px; margin-top: 4px;'>
-        <table id='synTable' style='width: 100%%; border-collapse: collapse;' class='striped'>
-            <thead><tr style='margin-bottom: 20px;'><th style='word-wrap: break-word; max-width: 100px;'></th><th style='width: 100px; text-align: center;'></th></thead>
-            %s
-        </table>
-    </div>
-    <br/>
-    <span>Input a set of terms, separated by ',' and hit enter.</span>
-    <input type='text' id='siac-syn-inp' onkeyup='synInputKeyup(event, this)'/>
-    """
+def get_synonym_dialog() -> str:
+    """ Returns the html for the dialog that allows input / editing of synonym sets (Settings & Info > Synonyms). """
+
     synonyms    = loadSynonyms()
+
+    if not synonyms:
+        return """
+            <b>Synonym sets</b>
+            <hr class='siac-modal-sep'/>
+            <br>
+            No synonyms defined yet. Input a set of terms, separated by ',' and hit enter.<br>
+            If a search is triggered that at least contains one word from a synonym set, all the other words in the set will be inserted in the search query too. 
+            <br/><br/>
+
+            <input type='text' id='siac-syn-inp' onkeyup='synInputKeyup(event, this)'/>
+        """
+
     st          = ""
     for c, sList in enumerate(synonyms):
         st += """<tr>
@@ -60,11 +63,22 @@ def getSynonymEditor() -> str:
                         <div class='siac-btn-smaller' style='margin-left: 4px;' onclick='searchSynset(this)'>Search</div>
                     </td>
                 </tr>""" % (c, ", ".join(sList), c)
-    if not synonyms:
-        return """No synonyms defined yet. Input a set of terms, separated by ',' and hit enter.<br/><br/>
-        <input type='text' id='siac-syn-inp' onkeyup='synInputKeyup(event, this)'/>
-        """
-    return synonymEditor % st
+    return f"""
+    <b>Synonym sets ({len(synonyms)})</b>
+    <hr class='siac-modal-sep'/>
+    If a search is triggered that at least contains one word from a synonym set, all the other words in the set will be inserted in the search query too. 
+    Click inside a set to edit it.
+    <br><br>
+    <div style='max-height: 300px; overflow-y: auto; padding-right: 10px; margin-top: 4px;'>
+        <table id='synTable' style='width: 100%; border-collapse: collapse;' class='striped'>
+            <thead><tr style='margin-bottom: 20px;'><th style='word-wrap: break-word; max-width: 100px;'></th><th style='width: 100px; text-align: center;'></th></thead>
+            {st}
+        </table>
+    </div>
+    <br/>
+    <span>Input a set of terms, separated by ',' and hit enter.</span>
+    <input type='text' id='siac-syn-inp' onkeyup='synInputKeyup(event, this)'/>
+    """
 
 def saveSynonyms(synonyms):
     config              = mw.addonManager.getConfig(__name__)
