@@ -698,14 +698,33 @@ def get_read_last_n_days(delta_days: int) -> Dict[int, Tuple[int, str]]:
 
 def get_read_last_n_days_by_day(delta_days: int) -> Dict[str, int]:
     """ Get # of read pages by dates. """
-    stamp = utility.date.date_x_days_ago_stamp(abs(delta_days))
-    conn = _get_connection()
-    res  = conn.execute(f"select count(*) as c, substr(created, 0, 11) as date from read where page > -1 and created >= '{stamp}' group by substr(created, 0, 11)").fetchall()
+    stamp   = utility.date.date_x_days_ago_stamp(abs(delta_days))
+    conn    = _get_connection()
+    res     = conn.execute(f"select count(*) as c, substr(created, 0, 11) as date from read where page > -1 and created >= '{stamp}' group by substr(created, 0, 11)").fetchall()
     conn.close()
-    d = dict()
+    d       = dict()
     for c, dt in res:
         d[dt] = c
     return d
+
+def get_notes_by_future_due_date() -> Dict[str, List[SiacNote]]:
+    """ Get notes that have a schedule due in the future. """
+
+    conn    = _get_connection()
+    res     = conn.execute(f"select * from notes where substr(reminder, 21, 10) >= '{utility.date.date_only_stamp()}'").fetchall()
+    conn.close()
+    res     = _to_notes(res)
+    d = dict()
+    for n in res:
+        due = n.current_due_date().date().strftime("%Y-%m-%d")
+        if not due in d:
+            d[due] = []
+        d[due].append(n)
+    return d
+        
+
+
+
 
 def get_note_tree_data() -> Dict[str, List[Tuple[int, str]]]:
     """
@@ -1094,15 +1113,13 @@ def _get_priority_list(nid_to_exclude: int = None) -> List[SiacNote]:
     return _to_notes(res)
 
 def _get_priority_list_with_last_prios() -> List[Tuple[Any, ...]]:
-    """
-        Returns (nid, last prio, last prio creation, current position, schedule)
-    """
+    """ Returns (nid, last prio, last prio creation, current position, schedule) """
+
     sql     = f""" select notes.id, prios.prio, prios.created, notes.position, notes.reminder, notes.delay from notes left join (select distinct nid, prio, max(created) as created, type from queue_prio_log group by nid) as prios on prios.nid = notes.id where notes.position >= 0 or substr(notes.reminder, 21, 10) >= '{utility.date.date_x_days_ago_stamp(3)}' order by position asc """
     conn    = _get_connection()
     res     = conn.execute(sql).fetchall()
     conn.close()
     return res
-
 
 def get_priority_list() -> List[SiacNote]:
     """
