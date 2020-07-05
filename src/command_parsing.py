@@ -580,11 +580,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             index.ui.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-user-note-queue-picker "):
-        nid = int(cmd.split()[1])
-        picker = QueuePicker(self.parentWindow, [], [])
-        if picker.exec_() and picker.chosen_id is not None and picker.chosen_id >= 0:
+        # show the queue manager dialog
+        nid     = int(cmd.split()[1])
+        picker  = QueuePicker(self.parentWindow)
+        if picker.exec_() and picker.chosen_id() is not None and picker.chosen_id() >= 0:
             # note = get_note(nid)
-            index.ui.reading_modal.display(picker.chosen_id)
+            index.ui.reading_modal.display(picker.chosen_id())
         else:
             if nid >= 0:
                 index.ui.reading_modal.reload_bottom_bar(nid)
@@ -824,18 +825,18 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-synonyms":
         if check_index():
-            index.ui.showInModal(getSynonymEditor())
+            index.ui.showInModal(get_synonym_dialog())
     elif cmd.startswith("siac-save-synonyms "):
         newSynonyms(cmd[19:])
-        index.ui.showInModal(getSynonymEditor())
+        index.ui.showInModal(get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-edit-synonyms "):
         editSynonymSet(cmd[19:])
-        index.ui.showInModal(getSynonymEditor())
+        index.ui.showInModal(get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-delete-synonyms "):
         deleteSynonymSet(cmd[21:])
-        index.ui.showInModal(getSynonymEditor())
+        index.ui.showInModal(get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-synset-search "):
         if check_index():
