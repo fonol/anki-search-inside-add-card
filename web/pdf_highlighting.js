@@ -57,6 +57,10 @@ var Highlighting = {
         pycmd("siac-hl-new " + cmd);
     },
 
+    displayFakeHighlight: function() {
+        this._createHighlightDiv(0,0,50,50,1, -1);
+    },
+
     displayHighlights: function () {
         this._removeAllHighlights();
         let canvas = document.getElementById("siac-pdf-canvas");
