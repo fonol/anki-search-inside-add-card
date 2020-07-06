@@ -55,7 +55,7 @@ from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.quick_open_pdf import QuickOpenPDF
 from .internals import requires_index_loaded
 from .config import get_config_value_or_default as conf_or_def
-from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index
+from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search
 
 config = mw.addonManager.getConfig(__name__)
 
@@ -306,11 +306,14 @@ def setup_hooks():
     add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-deleted", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-deleted", lambda: recalculate_priority_queue())
+    add_hook("user-note-deleted", lambda: try_repeat_last_search())
     add_hook("user-note-edited", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+    add_hook("user-note-edited", lambda: try_repeat_last_search())
     add_hook("updated-schedule", lambda: recalculate_priority_queue())
     add_hook("updated-schedule", lambda: get_index().ui.reading_modal.reload_bottom_bar())
     add_hook("reading-modal-closed", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("reading-modal-closed", lambda: try_repeat_last_search())
 
 
 def reset_state(shortcuts: List[Tuple], editor: Editor):
