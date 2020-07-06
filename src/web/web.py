@@ -228,6 +228,8 @@ def display_note_del_confirm_modal(editor, nid):
     """ Display the modal that asks to confirm a (add-on) note deletion. """
 
     html = get_note_delete_confirm_modal_html(nid)
+    if not html:
+        return
     return "$('#resultsWrapper').append(`%s`);" % html
    
 
@@ -258,7 +260,7 @@ def fillTagSelect(editor = None, expanded = False) :
             html = "<ul class='deck-sub-list'>"
         for key, value in tmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-search-tag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
         html += "</ul>"
         return html
 

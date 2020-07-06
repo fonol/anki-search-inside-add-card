@@ -23,7 +23,7 @@ import io
 import typing
 from aqt import mw
 from aqt.utils import showInfo
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 from ..state import get_index, check_index
 from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str
@@ -236,17 +236,17 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                             <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'><b>&nbsp;&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;&nbsp;</b>
                                 <div class='siac-btn-small-dropdown click'>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search"); event.stopPropagation();'>&nbsp;Search ...</div>
                                         <hr>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-head"); event.stopPropagation();'>&nbsp;<b>Read Next</b></div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-random"); event.stopPropagation();'>&nbsp;Read [Rnd]</div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-url-dialog"); event.stopPropagation();'>&nbsp;Url to PDF</div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-picker -1"); event.stopPropagation();'>&nbsp;Queue Man.</div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-zotero-import"); event.stopPropagation();'>&nbsp;Zotero Imp.</div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]</div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]</div>
                                 </div>
                             </div>
                             <div id='siac-settings-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; min-width: 140px; text-align: center;'><b>&nbsp; Settings & Info &nbsp;</b>
@@ -291,12 +291,12 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                 </div>
                 <div id="icns-large">
                     <div class='siac-read-icn' onclick='pycmd("siac-user-note-queue-read-head")'></div>
-                    <div class='pdf-icon' onclick='pycmd("siac-show-pdfs")'>
+                    <div class='pdf-icon' onclick='pycmd("siac-r-show-pdfs")'>
                         %s
                     </div>
                     <div class='rnd-icon' onclick='toggleNoteSidebar();'>NOTES</div>
                     <div class='flds-icon' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
-                    <div class='rnd-icon' onclick='pycmd("siac-random-notes " + siacState.selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
+                    <div class='rnd-icon' onclick='pycmd("siac-r-random-notes " + siacState.selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
                     <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
                     <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                 </div>
@@ -566,10 +566,12 @@ def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
     return html
 
 
-def get_note_delete_confirm_modal_html(nid: int) -> str:
+def get_note_delete_confirm_modal_html(nid: int) -> Optional[str]:
     """ Html for the modal that pops up when clicking on the trash icon on an add-on note. """
 
     note            = get_note(nid)
+    if not note:
+        return None
     creation_date   = note.created
     title           = utility.text.trim_if_longer_than(note.get_title(), 100) 
 
@@ -851,9 +853,9 @@ def get_pdf_list_first_card():
     """
     html = """
         <div style='width: calc(50%% - 30px); box-sizing: border-box; display: inline-block;'>
-            <a class='keyword' onclick='pycmd("siac-pdf-last-read")'>Order by Last Read</a><br>
-            <a class='keyword' onclick='pycmd("siac-pdf-last-added")'>Order by Last Added</a><br>
-            <a class='keyword' onclick='pycmd("siac-pdf-find-invalid")'>Find Invalid Paths</a>
+            <a class='keyword' onclick='pycmd("siac-r-pdf-last-read")'>Order by Last Read</a><br>
+            <a class='keyword' onclick='pycmd("siac-r-pdf-last-added")'>Order by Last Added</a><br>
+            <a class='keyword' onclick='pycmd("siac-r-pdf-find-invalid")'>Find Invalid Paths</a>
         </div>
         <div style='width: calc(50%%- 30px); box-sizing: border-box; display: inline-block;'>
             <p>

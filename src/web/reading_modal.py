@@ -78,6 +78,9 @@ class ReadingModal:
         index                   = get_index()
         note                    = get_note(note_id)
 
+        if not note:
+            return
+
         if ReadingModal.last_opened is None or (self.note_id is not None and int(note_id) != self.note_id):
             ReadingModal.last_opened = self.note_id if ReadingModal.last_opened else note_id
 

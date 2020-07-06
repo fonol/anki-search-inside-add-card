@@ -40,7 +40,7 @@ class Sidebar:
                     html = "<ul class='deck-sub-list'>"
                 for key, value in tmap.items():
                     full = prefix + "::" + key if prefix else key
-                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-user-note-search-tag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='siac-tl-plus' onclick='pycmd(\"siac-create-note-tag-prefill %s\") '><b> + &nbsp;</b></span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), full, iterateMap(value, full, False))
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-user-note-search-tag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='siac-tl-plus' onclick='pycmd(\"siac-create-note-tag-prefill %s\") '><b> + &nbsp;</b></span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), full, iterateMap(value, full, False))
                 html += "</ul>"
                 return html
 
@@ -50,21 +50,21 @@ class Sidebar:
             # check if there are any notes scheduled for today
             scheduled_for_today = get_notes_scheduled_for_today()
             if scheduled_for_today is not None and len(scheduled_for_today) > 0:
-                sched_today_menu_item = f"""<div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-due-today")'>Due today ({len(scheduled_for_today)})</div>"""
+                sched_today_menu_item = f"""<div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-due-today")'>Due today ({len(scheduled_for_today)})</div>"""
             else:
                 sched_today_menu_item = ""
 
             tab_html = f"""
                     <div style='flex: 0 1 auto; margin-top: 10px;'>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-newest");'>Newest</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs")'>PDFs</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-unread")'>PDFs - Unread</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-pdfs-in-progress")'>PDFs - In Progress</div>
-                      <!--  <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-last-done")'>Last Done</div>-->
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-show-stats")'>Read Stats</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-user-note-newest");'>Newest</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs")'>PDFs</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs-unread")'>PDFs - Unread</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs-in-progress")'>PDFs - In Progress</div>
+                      <!--  <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-last-done")'>Last Done</div>-->
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-stats")'>Read Stats</div>
                         {sched_today_menu_item}
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-untagged")'>Untagged</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-user-note-random");'>Random</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-user-note-untagged")'>Untagged</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-user-note-random");'>Random</div>
                         <input type='text' class='siac-sidebar-inp' style='width: calc(100% - 35px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>
                         <span class='siac-search-icn' style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
                         <div class='w-100' style='margin-top: 20px;'><b>Tags ({tag_len})</b>

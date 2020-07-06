@@ -45,18 +45,18 @@ function sendContent(event) {
     $fields.each(function(index, elem) {
         html += elem.innerHTML + "\u001f";
     });
-    pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+    pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 function sendSearchFieldContent() {
     showLoading("Searchbar");
     html = document.getElementById('siac-browser-search-inp').value + "\u001f";
-    pycmd('siac-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+    pycmd('siac-r-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 
 function searchFor(text) {
     showLoading("Note Search");
     text += "\u001f";
-    pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
+    pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
 }
 function updateSelectedDecks(elem) {
     siacState.selectedDecks = [];
@@ -279,7 +279,7 @@ function getSelectionText() {
     }
     if (text.length > 0 && text != "&nbsp;") {
         showLoading("Selection");
-        pycmd('siac-fld-selected ' + siacState.selectedDecks.toString() + ' ~ ' + text);
+        pycmd('siac-r-fld-selected ' + siacState.selectedDecks.toString() + ' ~ ' + text);
     }
 }
 function searchForUserNote(event, elem) {
@@ -290,13 +290,13 @@ function searchForUserNote(event, elem) {
         if (elem.id){
             elem.parentElement.parentElement.style.display = 'none';
         }
-        pycmd('siac-user-note-search-inp ' + elem.value);
+        pycmd('siac-r-user-note-search-inp ' + elem.value);
     } else if (elem.id && (event.key === "Escape" || event.key === "Esc")) {
         elem.parentElement.style.display = 'none';
     } else {
         clearTimeout(searchMaskTimer);
         searchMaskTimer = setTimeout(function() {
-            pycmd('siac-user-note-search-inp ' + elem.value);
+            pycmd('siac-r-user-note-search-inp ' + elem.value);
         }, 800);
     }
 }
@@ -399,7 +399,7 @@ function synonymSetKeydown(event, elem, index) {
 function searchSynset(elem) {
     let set = elem.parentElement.parentElement.children[0].children[0].innerHTML;
     if (set) {
-        pycmd("siac-synset-search " + set);
+        pycmd("siac-r-synset-search " + set);
     }
 }
 function updateFieldToExclude(checkbox, mid, fldOrd) {
@@ -463,12 +463,12 @@ function pinCard(elem, nid) {
 function searchCard(elem) {
     let html = $(elem).parent().next().html();
     showLoading("Note Search");
-    pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+    pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 function searchCardFromFloated(id) {
     let html = document.getElementById(id).innerHTML;
     showLoading("Note Search");
-    pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+    pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 function edit(nid) {
     pycmd('siac-edit-note ' + nid);
@@ -599,8 +599,8 @@ function displayPagination(page, pageMax, total, resultsFound, cacheSize) {
     if (page === 1 && pageMax == 1) {
         html = "";
     } else {
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page 1")'>&#171;</div>`;
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.max(page - 1, 1)}")'>&#8249;</div>`;
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-r-page 1")'>&#171;</div>`;
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-r-page ${Math.max(page - 1, 1)}")'>&#8249;</div>`;
         let a = 0, b = 0;
         if (page + 5 > pageMax) {
             a = page + 5 - pageMax;
@@ -610,13 +610,13 @@ function displayPagination(page, pageMax, total, resultsFound, cacheSize) {
         }
         for (var i = Math.max(page - 5 - a, 1); i <= page + 5 + b; i++) {
             if (i == page) {
-                html += `<div class='siac-pg-icn siac-pg-icn-active' onclick='pycmd("siac-page ${i}")'>${i}</div>`;
+                html += `<div class='siac-pg-icn siac-pg-icn-active' onclick='pycmd("siac-r-page ${i}")'>${i}</div>`;
             } else if (i <= pageMax){
-                    html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${i}")'>${i}</div>`;
+                    html += `<div class='siac-pg-icn' onclick='pycmd("siac-r-page ${i}")'>${i}</div>`;
             }
         }
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.min(page + 1, pageMax)}")'>&#8250;</div>`;
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${pageMax}")'>&#187;</div>`;
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-r-page ${Math.min(page + 1, pageMax)}")'>&#8250;</div>`;
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-r-page ${pageMax}")'>&#187;</div>`;
 
     }
     document.getElementById("siac-pagination-status").innerHTML = `Showing ${50 * (page - 1) + 1} - ${Math.min(total, 50 * page)} of ${total}`;
@@ -829,7 +829,7 @@ function fieldsBtnClicked() {
     $fields.each(function(index, elem) {
         html += elem.innerHTML + "\u001f";
     });
-    pycmd('siac-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+    pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 
 function showModalSubpage(html) {
