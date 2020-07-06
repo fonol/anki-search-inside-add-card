@@ -1017,7 +1017,6 @@ def get_position(nid: int) -> Optional[int]:
 
 def delete_note(id: int):
     update_priority_list(id, 0)
-    # s = time.time() * 1000
     conn = _get_connection()
     conn.executescript(f"""delete from read where nid ={id};
                             delete from marks where nid ={id};
