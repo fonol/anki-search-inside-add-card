@@ -280,7 +280,7 @@
 .floatingBtnBar {
     display: inline;
     color: white;
-    vertical-align: middle;
+    vertical-align: top;
     font-weight: bold;
 }
 .floatingBtnBarItem {
