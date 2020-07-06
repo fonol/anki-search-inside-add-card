@@ -140,6 +140,9 @@ class Output:
             self.lastResults        = notes
             self.last_query_set     = query_set
 
+        if (page - 1) * 50 > len(notes):
+            page = page - 1
+
         searchResults               = notes[(page- 1) * 50: page * 50]
         nids                        = [r.id for r in searchResults]
 
@@ -352,7 +355,7 @@ class Output:
         """
             Use webview's eval function to execute the given js.
         """
-        if self._editor is None or self._editor.web is None:
+        if self._editor is None or self._editor.web is None or not js:
             return
         self._editor.web.eval(js)
 
