@@ -127,6 +127,10 @@ class NoteEditor(QDialog):
 
         if self.note_id is not None:
             self.note = get_note(note_id)
+            if not self.note:
+                return
+
+        
         #self.mw.setupDialogGC(self)
         #self.setWindowModality(Qt.WindowModal)
         #self.setAttribute(Qt.WA_DeleteOnClose)
