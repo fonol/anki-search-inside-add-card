@@ -57,7 +57,8 @@ import utility.text
 import state
 
 
-config = mw.addonManager.getConfig(__name__)
+config              = mw.addonManager.getConfig(__name__)
+
 
 def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tuple[bool, Any]:
     """
@@ -69,39 +70,48 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     """
     if not isinstance(self, aqt.editor.Editor):
         return handled
-    index = get_index()
+
+    state.last_cmd    = cmd
+    if cmd.startswith("siac-r-"):
+        state.last_search_cmd = cmd
+
+    index       = get_index()
     # just to make sure
     if index is not None and index.ui._editor is None:
         index.ui.set_editor(self)
 
     # there has to be a more elegant way of processing the cmds than a giant if else...
 
-    if cmd.startswith("siac-fld "):
-        # keyup in fields -> search
-        rerender_info(self, cmd[8:])
+    # cmds that render some kind of result should start with "siac-r-"
+    # so that they can be stored and repeated if the UI needs to be refreshed
 
-    elif cmd.startswith("siac-page "):
+    if cmd.startswith("siac-r-fld "):
+        # keyup in fields -> search
+        rerender_info(self, cmd[10:])
+
+    elif cmd.startswith("siac-r-page "):
         # page in results clicked
         index.ui.show_page(self, int(cmd.split()[1]))
 
-    elif cmd.startswith("siac-srch-db "):
+    elif cmd.startswith("siac-r-srch-db "):
         # bottom search input used
         if index.searchbar_mode == "Add-on":
-            rerender_info(self, cmd[13:])
+            rerender_info(self, cmd[15:])
         else:
-            rerender_info(self, cmd[13:], searchDB = True)
+            rerender_info(self, cmd[15:], searchDB = True)
 
-    elif cmd.startswith("siac-fld-selected ") and index is not None:
+    elif cmd.startswith("siac-r-fld-selected ") and index is not None:
         # selection in field or note
-        rerender_info(self, cmd[18:])
+        rerender_info(self, cmd[20:])
 
-    elif (cmd.startswith("siac-note-stats ")):
+    elif cmd.startswith("siac-note-stats "):
         # note "Info" button clicked
         setStats(cmd[16:], calculateStats(cmd[16:], index.ui.gridView))
 
-    elif (cmd.startswith("siac-tag-clicked ")):
+    elif cmd.startswith("siac-tag-clicked "):
         # clicked on a tag
         if config["tagClickShouldSearch"]:
+            state.last_search_cmd = cmd
             rerender_info(self, cmd[17:].strip(), searchByTags=True)
         else:
             add_tag(cmd[17:])
@@ -121,20 +131,26 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         QDesktopServices.openUrl(QUrl(" ".join(cmd.split()[1:])))
 
     elif cmd.startswith("siac-pin"):
+        # pin note symbol clicked
         set_pinned(cmd[9:])
 
-    elif (cmd.startswith("siac-render-tags")):
+    elif cmd.startswith("siac-render-tags"):
+        # clicked on a tag with (+n) 
         index.ui.printTagHierarchy(cmd[16:].split(" "))
 
-    elif (cmd.startswith("siac-random-notes ") and check_index()):
-        res = getRandomNotes(index, [s for s in cmd[17:].split(" ") if s != ""])
+    elif cmd.startswith("siac-r-random-notes ") and check_index():
+        # RANDOM clicked
+        res = getRandomNotes(index, [s for s in cmd[19:].split(" ") if s != ""])
         index.ui.print_search_results(res["result"], res["stamp"])
+
     elif cmd == "siac-fill-deck-select":
         fillDeckSelect(self, expanded=True, update=False)
+
     elif cmd == "siac-fill-tag-select":
         fillTagSelect(expanded=True)
-    elif cmd.startswith("siac-search-tag "):
-        rerender_info(self, cmd[16:].strip(), searchByTags=True)
+
+    elif cmd.startswith("siac-r-search-tag "):
+        rerender_info(self, cmd[18:].strip(), searchByTags=True)
 
     elif cmd.startswith("siac-tag-info "):
         #this renders the popup
@@ -179,7 +195,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         mw.col.sched.unsuspendCards(cids)
         show_unsuspend_modal(nid)
 
-    elif cmd == "siac-show-pdfs":
+    elif cmd == "siac-r-show-pdfs":
         if check_index():
             stamp = setStamp()
             notes = get_all_pdf_notes()
@@ -188,24 +204,24 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
             index.ui.print_search_results(notes, stamp)
 
-    elif cmd == "siac-show-pdfs-unread":
+    elif cmd == "siac-r-show-pdfs-unread":
         if check_index():
             stamp = setStamp()
             notes = get_all_unread_pdf_notes()
             index.ui.print_search_results(notes, stamp)
 
-    elif cmd == "siac-show-pdfs-in-progress":
+    elif cmd == "siac-r-show-pdfs-in-progress":
         if check_index():
             stamp = setStamp()
             notes = get_in_progress_pdf_notes()
             index.ui.print_search_results(notes, stamp)
     
-    elif cmd == "siac-show-due-today":
+    elif cmd == "siac-r-show-due-today":
         stamp = setStamp()
         notes = get_notes_scheduled_for_today()
         index.ui.print_search_results(notes, stamp)
 
-    elif cmd == "siac-show-stats":
+    elif cmd == "siac-r-show-stats":
         # Read Stats clicked in sidebar
         stamp       = setStamp()
         res         = []
@@ -231,26 +247,26 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.ui.js(f""" drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)}); """)
 
 
-    elif cmd == "siac-show-last-done":
+    elif cmd == "siac-r-show-last-done":
         stamp = setStamp()
         notes = get_last_done_notes()
         index.ui.print_search_results(notes, stamp)
 
-    elif cmd == "siac-pdf-last-read":
+    elif cmd == "siac-r-pdf-last-read":
         stamp = setStamp()
         notes = get_pdf_notes_last_read_first()
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         index.ui.print_search_results(notes, stamp)
 
-    elif cmd == "siac-pdf-last-added":
+    elif cmd == "siac-r-pdf-last-added":
         stamp = setStamp()
         notes = get_pdf_notes_last_added_first()
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         index.ui.print_search_results(notes, stamp)
 
-    elif cmd == "siac-pdf-find-invalid":
+    elif cmd == "siac-r-pdf-find-invalid":
         stamp = setStamp()
         notes = get_invalid_pdfs()
         sp_body = get_pdf_list_first_card()
@@ -432,17 +448,19 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-model-dialog":
         display_model_dialog()
 
-    elif cmd.startswith("siac-added-same-day "):
+    elif cmd.startswith("siac-r-added-same-day "):
         if check_index():
-            getCreatedSameDay(index, self, int(cmd[20:]))
+            getCreatedSameDay(index, self, int(cmd.split()[1]))
 
     elif cmd == "siac-last-timing":
         if index is not None and index.lastResDict is not None:
             show_timing_modal()
+
     elif cmd.startswith("siac-last-timing "):
         render_time = int(cmd.split()[1])
         if index is not None and index.lastResDict is not None:
             show_timing_modal(render_time)
+
     elif cmd.startswith("siac-cal-info "):
         if check_index():
             context_html = get_cal_info_context(int(cmd[14:]))
@@ -543,37 +561,37 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if id >= 0:
             index.ui.reading_modal.display(id)
 
-    elif cmd == "siac-user-note-queue":
+    elif cmd == "siac-r-user-note-queue":
         stamp = setStamp()
         notes = get_priority_list()
         if check_index():
             index.ui.print_search_results(notes, stamp)
 
-    elif cmd == "siac-user-note-queue-random":
+    elif cmd == "siac-r-user-note-queue-random":
         stamp = setStamp()
         notes = get_queue_in_random_order()
         if check_index():
             index.ui.print_search_results(notes, stamp)
 
-    elif cmd == "siac-user-note-untagged":
+    elif cmd == "siac-r-user-note-untagged":
         stamp = setStamp()
         notes = get_untagged_notes()
         if check_index():
             index.ui.print_search_results(notes, stamp)
 
-    elif cmd == "siac-user-note-newest":
+    elif cmd == "siac-r-user-note-newest":
         stamp = setStamp()
         if check_index():
             notes = get_newest(index.limit, index.pinned)
             index.ui.print_search_results(notes, stamp)
 
-    elif cmd == "siac-user-note-random":
+    elif cmd == "siac-r-user-note-random":
         stamp = setStamp()
         if check_index():
             notes = get_random(index.limit, index.pinned)
             index.ui.print_search_results(notes, stamp)
 
-    elif cmd.startswith("siac-user-note-search-tag "):
+    elif cmd.startswith("siac-r-user-note-search-tag "):
         stamp = setStamp()
         if check_index():
             notes = find_by_tag(" ".join(cmd.split()[1:]))
@@ -602,7 +620,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if check_index():
             index.ui.show_search_modal("searchForUserNote(event, this);", "Search For User Notes")
 
-    elif cmd.startswith("siac-user-note-search-inp "):
+    elif cmd.startswith("siac-r-user-note-search-inp "):
         if check_index():
             search_for_user_notes_only(self, " ".join(cmd.split()[1:]))
 
@@ -838,7 +856,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         deleteSynonymSet(cmd[21:])
         index.ui.showInModal(get_synonym_dialog())
         index.synonyms = loadSynonyms()
-    elif cmd.startswith("siac-synset-search "):
+    elif cmd.startswith("siac-r-synset-search "):
         if check_index():
             index.ui.hideModal()
             default_search_with_decks(self, cmd.split()[1], ["-1"])
@@ -919,14 +937,8 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     #   Special searches
     #
     elif cmd.startswith("predefSearch "):
+        state.last_search_cmd = cmd
         parse_predef_search_cmd(cmd, self)
-
-    elif cmd.startswith("similarForCard "):
-        if check_index():
-            cid = int(cmd.split()[1])
-            min_sim = int(cmd.split()[2])
-            res_and_html = similar_cards(cid, min_sim, 20)
-            index.ui.show_in_modal_subpage(res_and_html[1])
 
     elif cmd == "siac-pdf-sidebar-last-addon":
         # last add-on notes button clicked in the pdf sidebar
@@ -1138,11 +1150,12 @@ def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
     """
     if not check_index():
         return
-    index = get_index()
-    cmd = cmd[13:]
-    searchtype = cmd.split(" ")[0]
-    limit = int(cmd.split(" ")[1])
-    decks = cmd.split(" ")[2:]
+    index       = get_index()
+    cmd         = cmd[13:]
+    searchtype  = cmd.split(" ")[0]
+    limit       = int(cmd.split(" ")[1])
+    decks       = cmd.split(" ")[2:]
+
     if searchtype == "lowestPerf":
         stamp = setStamp()
         index.lastSearch = (None, decks, "lowestPerf")
@@ -1384,24 +1397,21 @@ def update_field_to_exclude(mid: int, fldOrd: int, value: bool):
             config["fieldsToExclude"][mid].append(fldOrd)
     mw.addonManager.writeConfig(__name__, config)
 
+
 @requires_index_loaded
 def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
     """
     Sometimes it is useful if we can simply repeat the last search,
     e.g. the user has clicked another deck in the deck select.
     """
-    index = get_index()
 
-    if index.lastSearch is not None:
-        if editor is None and index.ui._editor is not None:
-            editor = index.ui._editor
+    if state.last_search_cmd is None:
+        return
 
-        if index.lastSearch[2] == "default":
-            default_search_with_decks(editor, index.lastSearch[0], index.selectedDecks)
-        elif index.lastSearch[2] == "lastCreated":
-            getCreatedNotesOrderedByDate(index, editor, index.selectedDecks, index.lastSearch[3], "desc")
-        elif index.lastSearch[2] == "firstCreated":
-            getCreatedNotesOrderedByDate(index, editor, index.selectedDecks, index.lastSearch[3], "asc")
+    if editor is None:
+        editor = get_index().ui._editor
+    
+    expanded_on_bridge_cmd(None, state.last_search_cmd, editor)
 
 
 def generate_clozes(sentences, pdf_path, pdf_title, page):
