@@ -472,6 +472,7 @@ class ReadingModal:
                 editable    = False
             else:
                 editable    = len(text) < 100000
+                overflow    = "hidden" 
                 text        = self.text_note_html(editable, priority)
             
         
@@ -939,7 +940,7 @@ class ReadingModal:
         return """
             tinymce.init({
                 selector: '#siac-text-top',
-                plugins: 'preview paste importcss searchreplace autolink directionality code visualblocks visualchars link codesample table charmap hr nonbreaking toc insertdatetime advlist lists wordcount imagetools textpattern noneditable charmap quickbars',
+                plugins: 'autoresize preview paste importcss searchreplace autolink directionality code visualblocks visualchars link codesample table charmap hr nonbreaking toc insertdatetime advlist lists wordcount imagetools textpattern noneditable charmap quickbars',
                 menubar: 'edit view insert format tools table',
                 toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | charmap | codesample | ltr rtl',
                 toolbar_sticky: true,
