@@ -105,9 +105,9 @@ class Output:
     def try_rerender_last(self):
         if self.previous_calls is not None and len(self.previous_calls) > 0:
             c = self.previous_calls[-1]
-            self.print_search_results(c[0], None, c[2], c[3], c[4], c[5], c[6], c[7], is_cached=True)
+            self.print_search_results(c[0], None, c[2], c[3], c[4], c[5], c[6], is_cached=True)
 
-    def print_search_results(self, notes, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_queue=False, is_cached=False):
+    def print_search_results(self, notes, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_cached=False):
         """
         This is the html that gets rendered in the search results div.
         This will always print the first page.
@@ -121,8 +121,26 @@ class Output:
             if stamp != self.latest:
                 return
 
+        # if we were on e.g. on page 2 which contains exactly one note (nr. 51 of 51 search results), and deleted that note, the
+        # refresh call would still be to rerender page 2 with the updated search results, 
+        # but page 2 would not exist anymore, so we have to check for that:
+        if (page - 1) * 50 > len(notes):
+            page = page - 1
+
+        # if this is true, avoid scrolling to the top of the search results again
+        is_rerender                 = False
+
         if not is_cached and len(notes) > 0:
-            self.previous_calls.append([notes, None, editor, logging, printTimingInfo, page, query_set, is_queue])
+            
+            # roughly check if current call equals the last one, to set is_rerender to True
+            if len(self.previous_calls) > 0:
+                nids = [n.id for n in self.previous_calls[-1][0][:30]]
+                if query_set == self.previous_calls[-1][6] and page == self.previous_calls[-1][5] and nids == [n.id for n in notes[:30]]:
+                    is_rerender = True
+
+            # cache all calls to be able to repeat them
+            self.previous_calls.append([notes, None, editor, logging, printTimingInfo, page, query_set])
+            
             if len(self.previous_calls) > 11:
                 self.previous_calls.pop(0)
 
@@ -140,8 +158,7 @@ class Output:
             self.lastResults        = notes
             self.last_query_set     = query_set
 
-        if (page - 1) * 50 > len(notes):
-            page = page - 1
+    
 
         searchResults               = notes[(page- 1) * 50: page * 50]
         nids                        = [r.id for r in searchResults]
@@ -261,7 +278,7 @@ class Output:
                     nid         = nid, 
                     creation    = "&nbsp;&#128336; " + timeDiffString, 
                     edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
-                    mouseup     = "getSelectionText()" if not is_queue else "",
+                    mouseup     = "getSelectionText()",
                     text        = text, 
                     tags        = utility.tags.build_tag_string(res.tags, self.gridView),
                     queue       = ": Q-%s&nbsp;" % (res.position + 1) if res.is_in_queue() else "",
@@ -276,7 +293,7 @@ class Output:
                     nid         = nid, 
                     creation    = "&nbsp;&#128336; " + timeDiffString, 
                     edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
-                    mouseup     = "getSelectionText()" if not is_queue else "",
+                    mouseup     = "getSelectionText()",
                     text        = text, 
                     tags        = utility.tags.build_tag_string(res.tags, self.gridView), 
                     ret         = retInfo)
@@ -301,7 +318,8 @@ class Output:
             self.last_took = took
         else:
             took = "?"
-        timing = "true" if printTimingInfo else "false"
+        timing      = "true" if printTimingInfo else "false"
+        rerender    = "true" if is_rerender else "false" 
 
         if not self.hideSidebar:
             infoMap = {
@@ -309,9 +327,9 @@ class Output:
                 "Found" :  "<b>%s</b> notes" % (len(notes) if len(notes) > 0 else "<span style='color: red;'>0</span>")
             }
             info = self.build_info_table(infoMap, tags, allText)
-            cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes), len(self.previous_calls), stamp, timing)
+            cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes), len(self.previous_calls), stamp, timing, rerender)
         else:
-            cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s);" % (html, page, pageMax, len(notes), len(self.previous_calls), stamp, timing)
+            cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (html, page, pageMax, len(notes), len(self.previous_calls), stamp, timing, rerender)
         cmd = f"{cmd}updateSwitchBtn({len(notes)});" 
 
         self._js(cmd, editor)
