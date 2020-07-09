@@ -177,8 +177,9 @@
     border-radius: 30px;
     height: 30px;
     opacity: 0;
-    margin-left: 24px;
-    width: 30px;
+     /* margin-left: 24px; */
+    width: 30px; 
+    display: inline-block;
 
     animation: pulsate 1.5s ease-out;
     animation-iteration-count: infinite;
@@ -186,10 +187,14 @@
 #loader {
     position: absolute;
     top: calc(50% - 45px);
-    left: calc(50% - 27px);
-    width: 80px;
+    left: calc(50% - 75px);
+    width: 150px;
     font-size: 20px;
+    text-align: center;
     color: #2496dc;
+    padding: 15px;
+    z-index: 10000;
+    border: 3px outset var(--c-modal-border);
 }
 .siac-search-loader {
     width: 250px; 

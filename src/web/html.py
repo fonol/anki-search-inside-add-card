@@ -306,7 +306,10 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                     <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                 </div>
                 <div id="resultsArea" style="">
-                    <div id='loader' style='%s'> <div class='signal'></div><br/>Preparing index...</div>
+                    <div id='loader' style='%s'> 
+                        <div class='signal'></div>
+                        <br/>Preparing index...
+                    </div>
                     <div id='resultsWrapper'>
                         <div id='searchResults'></div>
                         <div id='searchInfo' class='%s'></div>
