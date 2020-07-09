@@ -497,14 +497,14 @@ function clearSearchResults() {
     $('.tagLbl').css("z-index", "999");
 }
 
-function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total = 50, cacheSize = -1, stamp = -1, printTiming = false) {
+function setSearchResults(html, infoStr, infoMap, page = 1, pageMax = 1, total = 50, cacheSize = -1, stamp = -1, printTiming = false, isRerender= false) {
     let rStart = new Date().getTime();
     clearSearchResults();
     var sr = document.getElementById("searchResults");
     sr.style.overflowY = 'hidden';
     sr.style.paddingRight = '24px';
     sr.innerHTML += html;
-    if (!siacState.keepPositionAtRendering && html.length > 0) {
+    if (!isRerender && !siacState.keepPositionAtRendering && html.length > 0) {
         sr.scrollTop = 0;
     } else if (siacState.keepPositionAtRendering) {
         siacState.keepPositionAtRendering = false;
@@ -599,8 +599,8 @@ function displayPagination(page, pageMax, total, resultsFound, cacheSize) {
     if (page === 1 && pageMax == 1) {
         html = "";
     } else {
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-r-page 1")'>&#171;</div>`;
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-r-page ${Math.max(page - 1, 1)}")'>&#8249;</div>`;
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page 1")'>&#171;</div>`;
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.max(page - 1, 1)}")'>&#8249;</div>`;
         let a = 0, b = 0;
         if (page + 5 > pageMax) {
             a = page + 5 - pageMax;
@@ -610,13 +610,13 @@ function displayPagination(page, pageMax, total, resultsFound, cacheSize) {
         }
         for (var i = Math.max(page - 5 - a, 1); i <= page + 5 + b; i++) {
             if (i == page) {
-                html += `<div class='siac-pg-icn siac-pg-icn-active' onclick='pycmd("siac-r-page ${i}")'>${i}</div>`;
+                html += `<div class='siac-pg-icn siac-pg-icn-active' onclick='pycmd("siac-page ${i}")'>${i}</div>`;
             } else if (i <= pageMax){
-                    html += `<div class='siac-pg-icn' onclick='pycmd("siac-r-page ${i}")'>${i}</div>`;
+                    html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${i}")'>${i}</div>`;
             }
         }
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-r-page ${Math.min(page + 1, pageMax)}")'>&#8250;</div>`;
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-r-page ${pageMax}")'>&#187;</div>`;
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.min(page + 1, pageMax)}")'>&#8250;</div>`;
+            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${pageMax}")'>&#187;</div>`;
 
     }
     document.getElementById("siac-pagination-status").innerHTML = `Showing ${50 * (page - 1) + 1} - ${Math.min(total, 50 * page)} of ${total}`;
@@ -905,7 +905,7 @@ function addFloatingNote(nid) {
     </div>`;
     let floatingNote = `<div id="nF-${nid}" class='noteFloating'>
             <div id="nFH-${nid}" class='noteFloatingHeader' onmousedown='dragElement(this.parentElement, "nFH-${nid}")'>&nbsp;${btnBar}</div>
-            <div id="nFC-${nid}" class='noteFloatingContent'>${content}</div>
+            <div id="nFC-${nid}" class='noteFloatingContent'  onmouseup='getSelectionText()' >${content}</div>
                 </div>
             `;
     if ($('.field').length > 8)
