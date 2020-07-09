@@ -33,8 +33,14 @@ deck_map            : Optional[Dict[str, int]]          = None
 edit                : Optional[Editor]                  = None
 night_mode          : Optional[bool]                    = None
 
+# last cmd send from the web view, see command_parsing.py
 last_cmd            : Optional[str]                     = None
+
+# last cmd send from the web view that triggers any kind of search
 last_search_cmd     : Optional[str]                     = None
+
+# last page cmd from the web view that triggers a page load
+last_page_requested : Optional[int]                     = None
 
 def check_index() -> bool:
     """ Returns True if index and ui are ready to use. """
