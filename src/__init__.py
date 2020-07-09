@@ -202,8 +202,8 @@ def activate_nightmode(shortcuts: List[Tuple], editor: Editor):
 def insert_scripts():
     """
         Expose the scripts on the internal web server.
-        styles.css and pdf_reader.css are not included that way, because they 
-        are processed ($<config value>$ placeholders are replaced) and inserted via <style> tags.
+        'styles.css' not included that way, because it 
+        is processed ($<config value>$ placeholders are replaced) and inserted via <style> tags.
     """
 
     addon_id    = utility.misc.get_addon_id()
@@ -248,7 +248,7 @@ def insert_scripts():
             script.type = 'text/javascript';
             script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/cal-heatmap.min.js';
             document.body.appendChild(script);
-        }}, 100);
+        }}, 200);
 
         script = document.createElement('script');
         script.type = 'text/javascript';
@@ -304,6 +304,7 @@ def setup_hooks():
     """ Todo: move more add-on code to hooks. """
 
     add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("user-note-created", lambda: try_repeat_last_search())
     add_hook("user-note-deleted", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-deleted", lambda: recalculate_priority_queue())
     add_hook("user-note-deleted", lambda: try_repeat_last_search())
