@@ -210,7 +210,7 @@ def show_settings_modal(editor):
     index   = get_index()
 
     index.ui.showInModal(html)
-    return "$('.modal-close').on('click', function() {pycmd(`siac-write-config`) })"
+    return "$('.modal-close').on('click', function() {pycmd(`siac-write-config`); })"
 
 @js
 def show_unsuspend_modal(nid):
