@@ -195,6 +195,7 @@
     padding: 15px;
     z-index: 10000;
     border: 3px outset var(--c-modal-border);
+    background: var(--c-modal-background);
 }
 .siac-search-loader {
     width: 250px; 
