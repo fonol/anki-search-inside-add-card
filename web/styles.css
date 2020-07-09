@@ -884,6 +884,10 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
     background: var(--c-button-background);
     border: 1px solid  var(--c-button-border);
 }
+body.nightMode .modal-content input {
+    background-color: var(--c-modal-background-night);
+    color: var(--c-modal-foreground-night);
+}
 
 .siac-btn-dark-smaller {
     font-size: 10px !important;
