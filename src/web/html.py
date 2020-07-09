@@ -35,6 +35,11 @@ import utility.tags
 import utility.text
 
 
+""" Html.py - various HTML-building functions. 
+    Bigger UI components like the reading modal (reading_modal.py) or the sidebar (sidebar.py) contain their own HTML producing functions.
+"""
+
+
 def get_synonym_dialog() -> str:
     """ Returns the html for the dialog that allows input / editing of synonym sets (Settings & Info > Synonyms). """
 
@@ -237,7 +242,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                                 <div class='siac-btn-small-dropdown click'>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
+                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search"); event.stopPropagation();'>&nbsp;Search ...</div>
                                         <hr>
                                         <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
@@ -585,10 +590,10 @@ def get_note_delete_confirm_modal_html(nid: int) -> Optional[str]:
             <div style='text-align: center; font-size: 14px; margin-bottom: 4px;'><b>%s</b></div>
             <div style='text-align: center; font-size: 14px;'><i>%s</i></div>
             <br><br>
-            <div style='text-align: center;'><div class='siac-btn-small bold' onclick='removeNote(%s);deleteNote(%s);' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn-small bold' onclick='$(this.parentNode.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
+            <div style='text-align: center;'><div class='siac-btn-small bold' onclick='deleteNote(%s);' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn-small bold' onclick='$(this.parentNode.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
        </div>
     </div>
-    """ % (title, creation_date, nid, nid)
+    """ % (title, creation_date, nid)
 
 
 def stylingModal(config):
