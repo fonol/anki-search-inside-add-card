@@ -374,21 +374,19 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Newer add-on version should now run on 2.1.22 and 2.1.23 too, please report any bugs.",
-        "Added 'Read Stats' in sidebar",
-        "Hide PDF tooltip after toggle",
-        "Fix: Deck select repeating last search on open",
-        "Fix: Don't allow whitespace-only input in note search in sidebar",
-        "Fix: Search hanging when input has backticks (&#96;) in it.",
-        "Fix: CTRL+O -> CTRL+L (last opened note) not working sometimes",
-        "Fix: Floating notes having highlights still on them"
+        "Smarter rerendering (e.g. rerender the current results after note edit/delete/add/PDF reader close).",
+        "Allow Search on Select for floating notes",
+        "Fix: tinyMCE editor for text notes having not the correct height on Anki 2.1.22",
+        "Fix: Text field colors in settings modal staying white in night mode",
+        "Fix: Read Stats Heatmap not appearing sometimes"
     ]
 
 def known_issues() -> List[str]:
     """ Returns currently known issues/bugs. """
 
     return [
-        "PDF highlights seem to lose their opacity on 2.1.28 alpha",
-        "Some PDF color modes are not displayed correctly on 2.1.28 alpha",
+        "PDF highlights seem to lose their opacity on 2.1.28",
+        "Some PDF color modes are not displayed correctly on 2.1.28",
         "Tag autocomplete in Create/Update note modal only works on first tag",
+        "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions"
     ]
