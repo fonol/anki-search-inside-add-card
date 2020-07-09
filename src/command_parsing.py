@@ -56,24 +56,25 @@ import utility.misc
 import utility.text
 import state
 
+""" command_parsing.py - Mainly used to catch pycmds from the web view, and trigger the appropriate actions for them. """
 
 config              = mw.addonManager.getConfig(__name__)
-
 
 def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tuple[bool, Any]:
     """
     Process the various commands coming from the ui -
     this includes users clicks on option checkboxes, on rendered results, on special searches, etc.
 
-    Todo: needs some serious cleanup / splitting up.
-    Todo: maybe move cmd handling to components (reading_modal, sidebar, index)
+    Todo: Needs some serious cleanup / splitting up.
+    Todo: Maybe move cmd handling to components (reading_modal, sidebar, index)
     """
     if not isinstance(self, aqt.editor.Editor):
         return handled
 
     state.last_cmd    = cmd
     if cmd.startswith("siac-r-"):
-        state.last_search_cmd = cmd
+        state.last_search_cmd       = cmd
+        state.last_page_requested   = None
 
     index       = get_index()
     # just to make sure
@@ -82,19 +83,27 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     # there has to be a more elegant way of processing the cmds than a giant if else...
 
-    # cmds that render some kind of result should start with "siac-r-"
-    # so that they can be stored and repeated if the UI needs to be refreshed
+    # In general, cmds should start with "siac-" to avoid collisions with other add-ons and for easier debugging.
+    # Commands that render some kind of result should start with "siac-r-",
+    # so that they can be stored and repeated if the UI needs to be refreshed.
 
     if cmd.startswith("siac-r-fld "):
         # keyup in fields -> search
         rerender_info(self, cmd[10:])
 
-    elif cmd.startswith("siac-r-page "):
-        # page in results clicked
+    elif cmd.startswith("siac-page "):
+        # Page button in results clicked.
+        # This is a special command, it triggers a rendering, but should not be stored 
+        # as last command in state.last_search_cmd like other cmds that start with "siac-r-".
+        # That is because the index.ui instance caches the last result, and uses that cached result to display 
+        # a requested page (but to refresh the UI, we don't want the result to be cached).
+        # So if we want to refresh the UI, state.last_search_cmd should point to the cmd that produces the search results, 
+        # and state.last_page_requested indicates that we are on a page other than the first at the time of refresh.
+        state.last_page_requested = int(cmd.split()[1])
         index.ui.show_page(self, int(cmd.split()[1]))
 
     elif cmd.startswith("siac-r-srch-db "):
-        # bottom search input used
+        # bottom search input used, so trigger either an add-on search or a browser search
         if index.searchbar_mode == "Add-on":
             rerender_info(self, cmd[15:])
         else:
@@ -106,10 +115,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-note-stats "):
         # note "Info" button clicked
-        setStats(cmd[16:], calculateStats(cmd[16:], index.ui.gridView))
+        set_stats(cmd[16:], calculateStats(cmd[16:], index.ui.gridView))
 
     elif cmd.startswith("siac-tag-clicked "):
-        # clicked on a tag
+        # clicked on a tag -> either trigger a search or add the tag to the tag bar
         if config["tagClickShouldSearch"]:
             state.last_search_cmd = cmd
             rerender_info(self, cmd[17:].strip(), searchByTags=True)
@@ -117,7 +126,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             add_tag(cmd[17:])
 
     elif cmd.startswith("siac-edit-note "):
-        # "Edit" clicked on a normal note
+        # "Edit" clicked on a normal (Anki) note
         openEditor(mw, int(cmd[15:]))
 
     elif cmd.startswith("siac-eval "):
@@ -128,6 +137,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         exec(cmd[10:])
 
     elif cmd.startswith("siac-open-folder "):
+        # try to open a folder path with the default explorer
         QDesktopServices.openUrl(QUrl(" ".join(cmd.split()[1:])))
 
     elif cmd.startswith("siac-pin"):
@@ -197,7 +207,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-r-show-pdfs":
         if check_index():
-            stamp = setStamp()
+            stamp = set_stamp()
             notes = get_all_pdf_notes()
             # add special note at front
             sp_body = get_pdf_list_first_card()
@@ -206,24 +216,24 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-r-show-pdfs-unread":
         if check_index():
-            stamp = setStamp()
+            stamp = set_stamp()
             notes = get_all_unread_pdf_notes()
             index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-show-pdfs-in-progress":
         if check_index():
-            stamp = setStamp()
+            stamp = set_stamp()
             notes = get_in_progress_pdf_notes()
             index.ui.print_search_results(notes, stamp)
     
     elif cmd == "siac-r-show-due-today":
-        stamp = setStamp()
+        stamp = set_stamp()
         notes = get_notes_scheduled_for_today()
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-show-stats":
         # Read Stats clicked in sidebar
-        stamp       = setStamp()
+        stamp       = set_stamp()
         res         = []
         t_counts    = get_read_last_n_days_by_day(365)
         body        = read_counts_by_date_card_body(t_counts)
@@ -248,26 +258,26 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
 
     elif cmd == "siac-r-show-last-done":
-        stamp = setStamp()
+        stamp = set_stamp()
         notes = get_last_done_notes()
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-pdf-last-read":
-        stamp = setStamp()
+        stamp = set_stamp()
         notes = get_pdf_notes_last_read_first()
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-pdf-last-added":
-        stamp = setStamp()
+        stamp = set_stamp()
         notes = get_pdf_notes_last_added_first()
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-pdf-find-invalid":
-        stamp = setStamp()
+        stamp = set_stamp()
         notes = get_invalid_pdfs()
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
@@ -288,7 +298,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         """ % index.ui.reading_modal.get_queue_infobox(note, read_stats))
 
     elif cmd.startswith("siac-pdf-selection "):
-        stamp = setStamp()
+        stamp = set_stamp()
         if check_index():
             index.search(cmd[19:], ["-1"], only_user_notes = False, print_mode = "pdf")
 
@@ -296,7 +306,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         inp = cmd[len("siac-pdf-tooltip-search "):]
         if len(inp.strip()) > 0:
             if check_index():
-                stamp = setStamp()
+                stamp = set_stamp()
                 index.search(inp, ["-1"], only_user_notes = False, print_mode = "pdf")
 
     elif cmd.startswith("siac-cutout-io "):
@@ -369,8 +379,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             tooltip(f"Created {dialog.total_count} notes.")
 
     elif cmd == "siac-schedule-dialog":
-        original_sched = index.ui.reading_modal.note.reminder
-        dialog = ScheduleDialog(index.ui.reading_modal.note, self.parentWindow)
+        # show the dialog that allows to change the schedule of a note
+        original_sched  = index.ui.reading_modal.note.reminder
+        dialog          = ScheduleDialog(index.ui.reading_modal.note, self.parentWindow)
         if dialog.exec_():
             schedule = dialog.schedule()
             if schedule is not None and schedule != original_sched:
@@ -562,37 +573,37 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             index.ui.reading_modal.display(id)
 
     elif cmd == "siac-r-user-note-queue":
-        stamp = setStamp()
+        stamp = set_stamp()
         notes = get_priority_list()
         if check_index():
             index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-user-note-queue-random":
-        stamp = setStamp()
+        stamp = set_stamp()
         notes = get_queue_in_random_order()
         if check_index():
             index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-user-note-untagged":
-        stamp = setStamp()
+        stamp = set_stamp()
         notes = get_untagged_notes()
         if check_index():
             index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-user-note-newest":
-        stamp = setStamp()
+        stamp = set_stamp()
         if check_index():
             notes = get_newest(index.limit, index.pinned)
             index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-user-note-random":
-        stamp = setStamp()
+        stamp = set_stamp()
         if check_index():
             notes = get_random(index.limit, index.pinned)
             index.ui.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-r-user-note-search-tag "):
-        stamp = setStamp()
+        stamp = set_stamp()
         if check_index():
             notes = find_by_tag(" ".join(cmd.split()[1:]))
             index.ui.print_search_results(notes, stamp)
@@ -873,7 +884,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         update_config(key, val)
 
     elif cmd == "siac-write-config":
+        # after the settings modal has been closed
         write_config()
+        try_repeat_last_search(self)
 
     elif cmd.startswith("siac-add-image "):
         b64 = cmd.split()[2][13:]
@@ -1157,12 +1170,12 @@ def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
     decks       = cmd.split(" ")[2:]
 
     if searchtype == "lowestPerf":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "lowestPerf")
         res = findNotesWithLowestPerformance(decks, limit, index.pinned)
         index.ui.print_search_results(res, stamp)
     elif searchtype == "highestPerf":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "highestPerf")
         res = findNotesWithHighestPerformance(decks, limit, index.pinned)
         index.ui.print_search_results(res, stamp)
@@ -1173,63 +1186,63 @@ def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
     elif searchtype == "lastModified":
         getLastModifiedNotes(index, editor, decks, limit)
     elif searchtype == "lowestRet":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "lowestRet")
         res = findNotesWithLowestPerformance(decks, limit, index.pinned, retOnly = True)
         index.ui.print_search_results(res, stamp)
     elif searchtype == "highestRet":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "highestRet")
         res = findNotesWithHighestPerformance(decks, limit, index.pinned, retOnly = True)
         index.ui.print_search_results(res, stamp)
     elif searchtype == "longestText":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "highestRet")
         res = findNotesWithLongestText(decks, limit, index.pinned)
         index.ui.print_search_results(res, stamp)
     elif searchtype == "randomUntagged":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "randomUntagged")
         res = getRandomUntagged(decks, limit)
         index.ui.print_search_results(res, stamp)
     elif searchtype == "lastUntagged":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "lastUntagged")
         res = get_last_untagged(decks, limit)
         index.ui.print_search_results(res, stamp)
     elif searchtype == "highestInterval":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "highestInterval", limit)
         res = getSortedByInterval(decks, limit, index.pinned, "desc")
         index.ui.print_search_results(res, stamp)
     elif searchtype == "lowestInterval":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "lowestInterval", limit)
         res = getSortedByInterval(decks, limit, index.pinned, "asc")
         index.ui.print_search_results(res, stamp)
     elif searchtype == "lastReviewed":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "lastReviewed", limit)
         res = getLastReviewed(decks, limit)
         index.ui.print_search_results(res, stamp)
     elif searchtype == "lastLapses":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "lastLapses", limit)
         res = getLastLapses(decks, limit)
         index.ui.print_search_results(res, stamp)
     elif searchtype == "longestTime":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "longestTime", limit)
         res = getByTimeTaken(decks, limit, "desc")
         index.ui.print_search_results(res, stamp)
     elif searchtype == "shortestTime":
-        stamp = setStamp()
+        stamp = set_stamp()
         index.lastSearch = (None, decks, "shortestTime", limit)
         res = getByTimeTaken(decks, limit, "asc")
         index.ui.print_search_results(res, stamp)
 
 
-def setStamp() -> Optional[str]:
+def set_stamp() -> Optional[str]:
     """
     Generate a milisec stamp and give it to the index.
     The result of a search is not printed if it has a non-matching stamp.
@@ -1241,7 +1254,7 @@ def setStamp() -> Optional[str]:
         return stamp
     return None
 
-def setStats(nid: int, stats: Tuple[Any, ...]):
+def set_stats(nid: int, stats: Tuple[Any, ...]):
     """ Insert the statistics into the given card. """
     if check_index():
         get_index().ui.show_stats(stats[0], stats[1], stats[2], stats[3])
@@ -1402,16 +1415,28 @@ def update_field_to_exclude(mid: int, fldOrd: int, value: bool):
 def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
     """
     Sometimes it is useful if we can simply repeat the last search,
-    e.g. the user has clicked another deck in the deck select.
+    e.g. the user has clicked another deck in the deck select / updated a note / deleted a note / closed the reading modal.
+    This will attempt to repeat the last command that rendered some kind of result (i.e. the last cmd that started with "siac-r-").
     """
-
+    
     if state.last_search_cmd is None:
         return
 
     if editor is None:
         editor = get_index().ui._editor
-    
+
+    # executing the last cmd again will reset state.last_page_requested, so store it before
+    page = state.last_page_requested
+
+    # execute the last command again
     expanded_on_bridge_cmd(None, state.last_search_cmd, editor)
+
+    # If state.last_page_requested was not None, we were on a page > 1.
+    # So now that we have executed the last search cmd again, which refreshed the results,
+    # go to that page again.
+    if page is not None:
+        get_index().ui.show_page(editor, page)
+    
 
 
 def generate_clozes(sentences, pdf_path, pdf_title, page):
