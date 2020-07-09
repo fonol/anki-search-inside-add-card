@@ -244,6 +244,8 @@ body.nightMode #siac-reading-modal.rendering {
 #siac-text-top-wr {
     flex: 1 1 auto;
     margin-top: 20px;
+    display: flex;
+    flex-direction: column;
 }
 #siac-text-top {
     text-align: left;
@@ -743,7 +745,8 @@ body.nightMode #siac-reading-modal.rendering {
     z-index: 2147483638 !important;
 }
 #siac-text-top-wr > div {
-    height: 100% !important;
+    /* height: 100% !important; */
+    flex: 1 1 auto;
 }
 .siac-pdf-mark-lbl {
     font-weight: bold;
