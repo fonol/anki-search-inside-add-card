@@ -64,6 +64,7 @@ var Highlighting = {
     displayHighlights: function () {
         this._removeAllHighlights();
         let canvas = document.getElementById("siac-pdf-canvas");
+        if (!canvas) { return; }
         this.current.forEach((r) => {
             let x0 = r[0];
             let y0 = r[1];
