@@ -269,7 +269,6 @@ class ReadingModal:
                 var canvas = document.getElementById("siac-pdf-canvas");
                 var loadingTask = pdfjsLib.getDocument(arr, {nativeImageDecoderSupport: 'display'});
                 loadingTask.promise.catch(function(error) {
-                        console.log(error);
                         $('#siac-pdf-loader-wrapper').remove();
                         document.getElementById('siac-pdf-top').style.overflowY = 'auto';
 
@@ -286,6 +285,9 @@ class ReadingModal:
                         pdfNoteId = %s;
                         pdfDisplayedCurrentPage = getLastReadPage() || %s;
                         pdfHighDPIWasUsed = false;
+                        if (!document.getElementById('siac-pdf-top')) {
+                            return;
+                        }
                         document.getElementById('siac-pdf-top').style.overflowY = 'auto';
                         document.getElementById('text-layer').style.display = 'block'; 
                         if (pagesRead.length === pdf.numPages) {
@@ -300,7 +302,7 @@ class ReadingModal:
                         }
                         if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
                         fileReader = null;
-                });
+                }).catch(function(err) { setTimeout(function() { console.log(err); }); });
             };
             loadFn();
             b64 = ""; arr = null; bstr = null; file = null;
@@ -940,7 +942,7 @@ class ReadingModal:
         return """
             tinymce.init({
                 selector: '#siac-text-top',
-                plugins: 'autoresize preview paste importcss searchreplace autolink directionality code visualblocks visualchars link codesample table charmap hr nonbreaking toc insertdatetime advlist lists wordcount imagetools textpattern noneditable charmap quickbars',
+                plugins: 'preview paste importcss searchreplace autolink directionality code visualblocks visualchars link codesample table charmap hr nonbreaking toc insertdatetime advlist lists wordcount imagetools textpattern noneditable charmap quickbars',
                 menubar: 'edit view insert format tools table',
                 toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | charmap | codesample | ltr rtl',
                 toolbar_sticky: true,
