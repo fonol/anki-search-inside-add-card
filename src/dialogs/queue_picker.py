@@ -28,6 +28,7 @@ from ..internals import perf_time
 import utility.text
 import utility.misc
 import utility.tags
+import utility.date
 import state
 
 class QueuePicker(QDialog):
@@ -75,6 +76,7 @@ class QueuePicker(QDialog):
         else:
             self.queue_widget.setVisible(False)
             self.sched_widget.setVisible(True)
+            self.sched_widget.refresh()
 
     
 class PDFsTab(QWidget):
@@ -496,18 +498,50 @@ class ScheduleMWidget(QWidget):
     def __init__(self, parent):
         QWidget.__init__(self)
         self.parent = parent
+        # self.notes = get_notes_by_future_due_date() 
+        # self.setup_ui()
+    
+    def refresh(self):
+        self.notes = get_notes_by_future_due_date() 
         self.setup_ui()
 
     def setup_ui(self):
         self.setLayout(QHBoxLayout())
         self.table = QTableWidget()
-        self.layout().addWidget(QLabel("WIP"))
+        self.table.setRowCount(len(self.notes))
+        self.table.setColumnCount(3)
+        self.table.horizontalHeader().setVisible(False) 
+        self.table.verticalHeader().setVisible(False)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents) 
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+
+        due_dates = sorted(self.notes.keys())
+
+        for ix, due_date in enumerate(due_dates):
+            self.table.setItem(ix, 0, QTableWidgetItem(due_date))
+            if ix == 0 and datetime.today().strftime("%Y-%m-%d") == due_date:            
+                self.table.item(ix, 0).setForeground(Qt.blue if not state.night_mode else Qt.cyan)
+            due     = ""
+            types   = ""
+            for ix_2, note in enumerate(self.notes[due_date]):
+
+                due     += note.get_title() 
+                types   += utility.date.schedule_verbose(note.reminder) 
+                if ix_2 < len(self.notes[due_date]) - 1:
+                    types += "\n"
+                    due   += "\n"
+            self.table.setItem(ix, 1, QTableWidgetItem(due))
+            self.table.setItem(ix, 2, QTableWidgetItem(types))
+
+            self.table.item(ix, 0).setFlags(Qt.ItemIsEnabled)
+            self.table.item(ix, 1).setFlags(Qt.ItemIsEnabled)
+            self.table.item(ix, 2).setFlags(Qt.ItemIsEnabled)
+
+            self.table.resizeRowToContents(ix)
         self.layout().addWidget(self.table)
 
         
-
-
-
 
 class QueueWidget(QWidget):
 
