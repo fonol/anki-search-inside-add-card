@@ -20,22 +20,27 @@ from datetime import datetime
 import time
 import random
 
-cleanWordReg    = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]*$", re.I |re.U)    
-ignoreReg       = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]+$", re.I | re.U)
-nonWordReg      = re.compile(u"[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U) 
-wordToken       = re.compile(u"[a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U)
+cleanWordReg    = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*$", re.I |re.U)    
+ignoreReg       = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]+$", re.I | re.U)
+nonWordReg      = re.compile(u"[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.I | re.U) 
+wordToken       = re.compile(u"[a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.I | re.U)
 
 # used to merge multiple field separator signs into singles 
 SEP_RE          = re.compile(r'(?:\u001f){2,}|(?:\u001f[\s\r\n]+\u001f)')
+
 # used to hide IO fields
 IO_REPLACE      = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>)?-[OA]|-(<mark>)?ao(</mark>)?-[OA])\.svg" ?/?>(</img>)?')
+
 # move images in own line
 IMG_FLD         = re.compile('\\|</span> ?(<img[^>]+/?>)( ?<span class=\'fldSep\'>|$)')
+
+# hide cloze brackets
+CLOZE_REPLACE   = re.compile(r"{{c\d+::([^}]*?)(?:::[^}]+)?}}")
 
 tagReg          = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
 spaceReg        = re.compile('\s{2,}')
 normalChar      = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U) 
-asianChar       = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.U)
+asian_or_arabic_char       = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.U)
 
 def clean(text, stopWords):
 
@@ -56,7 +61,7 @@ def clean(text, stopWords):
         if ignoreReg.match(token) is not None:
             continue
         cleaned = cleanWordReg.sub(r'\1', token.strip())
-        if (len(cleaned) <= 1 and not asianChar.search(cleaned)) or cleaned.lower() in stopWords:
+        if (len(cleaned) <= 1 and not asian_or_arabic_char.search(cleaned)) or cleaned.lower() in stopWords:
             continue
         filtered += cleaned + " "
 
@@ -106,7 +111,7 @@ def tokenize(text):
     result = []
     spl = text.split(" ")
     for token in spl:
-        if re.search(u'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]', token):
+        if re.search(u'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]', token):
             for char in token:
                 result.append(str(char))
         else:
@@ -118,13 +123,13 @@ def text_too_small(text):
         return False
     if len(text) == 0:
         return True
-    if asianChar.search(text):
+    if asian_or_arabic_char.search(text):
         return False
     return True
 
-def is_asian_char(char):
-    """ Supported atm: chinese, japanese, korean """
-    return asianChar.match(char)
+def is_asian_or_arabic_char(char):
+    """ Supported atm: chinese, japanese, korean, arabic """
+    return asian_or_arabic_char.match(char)
 
 
 def ascii_fold_char(char):
@@ -276,7 +281,7 @@ def escape_html(text):
 def strip_url(url):
     url = re.sub("https?://(www\\.)?", "", url, re.I)
     return url
-
+        
 def clean_user_note_title(title):
     if title is None:
         return ""
@@ -290,6 +295,7 @@ def cleanFieldSeparators(text):
     if text.endswith("\u001f"):
         text = text[:-1]
     text = text.replace("\u001f", "<span class='fldSep'>|</span>")
+    text = text.replace("</p><span class='fldSep'>|</span><p>", "<span class='fldSep'>|</span></p><p>")
     return text
 
 def newline_before_images(text):
@@ -303,6 +309,14 @@ def try_hide_image_occlusion(text):
         return text
     text = IO_REPLACE.sub("(IO - image hidden)", text)
     return text
+
+def hide_cloze_brackets(text): 
+    """ {{clozed text}} -> clozed text """
+    if not text:
+        return ""
+    return CLOZE_REPLACE.sub("\\1", text)
+
+
 
 def clean_file_name(name):
     name = re.sub("[^a-zA-Z0-9]", "-", name)
@@ -372,7 +386,7 @@ def mark_highlights(text, querySet):
         if wordToken.match(char):
             currentWordNormalized = ''.join((currentWordNormalized, ascii_fold_char(char).lower()))
             # currentWordNormalized = ''.join((currentWordNormalized, char.lower()))
-            if is_asian_char(char) and str(char) in querySet:
+            if is_asian_or_arabic_char(char) and str(char) in querySet:
                 currentWord = ''.join((currentWord, "<MARK>%s</MARK>" % char))
             else:
                 currentWord = ''.join((currentWord, char))
