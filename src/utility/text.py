@@ -40,7 +40,9 @@ CLOZE_REPLACE   = re.compile(r"{{c\d+::([^}]*?)(?:::[^}]+)?}}")
 tagReg          = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
 spaceReg        = re.compile('\s{2,}')
 normalChar      = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U) 
-asian_or_arabic_char       = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.U)
+
+asian_or_arabic_char    = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.U)
+asian_char              = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.U)
 
 def clean(text, stopWords):
 
@@ -111,7 +113,7 @@ def tokenize(text):
     result = []
     spl = text.split(" ")
     for token in spl:
-        if re.search(u'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]', token):
+        if re.search(u'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]', token):
             for char in token:
                 result.append(str(char))
         else:
@@ -131,6 +133,9 @@ def is_asian_or_arabic_char(char):
     """ Supported atm: chinese, japanese, korean, arabic """
     return asian_or_arabic_char.match(char)
 
+def is_asian_char(char):
+    """ Supported atm: chinese, japanese, korean """
+    return asian_char.match(char)
 
 def ascii_fold_char(char):
     char = char.lower()
@@ -386,7 +391,7 @@ def mark_highlights(text, querySet):
         if wordToken.match(char):
             currentWordNormalized = ''.join((currentWordNormalized, ascii_fold_char(char).lower()))
             # currentWordNormalized = ''.join((currentWordNormalized, char.lower()))
-            if is_asian_or_arabic_char(char) and str(char) in querySet:
+            if is_asian_char(char) and str(char) in querySet:
                 currentWord = ''.join((currentWord, "<MARK>%s</MARK>" % char))
             else:
                 currentWord = ''.join((currentWord, char))
