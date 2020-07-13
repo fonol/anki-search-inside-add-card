@@ -374,11 +374,9 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Smarter rerendering (e.g. rerender the current results after note edit/delete/add/PDF reader close).",
-        "Allow Search on Select for floating notes",
-        "Fix: tinyMCE editor for text notes having not the correct height on Anki 2.1.22",
-        "Fix: Text field colors in settings modal staying white in night mode",
-        "Fix: Read Stats Heatmap not appearing sometimes"
+        "Added search support for arabic characters",
+        "Added setting option to hide Cloze brackets ({{c1::...}} in results",
+        "Fix some issue with text notes resizing in the reading modal"
     ]
 
 def known_issues() -> List[str]:
