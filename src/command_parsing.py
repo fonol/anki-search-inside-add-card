@@ -1707,8 +1707,13 @@ def update_styling(cmd):
 
     elif name == "removeDivsFromOutput":
         m = value == "true" or value == "on"
-        config["removeDivsFromOutput"] = m
+        config[name] = m
         index.ui.remove_divs = m
+
+    elif name == "results.hide_cloze_brackets":
+        m = value == "true" or value == "on"
+        config[name] = m
+        index.ui.show_clozes = not m
 
     elif name == "addonNoteDBFolderPath":
         if value is not None and len(value.strip()) > 0:
