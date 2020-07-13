@@ -181,7 +181,7 @@ class FTSIndex:
             log("\nFTS index - Received query: " + text)
             log("Decks (arg): " + str(decks))
             log("Self.pinned: " + str(self.pinned))
-            log("Self.limit: " +str(self.limit))
+            log("Self.limit: "  + str(self.limit))
 
 
         if len(text) == 0:
@@ -206,13 +206,13 @@ class FTSIndex:
         tokens                      = text.split(" ")
         if len(tokens) > 10:
             tokens                  = set(tokens)
-
         if self.type == "SQLite FTS5":
             query = u" OR ".join(["tags:" + s.strip().replace("OR", "or") for s in tokens if not utility.text.text_too_small(s) ])
             query += " OR " + " OR ".join(["text:" + s.strip().replace("OR", "or") for s in tokens if not utility.text.text_too_small(s) ])
         else:
             query = " OR ".join([s.strip().replace("OR", "or") for s in tokens if not utility.text.text_too_small(s) ])
         if len(query) == 0 or query == " OR ":
+         
             if self.logging:
                 log("Returning. Query was: " + query)
             return { "results" : [] }
@@ -372,9 +372,9 @@ class FTSIndex:
 
     def addNote(self, note):
         content = " \u001f ".join(note.fields)
-        tags = " ".join(note.tags)
+        tags    = " ".join(note.tags)
         #did = note.model()['did']
-        did = mw.col.db.all("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id)
+        did     = mw.col.db.all("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id)
         if did is None or len(did) == 0:
             return
         did = did[0][0]

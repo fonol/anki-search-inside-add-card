@@ -200,7 +200,10 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                     }
                 }
                 return lPage.getTextContent({ normalizeWhitespace: false, disableCombineTextItems: false });
-            }).then(function (textContent) {
+            }).catch(function(err) { console.log(err); return Promise.reject(); }).then(function (textContent) {
+                if (!textContent) { 
+                    return Promise.reject();
+                }
                 $("#text-layer").css({ height: canvas.height / window.devicePixelRatio, width: canvas.width / window.devicePixelRatio + 1, left: canvas.offsetLeft }).html('');
                 pdfjsLib.renderTextLayer({
                     textContent: textContent,
@@ -246,7 +249,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                     $('#siac-pdf-top').removeClass("extract");
                 }
             }
-        });
+        }).catch(function(err) { setTimeout(function() { console.log(err); }); });
 }
 function invertCanvas(ctx) {
     if (pdfColorMode === "Night") {
@@ -780,7 +783,7 @@ function queueLinkContextMenu(event, nid) {
     $(document.body).append(`
         <div onmouseleave='$(this).remove();' style='position: absolute; z-index: 1000; left: ${event.pageX}px; top: ${event.pageY - 30}px; width: 100px; height: 20px; text-align: center;' class='siac-pdf-contextmenu'> 
             <div>    
-                <a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.show_remove_dialog(${nid})")'>Remove / Delete</a>
+                <a class='siac-clickable-anchor' style='color: lightgrey;' onclick='pycmd("siac-eval index.ui.reading_modal.show_remove_dialog(${nid})")'>Remove / Delete</a>
             </div>
         </div>
     `);

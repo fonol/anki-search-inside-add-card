@@ -667,6 +667,10 @@ def stylingModal(config):
                 <table style="width: 100%%">
                     <tr><td><b>Remove &lt;div&gt; Tags from Output</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling removeDivsFromOutput ' + this.checked)" %s/></tr>
                 </table>
+                <span>Try to hide Cloze brackets in the rendered results, instead show only their contained text.</span>
+                <table style="width: 100%%">
+                    <tr><td><b>Hide {{c1:: ... }} Cloze brackets in output</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.hide_cloze_brackets ' + this.checked)" %s/></tr>
+                </table>
             </fieldset>
             <br/>
             <fieldset>
@@ -727,6 +731,7 @@ def stylingModal(config):
                         config["tagHoverDelayInMiliSec"],
                        config["alwaysRebuildIndexIfSmallerThan"],
                        "checked='true'" if config["removeDivsFromOutput"] else "",
+                       "checked='true'" if config["results.hide_cloze_brackets"] else "",
                        config["addonNoteDBFolderPath"],
                        config["pdfUrlImportSavePath"],
                        "checked='true'" if config["notes.showSource"] else "",
