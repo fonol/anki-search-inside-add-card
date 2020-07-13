@@ -865,17 +865,13 @@ def get_pdf_list_first_card():
         Returns the html for the body of a card that is displayed at first position when clicking on "PDFs".
     """
     html = """
-        <div style='width: calc(50%% - 30px); box-sizing: border-box; display: inline-block;'>
+        <div>
             <a class='keyword' onclick='pycmd("siac-r-pdf-last-read")'>Order by Last Read</a><br>
             <a class='keyword' onclick='pycmd("siac-r-pdf-last-added")'>Order by Last Added</a><br>
             <a class='keyword' onclick='pycmd("siac-r-pdf-find-invalid")'>Find Invalid Paths</a>
         </div>
-        <div style='width: calc(50%%- 30px); box-sizing: border-box; display: inline-block;'>
-            <p>
-            Avg. Pages Read (Last 7 Days): <b>%s</b>
-            </p>
-        </div>
-    """ % (get_avg_pages_read(7))
+       
+    """
     return html
 
 def get_unsuspend_modal(nid):
