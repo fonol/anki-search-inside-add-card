@@ -81,6 +81,7 @@
 "results.showFloatButton": false,
 "results.showIDButton": false,
 "results.showCIDButton": false,
+"results.hide_cloze_brackets": false,
 "styles.night.tagBackgroundColor": "DarkOrange",
 "styles.night.tagForegroundColor": "Black",
 "styles.tagBackgroundColor": "#f0506e",
