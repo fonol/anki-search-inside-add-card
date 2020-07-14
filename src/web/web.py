@@ -376,6 +376,7 @@ def changelog() -> List[str]:
     return [
         "Added search support for arabic characters",
         "Added setting option to hide Cloze brackets ({{c1::...}} in results",
+        "Remember last field selected in \"Send to Field\" in the PDF Cloze modal",
         "Fix some issue with text notes resizing in the reading modal"
     ]
 
