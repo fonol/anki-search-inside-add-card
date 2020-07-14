@@ -36,6 +36,7 @@ from .index.indexing import build_index, get_notes_in_collection
 from .debug_logging import log
 from .web.web import *
 from .web.html import *
+from .web.reading_modal import ReadingModal
 from .special_searches import *
 from .internals import requires_index_loaded, js, perf_time
 from .notes import *
@@ -419,14 +420,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         marks_updated = toggle_pdf_mark(nid, page, pages_total, mark_type)
         js_maps = utility.misc.marks_to_js_map(marks_updated)
         self.web.eval(""" pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s; updatePdfDisplayedMarks();""" % (js_maps[0], js_maps[1]))
-
-
-    elif cmd.startswith("siac-generate-clozes "):
-        pdf_title = cmd.split("$$$")[1]
-        pdf_path = cmd.split("$$$")[2]
-        page = cmd.split("$$$")[3]
-        sentences = [s for s in cmd.split("$$$")[4:] if len(s) > 0]
-        generate_clozes(sentences, pdf_path, pdf_title, page)
 
     elif cmd == "siac-reading-modal-tabs-left-browse":
         # clicked on "Browse" in the tabs on the fields' side.
@@ -910,9 +903,23 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         except:
             pass
 
+    elif cmd.startswith("siac-generate-clozes "):
+        # 'Generate' clicked in the cloze modal
+        pdf_title   = cmd.split("$$$")[1]
+        pdf_path    = cmd.split("$$$")[2]
+        page        = cmd.split("$$$")[3]
+        sentences   = [s for s in cmd.split("$$$")[4:] if len(s) > 0]
+        generate_clozes(sentences, pdf_path, pdf_title, page)
+
     elif cmd.startswith("siac-fld-cloze "):
+        # "Send to Field" clicked -> show modal with field list 
         cloze_text = " ".join(cmd.split()[1:])
         index.ui.reading_modal.show_cloze_field_picker_modal(cloze_text)
+
+    elif cmd.startswith("siac-last-cloze "):
+        # after a field has been selected in "Send to Field", store that field in ReadingModal
+        fld = " ".join(cmd.split()[1:])
+        ReadingModal.last_cloze = (self.note.model()['id'], fld)
 
     elif cmd.startswith("siac-url-srch "):
         search_term = cmd.split("$$$")[1]
@@ -1439,7 +1446,7 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
     
 
 
-def generate_clozes(sentences, pdf_path, pdf_title, page):
+def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: int):
     try:
         # (optional) field that full path to pdf doc goes into
         path_fld        = config["pdf.clozegen.field.pdfpath"]
