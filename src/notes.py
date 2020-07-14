@@ -722,20 +722,16 @@ def get_notes_by_future_due_date() -> Dict[str, List[SiacNote]]:
         d[due].append(n)
     return d
         
-
-
-
-
 def get_note_tree_data() -> Dict[str, List[Tuple[int, str]]]:
     """
         Fills a map with the data for the QTreeWidget in the Create dialog.
     """
-    conn = _get_connection()
-    last_created = conn.execute("select id, title, created from notes order by datetime(created, 'localtime') desc limit 500").fetchall()
+    conn                    = _get_connection()
+    last_created            = conn.execute("select id, title, created from notes order by datetime(created, 'localtime') desc limit 500").fetchall()
     conn.close()
-    n_map = {}
-    now = datetime.now()
-    seconds_since_midnight = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    n_map                   = {}
+    now                     = datetime.now()
+    seconds_since_midnight  = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
 
     for id, title, created in last_created:
         cr = datetime.strptime(created, '%Y-%m-%d %H:%M:%S')
