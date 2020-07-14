@@ -504,7 +504,7 @@ async function getContents(s = 1, n = 10000) {
     for (var j = s; j <= pdfDisplayed.numPages && j <= s + n; j++) {
         var page = pdfDisplayed.getPage(j);
         countPromises.push(page.then(function (page) {
-            var n = page._pageIndex + 1;
+            var n = page.pageIndex + 1;
             var txt = "";
             var textContent = page.getTextContent();
             return textContent.then(function (page) {
