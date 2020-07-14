@@ -805,7 +805,7 @@ function pdfKeyup(e) {
         // disable it, to get the actual bounding client rect
         $('#text-layer > span').css("height", "auto");
         let nodesInSel = nodesInSelection(r);
-        let sentences = getSentencesAroundSelection(r, nodesInSel, text);
+        let sentences  = getSentencesAroundSelection(r, nodesInSel, text);
         if (nodesInSel.length > 1) {
             text = joinTextLayerNodeTexts(nodesInSel, text);
         }
@@ -917,7 +917,7 @@ function getSentencesAroundSelection(range, nodesInSel, selection) {
         extracted.push(text);
     }
     while (currentNode) {
-        if (Math.abs(currentNode.clientHeight - height) > 3 || lastOffsetTop - currentNode.offsetTop > height * 1.5) {
+        if (Math.abs(currentNode.clientHeight - height) > 5 || lastOffsetTop - currentNode.offsetTop > height * 1.5) {
             extracted.push(text);
             break;
         }
@@ -966,9 +966,7 @@ function sendClozes() {
 function generateClozes() {
     let cmd = "";
     $('.siac-cl-row').each(function (i, elem) {
-        if ($(elem.children[1].children[0]).is(":checked")) {
-            cmd += "$$$" + $(elem.children[0].children[0]).text();
-        }
+        cmd += "$$$" + $(elem.children[0].children[0]).text();
     });
     let pdfPath = $('#siac-pdf-top').data("pdfpath");
     let pdfTitle = $('#siac-pdf-top').data("pdftitle");
