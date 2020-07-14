@@ -52,7 +52,9 @@ from ..stats import getRetentions
 class ReadingModal:
     """ Used to display text and PDF notes. """
 
-    last_opened : Optional[int] = None
+    last_opened : Optional[int]             = None
+
+    last_cloze  : Optional[Tuple[int, str]] = None
 
     def __init__(self):
         self.note_id            : Optional[int]         = None
@@ -1331,7 +1333,7 @@ class ReadingModal:
         flds        = ""
 
         for i, f in enumerate(self._editor.note.model()['flds']):
-            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`);  $(this.parentNode.parentNode).remove();">{2}</span><br>""".format(i, cloze_text, f["name"])
+            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`);  $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');">{3}</span><br>""".format(i, cloze_text, f["name"], f["name"])
         modal       = modal % (flds)
 
         return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
@@ -1595,21 +1597,34 @@ class ReadingModal:
                 sentence = sentence.replace("[ ", "[")
                 sentence = sentence.replace(" ]", "]")
                 sentence = re.sub(" ([,;:.]) ", r"\1 ", sentence)
-                sentence = re.sub(r"\( (.) \)", r"(\1)", sentence)
+                sentence = re.sub(r"\( *(.+?) *\)", r"(\1)", sentence, re.DOTALL)
                 sentence = re.sub(" ([?!.])$", r"\1", sentence)
                 sentence = re.sub("^[:.?!,;)] ", "", sentence)
                 sentence = re.sub("^\\d+ ?[:\\-.,;] ([A-ZÖÄÜ])", r"\1", sentence)
 
                 sentence = re.sub(" ([\"“”])([?!.])$", r"\1\2", sentence)
 
-                s_html += "<tr class='siac-cl-row'><td><div contenteditable class='siac-pdf-main-color'>%s</div></td><td><input type='checkbox' checked/></td></tr>" % (sentence.replace("`", "&#96;"))
+                s_html += "<tr class='siac-cl-row'><td><div contenteditable class='siac-pdf-main-color'>%s</div></td></tr>" % (sentence.replace("`", "&#96;"))
             s_html += "</table>"
+            model_id = self._editor.note.model()['id']
+            
+            # if another Send to Field has been executed before, and the note type is the same, add another button 
+            # to directly send the cloze to that last used field.
+            last_btn = ""
+            if ReadingModal.last_cloze is not None and model_id == ReadingModal.last_cloze[0]:
+                ix          = [f["name"] for f in self._editor.note.model()["flds"]].index(ReadingModal.last_cloze[1])
+                # remove the blue color from the cloze brackets again
+                txt         = sentence.replace("`", "").replace("\n", "").replace("<span style='color: lightblue;'>", "").replace("}}</span>", "}}")
+                last_btn    = f"<div class='siac-btn siac-btn-dark' style='margin-right: 15px; margin-top: 5px;' onclick=\"appendToField({ix}, \\`{txt}\\`);  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(ReadingModal.last_cloze[1], 15)}'</div>"  
+
             btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
+                                
                                 <div style='margin-top: 8px;'>
-                                <div class='siac-btn siac-btn-dark' onclick='pycmd("siac-fld-cloze " +$(".siac-cl-row div").first().text());' style='margin-right: 15px;'>Send to Field</div>
-                                <div class='siac-btn siac-btn-dark' onclick='generateClozes();'>Generate</div>
+                                    %s
+                                    <div class='siac-btn siac-btn-dark' onclick='pycmd("siac-fld-cloze " +$(".siac-cl-row div").first().text());' style='margin-right: 15px; margin-top: 5px;'>Send to Field</div>
+                                    <div class='siac-btn siac-btn-dark' onclick='generateClozes();' style='margin-top: 5px;'>Generate</div>
                                 </div>
-                    `;"""
+                    `;""" % last_btn
 
         else:
             s_html = "<br><center>Sorry, could not extract any sentences.</center>"
@@ -1617,10 +1632,10 @@ class ReadingModal:
 
         return """
                 document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`;
-                document.getElementById('siac-pdf-tooltip-top').innerHTML = `Found <b>%s</b> sentence(s) around selection: <br/><span style='color: lightgrey;'>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)</span>`;
+                document.getElementById('siac-pdf-tooltip-top').innerHTML = `<span style='color: lightgrey;'>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)</span>`;
                 document.getElementById('siac-pdf-tooltip-searchbar').style.display = "none";
                 %s
-                """ % (s_html, len(sentences), btn_html)
+                """ % (s_html, btn_html)
 
     @js
     def notification(self, html: str, on_ok: Optional[str] = None):
