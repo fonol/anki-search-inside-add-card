@@ -55,6 +55,7 @@ body.nightMode #siac-reading-modal.rendering {
     text-align: center;
     color:#41b3a3;
     cursor:pointer;
+    font-weight: bold;
     user-select: none;
 }
 #siac-cloze-btn:hover {
