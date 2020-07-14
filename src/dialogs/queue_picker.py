@@ -498,12 +498,12 @@ class ScheduleMWidget(QWidget):
     def __init__(self, parent):
         QWidget.__init__(self)
         self.parent = parent
-        # self.notes = get_notes_by_future_due_date() 
-        # self.setup_ui()
+        self.notes = get_notes_by_future_due_date() 
+        self.setup_ui()
     
     def refresh(self):
         self.notes = get_notes_by_future_due_date() 
-        self.setup_ui()
+        self.fill_table()
 
     def setup_ui(self):
         self.setLayout(QHBoxLayout())
@@ -516,6 +516,10 @@ class ScheduleMWidget(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
 
+        self.layout().addWidget(self.table)
+        self.fill_table()
+        
+    def fill_table(self):
         due_dates = sorted(self.notes.keys())
 
         for ix, due_date in enumerate(due_dates):
@@ -539,9 +543,6 @@ class ScheduleMWidget(QWidget):
             self.table.item(ix, 2).setFlags(Qt.ItemIsEnabled)
 
             self.table.resizeRowToContents(ix)
-        self.layout().addWidget(self.table)
-
-        
 
 class QueueWidget(QWidget):
 
