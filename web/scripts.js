@@ -878,7 +878,9 @@ function toggleSearchbarMode(elem) {
 }
 
 function globalKeydown(e) {
-    if (pdfDisplayed && !$('.field').is(':focus')) {
+    if (displayedNoteId && e.keyCode === 122) {
+        toggleReadingModalBars();
+    }  else if (pdfDisplayed && !$('.field').is(':focus')) {
         pdfViewerKeyup(e);
     }
 }

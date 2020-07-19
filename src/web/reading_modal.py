@@ -284,7 +284,7 @@ class ReadingModal:
                 loadingTask.promise.then(function(pdf) {
                         $('#siac-pdf-loader-wrapper').remove();
                         pdfDisplayed = pdf;
-                        pdfNoteId = %s;
+                        displayedNoteId = %s;
                         pdfDisplayedCurrentPage = getLastReadPage() || %s;
                         pdfHighDPIWasUsed = false;
                         if (!document.getElementById('siac-pdf-top')) {
@@ -550,6 +550,7 @@ class ReadingModal:
                 }}
                 pdfDisplayedMarks = null;   
                 pdfDisplayedMarksTable = null;
+                displayedNoteId = {nid};
                 {tiny_mce} 
             </script>
         """.format_map(dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, title=title, tiny_mce=self.tiny_mce_init_code()))
@@ -1827,6 +1828,7 @@ class ReadingModalSidebar():
                     <div class='siac-pdf-main-color-border-bottom' style='flex: 0 auto; padding: 5px 0 5px 0; user-select: none;'>
                         <strong class='blue-hover' style='color: grey; margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-pdfs-in-progress")'>In Progress</strong>
                         <strong class='blue-hover' style='color: grey; margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-pdfs-unread")'>Unread</strong>
+                        <strong class='blue-hover' style='color: grey; margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-pdfs-last-added")'>Last Added</strong>
                     </div>
                     <div id='siac-left-tab-browse-results' style='flex: 1 1 auto; overflow-y: auto; padding: 0 5px 0 0; margin: 10px 0 5px 0;'>
                     </div>
@@ -1867,17 +1869,18 @@ class ReadingModalSidebar():
         """ Print the results of the pdfs tab. """
 
         if not results:
-            return
-        html    = ""
-        limit   = get_config_value_or_default("pdfTooltipResultLimit", 50)
+            html = "<center style='margin-top: 50px;'><b>Nothing found.</b></center>"
+        else:
+            html    = ""
+            limit   = get_config_value_or_default("pdfTooltipResultLimit", 50)
 
-        for note in results[:limit]:
-            should_show_loader = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if note.is_pdf() else ""
-            html = f"{html}<div class='siac-note-title-only' onclick='if (!pdfLoading) {{{should_show_loader}  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note {note.id}\"); hideQueueInfobox();}}'>{note.get_title()}</div>"
+            for note in results[:limit]:
+                should_show_loader = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if note.is_pdf() else ""
+                html = f"{html}<div class='siac-note-title-only' onclick='if (!pdfLoading) {{{should_show_loader}  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note {note.id}\"); hideQueueInfobox();}}'>{note.get_title()}</div>"
 
-        html    = html.replace("`", "\\`")
+            html    = html.replace("`", "\\`")
 
-        self._editor.web.eval(f"document.getElementById('siac-left-tab-browse-results').innerHTML = `{html}`;")
+        self._editor.web.eval(f"document.getElementById('siac-left-tab-browse-results').innerHTML = `{html}`; document.getElementById('siac-left-tab-browse-results').scrollTop = 0;")
 
 
 
@@ -1890,6 +1893,7 @@ class ReadingModalSidebar():
         nids                        = [r.id for r in db_list]
         show_ret                    = get_config_value_or_default("showRetentionScores", True)
         fields_to_hide_in_results   = get_config_value_or_default("fieldsToHideInResults", {})
+        hide_clozes                 = get_config_value_or_default("results.hide_cloze_brackets", False)
         remove_divs                 = get_config_value_or_default("removeDivsFromOutput", False)
         if show_ret:
             retsByNid               = getRetentions(nids)
@@ -1915,6 +1919,10 @@ class ReadingModalSidebar():
             #remove <div> tags if set in config
             if remove_divs and res.note_type != "user":
                 text = utility.text.remove_divs(text)
+
+            # remove cloze brackets if set in config
+            if hide_clozes and res.note_type != "user":
+                text = utility.text.hide_cloze_brackets(text)
 
             if highlighting and query_set is not None:
                 text = utility.text.mark_highlights(text, query_set)

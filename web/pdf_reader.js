@@ -53,7 +53,7 @@ var pdfFullscreen = false;
 var pdfBarsHidden = false;
 var pdfNotificationShown = false;
 var pdfNotifications = [];
-var pdfNoteId = null;
+var displayedNoteId = null;
 var pdfLastReadPages = {};
 var pdfSearchOngoing = false;
 var pdfCurrentSearch = {
@@ -298,7 +298,7 @@ function togglePageRead(nid) {
     }
 
     if (!nid) {
-        nid = pdfNoteId;
+        nid = displayedNoteId;
     }
 
     if (pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
@@ -592,11 +592,11 @@ async function nextPDFSearchResult(dir = "right") {
 
 }
 function setLastReadPage() {
-    pdfLastReadPages[pdfNoteId] = pdfDisplayedCurrentPage;
+    pdfLastReadPages[displayedNoteId] = pdfDisplayedCurrentPage;
 }
 function getLastReadPage() {
-    if (pdfNoteId && pdfNoteId in pdfLastReadPages) {
-        return pdfLastReadPages[pdfNoteId];
+    if (displayedNoteId && displayedNoteId in pdfLastReadPages) {
+        return pdfLastReadPages[displayedNoteId];
     }
     return null;
 }
@@ -1127,9 +1127,7 @@ function pdfViewerKeyup(event) {
         pdfPageRight();
     } else if (event.ctrlKey && (event.keyCode === 37 || event.keyCode === 75)) {
         pdfPageLeft();
-    } else if (event.keyCode === 122) {
-        toggleReadingModalBars();
-    }
+    } 
 }
 function pdfTooltipClozeKeyup(event) {
     try {
@@ -1312,6 +1310,7 @@ function onReadingModalClose() {
     if (pdfLoading) {
         return;
     }
+    displayedNoteId = null;
     $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right").removeClass('siac-reading-modal-displayed');
     $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
     $('#fields').show();
