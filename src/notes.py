@@ -1200,9 +1200,13 @@ def get_in_progress_pdf_notes() -> List[SiacNote]:
     return _to_notes(res)
 
 
-def get_pdf_notes_last_added_first() -> List[SiacNote]:
+def get_pdf_notes_last_added_first(limit : int = None) -> List[SiacNote]:
+    if limit:
+        limit = f"limit {limit}"
+    else:
+        limit = ""
     conn = _get_connection()
-    res = conn.execute("select * from notes where lower(source) like '%.pdf' order by id desc").fetchall()
+    res = conn.execute(f"select * from notes where lower(source) like '%.pdf' order by id desc {limit}").fetchall()
     conn.close()
     return _to_notes(res)
 
