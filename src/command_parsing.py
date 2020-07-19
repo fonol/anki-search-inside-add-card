@@ -980,6 +980,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         notes = get_all_unread_pdf_notes()
         index.ui.reading_modal.sidebar.print(notes)
 
+    elif cmd == "siac-pdf-sidebar-pdfs-last-added":
+        # pdfs last added button clicked in the pdf sidebar
+        notes = get_pdf_notes_last_added_first(limit=100)
+        index.ui.reading_modal.sidebar.print(notes)
+
 
     #
     # highlights
