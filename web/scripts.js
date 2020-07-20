@@ -970,6 +970,7 @@ function dragElement(elmnt, headerId, inModal=false) {
 	cal.init({
         data,
         legendColors,
+        itemName: ["page", "pages"],
         itemSelector: id,
         considerMissingDataAsZero: true,
         dataType: "json",
