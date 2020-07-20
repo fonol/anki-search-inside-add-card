@@ -249,7 +249,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         res.append(SiacNote((-3, f"Pages read yesterday ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         counts      = get_read_last_n_days(7)
         body = read_counts_card_body(counts)
-        res.append(SiacNote((-4, f"Pages read last week ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        res.append(SiacNote((-4, f"Pages read last 7 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         counts      = get_read_last_n_days(30)
         body        = read_counts_card_body(counts)
         res.append(SiacNote((-5, f"Pages read last 30 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
