@@ -589,21 +589,21 @@ def _buildTable(tables, reviewPlotData, ivlPlotData, timePlotData, namesByCid):
             graphHeight = "250px"
 
         for k, v in reviewPlotData.items():
-            if len(v) > 1:
+            if k in namesByCid and len(v) > 1:
                 c += 1
                 s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Reviews over time for <i>%s</i>:</h3>" % namesByCid[
                     k]
                 s += "<div id='graph-" + \
                     str(c) + "' style='width: %s; height: %s; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 55px;'></div></div>" % (graphWidth, graphHeight)
         for k, v in ivlPlotData.items():
-            if len(v) > 1:
+            if k in namesByCid and len(v) > 1:
                 c += 1
                 s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Interval over time for <i>%s</i>:</h3>" % namesByCid[
                     k]
                 s += "<div id='graph-" + \
                     str(c) + "' style='width: %s; height: %s; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 55px;'></div></div>" % (graphWidth, graphHeight)
         for k, v in timePlotData.items():
-            if len(v) > 1:
+            if k in namesByCid and len(v) > 1:
                 c += 1
                 s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Answer times for <i>%s</i>:</h3>" % namesByCid[
                     k]
