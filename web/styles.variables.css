@@ -1,0 +1,76 @@
+:root {
+
+--pdf-tooltip-max-width: $pdfTooltipMaxWidth$px;
+--pdf-tooltip-max-height: $pdfTooltipMaxHeight$px;
+--img-max-height: $imgMaxHeight$px;
+--zoom: $zoom$;
+
+--c-suspended-foreground: $styles.suspendedForegroundColor$;
+--c-suspended-background: $styles.suspendedBackgroundColor$;
+
+--c-highlight-foreground: $styles.highlightForegroundColor$;
+--c-highlight-background: $styles.highlightBackgroundColor$;
+--c-tag-background: $styles.tagBackgroundColor$;
+--c-tag-foreground: $styles.tagForegroundColor$;
+
+--c-highlight-foreground-night: $styles.night.highlightForegroundColor$;
+--c-highlight-background-night: $styles.night.highlightBackgroundColor$;
+--c-tag-background-night: $styles.night.tagBackgroundColor$;
+--c-tag-foreground-night: $styles.night.tagForegroundColor$;
+
+
+--c-button-border: darkseagreen;
+--c-button-border-hover: rgb(156, 206, 156);
+--c-button-background: whitesmoke;
+--c-button-color: rgb(30, 44, 44);
+--c-input-background: whitesmoke;
+--c-input-foreground: rgb(30, 44, 44);
+--c-input-border: rgb(30, 44, 43);
+--c-timeline-background: #595959;
+--c-timeline-border: #595959;
+--c-modal-foreground: black;
+--c-modal-background: whitesmoke;
+--c-modal-border: #2496dc;
+--c-ranking-lbl-foreground: white;
+--c-ranking-lbl-background: lightseagreen;
+--c-note-background: white;
+--c-note-foreground: black;
+--c-note-border: lightseagreen;
+--c-note-hover-border: #2496dc;
+--c-field-separator: #2496dc;
+
+--c-keyword: #2496dc;
+--c-striped-table-background: #e6e6e6;
+--c-select-foreground: black;
+--c-select-background: whitesmoke;
+--c-deck-select-checkmark: green;
+--c-read-box-background: coral;
+
+--c-button-border-night: rgb(102,102,102);
+--c-button-border-hover-night: rgb(143, 143, 143);
+--c-button-background-night: #2f2f31;
+--c-button-color-night: lightgrey;
+--c-input-background-night: #2f2f31;
+--c-input-foreground-night: lightgrey;
+--c-input-border-night: lightgrey;
+--c-timeline-background-night: #2b2b30;
+--c-timeline-border-night: darkorange;
+--c-modal-foreground-night: beige;
+--c-modal-background-night: #2f2f31;
+--c-modal-border-night: darkorange;
+--c-ranking-lbl-foreground-night: black;
+--c-ranking-lbl-background-night: darkorange;
+--c-note-background-night: #2f2f31;
+--c-note-foreground-night: beige;
+--c-note-border-night: lightseagreen;
+--c-note-hover-border-night: #62C9C3;
+--c-field-separator-night: white;
+
+--c-keyword-night: SpringGreen;
+--c-striped-table-background-night: #2b2b30;
+--c-select-foreground-night: white;
+--c-select-background-night: #2f2f31;
+--c-deck-select-checkmark-night: lawngreen;
+--c-read-box-background-night: coral;
+
+}
