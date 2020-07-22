@@ -85,5 +85,9 @@
 "styles.night.tagBackgroundColor": "DarkOrange",
 "styles.night.tagForegroundColor": "Black",
 "styles.tagBackgroundColor": "#f0506e",
-"styles.tagForegroundColor": "white"
+"styles.tagForegroundColor": "white",
+"styles.highlightForegroundColor": "black",
+"styles.highlightBackgroundColor": "yellow",
+"styles.night.highlightForegroundColor": "black",
+"styles.night.highlightBackgroundColor": "SpringGreen"
 }
