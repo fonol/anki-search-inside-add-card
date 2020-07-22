@@ -1784,8 +1784,8 @@ def update_styling(cmd):
 
     elif name.startswith("styles."):
         config[name] = value
-        tooltip("Styling updated. Restart Anki to apply changes.")
         write_config()
+        reload_styles()
 
     elif name in ["notes.showSource", "useInEdit", "results.showFloatButton", "results.showIDButton", "results.showCIDButton"]:
         config[name] = value == "true"
