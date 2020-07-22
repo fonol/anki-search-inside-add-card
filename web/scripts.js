@@ -954,6 +954,11 @@ function dragElement(elmnt, headerId, inModal=false) {
  */
 
  function drawHeatmap(id, data) {
+    // script might not be loaded yet
+    if (typeof CalHeatMap === "undefined") {
+        setTimeout(() => { drawHeatmap(id, data); }, 200); 
+        return;
+    }
     var cal = new CalHeatMap();
     let legendColors = {
         min: "#dae289",
