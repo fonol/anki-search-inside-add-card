@@ -173,31 +173,7 @@ def on_add_cards_init(add_cards: AddCards):
     if get_index() is not None and add_cards.editor is not None:
         get_index().ui.set_editor(add_cards.editor)
         
-def activate_nightmode(shortcuts: List[Tuple], editor: Editor):
-    """ Activate dark theme if Anki's night mode is active. """
-    
-    editor.web.eval("""
-    if (document.body.classList.contains('nightMode')) {
-        var props = [];
-        for (var i = 0; i < document.styleSheets.length; i++){
-            try { 
-                for (var j = 0; j < document.styleSheets[i].cssRules.length; j++){
-                    try{
-                        for (var k = 0; k < document.styleSheets[i].cssRules[j].style.length; k++){
-                            let name = document.styleSheets[i].cssRules[j].style[k];
-                            if (name.startsWith('--c-') && !name.endsWith('-night') && props.indexOf(name) == -1) {
-                                props.push(name);
-                            }
-                        }
-                    } catch (error) {}
-                }
-            } catch (error) {}
-        }
-        for (const v of props) {
-            document.documentElement.style.setProperty(v, getComputedStyle(document.documentElement).getPropertyValue(v + '-night'));
-        }
-    }
-    """)
+
 
 def insert_scripts():
     """
@@ -213,6 +189,13 @@ def insert_scripts():
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf)$")
     aqt.editor._html += f"""
     <script>
+
+        script = document.createElement('link');
+        script.type = 'text/css';
+        script.rel = 'stylesheet';
+        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/styles.css';
+        document.body.appendChild(script);
+
         var script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/tinymce/tinymce.min.js';
