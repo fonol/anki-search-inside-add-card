@@ -220,9 +220,9 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 if (isInitial || query) {
                     ungreyoutBottom();
                 }
-                // if (isInitial) {
-                //    setTimeout(function() {  refreshCanvas(); }, 5000); 
-                // }
+                if (isInitial) {
+                   setTimeout(function() {  refreshCanvas(); }, 3000); 
+                }
                 pdfDisplayedViewPort = viewport;
                 if (fetchHighlights) {
                     Highlighting.current = [];  
@@ -275,8 +275,10 @@ function invertCanvas(ctx) {
    ctx.canvas.style.display = "inline-block";
 }
 function refreshCanvas() {
-    const ctx = document.getElementById("siac-pdf-canvas").getContext("2d");
-    ctx.putImageData(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height), 0, 0);
+    try {
+        const ctx = document.getElementById("siac-pdf-canvas").getContext("2d");
+        ctx.putImageData(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height), 0, 0);
+    } catch(e) {}
 }
 function numPagesExtract() {
     if (!pdfExtract) {
