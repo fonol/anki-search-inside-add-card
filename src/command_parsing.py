@@ -245,17 +245,17 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         body        = read_counts_card_body(counts)
         res.append(SiacNote((-2, f"Pages read today ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         counts      = get_read(1)
-        body = read_counts_card_body(counts)
+        body        = read_counts_card_body(counts)
         res.append(SiacNote((-3, f"Pages read yesterday ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         counts      = get_read_last_n_days(7)
-        body = read_counts_card_body(counts)
+        body        = read_counts_card_body(counts)
         res.append(SiacNote((-4, f"Pages read last 7 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         counts      = get_read_last_n_days(30)
         body        = read_counts_card_body(counts)
         res.append(SiacNote((-5, f"Pages read last 30 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
         index.ui.print_search_results(res, stamp)
         # fill plots
-        index.ui.js(f""" drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)}); """)
+        index.ui.js(f"""drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)});""")
 
 
     elif cmd == "siac-r-show-last-done":
@@ -1696,14 +1696,8 @@ def update_styling(cmd):
     name    = cmd.split()[0]
     value   = " ".join(cmd.split()[1:])
 
-    if name == "default" and value == "day":
-        config["styling"] = json.loads(default_styles())
-        tooltip("Styling updated. Restart to apply changes.", period=4000)
-    elif name == "default" and value == "night":
-        config["styling"] = json.loads(default_night_mode_styles())
-        tooltip("Styling updated. Restart to apply changes.", period=4000)
 
-    elif name == "searchpane.zoom":
+    if name == "searchpane.zoom":
         config[name] = float(value)
         index.ui.js("document.getElementById('siac-right-side').style.zoom = '%s'; showTagInfoOnHover = %s;" % (value, "false" if float(value) != 1.0 else "true"))
     elif name == "renderImmediately":
@@ -1788,9 +1782,13 @@ def update_styling(cmd):
                 value += "/"
             config["pdfUrlImportSavePath"] = value
 
+    elif name.startswith("styles."):
+        config[name] = value
+        tooltip("Styling updated. Restart Anki to apply changes.")
+        write_config()
+
     elif name in ["notes.showSource", "useInEdit", "results.showFloatButton", "results.showIDButton", "results.showCIDButton"]:
         config[name] = value == "true"
-
 
 @js
 def write_config():
@@ -1800,6 +1798,7 @@ def write_config():
 def update_config(key, value):
     config[key] = value
     mw.addonManager.writeConfig(__name__, config)
+
 
 @requires_index_loaded
 def after_index_rebuilt():
