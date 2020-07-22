@@ -720,6 +720,26 @@ def stylingModal(config):
                 </table>
             </fieldset>
             <br/>
+            <fieldset>
+                <span>Tag colors. <b>Needs a restart to apply.</b></span>
+                <table style="width: 100%%">
+                    <tr><td><b>Tag Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.tagForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
+                    <tr><td><b>Tag Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.tagBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
+                    <tr><td><b>Tag Foreground Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.tagForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
+                    <tr><td><b>Tag Background Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.tagBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <fieldset>
+                <span>Highlight colors. <b>Needs a restart to apply.</b></span>
+                <table style="width: 100%%">
+                    <tr><td><b>Highlight Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.highlightForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
+                    <tr><td><b>Highlight Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.highlightBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
+                    <tr><td><b>Highlight Foreground Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.highlightForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
+                    <tr><td><b>Highlight Background Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.highlightBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
+                </table>
+            </fieldset>
+            <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
                         """ % (
                         config["searchpane.zoom"],
@@ -738,7 +758,15 @@ def stylingModal(config):
                        "checked='true'" if config["useInEdit"] else "",
                        "checked='true'" if config["results.showFloatButton"] else "",
                        "checked='true'" if config["results.showIDButton"] else "",
-                       "checked='true'" if config["results.showCIDButton"] else ""
+                       "checked='true'" if config["results.showCIDButton"] else "",
+                       utility.misc.color_to_hex(config["styles.tagForegroundColor"]), 
+                       utility.misc.color_to_hex(config["styles.tagBackgroundColor"]),
+                       utility.misc.color_to_hex(config["styles.night.tagForegroundColor"]),
+                       utility.misc.color_to_hex(config["styles.night.tagBackgroundColor"]),
+                       utility.misc.color_to_hex(config["styles.highlightForegroundColor"]),
+                       utility.misc.color_to_hex(config["styles.highlightBackgroundColor"]),
+                       utility.misc.color_to_hex(config["styles.night.highlightForegroundColor"]),
+                       utility.misc.color_to_hex(config["styles.night.highlightBackgroundColor"]),
                         )
     html += """
     <br/> <br/>
