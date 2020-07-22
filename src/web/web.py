@@ -435,9 +435,9 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added \"Last Added\" search in the \"PDF\" tab (when reading modal is open)",
-        "Fix F11 toggle not working on text notes",
-        "Fix bug in \"Info\" dialog"
+        "Added color options to the settings dialog",
+        "Fix reading heatmap not loading initially when reopening Add Card",
+        "Possible workaround for highlight bug on 2.1.28"
     ]
 
 def known_issues() -> List[str]:
