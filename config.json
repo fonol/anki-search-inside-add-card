@@ -89,5 +89,7 @@
 "styles.highlightForegroundColor": "black",
 "styles.highlightBackgroundColor": "yellow",
 "styles.night.highlightForegroundColor": "black",
-"styles.night.highlightBackgroundColor": "SpringGreen"
+"styles.night.highlightBackgroundColor": "SpringGreen",
+"styles.suspendedForegroundColor": "black",
+"styles.suspendedBackgroundColor": "coral"
 }
