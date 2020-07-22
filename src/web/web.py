@@ -22,11 +22,11 @@ import re
 import datetime
 import time
 import sys
+import aqt
 import typing
-from typing import List
+from typing import List, Tuple
 from aqt import mw
-from aqt.utils import showInfo
-
+from aqt.editor import Editor
 
 import utility.tags
 import utility.text
@@ -59,7 +59,7 @@ def getScriptPlatformSpecific():
     dir = utility.misc.get_web_folder_path()
     #css + js
     all = """
-    <style>
+    <style id='siac-styles'>
     %s
     </style>
 
@@ -67,28 +67,10 @@ def getScriptPlatformSpecific():
     %s
     </script>
     """
+    css                 = styles()
     with open(dir + "scripts.js") as f:
-        script = f.read()
-    with open(dir + "styles.css") as f:
-        css = f.read().replace("%", "%%")
-
-    imgMaxHeight        = str(get_config_value_or_default("imageMaxHeight", 300)) + "px"
-    pdfTooltipMaxHeight = str(get_config_value_or_default("pdfTooltipMaxHeight", 300))
-    pdfTooltipMaxWidth  = str(get_config_value_or_default("pdfTooltipMaxWidth", 250))
-    tagFG               = str(get_config_value_or_default("styles.tagForegroundColor", "black"))
-    tagBG               = str(get_config_value_or_default("styles.tagBackgroundColor", "#f0506e"))
-    tagNightFG          = str(get_config_value_or_default("styles.night.tagForegroundColor", "black"))
-    tagNightBG          = str(get_config_value_or_default("styles.night.tagBackgroundColor", "DarkOrange"))
-
-    css                 = css.replace("$imgMaxHeight$", imgMaxHeight)
-    css                 = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
-    css                 = css.replace("$pdfTooltipMaxWidth$", pdfTooltipMaxWidth)
-    css                 = css.replace("$styles.tagForegroundColor$", tagFG)
-    css                 = css.replace("$styles.tagBackgroundColor$", tagBG)
-    css                 = css.replace("$styles.night.tagForegroundColor$", tagNightFG)
-    css                 = css.replace("$styles.night.tagBackgroundColor$", tagNightBG)
-
-    css                 = css.replace("$zoom$", str(get_config_value_or_default("searchpane.zoom", 1.0)))
+        script          = f.read()
+    
     renderImmediately   = str(get_config_value_or_default("renderImmediately", False)).lower()
     script              = script.replace("$renderImmediately$", renderImmediately)
 
@@ -98,6 +80,85 @@ def getScriptPlatformSpecific():
         script = script.replace("event.ctrlKey", "event.metaKey")
 
     return all % (css, script)
+
+def styles() -> str:
+    """ Returns the content of styles.css with all config values inserted. """
+
+    dir = utility.misc.get_web_folder_path()
+    with open(dir + "styles.variables.css") as f:
+        css = f.read().replace("%", "%%")
+
+    imgMaxHeight        = str(get_config_value_or_default("imageMaxHeight", 300))
+    pdfTooltipMaxHeight = str(get_config_value_or_default("pdfTooltipMaxHeight", 300))
+    pdfTooltipMaxWidth  = str(get_config_value_or_default("pdfTooltipMaxWidth", 250))
+    tagFG               = str(get_config_value_or_default("styles.tagForegroundColor", "black"))
+    tagBG               = str(get_config_value_or_default("styles.tagBackgroundColor", "#f0506e"))
+    tagNightFG          = str(get_config_value_or_default("styles.night.tagForegroundColor", "black"))
+    tagNightBG          = str(get_config_value_or_default("styles.night.tagBackgroundColor", "DarkOrange"))
+
+    highlightFG         = str(get_config_value_or_default("styles.highlightForegroundColor", "black"))
+    highlightBG         = str(get_config_value_or_default("styles.highlightBackgroundColor", "yellow"))
+    highlightNightFG    = str(get_config_value_or_default("styles.night.highlightForegroundColor", "black"))
+    highlightNightBG    = str(get_config_value_or_default("styles.night.highlightBackgroundColor", "SpringGreen")) 
+
+    suspFG              = str(get_config_value_or_default("styles.suspendedForegroundColor", "black"))
+    suspBG              = str(get_config_value_or_default("styles.suspendedBackgroundColor", "coral"))
+
+    css                 = css.replace("$imgMaxHeight$", imgMaxHeight)
+    css                 = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
+    css                 = css.replace("$pdfTooltipMaxWidth$", pdfTooltipMaxWidth)
+    css                 = css.replace("$styles.suspendedForegroundColor$", suspFG)
+    css                 = css.replace("$styles.suspendedBackgroundColor$", suspBG)
+    css                 = css.replace("$styles.tagForegroundColor$", tagFG)
+    css                 = css.replace("$styles.tagBackgroundColor$", tagBG)
+    css                 = css.replace("$styles.night.tagForegroundColor$", tagNightFG)
+    css                 = css.replace("$styles.night.tagBackgroundColor$", tagNightBG)
+    css                 = css.replace("$styles.highlightForegroundColor$", highlightFG)
+    css                 = css.replace("$styles.highlightBackgroundColor$", highlightBG)
+    css                 = css.replace("$styles.night.highlightForegroundColor$", highlightNightFG)
+    css                 = css.replace("$styles.night.highlightBackgroundColor$", highlightNightBG)
+    css                 = css.replace("$zoom$", str(get_config_value_or_default("searchpane.zoom", 1.0)))
+
+    return css
+
+def reload_styles():
+    """ Refresh the css variables in the editor's style tag. For use e.g. after config color options have been changed. """
+
+    css                 = styles()
+    aqt.editor._html    = re.sub("<style id='siac-styles'>(?:\r\n|\n|.)+?</style>", f"<style id='siac-styles'>{css}</style>", aqt.editor._html)
+    editor              = get_index().ui._editor
+
+    editor.web.eval(f"document.getElementById('siac-styles').innerHTML = `{css}`;")
+    activate_nightmode(None, editor)
+
+
+def activate_nightmode(shortcuts: List[Tuple], editor: Editor):
+    """ Activate dark theme if Anki's night mode is active. """
+    
+    editor.web.eval("""
+    if (document.body.classList.contains('nightMode')) {
+        var props = [];
+        for (var i = 0; i < document.styleSheets.length; i++){
+            try { 
+                for (var j = 0; j < document.styleSheets[i].cssRules.length; j++){
+                    try{
+                        for (var k = 0; k < document.styleSheets[i].cssRules[j].style.length; k++){
+                            let name = document.styleSheets[i].cssRules[j].style[k];
+                            if (name.startsWith('--c-') && !name.endsWith('-night') && props.indexOf(name) == -1) {
+                                props.push(name);
+                            }
+                        }
+                    } catch (error) {}
+                }
+            } catch (error) {}
+        }
+        for (const v of props) {
+            document.documentElement.style.setProperty(v, getComputedStyle(document.documentElement).getPropertyValue(v + '-night'));
+        }
+    }
+    """)
+
+
 
 def setup_ui_after_index_built(editor, index, init_time=None):
     #editor is None if index building finishes while add dialog is not open
@@ -144,7 +205,7 @@ def show_search_result_area(editor=None, initializationTime=0):
     elif editor is not None and editor.web is not None:
         editor.web.eval(js)
 
-def print_starting_info(editor):
+def print_starting_info(editor: Editor):
     """ Displays the information that is visible after the first start of the add-on. """
 
     if editor is None or editor.web is None:
