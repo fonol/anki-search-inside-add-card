@@ -721,7 +721,7 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <fieldset>
-                <span>Tag colors. <b>Needs a restart to apply.</b></span>
+                <span class='tagLbl' style='float: none; margin-left: 0;'>Tag Colors</span>
                 <table style="width: 100%%">
                     <tr><td><b>Tag Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.tagForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
                     <tr><td><b>Tag Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.tagBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
@@ -731,12 +731,20 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <fieldset>
-                <span>Highlight colors. <b>Needs a restart to apply.</b></span>
+                <mark>Highlight Colors</mark>
                 <table style="width: 100%%">
                     <tr><td><b>Highlight Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.highlightForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
                     <tr><td><b>Highlight Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.highlightBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
                     <tr><td><b>Highlight Foreground Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.highlightForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
                     <tr><td><b>Highlight Background Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.highlightBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
+                </table>
+            </fieldset>
+            <br/>
+            <fieldset>
+                <span class='siac-susp-lbl' style='position: static; margin-left: 0;'>Suspended Label Colors</span>
+                <table style="width: 100%%">
+                    <tr><td><b>Suspended Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.suspendedForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
+                    <tr><td><b>Suspended Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.suspendedBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
                 </table>
             </fieldset>
             <br/>
@@ -767,6 +775,8 @@ def stylingModal(config):
                        utility.misc.color_to_hex(config["styles.highlightBackgroundColor"]),
                        utility.misc.color_to_hex(config["styles.night.highlightForegroundColor"]),
                        utility.misc.color_to_hex(config["styles.night.highlightBackgroundColor"]),
+                       utility.misc.color_to_hex(config["styles.suspendedForegroundColor"]), 
+                       utility.misc.color_to_hex(config["styles.suspendedBackgroundColor"]),
                         )
     html += """
     <br/> <br/>
@@ -918,7 +928,7 @@ def get_unsuspend_modal(nid):
             if t["ord"] == c[3]:
                 temp_name = utility.text.trim_if_longer_than(t["name"], 60)
                 break
-        susp = "<span style='background: coral; color: black; border-radius: 3px; padding: 2px 3px 2px 3px; font-weight: bold;'>SUSPENDED</span>" if c[2] == -1 else ""
+        susp = "<span class='siac-susp' style='border-radius: 3px; padding: 2px 3px 2px 3px; font-weight: bold;'>SUSPENDED</span>" if c[2] == -1 else ""
         btn = f"<div class='siac-btn' onclick='pycmd(\"siac-unsuspend {nid} {c[0]}\");'>Unsuspend</div>" if c[2] == -1 else ""
         ivl = f"{c[1]} days" if c[1] >= 0 else f"{c[1]} seconds"
         cards_html += f"""
@@ -930,7 +940,7 @@ def get_unsuspend_modal(nid):
             </tr>
         """
     return f"""
-            <center>
+            <center style='margin: 10px 0 20px 0;'>
                 <b>{len(cards)}</b> Card(s) for Note <b>{nid}</b> 
                 <table style='min-width: 500px; margin-top: 20px;'>
                     {cards_html}
