@@ -92,7 +92,8 @@ class FTSIndex:
                     self.type = "SQlite FTS3"
 
             conn.executemany('INSERT INTO notes VALUES (?,?,?,?,?,?,?)', cleaned)
-            conn.execute("INSERT INTO notes(notes) VALUES('optimize')")
+            if self.type == "SQLite FTS5":
+                conn.execute("INSERT INTO notes(notes) VALUES('optimize')")
             conn.commit()
             conn.close()
         else:
