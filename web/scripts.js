@@ -277,7 +277,7 @@ function getSelectionText() {
     } else if (document.selection && document.selection.type != "Control") {
         text = document.selection.createRange().text;
     }
-    if (text.length > 0 && text != "&nbsp;") {
+    if (text.trim().length > 0 && text != "&nbsp;") {
         showLoading("Selection");
         pycmd('siac-r-fld-selected ' + siacState.selectedDecks.toString() + ' ~ ' + text);
     }
