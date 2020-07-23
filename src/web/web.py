@@ -459,6 +459,7 @@ def changelog() -> List[str]:
 
     return [
         "Added color options to the settings dialog",
+        "Don't trigger Search on Selection if selected text is only whitespace",
         "Fix reading heatmap not loading initially when reopening Add Card",
         "Possible workaround for highlight bug on 2.1.28"
     ]
