@@ -308,7 +308,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                 <div id="resultsArea" style="">
                     <div id='loader' style='%s'> 
                         <div class='signal'></div>
-                        <br/>Preparing index...
+                        <br/><span style='font-size: 15px; margin-top: 20px;'>Preparing index...</span>
                     </div>
                     <div id='resultsWrapper'>
                         <div id='searchResults'></div>
@@ -748,6 +748,14 @@ def stylingModal(config):
                 </table>
             </fieldset>
             <br/>
+            <fieldset>
+                <span>Modal Border Color</span>
+                <table style="width: 100%%">
+                    <tr><td><b>Modal Border Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.modalBorderColor ' + this.value)" type="color" value="%s"></td></tr>
+                    <tr><td><b>Modal Border Color (Night)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.modalBorderColor ' + this.value)" type="color" value="%s"></td></tr>
+                </table>
+            </fieldset>
+            <br/>
             <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
                         """ % (
                         config["searchpane.zoom"],
@@ -777,6 +785,8 @@ def stylingModal(config):
                        utility.misc.color_to_hex(config["styles.night.highlightBackgroundColor"]),
                        utility.misc.color_to_hex(config["styles.suspendedForegroundColor"]), 
                        utility.misc.color_to_hex(config["styles.suspendedBackgroundColor"]),
+                       utility.misc.color_to_hex(config["styles.modalBorderColor"]), 
+                       utility.misc.color_to_hex(config["styles.night.modalBorderColor"]),
                         )
     html += """
     <br/> <br/>

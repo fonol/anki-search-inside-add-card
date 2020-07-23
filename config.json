@@ -91,5 +91,7 @@
 "styles.night.highlightForegroundColor": "black",
 "styles.night.highlightBackgroundColor": "SpringGreen",
 "styles.suspendedForegroundColor": "black",
-"styles.suspendedBackgroundColor": "coral"
+"styles.suspendedBackgroundColor": "coral",
+"styles.modalBorderColor": "#2496dc",
+"styles.night.modalBorderColor": "darkorange"
 }

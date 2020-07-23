@@ -18,6 +18,8 @@
 --c-tag-background-night: $styles.night.tagBackgroundColor$;
 --c-tag-foreground-night: $styles.night.tagForegroundColor$;
 
+--c-modal-border: $styles.modalBorderColor$;
+--c-modal-border-night: $styles.night.modalBorderColor$;
 
 --c-button-border: darkseagreen;
 --c-button-border-hover: rgb(156, 206, 156);
@@ -30,7 +32,6 @@
 --c-timeline-border: #595959;
 --c-modal-foreground: black;
 --c-modal-background: whitesmoke;
---c-modal-border: #2496dc;
 --c-ranking-lbl-foreground: white;
 --c-ranking-lbl-background: lightseagreen;
 --c-note-background: white;
@@ -57,7 +58,6 @@
 --c-timeline-border-night: darkorange;
 --c-modal-foreground-night: beige;
 --c-modal-background-night: #2f2f31;
---c-modal-border-night: darkorange;
 --c-ranking-lbl-foreground-night: black;
 --c-ranking-lbl-background-night: darkorange;
 --c-note-background-night: #2f2f31;

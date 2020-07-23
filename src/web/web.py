@@ -121,9 +121,13 @@ def styles() -> str:
     suspFG              = str(get_config_value_or_default("styles.suspendedForegroundColor", "black"))
     suspBG              = str(get_config_value_or_default("styles.suspendedBackgroundColor", "coral"))
 
+    modalBorder         = str(get_config_value_or_default("styles.modalBorderColor", "#2496dc"))
+    modalBorderNight    = str(get_config_value_or_default("styles.night.modalBorderColor", "darkorange"))
+
     css                 = css.replace("$imgMaxHeight$", imgMaxHeight)
     css                 = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
     css                 = css.replace("$pdfTooltipMaxWidth$", pdfTooltipMaxWidth)
+
     css                 = css.replace("$styles.suspendedForegroundColor$", suspFG)
     css                 = css.replace("$styles.suspendedBackgroundColor$", suspBG)
     css                 = css.replace("$styles.tagForegroundColor$", tagFG)
@@ -134,6 +138,8 @@ def styles() -> str:
     css                 = css.replace("$styles.highlightBackgroundColor$", highlightBG)
     css                 = css.replace("$styles.night.highlightForegroundColor$", highlightNightFG)
     css                 = css.replace("$styles.night.highlightBackgroundColor$", highlightNightBG)
+    css                 = css.replace("$styles.modalBorderColor$", modalBorder)
+    css                 = css.replace("$styles.night.modalBorderColor$", modalBorderNight)
     css                 = css.replace("$zoom$", str(get_config_value_or_default("searchpane.zoom", 1.0)))
 
     return css
