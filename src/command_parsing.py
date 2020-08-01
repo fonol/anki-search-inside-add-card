@@ -1617,6 +1617,8 @@ def get_index_info():
                <tr><td>PDF: Later</td><td>  <b>%s</b></td></tr>
                <tr><td>Focus Search Input</td><td><b>%s</b></td></tr>
                <tr><td>Trigger Search with current field contents</td><td>  <b>%s</b></td></tr>
+               <tr><td>Trigger Search with current focused field's contents</td><td>  <b>%s</b></td></tr>
+               <tr><td>Trigger Predefined Search</td><td>  <b>%s</b></td></tr>
              </table>
 
             %s
@@ -1651,6 +1653,8 @@ def get_index_info():
             config["pdf.shortcuts.later"],
             config["shortcuts.focus_search_bar"],
             config["shortcuts.trigger_search"],
+            config["shortcuts.search_for_current_field"],
+            config["shortcuts.trigger_predef_search"],
             shortcuts
             )
 

@@ -472,6 +472,8 @@ def changelog() -> List[str]:
         "Drag and drop a PDF file on the add-on pane -> Open Create Note dialog with the PDF path",
         "Added Shortcut to focus search bar: CTRL/Meta+Shift+F",
         "Added Shortcut to trigger search with field contents: CTRL/Meta+Shift+K",
+        "Added Shortcut to trigger search with focused field's contents: Alt/Option+J",
+        "Added Shortcut to trigger current selected predefined search: Alt/Option+K",
         "Fix: Bug with PDF notifications",
         "Fix: Bug with just added note and \"Search in Fields\" settings"
 

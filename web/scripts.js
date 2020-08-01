@@ -48,11 +48,22 @@ function sendContent(event) {
     });
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
+function searchCurrentField() {
+    if (displayedNoteId || siacState.isFrozen) {return;}
+    let f = $('.field:focus').first();
+    if (!f.length) {return;}
+    let t = f.text();
+    if (!t || t.trim().length === 0) {return;}
+    showLoading("Typing");
+    pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + t);
+
+}
 function sendSearchFieldContent() {
     showLoading("Searchbar");
     html = document.getElementById('siac-browser-search-inp').value + "\u001f";
     pycmd('siac-r-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
+
 
 function searchFor(text) {
     showLoading("Note Search");
@@ -443,7 +454,7 @@ function sendSearchOnSelection() {
     pycmd("searchOnSelection " + (siacState.searchOnSelection ? "on" : "off"));
 }
 function fieldKeypress(event) {
-    if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey) {
+    if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey &&!event.altKey) {
         if (siacState.timeout) {
             clearTimeout(siacState.timeout);
             siacState.timeout = null;
