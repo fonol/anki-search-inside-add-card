@@ -22,7 +22,9 @@ from typing import Tuple, List, Any, Optional
 from datetime import datetime, timedelta
 from .web_import import import_webpage
 from .config import get_config_value_or_default
-
+from .markdown import markdown
+from .markdown.extensions.fenced_code import FencedCodeExtension
+from .markdown.extensions.def_list import DefListExtension
 
 class Printable():
     
@@ -59,7 +61,7 @@ class SiacNote(Printable):
     @staticmethod
     def from_index(index_props: Tuple[Any, ...]) -> 'SiacNote':
 
-        id      = index_props[0]
+        id      = int(index_props[0])
         # if the note was stored in the index, its title, text, and source fields are collapsed into a single field, separated by \u001f
         text    = index_props[4]
         title   = text.split("\u001f")[0]
@@ -140,6 +142,9 @@ class SiacNote(Printable):
     def schedule_value(self) -> str:
         return self.reminder.split("|")[2][3:]
 
+    def is_meta_note(self) -> bool:
+        return self.id < 0
+
     def _build_non_anki_note_html(self) -> str:
         """
         User's notes should be displayed in a way to visually distinguish between title, text and source.
@@ -148,12 +153,22 @@ class SiacNote(Printable):
         src     = self.source
         title   = html.escape(self.title)
         body    = self.text
+
+
+        # old notes where saved with html tags
+        # new ones are saved with markdown
+        # so the markdown -> html conversion should only be called if the text is not already html
+        # markdown conversion should also not be called for meta notes 
+        if not self.is_meta_note() and not utility.text.is_html(body):
+            body    = markdown(body,extensions=[FencedCodeExtension(), DefListExtension()])
+
+
         #trim very long texts:
         # id > 0 because meta cards should not be trimmed
-        if len(body) > 3000 and self.id >= 0:
+        if len(body) > 2000 and not self.is_meta_note():
             #there might be unclosed tags now, but parsing would be too much overhead, so simply remove div, a and span tags
             #there might be still problems with <p style='...'>
-            body                = body[:3000]
+            body                = body[:2000]
             body                = utility.text.remove_tags(body, ["div", "span", "a"])
             last_open_bracket   = body.rfind("<")
 
@@ -163,6 +178,8 @@ class SiacNote(Printable):
                     body = body[:last_open_bracket]
 
             body += "<br></ul></b></i></em></span></p></a></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
+
+     
         
         title   = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
 

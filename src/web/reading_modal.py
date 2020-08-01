@@ -47,6 +47,8 @@ from ..internals import js, requires_index_loaded, perf_time
 from ..config import get_config_value_or_default
 from ..web_import import import_webpage
 from ..stats import getRetentions
+from ..markdown import markdown
+
 
 
 class ReadingModal:
@@ -375,7 +377,6 @@ class ReadingModal:
                 delay_btn           = ""
 
             html = """
-                <script>destroyTinyMCE();</script>
                 <div style='width: 100%; display: flex; flex-direction: column;'>
                         <div id='siac-reading-modal-top-btns'>
                             <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}switch_layout.png");' onclick='switchLeftRight();'></div>
@@ -408,7 +409,7 @@ class ReadingModal:
                             </div>
                             
                         </div>
-                        <div id='siac-reading-modal-center' style='flex: 1 1 auto; overflow-y: {overflow}; font-size: 13px; padding: 0 20px 0 24px; position: relative; display: flex; flex-direction: column;' >
+                        <div id='siac-reading-modal-center' style='flex: 1 1 auto; overflow: {overflow}; font-size: 13px; padding: 0 20px 0 24px; position: relative; display: flex; flex-direction: column;' >
                             <div id='siac-rm-greyout'></div>
                             {text}
                         </div>
@@ -504,7 +505,7 @@ class ReadingModal:
 
         nid                     = self.note_id
         dir                     = utility.misc.get_web_folder_path()
-        text                    = self.note.text
+        text                    = self.note.text if not utility.text.is_html(self.note.text) else utility.text.html_to_text(self.note.text)
         search_sources          = ""
         config                  = mw.addonManager.getConfig(__name__)
         urls                    = config["searchUrls"]
@@ -529,7 +530,7 @@ class ReadingModal:
             <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark' onclick='pycmd("siac-close-iframe")'>&times; &nbsp;Close Web</div>
             <div id='siac-text-top-wr' style='height: calc(100% - 42px);'>
                 <div id='siac-text-top'>
-                    {text}
+                    <textarea style='height: 100%; width: 100%;' spellcheck='false'>{text}</textarea>
                 </div>
             </div>
             <iframe id='siac-iframe' sandbox='allow-scripts' style='height: calc(100% - 47px);'></iframe>
@@ -545,15 +546,17 @@ class ReadingModal:
             <div id='siac-pdf-br-notify'>
             </div>
             <script>
+                pdfLoading = false;
                 if (pdfBarsHidden) {{
                     readerNotification("{title}");
                 }}
                 pdfDisplayedMarks = null;   
                 pdfDisplayedMarksTable = null;
                 displayedNoteId = {nid};
-                {tiny_mce} 
+                editorMDInit();
+                noteLoading = false;
             </script>
-        """.format_map(dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, title=title, tiny_mce=self.tiny_mce_init_code()))
+        """.format_map(dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, title=title))
         return html
 
     def quick_sched_btn(self, priority: int) -> str:
@@ -938,37 +941,6 @@ class ReadingModal:
         marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src, extract=extract))
 
         return html
-
-    def tiny_mce_init_code(self) -> str:
-        """ Code that should be executed when a text note is opened. """
-
-        return """
-            tinymce.init({
-                selector: '#siac-text-top',
-                plugins: 'preview paste importcss searchreplace autolink directionality code visualblocks visualchars link codesample table charmap hr nonbreaking toc insertdatetime advlist lists wordcount imagetools textpattern noneditable charmap quickbars',
-                menubar: 'edit view insert format tools table',
-                toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | charmap | codesample | ltr rtl',
-                toolbar_sticky: true,
-                contextmenu: false,
-                resize: false,
-                statusbar: false,
-                skin: "oxide-dark",
-                content_css: "dark",
-                importcss_append: true,
-                quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote quickimage quicktable',
-                noneditable_noneditable_class: "mceNonEditable",
-                toolbar_drawer: 'sliding',
-                setup: function (ed) {
-                    ed.on('init', function(args) {
-                        setTimeout(function() { $('.tox-notification__dismiss').first().trigger('click'); }, 200);
-                        $('#siac-text-top_ifr').contents().find('body').css({
-                                background: '#2f2f31'
-                        });
-                    });
-                }
-            });
-        """
-
 
     def get_note_info_html(self) -> str:
         """ Returns the html that is displayed in the "Info" tab in the bottom bar of the reading modal. """

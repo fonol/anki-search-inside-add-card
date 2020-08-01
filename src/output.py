@@ -22,6 +22,9 @@ import math
 from datetime import datetime
 from aqt import mw
 from aqt.utils import showInfo, tooltip
+import typing
+from typing import Tuple, List, Optional
+
 # lazy solution for running output from test dir
 try:
     from .debug_logging import log
@@ -33,6 +36,8 @@ try:
     from .web.sidebar import Sidebar
     from .config import get_config_value_or_default
     from .web.note_templates import *
+    from .models import SiacNote
+   
 except:
     from debug_logging import log
     from stats import getRetentions
@@ -43,6 +48,7 @@ except:
     from web.sidebar import Sidebar
     from web.note_templates import *
     from config import get_config_value_or_default
+    from models import SiacNote
 
 import utility.tags
 import utility.text
@@ -218,7 +224,7 @@ class Output:
                 p_html              = "<div class='siac-prog-sq'></div>" * 10
                 progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div><div style='display: inline-block;'>{extract}</div>"
                 pdf_class           = "pdf"
-            elif res.note_type == "user" and res.id < 0:
+            elif res.note_type == "user" and int(res.id) < 0:
                 # meta card
                 pdf_class           = "meta"
             elif res.note_type == "index" and res.did > 0:
@@ -641,6 +647,21 @@ class Output:
             """ % (context_html, html)
 
         self._editor.web.eval("document.getElementById('cal-info').innerHTML = `%s`;" % html)
+
+    def print_in_meta_cards(self, html_list: List[Tuple[str, str]]):
+        """ Print the given list of (title, body) pairs each as its own card. """
+
+        if html_list is None or len(html_list) == 0:
+            return
+
+        stamp = utility.misc.get_milisec_stamp()
+        self.latest = stamp
+        notes = []
+        ix    = 0
+        for (title, body) in html_list:
+            ix -= 1
+            notes.append(SiacNote((ix, title, body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        self.print_search_results(notes, stamp)
 
 
     def showInModal(self, text):

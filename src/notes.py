@@ -181,7 +181,7 @@ def create_db_file_if_not_exists() -> bool:
 def create_note(title: str, text: str, source: str, tags: str, nid: int, reminder: str, queue_schedule: Optional[int], extract_start: Optional[int] = None, extract_end: Optional[int] = None) -> int:
 
     #clean the text
-    text    = utility.text.clean_user_note_text(text)
+    # text    = utility.text.clean_user_note_text(text)
 
     if source is not None:
         source = source.strip()
@@ -825,7 +825,7 @@ def update_note_tags(id: int, tags: str):
 
 def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int):
 
-    text = utility.text.clean_user_note_text(text)
+    # text = utility.text.clean_user_note_text(text)
     tags = " %s " % tags.strip()
     mod = _date_now_str()
     sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=? where id=?"
@@ -1110,7 +1110,7 @@ def _get_priority_list(nid_to_exclude: int = None) -> List[SiacNote]:
 def _get_priority_list_with_last_prios() -> List[Tuple[Any, ...]]:
     """ Returns (nid, last prio, last prio creation, current position, schedule) """
 
-    sql     = f""" select notes.id, prios.prio, prios.created, notes.position, notes.reminder, notes.delay from notes left join (select distinct nid, prio, max(created) as created, type from queue_prio_log group by nid) as prios on prios.nid = notes.id where notes.position >= 0 or substr(notes.reminder, 21, 10) >= '{utility.date.date_x_days_ago_stamp(3)}' order by position asc """
+    sql     = f""" select notes.id, prios.prio, prios.created, notes.position, notes.reminder, notes.delay from notes left join (select distinct nid, prio, max(created) as created, type from queue_prio_log group by nid) as prios on prios.nid = notes.id where notes.position >= 0 or substr(notes.reminder, 21, 10) >= '{utility.date.date_x_days_ago_stamp(60)}' order by position asc """
     conn    = _get_connection()
     res     = conn.execute(sql).fetchall()
     conn.close()

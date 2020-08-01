@@ -466,9 +466,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             show_timing_modal(render_time)
 
     elif cmd.startswith("siac-cal-info "):
+        # clicked on a square of the timeline
         if check_index():
-            context_html = get_cal_info_context(int(cmd[14:]))
-            res = get_notes_added_on_day_of_year(int(cmd[14:]), min(index.limit, 100))
+            context_html    = get_cal_info_context(int(cmd[14:]))
+            res             = get_notes_added_on_day_of_year(int(cmd[14:]), min(index.limit, 100))
             index.ui.print_timeline_info(context_html, res)
 
     elif cmd == "siac_rebuild_index":
@@ -952,6 +953,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-index-info":
         if check_index():
             index.ui.showInModal(get_index_info())
+
+    elif cmd == "siac-r-show-tips":
+        tips = get_tips_html()
+        index.ui.print_in_meta_cards(tips)
 
     #
     #   Special searches
@@ -1561,6 +1566,13 @@ def get_index_info():
     except:
         pass
 
+    if state.shortcuts_failed == []:
+        shortcuts = ""
+    else:
+        shortcuts = "<b>Following shortcuts failed to register (maybe a conflict with existing shortcuts):</b><br>"
+        shortcuts += "<br>".join(state.shortcuts_failed)
+        shortcuts += "<br>"
+
     html            = """
             <table class="striped" style='width: 100%%; margin-bottom: 18px;'>
                 
@@ -1603,7 +1615,11 @@ def get_index_info():
                <tr><td>PDF: Toggle Page Read</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Done</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Later</td><td>  <b>%s</b></td></tr>
+               <tr><td>Focus Search Input</td><td><b>%s</b></td></tr>
+               <tr><td>Trigger Search with current field contents</td><td>  <b>%s</b></td></tr>
              </table>
+
+            %s
 
             """ % (
             full_path,
@@ -1632,7 +1648,10 @@ def get_index_info():
             config["pdf.shortcuts.jump_to_last_page"],
             config["pdf.shortcuts.toggle_page_read"],
             config["pdf.shortcuts.done"],
-            config["pdf.shortcuts.later"]
+            config["pdf.shortcuts.later"],
+            config["shortcuts.focus_search_bar"],
+            config["shortcuts.trigger_search"],
+            shortcuts
             )
 
  
@@ -1758,7 +1777,7 @@ def update_styling(cmd):
                 $('.cal-block-outer').click(function(event) { displayCalInfo(this);});
             }
             onWindowResize();
-            """ % getCalendarHtml())
+            """ % get_calendar_html())
 
     elif name == "showTagInfoOnHover":
         config[name] = value == "true" or value == "on"

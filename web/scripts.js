@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+const ADDON_ID = '$addon_id$';
 
 var siacState = {
     selectedDecks : ["-1"],
@@ -298,6 +299,13 @@ function searchForUserNote(event, elem) {
         searchMaskTimer = setTimeout(function() {
             pycmd('siac-r-user-note-search-inp ' + elem.value);
         }, 800);
+    }
+}
+function searchUserNoteTag(e, tag) {
+    if (e.ctrlKey || e.metaKey) {
+        pycmd('siac-create-note-tag-prefill ' + tag);
+    } else {
+        pycmd('siac-r-user-note-search-tag ' + tag);
     }
 }
 function switchLeftRight() {
@@ -893,6 +901,17 @@ function toggleNoteSidebar(){
     }
 }
 
+function focusSearchShortcut() {
+    if (displayedNoteId === null && document.getElementById("siac-browser-search-inp")) {
+        document.getElementById("siac-browser-search-inp").focus();
+    }
+}
+function triggerSearchShortcut() {
+    if (!displayedNoteId) {
+        sendContent();
+    }
+}
+
 
 /** ############# Floating notes */
 function addFloatingNote(nid) {
@@ -947,6 +966,7 @@ function dragElement(elmnt, headerId, inModal=false) {
         document.onmousemove = null;
     }
 }
+
 
 
 /**

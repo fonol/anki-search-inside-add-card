@@ -30,11 +30,14 @@ from ..notes import *
 from ..notes import _get_priority_list
 from ..hooks import run_hooks
 from ..state import get_index
+from ..markdown import markdown
 from ..config import get_config_value_or_default, update_config
 from ..web_import import import_webpage
 from .url_import import UrlImporter
-from .components import QtPrioritySlider
+from .components import QtPrioritySlider, MDTextEdit
 from .url_input_dialog import URLInputDialog
+from ..markdown.extensions.fenced_code import FencedCodeExtension
+from ..markdown.extensions.def_list import DefListExtension
 
 import utility.text
 import utility.misc
@@ -152,10 +155,12 @@ class NoteEditor(QDialog):
             self.priority = 0
         
             self.save_and_stay = QPushButton(" \u2714 Create && Keep Open ")
+            self.save_and_stay.setFocusPolicy(Qt.NoFocus)
             self.save_and_stay.clicked.connect(self.on_create_and_keep_open_clicked)
             self.save_and_stay.setShortcut("Ctrl+Shift+Return")
 
         self.save.setShortcut("Ctrl+Return")
+        self.save.setFocus(True)
         self.cancel = QPushButton("Cancel")
         self.cancel.clicked.connect(self.reject)
         priority_list = _get_priority_list()
@@ -212,14 +217,18 @@ class NoteEditor(QDialog):
     def _create_note(self):
         title = self.create_tab.title.text()
         title = utility.text.clean_user_note_title(title) 
-        if self.create_tab.plain_text_cb.checkState() == Qt.Checked:
-            text = self.create_tab.text.toPlainText()
+     
+        # if this check is missing, text is sometimes saved as an empty paragraph
+        if self.create_tab.text.document().isEmpty():
+            text = ""
         else:
-            # if this check is missing, text is sometimes saved as an empty paragraph
-            if self.create_tab.text.document().isEmpty():
-                text = ""
-            else:
-                text = self.create_tab.text.toHtml()
+            # text = self.create_tab.text.toHtml()
+            if self.create_tab.text.text_was_pasted:
+                text = self.create_tab.text.toMarkdown()
+            else: 
+                text = self.create_tab.text.toPlainText()
+            # text = markdown(text)
+
 
         source              = self.create_tab.source.text()
         tags                = self.create_tab.tag.text()
@@ -250,7 +259,7 @@ class NoteEditor(QDialog):
             Clear the fields for the next note.
         """
         self.create_tab.title.setText("")
-        self.create_tab.text.setText("")
+        self.create_tab.text.setMarkdown("")
         if self.create_tab.source.text().endswith(".pdf"):
             self.create_tab.source.setText("")
         self.create_tab.title.setFocus()
@@ -259,14 +268,15 @@ class NoteEditor(QDialog):
     def on_update_clicked(self):
         title = self.create_tab.title.text()
         title = utility.text.clean_user_note_title(title) 
-        if self.create_tab.plain_text_cb.checkState() == Qt.Checked:
-            text = self.create_tab.text.toPlainText()
+
+        # if this check is missing, text is sometimes saved as an empty paragraph
+        if self.create_tab.text.document().isEmpty():
+            text = ""
         else:
-            # if this check is missing, text is sometimes saved as an empty paragraph
-            if self.create_tab.text.document().isEmpty():
-                text = ""
-            else:
-                text = self.create_tab.text.toHtml()
+            if self.create_tab.text.text_was_pasted:
+                text = self.create_tab.text.toMarkdown()
+            else: 
+                text = self.create_tab.text.toPlainText()
         source                  = self.create_tab.source.text()
         tags                    = self.create_tab.tag.text()
         priority                = self.create_tab.slider.value()
@@ -367,7 +377,7 @@ class CreateTab(QWidget):
         vbox_left.addLayout(tag_hb)
 
         vbox_left.addWidget(self.tree)
-        self.all_tags_cb = QCheckBox("Show All Tags")
+        self.all_tags_cb = QCheckBox("Include Anki Tags")
         self.all_tags_cb.stateChanged.connect(self.tag_cb_changed)
         vbox_left.addWidget(self.all_tags_cb)
         if len(recently_used_tags) > 0:
@@ -399,6 +409,7 @@ class CreateTab(QWidget):
         hbox = QHBoxLayout()
 
         self.toggle_btn = QPushButton("<")
+        self.toggle_btn.setFocusPolicy(Qt.NoFocus)
         self.toggle_btn.clicked.connect(self.toggle_left_pane)
         hbox.addWidget(self.toggle_btn)
 
@@ -421,9 +432,8 @@ class CreateTab(QWidget):
         vbox.addWidget(title_lbl)
         vbox.addWidget(self.title)
 
-        text_lbl = QLabel("Text")
-        text_lbl.setToolTip("Text may contain HTML (some tags and inline styles may be removed).")
-        self.text = QTextEdit()
+        text_lbl = QLabel("Text [Markdown]")
+        self.text = MDTextEdit()
         f = self.text.font()
         f.setPointSize(12)
         self.text.setFont(f)
@@ -434,7 +444,7 @@ class CreateTab(QWidget):
             QSizePolicy.Expanding)
         self.text.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         self.text.setLineWidth(2)
-        self.text.cursorPositionChanged.connect(self.on_text_cursor_change)
+        # self.text.cursorPositionChanged.connect(self.on_text_cursor_change)
         if hasattr(self.text, "setTabStopDistance"):
             self.text.setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 4) 
         t_h = QHBoxLayout()
@@ -447,71 +457,8 @@ class CreateTab(QWidget):
         self.tb.setOrientation(Qt.Horizontal)
         self.tb.setIconSize(QSize(12, 12))
 
-        self.vtb = QToolBar("Highlight")
-        self.vtb.setStyleSheet("background-color: transparent; border: 0px;")
-        self.vtb.setOrientation(Qt.Vertical)
-        self.vtb.setIconSize(QSize(16, 16))
-
-         
-        self.orange_black = self.vtb.addAction(QIcon(web_path + "icons/icon-orange-black.png"), "Highlight 1")
-        self.orange_black.triggered.connect(self.on_highlight_ob_clicked)
-
-        self.red_white = self.vtb.addAction(QIcon(web_path + "icons/icon-red-white.png"), "Highlight 2")
-        self.red_white.triggered.connect(self.on_highlight_rw_clicked)
-
-        self.yellow_black = self.vtb.addAction(QIcon(web_path + "icons/icon-yellow-black.png"), "Highlight 3")
-        self.yellow_black.triggered.connect(self.on_highlight_yb_clicked)
-
-        self.blue_white = self.vtb.addAction(QIcon(web_path + "icons/icon-blue-white.png"), "Highlight 4")
-        self.blue_white.triggered.connect(self.on_highlight_bw_clicked)
-
-        self.green_black = self.vtb.addAction(QIcon(web_path + "icons/icon-green-black.png"), "Highlight 5")
-        self.green_black.triggered.connect(self.on_highlight_gb_clicked)
-
-        bold =  self.tb.addAction("b")
-        f = bold.font()
-        f.setBold(True)
-        bold.setFont(f)
-        bold.setCheckable(True)
-        bold.triggered.connect(self.on_bold_clicked)
-        bold.setShortcut(QKeySequence("Ctrl+b"))
-
-        italic = self.tb.addAction("i")
-        italic.setCheckable(True)
-        italic.triggered.connect(self.on_italic_clicked)
-        f = italic.font()
-        f.setItalic(True)
-        italic.setFont(f)
-        italic.setShortcut(QKeySequence("Ctrl+i"))
-
-        underline = self.tb.addAction("u")
-        underline.setCheckable(True)
-        underline.triggered.connect(self.on_underline_clicked)
-        f = underline.font()
-        f.setUnderline(True)
-        underline.setFont(f)
-        underline.setShortcut(QKeySequence("Ctrl+u"))
-
-        strike = self.tb.addAction("s")
-        strike.setCheckable(True)
-        strike.triggered.connect(self.on_strike_clicked)
-        f = strike.font()
-        f.setStrikeOut(True)
-        strike.setFont(f)
-
-        color = self.tb.addAction(QIcon(web_path + "icons/icon-color-change.png"), "Foreground Color")
-        color.triggered.connect(self.on_color_clicked)
-
-        bullet_list = self.tb.addAction("BL")
-        bullet_list.setToolTip("Bullet List")
-        bullet_list.triggered.connect(self.on_bullet_list_clicked)
-
-        numbered_list = self.tb.addAction("NL")
-        numbered_list.setToolTip("Numbered List")
-        numbered_list.triggered.connect(self.on_numbered_list_clicked)
-
         clean_btn = QToolButton()
-        clean_btn.setText("Clean Text  ")
+        clean_btn.setText("Clean...  ")
         clean_btn.setPopupMode(QToolButton.InstantPopup)
         clean_btn.setFocusPolicy(Qt.NoFocus)
         clean_menu = QMenu(clean_btn)
@@ -526,38 +473,34 @@ class CreateTab(QWidget):
                 QMenu:item:selected { background: #2496dc; color: white; }
             """)
         
-        header_a = clean_menu.addAction("Remove Headers")
-        header_a.triggered.connect(self.on_remove_headers_clicked)
-        header_a1 = clean_menu.addAction("Remove All Bold Formatting")
-        header_a1.triggered.connect(self.on_remove_bold_clicked)
-        header_a2 = clean_menu.addAction("Convert Images to Base64")
-        header_a2.triggered.connect(self.on_convert_images_clicked)
-        header_a3 = clean_menu.addAction("Remove All Colors")
-        header_a3.triggered.connect(self.on_remove_colors_clicked)
+
+        clean_menu.addAction("Remove all Formatting").triggered.connect(self.on_remove_formatting)
+        # clean_menu.addAction("Remove all Headers (#)").triggered.connect(self.on_remove_headers_clicked)
         clean_btn.setMenu(clean_menu)
         self.tb.addWidget(clean_btn)
-
+        
+        t_h.addStretch(1)
         t_h.addWidget(self.tb)
 
-        vbox.addLayout(t_h)
-        text_h = QHBoxLayout()
-        text_h.addWidget(self.text)
-        text_h.addWidget(self.vtb)
-        vbox.addLayout(text_h)
-
-        self.plain_text_cb = QCheckBox("Save as Plain Text")
-        self.line_status = QLabel("Ln: 0, Col: 0")
-        p_hb = QHBoxLayout()
-        p_hb.addSpacing(5)
-        p_hb.addWidget(self.line_status)
-        p_hb.addStretch(1)
-        p_hb.addWidget(self.plain_text_cb)
-        
-        url_btn = QPushButton(u" Fetch from URL ... ")
+        url_btn = QPushButton(u"Fetch from URL ... ")
+        url_btn.setFocusPolicy(Qt.NoFocus)
         url_btn.clicked.connect(self.on_url_clicked)
-        p_hb.addWidget(url_btn)
-        p_hb.addSpacing(35)
-        vbox.addLayout(p_hb)
+        t_h.addWidget(url_btn)
+
+        self.preview_btn = QPushButton("Preview")
+        self.preview_btn.setFocusPolicy(Qt.NoFocus)
+        self.preview_btn.clicked.connect(self.on_preview_clicked)
+        t_h.addWidget(self.preview_btn)
+
+        vbox.addLayout(t_h)
+        vbox.addWidget(self.text)
+
+        self.preview = QWebEngineView()
+        self.preview.setMinimumHeight(380)
+        self.preview.setMinimumWidth(470)
+        self.preview.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.preview.setVisible(False)
+        vbox.addWidget(self.preview)
 
         self.source         = QLineEdit()
         # if note is an extract, prevent source editing 
@@ -572,10 +515,12 @@ class CreateTab(QWidget):
             self.source.setText(self.parent.source_prefill.replace("\\", "/"))
 
         pdf_btn             = QPushButton("PDF")
+        pdf_btn.setFocusPolicy(Qt.NoFocus)
         pdf_btn.clicked.connect(self.on_pdf_clicked)
         source_hb.addWidget(pdf_btn)
         pdf_from_url_btn    = QPushButton("PDF from Webpage")
         pdf_from_url_btn.clicked.connect(self.on_pdf_from_url_clicked)
+        pdf_from_url_btn.setFocusPolicy(Qt.NoFocus)
         source_hb.addWidget(pdf_from_url_btn)
 
         # if note is an extract, prevent source editing 
@@ -587,7 +532,7 @@ class CreateTab(QWidget):
         vbox.addLayout(source_hb)
 
         if self.parent.text_prefill is not None:
-            self.text.setText(self.parent.text_prefill)
+            self.text.setPlainText(self.parent.text_prefill)
 
         btn_styles = """
         QPushButton#q_1 { padding-left: 20px; padding-right: 20px; }
@@ -618,11 +563,6 @@ class CreateTab(QWidget):
                 QToolTip { color: black; background-color: white; }
             """
 
-        #     styles += """
-        #         QPushButton#q_1,QPushButton#q_2,QPushButton#q_22,QPushButton#q_3,QPushButton#q_33,QPushButton#q_4,QPushButton#q_44,QPushButton#q_5,QPushButton#q_6 { color: beige; }
-        #         QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_22,QPushButton:hover#q_3,QPushButton:hover#q_33,QPushButton:hover#q_4,QPushButton:hover#q_44,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: grey; border-color: blue; color: white; }
-        #     """
-
         self.setStyleSheet(styles)
 
         # vbox.addStretch(1)
@@ -651,11 +591,18 @@ class CreateTab(QWidget):
         self.layout.addSpacing(5)
         self.layout.addLayout(vbox, 73)
         self.setLayout(self.layout)
+
+        # if we are in update mode, fill fields
         if parent.note is not None:
             self.tag.setText(parent.note.tags.lstrip())
             self.title.setText(parent.note.title)
-            self.text.setHtml(parent.note.text)
+            if utility.text.is_html(parent.note.text):
+                self.text.setHtml(parent.note.text)
+                self.text.setPlainText(self.text.toMarkdown())
+            else:
+                self.text.setPlainText(parent.note.text)
             self.source.setText(parent.note.source)
+
 
         # toggle left pane by default if enabled in settings
         if get_config_value_or_default("notes.editor.autoHideLeftPaneOnOpen", False):
@@ -723,6 +670,81 @@ class CreateTab(QWidget):
         else:
             self.toggle_btn.setText(">")
 
+    # def on_text_history_exp(self):
+
+    def on_preview_clicked(self):
+        if self.preview.isHidden():
+            fg = self.text.palette().color(QPalette.Foreground).name()
+            bg = self.text.palette().color(QPalette.Background).name()
+            addon_id    = utility.misc.get_addon_id()
+            port        = aqt.mw.mediaServer.getPort()
+            nightmode   = "nightMode" if self.parent.dark_mode_used else ""
+            self.preview.setHtml(f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{
+                        background: {bg};
+                        color: {fg};
+                    }}
+                    @font-face {{
+                        font-family: "Open Sans";
+                        src: url("http://127.0.0.1:{port}/_addons/{addon_id}/web/font/OpenSans-Regular.ttf");
+                        font-weight: normal;
+                        font-style: normal;
+                    }}
+                    @font-face {{
+                        font-family: "Open Sans";
+                        src: url("http://127.0.0.1:{port}/_addons/{addon_id}/web/font/OpenSans-Bold.ttf");
+                        font-weight: bold;
+                        font-style: normal;
+                    }}
+                    @font-face {{
+                        font-family: "Open Sans";
+                        src: url("http://127.0.0.1:{port}/_addons/{addon_id}/web/font/OpenSans-Italic.ttf");
+                        font-weight: normal;
+                        font-style: italic;
+                    }}
+                    body {{
+                        font-family: "Open Sans";
+                    }}
+                    dt {{
+                        font-weight: bold;
+                    }}
+                    dd {{
+                        font-style: italic;
+                    }}
+                    dl {{
+                        border-left: 10px solid {fg}; 
+                        padding-left: 10px;
+                        margin: 1.5em 10px;
+
+                    }}
+                    blockquote,  pre {{
+                        background: #f9f9f9;
+                        border-left: 10px solid #2496dc;
+                        margin: 1.5em 10px;
+                        padding: 0.5em 10px;
+                    }}
+                    body.nightMode blockquote, body.nightMode pre {{
+                        background: #474749;
+                        border-left: 10px solid #2496dc;
+                    }}
+
+                </style>
+            </head>
+            <body class='{nightmode}'>
+                {markdown(self.text.toMarkdown(), extensions=[FencedCodeExtension(), DefListExtension()])}
+            </body>
+            </html>""")
+            self.preview_btn.setText("Back")
+        else:
+            self.preview_btn.setText("Preview")
+        self.text.setVisible(self.text.isHidden())
+        self.preview.setVisible(self.preview.isHidden())
+
+
     def on_pdf_clicked(self):
         fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"PDF (*.pdf)")
         if fname is not None:
@@ -750,140 +772,23 @@ class CreateTab(QWidget):
         dialog = URLInputDialog(self)
         if dialog.exec_():
             if dialog.chosen_url is not None and len(dialog.chosen_url.strip()) > 0:
-                text = import_webpage(dialog.chosen_url)
+                text = import_webpage(dialog.chosen_url, inline_images=False)
                 if text is None:
                     tooltip("Failed to fetch text from page.")
                 else:
                     self.text.setHtml(text)
 
-    def on_italic_clicked(self):
-        self.text.setFontItalic(not self.text.fontItalic())
+    def on_remove_formatting(self):
 
-    def on_bold_clicked(self):
-        self.text.setFontWeight(QFont.Normal if self.text.fontWeight() > QFont.Normal else QFont.Bold)
-
-    def on_remove_headers_clicked(self):
-        html = self.text.toHtml()
-        html = utility.text.remove_headers(html)
-        self.text.setHtml(html)
-
-    def on_remove_bold_clicked(self):
-        html = self.text.toHtml()
-        html = utility.text.remove_all_bold_formatting(html)
-        self.text.setHtml(html)
-
-    def on_bullet_list_clicked(self):
-        cursor = self.text.textCursor()
-        cursor.createList(QTextListFormat.ListDisc)
-
-    def on_numbered_list_clicked(self):
-        cursor = self.text.textCursor()
-        cursor.createList(QTextListFormat.ListDecimal)
-
-    def on_underline_clicked(self):
-        state = self.text.fontUnderline()
-        self.text.setFontUnderline(not state)
-
-    def on_strike_clicked(self):
-        format = self.text.currentCharFormat()
-        format.setFontStrikeOut(not format.fontStrikeOut())
-        self.text.setCurrentCharFormat(format)
-
-    def on_color_clicked(self):
-        color = QColorDialog.getColor()
-        self.text.setTextColor(color)
-
-    def highlight(self, type):
-        self.save_original_bg_and_fg()
-        if self.text.textCursor().selectedText() is not None and len(self.text.textCursor().selectedText()) > 0:
-            c = self.get_color_at_selection()
-            cursor = self.text.textCursor()
-            fmt = QTextCharFormat()
-            colors = self.highlight_map[type]
-            if (c[0] == self.original_fg or (c[0] == QColor(0,0,0) and self.original_fg ==  QColor(255,255,255))) and (c[1] == self.original_bg or c[1] == QColor(0, 0, 0) or c[1] == QColor(255,255,255)):
-                fmt.setBackground(QBrush(QColor(colors[3], colors[4], colors[5])))
-                fmt.setForeground(QBrush(QColor(colors[0], colors[1], colors[2])))
-            else:
-                fmt.setBackground(QBrush(self.original_bg))
-                fmt.setForeground(QBrush(self.original_fg))
-            cursor.mergeCharFormat(fmt)
-            cursor.clearSelection()
-            self.text.setTextCursor(cursor)
-            self.restore_original_bg_and_fg()
-
-    def on_highlight_ob_clicked(self):
-        self.highlight("ob")
-
-    def on_highlight_rw_clicked(self):
-        self.highlight("rw")
-
-    def on_highlight_yb_clicked(self):
-        self.highlight("yb")
-
-    def on_highlight_bw_clicked(self):
-        self.highlight("bw")
-
-    def on_highlight_gb_clicked(self):
-        self.highlight("gb")
-
-    def get_color_at_selection(self):
-        fg = self.text.textCursor().charFormat().foreground().color()
-        #fg = self.text.textColor()
-        # bg = self.text.textCursor().charFormat().background().color()
-        bg = self.text.textBackgroundColor()
-        return (fg, bg)
-
-    def save_original_bg_and_fg(self):
-        if self.original_bg is None:
-            self.original_bg = self.text.palette().color(QPalette.Base)
-
-            self.original_fg = self.text.palette().color(QPalette.Foreground)
-            #self.original_fg = self.text.textColor()
-
-    def restore_original_bg_and_fg(self):
-        self.text.setTextBackgroundColor(self.original_bg)
-        self.text.setTextColor(self.original_fg)
+        html = markdown(self.text.toMarkdown())
+        text = utility.text.html_to_text(html)
+        self.text.setPlainText(text)
 
     def on_text_cursor_change(self):
         cursor = self.text.textCursor()
         line = cursor.blockNumber() + 1
         col = cursor.columnNumber()
         self.line_status.setText("Ln: {}, Col: {}".format(line,col))
-
-    def on_remove_colors_clicked(self):
-        html = self.text.toHtml()
-        html = utility.text.remove_colors(html)
-        self.text.setHtml(html)
-
-    def on_convert_images_clicked(self):
-        html = self.text.toHtml()
-        images_contained = utility.text.find_all_images(html)
-        if images_contained is None:
-            return
-        for image_tag in images_contained:
-            #ignore images already in base64
-            if re.findall("src=['\"] *data:image/(png|jpe?g);[^;]{0,50};base64,", image_tag, flags=re.IGNORECASE):
-                continue
-            url = re.search("src=(\"[^\"]+\"|'[^']+')", image_tag, flags=re.IGNORECASE).group(1)[1:-1]
-            try:
-                base64 = utility.misc.url_to_base64(url)
-                if base64 is None or len(base64) == 0:
-                    return
-                ending = ""
-                if url.lower().endswith("jpg") or url.lower().endswith("jpeg"):
-                    ending = "jpeg"
-                elif url.lower().endswith("png"):
-                    ending = "png"
-                elif "jpg" in url.lower() or "jpeg" in url.lower():
-                    ending = "jpeg"
-                elif "png" in url.lower():
-                    ending = "png"
-                else:
-                    ending = "jpeg"
-                html = html.replace(image_tag, "<img src=\"data:image/%s;base64,%s\">" % (ending,base64))
-            except:
-                continue
-        self.text.setHtml(html)
 
 
 class PriorityTab(QWidget):

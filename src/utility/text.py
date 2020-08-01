@@ -19,6 +19,8 @@ import re
 from datetime import datetime
 import time
 import random
+from bs4 import BeautifulSoup
+import typing
 
 cleanWordReg    = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*$", re.I |re.U)    
 ignoreReg       = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]+$", re.I | re.U)
@@ -196,6 +198,7 @@ def clean_user_note_text(text):
     if text is None:
         return ""
     orig = text
+    
     try:
         if text.startswith("<!DOCTYPE"):
             starting_html_ix = text.lower().find("</head><body ")
@@ -204,6 +207,8 @@ def clean_user_note_text(text):
                 text = text[text.find(">") +1:]
                 if text.lower().endswith("</body></html>"):
                     text = text[:-len("</body></html>")]
+
+        text = text.strip()
         # <script>
         text = re.sub("</?script[^>]?>", "", text)
         # <canvas>
@@ -212,19 +217,35 @@ def clean_user_note_text(text):
         text = re.sub("(<a [^>]*?href=(\".+?\"|'.+?')[^>]*?>|</a>)", "", text)
         text = re.sub("<a( [^>]{0,100}?)?>", "", text)
 
+        # remove styles in <p>
+        text = re.sub("<p style=\"[^\">]*\" ?>", "<p>", text)
+
+        # remove trailing empty paragraphs 
+        text = re.sub("^(?: |\r\n|\n)*(<p[^>]*>(?: |\r\n|\n)*<br ?/?>(?: |\r\n|\n)*</p>(?: |\r\n|\n)*)+", "", text)
+        text = re.sub("^(?: |\r\n|\n)*(<p[^>]*>)(?: |\r\n|\n)*<br ?/?>", "\\1", text)
+        text = re.sub("(<p[^>]*>(?: |\r\n|\n)*<br ?/?>( |\r\n|\n)*</p>(?: |\r\n|\n)*)+$", "", text)
+
+
+        # represent indentation with &nbsp;
+        text = text.replace("\t", "&nbsp;"*4)
+        while re.match(r"(<p>(?:<br ?/?>|\n|\r\n)?(?:&nbsp;)*)\s", text):
+            text = re.sub(r"(<p>(?:<br ?/?>|\n|\r\n)?(?:&nbsp;)*)\s", r"\1&nbsp;", text)
+
         # don't allow too large headers
-        text = re.sub("<h[12]([> ])", "<h3 \1", text)
+        text = re.sub("<h[12]([> ])", "<h3 \\1", text)
         text = re.sub("</h[12]>", "</h3>", text)
 
         text = text.replace("`", "&#96;").replace("$", "&#36;")
 
         text = text.replace("-qt-block-indent:0;", "")
         text = text.replace("-qt-paragraph-type:empty;", "")
-        text = re.sub("<p style=\" ?margin-top:0px; margin-bottom:0px;", "<p style=\"", text) 
 
-        #delete fonts and font sizes 
-        text = re.sub("font-size:[^;\"']{1,10}?([;\"'])", "\1", text)
+
+        # delete fonts and font sizes 
+        text = re.sub("font-size:[^;\"']{1,10}?([;\"'])", "\\1", text)
         text = re.sub("font-family:[^;]{1,40}?;", "", text)
+
+    
         
         if len(orig) > 200 and len(text) == 0:
             return orig
@@ -271,11 +292,20 @@ def remove_all_bold_formatting(html):
         return orig
     return html
 
-def find_all_images(html):
-    """
-    Returns a list of all <img> tags contained in the html.
-    """
-    return re.findall("<img[^>]*?>", html, flags=re.IGNORECASE) 
+def html_to_text(html):
+
+    try:
+        soup = BeautifulSoup(html, features="html.parser")
+        text = ""
+        for d in soup.descendants:
+            if isinstance(d, str):
+                text += d.strip()
+            elif d.name in ["br", "h1", "h2", "h3", "h4", "h5", "h6", "p"]:
+                text += '\n'
+        return text.strip()
+    except:
+        return html
+ 
 
 def escape_html(text):
     text = text.replace("<", "&lt;")
@@ -321,6 +351,14 @@ def hide_cloze_brackets(text):
         return ""
     return CLOZE_REPLACE.sub("\\1", text)
 
+def is_html(text: str) -> bool:
+    """ Guess if given text contains html. Not really comprehensive. """
+
+    if not text or len(text.strip()) == 0:
+        return False
+    if re.search(r"< ?/ ?(?:p|b|em|a|div|i|h[123456]|strong|img|pre|span|code|html|input|script|style|label|button|font)>", text, re.IGNORECASE):
+        return True
+    return False
 
 
 def clean_file_name(name):

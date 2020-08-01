@@ -22,6 +22,7 @@ from ..hooks import run_hooks
 
 from datetime import datetime, timedelta
 import utility.date
+import utility.text
 
 class QtPrioritySlider(QWidget):
 
@@ -425,3 +426,19 @@ class ScheduleEditTab(QWidget):
             n = (next_date - 1 - today) % 7 
             due = (datetime.now() + timedelta(days=n)).strftime('%Y-%m-%d-%H-%M-%S')
             return f"{now}|{due}|wd:{wds}"
+
+
+
+
+class MDTextEdit(QTextEdit):
+
+    def __init__(self, parent=None):
+        super(QTextEdit, self).__init__(parent)
+        self.text_was_pasted = False
+
+
+    def insertFromMimeData(self, source):
+
+        super(MDTextEdit, self).insertFromMimeData(source)
+        if source.hasText():
+            self.text_was_pasted = True

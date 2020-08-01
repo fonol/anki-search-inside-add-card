@@ -16,17 +16,17 @@
 
 
 
-var pdfImgSel = { 
-    canvas: null, 
-    context: null, 
-    startX: null, 
-    endX: null, 
-    startY: null, 
-    endY: null, 
-    cvsOffLeft: null, 
-    cvsOffTop: null, 
-    mouseIsDown: false, 
-    canvasDispl: null 
+var pdfImgSel = {
+    canvas: null,
+    context: null,
+    startX: null,
+    endX: null,
+    startY: null,
+    endY: null,
+    cvsOffLeft: null,
+    cvsOffTop: null,
+    mouseIsDown: false,
+    canvasDispl: null
 };
 var remainingSeconds = 30 * 60;
 var readingTimer;
@@ -51,10 +51,14 @@ var pdfTooltipEnabled = true;
 var iframeIsDisplayed = false;
 var pdfFullscreen = false;
 var pdfBarsHidden = false;
-var pdfNotificationShown = false;
-var pdfNotifications = [];
+var pdfNotification = {
+    queue: [],
+    current: ""
+};
 var displayedNoteId = null;
+var textEditor = null;
 var pdfLastReadPages = {};
+/** PDF search */
 var pdfSearchOngoing = false;
 var pdfCurrentSearch = {
     query: null,
@@ -165,13 +169,13 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                 var viewport = page.getViewport({ scale: 1.0 });
                 pdfDisplayedScale = (canvas.parentNode.clientWidth - 23) / viewport.width;
             }
-            var viewport    = page.getViewport({ scale: pdfDisplayedScale });
-            canvas.height   = viewport.height * window.devicePixelRatio;
-            canvas.width    = viewport.width * window.devicePixelRatio;
+            var viewport = page.getViewport({ scale: pdfDisplayedScale });
+            canvas.height = viewport.height * window.devicePixelRatio;
+            canvas.width = viewport.width * window.devicePixelRatio;
             if (window.devicePixelRatio !== 1 || pdfHighDPIWasUsed) {
-                pdfHighDPIWasUsed   = true;
+                pdfHighDPIWasUsed = true;
                 canvas.style.height = viewport.height + "px";
-                canvas.style.width  = viewport.width + "px";
+                canvas.style.width = viewport.width + "px";
             }
             if (["Peach", "Sand", "Night"].indexOf(pdfColorMode) !== -1)
                 canvas.style.display = "none";
@@ -200,8 +204,8 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                     }
                 }
                 return lPage.getTextContent({ normalizeWhitespace: false, disableCombineTextItems: false });
-            }).catch(function(err) { console.log(err); return Promise.reject(); }).then(function (textContent) {
-                if (!textContent) { 
+            }).catch(function (err) { console.log(err); return Promise.reject(); }).then(function (textContent) {
+                if (!textContent) {
                     return Promise.reject();
                 }
                 $("#text-layer").css({ height: canvas.height / window.devicePixelRatio, width: canvas.width / window.devicePixelRatio + 1, left: canvas.offsetLeft }).html('');
@@ -221,11 +225,11 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                     ungreyoutBottom();
                 }
                 if (isInitial) {
-                   setTimeout(function() {  refreshCanvas(); }, 3000); 
+                    setTimeout(function () { refreshCanvas(); }, 3000);
                 }
                 pdfDisplayedViewPort = viewport;
                 if (fetchHighlights) {
-                    Highlighting.current = [];  
+                    Highlighting.current = [];
                     pycmd("siac-pdf-page-loaded " + pdfDisplayedCurrentPage);
                 } else {
                     Highlighting.displayHighlights();
@@ -249,7 +253,7 @@ function rerenderPDFPage(num, shouldScrollUp = true, fitToPage = false, isInitia
                     $('#siac-pdf-top').removeClass("extract");
                 }
             }
-        }).catch(function(err) { setTimeout(function() { console.log(err); }); });
+        }).catch(function (err) { setTimeout(function () { console.log(err); }); });
 }
 function invertCanvas(ctx) {
     if (pdfColorMode === "Night") {
@@ -272,13 +276,13 @@ function invertCanvas(ctx) {
         }
         ctx.putImageData(imgData, 0, 0);
     }
-   ctx.canvas.style.display = "inline-block";
+    ctx.canvas.style.display = "inline-block";
 }
 function refreshCanvas() {
     try {
         const ctx = document.getElementById("siac-pdf-canvas").getContext("2d");
         ctx.putImageData(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height), 0, 0);
-    } catch(e) {}
+    } catch (e) { }
 }
 function numPagesExtract() {
     if (!pdfExtract) {
@@ -374,7 +378,7 @@ function pdfPageLeft() {
 function markReadUpToCurrent() {
     for (var i = 0; i < pdfDisplayedCurrentPage; i++) {
         if (pagesRead.indexOf(i + 1) === -1) {
-            if (!pdfExtract || ((i+1) >= pdfExtract[0] && (i+1) <= pdfExtract[1])) {
+            if (!pdfExtract || ((i + 1) >= pdfExtract[0] && (i + 1) <= pdfExtract[1])) {
                 pagesRead.push(i + 1);
             }
         }
@@ -396,18 +400,14 @@ function setAllPagesRead() {
         pdfShowPageReadMark();
     }
 }
-function saveTextNote(nid, remove = true) {
+function saveTextNote(nid) {
     let html = "";
     try {
-        html = tinymce.activeEditor.getContent();
+        html = textEditor.value();
     } catch (e) {
         pycmd("siac-notification Could not save text note for some reason.");
         return;
-    } finally {
-        if (remove) {
-            tinymce.remove();
-        }
-    }
+    } 
     readerNotification("&nbsp;Note saved.&nbsp;");
     pycmd("siac-update-note-text " + nid + " " + html);
 }
@@ -735,27 +735,33 @@ function pdfMouseWheel(event) {
 function readerNotification(html, immediate) {
 
     if (!html) { return; }
-    if (!immediate && pdfNotificationShown) {
-        if (pdfNotifications.length > 0) {
-            if (html === pdfNotifications[pdfNotifications.length-1]) {
+    if (!immediate && pdfNotification.current != "") {
+        if (pdfNotification.queue.length > 0) {
+            if (html === pdfNotification.queue[pdfNotification.queue.length - 1]) {
                 return;
             }
+        } else if (pdfNotification.current === html) {
+            return;
         }
-        pdfNotifications.push(html);
+        pdfNotification.queue.push(html);
         return;
-    } 
-    pdfNotificationShown = true;
+    }
+    pdfNotification.current = html;
     document.getElementById('siac-pdf-br-notify').innerHTML = html;
     document.getElementById('siac-pdf-br-notify').style.display = "block";
 
     window.setTimeout(() => {
-        document.getElementById('siac-pdf-br-notify').style.display = "none";
-        pdfNotificationShown = false;
-        if (pdfNotifications.length) {
-            setTimeout(function() {
-                let next = pdfNotifications.shift();
-                readerNotification(next, true);
-            }, 800);
+        pdfNotification.current = "";
+        if (document.getElementById('siac-pdf-br-notify')) {
+            document.getElementById('siac-pdf-br-notify').style.display = "none";
+            if (pdfNotification.queue.length) {
+                setTimeout(function () {
+                    let next = pdfNotification.queue.shift();
+                    readerNotification(next, true);
+                }, 800);
+            }
+        } else {
+            pdfNotification.queue = [];
         }
 
     }, 3500);
@@ -807,7 +813,7 @@ function pdfKeyup(e) {
         // disable it, to get the actual bounding client rect
         $('#text-layer > span').css("height", "auto");
         let nodesInSel = nodesInSelection(r);
-        let sentences  = getSentencesAroundSelection(r, nodesInSel, text);
+        let sentences = getSentencesAroundSelection(r, nodesInSel, text);
         if (nodesInSel.length > 1) {
             text = joinTextLayerNodeTexts(nodesInSel, text);
         }
@@ -1129,7 +1135,7 @@ function pdfViewerKeyup(event) {
         pdfPageRight();
     } else if (event.ctrlKey && (event.keyCode === 37 || event.keyCode === 75)) {
         pdfPageLeft();
-    } 
+    }
 }
 function pdfTooltipClozeKeyup(event) {
     try {
@@ -1444,38 +1450,38 @@ function onPDFCopy(e) {
         if ((nodes[i].offsetLeft < offsetLeftLast || nodes[i].offsetTop > offsetTopLast + 5) && !nodes[i].innerText.startsWith(" ")) {
             // check for last font size, if difference is large, insert newlines
             if (lastFontSize && Math.abs(Number(nodes[i].style.fontSize.substring(0, nodes[i].style.fontSize.indexOf("px"))) - lastFontSize) > 4) {
-                text += "\n\n" + nodes[i].innerText; 
+                text += "\n\n" + nodes[i].innerText;
                 insertedCount += 2;
             }
 
             // check for line with larger vertical distance to the previous lines 
             else if (lastYDiffs.length > 0 && (nodes[i].offsetTop - offsetTopLast) > lastYDiffs.slice(-1)[0] + 2) {
-                text += "\n\n" + nodes[i].innerText; 
+                text += "\n\n" + nodes[i].innerText;
                 insertedCount += 2;
             }
             // if last word in previous line was hyphenated, join them
             else if (text.endsWith("-")) {
-                text = text.substring(0, text.length-1) + nodes[i].innerText;
-                insertedCount --;
-            // else insert a whitespace
+                text = text.substring(0, text.length - 1) + nodes[i].innerText;
+                insertedCount--;
+                // else insert a whitespace
             } else {
                 text += " " + nodes[i].innerText;
-                insertedCount ++;
+                insertedCount++;
             }
             if (offsetTopLast !== 0) {
                 lastYDiffs.push(nodes[i].offsetTop - offsetTopLast);
             }
             lastFontSize = Number(nodes[i].style.fontSize.substring(0, nodes[i].style.fontSize.indexOf("px")));
 
-        // check for space between text divs, if there is enough space, we should probably insert a whitespace
+            // check for space between text divs, if there is enough space, we should probably insert a whitespace
         } else if (offsetLeftLast + widthLast < nodes[i].offsetLeft - 2 && !nodes[i].innerText.startsWith(" ")) {
             text += " " + nodes[i].innerText;
-            insertedCount ++;
-        } 
+            insertedCount++;
+        }
         else {
             text += nodes[i].innerText;
         }
-     
+
         offsetLeftLast = nodes[i].offsetLeft;
         offsetTopLast = nodes[i].offsetTop;
         widthLast = nodes[i].offsetWidth;
@@ -1511,6 +1517,19 @@ function onPDFCopy(e) {
     e.preventDefault();
 }
 
+function editorMDInit() {
+    textEditor = new SimpleMDE({ element: document.getElementById("siac-text-top").children[0],
+    indentWithTabs: true,
+    autosave: { enabled: false },
+    placeholder: "",
+    status: false,
+    tagSize: 4,
+    toolbar: ["bold", "italic", "heading", "code", "quote", "unordered-list", "ordered-list", "horizontal-rule", "link"]
+
+});
+// textEditor.value(value);
+    //simplemde.codemirror.setOption("theme", "mbo");
+}
 
 //
 // helpers

@@ -188,7 +188,7 @@ body.nightMode #siac-reading-modal.rendering {
     padding: 4px 6px 4px 6px;
     background: #2f2f31;
     color: white;
-    z-index: 4;
+    z-index: 11;
     user-select: none;
 }
 .siac-pdf-mark-lbl > b:hover {
@@ -247,12 +247,20 @@ body.nightMode #siac-reading-modal.rendering {
     margin-top: 20px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 #siac-text-top {
     text-align: left;
-    padding: 10px;
-
+    /* padding: 10px; */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}   
+.CodeMirror {
+    flex: 1;
+    background-color: #1e211f;
 }
+
 #siac-iframe {
     width: 100%;
     flex: 1 1 auto;

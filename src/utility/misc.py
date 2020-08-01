@@ -20,6 +20,7 @@ import random
 from glob import glob  
 from datetime import datetime
 import os
+import re
 import time
 from aqt import mw
 from aqt.qt import *
@@ -44,6 +45,44 @@ def base64_to_file(b64):
         f.write(base64.b64decode(b64))
     return base_path + fname + ".png"
 
+
+def find_all_images(html):
+    """
+    Returns a list of all <img> tags contained in the html.
+    """
+    return re.findall("<img[^>]*?>", html, flags=re.IGNORECASE) 
+
+def try_inline_images(html: str, base_path: str) -> str:
+    images_contained = find_all_images(html)
+    if images_contained is None:
+        return html
+    for image_tag in images_contained:
+        #ignore images already in base64
+        if re.findall("src=['\"] *data:image/(png|jpe?g);[^;]{0,50};base64,", image_tag, flags=re.IGNORECASE):
+            continue
+        url = re.search("src=(\"[^\"]+\"|'[^']+')", image_tag, flags=re.IGNORECASE).group(1)[1:-1]
+        try:
+            if not url.startswith("http"):
+                url = f"{base_path}{url}"
+            base64 = url_to_base64(url)
+            if base64 is None or len(base64) == 0:
+                continue
+            ending = ""
+            if url.lower().endswith("jpg") or url.lower().endswith("jpeg"):
+                ending = "jpeg"
+            elif url.lower().endswith("png"):
+                ending = "png"
+            elif "jpg" in url.lower() or "jpeg" in url.lower():
+                ending = "jpeg"
+            elif "png" in url.lower():
+                ending = "png"
+            else:
+                ending = "jpeg"
+            html = html.replace(image_tag, "<img src=\"data:image/%s;base64,%s\">" % (ending,base64))
+        except:
+            continue
+    
+    return html
     
 def url_to_base64(url):
     return base64.b64encode(requests.get(url).content).decode('ascii')
@@ -285,7 +324,6 @@ def find_pdf_files_in_dir(dir, cut_path=True):
             res = [r[max(r.rfind("\\"),r.rfind("/"))+1:] for r in res]
         return res
     except Exception as e:
-        print(e)
         return []
 
 def find_pdf_files_in_dir_recursive(directory, cut_path=True):
@@ -308,7 +346,6 @@ def find_pdf_files_in_dir_recursive(directory, cut_path=True):
                 res += _find_rec(sub_dir, cut_path)
             return res
         except Exception as e:
-            print(e)
             return []
 
     result = _find_rec(directory, cut_path)

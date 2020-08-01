@@ -93,5 +93,7 @@
 "styles.suspendedForegroundColor": "black",
 "styles.suspendedBackgroundColor": "coral",
 "styles.modalBorderColor": "#2496dc",
-"styles.night.modalBorderColor": "darkorange"
+"styles.night.modalBorderColor": "darkorange",
+"shortcuts.focus_search_bar": "Ctrl+Shift+F",
+"shortcuts.trigger_search": "Ctrl+Shift+K"
 }

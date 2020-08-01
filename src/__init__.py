@@ -21,7 +21,7 @@ from aqt import mw, gui_hooks
 from aqt.qt import *
 from anki.hooks import wrap, addHook
 import aqt
-from aqt.utils import showInfo
+from anki.utils import isMac, isLin
 import aqt.webview
 from aqt.addcards import AddCards
 import aqt.editor
@@ -103,9 +103,27 @@ def init_addon():
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific()
 
+    # patch webview dropevent to catch pdf file drop
+    aqt.editor.EditorWebView.dropEvent =  wrap(aqt.editor.EditorWebView.dropEvent, webview_on_drop, "around")
+
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
 
+def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callable):
+    """ If a pdf file is dropped, intercept and open Create Note dialog. """
+
+    if evt:
+        mime = evt.mimeData()
+        if mime.hasUrls():
+            for url in mime.urls():
+                url = url.toLocalFile()
+                if re.match("^.+\.pdf$", url, re.IGNORECASE):
+                    editor = get_index().ui._editor
+                    # editor.web.eval("dropTarget = document.getElementById('f0');")
+                    # _old(web, evt)
+                    expanded_on_bridge_cmd(None, f"siac-create-note-source-prefill {url}", editor)
+                    return
+    _old(web, evt)
 
 def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
     _old(dialog)
@@ -124,7 +142,6 @@ def on_load_note(editor: Editor):
     Executed everytime a note is created/loaded in the add cards dialog.
     Wraps the normal editor html in a flex layout to render a second column for the searching ui.
     """
-
     #only display in add cards dialog or in the review edit dialog (if enabled)
     if editor.addMode or (conf_or_def("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
 
@@ -190,15 +207,21 @@ def insert_scripts():
     aqt.editor._html += f"""
     <script>
 
-        script = document.createElement('link');
+        var script = document.createElement('link');
         script.type = 'text/css';
         script.rel = 'stylesheet';
         script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/styles.css';
         document.body.appendChild(script);
 
-        var script = document.createElement('script');
+        script = document.createElement('script');
         script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/tinymce/tinymce.min.js';
+        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/simple_mde/simplemde.min.js';
+        document.body.appendChild(script);
+
+        var script = document.createElement('link');
+        script.type = 'text/css';
+        script.rel = 'stylesheet';
+        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/simple_mde/simplemde.min.css';
         document.body.appendChild(script);
 
         script = document.createElement('script');
@@ -318,8 +341,14 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
         try:
             QShortcut(QKeySequence(shortcut), editor.widget, activated=activated)
         except: 
-            pass
-    
+            state.shortcuts_failed.append(shortcut)
+            return
+        existing = editor.widget.findChildren(QShortcut)
+        existing = [e.key().toString().lower() for e in existing]
+        if not shortcut.lower() in existing:
+            state.shortcuts_failed.append(shortcut)
+
+
     # toggle add-on pane 
     _try_register(config["toggleShortcut"], toggleAddon)
 
@@ -344,6 +373,9 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     # Jump to first/last page in pdf reader 
     _try_register(config["pdf.shortcuts.jump_to_last_page"], lambda: editor.web.eval("jumpLastPageShortcut()"))
     _try_register(config["pdf.shortcuts.jump_to_first_page"], lambda: editor.web.eval("jumpFirstPageShortcut()"))
+
+    _try_register(config["shortcuts.focus_search_bar"], lambda: editor.web.eval("focusSearchShortcut()"))
+    _try_register(config["shortcuts.trigger_search"], lambda: editor.web.eval("triggerSearchShortcut()"))
 
 def show_note_modal():
     if not state.note_editor_shown:

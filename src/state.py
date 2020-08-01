@@ -42,6 +42,8 @@ last_search_cmd     : Optional[str]                     = None
 # last page cmd from the web view that triggers a page load
 last_page_requested : Optional[int]                     = None
 
+shortcuts_failed    : List[str]                         = []
+
 def check_index() -> bool:
     """ Returns True if index and ui are ready to use. """
     return (search_index is not None 

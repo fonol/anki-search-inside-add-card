@@ -379,10 +379,11 @@ class FTSIndex:
         if did is None or len(did) == 0:
             return
         did = did[0][0]
+        source  = content
         if str(note.mid) in self.fields_to_exclude:
             content = utility.text.remove_fields(content, self.fields_to_exclude[str(note.mid)])
         conn = sqlite3.connect(self.dir + "search-data.db")
-        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note.id, utility.text.clean(content, self.stopWords), tags, did, content, note.mid))
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note.id, utility.text.clean(content, self.stopWords), tags, did, source, note.mid))
         conn.commit()
         conn.close()
         persist_index_info(self)

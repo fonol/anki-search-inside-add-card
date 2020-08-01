@@ -17,8 +17,12 @@
 
 import urllib.request
 import typing
+import re
+from typing import Optional
 from bs4 import BeautifulSoup, Comment
 from requests import get
+
+import utility.misc
 
 
 def _fetch(url: str) -> BeautifulSoup:
@@ -46,12 +50,26 @@ def _fetch(url: str) -> BeautifulSoup:
 
     return page
 
-def import_webpage(url: str) -> str:
+def import_webpage(url: str, inline_images: bool = False) -> Optional[str]:
     if url is None or len(url.strip()) == 0:
         return None
     try:
         webpage = _fetch(url)
+
     except Exception as e:
         return None
     
-    return "\n".join(map(str, webpage.find('body').children))
+    body = "\n".join(map(str, webpage.find('body').children))
+
+    base_path   = url.rsplit('/', 1)[0]
+    if inline_images:
+        body        = utility.misc.try_inline_images(body, base_path)
+    # else:
+    #     images = utility.misc.find_all_images(body)
+    #     for i in images:
+    #         url = re.search("src=(\"[^\"]+\"|'[^']+')", i, flags=re.IGNORECASE).group(1)[1:-1]
+    #         if not url.startswith("http"):
+    #             url = f"{base_path}{url}"
+    #         body = body.replace(i, f"<img src='{url}'/>")
+
+    return body

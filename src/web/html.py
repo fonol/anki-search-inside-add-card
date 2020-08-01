@@ -286,6 +286,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                                                 <span>Menus</span>
                                                 <hr>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-index-info");'>&nbsp;Info</div>
+                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-show-tips");'>&nbsp;Tips</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-synonyms");'>&nbsp;Synonyms</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-styling");'>&nbsp;Settings</div>
                                                 <div class='siac-dropdown-item' style='width: 100%%;' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
@@ -428,7 +429,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
     pdf_svg(15, 18),
     "display: none;" if indexIsLoaded else "",
     "hidden" if hideSidebar else "",
-    getCalendarHtml() if conf_or_def("showTimeline", True) else "",
+    get_calendar_html() if conf_or_def("showTimeline", True) else "",
     search_bar_mode,
     insert_code
     )
@@ -477,7 +478,7 @@ def get_model_dialog_html() -> str:
     html += "</div></div>"
     return html
 
-def getCalendarHtml() -> str:
+def get_calendar_html() -> str:
     """ Html for the timeline at the bottom of the search pane. """
 
     html                    = """<div id='cal-row' style="width: 100%%; height: 8px;" onmouseleave='calMouseLeave()'>%s</div> """
@@ -487,30 +488,34 @@ def getCalendarHtml() -> str:
     nid_now                 = int(time.time() * 1000)
     nid_minus_day_of_year   = int(date_year_begin.timestamp() * 1000)
 
-    res                     = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now))
+    res                     = mw.col.db.all("select distinct notes.id from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now))
 
     counts                  = []
     c                       = 1
     notes_in_current_day    = 0
 
     for i, r in enumerate(res):
+
         c_day_of_year = time.localtime(r[0]/1000).tm_yday
+
         if c_day_of_year == c:
             notes_in_current_day += 1
             if i == len(res) - 1:
                 counts.append(notes_in_current_day)
         else:
             counts.append(notes_in_current_day)
-            notes_in_current_day = 1
-            for _ in range(0, c_day_of_year - c - 1):
-                counts.append(0)
+            notes_in_current_day    = 1
+            counts                  += [0 for _ in range(0, c_day_of_year - c - 1)]
+            # for _ in range(0, c_day_of_year - c - 1):
+            #     counts.append(0)
 
         c = c_day_of_year
     while len(counts) < day_of_year:
         counts.append(0)
 
-    html_content = ""
-    added = 0
+    html_content    = ""
+    added           = 0
+
     for i, notes_in_current_day in enumerate(counts):
         if notes_in_current_day > 20:
             color = "cal-three"
@@ -921,6 +926,31 @@ def get_pdf_list_first_card():
        
     """
     return html
+
+def get_tips_html() -> List[Tuple[str, str]]:
+    """ Settings & Info -> Tips:  Returns a list of (title, body) pairs of html to print. """
+
+    return [("General Tips", """
+        <br>
+        <ol>
+        <li>Look up available shortcuts in the 'Info' dialog. Most of them can be set in the config.</li>
+        <li>A convenient way to quickly open a certain PDF is to use CTRL+O.</li>
+        <li>Drag and drop a PDF file on the add-on pane to open the Create Note modal with that file path.</li>
+        <li>CTRL/Meta + Click on a tag in the notes sidebar opens the Create Note modal with that tag.</li>
+        <li>Not all settings are in the "Settings" dialog, some can be set only through Anki's add-on config dialog.</li>
+        <li>On Anki 2.1.28+, the whole UI can be resized at once with CTRL+Mousewheel.</li>
+        <li>There is no automatic backup function, but it is sufficient to simply copy the 'siac-notes.db' file somewhere else.</li>
+        </ol>
+    """), ("Markdown in Notes", """
+        Supported elements are, besides the standard markdown:<br>
+        <ol>
+        <li>Fenced Code Blocks (```)</li>
+        <li>Definition Lists (: )</li>
+        <li>Blockquotes (>)</li>
+        </ol>
+
+        Newlines can be done with two trailing spaces at the end of a line.
+    """)]
 
 def get_unsuspend_modal(nid):
     """ Returns the html content for the modal that is opened when clicking on a SUSPENDED label. """

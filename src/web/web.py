@@ -70,18 +70,19 @@ def getScriptPlatformSpecific():
     }
     """.replace("%", "%%")
 
+    addon_id    = utility.misc.get_addon_id()
     
-    #css + js
+    # css + js
     all = """
     <style>
-    %s
+        %s
     </style>
     <style id='siac-styles'>
-    %s
+        %s
     </style>
 
     <script type='text/javascript'>
-    %s
+        %s
     </script>
     """
     css                 = styles()
@@ -89,7 +90,7 @@ def getScriptPlatformSpecific():
         script          = f.read()
     
     renderImmediately   = str(get_config_value_or_default("renderImmediately", False)).lower()
-    script              = script.replace("$renderImmediately$", renderImmediately)
+    script              = script.replace("$renderImmediately$", renderImmediately).replace("$addon_id$", addon_id)
 
     #replace command key with meta key for mac
     cplatform           = platform.system().lower()
@@ -264,6 +265,13 @@ def print_starting_info(editor: Editor):
             html += "<br/><br/><b>Known Issues:</b><hr>"
             for ix, i in enumerate(issues):
                 html += f"<br>{ix + 1}. {i}"
+        
+        html += """ 
+            <br><br>
+            For bug reports, feedback or suggestions: <a href='https://github.com/fonol/anki-search-inside-add-card/issues'>Github Repository</a>
+            <br>
+            If you want to support this project: <a href='https://www.patreon.com/tomtomtom'>Patreon</a>
+            """
     
     if not state.db_file_existed:
         html += "<br><br><b><i>siac-notes.db</i> was not existing, created a new one.</b>"
@@ -458,10 +466,15 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added color options to the settings dialog",
-        "Don't trigger Search on Selection if selected text is only whitespace",
-        "Fix reading heatmap not loading initially when reopening Add Card",
-        "Possible workaround for highlight bug on 2.1.28"
+        "Add-on notes are now markdown. Still in testing, so please report any bugs",
+        "Added \"Tips\" under \"Settings & Info\"",
+        "Click on Tag in sidebar with Ctrl/Meta pressed -> Open Create Note dialog",
+        "Drag and drop a PDF file on the add-on pane -> Open Create Note dialog with the PDF path",
+        "Added Shortcut to focus search bar: CTRL/Meta+Shift+F",
+        "Added Shortcut to trigger search with field contents: CTRL/Meta+Shift+K",
+        "Fix: Bug with PDF notifications",
+        "Fix: Bug with just added note and \"Search in Fields\" settings"
+
     ]
 
 def known_issues() -> List[str]:
