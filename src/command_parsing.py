@@ -1173,6 +1173,10 @@ def parseSortCommand(cmd):
         index.ui.removeUnreviewed()
     elif cmd == "remReviewed":
         index.ui.removeReviewed()
+    elif cmd == "remSuspended":
+        index.ui.remove_suspended()
+    elif cmd == "remUnsuspended":
+        index.ui.remove_unsuspended()
 
 def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
     """
@@ -1285,10 +1289,11 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
     index = get_index()
     if (len(content) < 1):
         index.ui.empty_result("No results found for empty string")
-    decks = list()
+
+    decks = []
     if "~" in content:
-        for s in content[:content.index('~')].split(','):
-            decks.append(s.strip())
+        decks = [s.strip() for s in content[:content.index('~')].split(',') if s.strip() != ""]
+
     if index is not None:
 
         if searchDB:
@@ -1619,6 +1624,7 @@ def get_index_info():
                <tr><td>Trigger Search with current field contents</td><td>  <b>%s</b></td></tr>
                <tr><td>Trigger Search with current focused field's contents</td><td>  <b>%s</b></td></tr>
                <tr><td>Trigger Predefined Search</td><td>  <b>%s</b></td></tr>
+               <tr><td>Trigger current filter</td><td>  <b>%s</b></td></tr>
              </table>
 
             %s
@@ -1655,6 +1661,7 @@ def get_index_info():
             config["shortcuts.trigger_search"],
             config["shortcuts.search_for_current_field"],
             config["shortcuts.trigger_predef_search"],
+            config["shortcuts.trigger_current_filter"],
             shortcuts
             )
 
