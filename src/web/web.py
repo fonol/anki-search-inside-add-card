@@ -474,6 +474,8 @@ def changelog() -> List[str]:
         "Added Shortcut to trigger search with field contents: CTRL/Meta+Shift+K",
         "Added Shortcut to trigger search with focused field's contents: Alt/Option+J",
         "Added Shortcut to trigger current selected predefined search: Alt/Option+K",
+        "Added Shortcut to trigger current selected filter: Ctrl+K",
+        "Added Remove Suspended / Remove Unsuspended to filters",
         "Fix: Bug with PDF notifications",
         "Fix: Bug with just added note and \"Search in Fields\" settings"
 
