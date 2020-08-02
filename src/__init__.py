@@ -377,6 +377,7 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     _try_register(config["shortcuts.focus_search_bar"], lambda: editor.web.eval("focusSearchShortcut()"))
     _try_register(config["shortcuts.trigger_search"], lambda: editor.web.eval("triggerSearchShortcut()"))
     _try_register(config["shortcuts.trigger_predef_search"], lambda: editor.web.eval("predefSearch()"))
+    _try_register(config["shortcuts.trigger_current_filter"], lambda: editor.web.eval("sort()"))
     _try_register(config["shortcuts.search_for_current_field"], lambda: editor.web.eval("searchCurrentField()"))
 
 def show_note_modal():
