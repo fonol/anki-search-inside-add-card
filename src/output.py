@@ -314,13 +314,15 @@ class Output:
             if counter - (page - 1) * 50 < 20:
                 # todo: title for user notes
                 allText = f"{allText} {res.text[:5000]}"
+
         tags.sort()
-        html = html.replace("`", "&#96;").replace("$", "&#36;")
+        html    = html.replace("`", "&#96;").replace("$", "&#36;")
         pageMax = math.ceil(len(notes) / 50.0)
+
         if get_index() is not None and get_index().lastResDict is not None:
-            get_index().lastResDict["time-html"] = int((time.time() - start) * 1000)
-            get_index().lastResDict["time-html-highlighting"] = int(highlight_total * 1000)
-            get_index().lastResDict["time-html-build-user-note"] = int(build_user_note_total * 1000)
+            get_index().lastResDict["time-html"]                    = int((time.time() - start) * 1000)
+            get_index().lastResDict["time-html-highlighting"]       = int(highlight_total * 1000)
+            get_index().lastResDict["time-html-build-user-note"]    = int(build_user_note_total * 1000)
         if stamp is None and self.last_took is not None:
             took = self.last_took
             stamp = -1
@@ -472,7 +474,22 @@ class Output:
 
         self.print_search_results(filtered, stamp)
 
+    def remove_suspended(self):
+        if self.lastResults is None: return
+        stamp       = utility.misc.get_milisec_stamp()
+        self.latest = stamp
+        susp        = get_suspended([r.id for r in self.lastResults])
+        filtered    = [r for r in self.lastResults if int(r.id) not in susp]
+        self.print_search_results(filtered, stamp)
    
+    def remove_unsuspended(self):
+        if self.lastResults is None: return
+        stamp       = utility.misc.get_milisec_stamp()
+        self.latest = stamp
+        susp        = get_suspended([r.id for r in self.lastResults])
+        filtered    = [r for r in self.lastResults if int(r.id) in susp]
+        self.print_search_results(filtered, stamp)
+
     def _buildEditedInfo(self, timestamp):
         diffInSeconds = time.time() - timestamp
         if diffInSeconds < 60:
