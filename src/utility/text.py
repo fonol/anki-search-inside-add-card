@@ -330,7 +330,8 @@ def cleanFieldSeparators(text):
     if text.endswith("\u001f"):
         text = text[:-1]
     text = text.replace("\u001f", "<span class='fldSep'>|</span>")
-    text = text.replace("</p><span class='fldSep'>|</span><p>", "<span class='fldSep'>|</span></p><p>")
+    text = re.sub(r"(</(?:p|div|ul|ol)>)(?:\n| )*<span class=['\"]fldSep['\"]>\|</ ?span>", r"<span class='fldSep'>|</span>\1", text)
+    # text = text.replace("</p><span class='fldSep'>|</span><p>", "<span class='fldSep'>|</span></p><p>")
     return text
 
 def newline_before_images(text):
