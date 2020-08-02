@@ -339,10 +339,12 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                                                 <option value='remTagged'>Remove Tagged</option>
                                                 <option value='remUnreviewed'>Remove Unreviewed</option>
                                                 <option value='remReviewed'>Remove Reviewed</option>
+                                                <option value='remSuspended'>Remove Suspended</option>
+                                                <option value='remUnsuspended'>Remove Unsuspended</option>
                                             </select>
                                         </div>
                                         <div class='siac-table-cell'>
-                                            <div class='siac-table-cell-btn' style='margin-left: 5px;' onclick='sort();'>GO</div>
+                                            <div class='siac-table-cell-btn' style='margin-left: 5px;' onclick='sort();' title='%s'>GO</div>
                                         </div>
                                     </div>
                                 </fieldset>
@@ -371,7 +373,8 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                                                 <option value='shortestTime'>Time Taken (asc.)</option>
                                                 <option value='highestInterval'>Interval (desc.)</option>
                                                 <option value='lowestInterval'>Interval (asc.)</option>
-                                                <option value='longestText'>Longest Text</option>
+                                                <option value='longestText'>Longest HTML</option>
+                                                <option value='lastUntagged'>Newest Untagged</option>
                                                 <option value='randomUntagged'>Random Untagged</option>
                                             </select>
                                         </div>
@@ -385,7 +388,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                                             </select>
                                         </div>
                                         <div class='siac-table-cell'>
-                                            <div class='siac-table-cell-btn' onclick='predefSearch();'>GO</div>
+                                            <div class='siac-table-cell-btn' onclick='predefSearch();' title='%s'>GO</div>
                                         </div>
                                     </div>
                                 </fieldset>
@@ -430,7 +433,9 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
     "display: none;" if indexIsLoaded else "",
     "hidden" if hideSidebar else "",
     get_calendar_html() if conf_or_def("showTimeline", True) else "",
+    conf_or_def("shortcuts.trigger_current_filter", "CTRL+K"),
     search_bar_mode,
+    conf_or_def("shortcuts.trigger_predef_search", "ALT+K"),
     insert_code
     )
 
