@@ -75,7 +75,6 @@ def get_notes_in_collection():
 
 def build_index(force_rebuild = False, execute_after_end = None):
 
-    config = mw.addonManager.getConfig(__name__)
     if get_index() is None:
         if not corpus_is_loaded():
             corpus = get_notes_in_collection()

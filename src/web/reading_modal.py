@@ -518,7 +518,7 @@ class ReadingModal:
         quick_sched             = self.quick_sched_btn(priority)
 
         html                    = """
-            <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
+            <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
                 <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center; color: grey;'>Note: Not all sites allow embedding!</div>
                 <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
                     <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
@@ -613,7 +613,7 @@ class ReadingModal:
                 cats = ""
             text = ''.join((text, templ % (ix + 1, message.link, message.title, message.date, cats, message.text)))
         html = """
-            <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
+            <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
                 <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center; color: grey;'>Note: Not all sites allow embedding!</div>
                 <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
                     <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
@@ -763,7 +763,7 @@ class ReadingModal:
 
         html = """
         <div id='siac-queue-readings-list' style='display: inline-block; vertical-align: top; margin-left: 20px; user-select: none;'>
-            <div style='margin: 0px 0 1px 0; display: inline-block; color: lightgrey;'>Queue Head:</div>%s<br>
+            <div style='margin: 0px 0 1px 0; display: inline-block; color: lightgrey;'><i class="fa fa-inbox" aria-hidden="true"></i> &nbsp;Queue Head:</div>%s<br>
                 %s
         </div>
         """ % (hide_btn, queue_head_readings)
@@ -807,12 +807,12 @@ class ReadingModal:
         
         if self.note.extract_start:
             if self.note.extract_start == self.note.extract_end:
-                extract = f"<div class='siac-extract-marker'> Extract: P. {self.note.extract_start} </div>"
+                extract = f"<div class='siac-extract-marker'><i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {self.note.extract_start} </div>"
             else:
-                extract = f"<div class='siac-extract-marker'> Extract: P. {self.note.extract_start} - {self.note.extract_end} </div>"
+                extract = f"<div class='siac-extract-marker'><i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {self.note.extract_start} - {self.note.extract_end} </div>"
 
         html = """
-            <div id='siac-pdf-overlay'>PAGE READ</div>
+            <div id='siac-pdf-overlay'>PAGE &nbsp;<i class="fa fa-book" aria-hidden="true"></i>&nbsp; READ</div>
             <div id='siac-pdf-overlay-top'>
                 <div id='siac-pdf-mark-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><img src='{marks_img_src}' style='width: 17px; height: 17px; margin: 0;'/>
                     <div style='margin-left: 7px;'>
@@ -826,7 +826,7 @@ class ReadingModal:
                 {extract}
                 <div style='display: inline-block; vertical-align: top;' id='siac-pdf-overlay-top-lbl-wrap'></div>
             </div>
-            <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'>W
+            <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
                 <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center;'>Note: Not all sites allow embedding!</div>
                 <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
                     <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
@@ -850,7 +850,7 @@ class ReadingModal:
 
             <div class='siac-btn siac-btn-dark' id='siac-pdf-search-btn' onclick='$(this).toggleClass("expanded"); onPDFSearchBtnClicked(this);'><img src='{pdf_search_img_src}' style='width: 16px; height: 16px;'/>
                 <div id='siac-pdf-search-btn-inner' class='expanded-hidden white-hover' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'>
-                    <input style='width: 200px; border:none; background-color: #2f2f31; color: lightgrey; padding-left: 2px;' onclick='event.stopPropagation();' onkeyup='onPDFSearchInput(this.value, event);'/>
+                    <input class='siac-rm-bg' style='width: 200px; border:none; color: lightgrey; padding-left: 2px;' onclick='event.stopPropagation();' onkeyup='onPDFSearchInput(this.value, event);'/>
                     <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); readerNotification("Searching..."); nextPDFSearchResult(dir="left");'><b>&lt;</b></div>
                     <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); readerNotification("Searching..."); nextPDFSearchResult(dir="right");'><b>&gt;</b></div>
                 </div>
@@ -880,7 +880,7 @@ class ReadingModal:
                     <div class='siac-btn siac-btn-dark active' id='siac-pdf-tooltip-toggle' onclick='togglePDFSelect(this)' style='margin-left: 5px;'><div class='siac-search-icn-dark'></div></div>
                     <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
                 </div>
-                <div style='user-select:none; display: inline-block; position:relative; z-index: 2; padding: 0 5px 0 5px; background: #2f2f31;'>
+                <div class='siac-rm-bg' style='user-select:none; display: inline-block; position:relative; z-index: 2; padding: 0 5px 0 5px;'>
                     <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b>&lt;</b></div>
                     <span style='display: inline-block; text-align: center; width: 78px; user-select: none;' id='siac-pdf-page-lbl'>Loading...</span>
                     <div class='siac-btn siac-btn-dark' onclick='pdfPageRight();'><b>&gt;</b></div>
@@ -889,9 +889,12 @@ class ReadingModal:
                 <div style='position: absolute; right: 0; display: inline-block; user-select: none;'>
                     <div style='position: relative; display: inline-block; width: 70px; margin-right: 7px;'>
                         <div id='siac-pdf-color-mode-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'><span>Day</span>
-                            <div class='siac-btn-small-dropdown-inverted click' style='height: 140px; top: -118px; left: -42px; width: 100px;'>
+                            <div class='siac-btn-small-dropdown-inverted click' style='height: 200px; top: -178px; left: -42px; width: 100px;'>
                                 <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Day")'><b>Day</b></div>
                                 <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Night")'><b>Night</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("X1")'><b>X1</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("X2")'><b>X2</b></div>
+                                <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Mud")'><b>Mud</b></div>
                                 <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Sand")'><b>Sand</b></div>
                                 <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Peach")'> <b>Peach</b> </div>
                                 <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Rose")'> <b>Rose</b> </div>
@@ -901,7 +904,7 @@ class ReadingModal:
                         </div>
                     </div>
                     
-                    <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 65px;' onclick='togglePageRead({nid});'>\u2713&nbsp; Read</div>
+                    <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 75px;' onclick='togglePageRead({nid});'>\u2713&nbsp; Read</div>
                     <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
                         <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
                             <div class='siac-btn-small-dropdown-inverted click'>
@@ -965,7 +968,7 @@ class ReadingModal:
                 <tr>
                     <td style='padding-top: 10px;'>Tags</td>
                     <td style='padding-top: 10px;'>
-                        <input type='text' style='width: 210px; background: #2f2f31; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px; color: lightgrey;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
+                        <input type='text' class='siac-rm-bg' style='width: 210px; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px; color: lightgrey;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
                     </td>
                 </tr>
             </table>
@@ -1243,19 +1246,42 @@ class ReadingModal:
         modal = f"""
             <div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">
                 Change the main color of the reader.<br><br>
-                <div style='user-select: none;'>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader.css")'>Orange</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightblue.css")'>Lightblue</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_khaki.css")'>Khaki</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_darkseagreen.css")'>Darkseagreen</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_tan.css")'>Tan</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightgreen.css")'>Lightgreen</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightsalmon.css")'>Lightsalmon</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_yellow.css")'>Yellow</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_crimson.css")'>Crimson</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_coral.css")'>Coral</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_steelblue.css")'>Steelblue</a><br>
-                    <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightsteelblue.css")'>Light Steelblue</a><br>
+                <div style='user-select: none; display: flex; flex-direction: row;'>
+                    <div style='flex: 1'>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader.css")'>Orange</a><br>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightblue.css")'>Lightblue</a><br>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_khaki.css")'>Khaki</a><br>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_darkseagreen.css")'>Darkseagreen</a><br>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_tan.css")'>Tan</a><br>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightgreen.css")'>Lightgreen</a><br>
+                    </div>
+                    <div style='flex: 1'>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightsalmon.css")'>Lightsalmon</a><br>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_yellow.css")'>Yellow</a><br>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_crimson.css")'>Crimson</a><br>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_coral.css")'>Coral</a><br>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_steelblue.css")'>Steelblue</a><br>
+                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightsteelblue.css")'>Light Steelblue</a><br>
+                    </div>
+                </div>
+                <br>
+                Background Color:
+                <br><br>
+                <div style='user-select: none; display: flex; flex-direction: row;' id='siac-modal-bg-update'>
+                    <div style='flex: 1'>
+                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2f2f31")'>Default</a><br>
+                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor black")'>Black</a><br>
+                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #00193C")'>Darkblue</a><br>
+                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #020D1E")'>Darkbluegrey</a><br>
+                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #102212")'>Darkgreen</a><br>
+                    </div>
+                    <div style='flex: 1'>
+                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #343741")'>Lightgrey</a><br>
+                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #0B2A2A")'>Darkturquoise</a><br>
+                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2F1202")'>Darkbrown</a><br>
+                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #381313")'>Darkred</a><br>
+                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor " + getComputedStyle(document.body, null)["backgroundColor"])'>Window</a><br>
+                    </div>
                 </div>
                 <br>
                 <div style='text-align: right;'>
@@ -1363,7 +1389,7 @@ class ReadingModal:
                     search_sources += """<div class="siac-url-ch" onclick='pycmd("siac-url-srch $$$" + document.getElementById("siac-tt-ws-inp").value + "$$$%s"); $(this.parentNode.parentNode).remove();'>%s</div>""" % (url, name)
 
         modal = """ <div class="siac-modal-small dark" style="text-align:center;">
-                        <input style="width: 100%%; border-radius: 3px; padding-left: 4px; box-sizing: border-box; background: #2f2f31; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input>
+                        <input class='siac-rm-bg' style="width: 100%%; border-radius: 3px; padding-left: 4px; box-sizing: border-box; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input>
                         <br/>
                         <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden; cursor: pointer; margin-top: 15px;">%s</div><br><br>
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>

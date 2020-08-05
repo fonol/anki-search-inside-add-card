@@ -5,6 +5,8 @@
 --img-max-height: $imgMaxHeight$px;
 --zoom: $zoom$;
 
+--c-reading-modal-background: $styles.readingModalBackgroundColor$;
+
 --c-suspended-foreground: $styles.suspendedForegroundColor$;
 --c-suspended-background: $styles.suspendedBackgroundColor$;
 

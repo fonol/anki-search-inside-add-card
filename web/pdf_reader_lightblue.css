@@ -11,7 +11,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     top: 0;
     bottom: 0;
     right: 0;
-    background-color: #2f2f31;
+    background-color: var(--c-reading-modal-background);
     color: white;
     padding: 12px;
     padding-bottom: 6px;
@@ -19,6 +19,9 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     z-index: 2;
     border-radius: 5px;
     overflow: hidden;
+}
+.siac-rm-bg {
+    background-color: var(--c-reading-modal-background);
 }
 body.nightMode #siac-reading-modal.rendering {
     border: 2px solid #41b3a3;
@@ -42,7 +45,7 @@ body.nightMode #siac-reading-modal.rendering {
 }
 .siac-modal-small.dark, #siac-reading-modal .siac-modal-small, .siac-pdf-contextmenu {
     border: 3px outset #41b3a3;
-    background: #2f2f31;
+    background: var(--c-reading-modal-background);
     color: white;
 }
 .siac-pdf-contextmenu {
@@ -66,7 +69,7 @@ body.nightMode #siac-reading-modal.rendering {
     display: none;
     position: absolute;
     color: white;
-    background-color: #2f2f31;
+    background-color: var(--c-reading-modal-background);
     width: 200px;
     padding: 0px 4px 0px 4px;
     height: 185px; 
@@ -113,7 +116,7 @@ body.nightMode #siac-reading-modal.rendering {
     border: 3px outset #41b3a3; 
     border-radius: 3px; 
     color: lightgrey; 
-    background: #2f2f31; 
+    background: var(--c-reading-modal-background); 
     padding: 15px;
 }
 #siac-pdf-overlay {
@@ -123,15 +126,18 @@ body.nightMode #siac-reading-modal.rendering {
     right: 0; left: 0;
     z-index: 4;
     user-select: none;
-    background-color: #43a047;
+    background-color: #1c636d;
     border-radius: 7px;
-    border: 4px outset green;
+    border: 4px double #08212f;
     padding: 2px 4px 4px 4px;
     width: 200px;
     text-align: center;
-    color: white;
+    color: beige;
     margin-left: auto;
     margin-right: auto;
+    font-size: 11px;
+    font-weight: 700;
+    animation: readingModalIn 0.3s;
 }
 #siac-pdf-mark-btn {
     padding: 4px 3px 5px 4px;
@@ -186,7 +192,7 @@ body.nightMode #siac-reading-modal.rendering {
     border: 3px outset #2496dc;
     border-radius: 4px;
     padding: 4px 6px 4px 6px;
-    background: #2f2f31;
+    background: var(--c-reading-modal-background);
     color: white;
     z-index: 11;
     user-select: none;
@@ -237,7 +243,7 @@ body.nightMode #siac-reading-modal.rendering {
     border: 3px outset #2496dc;
     border-radius: 3px;
     padding: 4px 3px 5px 4px;
-    background-color: #2f2f31;
+    background-color: var(--c-reading-modal-background);
     color: beige;
     vertical-align: top;
     margin-right: 15px;
@@ -257,8 +263,9 @@ body.nightMode #siac-reading-modal.rendering {
     overflow: hidden;
 }   
 .CodeMirror {
-    flex: 1;
     background-color: #1e211f;
+    /* color: whitesmoke; */
+    flex: 1;
 }
 
 #siac-iframe {
@@ -291,7 +298,7 @@ body.nightMode #siac-reading-modal.rendering {
     border: 3px outset #2496dc;
     border-radius: 4px;
     padding: 4px 6px 4px 6px;
-    background: #2f2f31;
+    background: var(--c-reading-modal-background);
     color: white;
     user-select: none;
 }
@@ -350,7 +357,7 @@ body.nightMode #siac-reading-modal.rendering {
 }
 #siac-iframe-btn input {
     width: 100%;
-    background: #2f2f31;
+    background: var(--c-reading-modal-background);
     color: white;
     border-color: white;
     border-radius: 3px;
@@ -379,7 +386,7 @@ body.nightMode #siac-reading-modal.rendering {
 	position: absolute;
 	display: none;
 	z-index: 999;
-    background-color: #2f2f31;
+    background-color: var(--c-reading-modal-background);
 	color: white;
     padding: 9px;
 	border-radius: 5px;
@@ -391,8 +398,11 @@ body.nightMode #siac-reading-modal.rendering {
     border-radius: 4px;
     border: 3px outset #43a047;
     padding: 1px 5px 1px 5px;
-    background-color: #2f2f31;
+    background-color: var(--c-reading-modal-background);
     color: beige;
+}
+#siac-pdf-read-btn {
+    font-weight: 700;
 }
 #siac-pdf-read-btn:hover,#siac-pdf-more-btn:hover {
     color: white;
@@ -432,7 +442,7 @@ body.nightMode #siac-reading-modal.rendering {
     margin-top: 15px;
     margin-bottom: 5px;
     border-radius: 4px;
-    background-color: #2f2f31;
+    background-color: var(--c-reading-modal-background);
     color: white;
     border-color: white;
     padding-left: 4px;
@@ -441,7 +451,7 @@ body.nightMode #siac-reading-modal.rendering {
     outline: none;
 }
 #siac-pdf-page-inp {
-    background: #2f2f31;
+    background: var(--c-reading-modal-background);
     color: beige;
 }
 #siac-reading-modal-bottom-bar {
@@ -633,6 +643,10 @@ body.nightMode #siac-reading-modal.rendering {
 }
 .siac-clickable-anchor.siac-disabled,.siac-queue-picker-icn.siac-disabled,.siac-page-mark-link.siac-disabled,.siac-queue-sched-btn.siac-disabled {
     color: grey !important;
+    pointer-events: none;
+}
+.siac-disabled .siac-clickable-anchor {
+    color: grey !important;
 }
 .siac-sched-icn.siac-disabled {
     opacity: 0.3;
@@ -714,7 +728,7 @@ body.nightMode #siac-reading-modal.rendering {
 }
 #siac-timer-popup {
     z-index: 9999999;
-    background: #2f2f31;
+    background: var(--c-reading-modal-background);
     color: white;
     position: absolute;
     top: 50%;
@@ -744,7 +758,7 @@ body.nightMode #siac-reading-modal.rendering {
     position: relative; 
     text-align: center;
     border: 3px outset #41b3a3;
-    background: #2f2f31;
+    background: var(--c-reading-modal-background);
     color: white;
 }
 .tox-tinymce-aux {
@@ -882,7 +896,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     bottom: 0;
     opacity: 0.4;
     background-color: black;
-    z-index: 5;
+    z-index: 12;
 }
 .siac-prio-slider, .siac-prio-slider-small {
     width: 190px;

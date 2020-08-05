@@ -213,6 +213,12 @@ def insert_scripts():
         script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/styles.css';
         document.body.appendChild(script);
 
+        var script = document.createElement('link');
+        script.type = 'text/css';
+        script.rel = 'stylesheet';
+        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/fa/css/font-awesome.min.css';
+        document.body.appendChild(script);
+
         script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/simple_mde/simplemde.min.js';

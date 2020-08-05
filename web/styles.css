@@ -839,7 +839,7 @@ table.striped tr:nth-child(even) {
     outline: none;
 }
 .siac-btn.siac-btn-dark, .siac-btn.siac-btn-dark-smaller {
-    background-color: #2f2f31;
+    background-color: var(--c-reading-modal-background);
     color: beige;
     border: 2px outset #b2b2a0;
     border-radius: 3px;

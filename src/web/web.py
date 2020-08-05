@@ -124,6 +124,7 @@ def styles() -> str:
 
     modalBorder         = str(get_config_value_or_default("styles.modalBorderColor", "#2496dc"))
     modalBorderNight    = str(get_config_value_or_default("styles.night.modalBorderColor", "darkorange"))
+    readingModalBG      = str(get_config_value_or_default("styles.readingModalBackgroundColor", "#2f2f31"))
 
     css                 = css.replace("$imgMaxHeight$", imgMaxHeight)
     css                 = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
@@ -141,6 +142,7 @@ def styles() -> str:
     css                 = css.replace("$styles.night.highlightBackgroundColor$", highlightNightBG)
     css                 = css.replace("$styles.modalBorderColor$", modalBorder)
     css                 = css.replace("$styles.night.modalBorderColor$", modalBorderNight)
+    css                 = css.replace("$styles.readingModalBackgroundColor$", readingModalBG)
     css                 = css.replace("$zoom$", str(get_config_value_or_default("searchpane.zoom", 1.0)))
 
     return css

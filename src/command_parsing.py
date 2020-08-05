@@ -1816,6 +1816,7 @@ def update_styling(cmd):
         config[name] = value
         write_config()
         reload_styles()
+        tooltip("Reloaded styles.")
 
     elif name in ["notes.showSource", "useInEdit", "results.showFloatButton", "results.showIDButton", "results.showCIDButton"]:
         config[name] = value == "true"
