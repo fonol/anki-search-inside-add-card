@@ -468,27 +468,16 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Add-on notes are now markdown. Still in testing, so please report any bugs",
-        "Added \"Tips\" under \"Settings & Info\"",
-        "Click on Tag in sidebar with Ctrl/Meta pressed -> Open Create Note dialog",
-        "Drag and drop a PDF file on the add-on pane -> Open Create Note dialog with the PDF path",
-        "Added Shortcut to focus search bar: CTRL/Meta+Shift+F",
-        "Added Shortcut to trigger search with field contents: CTRL/Meta+Shift+K",
-        "Added Shortcut to trigger search with focused field's contents: Alt/Option+J",
-        "Added Shortcut to trigger current selected predefined search: Alt/Option+K",
-        "Added Shortcut to trigger current selected filter: Ctrl+K",
-        "Added Remove Suspended / Remove Unsuspended to filters",
-        "Fix: Bug with PDF notifications",
-        "Fix: Bug with just added note and \"Search in Fields\" settings"
-
+        "Added some more PDF color modes",
+        "PDF reader background color can now be set through 'Change Theme'",
+        "Replaced/Added some icons in the reading modal",
+        "Fix: Icons in reading modal's markdown editor sometimes not loading"
     ]
 
 def known_issues() -> List[str]:
     """ Returns currently known issues/bugs. """
 
     return [
-        "PDF highlights seem to lose their opacity on 2.1.28",
-        "Some PDF color modes are not displayed correctly on 2.1.28",
         "Tag autocomplete in Create/Update note modal only works on first tag",
         "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions"
     ]
