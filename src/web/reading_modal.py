@@ -73,8 +73,9 @@ class ReadingModal:
         self.sidebar.set_editor(editor)
 
     def reset(self):
-        self.note_id            = None
-        self.note               = None
+        self.note_id                = None
+        self.note                   = None
+        self.sidebar.tab_displayed  = None
 
     @requires_index_loaded
     def display(self, note_id: int):

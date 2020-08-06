@@ -685,7 +685,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         tooltip(f"<center>Removed from Queue.</center>")
 
     elif cmd == "siac-on-reading-modal-close":
-        index.ui.reading_modal.note_id = None
+        index.ui.reading_modal.reset()
         run_hooks("reading-modal-closed")
 
     elif cmd == "siac-user-note-queue-read-random":
