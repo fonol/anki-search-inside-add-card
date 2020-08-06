@@ -83,5 +83,5 @@ noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {gr
                     </div>
                     <div class='cardR siac-user-note' onmouseup='{mouseup}' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
                     <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
-                    <div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'><div class='siac-read-icn'></div>{progress}</div>
+                    <div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'>&nbsp;<i class='fa fa-book' aria-hidden='true'></i>&nbsp;{progress}</div>
                 </div>""" % (FLOAT_BTN, NID_BTN)
