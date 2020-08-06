@@ -513,9 +513,6 @@ body.nightMode .cardR blockquote, body.nightMode .cardR pre {
 .cardLeftBot:hover :not(.siac-prog-tmp span) {
     color: #2496dc;
 }
-.siac-extract-mark {
-    vertical-align: middle;
-}
 .siac-read-box {
     display: inline-block;
     height: 12px;
