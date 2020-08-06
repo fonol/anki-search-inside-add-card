@@ -314,6 +314,9 @@ class Output:
             if counter - (page - 1) * 50 < 20:
                 # todo: title for user notes
                 allText = f"{allText} {res.text[:5000]}"
+                if res.note_type == "user":
+                    allText = f"{allText} {res.title}"
+
 
         tags.sort()
         html    = html.replace("`", "&#96;").replace("$", "&#36;")
@@ -403,6 +406,8 @@ class Output:
         else:
             editor.web.eval(js)
 
+    ### Sorting & Filtering
+
     def sortByDate(self, mode):
         """ Rerenders the last search results, but sorted by creation date. """
         if self.lastResults is None:
@@ -489,6 +494,10 @@ class Output:
         susp        = get_suspended([r.id for r in self.lastResults])
         filtered    = [r for r in self.lastResults if int(r.id) in susp]
         self.print_search_results(filtered, stamp)
+
+    ### End Sorting & Filtering
+
+
 
     def _buildEditedInfo(self, timestamp):
         diffInSeconds = time.time() - timestamp
