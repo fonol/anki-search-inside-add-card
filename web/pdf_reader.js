@@ -1281,10 +1281,10 @@ function hideQueueInfobox() {
     }
 }
 function greyoutBottom() {
-    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').addClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .fa,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').addClass("siac-disabled");
 }
 function ungreyoutBottom() {
-    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').removeClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-clickable-anchor,#siac-reading-modal-bottom-bar .fa,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').removeClass("siac-disabled");
 }
 function unhideQueue(nid) {
     if (pdfLoading || noteLoading || modalShown) { return; }

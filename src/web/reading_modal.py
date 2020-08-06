@@ -421,7 +421,7 @@ class ReadingModal:
                                 <div id='siac-queue-actions'>
                                     <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                     <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                                    <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;<i class="fa fa-folder-o sa-cursor-pointer" onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
+                                    <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;<i class="fa fa-folder-o sa-cursor-pointer siac-icn-hover" onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
                                     <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("{queue_btn_action}");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
                                     {delay_btn}<br>
                                     <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
@@ -684,7 +684,7 @@ class ReadingModal:
                         <div  id='siac-queue-actions'>
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                            <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;<i class="fa fa-folder-o sa-cursor-pointer"  onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
+                            <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;<i class="fa fa-folder-o sa-cursor-pointer siac-icn-hover"  onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
                             <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("{queue_btn_action}") }}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
                             {delay_btn}<br>
                             <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random") }}' class='siac-clickable-anchor'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>

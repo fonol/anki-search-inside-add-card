@@ -660,7 +660,7 @@ body.nightMode #siac-reading-modal.rendering {
 .siac-queue-sched-btn.siac-disabled {
     border-color: grey !important;
 }
-.siac-clickable-anchor:not(.siac-disabled):hover {
+.siac-clickable-anchor:not(.siac-disabled):hover,.siac-icn-hover:not(.siac-disabled):hover {
     transform: scale(1.02);
     filter: brightness(140%);
 }
