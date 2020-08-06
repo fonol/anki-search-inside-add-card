@@ -372,13 +372,15 @@ class FTSIndex:
 
 
     def addNote(self, note):
+        """ Add an (Anki) note to the index. """
+
         content = " \u001f ".join(note.fields)
         tags    = " ".join(note.tags)
         #did = note.model()['did']
         did     = mw.col.db.all("select distinct did from notes left join cards on notes.id = cards.nid where nid = %s" % note.id)
         if did is None or len(did) == 0:
             return
-        did = did[0][0]
+        did     = did[0][0]
         source  = content
         if str(note.mid) in self.fields_to_exclude:
             content = utility.text.remove_fields(content, self.fields_to_exclude[str(note.mid)])
