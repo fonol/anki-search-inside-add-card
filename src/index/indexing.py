@@ -162,11 +162,16 @@ def _build_index(index_up_to_date):
 def _should_rebuild():
     """ Check if the index should be rebuilt. """
 
+
+    config  = mw.addonManager.getConfig(__name__)
+
+    if config["freezeIndex"]:
+        return False
+
     info    = get_index_info()
     if info is None:
         return True
     corpus  = get_corpus()
-    config  = mw.addonManager.getConfig(__name__)
 
     # not used atm, so always false
     if info["shouldRebuild"]:
