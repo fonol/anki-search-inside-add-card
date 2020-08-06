@@ -1536,7 +1536,13 @@ hr.siac-modal-sep {
     margin-top: 6px;
 }
 .siac-prog-tmp span {
-    vertical-align: middle;
+    vertical-align: baseline;
+}
+.cardLeftBot .fa {
+    vertical-align: baseline;
+}
+.siac-user-note .cardLeftBot {
+    padding: 2px;
 }
 .siac-blue-outset {
     border: 2px outset #2496dc; 
