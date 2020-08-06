@@ -471,7 +471,9 @@ def changelog() -> List[str]:
         "Added some more PDF color modes",
         "PDF reader background color can now be set through 'Change Theme'",
         "Replaced/Added some icons in the reading modal",
-        "Fix: Icons in reading modal's markdown editor sometimes not loading"
+        "Better display of list items in the search results",
+        "Fix: Icons in reading modal's markdown editor sometimes not loading",
+        "Fix: 'Browse' / 'PDF' tab in reading modal not being reset after closing"
     ]
 
 def known_issues() -> List[str]:
