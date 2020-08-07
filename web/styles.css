@@ -1696,11 +1696,6 @@ body.nightMode .siac-btn-small:hover .siac-btn-small-dropdown.hover,body.nightMo
     }
 
 }
-
-#siac-reading-modal {
-    /* will-change: transform; */
-    /* animation: readingModalIn 0.7s;  */
-}
 @keyframes readingModalIn {
     0% {
       transform: scale(0);
