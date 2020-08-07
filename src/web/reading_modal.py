@@ -100,8 +100,6 @@ class ReadingModal:
         index.ui.js("""
             $(document.body).addClass('siac-reading-modal-displayed');
             //remove modal animation to prevent it from being triggered when switching left/right or CTRL+F-ing
-            setTimeout(() => { document.getElementById("siac-reading-modal").style.animation = "none"; }, 1000);
-            setTimeout(() => { document.getElementById("siac-reading-modal").classList.remove('rendering'); }, 700);
             if (!document.getElementById('siac-reading-modal-tabs-left')) {
                 $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
                 document.getElementById('leftSide').innerHTML += `
@@ -421,7 +419,7 @@ class ReadingModal:
                                 <div id='siac-queue-actions'>
                                     <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                     <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                                    <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;<i class="fa fa-folder-o sa-cursor-pointer siac-icn-hover" onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
+                                    <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;&nbsp;<i class="fa fa-folder-o sa-cursor-pointer siac-icn-hover siac-pdf-main-color" onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
                                     <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("{queue_btn_action}");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
                                     {delay_btn}<br>
                                     <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
@@ -684,7 +682,7 @@ class ReadingModal:
                         <div  id='siac-queue-actions'>
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
-                            <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;<i class="fa fa-folder-o sa-cursor-pointer siac-icn-hover"  onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
+                            <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;&nbsp;<i class="fa fa-folder-o sa-cursor-pointer siac-icn-hover siac-pdf-main-color"  onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
                             <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("{queue_btn_action}") }}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
                             {delay_btn}<br>
                             <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random") }}' class='siac-clickable-anchor'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
@@ -808,9 +806,9 @@ class ReadingModal:
         
         if self.note.extract_start:
             if self.note.extract_start == self.note.extract_end:
-                extract = f"<div class='siac-extract-marker'><i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {self.note.extract_start} </div>"
+                extract = f"<div class='siac-extract-marker'>&nbsp;<i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {self.note.extract_start}&nbsp;</div>"
             else:
-                extract = f"<div class='siac-extract-marker'><i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {self.note.extract_start} - {self.note.extract_end} </div>"
+                extract = f"<div class='siac-extract-marker'>&nbsp;<i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {self.note.extract_start} - {self.note.extract_end}&nbsp;</div>"
 
         html = """
             <div id='siac-pdf-overlay'>PAGE &nbsp;<i class="fa fa-book" aria-hidden="true"></i>&nbsp; READ</div>

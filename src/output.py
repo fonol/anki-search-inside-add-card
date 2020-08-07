@@ -361,7 +361,7 @@ class Output:
             if len(susp) > 0:
                 cmd = ""
                 for nid in susp:
-                    cmd = f"{cmd}$('#cW-{nid}').after(`<span id='siac-susp-lbl-{nid}' onclick='pycmd(\"siac-unsuspend-modal {nid}\")' class='siac-susp-lbl'>SUSPENDED</span>`);"
+                    cmd = f"{cmd}$('#cW-{nid}').after(`<span id='siac-susp-lbl-{nid}' onclick='pycmd(\"siac-unsuspend-modal {nid}\")' class='siac-susp-lbl'>&nbsp;SUSPENDED&nbsp;</span>`);"
                     if str(nid) in self.edited:
                         cmd = f"{cmd} $('#siac-susp-lbl-{nid}').css('left', '140px');"
                 self._js(cmd, editor)
@@ -697,10 +697,7 @@ class Output:
     def show_in_large_modal(self, html):
         html = html.replace("`", "&#96;")
         js = """
-            
-            if (!$('#siac-reading-modal').html(`%s`).is(':visible')) { 
-                $('#siac-reading-modal').addClass('rendering'); 
-            }
+            $('#siac-reading-modal').html(`%s`); 
             document.getElementById('siac-reading-modal').style.display = 'flex';
             document.getElementById('resultsArea').style.display = 'none';
             document.getElementById('bottomContainer').style.display = 'none';
