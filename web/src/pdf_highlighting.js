@@ -1,4 +1,4 @@
-var Highlighting = {
+export const Highlighting = {
 
     /**
      * state

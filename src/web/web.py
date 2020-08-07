@@ -82,22 +82,23 @@ def getScriptPlatformSpecific():
     </style>
 
     <script type='text/javascript'>
-        %s
+        window.renderImmediately = %s;
+        window.ADDON_ID = '%s';
     </script>
     """
     css                 = styles()
-    with open(dir + "scripts.js") as f:
-        script          = f.read()
+    # with open(dir + "scripts.js") as f:
+        # script          = f.read()
     
-    renderImmediately   = str(get_config_value_or_default("renderImmediately", False)).lower()
-    script              = script.replace("$renderImmediately$", renderImmediately).replace("$addon_id$", addon_id)
+    render_immediately  = str(get_config_value_or_default("renderImmediately", False)).lower()
+    # script              = script.replace("$renderImmediately$", renderImmediately).replace("$addon_id$", addon_id)
 
     #replace command key with meta key for mac
-    cplatform           = platform.system().lower()
-    if cplatform == "darwin":
-        script = script.replace("event.ctrlKey", "event.metaKey")
+    # cplatform           = platform.system().lower()
+    # if cplatform == "darwin":
+        # script = script.replace("event.ctrlKey", "event.metaKey")
 
-    return all % (icon_vars, css, script)
+    return all % (icon_vars, css, render_immediately, addon_id)
 
 def styles() -> str:
     """ Returns the content of styles.css with all config values inserted. """

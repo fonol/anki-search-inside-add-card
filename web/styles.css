@@ -12,9 +12,8 @@
 .siac-trash-icn {
     background-image: var(--c-trash-icn);
     margin-top: -3px;
-    background-image: 
 }
-.siac-trash-icn:hover {
+.siac-trash-icn:hover { 
     background-image: url("data:image/svg+xml,%3Csvg width='11' height='11' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cpath stroke='%232496dc' transform='rotate(179.51019287109375 6.166921615600586,6.9911985397338885) ' id='svg_4' d='m2.799955,10.675048l1.262613,-7.3677l4.208709,0l1.262612,7.3677l-6.733934,0z' fill-opacity='null' stroke-opacity='null' stroke-width='1.5' fill='none'/%3E%3Crect stroke='%232496dc' id='svg_7' height='0.638096' width='1.884984' y='0.823103' x='5.256614' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke='%232496dc' transform='rotate(2.7647311687469482 6.056345462799075,1.717745661735527) ' stroke-linecap='null' stroke-linejoin='null' id='svg_9' y2='1.451854' x2='10.882708' y1='1.983638' x1='1.229983' fill-opacity='null' stroke-opacity='null' fill='none'/%3E%3C/g%3E%3C/svg%3E");
 }
 .siac-fullscreen-icn {
@@ -1514,20 +1513,27 @@ hr.siac-modal-sep {
     border-color: var(--c-modal-border);
 }
 .siac-prog-sq-filled, .siac-prog-sq {
-    vertical-align: middle;
+    vertical-align: bottom;
     display: inline-block;
     margin: 0 1px 0 1px;
-    height: 9px;
+    height: 7px;
     width: 6px;
     border-radius: 3px;
 }
 .siac-prog-sq-filled {
     background-color: #67c3fc;
-    border: 2px solid #1773ac;
+    /* border: 3px solid #186a9c; */
+    border: 3px double #186a9c; 
+    background: radial-gradient(#89edff, #1773ac);
 }
 .siac-prog-sq {
-     background-color: #747272;
-     border: 2px solid #494949;
+     background-color: #b2b2b2;
+     border: 3px double #494949;
+     /* background: #d3dddc; */
+     /* border: 3px solid #777777; */
+}
+body.nightMode .siac-prog-sq {
+     background: radial-gradient(#adadad, #818181);
 }
 .siac-prog-tmp {
     margin-top: 6px;
@@ -1692,8 +1698,8 @@ body.nightMode .siac-btn-small:hover .siac-btn-small-dropdown.hover,body.nightMo
 }
 
 #siac-reading-modal {
-    will-change: transform;
-    animation: readingModalIn 0.7s; 
+    /* will-change: transform; */
+    /* animation: readingModalIn 0.7s;  */
 }
 @keyframes readingModalIn {
     0% {

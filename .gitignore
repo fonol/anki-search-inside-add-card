@@ -8,3 +8,4 @@ build.bat
 .vscode/*
 user_files/siac-notes.db
 user_files/data.json
+web/node_modules/*

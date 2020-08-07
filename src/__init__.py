@@ -203,14 +203,14 @@ def insert_scripts():
     pdf_theme   = conf_or_def("pdf.theme", "pdf_reader.css")
     port        = mw.mediaServer.getPort()
 
-    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf)$")
+    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf|woff2?)$")
     aqt.editor._html += f"""
     <script>
 
         var script = document.createElement('link');
         script.type = 'text/css';
         script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/styles.css';
+        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/dist/styles.min.css';
         document.body.appendChild(script);
 
         var script = document.createElement('link');
@@ -237,12 +237,7 @@ def insert_scripts():
 
         script = document.createElement('script');
         script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf_highlighting.js';
-        document.body.appendChild(script);
-
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf_reader.js';
+        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/dist/siac.min.js';
         document.body.appendChild(script);
 
         script = document.createElement('script');
