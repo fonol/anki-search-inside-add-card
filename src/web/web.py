@@ -87,16 +87,7 @@ def getScriptPlatformSpecific():
     </script>
     """
     css                 = styles()
-    # with open(dir + "scripts.js") as f:
-        # script          = f.read()
-    
     render_immediately  = str(get_config_value_or_default("renderImmediately", False)).lower()
-    # script              = script.replace("$renderImmediately$", renderImmediately).replace("$addon_id$", addon_id)
-
-    #replace command key with meta key for mac
-    # cplatform           = platform.system().lower()
-    # if cplatform == "darwin":
-        # script = script.replace("event.ctrlKey", "event.metaKey")
 
     return all % (icon_vars, css, render_immediately, addon_id)
 
