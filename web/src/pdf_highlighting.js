@@ -210,7 +210,7 @@ export const Highlighting = {
         if (this.colorSelected.id > 0) {
             readerNotification("CTRL + select to highlight");
         } else {
-            readerNotification("CTRL + click to insert text");
+            readerNotification("CTRL + click to insert text<br>CTRL + click again to remove");
         }
     },
 

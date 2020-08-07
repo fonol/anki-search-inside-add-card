@@ -234,6 +234,9 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     opacity: 0.7 !important;
     mix-blend-mode: normal !important;
 }
+#siac-pdf-top.siac-pdf-x2 .siac-hl, #siac-pdf-top.siac-pdf-x1 .siac-hl, #siac-pdf-top.siac-pdf-mud .siac-hl {
+    mix-blend-mode: difference !important;
+}
 .siac-extract-marker {
     display: inline-block;
     border: 3px outset #2496dc;

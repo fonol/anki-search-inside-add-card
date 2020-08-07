@@ -15,9 +15,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import { Highlighting } from "./pdf_highlighting.js";
-import {  } from "./pdf_search.js";
-import {  } from "./pdf_image.js";
-import {  } from "./pdf_events.js";
 
 
 window.Highlighting = Highlighting;
@@ -518,7 +515,7 @@ window.setPDFColorMode = function(mode) {
     pdfColorMode = mode;
     rerenderPDFPage(pdfDisplayedCurrentPage, false);
     pycmd('siac-update-config-str pdf.color_mode ' + mode);
-    $('#siac-pdf-top').removeClass("siac-pdf-sand siac-pdf-night siac-pdf-peach siac-pdf-day siac-pdf-rose siac-pdf-moss siac-pdf-coral").addClass("siac-pdf-" + pdfColorMode.toLowerCase());
+    $('#siac-pdf-top').removeClass("siac-pdf-sand siac-pdf-night siac-pdf-peach siac-pdf-day siac-pdf-rose siac-pdf-moss siac-pdf-coral siac-pdf-x1 siac-pdf-x2 siac-pdf-mud").addClass("siac-pdf-" + pdfColorMode.toLowerCase());
 }
 
 window.joinTextLayerNodeTexts = function(nodes, text) {
