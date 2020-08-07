@@ -357,7 +357,7 @@ def is_html(text: str) -> bool:
 
     if not text or len(text.strip()) == 0:
         return False
-    if re.search(r"< ?/ ?(?:p|b|em|a|div|i|h[123456]|strong|img|pre|span|code|html|input|script|style|label|button|font)>", text, re.IGNORECASE):
+    if re.search(r"< ?/ ?(?:p|b|em|a|div|i|h[123456]|strong|img|pre|span|code|html|input|script|style|label|button|font)>", text[:200], re.IGNORECASE):
         return True
     return False
 
