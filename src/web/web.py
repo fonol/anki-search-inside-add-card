@@ -469,14 +469,10 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added some more PDF color modes",
-        "PDF reader background color can now be set through 'Change Theme'",
-        "Replaced/Added some icons in the reading modal",
-        "Better display of list items in the search results",
-        "Fix: Keywords being empty for some categories",
-        "Fix: Text note in reading modal displayed incorrectly after using web search",
-        "Fix: Icons in reading modal's markdown editor sometimes not loading",
-        "Fix: 'Browse' / 'PDF' tab in reading modal not being reset after closing"
+        "Changed default hotkeys for predefined search and sort (due to conflict)",
+        "Removed reading modal animation",
+        "PDFs should now show the total no. of pages after the first opening instead of \"?\"",
+        "Fix highlight colors in the last added pdf color modes"
     ]
 
 def known_issues() -> List[str]:
