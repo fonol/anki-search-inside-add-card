@@ -23,10 +23,6 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 .siac-rm-bg {
     background-color: var(--c-reading-modal-background);
 }
-body.nightMode #siac-reading-modal.rendering {
-    border: 2px solid #9dab86;
-}
-
 #siac-reading-modal a:not(.siac-disabled) {
     color: #9dab86 !important;
 }
