@@ -160,7 +160,7 @@ class SiacNote(Printable):
         # so the markdown -> html conversion should only be called if the text is not already html
         # markdown conversion should also not be called for meta notes 
         if not self.is_meta_note() and not utility.text.is_html(body):
-            body    = markdown(body,extensions=[FencedCodeExtension(), DefListExtension()])
+            body    = markdown(body[:3000],extensions=[FencedCodeExtension(), DefListExtension()])
 
 
         #trim very long texts:
