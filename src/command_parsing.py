@@ -1170,9 +1170,9 @@ def parseSortCommand(cmd):
     elif cmd == "remTagged":
         index.ui.removeTagged()
     elif cmd == "remUnreviewed":
-        index.ui.removeUnreviewed()
+        index.ui.remove_unreviewed()
     elif cmd == "remReviewed":
-        index.ui.removeReviewed()
+        index.ui.remove_reviewed()
     elif cmd == "remSuspended":
         index.ui.remove_suspended()
     elif cmd == "remUnsuspended":
