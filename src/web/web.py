@@ -460,10 +460,8 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Changed default hotkeys for predefined search and sort (due to conflict)",
-        "Removed reading modal animation",
-        "PDFs should now show the total no. of pages after the first opening instead of \"?\"",
-        "Fix highlight colors in the last added pdf color modes"
+        "PDF: Added area highlights (Ctrl+Shift+A)",
+        "Added documentation to the add-on config"
     ]
 
 def known_issues() -> List[str]:
