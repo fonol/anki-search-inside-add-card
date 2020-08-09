@@ -760,7 +760,7 @@ def get_all_notes() -> List[Tuple[Any, ...]]:
 
 def get_untagged_notes() -> List[SiacNote]:
     conn = _get_connection()
-    res = list(conn.execute("select * from notes where tags is null or trim(tags) = ''"))
+    res = conn.execute("select * from notes where tags is null or trim(tags) = ''").fetchall()
     conn.close()
     return _to_notes(res)
 
