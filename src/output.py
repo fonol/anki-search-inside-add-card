@@ -363,7 +363,7 @@ class Output:
                 for nid in susp:
                     cmd = f"{cmd}$('#cW-{nid}').after(`<span id='siac-susp-lbl-{nid}' onclick='pycmd(\"siac-unsuspend-modal {nid}\")' class='siac-susp-lbl'>&nbsp;SUSPENDED&nbsp;</span>`);"
                     if str(nid) in self.edited:
-                        cmd = f"{cmd} $('#siac-susp-lbl-{nid}').css('left', '140px');"
+                        cmd = f"{cmd} $('#siac-susp-lbl-{nid}').css('left', '150px');"
                 self._js(cmd, editor)
 
         if len(pdfs) > 0:
