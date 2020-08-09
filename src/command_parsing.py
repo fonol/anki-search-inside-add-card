@@ -1010,11 +1010,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-hl-new "):
         # highlights created, save to db
         # order is page group type [x0,y0,x1,y1]+ # text
-        page = int(cmd.split(" ")[1])
-        group = int(cmd.split(" ")[2])
-        type = int(cmd.split(" ")[3])
-        nid = index.ui.reading_modal.note_id
-        all = []
+        page    = int(cmd.split(" ")[1])
+        group   = int(cmd.split(" ")[2])
+        type    = int(cmd.split(" ")[3])
+        nid     = index.ui.reading_modal.note_id
+        all     = []
         # [(nid,page,group,type,text,x0,y0,x1,y1)]
         text = cmd[cmd.index("#") + 1:]
         for ix, i in enumerate(cmd.split(" ")[4:]):
