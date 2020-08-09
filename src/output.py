@@ -443,40 +443,26 @@ class Output:
                 filtered.append(r)
         self.print_search_results(filtered, stamp)
 
-    def removeUnreviewed(self):
+    def remove_unreviewed(self):
         if self.lastResults is None:
             return
-        stamp = utility.misc.get_milisec_stamp()
-        self.latest = stamp
-        filtered = []
-        nids = []
-        for r in self.lastResults:
-            nids.append(str(r.id))
-        nidStr =  "(%s)" % ",".join(nids)
-        unreviewed = [r[0] for r in mw.col.db.all("select nid from cards where nid in %s and reps = 0" % nidStr)]
-        for r in self.lastResults:
-            if int(r.id) not in unreviewed:
-                filtered.append(r)
-        self.print_search_results(filtered, stamp)
-
-    def removeReviewed(self):
-        if self.lastResults is None:
-            return
-
         stamp       = utility.misc.get_milisec_stamp()
         self.latest = stamp
-        filtered    = []
-        nids        = []
+        nids        = [str(r.id) for r in self.lastResults]
+        nidStr      =  "(%s)" % ",".join(nids)
+        unreviewed  = [r[0] for r in mw.col.db.all("select nid from cards where nid in %s and reps = 0" % nidStr)]
+        filtered    = [r for r in self.lastResults if int(r.id) not in unreviewed]
+        self.print_search_results(filtered, stamp)
 
-        for r in self.lastResults:
-            nids.append(str(r.id))
+    def remove_reviewed(self):
+        if self.lastResults is None:
+            return
+        stamp       = utility.misc.get_milisec_stamp()
+        self.latest = stamp
+        nids        = [str(r.id) for r in self.lastResults]
         nidStr      = "(%s)" % ",".join(nids)
         reviewed    = [r[0] for r in mw.col.db.all("select nid from cards where nid in %s and reps > 0" % nidStr)]
-
-        for r in self.lastResults:
-            if int(r.id) not in reviewed:
-                filtered.append(r)
-
+        filtered    = [r for r in self.lastResults if int(r.id) not in reviewed]
         self.print_search_results(filtered, stamp)
 
     def remove_suspended(self):
