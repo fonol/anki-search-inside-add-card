@@ -309,7 +309,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                 <div id="resultsArea" style="">
                     <div id='loader' style='%s'> 
                         <div class='signal'></div>
-                        <br/><span style='font-size: 15px; margin-top: 20px;'>Preparing index...</span>
+                        <br><span style='font-size: 15px; margin-top: 20px;'>Preparing index...</span>
                     </div>
                     <div id='resultsWrapper'>
                         <div id='searchResults'></div>
