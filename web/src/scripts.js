@@ -707,10 +707,10 @@ window.predefSearchFromSidebar = function(type) {
     let decks = siacState.selectedDecks.toString();
     // show a loader for the longer-taking searches
     if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(type) !== -1) {
-        showSearchLoader();
+        showSearchLoader("Computing");
         setTimeout(function() {
             pycmd('predefSearch ' + type + ' 200 ' + decks);
-        }, 110);
+        }, 250);
     } else {
         pycmd('predefSearch ' + type + ' 200 ' + decks);
     }
@@ -725,10 +725,10 @@ window.predefSearch = function() {
     let decks   = siacState.selectedDecks.toString();
     // show a loader for the longer-taking searches
     if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(search) !== -1) {
-        showSearchLoader();
+        showSearchLoader("Computing");
         setTimeout(function() {
             pycmd("predefSearch " + search + " " + count + " " + decks);
-        }, 110);
+        }, 250);
     } else {
         pycmd("predefSearch " + search + " " + count + " " + decks);
     }
@@ -871,16 +871,15 @@ window.showSearchLoader = function(text) {
     if (document.getElementById('siac-results-loader-wrapper')) {
         return;
     }
-    text = text ? text : "Computing ...";
     let sr = document.getElementById("searchResults");
     sr.scrollTop = 0;
     sr.style.overflowY = 'hidden';
-    sr.innerHTML += `
+    $(sr).append(`
     <div id='siac-results-loader-wrapper' style='position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5; height: 100%; text-align: center; background: rgba(0,0,0,0.4); display:flex; align-items: center; justify-content: center; border-radius: 5px;'>
         <div class='siac-search-loader' style='display: inline-block; vertical-align: middle;'>
             <b>${text}</b>
         </div>
-    </div>`;
+    </div>`);
 }
 
 window.toggleSearchbarMode = function(elem) {
