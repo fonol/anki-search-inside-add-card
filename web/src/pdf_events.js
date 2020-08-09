@@ -1,5 +1,5 @@
 /** Experimental function to improve copy+paste from the text layer. */
-window.onPDFCopy = function(e) {
+window.onPDFCopy = function (e) {
     sel = getSelection();
     let r = sel.getRangeAt(0);
     let nodes = nodesInSelection(r);
@@ -85,7 +85,7 @@ window.onPDFCopy = function(e) {
     e.preventDefault();
 }
 
-window.pdfLeftTabPdfSearchKeyup = function(value, event) {
+window.pdfLeftTabPdfSearchKeyup = function (value, event) {
     if (event.keyCode !== 13) {
         return;
     }
@@ -94,7 +94,7 @@ window.pdfLeftTabPdfSearchKeyup = function(value, event) {
     }
 }
 
-window.pdfLeftTabAnkiSearchKeyup = function(value, event) {
+window.pdfLeftTabAnkiSearchKeyup = function (value, event) {
     if (event.keyCode !== 13) {
         return;
     }
@@ -103,7 +103,7 @@ window.pdfLeftTabAnkiSearchKeyup = function(value, event) {
     }
 }
 
-window.pdfViewerKeyup = function(event) {
+window.pdfViewerKeyup = function (event) {
     if (event.ctrlKey && (event.keyCode === 39 || (event.keyCode === 32 && event.shiftKey))) {
         if (event.shiftKey && pdfDisplayed && pagesRead.indexOf(pdfDisplayedCurrentPage) === -1 && (!pdfExtract || (pdfExtract[0] <= pdfDisplayedCurrentPage && pdfExtract[1] >= pdfDisplayedCurrentPage))) {
             pycmd("siac-pdf-page-read " + $('#siac-pdf-top').data("pdfid") + " " + pdfDisplayedCurrentPage + " " + numPagesExtract());
@@ -115,9 +115,13 @@ window.pdfViewerKeyup = function(event) {
         pdfPageRight();
     } else if (event.ctrlKey && (event.keyCode === 37 || event.keyCode === 75)) {
         pdfPageLeft();
+    } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.keyCode === 65 && Highlighting.colorSelected.id > 0) {
+        readerNotification("&nbsp;Area Highlight&nbsp;");
+        initAreaHighlight();
+        pdfTextLayerMetaKey = false;
     }
 }
-window.pdfTooltipClozeKeyup = function(event) {
+window.pdfTooltipClozeKeyup = function (event) {
     try {
         if (event.ctrlKey && event.shiftKey && event.keyCode === 67) {
             let text = window.getSelection().toString();
@@ -138,7 +142,7 @@ window.pdfTooltipClozeKeyup = function(event) {
     }
 }
 
-window.markClicked = function(event) {
+window.markClicked = function (event) {
     if (event.target.className === "siac-page-mark-link") {
         pdfDisplayedCurrentPage = Number(event.target.innerHTML);
         queueRenderPage(pdfDisplayedCurrentPage, true);
@@ -148,7 +152,7 @@ window.markClicked = function(event) {
 // clicked on the text layer, should
 // 1. hide the tooltip if present
 // 2. trigger the click on a highlight if it is below the textlayer at the given coords
-window.textlayerClicked = function(event, el) {
+window.textlayerClicked = function (event, el) {
     if (!event.ctrlKey && !windowHasSelection()) {
         $("#siac-pdf-tooltip").hide();
         if (el.style.pointerEvents !== "none") {
@@ -164,7 +168,7 @@ window.textlayerClicked = function(event, el) {
 /**
  * Right click on a queue item in the bottom bar of the reading modal. 
  */
-window.queueLinkContextMenu = function(event, nid) {
+window.queueLinkContextMenu = function (event, nid) {
     event.preventDefault();
     document.body.style.overflowY = "hidden";
     $(document.body).append(`
@@ -180,14 +184,14 @@ window.queueLinkContextMenu = function(event, nid) {
 /**
  *  executed after keyup in the pdf pane
  */
-window.pdfKeyup = function(e) {
+window.pdfKeyup = function (e) {
     // selected text, no ctrl key -> show tooltip if enabled 
     if (!e.ctrlKey && !e.metaKey && pdfTooltipEnabled && windowHasSelection()) {
         $('#text-layer .tl-highlight').remove();
         let s = window.getSelection();
         let r = s.getRangeAt(0);
         let text = s.toString();
-        if (text === " " || text.length > 500) { return; }
+        if (text.trim().length === 0 || text.length > 500) { return; }
         // spans in textlayer have a max height to prevent selection jumping, but here we have to temporarily 
         // disable it, to get the actual bounding client rect
         $('#text-layer > span').css("height", "auto");
@@ -217,10 +221,11 @@ window.pdfKeyup = function(e) {
     } else if ((e.ctrlKey || e.metaKey) && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
         // clicked with ctrl, text insert btn is active -> insert text area at coordinates
         Highlighting.insertText(e);
-    }
+    } 
+    
 }
 
-window.pdfMouseWheel = function(event) {
+window.pdfMouseWheel = function (event) {
     if (!event.ctrlKey && !event.metaKey) { return; }
     if (event.deltaY < 0) {
         pdfScaleChange("up");

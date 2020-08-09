@@ -42,6 +42,19 @@ export const Highlighting = {
         pycmd("siac-hl-new " + cmd);
         $('#text-layer > span').css("height", "100px");
     },
+    createAreaHighlight: function(x, y, w, h) {
+        let t = this.colorSelected.id;
+        if (t < 1 || (w < 2 && h < 2)) {return;}
+        if (t >= 6) {
+            t += 3;
+            x -= 3;
+            y -= 3;
+        }
+        let conv_xy = pdfDisplayedViewPort.convertToPdfPoint(x, y);
+        let conv_wh = pdfDisplayedViewPort.convertToPdfPoint(x + w, y + h);
+        let cmd = `siac-hl-new ${pdfDisplayedCurrentPage} -1 ${t} ${conv_xy[0]} ${conv_xy[1]} ${conv_wh[0]} ${conv_wh[1]} # `;
+        pycmd(cmd);
+    },
     insertText: function (event) {
         let rectCanvas = document.getElementById("text-layer").getBoundingClientRect();
         let offset = document.getElementById('text-layer').offsetLeft;
@@ -99,9 +112,9 @@ export const Highlighting = {
             case 3: return "#2196f3";
             case 4: return "#ffee58";
             case 5: return "#ab47bc";
-            case 6: return "#e65100";
-            case 7: return "#558b2f";
-            case 8: return "#2196f3";
+            case 6: case 9: return "#e65100";
+            case 7: case 10: return "#558b2f";
+            case 8: case 11: return "#2196f3";
         }
     },
 
@@ -208,7 +221,7 @@ export const Highlighting = {
         $(elem).addClass("active");
         pycmd("siac-hl-clicked " + this.colorSelected.id + " " + this.colorSelected.color);
         if (this.colorSelected.id > 0) {
-            readerNotification("CTRL + select to highlight");
+            readerNotification("CTRL + select to Highlight<br>CTRL + Shift + A to Area Highlight");
         } else {
             readerNotification("CTRL + click to insert text<br>CTRL + click again to remove");
         }
@@ -289,8 +302,10 @@ export const Highlighting = {
                 el.dataset.id = id;
             }
             el.setAttribute("onclick", "Highlighting.hlClick(event, this);");
-            if (t >= 6)
+            if (t >= 6 && t < 9)
                 el.style.borderBottom = "3px solid " + this._colorById(t);
+            else if (t >= 9)
+                el.style.border = "3px solid " + this._colorById(t);
             else
                 el.style.background = this._colorById(t);
         }
