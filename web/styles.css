@@ -120,7 +120,7 @@
     position: absolute;
     top: calc(50% - 45px);
     left: calc(50% - 75px);
-    width: 150px;
+    width: 250px;
     font-size: 20px;
     text-align: center;
     color: #2496dc;
@@ -1029,7 +1029,7 @@ select {
 .modal {
     display: none;
     position: absolute;
-    z-index: 9999999999;
+    z-index: 100;
     left: 0;
     top: 0;
     width: 100%;
@@ -1040,7 +1040,6 @@ select {
   }
 
   .modal-content {
-    z-index: 99999999999;
     background: var(--c-modal-background);
     color: var(--c-modal-foreground);
     position: absolute;
@@ -1166,7 +1165,7 @@ span.tag-symbol {
     padding-top: 2px;
     padding-bottom: 2px;
     cursor: move;
-    z-index: 9999999999;
+    z-index: 110;
     background-color: var(--c-note-border);
     color: #fff;
     user-select: none;
@@ -1443,7 +1442,7 @@ span.tag-symbol {
     right: 0;
     background-color: rgb(0,0,0);
     background-color: rgba(0,0,0,0.4);
-    z-index: 99999999;
+    z-index: 110;
 }
 #siac-search-modal-wrapper {
     position: absolute;
@@ -1497,7 +1496,7 @@ span.tag-symbol {
     max-height: var(--pdf-tooltip-max-height);
 }
 .siac-modal-small {
-    z-index: 9999999;
+    z-index: 100;
     background: var(--c-modal-background);
     color: var(--c-modal-foreground);
     position: absolute;

@@ -760,12 +760,6 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     background: var(--c-reading-modal-background);
     color: white;
 }
-.tox-tinymce-aux {
-    z-index: 2147483638 !important;
-}
-.tox .tox-menu {
-    z-index: 2147483638 !important;
-}
 #siac-text-top-wr > div {
     /* height: 100% !important; */
     flex: 1 1 auto;
@@ -844,6 +838,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     mix-blend-mode: multiply !important;
     z-index: 2;
     border-radius: 7px;
+    user-select: none;
 }
 .siac-text-hl {
     mix-blend-mode: normal !important;

@@ -844,6 +844,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     mix-blend-mode: multiply !important;
     z-index: 2;
     border-radius: 7px;
+    user-select: none;
 }
 .siac-text-hl {
     mix-blend-mode: normal !important;
