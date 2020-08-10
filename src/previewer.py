@@ -19,7 +19,7 @@ import aqt
 
 try: 
 
-    class AddPreviewer(aqt.previewera.BrowserPreviewer):
+    class AddPreviewer(aqt.previewer.BrowserPreviewer):
         """ Subclass of the browser previewer, overrides some methods to make it work in the Add dialog. """
 
         def __init__(self, parent, parent_window, cards):
