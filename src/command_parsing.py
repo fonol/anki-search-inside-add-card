@@ -53,6 +53,7 @@ from .dialogs.schedule_dialog import ScheduleDialog
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 from .models import SiacNote
+from .previewer import AddPreviewer
 import utility.misc
 import utility.text
 import state
@@ -1117,7 +1118,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and index is not None:
             index.ui.js("selectDeckAndSubdecksWithId(%s);" % deckChooser.selectedId())
-
     elif cmd.startswith("siac-update-field-to-hide-in-results "):
         if not check_index():
             return (True, None)
@@ -1145,6 +1145,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-sidebar-show-special-tab":
         index.ui.sidebar.show_tab(index.ui.sidebar.SPECIAL_SEARCHES_TAB)
 
+    elif cmd.startswith("siac-preview "):
+        # clicked on preview icon -> open preview modal
+        nid     = int(cmd.split(" ")[1])
+        cards   = [mw.col.getCard(c) for c in mw.col.find_cards(f"nid:{nid}")]
+        if len(cards) > 0:
+            d = AddPreviewer(self.parentWindow, mw, cards)
+            d.open()
 
 
     else:
