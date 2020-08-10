@@ -30,7 +30,8 @@ noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                         {ret}
                     </div>
                     <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                        <div class='editLbl' onclick='edit({nid})'>Edit</div>
+                        <div class='editLbl' onclick='edit({nid})'><i class="fa fa-pencil"></i></div>
+                        <div class='srchLbl' onclick='pycmd("siac-preview {nid}")'><i class="fa fa-id-card-o"></i></div>
                         <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
                         <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
                         %s
@@ -49,7 +50,7 @@ noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
                         {ret}
                     </div>
                     <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                        <div class='editLbl' onclick='edit({nid})'>Edit</div>
+                        <div class='editLbl' onclick='edit({nid})'><i class="fa fa-pencil"></i></div>
                     </div>
                     <div class='cardR' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
                     <div style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
@@ -61,7 +62,7 @@ noteTemplateUserNoteSimple = """<div class='cardWrapper' style="display: block;"
                         <div class='rankingLbl'>{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
                     </div>
                     <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                        <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'>Edit</div>
+                        <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'><i class="fa fa-pencil"></i></div>
                     </div>
                     <div class='cardR' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
                     <div style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
@@ -74,7 +75,7 @@ noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {gr
                     </div>
                     <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                         <div class='deleteLbl' onclick='pycmd("siac-delete-user-note-modal {nid}"); '><div class='siac-trash-icn'></div></div>
-                        <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'>Edit</div>
+                        <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'><i class="fa fa-pencil"></i></div>
                         <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
                         <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
                         %s 
