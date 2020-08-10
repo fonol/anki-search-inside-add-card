@@ -20,9 +20,16 @@ HTML templates for search results.
 from aqt import mw
 config = mw.addonManager.getConfig(__name__)
 
+PREVIEWER   = """<div class='srchLbl' onclick='pycmd("siac-preview {nid}")'><i class="fa fa-id-card-o"></i></div>"""
+try: 
+    from aqt.previewer import BrowserPreviewer
+except:
+    PREVIEWER = ""
+
 FLOAT_BTN   = "<div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>" if config["results.showFloatButton"] else ""
 NID_BTN      = "<div class='floatLbl' onclick='pycmd(\"siac-copy-to-cb {nid}\")'>NID</div>" if config["results.showIDButton"] else ""
 CID_BTN      = "<div class='floatLbl' onclick='pycmd(\"siac-copy-cid-to-cb {nid}\")'>CID</div>" if config["results.showCIDButton"] else ""
+
 
 noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                     <div class='topLeftWr'>
@@ -31,7 +38,7 @@ noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                     </div>
                     <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                         <div class='editLbl' onclick='edit({nid})'><i class="fa fa-pencil"></i></div>
-                        <div class='srchLbl' onclick='pycmd("siac-preview {nid}")'><i class="fa fa-id-card-o"></i></div>
+                        %s
                         <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
                         <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
                         %s
@@ -42,7 +49,7 @@ noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                     <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
                     <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
                     <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;INFO&nbsp;</div>
-                </div>""" % (FLOAT_BTN, NID_BTN, CID_BTN)
+                </div>""" % (PREVIEWER, FLOAT_BTN, NID_BTN, CID_BTN)
 
 noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
                     <div class='topLeftWr'>

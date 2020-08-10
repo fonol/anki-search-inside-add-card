@@ -461,7 +461,7 @@ def changelog() -> List[str]:
 
     return [
         "PDF: Added area highlights (Ctrl+Shift+A)",
-        "Added Preview Cards function (icon next to the edit button)",
+        "Added Preview Cards function (icon next to the edit button, only for >= 2.1.26)",
         "Added documentation to the add-on config"
     ]
 

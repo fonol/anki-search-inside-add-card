@@ -53,7 +53,10 @@ from .dialogs.schedule_dialog import ScheduleDialog
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 from .models import SiacNote
-from .previewer import AddPreviewer
+try:
+    from .previewer import AddPreviewer
+except: 
+    pass
 import utility.misc
 import utility.text
 import state
@@ -140,7 +143,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-open-folder "):
         # try to open a folder path with the default explorer
-        QDesktopServices.openUrl(QUrl(" ".join(cmd.split()[1:])))
+        folder = " ".join(cmd.split()[1:]).replace("\\", "/")
+        if not folder.endswith("/"):
+            folder += "/"
+        if os.path.isdir(folder):
+            QDesktopServices.openUrl(QUrl("file:///" + folder))
 
     elif cmd.startswith("siac-pin"):
         # pin note symbol clicked
