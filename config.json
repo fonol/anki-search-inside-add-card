@@ -100,5 +100,5 @@
 "shortcuts.trigger_search": "Ctrl+Shift+K",
 "shortcuts.trigger_predef_search": "Alt+P",
 "shortcuts.search_for_current_field": "Alt+J",
-"shortcuts.trigger_current_filter": "Ctrl+F"
+"shortcuts.trigger_current_filter": "Alt+F"
 }
