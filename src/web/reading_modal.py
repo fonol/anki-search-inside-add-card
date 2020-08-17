@@ -141,6 +141,27 @@ class ReadingModal:
         else:
             tooltip("Queue is empty.")
 
+    def done(self):
+        """ Hit "Done" button. """
+
+        note = self.note
+        # if note is scheduled for today or some point in the future, show the schedule dialog,
+        # but only if type is 'td', i.e. the note was not scheduled for a regular interval.
+        if note.is_due_sometime() and note.schedule_type() == "td":
+            self.display_schedule_dialog()
+        else:
+            prio = get_priority(self.note_id)
+            if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
+                add_to_prio_log(self.note_id, prio)
+                self.show_schedule_change_modal(unscheduled=True)
+            else:
+                if note.is_due_sometime():
+                    update_reminder(self.note_id, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
+                update_priority_list(self.note_id, prio)
+                nid = get_head_of_queue()
+                self.display(nid)
+
+
     @js
     def show_width_picker(self):
         html = """
