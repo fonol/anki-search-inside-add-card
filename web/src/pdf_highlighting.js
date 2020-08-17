@@ -282,6 +282,7 @@ export const Highlighting = {
         if (event.ctrlKey || event.metaKey) {
             $(el).remove();
             pycmd("siac-hl-del " + el.dataset.id);
+            this.current = this.current.filter(c => c[5] != el.dataset.id);
         }
     },
     /**
