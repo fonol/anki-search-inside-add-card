@@ -49,3 +49,6 @@ Accepts a list of folder names, that will be scanned for .pdf files if you open 
 
 ### freezeIndex
 If you, for some reason, don't want the index to be rebuilt under any circumstances on startup, set this to true.
+
+### shortcuts.xyz
+Shortcuts for some different functions. If you change these, maybe check for existing shortcuts in the editor before.
