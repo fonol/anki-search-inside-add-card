@@ -242,29 +242,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-r-show-stats":
         # Read Stats clicked in sidebar
-        stamp       = set_stamp()
-        res         = []
-        t_counts    = get_read_last_n_days_by_day(365)
-        body        = read_counts_by_date_card_body(t_counts)
-        t_counts    = utility.date.counts_to_timestamps(t_counts)
-        res.append(SiacNote((-1, f"Pages read per day (this year)", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
-
-        counts      = get_read(0)
-        body        = read_counts_card_body(counts)
-        res.append(SiacNote((-2, f"Pages read today ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
-        counts      = get_read(1)
-        body        = read_counts_card_body(counts)
-        res.append(SiacNote((-3, f"Pages read yesterday ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
-        counts      = get_read_last_n_days(7)
-        body        = read_counts_card_body(counts)
-        res.append(SiacNote((-4, f"Pages read last 7 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
-        counts      = get_read_last_n_days(30)
-        body        = read_counts_card_body(counts)
-        res.append(SiacNote((-5, f"Pages read last 30 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
-        index.ui.print_search_results(res, stamp)
-        # fill plots
-        index.ui.js(f"""drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)});""")
-
+        show_read_stats()
 
     elif cmd == "siac-r-show-last-done":
         stamp = set_stamp()
@@ -336,8 +314,8 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         mark_as_read_up_to(index.ui.reading_modal.note, int(cmd.split()[2]), int(cmd.split()[3]))
 
     elif cmd.startswith("siac-display-range-input "):
-        nid = int(cmd.split()[1])
-        num_pages = int(cmd.split()[2])
+        nid         = int(cmd.split()[1])
+        num_pages   = int(cmd.split()[2])
         index.ui.reading_modal.display_read_range_input(nid, num_pages)
 
     elif cmd.startswith("siac-user-note-mark-range "):
@@ -389,21 +367,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-schedule-dialog":
         # show the dialog that allows to change the schedule of a note
-        original_sched  = index.ui.reading_modal.note.reminder
-        dialog          = ScheduleDialog(index.ui.reading_modal.note, self.parentWindow)
-        if dialog.exec_():
-            schedule = dialog.schedule()
-            if schedule is not None and schedule != original_sched:
-                update_reminder(index.ui.reading_modal.note_id, schedule)
-                index.ui.reading_modal.note.reminder = schedule
-                if schedule == "":
-                    tooltip(f"Removed schedule.")
-                    if not get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True):
-                        # removed schedule, and config was set to not show scheduled notes in the queue, so now we have to insert it again
-                        update_priority_list(index.ui.reading_modal.note_id, get_priority(index.ui.reading_modal.note_id))
-                else:
-                    tooltip(f"Updated schedule.")
-                run_hooks("updated-schedule")
+        show_schedule_dialog(self.parentWindow)
 
     elif cmd == "siac-delay-note":
         # "Later" button pressed in the reading modal
@@ -421,12 +385,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             tooltip("Later only works if 3+ items are in the queue.")
 
     elif cmd.startswith("siac-pdf-mark "):
-        mark_type = int(cmd.split()[1])
-        nid = int(cmd.split()[2])
-        page = int(cmd.split()[3])
-        pages_total = int(cmd.split()[4])
-        marks_updated = toggle_pdf_mark(nid, page, pages_total, mark_type)
-        js_maps = utility.misc.marks_to_js_map(marks_updated)
+        mark_type       = int(cmd.split()[1])
+        nid             = int(cmd.split()[2])
+        page            = int(cmd.split()[3])
+        pages_total     = int(cmd.split()[4])
+        marks_updated   = toggle_pdf_mark(nid, page, pages_total, mark_type)
+        js_maps         = utility.misc.marks_to_js_map(marks_updated)
         self.web.eval(""" pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s; updatePdfDisplayedMarks();""" % (js_maps[0], js_maps[1]))
 
     elif cmd == "siac-reading-modal-tabs-left-browse":
@@ -713,23 +677,8 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             tooltip("Queue is Empty! Add some items first.", period=4000)
 
     elif cmd == "siac-user-note-done":
-        note = index.ui.reading_modal.note
-        # if note is scheduled for today or some point in the future, show the schedule dialog,
-        # but only if type is 'td', i.e. the note was not scheduled for a regular interval.
-        if note.is_due_sometime() and note.schedule_type() == "td":
-            index.ui.reading_modal.display_schedule_dialog()
-        else:
-            nid = index.ui.reading_modal.note_id
-            prio = get_priority(nid)
-            if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
-                add_to_prio_log(nid, prio)
-                index.ui.reading_modal.show_schedule_change_modal(unscheduled=True)
-            else:
-                if note.is_due_sometime():
-                    update_reminder(nid, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
-                update_priority_list(nid, prio)
-                nid = get_head_of_queue()
-                index.ui.reading_modal.display(nid)
+        # hit "Done" button in reading modal
+        index.ui.reading_modal.done()
 
     elif cmd.startswith("siac-update-schedule "):
         stype           = cmd.split()[1]
@@ -745,9 +694,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         else:
             tooltip("Queue is Empty! Add some items first.", period=4000)
 
-
     elif cmd.startswith("siac-update-note-tags "):
-        nid = int(cmd.split()[1])
+        # entered tags in the tag line input in the reading modal bottom bar
+        nid  = int(cmd.split()[1])
         tags = " ".join(cmd.split()[2:])
         tags = utility.text.clean_tags(tags)
         update_note_tags(nid, tags)
@@ -755,7 +704,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-try-copy-text-note":
         # copy to new note button clicked in reading modal
-        nid = index.ui.reading_modal.note_id
+        nid  = index.ui.reading_modal.note_id
         note = get_note(nid)
         html = note.text
         prio = get_priority(nid)
@@ -1473,7 +1422,53 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
     if page is not None:
         get_index().ui.show_page(editor, page)
     
+def show_schedule_dialog(parent_window):
+    """ Show the dialog that allows to change the schedule of a note """
+    
+    index           = get_index()
+    original_sched  = index.ui.reading_modal.note.reminder
+    dialog          = ScheduleDialog(index.ui.reading_modal.note, parent_window)
+    if dialog.exec_():
+        schedule = dialog.schedule()
+        if schedule is not None and schedule != original_sched:
+            update_reminder(index.ui.reading_modal.note_id, schedule)
+            index.ui.reading_modal.note.reminder = schedule
+            if schedule == "":
+                tooltip(f"Removed schedule.")
+                if not get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True):
+                    # removed schedule, and config was set to not show scheduled notes in the queue, so now we have to insert it again
+                    update_priority_list(index.ui.reading_modal.note_id, get_priority(index.ui.reading_modal.note_id))
+            else:
+                tooltip(f"Updated schedule.")
+            run_hooks("updated-schedule")
 
+
+def show_read_stats():
+    """ Displays some cards with pages read graphs. """
+
+    index       = get_index()
+    stamp       = set_stamp()
+    res         = []
+    t_counts    = get_read_last_n_days_by_day(365)
+    body        = read_counts_by_date_card_body(t_counts)
+    t_counts    = utility.date.counts_to_timestamps(t_counts)
+    res.append(SiacNote((-1, f"Pages read per day (this year)", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+
+    counts      = get_read(0)
+    body        = read_counts_card_body(counts)
+    res.append(SiacNote((-2, f"Pages read today ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+    counts      = get_read(1)
+    body        = read_counts_card_body(counts)
+    res.append(SiacNote((-3, f"Pages read yesterday ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+    counts      = get_read_last_n_days(7)
+    body        = read_counts_card_body(counts)
+    res.append(SiacNote((-4, f"Pages read last 7 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+    counts      = get_read_last_n_days(30)
+    body        = read_counts_card_body(counts)
+    res.append(SiacNote((-5, f"Pages read last 30 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+    index.ui.print_search_results(res, stamp)
+    # fill plots
+    index.ui.js(f"""drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)});""")
 
 def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: int):
     try:
