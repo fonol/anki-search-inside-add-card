@@ -77,7 +77,7 @@ class SiacNote(Printable):
         """ Used to create a 'mock' SiacNote object, that is not linked to an entity in the DB. """
 
         SiacNote._ct_timestamp += 1
-        id = - utility.misc.get_milisec_stamp() + SiacNote._ct_timestamp
+        id = - (utility.misc.get_milisec_stamp() + SiacNote._ct_timestamp)
         return SiacNote((id, title, body, "", tags, -1, "", "", "", "", -1, None, None, None))
 
     def get_content(self) -> str:
