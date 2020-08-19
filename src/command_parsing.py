@@ -220,7 +220,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             notes = get_all_pdf_notes()
             # add special note at front
             sp_body = get_pdf_list_first_card()
-            notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+            notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
             index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-show-pdfs-unread":
@@ -253,21 +253,21 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         stamp = set_stamp()
         notes = get_pdf_notes_last_read_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        notes.insert(0, SiacNote.mock("PDF Meta", sp_body, "Meta"))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-pdf-last-added":
         stamp = set_stamp()
         notes = get_pdf_notes_last_added_first()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        notes.insert(0, SiacNote.mock("PDF Meta", sp_body, "Meta"))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-pdf-find-invalid":
         stamp = set_stamp()
         notes = get_invalid_pdfs()
         sp_body = get_pdf_list_first_card()
-        notes.insert(0, SiacNote((-1, "PDF Meta", sp_body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+        notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
         index.ui.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-queue-info "):
@@ -1452,20 +1452,20 @@ def show_read_stats():
     t_counts    = get_read_last_n_days_by_day(365)
     body        = read_counts_by_date_card_body(t_counts)
     t_counts    = utility.date.counts_to_timestamps(t_counts)
-    res.append(SiacNote((-1, f"Pages read per day (this year)", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+    res.append(SiacNote.mock(f"Pages read per day (this year)", body, "Meta"))
 
     counts      = get_read(0)
     body        = read_counts_card_body(counts)
-    res.append(SiacNote((-2, f"Pages read today ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+    res.append(SiacNote.mock(f"Pages read today ({sum([c[0] for c in counts.values()])})", body, "Meta"))
     counts      = get_read(1)
     body        = read_counts_card_body(counts)
-    res.append(SiacNote((-3, f"Pages read yesterday ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+    res.append(SiacNote.mock(f"Pages read yesterday ({sum([c[0] for c in counts.values()])})", body,"Meta"))
     counts      = get_read_last_n_days(7)
     body        = read_counts_card_body(counts)
-    res.append(SiacNote((-4, f"Pages read last 7 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+    res.append(SiacNote.mock(f"Pages read last 7 days ({sum([c[0] for c in counts.values()])})", body, "Meta"))
     counts      = get_read_last_n_days(30)
     body        = read_counts_card_body(counts)
-    res.append(SiacNote((-5, f"Pages read last 30 days ({sum([c[0] for c in counts.values()])})", body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+    res.append(SiacNote.mock(f"Pages read last 30 days ({sum([c[0] for c in counts.values()])})", body, "Meta"))
     index.ui.print_search_results(res, stamp)
     # fill plots
     index.ui.js(f"""drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)});""")

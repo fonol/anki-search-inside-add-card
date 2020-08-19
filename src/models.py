@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import utility.text
+import utility.misc
 import html
 import typing
 from typing import Tuple, List, Any, Optional
@@ -37,6 +38,7 @@ class Printable():
 
 class SiacNote(Printable):
 
+    _ct_timestamp   = 0
     note_type       = "user"
     MISSED_NOTES    = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
 
@@ -69,6 +71,14 @@ class SiacNote(Printable):
         src     = text.split("\u001f")[2]
 
         return SiacNote((id, title, body, src, index_props[2], -1, "", "", "", "", -1, None, None, None))
+
+    @staticmethod
+    def mock(title: str, body: str, tags: str) -> 'SiacNote':
+        """ Used to create a 'mock' SiacNote object, that is not linked to an entity in the DB. """
+
+        SiacNote._ct_timestamp += 1
+        id = utility.misc.get_milisec_stamp() + SiacNote._ct_timestamp
+        return SiacNote((id, title, body, "", tags, -1, "", "", "", "", -1, None, None, None))
 
     def get_content(self) -> str:
         return self._build_non_anki_note_html()

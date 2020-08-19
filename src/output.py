@@ -655,7 +655,7 @@ class Output:
         else:
             html = """
                 %s
-                <div id='cal-jinfo-notes' style='overflow-y: auto; overflow-x: hidden; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div>
+                <div id='cal-info-notes' style='overflow-y: auto; overflow-x: hidden; height: 190px; margin: 10px 0 5px 0; padding-left: 4px; padding-right: 8px;'>%s</div>
             """ % (context_html, html)
 
         self._editor.web.eval("document.getElementById('cal-info').innerHTML = `%s`;" % html)
@@ -669,10 +669,8 @@ class Output:
         stamp = utility.misc.get_milisec_stamp()
         self.latest = stamp
         notes = []
-        ix    = 0
         for (title, body) in html_list:
-            ix -= 1
-            notes.append(SiacNote((ix, title, body, "", "Meta", -1, "", "", "", "", -1, None, None, None)))
+            notes.append(SiacNote.mock(title, body, "Meta"))
         self.print_search_results(notes, stamp)
 
 
@@ -933,7 +931,7 @@ class Output:
             if query_set is None or len(query_set)  == 0:
                 message = "Query was empty after cleaning."
             else:
-                message = "Nothing found for query: <br/><br/><i>%s</i>" % (utility.text.trim_if_longer_than(" ".join(query_set), 200))
+                message = "<center>Nothing found for query: <br/><br/><i>%s</i></center>" % (utility.text.trim_if_longer_than(" ".join(query_set), 200))
             self._editor.web.eval("""
                 document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
                 document.getElementById('siac-pdf-tooltip-top').innerHTML = `<div id='siac-tooltip-center' onclick='centerTooltip();'></div>
