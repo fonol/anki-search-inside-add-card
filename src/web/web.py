@@ -455,6 +455,25 @@ def addToDecklist(dmap, id, name):
             found.update({d : {}})
     return dmap
 
+def try_select_deck(deck: str) -> bool:
+    """ Try to select a deck with the given name. """
+
+    if not deck or len(deck.strip()) == 0:
+        return False
+
+    win = aqt.mw.app.activeWindow()
+    # dont trigger keypress in edit dialogs opened within the add dialog
+    if not isinstance(win, aqt.AddCards):
+        return False
+
+    try:
+        win.deckChooser.setDeckName(deck)
+        win.deckChooser.onDeckChange()
+        return True
+    except: 
+        return False
+        
+
 
 def changelog() -> List[str]:
     """ Returns recent add-on changes. """
