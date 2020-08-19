@@ -936,20 +936,23 @@ def get_tips_html() -> List[Tuple[str, str]]:
     """ Settings & Info -> Tips:  Returns a list of (title, body) pairs of html to print. """
 
     return [("General Tips", """
-1. Look up available shortcuts in the 'Info' dialog. Most of them can be set in the config.
-2. A convenient way to quickly open a certain PDF is to use CTRL+O.
-3. Drag and drop a PDF file on the add-on pane to open the Create Note modal with that file path.
-4. CTRL/Meta + Click on a tag in the notes sidebar opens the Create Note modal with that tag.
-5. Not all settings are in the "Settings" dialog, some can be set only through Anki's add-on config dialog.
-6. On Anki 2.1.28+, the whole UI can be resized at once with CTRL+Mousewheel.
-7. There is no automatic backup function, but it is sufficient to simply copy the 'siac-notes.db' file somewhere else.
+    <ol>
+        <li>Look up available shortcuts in the 'Info' dialog. Most of them can be set in the config.</li>
+        <li>A convenient way to quickly open a certain PDF is to use CTRL+O.</li>
+        <li>Drag and drop a PDF file on the add-on pane to open the Create Note modal with that file path.</li>
+        <li>CTRL/Meta + Click on a tag in the notes sidebar opens the Create Note modal with that tag.</li>
+        <li>Not all settings are in the "Settings" dialog, some can be set only through Anki's add-on config dialog.</li>
+        <li>On Anki 2.1.28+, the whole UI can be resized at once with CTRL+Mousewheel.</li>
+        <li>There is no automatic backup function, but it is sufficient to simply copy the 'siac-notes.db' file somewhere else.</li>
+    </ol>
         
 """), ("Markdown in Notes", """
-Supported elements are, besides the standard markdown:  
-
-1. Fenced Code Blocks (```)
-2. Definition Lists (: )
-3. Blockquotes (>)
+Supported elements are, besides the standard markdown:<br>
+    <ol>
+        <li>Fenced Code Blocks (```)</li>
+        <li>Definition Lists (: )</li>
+        <li>Blockquotes (>)</li>
+    </ol>
 
 Newlines can be done with two trailing spaces at the end of a line.
 """)]
