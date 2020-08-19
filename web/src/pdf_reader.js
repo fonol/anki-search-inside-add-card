@@ -340,7 +340,7 @@ window.saveTextNote = function(nid) {
         pycmd("siac-notification Could not save text note for some reason.");
         return;
     } 
-    readerNotification("&nbsp;Note saved.&nbsp;");
+    readerNotification("&nbsp;<i class='fa fa-save'></i>&nbsp; Note saved.&nbsp;");
     pycmd("siac-update-note-text " + nid + " " + html);
 }
 window.toggleQueue = function() {
@@ -974,7 +974,7 @@ window.onReadingModalClose = function() {
     pycmd("siac-on-reading-modal-close")
 }
 window.tryExtractTextFromTextNote = function() {
-    saveTextNote($('#siac-reading-modal-top-bar').data('nid'), remove = false);
+    saveTextNote($('#siac-reading-modal-top-bar').data('nid'));
     pycmd("siac-try-copy-text-note");
 }
 
