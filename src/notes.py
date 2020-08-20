@@ -28,12 +28,12 @@ import time
 
 try:
     from .state import get_index
-    from .models import SiacNote, NoteRelations
+    from .models import SiacNote, IndexNote, NoteRelations
     from .config import get_config_value_or_default
     from .debug_logging import get_notes_info, persist_notes_db_checked
 except:
     from state import get_index
-    from models import SiacNote, NoteRelations
+    from models import SiacNote, IndexNote, NoteRelations
     from config import get_config_value_or_default
     from debug_logging import get_notes_info, persist_notes_db_checked
 import utility.misc
@@ -161,8 +161,19 @@ def create_db_file_if_not_exists() -> bool:
 
     try:
         # update code
-        conn.execute(""" ALTER TABLE notes ADD COLUMN extract_start INTEGER; """)
-        conn.execute(""" ALTER TABLE notes add column extract_end INTEGER;""")
+        # conn.execute(""" ALTER TABLE notes ADD COLUMN extract_start INTEGER; """)
+        # conn.execute(""" ALTER TABLE notes add column extract_end INTEGER;""")
+
+        conn.execute("""
+            Create table if not exists notes_pdf_page (
+                nid INTEGER,
+                siac_nid INTEGER,
+                page INTEGER,
+                type INTEGER,
+                data TEXT,
+                created TEXT
+            ) 
+        """)
         conn.commit()
     except:
         pass
@@ -572,6 +583,12 @@ def get_last_done_notes() -> List[SiacNote]:
     conn.close()
     return _to_notes(res)
 
+
+def link_note_and_page(siac_nid: int, anki_nid: int, page: int):
+    conn = _get_connection()
+    conn.execute(f"insert into notes_pdf_page (nid, siac_nid, page, type, data, created) values ({anki_nid}, {siac_nid}, {page}, 1, '', '{_date_now_str()}')")
+    conn.commit()
+    conn.close()
 
 def mark_page_as_read(nid: int, page: int, pages_total: int):
     now = _date_now_str()
@@ -1342,6 +1359,27 @@ def insert_pages_total(nid: int, pages_total: int):
     conn.commit()
     conn.close()
 
+def get_linked_anki_notes_for_pdf_page(siac_nid: int, page: int) -> List[IndexNote]:
+    """ Query to retrieve the Anki notes that were created while on a given pdf page. """
+
+    conn = _get_connection()
+    nids = conn.execute(f"select nid from notes_pdf_page where siac_nid = {siac_nid} and page = {page}").fetchall()
+    conn.close()
+    if not nids or len(nids) == 0:
+        return []
+    nids_str = ",".join([str(nid[0]) for nid in nids])
+    res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id in (%s)" % nids_str)
+    return _anki_to_index_note(res)
+
+def get_linked_anki_notes_around_pdf_page(siac_nid: int, page: int) -> List[IndexNote]:
+    conn = _get_connection()
+    nids = conn.execute(f"select nid from notes_pdf_page where siac_nid = {siac_nid} and page > {page-3} and page < {page + 3}").fetchall()
+    conn.close()
+    if not nids or len(nids) == 0:
+        return []
+    nids_str = ",".join([str(nid[0]) for nid in nids])
+    res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id in (%s)" % nids_str)
+    return _anki_to_index_note(res)
 
 #
 # helpers
@@ -1402,6 +1440,9 @@ def _table_exists(name) -> bool:
     if res[0]==1:
         return True
     return False
+
+def _anki_to_index_note(db_list: List[Tuple[Any, ...]]) -> List[IndexNote]:
+    return list(map(lambda r : IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")), db_list))
 
 def _convert_manual_prio_to_dynamic(prio: int) -> int:
     if prio == 2 or prio == 7:
