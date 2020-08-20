@@ -23,7 +23,7 @@ import time
 from datetime import datetime as dt
 import sys
 import typing
-from typing import List, Optional, Tuple, Any
+from typing import List, Optional, Tuple, Any, Callable
 import aqt
 import uuid
 import html as ihtml
@@ -40,6 +40,7 @@ from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
 from ..notes import *
 from ..notes import _get_priority_list
+from ..special_searches import get_last_added_anki_notes
 from ..models import SiacNote, IndexNote, Printable
 from .html import *
 from .note_templates import *
@@ -76,6 +77,18 @@ class ReadingModal:
         self.note_id                = None
         self.note                   = None
         self.sidebar.tab_displayed  = None
+
+    def page_displayed(self, cb: Callable):
+        """ Evaluates the currently read page from the webview, and calls the given callback function with the page number. """
+
+        if not self.note_id:
+            return
+
+        if not self.note.is_pdf():
+            cb(1)
+
+        self._editor.web.evalWithCallback("(() => { return pdfDisplayedCurrentPage; })()", cb)
+
 
     @requires_index_loaded
     def display(self, note_id: int):
@@ -273,7 +286,6 @@ class ReadingModal:
             var loadFn = function(retry) {
                 if (retry > 4) {
                     $('#siac-pdf-loader-wrapper').remove();
-                    document.getElementById('siac-pdf-top').style.overflowY = 'auto';
                     $('#siac-timer-popup').html(`<br><center>PDF.js could not be loaded from CDN.</center><br>`).show();
                     pdfDisplayed = null;
                     ungreyoutBottom();
@@ -294,8 +306,6 @@ class ReadingModal:
                 var loadingTask = pdfjsLib.getDocument(arr, {nativeImageDecoderSupport: 'display'});
                 loadingTask.promise.catch(function(error) {
                         $('#siac-pdf-loader-wrapper').remove();
-                        document.getElementById('siac-pdf-top').style.overflowY = 'auto';
-
                         $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
                         pdfDisplayed = null;
                         ungreyoutBottom();
@@ -312,8 +322,7 @@ class ReadingModal:
                         if (!document.getElementById('siac-pdf-top')) {
                             return;
                         }
-                        document.getElementById('siac-pdf-top').style.overflowY = 'auto';
-                        document.getElementById('text-layer').style.display = 'block'; 
+                        document.getElementById('text-layer').style.display = 'inline-block'; 
                         if (pagesRead.length === pdf.numPages) {
                             pdfDisplayedCurrentPage = getLastReadPage() || 1;
                             queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
@@ -383,6 +392,7 @@ class ReadingModal:
             sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
             img_folder      = utility.misc.img_src_base_path()
             active          = "active" if note.is_due_sometime() else ""
+            page_sidebar    = str(note.is_pdf() and conf_or_def("pdf.page_sidebar_shown", True)).lower()
 
             if note.is_in_queue():
                 queue_btn_text      = "Done!"
@@ -425,11 +435,11 @@ class ReadingModal:
                             
                             </div>
                             <div id='siac-reading-modal-change-theme'>
-                                <a onclick='pycmd("siac-eval index.ui.reading_modal.show_theme_dialog()")'>Change Theme</a>
+                                <a onclick='pycmd("siac-eval index.ui.reading_modal.show_theme_dialog()")'><i class="fa fa-cogs"></i>&nbsp; Theme</a>
                             </div>
                             
                         </div>
-                        <div id='siac-reading-modal-center' style='flex: 1 1 auto; overflow: {overflow}; font-size: 13px; padding: 0 20px 0 24px; position: relative; display: flex; flex-direction: column;' >
+                        <div id='siac-reading-modal-center' class='' style='flex: 1 1 auto; overflow: {overflow}; font-size: 13px; padding: 0 5px 0 24px; position: relative; display: flex; flex-direction: column;' >
                             <div id='siac-rm-greyout'></div>
                             {text}
                         </div>
@@ -465,6 +475,7 @@ class ReadingModal:
                 </div>
                 <script>
                 destroyPDF();
+                pageSidebarDisplayed = {page_sidebar};
                 if (readingTimer != null)  {{
                     $('#siac-timer-play-btn').html('Pause').removeClass('inactive');
                 }} else if (remainingSeconds !== 1800) {{
@@ -475,6 +486,10 @@ class ReadingModal:
                 }} else if (pdfBarsHidden) {{
                     pdfBarsHidden = false;
                     toggleReadingModalBars();
+                }}
+                if (pageSidebarDisplayed) {{
+                    pageSidebarDisplayed = false;
+                    togglePageSidebar(false);
                 }}
                 {notification}
                 iframeIsDisplayed = false;
@@ -509,7 +524,7 @@ class ReadingModal:
             queue_readings_list = self.get_queue_head_display(queue, editable)
 
             params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info, 
-            queue_info_short    = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, notification=notification, sched_click=sched_click)
+            queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, notification=notification, sched_click=sched_click, page_sidebar=page_sidebar)
             html                = html.format_map(params)
 
             return html
@@ -881,13 +896,19 @@ class ReadingModal:
             {quick_sched_btn} 
             <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark' onclick='pycmd("siac-close-iframe")'>&times; &nbsp;Close Web</div>
             <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" oncopy='onPDFCopy(event)' onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
-                <div id='siac-pdf-loader-wrapper' style='display: flex; justify-content: center; align-items: center; height: 100%; z-index: 7;'>
-                    <div class='siac-pdf-loader' style=''>
-                        <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>Loading PDF</div></div>
-                    </div>
+                <div id='siac-pdf-wrapper'>
+                    <div id='siac-pdf-overflow'>
+                        <div id='siac-pdf-loader-wrapper' style='display: flex; justify-content: center; align-items: center; height: 100%; z-index: 7;'>
+                            <div class='siac-pdf-loader' style=''>
+                                <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>Loading PDF</div></div>
+                            </div>
+                        </div>
+                        <canvas id="siac-pdf-canvas" style='z-index: 3; display:inline-block;'></canvas>
+                        <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
+                        </div>
+                    <div id='siac-pdf-br-notify'> </div>
                 </div>
-                <canvas id="siac-pdf-canvas" style='z-index: 3; display:inline-block;'></canvas>
-                <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
+                <div id='siac-page-sidebar'></div>
             </div>
             <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
             <div class='siac-reading-modal-button-bar-wrapper' style="">
@@ -900,7 +921,7 @@ class ReadingModal:
                     <div class='siac-btn siac-btn-dark active' id='siac-pdf-tooltip-toggle' onclick='togglePDFSelect(this)' style='margin-left: 5px;'><div class='siac-search-icn-dark'></div></div>
                     <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
                 </div>
-                <div class='siac-rm-bg' style='user-select:none; display: inline-block; position:relative; z-index: 2; padding: 0 5px 0 5px;'>
+                <div id='siac-page-btns' class='siac-rm-bg'>
                     <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b>&lt;</b></div>
                     <span style='display: inline-block; text-align: center; width: 78px; user-select: none;' id='siac-pdf-page-lbl'>Loading...</span>
                     <div class='siac-btn siac-btn-dark' onclick='pdfPageRight();'><b>&gt;</b></div>
@@ -944,9 +965,8 @@ class ReadingModal:
                         </div>
                     </div>
                     <input id="siac-pdf-page-inp" style="width: 50px;margin-right: 5px;" value="1" type="number" min="1" onkeyup="pdfJumpToPage(event, this);"></input>
+                    <div class='siac-btn siac-btn-dark' onclick='togglePageSidebar()'><i class="fa fa-bars"></i></div>
                 </div>
-            </div>
-            <div id='siac-pdf-br-notify'>
             </div>
             <script>
                 greyoutBottom();
@@ -1382,7 +1402,7 @@ class ReadingModal:
             document.getElementById('siac-iframe').style.display = "none";
             document.getElementById('siac-close-iframe-btn').style.display = "none";
             if (pdfDisplayed) {
-                document.getElementById('siac-pdf-top').style.display = "block";
+                document.getElementById('siac-pdf-top').style.display = "flex";
             } else {
                 document.getElementById('siac-text-top-wr').style.display = "flex";
             }
@@ -1421,6 +1441,46 @@ class ReadingModal:
         $('#siac-reading-modal-center').append('%s');
         """ % modal.replace("\n", "").replace("'", "\\'")
         return js
+
+
+    def page_sidebar_info(self, page: int):
+        """ Fill the page sidebar with Anki notes made on that page / other pdf info. """
+
+        linked      = get_linked_anki_notes_for_pdf_page(self.note_id, page)
+        read_today  = get_read_today_count()
+
+        if len(linked) > 0:
+            html = search_results(linked, [])
+            html = html.replace("`", "\\`")
+            html = f"""
+                <div style='flex: 0 1 auto; color: lightgrey;'>
+                    <center>Page {page}</center>
+                    <b style='text-align: center;'>Notes added ({len(linked)})</b>
+                    <hr style='border-top: 4px solid grey;'>
+                </div>
+                <div style='overflow-y: auto; flex: 1 1 auto; padding: 7px; text-align: left;'>
+                    {html}
+                </div>
+                <div style='flex: 0 1 auto; color: lightgrey; text-align: center; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
+                    Read today: <b>{read_today}</b> pages
+                </div>
+            """
+        else:
+            html = f""" 
+                <div style='flex: 0 1 auto; color: lightgrey;'>
+                    <center>Page {page}</center>
+                    <hr style='border-top: 4px solid grey;'>
+                </div>
+                <div style='flex: 1 1 auto;'>
+                    <center style='margin-top: 150px; padding: 20px; color: lightgrey;'>No notes added while on this page.</center> 
+                </div>
+                <div style='flex: 0 1 auto; color: lightgrey; text-align: center; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
+                    Read today: <b>{read_today}</b> pages
+                </div>
+            """
+
+        self._editor.web.eval(f"document.getElementById('siac-page-sidebar').innerHTML = `{html}`;")
+
 
     @js
     def update_reading_bottom_bar(self, nid: int):
@@ -1740,6 +1800,7 @@ class ReadingModal:
             }
         """
     
+    
 
     #
     # highlights
@@ -1832,7 +1893,8 @@ class ReadingModalSidebar():
         if self.browse_tab_last_results is not None:
             self.print(self.browse_tab_last_results[0], self.browse_tab_last_results[1], self.browse_tab_last_results[2])
         else:
-            self._editor.web.eval("pycmd('siac-pdf-sidebar-last-anki')")
+            notes = get_last_added_anki_notes(get_config_value_or_default("pdfTooltipResultLimit", 50))
+            self.print(notes, "", [])
 
     def show_pdfs_tab(self):
         if self.tab_displayed == "pdfs":
@@ -1868,7 +1930,7 @@ class ReadingModalSidebar():
         """
         if results:
             limit   = get_config_value_or_default("pdfTooltipResultLimit", 50)
-            html    = self._sidebar_search_results(results[:limit], query_set)
+            html    =  search_results(results[:limit], query_set)
             self._editor.web.eval("""
                 document.getElementById('siac-left-tab-browse-results').innerHTML = `%s`;
                 document.getElementById('siac-left-tab-browse-results').scrollTop = 0;
@@ -1902,62 +1964,4 @@ class ReadingModalSidebar():
 
 
 
-    def _sidebar_search_results(self, db_list: List[IndexNote], query_set: List[str]) -> str:
-        html                        = ""
-        epochTime                   = int(time.time() * 1000)
-        timeDiffString              = ""
-        newNote                     = ""
-        lastNote                    = ""
-        nids                        = [r.id for r in db_list]
-        show_ret                    = get_config_value_or_default("showRetentionScores", True)
-        fields_to_hide_in_results   = get_config_value_or_default("fieldsToHideInResults", {})
-        hide_clozes                 = get_config_value_or_default("results.hide_cloze_brackets", False)
-        remove_divs                 = get_config_value_or_default("removeDivsFromOutput", False)
-        if show_ret:
-            retsByNid               = getRetentions(nids)
-        ret                         = 0
-        highlighting                = get_config_value_or_default("highlighting", True)
-
-        for counter, res in enumerate(db_list):
-            ret = retsByNid[int(res.id)] if show_ret and int(res.id) in retsByNid else None
-            if ret is not None:
-                retMark = "background: %s; color: black;" % (utility.misc._retToColor(ret))
-                retInfo = """<div class='retMark' style='%s'>%s</div>
-                                """ % (retMark, int(ret))
-            else:
-                retInfo = ""
-
-            lastNote    = newNote
-            text        = res.get_content()
-
-            # hide fields that should not be shown
-            if str(res.mid) in fields_to_hide_in_results:
-                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in fields_to_hide_in_results[str(res.mid)]])
-
-            #remove <div> tags if set in config
-            if remove_divs and res.note_type != "user":
-                text = utility.text.remove_divs(text)
-
-            # remove cloze brackets if set in config
-            if hide_clozes and res.note_type != "user":
-                text = utility.text.hide_cloze_brackets(text)
-
-            if highlighting and query_set is not None:
-                text = utility.text.mark_highlights(text, query_set)
-
-            text        = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
-            text        = utility.text.try_hide_image_occlusion(text)
-            #try to put fields that consist of a single image in their own line
-            text        = utility.text.newline_before_images(text)
-            template    = noteTemplateSimple if res.note_type == "index" else noteTemplateUserNoteSimple
-            newNote     = template.format(
-                counter=counter+1,
-                nid=res.id,
-                edited="",
-                mouseup="",
-                text=text,
-                ret=retInfo,
-                tags=utility.tags.build_tag_string(res.tags, False, False, maxLength = 25, maxCount = 2),
-                creation="")
-            html += newNote
-        return html
+    
