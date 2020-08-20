@@ -47,6 +47,7 @@ window.pdfLoading = false;
 window.modalShown = false;
 window.pdfTooltipEnabled = true;
 window.iframeIsDisplayed = false;
+window.pageSidebarDisplayed = true;
 window.pdfFullscreen = false;
 window.pdfBarsHidden = false;
 window.displayedNoteId = null;
@@ -187,12 +188,15 @@ window.rerenderPDFPage = function(num, shouldScrollUp = true, fitToPage = false,
                     document.getElementById('siac-pdf-overlay').style.display = 'none';
                     document.getElementById('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book" aria-hidden="true"></i>&nbsp; Read';
                 }
-                if (pdfExtract) {
+                if (fetchHighlights && pdfExtract) {
                     if (pdfExtract[0] > pdfDisplayedCurrentPage || pdfExtract[1] < pdfDisplayedCurrentPage) {
                         $('#siac-pdf-top').addClass("extract");
                     } else {
                         $('#siac-pdf-top').removeClass("extract");
                     }
+                }
+                if (fetchHighlights && pageSidebarDisplayed) {
+                    pycmd("siac-linked-to-page " + pdfDisplayedCurrentPage);
                 }
             }
         }).catch(function (err) { setTimeout(function () { console.log(err); }); });
@@ -477,7 +481,6 @@ window.escapeRegExp = function(string) {
 
 /**
  * Display a short message in bottom right area of the reader.
- * No linebreaks! 
  */
 window.readerNotification = function(html, immediate) {
 
@@ -1051,6 +1054,30 @@ window.updateSchedule = function() {
         let id = document.getElementById("siac-sched-id-inp").value;
         if (!id) { pycmd('siac-notification Value is empty!'); return; }
         pycmd("siac-update-schedule id " + id);
+    }
+}
+
+/**
+ * Show or hide the pdf page sidebar.
+ * @param {boolean} persist if the updated value should be sent to the backend 
+ */
+window.togglePageSidebar = function(persist = true) {
+    pageSidebarDisplayed = !pageSidebarDisplayed; 
+    if (pageSidebarDisplayed) {
+        $('#siac-reading-modal-center').addClass('siac-page-sidebar');
+        if (persist)
+            pycmd("siac-linked-to-page " + pdfDisplayedCurrentPage);
+    } else {
+        $('#siac-reading-modal-center').removeClass('siac-page-sidebar');
+    }
+    if (persist) {
+        pdfFitToPage();
+        pycmd('siac-config-bool pdf.page_sidebar_shown ' + pageSidebarDisplayed);
+    }
+}
+window.updatePageSidebarIfShown = function() {
+    if (pdfDisplayed && pageSidebarDisplayed) {
+        pycmd("siac-linked-to-page " + pdfDisplayedCurrentPage);
     }
 }
 

@@ -235,14 +235,14 @@ export const Highlighting = {
         if (!el.dataset.id) {
             return;
         }
-        if (el.clientWidth != el.dataset.ow || el.clientHeight != el.dataset.oh) {
-            el.dataset.ow = el.clientWidth;
+        if (el.offsetWidth != el.dataset.ow || el.clientHeight != el.dataset.oh) {
+            el.dataset.ow = el.offsetWidth;
             el.dataset.oh = el.clientHeight;
 
             let rectCanvas = document.getElementById("text-layer").getBoundingClientRect();
             let x0 = el.offsetLeft - document.getElementById("siac-pdf-canvas").offsetLeft;
             let y0 = el.offsetTop ;
-            let x1 = x0 + el.clientWidth; 
+            let x1 = x0 + el.offsetWidth - 6; 
             let y1 = y0 + el.clientHeight; 
 
             let conv = pdfDisplayedViewPort.convertToPdfPoint(x0, y0);
@@ -252,7 +252,7 @@ export const Highlighting = {
             x1 = conv[0];
             y1 = conv[1];
 
-            pycmd(`siac-hl-text-update-coords ${el.dataset.id} ${x0} ${y0} ${x1} ${y1}`);
+            pycmd(`siac-hl-text-update-coords ${el.dataset.id} ${x0} ${y0} ${x1-2} ${y1+2}`);
         }
     },
 
@@ -263,7 +263,7 @@ export const Highlighting = {
         if (!el.dataset.id) {
             return;
         }
-        pycmd("siac-hl-text-update-text " + el.dataset.id + " " + $(el).val());
+        pycmd(`siac-hl-text-update-text ${el.dataset.id} ${pdfDisplayedCurrentPage} ${$(el).val()}`);
     },
 
     onTextKeyup: function(el) {
@@ -280,9 +280,9 @@ export const Highlighting = {
             return;
         }
         if (event.ctrlKey || event.metaKey) {
-            $(el).remove();
-            pycmd("siac-hl-del " + el.dataset.id);
             this.current = this.current.filter(c => c[5] != el.dataset.id);
+            pycmd("siac-hl-del " + el.dataset.id);
+            $(el).remove();
         }
     },
     /**
@@ -294,7 +294,7 @@ export const Highlighting = {
         //regular highlight
         if (t > 0) {
             el = document.createElement("div");
-            el.className = "siac-hl" + (t === 0 ? " siac-text-hl" : "");
+            el.className = "siac-hl siac-hl-c";
             el.style.height = h + "px";
             el.style.width = w + "px";
             el.style.top = y + "px";
@@ -329,7 +329,7 @@ export const Highlighting = {
             el.setAttribute("onkeyup", "Highlighting.onTextKeyup(this);");
         }
 
-        document.getElementById("siac-pdf-top").appendChild(el);
+        document.getElementById("siac-pdf-overflow").appendChild(el);
         return el;
     }
 };
