@@ -48,7 +48,7 @@ noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                     </div>
                     <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
                     <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
-                    <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;INFO&nbsp;</div>
+                    <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;&nbsp;<i class="fa fa-info"></i>&nbsp;&nbsp;</div>
                 </div>""" % (PREVIEWER, FLOAT_BTN, NID_BTN, CID_BTN)
 
 noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
@@ -61,7 +61,7 @@ noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
                     </div>
                     <div class='cardR' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
                     <div style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
-                    <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;INFO&nbsp;</div>
+                    <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;&nbsp;<i class="fa fa-info"></i>&nbsp;&nbsp;</div>
                 </div>"""
 
 noteTemplateUserNoteSimple = """<div class='cardWrapper' style="display: block;">
