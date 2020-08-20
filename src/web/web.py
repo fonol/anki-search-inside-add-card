@@ -482,10 +482,9 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "PDF: Added area highlights (Ctrl+Shift+A)",
-        "Added Preview Cards function (icon next to the edit button, only for >= 2.1.26)",
-        "Added documentation to the add-on config",
-        "Fix: Highlight being still shown after deletion when zooming in PDF"
+        "PDF reader now remembers notes added while reading a given page, added a sidebar to display",
+        "Updated tips section",
+        "Fix: Some issues with PDF text comments"
     ]
 
 def known_issues() -> List[str]:
