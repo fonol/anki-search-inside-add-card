@@ -164,6 +164,11 @@
   max-height: 950px;
   min-width: 95px;
 }
+#siac-reading-modal .cardR {
+  border: 3px outset var(--c-note-border-night);
+  color: var(--c-note-foreground-night);
+  background: var(--c-note-background-night);
+}
 .cardWrapper.meta .cardR {
     max-height: none;
 }
@@ -304,6 +309,11 @@ body.nightMode .cardR blockquote, body.nightMode .cardR pre {
     user-select: none;
     border: 1px solid var(--c-tag-background);
 }
+#siac-reading-modal .tagLbl {
+    background: var(--c-tag-background-night);
+    color: var(--c-tag-foreground-night);
+    border: 1px solid var(--c-tag-background-night);
+}
 .tagLbl:hover {
     filter: brightness(150%);
 }
@@ -362,6 +372,10 @@ body.nightMode .cardR blockquote, body.nightMode .cardR pre {
     cursor: pointer;
     border-radius: 4px;
 }
+#siac-reading-modal .rankingLbl {
+    background: var(--c-ranking-lbl-background-night);
+    color: var(--c-ranking-lbl-foreground-night);
+}
 .rankingLblAddInfo {
     display: none;
     user-select: none;
@@ -400,6 +414,12 @@ body.nightMode .cardR blockquote, body.nightMode .cardR pre {
     flex: 1;
     vertical-align: middle;
 }
+#siac-reading-modal .editLbl {
+    background:  var(--c-note-background-night);
+    color: var(--c-note-foreground-night);
+    border: 2px solid var(--c-note-border-night);
+    border-right: 0px solid  var(--c-note-background-night);
+}
 .pinLbl {
     color: black;
     padding: 1px 5px 2px 5px;
@@ -424,7 +444,7 @@ body.nightMode .cardR blockquote, body.nightMode .cardR pre {
   user-select: none;
 }
 .editLbl:hover,.srchLbl:hover,.remLbl:hover,.floatLbl:hover,.deleteLbl:hover {
-    color: #2496dc;
+    color: #2496dc !important;
 }
 .pinLbl.unselected > span {
    color: transparent;
@@ -506,11 +526,16 @@ body.nightMode .cardR blockquote, body.nightMode .cardR pre {
     padding: 1px 1px 1px 1px; 
     white-space: nowrap;
 }
-.cardLeftBot:hover {
-    border-color: var(--c-note-hover-border);
+#siac-reading-modal .cardLeftBot {
+    border: 3px outset var(--c-note-border-night);
+    background:  var(--c-note-background-night);
+    color: var(--c-note-foreground-night);
 }
-.cardLeftBot:hover :not(.siac-prog-tmp span) {
-    color: #2496dc;
+.cardLeftBot:hover {
+    border-color: var(--c-note-hover-border) !important;
+}
+.cardLeftBot:hover .fa-info {
+    color: #2496dc !important;
 }
 .siac-read-box {
     display: inline-block;
@@ -1359,12 +1384,12 @@ span.tag-symbol {
 .siac-tag-info-box-left .cardR {
     user-select: text;
 }
-.siac-tag-info-box-left .editLbl, #siac-left-tab-browse .editLbl {
+.siac-tag-info-box-left .editLbl, #siac-left-tab-browse .editLbl, #cal-info .editLbl {
     border-right: 2px solid var(--c-note-border);
     border-radius: 4px;
 }
-#cal-info .editLbl, #siac-pdf-tooltip-results-area .editLbl {
-    border-right: 2px solid var(--c-note-border);
+#siac-reading-modal .editLbl {
+    border-right: 2px solid var(--c-note-border-night);
     border-radius: 4px;
 }
 .siac-tag-info-box .flot-y-axis {
