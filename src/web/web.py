@@ -223,6 +223,9 @@ def show_search_result_area(editor=None, initializationTime=0):
     elif editor is not None and editor.web is not None:
         editor.web.eval(js)
 
+
+
+
 def print_starting_info(editor: Editor):
     """ Displays the information that is visible after the first start of the add-on. """
 
@@ -490,5 +493,6 @@ def known_issues() -> List[str]:
 
     return [
         "Tag autocomplete in Create/Update note modal only works on first tag",
-        "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions"
+        "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions",
+        "Notes added on Page does not register Image Occlusion cards"
     ]
