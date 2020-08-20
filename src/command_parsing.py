@@ -201,6 +201,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-rerender":
         index.ui.try_rerender_last()
 
+    elif cmd.startswith("siac-config-bool "):
+        key = cmd.split()[1]
+        b   = cmd.split()[2].lower() == "true"
+        update_config(key, b)
+
     elif cmd.startswith("siac-notification "):
         tooltip(cmd[18:])
 
@@ -312,6 +317,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-mark-read-up-to "):
         mark_as_read_up_to(index.ui.reading_modal.note, int(cmd.split()[2]), int(cmd.split()[3]))
+        index.ui.js("updatePageSidebarIfShown()")
 
     elif cmd.startswith("siac-display-range-input "):
         nid         = int(cmd.split()[1])
@@ -324,12 +330,15 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         pages_total     = int(cmd.split()[4])
         current_page    = int(cmd.split()[5])
         index.ui.reading_modal.mark_range(start, end, pages_total, current_page)
+        index.ui.js("updatePageSidebarIfShown()")
 
     elif cmd.startswith("siac-mark-all-read "):
         mark_all_pages_as_read(index.ui.reading_modal.note, int(cmd.split()[2]))
+        index.ui.js("updatePageSidebarIfShown()")
 
     elif cmd.startswith("siac-mark-all-unread "):
         mark_all_pages_as_unread(int(cmd.split()[1]))
+        index.ui.js("updatePageSidebarIfShown()")
 
     elif cmd.startswith("siac-insert-pages-total "):
         insert_pages_total(int(cmd.split()[1]), int(cmd.split()[2]))
@@ -338,6 +347,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         selection = " ".join(cmd.split()[1:]).split("$$$")[0]
         sentences = cmd.split("$$$")[1:]
         index.ui.reading_modal.display_cloze_modal(self, selection, sentences)
+
+    elif cmd.startswith("siac-linked-to-page "):
+        page = int(cmd.split()[1])
+        index.ui.reading_modal.page_sidebar_info(page)
 
     elif cmd == "siac-url-dialog":
         dialog = UrlImporter(self.parentWindow)
@@ -732,11 +745,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         page = cmd.split()[2]
         total = cmd.split()[3]
         mark_page_as_read(nid, page, total)
+        index.ui.js("updatePageSidebarIfShown()")
 
     elif cmd.startswith("siac-pdf-page-unread"):
         nid = cmd.split()[1]
         page = cmd.split()[2]
         mark_page_as_unread(nid, page)
+        index.ui.js("updatePageSidebarIfShown()")
 
     elif cmd.startswith("siac-unhide-pdf-queue "):
         nid = int(cmd.split()[1])
@@ -1005,9 +1020,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-hl-text-update-text "):
         # text comment content has changed, so update in db
-        id = int(cmd.split()[1])
-        text = " ".join(cmd.split(" ")[2:])
+        id      = int(cmd.split()[1])
+        page    = int(cmd.split()[2])
+        text    = " ".join(cmd.split(" ")[3:])
+
         update_text_comment_text(id, text)
+        index.ui.reading_modal.show_highlights_for_page(page)
 
     #
     #   Checkboxes
@@ -1403,7 +1421,7 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
     e.g. the user has clicked another deck in the deck select / updated a note / deleted a note / closed the reading modal.
     This will attempt to repeat the last command that rendered some kind of result (i.e. the last cmd that started with "siac-r-").
     """
-    
+
     if state.last_search_cmd is None:
         return
 
@@ -1530,6 +1548,15 @@ def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: i
             a                   = mw.col.addNote(note)
             if a > 0:
                 add_note_to_index(note)
+                if index.ui.reading_modal.note_id is not None:
+                    nid = index.ui.reading_modal.note_id 
+
+                    def cb(page: int):
+                        if page >= 0:
+                            link_note_and_page(nid, note.id, page)
+                            # update sidebar if shown
+                            index.ui.js("updatePageSidebarIfShown()")
+                    index.ui.reading_modal.page_displayed(cb)
             added               += a
 
         tags_str            = " ".join(tags) if len(tags) > 0 else "<i>No tags</i>"
