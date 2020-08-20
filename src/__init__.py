@@ -24,6 +24,7 @@ import aqt
 from anki.utils import isMac, isLin
 import aqt.webview
 from aqt.addcards import AddCards
+from anki.notes import Note
 import aqt.editor
 from aqt.editor import Editor, EditorWebView
 from aqt.browser import Browser
@@ -79,6 +80,7 @@ def init_addon():
 
     # add new notes to search index when adding
     gui_hooks.add_cards_did_add_note.append(add_note_to_index)
+    gui_hooks.add_cards_did_add_note.append(save_pdf_page)
 
     # update notes in index when changed through the "Edit" button
     EditDialog.saveAndClose = wrap(EditDialog.saveAndClose, editor_save_with_index_update, "around")
@@ -136,6 +138,9 @@ def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
          # keep track of edited notes (to display a little remark in the results)
         index.ui.edited[str(dialog.editor.note.id)] = t.time()
 
+        if index.ui.reading_modal.note_id is not None:
+            index.ui.js("updatePageSidebarIfShown()")
+
 
 def on_load_note(editor: Editor):
     """
@@ -190,6 +195,20 @@ def on_add_cards_init(add_cards: AddCards):
     if get_index() is not None and add_cards.editor is not None:
         get_index().ui.set_editor(add_cards.editor)
         
+def save_pdf_page(note: Note):
+
+    ix = get_index()
+    if ix.ui.reading_modal.note_id is None:
+        return
+
+    nid = ix.ui.reading_modal.note_id 
+    def cb(page: int):
+        if page >= 0:
+            link_note_and_page(nid, note.id, page)
+            # update sidebar if shown
+            ix.ui.js("updatePageSidebarIfShown()")
+    
+    ix.ui.reading_modal.page_displayed(cb)
 
 
 def insert_scripts():
@@ -312,14 +331,18 @@ def setup_hooks():
 
     add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-created", lambda: try_repeat_last_search())
+
     add_hook("user-note-deleted", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-deleted", lambda: recalculate_priority_queue())
     add_hook("user-note-deleted", lambda: try_repeat_last_search())
+
     add_hook("user-note-edited", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
     add_hook("user-note-edited", lambda: try_repeat_last_search())
+
     add_hook("updated-schedule", lambda: recalculate_priority_queue())
     add_hook("updated-schedule", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+
     add_hook("reading-modal-closed", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("reading-modal-closed", lambda: try_repeat_last_search())
 
