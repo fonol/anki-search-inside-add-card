@@ -36,7 +36,7 @@ try:
     from .web.sidebar import Sidebar
     from .config import get_config_value_or_default
     from .web.note_templates import *
-    from .models import SiacNote
+    from .models import SiacNote, IndexNote
    
 except:
     from debug_logging import log
@@ -48,7 +48,7 @@ except:
     from web.sidebar import Sidebar
     from web.note_templates import *
     from config import get_config_value_or_default
-    from models import SiacNote
+    from models import SiacNote, IndexNote
 
 import utility.tags
 import utility.text
@@ -943,6 +943,7 @@ class Output:
                 %s
             """ % (message, clz_btn_js))
 
+    
 
 
    

@@ -133,9 +133,8 @@ def getRandomNotes(index, decks):
     return { "result" : res, "stamp" : stamp }
 
 def get_last_added_anki_notes(limit):
-    """
-        Get notes ordered by their nid descending, no decks or pinned notes excluded.
-    """
+    """ Get notes ordered by their nid descending, no decks or pinned notes excluded. """
+
     res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid order by nid desc limit %s" % limit)
     return to_notes(res)
 
