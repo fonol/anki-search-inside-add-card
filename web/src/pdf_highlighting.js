@@ -25,6 +25,7 @@ export const Highlighting = {
         let offset = document.getElementById('text-layer').offsetLeft;
         //page group type [x,y,w,h]+ # text
         let cmd = pdfDisplayedCurrentPage + " -1 " + this.colorSelected.id + " ";
+
         rects.forEach((r) => {
             let x = r.x - rectCanvas.x;
             let y = r.y - rectCanvas.y;
@@ -34,7 +35,7 @@ export const Highlighting = {
             conv = pdfDisplayedViewPort.convertToPdfPoint(x + r.w, y + r.h);
             cmd += conv[0] + " " + conv[1] + " ";
             // text layer spans seem to be shifted to the top by some pixels, so add a small offset to the highlight div
-            this._createHighlightDiv(x + offset, y, r.w, r.h, this.colorSelected.id);
+            // this._createHighlightDiv(x + offset, y, r.w, r.h, this.colorSelected.id);
 
         });
         cmd += "# " + s.toString();
@@ -78,6 +79,8 @@ export const Highlighting = {
         this._removeAllHighlights();
         let canvas = document.getElementById("siac-pdf-canvas");
         if (!canvas) { return; }
+        let st = document.getElementById("siac-pdf-overflow").scrollTop;
+
         this.current.forEach((r) => {
             let x0 = r[0];
             let y0 = r[1];
@@ -95,6 +98,7 @@ export const Highlighting = {
             this._createHighlightDiv(x, y, w, h, t, id, text);
 
         });
+        document.getElementById("siac-pdf-overflow").scrollTop = st;
     },
 
     _removeAllHighlights: function () {
@@ -329,7 +333,7 @@ export const Highlighting = {
             el.setAttribute("onkeyup", "Highlighting.onTextKeyup(this);");
         }
 
-        document.getElementById("siac-pdf-overflow").appendChild(el);
+        document.getElementById("siac-pdf-overflow").append(el);
         return el;
     }
 };
