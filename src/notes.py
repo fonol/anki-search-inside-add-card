@@ -1269,7 +1269,7 @@ def get_pdf_info(nids: List[int]) -> List[Tuple[int, int, int]]:
                 case count(*)
                     when 1 then 
                         case page when -1 then 0 else 1 end
-                    else (select count(*) from read where nid in ({nids}) and page > -1) 
+                    else count(*) - 1
                 end, max(created) from read where nid in ({nids}) and page >= -1 group by nid"""
     conn = _get_connection()
     res = conn.execute(sql).fetchall()
