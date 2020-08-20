@@ -1264,12 +1264,13 @@ def get_pdf_quick_open_suggestions() -> List[SiacNote]:
     return _to_notes(res)
 
 def get_pdf_info(nids: List[int]) -> List[Tuple[int, int, int]]:
-    sql = """select nid, pagestotal, 
+    nids = ",".join([str(n) for n in nids])
+    sql = f"""select nid, pagestotal, 
                 case count(*)
                     when 1 then 
                         case page when -1 then 0 else 1 end
-                    else count(*) 
-                end, max(created) from read where nid in (%s) and page >= -1 group by nid""" % (",".join([str(n) for n in nids]))
+                    else (select count(*) from read where nid in ({nids}) and page > -1) 
+                end, max(created) from read where nid in ({nids}) and page >= -1 group by nid"""
     conn = _get_connection()
     res = conn.execute(sql).fetchall()
     conn.close()
