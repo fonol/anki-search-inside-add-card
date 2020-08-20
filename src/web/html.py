@@ -25,11 +25,14 @@ from aqt import mw
 from aqt.utils import showInfo
 from typing import List, Tuple, Dict, Optional
 
+from .note_templates import *
+from ..stats import getRetentions
 from ..state import get_index, check_index
 from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str
 from ..feeds import read
 from ..internals import perf_time
 from ..config import get_config_value_or_default as conf_or_def
+from ..models import IndexNote
 import utility.misc
 import utility.tags
 import utility.text
@@ -570,6 +573,68 @@ def read_counts_card_body(counts: Dict[int, int]) -> str:
 
     return html
 
+def search_results(db_list: List[IndexNote], query_set: List[str]) -> str:
+    """ Prints a list of index notes. Used e.g. in the pdf viewer. """
+    html                        = ""
+    epochTime                   = int(time.time() * 1000)
+    timeDiffString              = ""
+    newNote                     = ""
+    lastNote                    = ""
+    nids                        = [r.id for r in db_list]
+    show_ret                    = conf_or_def("showRetentionScores", True)
+    fields_to_hide_in_results   = conf_or_def("fieldsToHideInResults", {})
+    hide_clozes                 = conf_or_def("results.hide_cloze_brackets", False)
+    remove_divs                 = conf_or_def("removeDivsFromOutput", False)
+    if show_ret:
+        retsByNid               = getRetentions(nids)
+    ret                         = 0
+    highlighting                = conf_or_def("highlighting", True)
+
+    for counter, res in enumerate(db_list):
+        ret = retsByNid[int(res.id)] if show_ret and int(res.id) in retsByNid else None
+        if ret is not None:
+            retMark = "background: %s; color: black;" % (utility.misc._retToColor(ret))
+            retInfo = """<div class='retMark' style='%s'>%s</div>
+                            """ % (retMark, int(ret))
+        else:
+            retInfo = ""
+
+        lastNote    = newNote
+        text        = res.get_content()
+
+        # hide fields that should not be shown
+        if str(res.mid) in fields_to_hide_in_results:
+            text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in fields_to_hide_in_results[str(res.mid)]])
+
+        #remove <div> tags if set in config
+        if remove_divs and res.note_type != "user":
+            text = utility.text.remove_divs(text)
+
+        # remove cloze brackets if set in config
+        if hide_clozes and res.note_type != "user":
+            text = utility.text.hide_cloze_brackets(text)
+
+        if highlighting and query_set is not None:
+            text = utility.text.mark_highlights(text, query_set)
+
+        text        = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
+        text        = utility.text.try_hide_image_occlusion(text)
+        #try to put fields that consist of a single image in their own line
+        text        = utility.text.newline_before_images(text)
+        template    = noteTemplateSimple if res.note_type == "index" else noteTemplateUserNoteSimple
+        newNote     = template.format(
+            counter=counter+1,
+            nid=res.id,
+            edited="",
+            mouseup="",
+            text=text,
+            ret=retInfo,
+            tags=utility.tags.build_tag_string(res.tags, False, False, maxLength = 15, maxCount = 2),
+            creation="")
+        html += newNote
+    return html
+
+
 def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
     """ Html for the card that displays read pages / day. """
 
@@ -955,7 +1020,19 @@ Supported elements are, besides the standard markdown:<br>
     </ol>
 
 Newlines can be done with two trailing spaces at the end of a line.
-""")]
+"""),
+("Shortcuts", """
+Some of the default shortcuts might not work on every Anki installation, e.g. when I did the "Toggle Page Read" shortcut (Ctrl+Space), I didn't know that
+this is reserved on Mac OS for the finder, so you might want to try out different values.
+"""),
+("Bugs", """
+    If you find anything that does not seem to work correctly, please notify me, and don't wait for me to publish a fix
+    on my own. As there are a lot of configuration options and features at this point, it is infeasible for me to test every single feature and
+    combination of settings after every update. So if nobody notifies me, it might happen that bugs remain for weeks before I randomly stumble upon them.
+<br><br>
+<a href='https://github.com/fonol/anki-search-inside-add-card/issues'>Issue page on the Github repository</a>
+""")
+]
 
 def get_unsuspend_modal(nid):
     """ Returns the html content for the modal that is opened when clicking on a SUSPENDED label. """
