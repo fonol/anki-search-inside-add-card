@@ -1360,27 +1360,36 @@ def insert_pages_total(nid: int, pages_total: int):
     conn.commit()
     conn.close()
 
+#region page-note linking
+
 def get_linked_anki_notes_for_pdf_page(siac_nid: int, page: int) -> List[IndexNote]:
     """ Query to retrieve the Anki notes that were created while on a given pdf page. """
 
     conn = _get_connection()
     nids = conn.execute(f"select nid from notes_pdf_page where siac_nid = {siac_nid} and page = {page}").fetchall()
-    conn.close()
     if not nids or len(nids) == 0:
         return []
     nids_str = ",".join([str(nid[0]) for nid in nids])
     res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id in (%s)" % nids_str)
+    if len(res) != len(nids):
+        anki_nids = [r[0] for r in res]
+        siac_nids = [r[0] for r in nids]
+        for snid in siac_nids: 
+            if snid not in anki_nids:
+                conn.execute(f"delete from notes_pdf_page where nid = {snid}")
+        conn.commit()
+    conn.close()
     return _anki_to_index_note(res)
 
-def get_linked_anki_notes_around_pdf_page(siac_nid: int, page: int) -> List[IndexNote]:
+def get_linked_anki_notes_around_pdf_page(siac_nid: int, page: int) -> List[Tuple[int, int]]:
     conn = _get_connection()
-    nids = conn.execute(f"select nid from notes_pdf_page where siac_nid = {siac_nid} and page > {page-3} and page < {page + 3}").fetchall()
+    nps  = conn.execute(f"select page from notes_pdf_page where siac_nid = {siac_nid} and page >= {page-3} and page <= {page + 3}").fetchall()
     conn.close()
-    if not nids or len(nids) == 0:
+    if not nps or len(nps) == 0:
         return []
-    nids_str = ",".join([str(nid[0]) for nid in nids])
-    res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id in (%s)" % nids_str)
-    return _anki_to_index_note(res)
+    return [n[0] for n in nps]
+
+#endregion page-note linking
 
 #
 # helpers
