@@ -1442,45 +1442,70 @@ class ReadingModal:
         """ % modal.replace("\n", "").replace("'", "\\'")
         return js
 
+    #region page sidebar
 
-    def page_sidebar_info(self, page: int):
+    def page_sidebar_info(self, page: int, pages_total: int):
         """ Fill the page sidebar with Anki notes made on that page / other pdf info. """
 
         linked      = get_linked_anki_notes_for_pdf_page(self.note_id, page)
+        around      = get_linked_anki_notes_around_pdf_page(self.note_id, page)
         read_today  = get_read_today_count()
+
+        around_s    = ""
+        around_d    = {  p: 0  for p in set(around) }
+        for p in around:
+            around_d[p] += 1
+        for p_ix in range(max(1, page- 3), min(page+4, pages_total + 1)):
+            if not p_ix in around_d:
+                around_d[p_ix] = 0
+        
+        for p_ix in range(max(1, page- 3), min(page+4, pages_total + 1)):
+            c = around_d[p_ix]
+            if c == 0:
+                if page == p_ix:
+                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdfDisplayed.numPages)' class='siac-pa-sq empty current'>-</span>"
+                else:
+                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdfDisplayed.numPages)' class='siac-pa-sq empty'>-</span>"
+            else:
+                if page == p_ix:
+                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdfDisplayed.numPages)' class='siac-pa-sq current'>{c}</span>"
+                else:
+                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdfDisplayed.numPages)' class='siac-pa-sq'>{c}</span>"
 
         if len(linked) > 0:
             html = search_results(linked, [])
             html = html.replace("`", "\\`")
             html = f"""
                 <div style='flex: 0 1 auto; color: lightgrey;'>
-                    <center>Page {page}</center>
-                    <b style='text-align: center;'>Notes added ({len(linked)})</b>
+                    <center><b>Page {page}</b></center>
+                    <center style='font-size: 10px; margin-top: 5px;'>{around_s}</center>
                     <hr style='border-top: 4px solid grey;'>
                 </div>
                 <div style='overflow-y: auto; flex: 1 1 auto; padding: 7px; text-align: left;'>
                     {html}
                 </div>
                 <div style='flex: 0 1 auto; color: lightgrey; text-align: center; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    Read today: <b>{read_today}</b> pages
+                    Read today: <b>{read_today}</b> page{"s" if read_today > 1 else ""}
                 </div>
             """
         else:
             html = f""" 
                 <div style='flex: 0 1 auto; color: lightgrey;'>
-                    <center>Page {page}</center>
+                    <center><b>Page {page}</b></center>
+                    <center style='font-size: 10px; margin-top: 5px;'>{around_s}</center>
                     <hr style='border-top: 4px solid grey;'>
                 </div>
-                <div style='flex: 1 1 auto;'>
-                    <center style='margin-top: 150px; padding: 20px; color: lightgrey;'>No notes added while on this page.</center> 
+                <div style='flex: 1 1 auto; display: flex; align-items: center;'>
+                    <center style='padding: 20px; color: lightgrey;'>No notes added while on this page.</center> 
                 </div>
                 <div style='flex: 0 1 auto; color: lightgrey; text-align: center; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    Read today: <b>{read_today}</b> pages
+                    Read today: <b>{read_today}</b> page{"s" if read_today > 1 else ""}
                 </div>
             """
 
         self._editor.web.eval(f"document.getElementById('siac-page-sidebar').innerHTML = `{html}`;")
 
+    #endregion page sidebar
 
     @js
     def update_reading_bottom_bar(self, nid: int):

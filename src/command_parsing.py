@@ -349,8 +349,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.ui.reading_modal.display_cloze_modal(self, selection, sentences)
 
     elif cmd.startswith("siac-linked-to-page "):
-        page = int(cmd.split()[1])
-        index.ui.reading_modal.page_sidebar_info(page)
+        page  = int(cmd.split()[1])
+        total = int(cmd.split()[2])
+        index.ui.reading_modal.page_sidebar_info(page, total)
 
     elif cmd == "siac-url-dialog":
         dialog = UrlImporter(self.parentWindow)
