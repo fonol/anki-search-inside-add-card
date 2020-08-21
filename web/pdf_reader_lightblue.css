@@ -723,6 +723,28 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     border-color: transparent #41b3a3 transparent transparent;
     transition: all ease 0.2s;
 }
+.siac-pa-sq {
+    display: inline-block;
+    background-color: #67c3fc;
+    border-radius: 3px;
+    border: 3px double #186a9c; 
+    background: radial-gradient(#89edff, #1773ac);
+    color: black;
+    font-weight: bold;
+    min-width: 9px;
+    padding: 0 2px 0 2px;
+    margin: 0 2px 0 2px;
+    cursor: pointer;
+    user-select: none;
+}
+.siac-pa-sq.empty {
+    border: 3px double #494949;
+    background: radial-gradient(#adadad, #818181);
+    color: #484848;
+}
+.siac-pa-sq.current {
+    font-size: 1.3em;
+}
 #siac-reading-modal-timer {
     font-size: 30px;
     user-select: none;

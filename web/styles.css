@@ -46,6 +46,9 @@
     vertical-align: bottom;
     background-repeat: no-repeat;
 }
+#siac-reading-modal .siac-pdf-icon {
+    background-image: var(--c-pdf-icn-night); 
+}
 .siac-read-icn {
     cursor: pointer;
     display: inline-block;
