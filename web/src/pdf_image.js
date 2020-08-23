@@ -23,7 +23,7 @@ window.pdfImgMouseUp = function (event) {
     if (pdfImgSel.mouseIsDown) {
         pdfImgSel.mouseIsDown = false;
         drawSquare();
-        var pdfC = document.getElementById("siac-pdf-canvas");
+        var pdfC = activeCanvas();
         cropSelection(pdfC, pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY, insertImage);
         $(pdfImgSel.canvas).remove();
         $('#text-layer').show();
@@ -31,7 +31,7 @@ window.pdfImgMouseUp = function (event) {
 }
 /** Save whole page to image */
 window.pageSnapshot = function() {
-    var pdfC = document.getElementById("siac-pdf-canvas");
+    var pdfC = activeCanvas();
     cropSelection(pdfC, 0, 0, pdfC.offsetWidth, pdfC.offsetHeight, insertImage);
 }
 window.cropSelection = function(canvasSrc, offsetX, offsetY, width, height, callback) {
@@ -46,7 +46,7 @@ window.insertImage = function(data) {
     pycmd("siac-add-image 1 " + data.replace("image/png", ""));
 }
 window.pdfImgMouseDown = function(event) {
-    pdfImgSel.canvasDispl = document.getElementById("siac-pdf-canvas").offsetLeft;
+    pdfImgSel.canvasDispl = activeCanvas().offsetLeft;
     pdfImgSel.mouseIsDown = true;
     pdfImgSel.cvsOffLeft = $(pdfImgSel.canvas).offset().left;
     pdfImgSel.cvsOffTop = $(pdfImgSel.canvas).offset().top;
@@ -62,7 +62,7 @@ window.initImageSelection = function() {
     }
     disableAreaHighlight();
     $('#text-layer').hide();
-    pdfImgSel.canvas = document.getElementById("siac-pdf-canvas");
+    pdfImgSel.canvas = activeCanvas();
     var lCanvasOverlay = document.createElement("canvas");
     pdfImgSel.canvas.parentNode.insertBefore(lCanvasOverlay, pdfImgSel.canvas.nextSibling);
     $(lCanvasOverlay).css({ "width": (pdfImgSel.canvas.width / window.devicePixelRatio) + "px", "height": (pdfImgSel.canvas.height / window.devicePixelRatio) + "px", "top": "0", "left": document.getElementById('text-layer').style.left, "position": "absolute", "z-index": 999999, "opacity": 0.3, "cursor": "crosshair" });
@@ -93,7 +93,7 @@ window.clearImgSelectionCanvas = function() {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 window.initAreaHighlight = function() {
-    pdfImgSel.canvas = document.getElementById("siac-pdf-canvas");
+    pdfImgSel.canvas = activeCanvas();
     var lCanvasOverlay = document.createElement("canvas");
     lCanvasOverlay.oncontextmenu = disableAreaHighlight;
     pdfImgSel.canvas.parentNode.insertBefore(lCanvasOverlay, pdfImgSel.canvas.nextSibling);

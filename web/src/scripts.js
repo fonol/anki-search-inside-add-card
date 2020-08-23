@@ -34,10 +34,12 @@ window.$fields = null;
 
 
 window.sendContent = function(event) {
-    if ((event && event.repeat) || pdfDisplayed != null || siacState.isFrozen)
+    if ((event && event.repeat) || pdfDisplayed != null || siacState.isFrozen) {
         return;
-    if (!$fields.text())
+    }
+    if (!$fields.text()) {
         return;
+    }
     let html = "";
     showLoading("Typing");
     $fields.each(function(index, elem) {
@@ -988,9 +990,11 @@ window.drawHeatmap = function(id, data) {
     }
     var cal = new CalHeatMap();
     let legendColors = {
-        min: "#dae289",
-        max: "#3b6427",
-        empty: "lightgrey"
+        // min: "#dae289",
+        // max: "#3b6427",
+        min: "#8cecff",
+		max: "#008eab",
+        empty: "#e8e8e8"
     };
     if (document.body.classList.contains("nightMode")) {
         legendColors = {
@@ -998,6 +1002,23 @@ window.drawHeatmap = function(id, data) {
             max: "#800026",
             empty: "black"
         }
+    }
+    let cellSize = 10;
+    let cellPadding = 2;
+    let domainLabelFormat = "%B";
+    // crude check for available size, reduce cell size if not enough space
+    let srw = document.getElementById("searchResults").offsetWidth;
+    if (srw < 600) {
+        cellSize = 6;
+        cellPadding = 1;
+        domainLabelFormat = "%b";
+    } else if (srw < 700) {
+        cellSize = 7;
+        domainLabelFormat = "%b";
+    } else if (srw < 750) {
+        cellSize = 8;
+    } else if (srw < 800) {
+        cellSize = 9;
     }
 	cal.init({
         data,
@@ -1010,7 +1031,10 @@ window.drawHeatmap = function(id, data) {
         maxDate: new Date(),
         range: 12,
         rowLimit: 7,
+        cellSize,
+        cellPadding,
         domain: "month",
+        domainLabelFormat,
         subDomain: "day"
     });
 

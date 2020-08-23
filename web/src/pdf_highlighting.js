@@ -77,7 +77,7 @@ export const Highlighting = {
 
     displayHighlights: function () {
         this._removeAllHighlights();
-        let canvas = document.getElementById("siac-pdf-canvas");
+        let canvas = activeCanvas();
         if (!canvas) { return; }
         let st = document.getElementById("siac-pdf-overflow").scrollTop;
 
@@ -244,7 +244,7 @@ export const Highlighting = {
             el.dataset.oh = el.clientHeight;
 
             let rectCanvas = document.getElementById("text-layer").getBoundingClientRect();
-            let x0 = el.offsetLeft - document.getElementById("siac-pdf-canvas").offsetLeft;
+            let x0 = el.offsetLeft - activeCanvas().offsetLeft;
             let y0 = el.offsetTop ;
             let x1 = x0 + el.offsetWidth - 6; 
             let y1 = y0 + el.clientHeight; 
