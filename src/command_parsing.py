@@ -27,6 +27,7 @@ import os
 import time
 import urllib.parse
 import json
+from datetime import datetime
 import typing
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -1471,7 +1472,7 @@ def show_read_stats():
     t_counts    = get_read_last_n_days_by_day(365)
     body        = read_counts_by_date_card_body(t_counts)
     t_counts    = utility.date.counts_to_timestamps(t_counts)
-    res.append(SiacNote.mock(f"Pages read per day (this year)", body, "Meta"))
+    res.append(SiacNote.mock(f"Pages read per day ({datetime.now().year})", body, "Meta"))
 
     counts      = get_read(0)
     body        = read_counts_card_body(counts)
