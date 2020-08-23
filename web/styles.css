@@ -546,7 +546,7 @@ body.nightMode .cardR blockquote, body.nightMode .cardR pre {
     width: 12px;
     background: var(--c-read-box-background);
     border-radius: 3px;
-    margin-left: 3px;
+    margin-left: 2px;
     vertical-align: middle;
 }
 #predefSearchSelect {

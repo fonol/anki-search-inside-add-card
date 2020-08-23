@@ -48,6 +48,12 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     border-radius: 3px;
     padding: 5px;
 }
+#siac-pdf-canvas {
+    display:inline-block;
+}
+#siac-pdf-canvas_1 {
+    display:none;
+}
 
 #siac-cloze-btn {
     margin-bottom: 7px;
@@ -244,10 +250,6 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     margin-top: 23px;
     display: flex;
 }
-/* #siac-pdf-top.siac-pdf-night #text-layer {
-    background-color: #2496dc;
-    opacity: 0.8;
-} */
 #siac-pdf-top.siac-pdf-rose #text-layer {
     background-color: red;
     opacity: 0.2;
@@ -256,10 +258,10 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     background-color: green;
     opacity: 0.4;
 }
-#siac-pdf-top.siac-pdf-coral #text-layer {
+/* #siac-pdf-top.siac-pdf-coral #text-layer {
     background-color: coral;
     opacity: 0.8;
-}
+} */
 #siac-pdf-top.extract #text-layer {
     background-color: #2496dc !important;
     opacity: 0.7 !important;
@@ -305,8 +307,9 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 }
 #siac-iframe-btn {
     position: absolute;
-    left: 0px;
-    top: 50px;
+    /* left: 0px;
+    top: 50px; */
+    top: 5px; left: 0px;
 }
 #siac-schedule-dialog-btn {
     margin-left: 8px;
@@ -381,6 +384,11 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 }
 #siac-pdf-search-btn.expanded img { 
     margin-top: 5px;
+}
+#siac-pdf-search-btn-inner {
+    margin: 0 2px 0 5px; 
+    color: lightgrey; 
+    text-align: center;
 }
 #siac-pdf-search-btn-inner input:focus {
     outline-width: 0;
@@ -486,6 +494,12 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     border: 2px inset #b2b2a0;
     border-radius: 3px;
     height: 20px;
+}
+#siac-pdf-page-lbl {
+    display: inline-block; 
+    text-align: center; 
+    width: 78px; 
+    user-select: none;
 }
 #siac-reading-modal-bottom-bar {
     width: 100%; 
@@ -815,6 +829,13 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     border: 3px outset #90EE90;
     background: var(--c-reading-modal-background);
     color: white;
+}
+#siac-pdf-loader-wrapper {
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100%; 
+    z-index: 7;
 }
 #siac-text-top-wr > div {
     /* height: 100% !important; */
