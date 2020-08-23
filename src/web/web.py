@@ -483,9 +483,12 @@ def changelog() -> List[str]:
 
     return [
         "PDF reader now remembers notes added while reading a given page, added a sidebar to display",
+        "Reduce flicker when switching PDF pages",
         "Updated tips section",
+        "Reduce size of Read heatmap if little space available",
         "Fix: Some issues with PDF text comments",
-        "Fix: Page read count in results being shifted by 1 sometimes"
+        "Fix: Page read count in results being shifted by 1 sometimes",
+        "Fix: Coral PDF color mode"
     ]
 
 def known_issues() -> List[str]:
