@@ -303,7 +303,7 @@ class ReadingModal:
                     pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/pdf.worker.min.js';
                 }
                 var canvas = document.getElementById("siac-pdf-canvas");
-                var loadingTask = pdfjsLib.getDocument(arr, {nativeImageDecoderSupport: 'display'});
+                var loadingTask = pdfjsLib.getDocument(arr, {nativeImageDecoderSupport: 'none'});
                 loadingTask.promise.catch(function(error) {
                         $('#siac-pdf-loader-wrapper').remove();
                         $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
@@ -553,7 +553,7 @@ class ReadingModal:
         quick_sched             = self.quick_sched_btn(priority)
 
         html                    = """
-            <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
+            <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
                 <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 40px); text-align: center; color: grey;'>Note: Not all sites allow embedding!</div>
                 <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
                     <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
@@ -884,7 +884,7 @@ class ReadingModal:
             </div>
 
             <div class='siac-btn siac-btn-dark' id='siac-pdf-search-btn' onclick='$(this).toggleClass("expanded"); onPDFSearchBtnClicked(this);'><img src='{pdf_search_img_src}' style='width: 16px; height: 16px;'/>
-                <div id='siac-pdf-search-btn-inner' class='expanded-hidden white-hover' style='margin: 0 2px 0 5px; color: lightgrey; text-align: center;'>
+                <div id='siac-pdf-search-btn-inner' class='expanded-hidden white-hover'>
                     <input class='siac-rm-bg' style='width: 200px; border:none; color: lightgrey; padding-left: 2px;' onclick='event.stopPropagation();' onkeyup='onPDFSearchInput(this.value, event);'/>
                     <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); readerNotification("Searching..."); nextPDFSearchResult(dir="left");'><b>&lt;</b></div>
                     <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); readerNotification("Searching..."); nextPDFSearchResult(dir="right");'><b>&gt;</b></div>
@@ -898,14 +898,15 @@ class ReadingModal:
             <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" oncopy='onPDFCopy(event)' onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
                 <div id='siac-pdf-wrapper'>
                     <div id='siac-pdf-overflow'>
-                        <div id='siac-pdf-loader-wrapper' style='display: flex; justify-content: center; align-items: center; height: 100%; z-index: 7;'>
-                            <div class='siac-pdf-loader' style=''>
+                        <div id='siac-pdf-loader-wrapper'>
+                            <div class='siac-pdf-loader'>
                                 <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>Loading PDF</div></div>
                             </div>
                         </div>
-                        <canvas id="siac-pdf-canvas" style='z-index: 3; display:inline-block;'></canvas>
+                        <canvas id="siac-pdf-canvas"></canvas>
+                        <canvas id="siac-pdf-canvas_1"></canvas>
                         <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
-                        </div>
+                    </div>
                     <div id='siac-pdf-br-notify'> </div>
                 </div>
                 <div id='siac-page-sidebar'></div>
@@ -923,7 +924,7 @@ class ReadingModal:
                 </div>
                 <div id='siac-page-btns' class='siac-rm-bg'>
                     <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b>&lt;</b></div>
-                    <span style='display: inline-block; text-align: center; width: 78px; user-select: none;' id='siac-pdf-page-lbl'>Loading...</span>
+                    <span id='siac-pdf-page-lbl'>Loading...</span>
                     <div class='siac-btn siac-btn-dark' onclick='pdfPageRight();'><b>&gt;</b></div>
                 </div>
 
@@ -1447,9 +1448,10 @@ class ReadingModal:
     def page_sidebar_info(self, page: int, pages_total: int):
         """ Fill the page sidebar with Anki notes made on that page / other pdf info. """
 
-        linked      = get_linked_anki_notes_for_pdf_page(self.note_id, page)
-        around      = get_linked_anki_notes_around_pdf_page(self.note_id, page)
-        read_today  = get_read_today_count()
+        linked              = get_linked_anki_notes_for_pdf_page(self.note_id, page)
+        around              = get_linked_anki_notes_around_pdf_page(self.note_id, page)
+        read_today          = get_read_today_count()
+        added_today_count   = utility.misc.count_cards_added_today()
 
         around_s    = ""
         around_d    = {  p: 0  for p in set(around) }
@@ -1485,7 +1487,8 @@ class ReadingModal:
                     {html}
                 </div>
                 <div style='flex: 0 1 auto; color: lightgrey; text-align: center; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    Read today: <b>{read_today}</b> page{"s" if read_today > 1 else ""}
+                     <i class="fa fa-bar-chart"></i>&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""}, 
+                    added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
                 </div>
             """
         else:
@@ -1499,7 +1502,8 @@ class ReadingModal:
                     <center style='padding: 20px; color: lightgrey;'>No notes added while on this page.</center> 
                 </div>
                 <div style='flex: 0 1 auto; color: lightgrey; text-align: center; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    Read today: <b>{read_today}</b> page{"s" if read_today > 1 else ""}
+                    <i class="fa fa-bar-chart"></i>&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""}, 
+                    added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
                 </div>
             """
 
