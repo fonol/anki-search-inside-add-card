@@ -204,7 +204,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-config-bool "):
         key = cmd.split()[1]
-        b   = cmd.split()[2].lower() == "true"
+        b   = cmd.split()[2].lower() == "true" or cmd.split()[2].lower() == "on"
         update_config(key, b)
 
     elif cmd.startswith("siac-notification "):
@@ -527,9 +527,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if index is not None:
             index.deleteNote(id)
         run_hooks("user-note-deleted")
-        index.ui.js("""
-            $('#siac-del-modal').remove();
-        """)
+        index.ui.js(""" $('#siac-del-modal').remove(); """)
 
     elif cmd.startswith("siac-delete-current-user-note "):
         # Delete a note, invoked from the reading modal
@@ -650,8 +648,8 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-update-prio "):
         # prio slider in bottom bar released on value != 0
         # not used atm
-        nid = int(cmd.split()[1])
-        new_prio = int(cmd.split()[2])
+        nid         = int(cmd.split()[1])
+        new_prio    = int(cmd.split()[2])
         update_priority_without_timestamp(nid, new_prio)
         # todo: find a better solution
         recalculate_priority_queue()
@@ -935,7 +933,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     #
     #   Special searches
     #
-    elif cmd.startswith("predefSearch "):
+    elif cmd.startswith("siac-predef-search "):
         state.last_search_cmd = cmd
         parse_predef_search_cmd(cmd, self)
 
@@ -1033,17 +1031,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     #   Checkboxes
     #
 
-    elif (cmd.startswith("highlight ")):
+    elif (cmd.startswith("siac-toggle-highlight ")):
         if check_index():
-            index.highlighting = cmd[10:] == "on"
-            config["highlighting"] = cmd[10:] == "on"
+            index.highlighting = cmd.split()[1] == "on"
+            config["highlighting"] = cmd.split()[1] == "on"
             mw.addonManager.writeConfig(__name__, config)
-    elif cmd.startswith("searchWhileTyping "):
-        config["searchOnTyping"] = cmd[18:] == "on"
-        mw.addonManager.writeConfig(__name__, config)
-    elif (cmd.startswith("searchOnSelection ")):
-        config["searchOnSelection"] = cmd[18:] == "on"
-        mw.addonManager.writeConfig(__name__, config)
     elif cmd.startswith("deckSelection"):
         if not check_index():
             return (True, None)
@@ -1168,7 +1160,7 @@ def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
     if not check_index():
         return
     index       = get_index()
-    cmd         = cmd[13:]
+    cmd         = " ".join(cmd.split()[1:])
     searchtype  = cmd.split(" ")[0]
     limit       = int(cmd.split(" ")[1])
     decks       = cmd.split(" ")[2:]
