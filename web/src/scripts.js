@@ -355,7 +355,7 @@ window.onWindowResize = function(fitPdfToPage = true) {
 }
 window.setHighlighting = function(elem) {
     let highlight = $(elem).is(":checked") ? "on" : "off";
-    pycmd("highlight " + highlight);
+    pycmd("siac-toggle-highlight " + highlight);
 }
 window.setTagSearch = function(elem) {
     let tagSearch = $(elem).is(":checked") ? "on" : "off";
@@ -447,10 +447,10 @@ window.setSearchOnTyping = function(active, trigger=true) {
     sendSearchOnTyping();
 }
 window.sendSearchOnTyping = function() {
-    pycmd("searchWhileTyping " + (siacState.searchOnTyping ? "on" : "off"));
+    pycmd("siac-config-bool searchOnTyping " + siacState.searchOnTyping);
 }
 window.sendSearchOnSelection = function() {
-    pycmd("searchOnSelection " + (siacState.searchOnSelection ? "on" : "off"));
+    pycmd("siac-config-bool searchOnSelection " + siacState.searchOnSelection);
 }
 window.fieldKeypress = function(event) {
     if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey &&!event.altKey) {
@@ -711,10 +711,10 @@ window.predefSearchFromSidebar = function(type) {
     if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(type) !== -1) {
         showSearchLoader("Computing");
         setTimeout(function() {
-            pycmd('predefSearch ' + type + ' 200 ' + decks);
+            pycmd('siac-predef-search ' + type + ' 200 ' + decks);
         }, 250);
     } else {
-        pycmd('predefSearch ' + type + ' 200 ' + decks);
+        pycmd('siac-predef-search ' + type + ' 200 ' + decks);
     }
 
 }
@@ -729,10 +729,10 @@ window.predefSearch = function() {
     if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(search) !== -1) {
         showSearchLoader("Computing");
         setTimeout(function() {
-            pycmd("predefSearch " + search + " " + count + " " + decks);
+            pycmd("siac-predef-search " + search + " " + count + " " + decks);
         }, 250);
     } else {
-        pycmd("predefSearch " + search + " " + count + " " + decks);
+        pycmd("siac-predef-search " + search + " " + count + " " + decks);
     }
 }
 window.sort = function() {
@@ -984,7 +984,7 @@ window.dragElement = function(elmnt, headerId, inModal=false) {
 
 window.drawHeatmap = function(id, data) {
     // script might not be loaded yet
-    if (typeof CalHeatMap === "undefined") {
+    if (typeof CalHeatMap === "undefined" || typeof d3 === "undefined") {
         setTimeout(() => { drawHeatmap(id, data); }, 200); 
         return;
     }
