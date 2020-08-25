@@ -225,6 +225,10 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
 window.invertCanvas = function (ctx) {
     if (pdfColorMode === "Night") {
         colorize(ctx, '#2496dc', 0.4);
+        applyFilter(ctx, "#121212", "overlay");
+        // invert(ctx);
+        // applyFilter(ctx, "#121212", "lighten");
+        // overlay(ctx, "#f5f0bc");
     } else if (pdfColorMode === 'X1') {
         invert(ctx);
         colorize(ctx, 'teal', 0.4);
@@ -743,6 +747,21 @@ window.invert = function (ctx) {
 }
 window.darken = function (ctx, color) {
     ctx.globalCompositeOperation = 'darken';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+window.lighten = function (ctx, color) {
+    ctx.globalCompositeOperation = 'lighten';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+window.overlay = function (ctx, color) {
+    ctx.globalCompositeOperation = 'overlay';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+window.applyFilter = function (ctx, color, filter) {
+    ctx.globalCompositeOperation = filter;
     ctx.fillStyle = color;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
