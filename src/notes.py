@@ -1389,6 +1389,23 @@ def get_linked_anki_notes_around_pdf_page(siac_nid: int, page: int) -> List[Tupl
         return []
     return [n[0] for n in nps]
 
+def get_deck_mostly_linked_to_note(siac_nid: int) -> Optional[str]:
+    conn = _get_connection()
+    nids = conn.execute(f"select nid from notes_pdf_page where siac_nid = {siac_nid} order by rowid desc limit 50").fetchall()
+    conn.close()
+    if len(nids) == 0:
+        return None
+    nids = ",".join([str(nid[0]) for nid in nids])
+    res = mw.col.db.first(f"select did, count(did) as cnt from (select did from cards where nid in ({nids})) group by did order by cnt desc limit 1")
+    did = res[0]
+    try:
+        d = mw.col.decks.get(did)["name"]
+        return d
+    except:
+        return None
+
+
+
 #endregion page-note linking
 
 #
