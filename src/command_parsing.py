@@ -127,7 +127,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         # clicked on a tag -> either trigger a search or add the tag to the tag bar
         if config["tagClickShouldSearch"]:
             state.last_search_cmd = cmd
-            rerender_info(self, cmd[17:].strip(), searchByTags=True)
+            search_by_tags(cmd[17:].strip())
         else:
             add_tag(cmd[17:])
 
@@ -170,7 +170,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         fillTagSelect(expanded=True)
 
     elif cmd.startswith("siac-r-search-tag "):
-        rerender_info(self, cmd[18:].strip(), searchByTags=True)
+        search_by_tags(cmd[18:].strip())
 
     elif cmd.startswith("siac-tag-info "):
         #this renders the popup
@@ -1255,14 +1255,15 @@ def set_stats(nid: int, stats: Tuple[Any, ...]):
     if check_index():
         get_index().ui.show_stats(stats[0], stats[1], stats[2], stats[3])
 
-def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool = False, searchByTags: bool = False):
+def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool = False):
     """
     Main function that is executed when a user has typed or manually entered a search.
     Args:
         content: string containing the decks selected (did) + ~ + all input fields content / search masks content
     """
     index = get_index()
-    if (len(content) < 1):
+
+    if len(content) < 1:
         index.ui.empty_result("No results found for empty string")
 
     decks = []
@@ -1279,12 +1280,6 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
             index.lastSearch    = (content, decks, "db")
             searchRes           = index.searchDB(content, decks)
 
-        elif searchByTags:
-            stamp               = utility.misc.get_milisec_stamp()
-            index.ui.latest     = stamp
-            index.lastSearch    = (content, ["-1"], "tags")
-            searchRes           = findBySameTag(content, index.limit, [], index.pinned)
-
         else:
             if len(content[content.index('~ ') + 2:]) > 2000:
                 index.ui.empty_result("Query was <b>too long</b>")
@@ -1295,9 +1290,22 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
 
         if (searchDB or searchByTags) and editor is not None and editor.web is not None:
             if searchRes is not None and len(searchRes["result"]) > 0:
-                index.ui.print_search_results(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor, index.logging)
+                index.ui.print_search_results(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor, logging=index.logging)
             else:
                 index.ui.empty_result("No results found")
+
+
+@requires_index_loaded
+def search_by_tags(query: str):
+    """ Searches for notes with at least one fitting tag. """
+
+    index               = get_index()
+    stamp               = utility.misc.get_milisec_stamp()
+    index.ui.latest     = stamp
+    index.lastSearch    = (query, ["-1"], "tags")
+    res                 = findBySameTag(query, index.limit, [], index.pinned)
+
+    index.ui.print_search_results(res["result"], stamp, index.ui._editor, logging=index.logging)
 
 
 def rerenderNote(nid: int):
