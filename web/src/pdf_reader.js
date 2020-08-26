@@ -149,7 +149,6 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 // } else if (pageTimestamp != latestRenderTimestamp) {
                 //     return null;
                 } else {
-                    Highlighting._removeAllHighlights();
 
                     if (shouldScrollUp) {
                         canvas.parentElement.scrollTop = 0;
@@ -162,6 +161,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                         document.getElementById("siac-pdf-canvas").style.display = "none";
                     canvas.style.display = "inline-block";
 
+                    Highlighting._removeAllHighlights();
 
                     if (fetchHighlights) {
                         updatePdfDisplayedMarks();
