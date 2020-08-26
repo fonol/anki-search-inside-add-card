@@ -466,12 +466,12 @@ def try_select_deck(deck: str) -> bool:
 
     win = aqt.mw.app.activeWindow()
     # dont trigger keypress in edit dialogs opened within the add dialog
-    if not isinstance(win, aqt.AddCards):
+    if not isinstance(win, aqt.addcards.AddCards):
         return False
 
     try:
         win.deckChooser.setDeckName(deck)
-        win.deckChooser.onDeckChange()
+        # win.deckChooser.onDeckChange()
         return True
     except: 
         return False
@@ -482,6 +482,7 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
+        "Try to auto select deck when opening PDF based on previously added notes in the PDF",
         "More accurate PDF loading modals",
         "Improve initial PDF loading time",
         "Fix: Rare error on rendering reading heatmap",
