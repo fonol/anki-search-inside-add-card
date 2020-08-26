@@ -1288,9 +1288,9 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
             searchRes           = index.search(content, decks)
 
 
-        if (searchDB or searchByTags) and editor is not None and editor.web is not None:
+        if searchDB and editor is not None and editor.web is not None:
             if searchRes is not None and len(searchRes["result"]) > 0:
-                index.ui.print_search_results(searchRes["result"], stamp if searchByTags else searchRes["stamp"], editor, logging=index.logging)
+                index.ui.print_search_results(searchRes["result"], searchRes["stamp"], editor, logging=index.logging)
             else:
                 index.ui.empty_result("No results found")
 
