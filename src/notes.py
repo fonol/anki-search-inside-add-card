@@ -1397,6 +1397,8 @@ def get_deck_mostly_linked_to_note(siac_nid: int) -> Optional[str]:
         return None
     nids = ",".join([str(nid[0]) for nid in nids])
     res = mw.col.db.first(f"select did, count(did) as cnt from (select did from cards where nid in ({nids})) group by did order by cnt desc limit 1")
+    if res is None:
+        return None
     did = res[0]
     try:
         d = mw.col.decks.get(did)["name"]
