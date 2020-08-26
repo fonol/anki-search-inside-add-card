@@ -453,7 +453,7 @@ window.sendSearchOnSelection = function() {
     pycmd("siac-config-bool searchOnSelection " + siacState.searchOnSelection);
 }
 window.fieldKeypress = function(event) {
-    if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey &&!event.altKey) {
+    if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey && !event.altKey) {
         if (siacState.timeout) {
             clearTimeout(siacState.timeout);
             siacState.timeout = null;
@@ -861,13 +861,17 @@ window.hideModalSubpage = function() {
     $('#modalText').show();
 }
 
-window.showLoader = function(target, text, voffset) {
-    voffset = voffset ? voffset : 0;
-    $('#' + target).append(`
-    <div id='siac-loader-modal' class='siac-modal-small' contenteditable=false style='position-relative; text-align: center; margin-top: ${voffset}px;'>
-        <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>${text}</div></div>
-    </div>
-    `);
+window.showPDFLoader = function() {
+    let margin = pageSidebarDisplayed ? 230 : 0;
+    document.getElementById('siac-reading-modal-center').innerHTML += `
+    <div id='siac-pdf-loader-wrapper'>
+        <div class='siac-pdf-loader' style='margin-right: ${margin}px'>
+            <div style='margin-top: 7px;'> 
+                <i class="fa fa-file-pdf-o" style='font-size: 27px; color: grey;'></i><br><br>
+                <div id='siac-pdf-loader-text'>Loading PDF file...</div>
+            </div>
+        </div>
+    </div>`;
 }
 window.showSearchLoader = function(text) {
     if (document.getElementById('siac-results-loader-wrapper')) {

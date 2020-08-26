@@ -100,12 +100,14 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
     }
     document.getElementById("siac-pdf-tooltip").style.display = "none";
     document.getElementById("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
-    Highlighting._removeAllHighlights();
     pdfLoading = true;
+    if (isInitial) {
+        pdfLoaderText('Initializing Reader...');
+    }
     pdfDisplayed.getPage(num)
         .then(function (page) {
-            updatePdfDisplayedMarks();
             pdfPageRendering = true;
+
             var lPage = page;
             var pageTimestamp = new Date().getTime();
             latestRenderTimestamp = pageTimestamp;
@@ -131,42 +133,52 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 canvasContext: ctx,
                 viewport: viewport,
                 transform: window.devicePixelRatio !== 1 ? [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0] : null,
-                continueCallback: function (cont) {
-                    if (latestRenderTimestamp != pageTimestamp) {
-                        return;
-                    }
-                    cont();
-                }
             });
             if (pageNumPending !== null) {
-                rerenderPDFPage(pageNumPending, shouldScrollUp);
+                rerenderPDFPage(pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
                 pageNumPending = null;
                 return Promise.reject();
             }
             renderTask.promise.then(function () {
-                // hide other canvas after render
-                if (canvas.id === 'siac-pdf-canvas')
-                    document.getElementById("siac-pdf-canvas_1").style.display = "none";
-                else
-                    document.getElementById("siac-pdf-canvas").style.display = "none";
-                canvas.style.display = "inline-block";
+
                 pdfPageRendering = false;
                 if (pageNumPending !== null) {
-                    rerenderPDFPage(pageNumPending, shouldScrollUp);
+                    rerenderPDFPage(pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
                     pageNumPending = null;
                     return null;
+                // } else if (pageTimestamp != latestRenderTimestamp) {
+                //     return null;
                 } else {
+                    Highlighting._removeAllHighlights();
+
+                    if (shouldScrollUp) {
+                        canvas.parentElement.scrollTop = 0;
+                    }
+
+                    // hide other canvas after render
+                    if (canvas.id === 'siac-pdf-canvas')
+                        document.getElementById("siac-pdf-canvas_1").style.display = "none";
+                    else
+                        document.getElementById("siac-pdf-canvas").style.display = "none";
+                    canvas.style.display = "inline-block";
+
+
+                    if (fetchHighlights) {
+                        updatePdfDisplayedMarks();
+                    }
                     if (["Sand", "Peach", "Night", "X1", "X2", "Mud", "Coral"].indexOf(pdfColorMode) !== -1) {
                         invertCanvas(ctx);
                     }
                 }
                 return lPage.getTextContent({ normalizeWhitespace: false, disableCombineTextItems: false });
             }).catch(function (err) { console.log(err); return Promise.reject(); }).then(function (textContent) {
-                if (!textContent) {
+                if (!textContent || pdfPageRendering) {
                     return Promise.reject();
                 }
                 if (pageNumPending) {
-                    return;
+                    rerenderPDFPage(pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
+                    pageNumPending = null;
+                    return null;
                 }
                 $("#text-layer").css({ height: canvas.height / window.devicePixelRatio, width: canvas.width / window.devicePixelRatio + 1, left: canvas.offsetLeft }).html('');
                 pdfjsLib.renderTextLayer({
@@ -186,7 +198,8 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 }
 
                 if (isInitial) {
-                    setTimeout(function () { refreshCanvas(); }, 3000);
+                    $('#siac-pdf-loader-wrapper').remove();
+                    // setTimeout(function () { refreshCanvas(); }, 3000);
                 }
                 pdfDisplayedViewPort = viewport;
                 if (fetchHighlights) {
@@ -195,30 +208,29 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 } else {
                     Highlighting.displayHighlights();
                 }
-                setLastReadPage();
-            });
-            if (!pageNumPending) {
-                if (shouldScrollUp) {
-                    canvas.parentElement.scrollTop = 0;
-                }
-                if (pagesRead.indexOf(num) !== -1) {
-                    document.getElementById('siac-pdf-overlay').style.display = 'block';
-                    document.getElementById('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book" aria-hidden="true"></i>&nbsp; Unread';
-                } else {
-                    document.getElementById('siac-pdf-overlay').style.display = 'none';
-                    document.getElementById('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book" aria-hidden="true"></i>&nbsp; Read';
-                }
-                if (fetchHighlights && pdfExtract) {
-                    if (pdfExtract[0] > pdfDisplayedCurrentPage || pdfExtract[1] < pdfDisplayedCurrentPage) {
-                        $('#siac-pdf-top').addClass("extract");
+                if (!pageNumPending && !pdfPageRendering) {
+                
+                    if (pagesRead.indexOf(num) !== -1) {
+                        document.getElementById('siac-pdf-overlay').style.display = 'block';
+                        document.getElementById('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book"></i>&nbsp; Unread';
                     } else {
-                        $('#siac-pdf-top').removeClass("extract");
+                        document.getElementById('siac-pdf-overlay').style.display = 'none';
+                        document.getElementById('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book"></i>&nbsp; Read';
                     }
-                }
-                if (fetchHighlights && pageSidebarDisplayed) {
-                    pycmd(`siac-linked-to-page ${pdfDisplayedCurrentPage} ${pdfDisplayed.numPages}`);
-                }
-            }
+                    if (fetchHighlights && pdfExtract) {
+                        if (pdfExtract[0] > pdfDisplayedCurrentPage || pdfExtract[1] < pdfDisplayedCurrentPage) {
+                            $('#siac-pdf-top').addClass("extract");
+                        } else {
+                            $('#siac-pdf-top').removeClass("extract");
+                        }
+                    }
+                    if (fetchHighlights && pageSidebarDisplayed) {
+                        pycmd(`siac-linked-to-page ${pdfDisplayedCurrentPage} ${pdfDisplayed.numPages}`);
+                    }
+                    setLastReadPage();
+                } 
+            });
+            
         }).catch(function (err) { setTimeout(function () { console.log(err); }); });
 }
 
@@ -248,7 +260,7 @@ window.invertCanvas = function (ctx) {
     } else if (pdfColorMode === 'Peach') {
         darken(ctx, '#ffcba4');
     }
-    
+
     // else {
     //     var imgData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
     //     var data = imgData.data;
@@ -1155,4 +1167,9 @@ window.modalBgUpdate = function () {
 
 window.windowHasSelection = function () {
     return window.getSelection().toString().length;
+}
+window.pdfLoaderText = function (html) {
+    try {
+        document.getElementById("siac-pdf-loader-text").innerHTML = html;
+    } catch (e) { }
 }
