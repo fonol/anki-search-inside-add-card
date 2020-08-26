@@ -267,8 +267,11 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     opacity: 0.7 !important;
     mix-blend-mode: normal !important;
 }
-#siac-pdf-top.siac-pdf-x2 .siac-hl-c, #siac-pdf-top.siac-pdf-x1 .siac-hl-c, #siac-pdf-top.siac-pdf-mud .siac-hl-c {
+#siac-pdf-top.siac-pdf-x2 .siac-hl-c, #siac-pdf-top.siac-pdf-x1 .siac-hl-c {
     mix-blend-mode: difference !important;
+}
+#siac-pdf-top.siac-pdf-night .siac-hl-c, #siac-pdf-top.siac-pdf-mud .siac-hl-c {
+    mix-blend-mode: color !important;
 }
 .siac-extract-marker {
     display: inline-block;
@@ -757,7 +760,10 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     color: #484848;
 }
 .siac-pa-sq.current {
-    font-size: 1.3em;
+    font-size: 1.4em;
+}
+.siac-pa-sq.empty.current {
+    border: 2px solid #2496dc;
 }
 #siac-reading-modal-timer {
     font-size: 30px;
@@ -836,6 +842,10 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     align-items: center; 
     height: 100%; 
     z-index: 7;
+}
+#siac-pdf-loader-text {
+    font-weight: bold;
+    color: lightgrey;
 }
 #siac-text-top-wr > div {
     /* height: 100% !important; */
