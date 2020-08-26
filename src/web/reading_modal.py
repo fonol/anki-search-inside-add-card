@@ -43,6 +43,7 @@ from ..notes import _get_priority_list
 from ..special_searches import get_last_added_anki_notes
 from ..models import SiacNote, IndexNote, Printable
 from .html import *
+from .web import try_select_deck
 from .note_templates import *
 from ..internals import js, requires_index_loaded, perf_time
 from ..config import get_config_value_or_default
@@ -129,6 +130,11 @@ class ReadingModal:
         if note.is_pdf():
             if utility.misc.file_exists(note.source):
                 self._display_pdf(note.source.strip(), note_id)
+                # try to select deck which was mostly used when adding notes while this pdf was open
+                deck_name = get_deck_mostly_linked_to_note(note_id)
+                if deck_name:
+                    selected = try_select_deck(deck_name)
+
             else:
                 message = "Could not load the given PDF.<br>Are you sure the path is correct?"
                 self.notification(message)
