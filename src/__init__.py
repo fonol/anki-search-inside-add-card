@@ -56,7 +56,7 @@ from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.quick_open_pdf import QuickOpenPDF
 from .internals import requires_index_loaded
 from .config import get_config_value_or_default as conf_or_def
-from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search
+from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search, search_by_tags
 
 config = mw.addonManager.getConfig(__name__)
 
@@ -438,6 +438,9 @@ def tag_edit_keypress(self, evt, _old):
     # dont trigger keypress in edit dialogs opened within the add dialog
     if isinstance(win, EditDialog) or isinstance(win, Browser):
         return
+    modifiers = evt.modifiers()
+    if modifiers == Qt.ControlModifier or modifiers == Qt.AltModifier or modifiers == Qt.MetaModifier:
+        return
     index = get_index()
 
     if index is not None and len(self.text().strip()) > 0:
@@ -445,7 +448,7 @@ def tag_edit_keypress(self, evt, _old):
         try:
             tagEditTimer.timeout.disconnect()
         except Exception: pass
-        tagEditTimer.timeout.connect(lambda: rerender_info(index.ui._editor, text, searchByTags = True)) 
+        tagEditTimer.timeout.connect(lambda: search_by_tags(text)) 
         tagEditTimer.start(1000)
 
 init_addon()
