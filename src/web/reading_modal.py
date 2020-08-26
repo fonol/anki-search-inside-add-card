@@ -242,6 +242,7 @@ class ReadingModal:
 
 
     def _display_pdf(self, full_path: str, note_id: int):
+
         base64pdf       = utility.misc.pdf_to_base64(full_path)
         blen            = len(base64pdf)
 
@@ -275,11 +276,6 @@ class ReadingModal:
 
             pdfLoading = true;
             var bstr = atob(b64);
-            var n = bstr.length;
-            var arr = new Uint8Array(n);
-            while(n--){
-                arr[n] = bstr.charCodeAt(n);
-            }
             pagesRead = [%s];
             %s
             %s
@@ -296,14 +292,14 @@ class ReadingModal:
                 }
                 if (typeof(pdfjsLib) === 'undefined') {
                     window.setTimeout(() => { loadFn(retry + 1);}, 800);
-                    document.getElementById('siac-loader-text').innerHTML = `PDF.js was not loaded. Retrying (${retry+1} / 5)`;
+                    pdfLoaderText(`PDF.js was not loaded. Retrying (${retry+1} / 5)`);
                     return;
                 }
                 if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
                     pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/pdf.worker.min.js';
                 }
                 var canvas = document.getElementById("siac-pdf-canvas");
-                var loadingTask = pdfjsLib.getDocument(arr, {nativeImageDecoderSupport: 'none'});
+                var loadingTask = pdfjsLib.getDocument({data: bstr}, {nativeImageDecoderSupport: 'none'});
                 loadingTask.promise.catch(function(error) {
                         $('#siac-pdf-loader-wrapper').remove();
                         $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
@@ -314,7 +310,6 @@ class ReadingModal:
                         noteLoading = false;
                 });
                 loadingTask.promise.then(function(pdf) {
-                        $('#siac-pdf-loader-wrapper').remove();
                         pdfDisplayed = pdf;
                         displayedNoteId = %s;
                         pdfDisplayedCurrentPage = getLastReadPage() || %s;
@@ -338,11 +333,12 @@ class ReadingModal:
                 }).catch(function(err) { setTimeout(function() { console.log(err); }); });
             };
             loadFn();
-            b64 = ""; arr = null; bstr = null; file = null;
+            b64 = ""; 
+            bstr = null; file = null;
         """ % (pages_read_js, marks_js, extract_js, port, addon_id, note_id, last_page_read, title, note_id)
         #send large files in multiple packets
         page = self._editor.web.page()
-        chunk_size = 10000000
+        chunk_size = 50000000
         if blen > chunk_size:
             page.runJavaScript(f"var b64 = `{base64pdf[0: chunk_size]}`;")
             sent = chunk_size
@@ -355,7 +351,6 @@ class ReadingModal:
                 var b64 = `%s`;
                     %s
             """ % (base64pdf, init_code))
-      
 
     def show_fields_tab(self):
         self.sidebar.show_fields_tab()
@@ -786,7 +781,7 @@ class ReadingModal:
             #if the note is a pdf or feed, show a loader on click
             pdf_or_feed         = queue_item.is_feed() or queue_item.is_pdf()
             clock               = clock_svg(len(should_greyout) > 0) if queue_item.is_scheduled() else ""
-            should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if pdf_or_feed else ""
+            should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showPDFLoader();' if pdf_or_feed else ""
             queue_head_readings +=  "<a oncontextmenu='queueLinkContextMenu(event, %s)' onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s.%s %s</a><br>" % (queue_item.id, should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
             if ix > 3:
                 break
@@ -900,7 +895,10 @@ class ReadingModal:
                     <div id='siac-pdf-overflow'>
                         <div id='siac-pdf-loader-wrapper'>
                             <div class='siac-pdf-loader'>
-                                <div> <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><div id='siac-loader-text'>Loading PDF</div></div>
+                                <div> 
+                                    <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><br/>
+                                    <div id='siac-pdf-loader-text'>Loading PDF...</div>
+                                </div>
                             </div>
                         </div>
                         <canvas id="siac-pdf-canvas"></canvas>
@@ -1453,15 +1451,19 @@ class ReadingModal:
         read_today          = get_read_today_count()
         added_today_count   = utility.misc.count_cards_added_today()
 
-        around_s    = ""
-        around_d    = {  p: 0  for p in set(around) }
+        around_s            = ""
+        around_d            = {  p: 0  for p in set(around) }
         for p in around:
             around_d[p] += 1
-        for p_ix in range(max(1, page- 3), min(page+4, pages_total + 1)):
+
+        upper               = page + 4 + abs(min(0, page - 4))
+        lower               = page - 3 - (3 - min(pages_total - page, 3))
+
+        for p_ix in range(max(1, lower), min(upper, pages_total + 1)):
             if not p_ix in around_d:
                 around_d[p_ix] = 0
         
-        for p_ix in range(max(1, page- 3), min(page+4, pages_total + 1)):
+        for p_ix in range(max(1, lower), min(upper, pages_total + 1)):
             c = around_d[p_ix]
             if c == 0:
                 if page == p_ix:
@@ -1487,7 +1489,7 @@ class ReadingModal:
                     {html}
                 </div>
                 <div style='flex: 0 1 auto; color: lightgrey; text-align: center; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                     <i class="fa fa-bar-chart"></i>&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""}, 
+                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""}, 
                     added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
                 </div>
             """
@@ -1502,7 +1504,7 @@ class ReadingModal:
                     <center style='padding: 20px; color: lightgrey;'>No notes added while on this page.</center> 
                 </div>
                 <div style='flex: 0 1 auto; color: lightgrey; text-align: center; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    <i class="fa fa-bar-chart"></i>&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""}, 
+                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""}, 
                     added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
                 </div>
             """
@@ -1598,7 +1600,7 @@ class ReadingModal:
                 continue
             title               = utility.text.trim_if_longer_than(rel.get_title(), 70)
             pdf_or_feed         = rel.is_pdf() or rel.is_feed()
-            should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if pdf_or_feed else ""
+            should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showPDFLoader();' if pdf_or_feed else ""
             html                = f"{html}<div class='siac-related-notes-item' onclick='if (!pdfLoading) {{ {should_show_loader}  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note {rel.id}\"); }}'>{title}</div>"
         return html
 
@@ -1984,7 +1986,7 @@ class ReadingModalSidebar():
             limit   = get_config_value_or_default("pdfTooltipResultLimit", 50)
 
             for note in results[:limit]:
-                should_show_loader = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showLoader(\"siac-reading-modal-center\", \"Loading Note...\");' if note.is_pdf() else ""
+                should_show_loader = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showPDFLoader();' if note.is_pdf() else ""
                 html = f"{html}<div class='siac-note-title-only' onclick='if (!pdfLoading) {{{should_show_loader}  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note {note.id}\"); hideQueueInfobox();}}'>{note.get_title()}</div>"
 
             html    = html.replace("`", "\\`")
