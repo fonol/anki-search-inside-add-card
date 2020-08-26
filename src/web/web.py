@@ -482,13 +482,10 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "PDF reader now remembers notes added while reading a given page, added a sidebar to display",
-        "Reduce flicker when switching PDF pages",
-        "Updated tips section",
-        "Reduce size of Read heatmap if little space available",
-        "Fix: Some issues with PDF text comments",
-        "Fix: Page read count in results being shifted by 1 sometimes",
-        "Fix: Coral PDF color mode"
+        "More accurate PDF loading modals",
+        "Improve initial PDF loading time",
+        "Fix: Rare error on rendering reading heatmap",
+        "Fix: CTRL/Alt shortcuts pressed while in tag input triggering tag search"
     ]
 
 def known_issues() -> List[str]:
