@@ -480,7 +480,8 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Add Tag distribution pie charts in 'Read Stats'",
+        "Add tag distribution pie charts in 'Read Stats'",
+        "Add support for Youtube videos: Insert the URL of a Youtube video in the 'Source' field of a note",
         "Change the 'Zoom' setting: It now zooms in the whole browser window",
         "Add zoom in/out buttons in the PDF viewer",
         "Added alternate PDF highlight rendering mode: pdf.highlights.use_alt_render, use if default highlights don't display correctly",
