@@ -236,13 +236,17 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         show_unsuspend_modal(nid)
 
     elif cmd == "siac-r-show-pdfs":
-        if check_index():
-            stamp = set_stamp()
-            notes = get_all_pdf_notes()
-            # add special note at front
-            sp_body = get_pdf_list_first_card()
-            notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
-            index.ui.print_search_results(notes, stamp)
+        stamp = set_stamp()
+        notes = get_all_pdf_notes()
+        # add special note at front
+        sp_body = get_pdf_list_first_card()
+        notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
+        index.ui.print_search_results(notes, stamp)
+
+    elif cmd == "siac-r-show-text-notes":
+        stamp = set_stamp()
+        notes = get_all_text_notes()
+        index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-show-pdfs-unread":
         if check_index():
@@ -743,6 +747,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 NoteEditor(self.parentWindow, add_only=True, read_note_id=None, tag_prefill =note.tags, source_prefill=note.source, text_prefill=html, title_prefill = note.title, prio_prefill = prio)
             else:
                 tooltip("Close the opened note dialog first!")
+
+    elif cmd.startswith("siac-yt-save-time "):
+        # save time clicked in yt player
+        time = int(cmd.split()[1])
+        src = index.ui.reading_modal.note.source 
+        set_source(index.ui.reading_modal.note_id, utility.text.set_yt_time(src, time))
+
 
     elif cmd.startswith("siac-scale "):
         factor = float(cmd.split()[1])
