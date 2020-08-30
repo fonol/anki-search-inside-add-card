@@ -299,14 +299,13 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                     </div>
                 </div>
                 <div id="icns-large">
-                    <div class='siac-read-icn' onclick='pycmd("siac-user-note-queue-read-head")'></div>
-                    <div class='pdf-icon' onclick='pycmd("siac-r-show-pdfs")'>
-                        %s
-                    </div>
-                    <div class='rnd-icon' onclick='toggleNoteSidebar();'>NOTES</div>
-                    <div class='flds-icon' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span>&#9744; </div>
-                    <div class='rnd-icon' onclick='pycmd("siac-r-random-notes " + siacState.selectedDecks.toString())'> <span class='icns-add'>RANDOM </span>&#9861; </div>
-                    <div class='freeze-icon' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
+                    <div class='rnd-icon' title='Read First in Queue' onclick='pycmd("siac-user-note-queue-read-head")'><i class="fa fa-inbox"></i></div>
+                    <div class='rnd-icon' title='PDF Notes' onclick='pycmd("siac-r-show-pdfs")'> <i class="fa fa-file-pdf-o"></i></div>
+                    <div class='rnd-icon' title='Text Notes' onclick='pycmd("siac-r-show-text-notes")'> <i class="fa fa-file-text-o"></i></div>
+                    <div class='rnd-icon' title='Toggle Sidebar' onclick='toggleNoteSidebar();'><i class="fa fa-bars"></i></div>
+                    <div class='rnd-icon' title='Search for fields content' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span><i class="fa fa-search"></i></div>
+                    <div class='rnd-icon' title='Random Anki Notes' onclick='pycmd("siac-r-random-notes " + siacState.selectedDecks.toString())'><i class="fa fa-random"></i></div>
+                    <div class='freeze-icon' title='Freeze results' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
                     <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
                 </div>
                 <div id="resultsArea" style="">
@@ -431,7 +430,6 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
     rightSideWidth,
     conf_or_def("noteScale", 1.0),
     conf_or_def("leftSideWidthInPercent", 40),
-    pdf_svg(15, 18),
     "display: none;" if indexIsLoaded else "",
     "hidden" if hideSidebar else "",
     get_calendar_html() if conf_or_def("showTimeline", True) else "",
