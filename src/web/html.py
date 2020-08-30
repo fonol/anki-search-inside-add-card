@@ -185,7 +185,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
         $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
         document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
         let toInsert = `
-        <div class='siac-col' style='width: %s%%; flex-grow: 1; zoom: %s' id='siac-right-side'>
+        <div class='siac-col' style='width: %s%%; flex-grow: 1;' id='siac-right-side'>
             <div id='siac-second-col-wrapper'>
                 <div id="greyout"></div>
                 <div id="a-modal" class="modal">
@@ -414,7 +414,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
            var there = true;
         }
         if (siacState.searchOnTyping) {
-            $('.field').off('siac').on('keyup.siac', fieldKeypress);
+            $('.field').off('siac').on('keydown.siac', fieldKeypress);
         } 
         $('.field').attr('onmouseup', 'getSelectionText()');
         window.$fields = $('.field');
@@ -429,7 +429,6 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
     """ % (
     leftSideWidth,
     rightSideWidth,
-    conf_or_def("searchpane.zoom", 1.0),
     conf_or_def("noteScale", 1.0),
     conf_or_def("leftSideWidthInPercent", 40),
     pdf_svg(15, 18),
@@ -552,10 +551,12 @@ def read_counts_card_body(counts: Dict[int, int]) -> str:
 
     ordered   = [(k, counts[k]) for k in sorted(counts, key=counts.get, reverse=True)]
     html      = ""
+    ix        = 0
     for nid, tup in ordered:
         row     = ""
         title   = utility.text.trim_if_longer_than(tup[1], 70)
         c       = tup[0]
+        ix      += 1
         if c < 100:
             for i in range(c): 
                 row = f"{row}<span class='siac-read-box'></span>" 
@@ -564,13 +565,26 @@ def read_counts_card_body(counts: Dict[int, int]) -> str:
                 row = f"{row}<span class='siac-read-box'></span>" 
             row = f"{row}<span class='keyword'>&nbsp; (+ {c-100})</span>"
 
-        html = f"{html}<tr><td style='min-width: 240px;'><span class='keyword' onclick='pycmd(\"siac-read-user-note {nid}\")'>{title}</span></td><td style='padding-left: 5px; text-align: right;'><b style='vertical-align: middle;'>{c}</b></td><td style='padding-left: 5px;'>{row}</td></tr>"
-    html = f"<br><table>{html}</table>"
+        html = f"{html}<tr><td style='min-width: 240px;'><a class='keyword' onclick='pycmd(\"siac-read-user-note {nid}\")'>{ix}. {title}</a></td><td style='padding-left: 5px; text-align: right;'><b style='vertical-align: middle;'>{c}</b></td><td style='padding-left: 5px;'>{row}</td></tr>"
+    html = f"<br><table class='siac-read-stats-table'>{html}</table>"
 
     html += """
     """
+    return html
 
-
+def topic_card_body(topics: List[Tuple[str, float]]) -> str:
+    html = """
+                <div style='display: flex; width: 100%; margin-top: 20px;'>
+                    <div style='width: 50%; flex: 0 1 auto;'>
+                        <div style='width: 100%; text-align:center;'><b>All PDFs</b></div>
+                        <div id='siac-read-stats-topics-pc_1' style='width: 100%; height: 400px;'></div>
+                    </div> 
+                    <div style='width: 50%; flex: 0 1 auto;'>
+                        <div style='width: 100%; text-align:center;'><b>Read last 7 days</b></div>
+                        <div id='siac-read-stats-topics-pc_2' style='width: 100%; height: 400px;'></div>
+                    </div> 
+                </div> 
+                """
     return html
 
 def search_results(db_list: List[IndexNote], query_set: List[str]) -> str:
@@ -636,7 +650,7 @@ def search_results(db_list: List[IndexNote], query_set: List[str]) -> str:
 
 
 def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
-    """ Html for the card that displays read pages / day. """
+    """ Html for the card that displays read pages / day (heatmap). """
 
     if counts is None or len(counts) == 0:
         return """
@@ -645,7 +659,7 @@ def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
             </center>
         """
 
-    html = """<div id='siac-read-time-ch' style='width: 100%; margin: 25px auto 0 auto;'></div>"""
+    html = """<div id='siac-read-time-ch' style='width: 100%; margin: 30px auto 10px auto;'></div>"""
     return html
 
 
@@ -682,7 +696,7 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <fieldset>
-            <span><mark>Important:</mark> Modify this value to scale the whole search pane. Useful e.g. when working on a small screen.</span>
+            <span><mark>Important:</mark> Modify this value to scale the editor. Useful e.g. when working on a small screen. This is essentially the same as zooming in a web browser with CTRL+Mousewheel.</span>
                 <table style="width: 100%%">
                     <tr><td><b>Zoom</b></td><td style='text-align: right;'><input placeholder="" type="number" step="0.1" style='width: 60px;' onchange="pycmd('siac-styling searchpane.zoom ' + this.value)" value="%s"/></td></tr>
                 </table>
