@@ -409,6 +409,17 @@ def try_find_sentence(text, selection):
 
     return pre + after[::-1] + "."
 
+def set_yt_time(src: str, time: int) -> str:
+    id = get_yt_video_id(src)
+    return f"https://www.youtube.com/watch?v={id}&t={time}s"
+
+def get_yt_video_id(src: str) -> str:
+    match = re.match(r".+/watch\?v=([^&]+)(?:&t=.+)?", src)
+    if match: 
+        return match.group(1)
+    return ""
+
+
    
 def clean_tags(tags):
     if tags is None or len(tags.strip()) == 0:
