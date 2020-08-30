@@ -311,6 +311,12 @@ def insert_scripts():
         script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/{pdf_theme}';
         document.body.appendChild(script);
 
+
+        script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'https://www.youtube.com/iframe_api';
+        document.body.appendChild(script);
+
         var css = `@font-face {{
                         font-family: "Open Sans";
                         src: url("http://127.0.0.1:{port}/_addons/{addon_id}/web/font/OpenSans-Regular.ttf");
