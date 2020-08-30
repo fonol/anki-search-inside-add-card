@@ -504,15 +504,16 @@ class ReadingModal:
             #check if it is a pdf or feed
             overflow        = "auto"
             notification    = ""
+            editable        = False
             if note.is_pdf() and utility.misc.file_exists(source):
-                editable    = False
                 overflow    = "hidden" 
                 text        = self.pdf_viewer_html(source, note.get_title(), priority)
                 if "/" in source:
                     source  = source[source.rindex("/") +1:]
             elif note.is_feed():
                 text        = self.get_feed_html(note_id, source)
-                editable    = False
+            elif note.is_yt():
+                text        = self.yt_html()
             else:
                 editable    = len(text) < 100000
                 overflow    = "hidden" 
@@ -596,6 +597,43 @@ class ReadingModal:
             </script>
         """.format_map(dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, title=title))
         return html
+
+    def yt_html(self) -> str:
+        """ Returns the HTML for the embedded youtube video player. """
+
+        title   = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
+        url     = self.note.source.strip()
+        match   = re.match(r".+/watch\?v=([^&]+)(?:&t=(.+)s)?", url)
+        time    = 0
+        if match:
+            video = match.group(1)
+            if len(match.groups()) > 2:
+                time = int(match.group(2))
+        
+        return f"""
+            <div style='width: 100%; height: 100%; position: relative; display: flex; flex-direction: column;'>
+                <div id='siac-yt-player' style='width: 100%; flex: 1 1 auto;  box-sizing: border-box; margin: 10px -15px 0 -16px;'></div>
+                <div class="siac-reading-modal-button-bar-wrapper">
+                    <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
+                        <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
+                        <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {self.note_id}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
+                        <div class='siac-btn siac-btn-dark' onclick='pycmd("siac-yt-save-time " + ytCurrentTime()); readerNotification("Saved Position.");' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save Time&nbsp;</b></div>
+                    </div>
+                </div>
+                <div id='siac-pdf-br-notify'></div>
+            </div>
+            <script>
+                pdfLoading = false;
+                noteLoading = false;
+                pdfDisplayed = null;
+                if (pdfBarsHidden) {{
+                    readerNotification("{title}");
+                }}
+                displayedNoteId = {self.note_id};
+                initYtPlayer('{video}', {time});
+            </script>
+
+        """
 
     def quick_sched_btn(self, priority: int) -> str:
         """ The button at the left side of the pdf/note pane, which allows to quickly mark as done and/or update the priority. """
