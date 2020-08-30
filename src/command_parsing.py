@@ -154,6 +154,21 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         # pin note symbol clicked
         set_pinned(cmd[9:])
 
+    elif cmd == "siac-zoom-out":
+        # zoom out webview
+        z = get_config_value_or_default("searchpane.zoom", 1.0)
+        new = round(max(0.3, z - 0.1), 1)
+        self.web.setZoomFactor(new)
+        tooltip(f"Set Zoom to <b>{str(int(new * 100))}%</b>")
+        update_config("searchpane.zoom", new)
+    elif cmd == "siac-zoom-in":
+        # zoom in webview
+        z = get_config_value_or_default("searchpane.zoom", 1.0)
+        new = round(min(2.0, z + 0.1), 1)
+        self.web.setZoomFactor(new)
+        tooltip(f"Set Zoom to <b>{str(int(new * 100))}%</b>")
+        update_config("searchpane.zoom", new)
+
     elif cmd.startswith("siac-render-tags"):
         # clicked on a tag with (+n) 
         index.ui.printTagHierarchy(cmd[16:].split(" "))
@@ -1474,6 +1489,13 @@ def show_read_stats():
     t_counts    = utility.date.counts_to_timestamps(t_counts)
     res.append(SiacNote.mock(f"Pages read per day ({datetime.now().year})", body, "Meta"))
 
+    topics      = pdf_topic_distribution()
+    rec_topics  = pdf_topic_distribution_recently_read(7)
+
+    if len(topics) > 0:
+        body    = topic_card_body(topics)
+        res.append(SiacNote.mock(f"Topic/Tag Distribution", body, "Meta"))
+
     counts      = get_read(0)
     body        = read_counts_card_body(counts)
     res.append(SiacNote.mock(f"Pages read today ({sum([c[0] for c in counts.values()])})", body, "Meta"))
@@ -1489,6 +1511,10 @@ def show_read_stats():
     index.ui.print_search_results(res, stamp)
     # fill plots
     index.ui.js(f"""drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)});""")
+    if len(topics) > 0:
+        index.ui.js(f"drawTopics('siac-read-stats-topics-pc_1', {json.dumps(topics)});")
+    if len(rec_topics) > 0:
+        index.ui.js(f"drawTopics('siac-read-stats-topics-pc_2', {json.dumps(rec_topics)});")
 
 def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: int):
     try:
@@ -1767,7 +1793,7 @@ def update_styling(cmd):
 
     if name == "searchpane.zoom":
         config[name] = float(value)
-        index.ui.js("document.getElementById('siac-right-side').style.zoom = '%s'; showTagInfoOnHover = %s;" % (value, "false" if float(value) != 1.0 else "true"))
+        index.ui._editor.web.setZoomFactor(float(value))
     elif name == "renderImmediately":
         m = value == "true" or value == "on"
         config["renderImmediately"] = m
