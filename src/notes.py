@@ -1360,6 +1360,55 @@ def insert_pages_total(nid: int, pages_total: int):
     conn.commit()
     conn.close()
 
+#region stats
+
+def pdf_topic_distribution() -> List[Tuple[str, float]]:
+    """ Counts the tags used in PDF notes and returns an ordered list of tag - percentage share pairs. """
+
+    conn    = _get_connection()
+    res     = conn.execute("select tags from notes where trim(tags, ' ') != '' and lower(source) like '%.pdf'").fetchall()
+    conn.close()
+    if not res:
+        return []
+    d = dict()
+    for r in res:
+        for t in r[0].split():
+            if len(t) > 0:
+                if t in d:
+                    d[t] += 1
+                else:
+                    d[t] = 1
+
+    total_c     = sum(d.values()) 
+    res_list    = [(utility.text.trim_if_longer_than(k, 60), v * 100 / total_c) for k,v in d.items()]
+    res_list    = sorted(res_list, key=lambda x: x[1])
+    return res_list
+
+def pdf_topic_distribution_recently_read(delta_days: int) -> List[Tuple[str, float]]:
+    """ Counts the tags used in PDF notes which where recently read and returns an ordered list of tag - percentage share pairs. """
+
+    stamp   = utility.date.date_x_days_ago_stamp(abs(delta_days))
+    conn    = _get_connection()
+    res     = conn.execute(f"select notes.tags from notes join read on notes.id = read.nid where read.created > '{stamp}' and trim(notes.tags, ' ') != ''").fetchall()
+    conn.close()
+    if not res:
+        return []
+    d = dict()
+    for r in res:
+        for t in r[0].split():
+            if len(t) > 0:
+                if t in d:
+                    d[t] += 1
+                else:
+                    d[t] = 1
+
+    total_c     = sum(d.values()) 
+    res_list    = [(utility.text.trim_if_longer_than(k, 60), v * 100 / total_c) for k,v in d.items()]
+    res_list    = sorted(res_list, key=lambda x: x[1])
+    return res_list
+
+#endregion stats
+
 #region page-note linking
 
 def get_linked_anki_notes_for_pdf_page(siac_nid: int, page: int) -> List[IndexNote]:
@@ -1390,6 +1439,8 @@ def get_linked_anki_notes_around_pdf_page(siac_nid: int, page: int) -> List[Tupl
     return [n[0] for n in nps]
 
 def get_deck_mostly_linked_to_note(siac_nid: int) -> Optional[str]:
+    """ Count which deck was most common among Anki notes that have been created while reading the given note. """
+
     conn = _get_connection()
     nids = conn.execute(f"select nid from notes_pdf_page where siac_nid = {siac_nid} order by rowid desc limit 50").fetchall()
     conn.close()
@@ -1405,7 +1456,6 @@ def get_deck_mostly_linked_to_note(siac_nid: int) -> Optional[str]:
         return d
     except:
         return None
-
 
 
 #endregion page-note linking
