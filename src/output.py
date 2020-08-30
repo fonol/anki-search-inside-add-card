@@ -158,7 +158,7 @@ class Output:
         timeDiffString              = ""
         newNote                     = ""
         lastNote                    = ""
-        ret = 0
+        ret                         = 0
         self.last_had_timing_info   = printTimingInfo
 
         if notes is not None and len(notes) > 0:
@@ -223,7 +223,7 @@ class Output:
                 extract             = f"<span class='siac-extract-mark'> | P. {res.extract_start} - {res.extract_end}&nbsp;</span>" if res.extract_start else ""
                 p_html              = "<div class='siac-prog-sq'></div>" * 10
                 progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div><div style='display: inline-block;'>{extract}</div>"
-                pdf_class           = "pdf"
+                pdf_class           = "pdf" if not res.extract_start else "pdf extract"
             elif res.note_type == "user" and int(res.id) < 0:
                 # meta card
                 pdf_class           = "meta"
@@ -266,7 +266,16 @@ class Output:
                 remaining_to_highlight[nid] = text
 
             gridclass = "grid" if self.gridView else ""
-            if self.gridView and len(text) < 200:
+
+            # meta notes (graphs etc.) should be full width
+            if self.gridView and res.note_type == "user" and res.is_meta_note():
+                gridclass = ' '.join((gridclass, "grid-full"))
+
+            # pdf notes should be larger because of the progress bar
+            elif self.gridView and res.note_type == "user" and res.is_pdf():
+                gridclass = ' '.join((gridclass, "grid-large"))
+
+            elif self.gridView and len(text) < 200:
                 if self.scale < 0.8:
                     gridclass = ' '.join((gridclass, "grid-smaller"))
                 else:

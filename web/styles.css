@@ -212,7 +212,8 @@ body.nightMode .cardR blockquote, body.nightMode .cardR pre {
      border: 3px outset var(--c-note-hover-border);
 }
 .w-100 {
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 .bold {
     font-weight: bold;
@@ -498,6 +499,10 @@ body.nightMode .cardR blockquote, body.nightMode .cardR pre {
     vertical-align: top;
     margin-left: 5px !important;
 }
+.cardWrapper.grid-full {
+    display: block !important;
+    max-width: none;
+}
 .cardWrapper.grid-small {
     max-width: calc(33% - 12px);
 }
@@ -508,7 +513,10 @@ body.nightMode .cardR blockquote, body.nightMode .cardR pre {
     max-width: 20%;
 }
 .cardWrapper.grid.pdf {
-    max-width: 240px;
+    min-width: 300px !important;
+}
+.cardWrapper.grid.pdf.extract {
+    min-width: 340px !important;
 }
 .cardWrapper .tag-symbol {
     color: grey;
