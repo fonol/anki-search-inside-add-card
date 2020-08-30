@@ -437,9 +437,9 @@ window.updateFieldToHideInResult = function(checkbox, mid, fldOrd) {
 window.setSearchOnTyping = function(active, trigger=true) {
     siacState.searchOnTyping = active;
     if (!active)
-        $('.field').off('keyup.siac', fieldKeypress);
+        $('.field').off('keydown.siac', fieldKeypress);
     else {
-        $('.field').on('keyup.siac', fieldKeypress);
+        $('.field').on('keydown.siac', fieldKeypress);
         if (trigger) {
             sendContent();
         }
@@ -462,6 +462,7 @@ window.fieldKeypress = function(event) {
             sendContent(event);
         }, delayWhileTyping);
     }
+    return true;
 }
 window.searchMaskKeypress = function(event) {
     if (event.keyCode === 13)
@@ -867,7 +868,7 @@ window.showPDFLoader = function() {
     <div id='siac-pdf-loader-wrapper'>
         <div class='siac-pdf-loader' style='margin-right: ${margin}px'>
             <div style='margin-top: 7px;'> 
-                <i class="fa fa-file-pdf-o" style='font-size: 27px; color: grey;'></i><br><br>
+                <div style='margin-bottom: 12px;'><i class="fa fa-download" style='font-size: 25px; color: lightgrey;'></i></div>
                 <div id='siac-pdf-loader-text'>Loading PDF file...</div>
             </div>
         </div>
@@ -996,9 +997,11 @@ window.drawHeatmap = function(id, data) {
     let legendColors = {
         // min: "#dae289",
         // max: "#3b6427",
-        min: "#8cecff",
-		max: "#008eab",
-        empty: "#e8e8e8"
+        // min: "#8cecff",
+        // max: "#008eab",
+        min: "lightskyblue",     
+        max: "steelblue",
+        empty: "#e1e1e1"
     };
     if (document.body.classList.contains("nightMode")) {
         legendColors = {
@@ -1007,7 +1010,7 @@ window.drawHeatmap = function(id, data) {
             empty: "black"
         }
     }
-    let cellSize = 10;
+    let cellSize = 11;
     let cellPadding = 2;
     let domainLabelFormat = "%B";
     // crude check for available size, reduce cell size if not enough space
@@ -1023,7 +1026,9 @@ window.drawHeatmap = function(id, data) {
         cellSize = 8;
     } else if (srw < 800) {
         cellSize = 9;
-    }
+    } else if (srw < 900) {
+        cellSize = 10;
+    } 
 	cal.init({
         data,
         legendColors,
@@ -1040,6 +1045,39 @@ window.drawHeatmap = function(id, data) {
         domain: "month",
         domainLabelFormat,
         subDomain: "day"
+    });
+
+ }
+
+ /**
+  * Pie chart in Read stats.
+  * 
+  */
+ window.drawTopics = function(id, topics) {
+    if (typeof $ === "undefined" || typeof $.plot === "undefined") {
+        setTimeout(() => { drawTopics(id, topics); }, 200); 
+        return;
+    }
+    $.plot('#' + id, topics.map(t => { return { label: t[0], data: t[1]}; }), {
+        series: {
+            pie: {
+                show: true,
+                label: {
+                    show: true,
+                },
+                combine: {
+                    threshold: 0.02,
+                    label: 'Others (< 2%)'
+                },
+                stroke: {
+                    color: document.body.classList.contains("nightMode") ? '#ffffff' : 'black',
+                }
+
+            },
+        },
+        legend: {
+            show: false
+        },
     });
 
  }
