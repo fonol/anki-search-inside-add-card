@@ -1027,6 +1027,11 @@ window.onReadingModalClose = function () {
     document.getElementById('bottomContainer').style.display = 'block';
     document.getElementById('topContainer').style.display = 'flex';
     destroyPDF();
+    if (siacYt.player) {
+        try {
+            siacYt.player.destroy();
+        } catch(e) { }
+    }
     document.getElementById("siac-reading-modal-center").innerHTML = "";
     onWindowResize();
     window.$fields = $('.field');
