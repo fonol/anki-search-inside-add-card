@@ -93,6 +93,9 @@ def init_addon():
     # activate nighmode if Anki's nightmode is active
     gui_hooks.editor_did_init_shortcuts.append(activate_nightmode) 
 
+    # set zoom factor according to config
+    gui_hooks.editor_did_init_shortcuts.append(set_zoom) 
+
     # add-on internal hooks
     setup_hooks()
 
@@ -146,6 +149,8 @@ def on_load_note(editor: Editor):
     """
     Executed everytime a note is created/loaded in the add cards dialog.
     Wraps the normal editor html in a flex layout to render a second column for the searching ui.
+    There are better hooks (i.e. ones that do not get executed on every note loading, but only once on the webview init instead),
+    but for backwards compatibility, this hook is still used instead.
     """
     #only display in add cards dialog or in the review edit dialog (if enabled)
     if editor.addMode or (conf_or_def("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
@@ -156,11 +161,17 @@ def on_load_note(editor: Editor):
         show_tag_info_on_hover  = "true" if conf_or_def("showTagInfoOnHover", True) and conf_or_def("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
         pdf_color_mode          = conf_or_def("pdf.color_mode", "Day")
 
+        pdf_highlights_render   = "siac-pdf-hl-alt-render" if conf_or_def("pdf.highlights.use_alt_render", False) else ""
+
         editor.web.eval(f"""
             var showTagInfoOnHover  = {show_tag_info_on_hover}; 
             tagHoverTimeout         = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
             var delayWhileTyping    = {typing_delay};
             pdfColorMode            = "{pdf_color_mode}";
+
+            if ('{pdf_highlights_render}') {{
+                document.body.classList.add("{pdf_highlights_render}");
+            }}
         """)
 
         def cb(was_already_rendered):
@@ -357,6 +368,20 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
         state.night_mode = night_mode
 
     editor.web.evalWithCallback("(() => {  return document.body.classList.contains('nightMode'); })();", cb)
+
+
+def set_zoom(shortcuts: List[Tuple], editor: Editor):
+    """ After the Add Card / Edit Current dialog is opened, set the zoom according to 'searchpane.zoom'. """
+    
+    win = editor.parentWindow
+    if not win or isinstance(win, Browser): 
+        return
+    if not isinstance(win, AddCards) and not get_config_value_or_default("useInEdit", False):
+        return
+    zoom = get_config_value_or_default("searchpane.zoom", 1.0)
+    if zoom != 1.0:
+        editor.web.setZoomFactor(zoom)
+
 
 def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     """ Register shortcuts used by the add-on. """
