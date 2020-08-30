@@ -135,7 +135,6 @@ def styles() -> str:
     css                 = css.replace("$styles.modalBorderColor$", modalBorder)
     css                 = css.replace("$styles.night.modalBorderColor$", modalBorderNight)
     css                 = css.replace("$styles.readingModalBackgroundColor$", readingModalBG)
-    css                 = css.replace("$zoom$", str(get_config_value_or_default("searchpane.zoom", 1.0)))
 
     return css
 
@@ -243,7 +242,6 @@ def print_starting_info(editor: Editor):
         html += "<br/>Index contains <b>%s</b> notes." % index.get_number_of_notes()
         html += "<br/>Index is always rebuilt if smaller than <b>%s</b> notes." % config["alwaysRebuildIndexIfSmallerThan"]
         html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
-        html += "<br/>Logging is turned <b>%s</b>. %s" % ("on" if index.logging else "off", "You should probably disable it if you don't have any problems." if index.logging else "")
         html += "<br/>Results are rendered <b>%s</b>." % ("immediately" if config["renderImmediately"] else "with fade-in")
         html += "<br/>Tag Info on hover is <b>%s</b>.%s" % ("shown" if config["showTagInfoOnHover"] else "not shown", (" Delay: [<b>%s</b> ms]" % config["tagHoverDelayInMiliSec"]) if config["showTagInfoOnHover"] else "")
         html += "<br/>Image max height is <b>%s</b> px." % config["imageMaxHeight"]
@@ -482,11 +480,11 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Try to auto select deck when opening PDF based on previously added notes in the PDF",
-        "More accurate PDF loading modals",
-        "Improve initial PDF loading time",
-        "Fix: Rare error on rendering reading heatmap",
-        "Fix: CTRL/Alt shortcuts pressed while in tag input triggering tag search"
+        "Add Tag distribution pie charts in 'Read Stats'",
+        "Change the 'Zoom' setting: It now zooms in the whole browser window",
+        "Add zoom in/out buttons in the PDF viewer",
+        "Added alternate PDF highlight rendering mode: pdf.highlights.use_alt_render, use if default highlights don't display correctly",
+        "Fix some problem with typing in fields and shortcuts",
     ]
 
 def known_issues() -> List[str]:
