@@ -17,6 +17,7 @@
 import utility.text
 import utility.misc
 import html
+import re
 import typing
 from typing import Tuple, List, Any, Optional
 
@@ -88,6 +89,9 @@ class SiacNote(Printable):
     
     def is_feed(self) -> bool:
         return self.source is not None and self.source.strip().lower().startswith("feed:")
+
+    def is_yt(self) -> bool:
+        return self.source is not None and re.match("(?:https?://)?www\.youtube\..+", self.source.strip().lower())
     
     def is_in_queue(self) -> bool:
         return self.position is not None and self.position >= 0
