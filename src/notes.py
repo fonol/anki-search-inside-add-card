@@ -255,6 +255,12 @@ def set_delay(nid: int, delay: int):
     conn.commit()
     conn.close()
 
+def set_source(nid: int, source: str):
+    """ Update the source field for the given note. """
+    conn = _get_connection()
+    conn.execute(f"update notes set source = ? where id={nid}", [source])
+    conn.commit()
+    conn.close()
 
 def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
     """
@@ -1197,10 +1203,15 @@ def get_all_tags_as_hierarchy(include_anki_tags: bool) -> Dict:
         tags = get_all_tags()
     return utility.tags.to_tag_hierarchy(tags)
 
+def get_all_text_notes() -> List[SiacNote]:
+    conn = _get_connection()
+    res = conn.execute("select * from notes where not lower(source) like '%.pdf' order by rowid desc").fetchall()
+    conn.close()
+    return _to_notes(res)
 
 def get_all_pdf_notes() -> List[SiacNote]:
     conn = _get_connection()
-    res = conn.execute("select * from notes where lower(source) like '%.pdf'").fetchall()
+    res = conn.execute("select * from notes where lower(source) like '%.pdf' order by rowid desc").fetchall()
     conn.close()
     return _to_notes(res)
 
