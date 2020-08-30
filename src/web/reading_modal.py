@@ -399,7 +399,7 @@ class ReadingModal:
                 queue_btn_text      = "Done!"
                 queue_btn_action    = "siac-user-note-done"
                 schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
-                delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-clickable-anchor'>Later</a>"""
+                delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-link-btn'>Later</a>"""
 
             else:
                 queue_btn_text      = "First in Queue"
@@ -436,7 +436,9 @@ class ReadingModal:
                             
                             </div>
                             <div id='siac-reading-modal-change-theme'>
-                                <a onclick='pycmd("siac-eval index.ui.reading_modal.show_theme_dialog()")'><i class="fa fa-cogs"></i>&nbsp; Theme</a>
+                                <a class='siac-link-btn' onclick='pycmd("siac-zoom-out")'><i class='fa fa-search-minus'></i></a>&nbsp;
+                                <a class='siac-link-btn' onclick='pycmd("siac-zoom-in")' style='margin-right: 15px;'><i class='fa fa-search-plus'></i></a>
+                                <a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.show_theme_dialog()")'><i class="fa fa-cogs"></i>&nbsp; Theme</a>
                             </div>
                             
                         </div>
@@ -452,19 +454,19 @@ class ReadingModal:
                                     <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                                     <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
                                     <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;&nbsp;<i class="fa fa-folder-o sa-cursor-pointer siac-icn-hover siac-pdf-main-color" onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
-                                    <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("{queue_btn_action}");}}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
+                                    <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("{queue_btn_action}");}}' class='siac-link-btn' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
                                     {delay_btn}<br>
-                                    <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-clickable-anchor'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
-                                    <a onclick='if (!pdfLoading && !modalShown) {{ modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}}' class='siac-clickable-anchor'>Remove</a>
+                                    <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}}' class='siac-link-btn'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
+                                    <a onclick='if (!pdfLoading && !modalShown) {{ modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}}' class='siac-link-btn'>Remove</a>
                                 </div>
                                 {queue_readings_list}
                                 <div id='siac-queue-infobox-wrapper'>
                                     <div id='siac-queue-infobox' onmouseleave='leaveQueueItem();'></div>
                                 </div>
                                 <div id='siac-pdf-bottom-tabs' style='display: inline-block; vertical-align: top; margin-left: 16px; user-select: none;'>
-                                    <a class='siac-clickable-anchor tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'>Marks</a>
-                                    <a class='siac-clickable-anchor tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' style='margin-right: 10px;'>Related</a>
-                                    <a class='siac-clickable-anchor tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'>Info</a> <br>
+                                    <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'>Marks</a>
+                                    <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' style='margin-right: 10px;'>Related</a>
+                                    <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'>Info</a> <br>
                                     <div id='siac-pdf-bottom-tab'>
                                         <div id='siac-marks-display' onclick='markClicked(event);'></div>
                                     </div>
@@ -575,7 +577,7 @@ class ReadingModal:
                     <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
                     <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
                     <div class='siac-btn siac-btn-dark' id='siac-extract-text-btn' onclick='tryExtractTextFromTextNote()' style='margin-left: 5px;'>&nbsp;<i class="fa fa-clone"></i> &nbsp;<b>Copy to new Note</b></div>
-                    <div class='siac-btn siac-btn-dark' onclick='saveTextNote({nid}, remove=false)' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save &nbsp;</b></div>
+                    <div class='siac-btn siac-btn-dark' onclick='saveTextNote({nid}, remove=false)' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save&nbsp;</b></div>
                     <span id='siac-text-note-status' style='margin-left: 30px; color: grey;'></span>
                 </div>
             </div>
@@ -701,7 +703,7 @@ class ReadingModal:
             queue_btn_text      = "Done!"
             queue_btn_action    = "siac-user-note-done"
             schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
-            delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-clickable-anchor'>Later</a>"""
+            delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-link-btn'>Later</a>"""
         else:
             queue_btn_text      = "First in Queue"
             queue_btn_action    = "siac-user-note-queue-read-head"
@@ -720,19 +722,19 @@ class ReadingModal:
                             <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
                             <span style='margin-top: 5px; color: lightgrey;'>{time_str}</span> <br>
                             <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;&nbsp;<i class="fa fa-folder-o sa-cursor-pointer siac-icn-hover siac-pdf-main-color"  onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {{return;}}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
-                            <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("{queue_btn_action}") }}' class='siac-clickable-anchor' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
+                            <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("{queue_btn_action}") }}' class='siac-link-btn' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
                             {delay_btn}<br>
-                            <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random") }}' class='siac-clickable-anchor'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
-                            <a onclick='if (!pdfLoading && !modalShown) {{ modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}}' class='siac-clickable-anchor'>Remove</a>
+                            <a onclick='if (!pdfLoading && !modalShown) {{ noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random") }}' class='siac-link-btn'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
+                            <a onclick='if (!pdfLoading && !modalShown) {{ modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}}' class='siac-link-btn'>Remove</a>
                         </div>
                         {queue_readings_list}
                         <div id='siac-queue-infobox-wrapper'>
                             <div id='siac-queue-infobox' onmouseleave='leaveQueueItem();'></div>
                         </div>
                         <div id='siac-pdf-bottom-tabs' style='display: inline-block; vertical-align: top; margin-left: 16px; user-select: none;'>
-                            <a class='siac-clickable-anchor tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'>Marks</a>
-                            <a class='siac-clickable-anchor tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' style='margin-right: 10px;'>Related</a>
-                            <a class='siac-clickable-anchor tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'>Info</a> <br>
+                            <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'>Marks</a>
+                            <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' style='margin-right: 10px;'>Related</a>
+                            <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'>Info</a> <br>
                             <div id='siac-pdf-bottom-tab'>
                                 <div id='siac-marks-display' onclick='markClicked(event);'></div>
                             </div>
@@ -788,7 +790,7 @@ class ReadingModal:
             pdf_or_feed         = queue_item.is_feed() or queue_item.is_pdf()
             clock               = clock_svg(len(should_greyout) > 0) if queue_item.is_scheduled() else ""
             should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showPDFLoader();' if pdf_or_feed else ""
-            queue_head_readings +=  "<a oncontextmenu='queueLinkContextMenu(event, %s)' onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-clickable-anchor %s' style='font-size: 12px; font-weight: bold;' %s >%s.%s %s</a><br>" % (queue_item.id, should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
+            queue_head_readings +=  "<a oncontextmenu='queueLinkContextMenu(event, %s)' onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-link-btn %s' style='font-size: 12px; font-weight: bold;' %s >%s.%s %s</a><br>" % (queue_item.id, should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
             if ix > 3:
                 break
 
@@ -913,7 +915,13 @@ class ReadingModal:
                     </div>
                     <div id='siac-pdf-br-notify'> </div>
                 </div>
-                <div id='siac-page-sidebar'></div>
+                <div id='siac-page-sidebar'>
+                    <div style='height: 100%; display: flex; flex-direction: column; justify-content: center;'>
+                        <div> 
+                            <div class='signal' style='margin-left: auto; margin-right: auto;'></div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
             <div class='siac-reading-modal-button-bar-wrapper' style="">
@@ -1119,7 +1127,7 @@ class ReadingModal:
 
                 </div>
                 <div style='text-align: left;'>
-                    <a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.show_schedule_change_modal()")'>Change Scheduling</a>
+                    <a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.show_schedule_change_modal()")'>Change Scheduling</a>
                     <div class='siac-btn siac-btn-dark' style='float: right;' onclick='scheduleDialogQuickAction()'>Ok</div>
                 </div>
 
@@ -1183,9 +1191,9 @@ class ReadingModal:
 
         title = "Set a new Schedule" if not unscheduled else "This note had no schedule before."
         if not unscheduled:
-            back_btn = """<a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.display_schedule_dialog()")'>Back</a>"""
+            back_btn = """<a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.display_schedule_dialog()")'>Back</a>"""
         else:
-            back_btn = """<a class='siac-clickable-anchor' onclick='pycmd("siac-eval index.ui.reading_modal.display_head_of_queue()")'>Proceed without scheduling</a>"""
+            back_btn = """<a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.display_head_of_queue()")'>Proceed without scheduling</a>"""
 
         body = f"""
                 {title}
@@ -1293,20 +1301,20 @@ class ReadingModal:
                 Change the main color of the reader.<br><br>
                 <div style='user-select: none; display: flex; flex-direction: row;'>
                     <div style='flex: 1'>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader.css")'>Orange</a><br>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightblue.css")'>Lightblue</a><br>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_khaki.css")'>Khaki</a><br>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_darkseagreen.css")'>Darkseagreen</a><br>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_tan.css")'>Tan</a><br>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightgreen.css")'>Lightgreen</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader.css")'>Orange</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightblue.css")'>Lightblue</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_khaki.css")'>Khaki</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_darkseagreen.css")'>Darkseagreen</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_tan.css")'>Tan</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightgreen.css")'>Lightgreen</a><br>
                     </div>
                     <div style='flex: 1'>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightsalmon.css")'>Lightsalmon</a><br>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_yellow.css")'>Yellow</a><br>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_crimson.css")'>Crimson</a><br>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_coral.css")'>Coral</a><br>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_steelblue.css")'>Steelblue</a><br>
-                        <a class='siac-clickable-anchor' onclick='setPdfTheme("pdf_reader_lightsteelblue.css")'>Light Steelblue</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightsalmon.css")'>Lightsalmon</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_yellow.css")'>Yellow</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_crimson.css")'>Crimson</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_coral.css")'>Coral</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_steelblue.css")'>Steelblue</a><br>
+                        <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightsteelblue.css")'>Light Steelblue</a><br>
                     </div>
                 </div>
                 <br>
@@ -1314,18 +1322,18 @@ class ReadingModal:
                 <br><br>
                 <div style='user-select: none; display: flex; flex-direction: row;' id='siac-modal-bg-update'>
                     <div style='flex: 1'>
-                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2f2f31")'>Default</a><br>
-                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor black")'>Black</a><br>
-                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #00193C")'>Darkblue</a><br>
-                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #020D1E")'>Darkbluegrey</a><br>
-                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #102212")'>Darkgreen</a><br>
+                        <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2f2f31")'>Default</a><br>
+                        <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor black")'>Black</a><br>
+                        <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #00193C")'>Darkblue</a><br>
+                        <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #020D1E")'>Darkbluegrey</a><br>
+                        <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #102212")'>Darkgreen</a><br>
                     </div>
                     <div style='flex: 1'>
-                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #343741")'>Lightgrey</a><br>
-                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #0B2A2A")'>Darkturquoise</a><br>
-                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2F1202")'>Darkbrown</a><br>
-                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #381313")'>Darkred</a><br>
-                        <a class='siac-clickable-anchor' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor " + getComputedStyle(document.body, null)["backgroundColor"])'>Window</a><br>
+                        <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #343741")'>Lightgrey</a><br>
+                        <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #0B2A2A")'>Darkturquoise</a><br>
+                        <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2F1202")'>Darkbrown</a><br>
+                        <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #381313")'>Darkred</a><br>
+                        <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor " + getComputedStyle(document.body, null)["backgroundColor"])'>Window</a><br>
                     </div>
                 </div>
                 <br>
@@ -1487,7 +1495,7 @@ class ReadingModal:
             html = html.replace("`", "\\`")
             html = f"""
                 <div style='flex: 0 1 auto; color: lightgrey;'>
-                    <center><b>Page {page}</b></center>
+                    <center><b>PAGE {page}</b></center>
                     <center style='font-size: 10px; margin-top: 5px;'>{around_s}</center>
                     <hr style='border-top: 4px solid grey;'>
                 </div>
@@ -1502,12 +1510,13 @@ class ReadingModal:
         else:
             html = f""" 
                 <div style='flex: 0 1 auto; color: lightgrey;'>
-                    <center><b>Page {page}</b></center>
+                    <center><b>PAGE {page}</b></center>
                     <center style='font-size: 10px; margin-top: 5px;'>{around_s}</center>
                     <hr style='border-top: 4px solid grey;'>
                 </div>
-                <div style='flex: 1 1 auto; display: flex; align-items: center;'>
-                    <center style='padding: 20px; color: lightgrey;'>No notes added while on this page.</center> 
+                <div style='flex: 1 1 auto; display: flex; justify-content: center; flex-direction: column; color: lightgrey;'>
+                    <div style='margin-bottom: 10px; font-size: 25px;'><i class="fa fa-graduation-cap"></i></div>
+                    <center style='padding: 20px; font-variant-caps: all-petite-caps; font-size: medium;'>No notes added while on this page.</center> 
                 </div>
                 <div style='flex: 0 1 auto; color: lightgrey; text-align: center; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
                     <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""}, 
@@ -1548,23 +1557,23 @@ class ReadingModal:
     def show_pdf_bottom_tab(self, note_id: int, tab: str):
         """ Context: Clicked on a tab (Marks / Related / Info) in the bottom bar. """
 
-        tab_js = "$('.siac-clickable-anchor.tab').removeClass('active');"
+        tab_js = "$('.siac-link-btn.tab').removeClass('active');"
         if tab == "marks":
             return f"""{tab_js}
-            $('.siac-clickable-anchor.tab').eq(0).addClass('active');
+            $('.siac-link-btn.tab').eq(0).addClass('active');
             document.getElementById('siac-pdf-bottom-tab').innerHTML =`<div id='siac-marks-display' onclick='markClicked(event);'></div>`;
             updatePdfDisplayedMarks()"""
         if tab == "info":
             html = self.get_note_info_html()
             html = html.replace("`", "&#96;")
             return f"""{tab_js}
-            $('.siac-clickable-anchor.tab').eq(2).addClass('active');
+            $('.siac-link-btn.tab').eq(2).addClass('active');
             document.getElementById('siac-pdf-bottom-tab').innerHTML =`{html}`;"""
         if tab == "related":
             html = self.get_related_notes_html()
             html = html.replace("`", "&#96;")
             return f"""{tab_js}
-            $('.siac-clickable-anchor.tab').eq(1).addClass('active');
+            $('.siac-link-btn.tab').eq(1).addClass('active');
             document.getElementById('siac-pdf-bottom-tab').innerHTML =`{html}`;"""
 
     def get_related_notes_html(self) -> str:
