@@ -51,4 +51,8 @@ Accepts a list of folder names, that will be scanned for .pdf files if you open 
 If you, for some reason, don't want the index to be rebuilt under any circumstances on startup, set this to true.
 
 ### shortcuts.xyz
-Shortcuts for some different functions. If you change these, maybe check for existing shortcuts in the editor before.
+Shortcuts for some different functions. If you change these, check for possible conflicts with existing shortcuts in the editor before.
+
+### pdf.highlights.use_alt_render
+For some reason, the highlights are not displaying correctly on some environments. Until the issue is found, you can set this option to true, 
+which will make the PDF reader use an alternative way of displaying the highlights (might not look as good as the default mode).
