@@ -218,15 +218,20 @@ class Output:
             text                    = res.get_content()
             progress                = ""
             pdf_class               = ""
-            if res.note_type == "user" and res.is_pdf():
-                pdfs.append(nid)
-                extract             = f"<span class='siac-extract-mark'> | P. {res.extract_start} - {res.extract_end}&nbsp;</span>" if res.extract_start else ""
-                p_html              = "<div class='siac-prog-sq'></div>" * 10
-                progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div><div style='display: inline-block;'>{extract}</div>"
-                pdf_class           = "pdf" if not res.extract_start else "pdf extract"
-            elif res.note_type == "user" and int(res.id) < 0:
-                # meta card
-                pdf_class           = "meta"
+            if res.note_type == "user": 
+                icon = "book"
+                if res.is_pdf():
+                    pdfs.append(nid)
+                    extract             = f"<span class='siac-extract-mark'> | P. {res.extract_start} - {res.extract_end}&nbsp;</span>" if res.extract_start else ""
+                    p_html              = "<div class='siac-prog-sq'></div>" * 10
+                    progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div><div style='display: inline-block;'>{extract}</div>"
+                    pdf_class           = "pdf" if not res.extract_start else "pdf extract"
+                elif int(res.id) < 0:
+                    # meta card
+                    pdf_class           = "meta"
+
+                elif res.is_yt():
+                    icon = "film"
             elif res.note_type == "index" and res.did > 0:
                 check_for_suspended.append(res.id)
 
@@ -303,6 +308,7 @@ class Output:
                     tags        = utility.tags.build_tag_string(res.tags, self.gridView),
                     queue       = ": Q-%s&nbsp;" % (res.position + 1) if res.is_in_queue() else "",
                     progress    = progress,
+                    icon        = icon,
                     pdf_class   = pdf_class,
                     ret         = retInfo)
 
