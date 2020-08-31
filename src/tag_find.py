@@ -33,10 +33,9 @@ def findBySameTag(tagStr, limit, decks, pinned):
                 query += " or "
             query += "lower(tags) like '% " + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '%::" + t + " %' or lower(tags) like '% " + t + "::%' or lower(tags) like '" + t + " %' or lower(tags) like '%::" + t + "::%'"
   
+    deckQ = ""
     if decks is not None and len(decks) > 0 and not "-1" in decks:
         deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
 
     if deckQ:
         res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid %s and did in %s" %(query, deckQ))
