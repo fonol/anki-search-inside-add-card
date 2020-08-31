@@ -214,7 +214,7 @@ def save_pdf_page(note: Note):
 
     nid = ix.ui.reading_modal.note_id 
     def cb(page: int):
-        if page >= 0:
+        if page is not None and page >= 0:
             link_note_and_page(nid, note.id, page)
             # update sidebar if shown
             ix.ui.js("updatePageSidebarIfShown()")
