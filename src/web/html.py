@@ -302,6 +302,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
                     <div class='rnd-icon' title='Read First in Queue' onclick='pycmd("siac-user-note-queue-read-head")'><i class="fa fa-inbox"></i></div>
                     <div class='rnd-icon' title='PDF Notes' onclick='pycmd("siac-r-show-pdfs")'> <i class="fa fa-file-pdf-o"></i></div>
                     <div class='rnd-icon' title='Text Notes' onclick='pycmd("siac-r-show-text-notes")'> <i class="fa fa-file-text-o"></i></div>
+                    <div class='rnd-icon' title='Video Notes' onclick='pycmd("siac-r-show-video-notes")'> <i class="fa fa-file-video-o"></i></div>
                     <div class='rnd-icon' title='Toggle Sidebar' onclick='toggleNoteSidebar();'><i class="fa fa-bars"></i></div>
                     <div class='rnd-icon' title='Search for fields content' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span><i class="fa fa-search"></i></div>
                     <div class='rnd-icon' title='Random Anki Notes' onclick='pycmd("siac-r-random-notes " + siacState.selectedDecks.toString())'><i class="fa fa-random"></i></div>
