@@ -248,6 +248,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         notes = get_all_text_notes()
         index.ui.print_search_results(notes, stamp)
 
+    elif cmd == "siac-r-show-video-notes":
+        stamp = set_stamp()
+        notes = get_all_video_notes()
+        index.ui.print_search_results(notes, stamp)
+
     elif cmd == "siac-r-show-pdfs-unread":
         if check_index():
             stamp = set_stamp()

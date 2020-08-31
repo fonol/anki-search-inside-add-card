@@ -1205,7 +1205,13 @@ def get_all_tags_as_hierarchy(include_anki_tags: bool) -> Dict:
 
 def get_all_text_notes() -> List[SiacNote]:
     conn = _get_connection()
-    res = conn.execute("select * from notes where not lower(source) like '%.pdf' order by rowid desc").fetchall()
+    res = conn.execute("select * from notes where not lower(source) like '%.pdf' and not lower(source) like '%youtube.com/watch%' order by rowid desc").fetchall()
+    conn.close()
+    return _to_notes(res)
+
+def get_all_video_notes() -> List[SiacNote]:
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%youtube.com/watch%' order by rowid desc").fetchall()
     conn.close()
     return _to_notes(res)
 
