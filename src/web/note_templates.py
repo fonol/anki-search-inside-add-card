@@ -46,7 +46,7 @@ noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                         %s
                         <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
                     </div>
-                    <div class='cardR' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
+                    <div class='siac-inner-card' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
                     <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
                     <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;&nbsp;<i class="fa fa-info"></i>&nbsp;&nbsp;</div>
                 </div>""" % (PREVIEWER, FLOAT_BTN, NID_BTN, CID_BTN)
@@ -59,7 +59,7 @@ noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
                     <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                         <div class='editLbl' onclick='edit({nid})'><i class="fa fa-pencil"></i></div>
                     </div>
-                    <div class='cardR' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
+                    <div class='siac-inner-card' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
                     <div style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
                     <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;&nbsp;<i class="fa fa-info"></i>&nbsp;&nbsp;</div>
                 </div>"""
@@ -71,7 +71,7 @@ noteTemplateUserNoteSimple = """<div class='cardWrapper' style="display: block;"
                     <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
                         <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'><i class="fa fa-pencil"></i></div>
                     </div>
-                    <div class='cardR' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
+                    <div class='siac-inner-card' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
                     <div style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
                     <div class='cardLeftBot' style='display: none' onclick=''></div>
                 </div>"""
@@ -89,7 +89,7 @@ noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {gr
                         %s
                         <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
                     </div>
-                    <div class='cardR siac-user-note' onmouseup='{mouseup}' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
+                    <div class='siac-inner-card siac-user-note' onmouseup='{mouseup}' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
                     <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
                     <div class='cardLeftBot' onclick='pycmd("siac-read-user-note {nid}")'>&nbsp;<i class='fa fa-{icon}' aria-hidden='true'></i>&nbsp;{progress}</div>
                 </div>""" % (FLOAT_BTN, NID_BTN)

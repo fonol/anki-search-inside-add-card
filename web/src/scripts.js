@@ -647,10 +647,10 @@ window.sendClickedInformation = function(x, y) {
     if (el.tagName == "IMG") {
         return "img " + el.src;
     }
-    if ((el.tagName == "SPAN" || el.tagName == "DIV" || el.tagName == "MARK") && el.parentElement.className == "cardR") {
+    if ((el.tagName == "SPAN" || el.tagName == "DIV" || el.tagName == "MARK") && el.parentElement.className == "siac-inner-card") {
         return "note " + el.parentElement.id + " " + el.parentElement.innerHTML;
     }
-    if (el.className == "cardR") {
+    if (el.className == "siac-inner-card") {
         return "note " + el.id + " " + el.innerHTML;
     }
 }

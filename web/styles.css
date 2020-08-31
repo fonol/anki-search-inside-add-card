@@ -154,7 +154,7 @@
 .editedStamp {
     display: inline;
 }
-.cardR {
+.siac-inner-card {
   border: 3px outset var(--c-note-border);
   border-radius: 5px;
   padding: 8px 12px 17px 12px;
@@ -167,48 +167,48 @@
   max-height: 950px;
   min-width: 95px;
 }
-#siac-reading-modal .cardR {
+#siac-reading-modal .siac-inner-card {
   border: 3px outset var(--c-note-border-night);
   color: var(--c-note-foreground-night);
   background: var(--c-note-background-night);
 }
-.cardWrapper.meta .cardR {
+.cardWrapper.meta .siac-inner-card {
     max-height: none;
 }
-.pdf .cardR{
+.pdf .siac-inner-card{
     min-width: 200px;
 }
-.cardR img {
+.siac-inner-card img {
     max-height: var(--img-max-height) !important;
     max-width: 100%;
 }
-.cardR dt {
+.siac-inner-card dt {
     font-weight: bold;
 }
-.cardR dd {
+.siac-inner-card dd {
     font-style: italic;
 }
-.cardR dl {
+.siac-inner-card dl {
     border-left: 10px solid var(--c-note-foreground); 
     padding-left: 10px;
     margin: 1.5em 10px;
 
 }
-.cardR blockquote, .cardR pre {
+.siac-inner-card blockquote, .siac-inner-card pre {
   background: #f9f9f9;
   border-left: 10px solid #2496dc;
   margin: 1.5em 10px;
   padding: 0.5em 10px;
 }
-body.nightMode .cardR blockquote, body.nightMode .cardR pre {
+body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre {
   background: #474749;
   border-left: 10px solid #2496dc;
 }
-.cardWrapper.grid .cardR {
+.cardWrapper.grid .siac-inner-card {
     word-wrap: break-word;
 }
 
-.cardR:hover {
+.siac-inner-card:hover {
      border: 3px outset var(--c-note-hover-border);
 }
 .w-100 {
@@ -1397,7 +1397,7 @@ span.tag-symbol {
     overflow-x: hidden;
     cursor: auto;
 }
-.siac-tag-info-box-left .cardR {
+.siac-tag-info-box-left .siac-inner-card {
     user-select: text;
 }
 .siac-tag-info-box-left .editLbl, #siac-left-tab-browse .editLbl, #cal-info .editLbl {
@@ -1650,10 +1650,10 @@ body.nightMode .siac-prog-sq {
     display: inline-block;
     margin: 0 4px 0 7px;
 }
-.siac-user-note .cardR {
+.siac-user-note .siac-inner-card {
     padding-bottom: 21px;
 }
-.siac-user-note .cardR p {
+.siac-user-note .siac-inner-card p {
     margin-block-start: 0.5em;
     margin-block-end: 0.5em;
 }
