@@ -1,0 +1,16 @@
+[package]
+name = "siacrs"
+version = "0.1.0"
+authors = ["Tom Z. <tom-kouran@gmx.de>"]
+edition = "2018"
+
+[lib]
+name = "siacrs"
+crate-type = ["cdylib"]
+
+[dependencies]
+base64 = "*"
+
+[dependencies.pyo3]
+version = "0.11.1"
+features = ["extension-module"]
