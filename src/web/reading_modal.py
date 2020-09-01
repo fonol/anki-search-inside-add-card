@@ -260,8 +260,11 @@ class ReadingModal:
 
         # use rust based lib for better performance if possible
         if state.rust_lib:
-            base64pdf       = encode_file(full_path)
-        else:
+            try:
+                base64pdf       = encode_file(full_path)
+            except:
+                state.rust_lib = False
+        if not state.rust_lib:
             base64pdf       = utility.misc.pdf_to_base64(full_path)
         blen            = len(base64pdf)
 
