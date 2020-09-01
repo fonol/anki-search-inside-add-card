@@ -1665,6 +1665,7 @@ def get_index_info():
                <tr><td>Last Update:</td><td> <b>%s</b></td></tr>
                <tr><td>Qt Version:</td><td> <b>%s</b></td></tr>
                <tr><td>Chromium Version:</td><td> <b>%s</b></td></tr>
+               <tr><td>Rust Libs:</td><td> <b>%s</b></td></tr>
                <tr><td>Index Used:</td><td> <b>%s</b></td></tr>
                <tr><td>SQLite Version</td><td> <b>%s</b></td></tr>
                <tr><td>Index Initialization:</td><td>  <b>%s s</b></td></tr>
@@ -1715,6 +1716,7 @@ def get_index_info():
             last_mod,
             qt_v,
             chromium_v,
+            str(state.rust_lib),
             index.type, 
             sqlite3.sqlite_version,
             str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
