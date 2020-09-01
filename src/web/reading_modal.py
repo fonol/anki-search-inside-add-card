@@ -621,14 +621,18 @@ class ReadingModal:
         url     = self.note.source.strip()
         match   = re.match(r".+/watch\?v=([^&]+)(?:&t=(.+)s)?", url)
         time    = 0
+        prio    = get_priority(self.note_id)
+        qsched  = self.quick_sched_btn(prio)
+
         if match:
             video = match.group(1)
             if len(match.groups()) > 2:
                 time = int(match.group(2))
         
         return f"""
+            {qsched}
             <div style='width: 100%; height: 100%; position: relative; display: flex; flex-direction: column;'>
-                <div id='siac-yt-player' style='width: 100%; flex: 1 1 auto;  box-sizing: border-box; margin: 10px -15px 0 -16px;'></div>
+                <div id='siac-yt-player' style='width: 100%; flex: 1 1 auto;  box-sizing: border-box; margin: 10px -15px 0 0;'></div>
                 <div class="siac-reading-modal-button-bar-wrapper">
                     <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
                         <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
@@ -663,7 +667,7 @@ class ReadingModal:
         else:
             current_btn = f"""<div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-user-note-done");'><b>Current</b></div>"""
         return f"""
-            <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='{onclick}'><div class='siac-read-icn siac-read-icn-light'></div>
+            <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='{onclick}'><i class='fa fa-check'></i>
                 <div class='expanded-hidden white-hover' style='margin: 0 0 0 6px; color: lightgrey; text-align: center;'>
                     <input id='siac-prio-slider-small' type='range' class='siac-prio-slider-small' max='100' min='0' value='{value}' oninput='schedSmallChange(this)' onchange='schedSmallChanged(this, {nid})'/>
                     <span id='siac-slider-small-lbl' style='margin: 0 5px 0 5px;'>{value}</span>
