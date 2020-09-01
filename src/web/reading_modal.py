@@ -35,6 +35,7 @@ import utility.tags
 import utility.text
 import utility.misc
 import utility.date
+import state
 
 from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
@@ -50,6 +51,14 @@ from ..config import get_config_value_or_default
 from ..web_import import import_webpage
 from ..stats import getRetentions
 from ..markdown import markdown
+
+
+try: 
+    from ..rs.siacrs.siacrs import *
+    state.rust_lib = True
+
+except:
+    state.rust_lib = False
 
 
 
@@ -249,7 +258,11 @@ class ReadingModal:
 
     def _display_pdf(self, full_path: str, note_id: int):
 
-        base64pdf       = utility.misc.pdf_to_base64(full_path)
+        # use rust based lib for better performance if possible
+        if state.rust_lib:
+            base64pdf       = encode_file(full_path)
+        else:
+            base64pdf       = utility.misc.pdf_to_base64(full_path)
         blen            = len(base64pdf)
 
         #pages read are stored in js array [int]
