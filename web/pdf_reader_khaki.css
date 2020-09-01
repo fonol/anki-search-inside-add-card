@@ -375,8 +375,10 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     display: none;
     vertical-align: middle;
 }
-#siac-quick-sched-btn .siac-read-icn {
-    margin: 0;
+#siac-quick-sched-btn .fa {
+    margin: 3px 2px 3px 2px;
+}
+#siac-quick-sched-btn.expanded .fa {
     vertical-align: middle;
 }
 #siac-quick-sched-btn.expanded > .expanded-hidden, #siac-mark-jump-btn.expanded > .expanded-hidden, #siac-pdf-search-btn.expanded > .expanded-hidden {
