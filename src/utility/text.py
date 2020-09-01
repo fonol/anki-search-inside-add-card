@@ -189,10 +189,8 @@ def expand_by_synonyms(text, synonyms):
         return  text + " " + " ".join(found)
     return text
 
-
 def get_stamp():
     return  str(random.randint(0, 999999999))
-
 
 def clean_user_note_text(text):
     if text is None:
@@ -240,12 +238,9 @@ def clean_user_note_text(text):
         text = text.replace("-qt-block-indent:0;", "")
         text = text.replace("-qt-paragraph-type:empty;", "")
 
-
         # delete fonts and font sizes 
         text = re.sub("font-size:[^;\"']{1,10}?([;\"'])", "\\1", text)
         text = re.sub("font-family:[^;]{1,40}?;", "", text)
-
-    
         
         if len(orig) > 200 and len(text) == 0:
             return orig
