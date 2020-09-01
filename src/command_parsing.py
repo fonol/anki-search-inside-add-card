@@ -841,7 +841,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                         $('#siac-slider-small-lbl').html('0');
                         $('#siac-quick-sched-btn').toggleClass('expanded');""")
         else:
-            index.ui.js(f"""$('#siac-quick-sched-btn .siac-btn-dark-smaller').last().show().text('Current ({prio})');
+            index.ui.js(f"""$('#siac-quick-sched-btn .siac-btn-dark-smaller').last().show().html('<b>Current ({prio})</b>');
                             $('#siac-prio-slider-small').val({prio});
                             $('#siac-slider-small-lbl').html('{prio}');
                             $('#siac-quick-sched-btn').toggleClass('expanded');""")
