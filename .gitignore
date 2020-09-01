@@ -9,3 +9,8 @@ build.bat
 user_files/siac-notes.db
 user_files/data.json
 web/node_modules/*
+src/rs/siacrs/target/*
+src/rs/siacrs/siacrs_venv/*
+src/rs/siacrs/Cargo.lock
+rs_build.bat
+
