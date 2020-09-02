@@ -10,6 +10,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "*"
+regex = "*"
+lazy_static = "*"
 
 [dependencies.pyo3]
 version = "0.11.1"
