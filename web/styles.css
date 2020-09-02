@@ -126,11 +126,13 @@
     width: 250px;
     font-size: 20px;
     text-align: center;
-    color: #2496dc;
     padding: 15px;
     z-index: 10000;
     border: 3px outset var(--c-modal-border);
     background: var(--c-modal-background);
+}
+#loader .signal {
+    color: #2496dc;
 }
 .siac-search-loader {
     width: 250px; 
