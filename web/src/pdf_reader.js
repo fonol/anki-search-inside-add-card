@@ -166,7 +166,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     if (fetchHighlights) {
                         updatePdfDisplayedMarks();
                     }
-                    if (["Sand", "Peach", "Night", "X1", "X2", "Mud", "Coral"].indexOf(pdfColorMode) !== -1) {
+                    if (["Sand", "Peach", "Night", "X1", "X2", "Mud", "Coral", "Moss"].indexOf(pdfColorMode) !== -1) {
                         invertCanvas(ctx);
                     }
                 }
@@ -259,6 +259,8 @@ window.invertCanvas = function (ctx) {
         darken(ctx, '#ffebb3');
     } else if (pdfColorMode === 'Peach') {
         darken(ctx, '#ffcba4');
+    } else if (pdfColorMode === 'Moss') {
+        colorize(ctx, 'green', 0.4);
     }
 
     // else {
