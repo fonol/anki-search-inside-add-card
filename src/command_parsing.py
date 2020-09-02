@@ -1781,15 +1781,15 @@ def show_timing_modal(render_time = None):
     """ Builds the html and shows the modal which gives some info about the last executed search (timing, query after stopwords etc.) """
 
     index   = get_index()
-    html    = "<h4>Query (stopwords removed, checked SynSets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % index.lastResDict["query"]
+    html    = "<h4>Query (stopwords removed, checked Synsets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % index.lastResDict["query"]
 
     if "decks" in index.lastResDict:
         html += "<h4>Decks:</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % ", ".join([str(d) for d in index.lastResDict["decks"]])
 
     html += "<h4>Execution time:</h4><table style='width: 100%'>"
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", index.lastResDict["time-stopwords"] if index.lastResDict["time-stopwords"] > 0 else "< 1")
-    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking SynSets", index.lastResDict["time-synonyms"] if index.lastResDict["time-synonyms"] > 0 else "< 1")
-    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Executing Query", index.lastResDict["time-query"] if index.lastResDict["time-query"] > 0 else "< 1")
+    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking Synsets", index.lastResDict["time-synonyms"] if index.lastResDict["time-synonyms"] > 0 else "< 1")
+    html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("SQLite: Executing Query", index.lastResDict["time-query"] if index.lastResDict["time-query"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML", index.lastResDict["time-html"] if index.lastResDict["time-html"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Highlighting", index.lastResDict["time-html-highlighting"] if index.lastResDict["time-html-highlighting"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Building HTML - Formatting SIAC Notes", index.lastResDict["time-html-build-user-note"] if index.lastResDict["time-html-build-user-note"] > 0 else "< 1")
