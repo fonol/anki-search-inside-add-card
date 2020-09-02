@@ -25,34 +25,27 @@ from aqt.utils import showInfo, tooltip
 import typing
 from typing import Tuple, List, Optional
 
-# lazy solution for running output from test dir
-try:
-    from .debug_logging import log
-    from .stats import getRetentions
-    from .state import get_index
-    from .notes import get_pdf_info
-    from .special_searches import get_suspended
-    from .web.reading_modal import ReadingModal
-    from .web.sidebar import Sidebar
-    from .config import get_config_value_or_default
-    from .web.note_templates import *
-    from .models import SiacNote, IndexNote
-   
-except:
-    from debug_logging import log
-    from stats import getRetentions
-    from state import get_index
-    from notes import get_pdf_info
-    from special_searches import get_suspended
-    from web.reading_modal import ReadingModal
-    from web.sidebar import Sidebar
-    from web.note_templates import *
-    from config import get_config_value_or_default
-    from models import SiacNote, IndexNote
+from .debug_logging import log
+from .stats import getRetentions
+from .state import get_index
+from .notes import get_pdf_info
+from .special_searches import get_suspended
+from .web.reading_modal import ReadingModal
+from .web.sidebar import Sidebar
+from .config import get_config_value_or_default
+from .web.note_templates import *
+from .models import SiacNote, IndexNote
 
 import utility.tags
 import utility.text
 import utility.misc
+import state
+
+try:
+    from .rs.siacrs.siacrs import rs_mark_highlights
+    state.rust_lib = True
+except:
+    state.rust_lib = False
 
 class Output:
     """
@@ -262,7 +255,14 @@ class Output:
             highlight_start         = time.time()
             if query_set is not None:
                 if counter - (page -1) * 50 < highlight_boundary:
-                    text            = utility.text.mark_highlights(text, query_set)
+                    if state.rust_lib:
+                        try: 
+                            text            = rs_mark_highlights(text, list(query_set))
+                        except: 
+                            text            = utility.text.mark_highlights(text, query_set)
+                            state.rust_lib  = False
+                    else:
+                        text            = utility.text.mark_highlights(text, query_set)
                 else:
                     remaining_to_highlight[nid] = ""
             highlight_total += time.time() - highlight_start
