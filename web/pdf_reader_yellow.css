@@ -254,14 +254,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     background-color: red;
     opacity: 0.2;
 }
-#siac-pdf-top.siac-pdf-moss #text-layer {
-    background-color: green;
-    opacity: 0.4;
-}
-/* #siac-pdf-top.siac-pdf-coral #text-layer {
-    background-color: coral;
-    opacity: 0.8;
-} */
+
 #siac-pdf-top.extract #text-layer {
     background-color: #2496dc !important;
     opacity: 0.7 !important;
