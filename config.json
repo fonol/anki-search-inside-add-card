@@ -51,7 +51,7 @@
 "pdf.clozegen.field.pdftitle": "",
 "pdf.clozegen.field.pdfpath": "",
 "pdf.clozegen.field.page": "",
-"searchUrls": ["https://en.wikipedia.org/w/index.php?search=[QUERY]&title=Special%3ASearch&go=Go&ns0=1" ],
+"searchUrls": ["https://en.wikipedia.org/w/index.php?search=[QUERY]&title=Special%3ASearch&go=Go&ns0=1", "https://dictionary.cambridge.org/dictionary/english/[QUERY]" ],
 "pdf.queue.hide": false,
 "pdf.highlights.use_alt_render": false,
 "notes.sidebar.visible": false,
