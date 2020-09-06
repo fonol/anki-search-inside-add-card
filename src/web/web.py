@@ -480,12 +480,13 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Add tag distribution pie charts in 'Read Stats'",
-        "Add support for Youtube videos: Insert the URL of a Youtube video in the 'Source' field of a note",
-        "Change the 'Zoom' setting: It now zooms in the whole browser window",
-        "Add zoom in/out buttons in the PDF viewer",
-        "Added alternate PDF highlight rendering mode: pdf.highlights.use_alt_render, use if default highlights don't display correctly",
-        "Fix some problem with typing in fields and shortcuts",
+        "Faster PDF loading on some Windows/Mac systems using Rust lib",
+        "Added 'searchbar.default_mode' to the config: Allows to set either 'Add-on' or 'Browse' mode as default",
+        "Added 'How to add PDFs/Youtube' to tips section",
+        "Fix: Bug with invisible background on opening some webpages in PDF reader",
+        "Fix: DB error when re-enabling the add-on from a specific deactived older version",
+        "Fix: Last PDF color mode sometimes not applied on restarting Anki",
+        "Fix: Don't display Youtube notes in the 'Text Notes' tab in the Queue Manager",
     ]
 
 def known_issues() -> List[str]:
