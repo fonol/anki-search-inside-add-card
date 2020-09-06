@@ -1034,6 +1034,11 @@ Supported elements are, besides the standard markdown:<br>
 
 Newlines can be done with two trailing spaces at the end of a line.
 """),
+("How to add PDFs or Youtube videos", """
+In general, it is the "Source" field that determines how the note is opened. If you put the path to a PDF file in the source field, 
+e.g. <i>C:/Path/to/file.pdf</i>, the add-on will attempt to open it as a PDF. 
+For embedding YouTube videos, you simply have to paste the URL of the video into the source field.
+"""),
 ("Shortcuts", """
 Some of the default shortcuts might not work on every Anki installation, e.g. when I did the "Toggle Page Read" shortcut (Ctrl+Space), I didn't know that
 this is reserved on Mac OS for the finder, so you might want to try out different values.
