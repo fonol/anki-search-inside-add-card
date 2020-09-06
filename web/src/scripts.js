@@ -1015,19 +1015,24 @@ window.drawHeatmap = function(id, data) {
     let domainLabelFormat = "%B";
     // crude check for available size, reduce cell size if not enough space
     let srw = document.getElementById("searchResults").offsetWidth;
-    if (srw < 600) {
-        cellSize = 6;
-        cellPadding = 1;
+
+    if (srw < 500) {
+        // cellSize = 4;
+        // cellPadding = 1;
+        domainLabelFormat = "%b";
+    } else if (srw < 600) {
+        // cellSize = 5;
+        // cellPadding = 1;
         domainLabelFormat = "%b";
     } else if (srw < 700) {
-        cellSize = 7;
+        // cellSize = 7;
         domainLabelFormat = "%b";
     } else if (srw < 750) {
-        cellSize = 8;
+        // cellSize = 8;
     } else if (srw < 800) {
-        cellSize = 9;
+        // cellSize = 9;
     } else if (srw < 900) {
-        cellSize = 10;
+        // cellSize = 10;
     } 
 	cal.init({
         data,
@@ -1046,6 +1051,10 @@ window.drawHeatmap = function(id, data) {
         domainLabelFormat,
         subDomain: "day"
     });
+    let el = document.getElementsByClassName("cal-heatmap-container")[0];
+    if (el.getBBox().width > srw) {
+        el.style.zoom = srw / (el.getBBox().width + 120);
+    }
 
  }
 
