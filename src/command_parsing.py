@@ -110,7 +110,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-r-srch-db "):
         # bottom search input used, so trigger either an add-on search or a browser search
-        if index.searchbar_mode == "Add-on":
+        if index.searchbar_mode.lower() == "add-on":
             rerender_info(self, cmd[15:])
         else:
             rerender_info(self, cmd[15:], searchDB = True)
@@ -156,15 +156,15 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-zoom-out":
         # zoom out webview
-        z = get_config_value_or_default("searchpane.zoom", 1.0)
-        new = round(max(0.3, z - 0.1), 1)
+        z   = get_config_value_or_default("searchpane.zoom", 1.0)
+        new = round(max(0.3, z - 0.05), 2)
         self.web.setZoomFactor(new)
         tooltip(f"Set Zoom to <b>{str(int(new * 100))}%</b>")
         update_config("searchpane.zoom", new)
     elif cmd == "siac-zoom-in":
         # zoom in webview
-        z = get_config_value_or_default("searchpane.zoom", 1.0)
-        new = round(min(2.0, z + 0.1), 1)
+        z   = get_config_value_or_default("searchpane.zoom", 1.0)
+        new = round(min(2.0, z + 0.05), 2)
         self.web.setZoomFactor(new)
         tooltip(f"Set Zoom to <b>{str(int(new * 100))}%</b>")
         update_config("searchpane.zoom", new)
