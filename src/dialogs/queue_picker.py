@@ -35,7 +35,7 @@ class QueuePicker(QDialog):
     """ Can be used to select a single note from the queue or to move pdf notes in/out of the queue. """
 
     def __init__(self, parent):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
 
         self.mw         = aqt.mw
         self.parent     = parent
@@ -47,6 +47,8 @@ class QueuePicker(QDialog):
 
         self.setup_ui()
         self.setWindowTitle("Queue Manager")
+        self.showMaximized()
+        # self.setWindowState(Qt.WindowFullScreen)
     
     def setup_ui(self):
         self.setLayout(QVBoxLayout())
@@ -98,7 +100,7 @@ class PDFsTab(QWidget):
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
         
-        lbl = QLabel("Drag slider to assign priority to selected item.")
+        lbl = QLabel("Drag slider to assign priority to selected item (add to queue).")
         lbl.setAlignment(Qt.AlignCenter)
         self.vbox_right.addWidget(lbl)
         self.slider = QtPrioritySlider(0, show_spec_sched=False)
@@ -172,7 +174,7 @@ class TextNotesTab(QWidget):
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
     
-        lbl = QLabel("Drag slider to assign priority to selected item.")
+        lbl = QLabel("Drag slider to assign priority to selected item (add to queue).")
         lbl.setAlignment(Qt.AlignCenter)
         self.vbox_right.addWidget(lbl)
         self.slider = QtPrioritySlider(0, show_spec_sched=False)
@@ -186,7 +188,7 @@ class TextNotesTab(QWidget):
 
     def refresh(self):
         self.search_bar_right.clear()
-        self.fill_list(get_non_pdf_notes_not_in_queue())
+        self.fill_list(get_text_notes_not_in_queue())
 
     def fill_list(self, db_list):
         self.t_view_right.clear()
@@ -201,9 +203,9 @@ class TextNotesTab(QWidget):
     def search_enter(self):
         inp = self.search_bar_right.text()
         if inp is None or len(inp.strip()) == 0:
-            self.fill_list(get_non_pdf_notes_not_in_queue())
+            self.fill_list(get_text_notes_not_in_queue())
             return
-        res = find_unqueued_non_pdf_notes(inp)
+        res = find_unqueued_text_notes(inp)
         self.t_view_right.clear()
         self.fill_list(res)
 
@@ -384,7 +386,7 @@ class TagsTab(QWidget):
         self.vbox_right.addWidget(self.enqueue_all_btn)
         self.vbox_right.addWidget(self.empty_and_enqueue_all_btn)
      
-        plbl = QLabel("Drag slider to assign priority to selected item.")
+        plbl = QLabel("Drag slider to assign priority to selected item (add to queue).")
         plbl.setAlignment(Qt.AlignCenter)
         self.vbox_right.addWidget(plbl)
         self.slider = QtPrioritySlider(0, show_spec_sched=False)
@@ -571,9 +573,9 @@ class QueueWidget(QWidget):
         self.folders_tab    = FoldersTab(self)
 
         self.tabs.currentChanged.connect(self.tabs_changed)
-        self.tabs.addTab(self.tags_tab, "PDFs + Text Notes, By Tag")
-        self.tabs.addTab(self.pdfs_tab, "PDFs, Unqueued")
-        self.tabs.addTab(self.notes_tab, "Text Notes, Unqueued")
+        self.tabs.addTab(self.tags_tab, "Unqueued Notes, By Tag")
+        self.tabs.addTab(self.pdfs_tab, "PDFs")
+        self.tabs.addTab(self.notes_tab, "Text Notes")
         self.tabs.addTab(self.folders_tab, "Folders - Import")
 
         self.t_view_left.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -669,7 +671,7 @@ class QueueWidget(QWidget):
         elif ix == 1:
             self.pdfs_tab.fill_list(get_pdf_notes_not_in_queue())
         elif ix == 2:
-            self.notes_tab.fill_list(get_non_pdf_notes_not_in_queue())
+            self.notes_tab.fill_list(get_text_notes_not_in_queue())
         elif ix == 3:
             self.folders_tab.fill_tree(get_most_used_pdf_folders())
         
