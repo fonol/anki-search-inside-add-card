@@ -167,7 +167,7 @@ def on_load_note(editor: Editor):
             var showTagInfoOnHover  = {show_tag_info_on_hover}; 
             tagHoverTimeout         = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
             var delayWhileTyping    = {typing_delay};
-            pdfColorMode            = "{pdf_color_mode}";
+            var pdfColorMode        = "{pdf_color_mode}";
 
             if ('{pdf_highlights_render}') {{
                 document.body.classList.add("{pdf_highlights_render}");

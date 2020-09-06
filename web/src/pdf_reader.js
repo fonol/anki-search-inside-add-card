@@ -30,7 +30,7 @@ window.pdfPageRendering = false;
 window.pdfDisplayedCurrentPage = null;
 window.pdfDisplayedScale = 2.0;
 window.pdfHighDPIWasUsed = false;
-window.pdfColorMode = "Day";
+// window.pdfColorMode = "Day";
 window.pageNumPending = null;
 window.latestRenderTimestamp = null;
 
