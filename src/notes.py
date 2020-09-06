@@ -159,11 +159,18 @@ def create_db_file_if_not_exists() -> bool:
     conn.execute("CREATE INDEX if not exists prio_nid ON queue_prio_log (nid);")
     conn.commit()
 
+    #
+    # Update code
+    # For lack of some kind of versioning, simply attempt to alter the tables, 
+    # and ignore any sql errors thrown if the modifications did already exist.
+    #
     try:
-        # update code
-        # conn.execute(""" ALTER TABLE notes ADD COLUMN extract_start INTEGER; """)
-        # conn.execute(""" ALTER TABLE notes add column extract_end INTEGER;""")
-
+        conn.execute(""" ALTER TABLE notes ADD COLUMN extract_start INTEGER; """)
+        conn.execute(""" ALTER TABLE notes ADD COLUMN extract_end INTEGER;""")
+        conn.commit()
+    except:
+        pass
+    try:
         conn.execute("""
             Create table if not exists notes_pdf_page (
                 nid INTEGER,
@@ -179,6 +186,7 @@ def create_db_file_if_not_exists() -> bool:
         pass
     try:
         conn.execute(""" ALTER TABLE notes add column delay TEXT;""")
+        con.commit()
     except:
         pass
     finally:
@@ -186,6 +194,7 @@ def create_db_file_if_not_exists() -> bool:
 
     # store a timestamp in /user_files/data.json to check next time, so we don't have to do this on every startup
     # persist_notes_db_checked()
+
     return existed
 
 
@@ -1002,7 +1011,7 @@ def find_unqueued_pdf_notes(text: str) -> Optional[List[SiacNote]]:
     conn.close()
     return _to_notes(res)
 
-def find_unqueued_non_pdf_notes(text: str) -> Optional[List[SiacNote]]:
+def find_unqueued_text_notes(text: str) -> Optional[List[SiacNote]]:
     q = ""
     for token in text.lower().split():
         if len(token) > 0:
@@ -1012,7 +1021,7 @@ def find_unqueued_non_pdf_notes(text: str) -> Optional[List[SiacNote]]:
     if len(q) == 0:
         return
     conn = _get_connection()
-    res = conn.execute(f"select * from notes where ({q}) and not lower(source) like '%.pdf' and (position is null or position < 0) order by id desc").fetchall()
+    res = conn.execute(f"select * from notes where ({q}) and not lower(source) like '%.pdf' and not lower(source) like '%youtube.com/watch%' and (position is null or position < 0) order by id desc").fetchall()
     conn.close()
     return _to_notes(res)
 
@@ -1256,19 +1265,19 @@ def get_pdf_notes_not_in_queue() -> List[SiacNote]:
     conn.close()
     return _to_notes(res)
 
-def get_non_pdf_notes_not_in_queue() -> List[SiacNote]:
+def get_text_notes_not_in_queue() -> List[SiacNote]:
     conn = _get_connection()
-    res = conn.execute("select * from notes where not lower(source) like '%.pdf' and position is null order by id desc").fetchall()
+    res = conn.execute("select * from notes where not lower(source) like '%.pdf' and not lower(source) like '%youtube.com/watch%' and position is null order by id desc").fetchall()
     conn.close()
     return _to_notes(res)
 
 def get_pdf_quick_open_suggestions() -> List[SiacNote]:
-    conn = _get_connection()
-    last_added = conn.execute("select * from notes where lower(source) like '%.pdf' order by id desc limit 8").fetchall()
-    last_read = conn.execute("select notes.id,notes.title,notes.text,notes.source,notes.tags,notes.nid,notes.created,notes.modified,notes.reminder,notes.lastscheduled,notes.position,notes.extract_start,notes.extract_end,notes.delay from notes join read on notes.id == read.nid where lower(notes.source) like '%.pdf' group by notes.id order by max(read.created) desc limit 8").fetchall()
+    conn        = _get_connection()
+    last_added  = conn.execute("select * from notes where lower(source) like '%.pdf' order by id desc limit 8").fetchall()
+    last_read   = conn.execute("select notes.id,notes.title,notes.text,notes.source,notes.tags,notes.nid,notes.created,notes.modified,notes.reminder,notes.lastscheduled,notes.position,notes.extract_start,notes.extract_end,notes.delay from notes join read on notes.id == read.nid where lower(notes.source) like '%.pdf' group by notes.id order by max(read.created) desc limit 8").fetchall()
     conn.close()
-    res = []
-    used = set()
+    res         = []
+    used        = set()
     for nt in zip(last_read, last_added):
         if nt[0] is not None and not nt[0][0] in used:
             res.append(nt[0])
@@ -1281,19 +1290,19 @@ def get_pdf_quick_open_suggestions() -> List[SiacNote]:
     return _to_notes(res)
 
 def get_pdf_info(nids: List[int]) -> List[Tuple[int, int, int]]:
-    nids = ",".join([str(n) for n in nids])
-    sql = f"""select nid, pagestotal, 
+    """ Returns tuples of (nid, read pages, pages total) for all the given note IDs. """
+
+    nids    = ",".join([str(n) for n in nids])
+    sql     = f"""select nid, pagestotal, 
                 case count(*)
                     when 1 then 
                         case page when -1 then 0 else 1 end
                     else count(*) - 1
                 end, max(created) from read where nid in ({nids}) and page >= -1 group by nid"""
-    conn = _get_connection()
-    res = conn.execute(sql).fetchall()
+    conn    = _get_connection()
+    res     = conn.execute(sql).fetchall()
     conn.close()
-    ilist = []
-    for r in res:
-        ilist.append([r[0], r[2], r[1]])
+    ilist   = [(r[0], r[2], r[1]) for r in res]
     return ilist
 
 def get_related_notes(id: int) -> NoteRelations:
