@@ -56,3 +56,6 @@ Shortcuts for some different functions. If you change these, check for possible 
 ### pdf.highlights.use_alt_render
 For some reason, the highlights are not displaying correctly on some environments. Until the issue is found, you can set this option to true, 
 which will make the PDF reader use an alternative way of displaying the highlights (might not look as good as the default mode).
+
+### searchbar.default_mode 
+Determines what mode (Add-on or Browser) the searchbar at the bottom of the UI will have on Anki startup.
