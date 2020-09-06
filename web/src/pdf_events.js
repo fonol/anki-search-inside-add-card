@@ -202,7 +202,7 @@ window.pdfKeyup = function (e) {
         }
         let rect = r.getBoundingClientRect();
         let prect = document.getElementById("siac-reading-modal").getBoundingClientRect();
-        document.getElementById('siac-pdf-tooltip-results-area').innerHTML = 'Searching...';
+        document.getElementById('siac-pdf-tooltip-results-area').innerHTML = '<center>Searching...</center>';
         document.getElementById('siac-pdf-tooltip-searchbar').value = "";
         let left = rect.left - prect.left;
         if (prect.width - left < 250) {
