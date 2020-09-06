@@ -16,6 +16,9 @@ WinRAR a -afzip -ep1 -ibck -r -y "addon-packed.zip" ^
 -x\.git ^
 -x\.vscode ^
 -x\tests\ ^
+-x\src\rs\siacrs\siacrs_venv ^
+-x\src\rs\siacrs\src ^
+-x\src\rs\siacrs\target ^
 -x\web\package.json ^
 -x\web\package-lock.json ^
 -x\web\webpack.config.js
