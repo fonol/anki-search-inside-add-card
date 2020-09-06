@@ -119,7 +119,7 @@ def _build_index(index_up_to_date):
     index.initializationTime            = initializationTime
     index.synonyms                      = loadSynonyms()
     index.logging                       = config["logging"]
-    index.searchbar_mode                = "Add-on"
+    index.searchbar_mode                = config["searchbar.default_mode"]
 
     try:
         limit = config['numberOfResults']
