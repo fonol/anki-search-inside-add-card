@@ -23,4 +23,12 @@ window.initYtPlayer = function(videoId, start) {
 
 window.ytCurrentTime = function() {
     return Math.round(siacYt.player.getCurrentTime());
-}
+};
+
+window.ytScreenCapture = function() {
+    let playerEl = document.getElementById("siac-yt-player");
+    if (!playerEl) { return; }
+    let r =  playerEl.getBoundingClientRect();
+    pycmd(`siac-screen-capture ${Math.trunc(r.top)} ${Math.trunc(r.right)} ${Math.trunc(r.bottom)} ${Math.trunc(r.left)}`);
+
+};

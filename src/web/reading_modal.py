@@ -638,6 +638,7 @@ class ReadingModal:
                         <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
                         <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {self.note_id}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
                         <div class='siac-btn siac-btn-dark' onclick='pycmd("siac-yt-save-time " + ytCurrentTime()); readerNotification("Saved Position.");' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save Position&nbsp;</b></div>
+                        <div class='siac-btn siac-btn-dark' onclick='ytScreenCapture();' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-camera"></i> &nbsp;Capture&nbsp;</b></div>
                     </div>
                 </div>
                 <div id='siac-pdf-br-notify'></div>
@@ -1417,15 +1418,22 @@ class ReadingModal:
         # if Image Occlusion add-on is there and enabled, add a button to directly open the IO dialog
         io      = ""
         if hasattr(self._editor, 'onImgOccButton') and mw.addonManager.isEnabled("1374772155"):
-            io  = f"<div class='siac-btn siac-btn-dark' style='margin-right: 9px;' onclick='pycmd(`siac-cutout-io {img_src}`); $(this.parentNode).remove();'>Image Occlusion</div>"
-        modal   = """ <div class="siac-modal-small dark" style="text-align:center;"><b>Append to:</b><br><br><div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br>%s<div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div></div> """
+            io  = f"<div class='siac-btn siac-btn-dark' style='margin-right: 9px;' onclick='pycmd(\"siac-cutout-io {img_src}\"); $(this.parentNode).remove();'><i class='fa fa-eraser'></i>&nbsp; Image Occlusion</div>"
+        modal   = """<div class="siac-modal-small dark" style="text-align:center;">
+                        <img src="%s" style="height: 90px;"/><br>
+                        <b>Append to:</b><br><br>
+                        <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
+                        <br><br>
+                        %s
+                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div>
+                    </div> """
         flds    = ""
         for i, f in enumerate(self._editor.note.model()['flds']):
             # trigger note update
             fld_update_js = "pycmd(`blur:%s:${currentNoteId}:${$(`.field:eq(%s)`).html()}`);" % (i,i)
-            flds += """<span class="siac-field-picker-opt" onclick="$(`.field`).get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s">%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
-        modal = modal % (flds, io, img_src)
-        return "$('#siac-reading-modal-center').append('%s');" % modal.replace("'", "\\'")
+            flds += """<span class="siac-field-picker-opt" onclick="$('.field').get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s">%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
+        modal = modal % (img_src, flds, io, img_src)
+        return "$('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
     @js
     def show_cloze_field_picker_modal(self, cloze_text: str):
@@ -1798,7 +1806,7 @@ class ReadingModal:
                 ix          = [f["name"] for f in self._editor.note.model()["flds"]].index(ReadingModal.last_cloze[1])
                 # remove the blue color from the cloze brackets again
                 txt         = sentence.replace("`", "").replace("\n", "").replace("<span style='color: lightblue;'>", "").replace("}}</span>", "}}")
-                last_btn    = f"<div class='siac-btn siac-btn-dark' style='margin-right: 15px; margin-top: 5px;' onclick=\"appendToField({ix}, \\`{txt}\\`);  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(ReadingModal.last_cloze[1], 15)}'</div>"  
+                last_btn    = f"<div class='siac-btn siac-btn-dark' style='margin-right: 15px; margin-top: 5px;' onclick=\"appendToField({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(ReadingModal.last_cloze[1], 15)}'</div>"  
 
             btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
                                 

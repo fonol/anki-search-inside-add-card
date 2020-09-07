@@ -169,6 +169,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         tooltip(f"Set Zoom to <b>{str(int(new * 100))}%</b>")
         update_config("searchpane.zoom", new)
 
+    elif cmd.startswith("siac-screen-capture "):
+        t = int(cmd.split()[1])
+        r = int(cmd.split()[2])
+        b = int(cmd.split()[3])
+        l = int(cmd.split()[4])
+        capture_web(t,r,b,l)
+
     elif cmd.startswith("siac-render-tags"):
         # clicked on a tag with (+n) 
         index.ui.printTagHierarchy(cmd[16:].split(" "))
@@ -1531,6 +1538,39 @@ def show_read_stats():
         index.ui.js(f"drawTopics('siac-read-stats-topics-pc_1', {json.dumps(topics)});")
     if len(rec_topics) > 0:
         index.ui.js(f"drawTopics('siac-read-stats-topics-pc_2', {json.dumps(rec_topics)});")
+
+def capture_web(t:int,r:int,b:int,l:int):
+
+    w       = r - l
+    h       = b - t
+    index   = get_index()
+    web     = index.ui._editor.web
+    image   = QImage(w, h, QImage.Format_ARGB32)
+    region  = QRegion(l, t, w, h)
+    painter = QPainter(image)
+
+    web.page().view().render(painter, QPoint(), region)
+    painter.end()
+    ba      = QByteArray()
+    buf     = QBuffer(ba)
+    buf.open(QBuffer.ReadWrite)
+    image.save(buf, "JPG", 100)
+    b64     = ba.toBase64()
+    buf.close()
+    image = utility.misc.base64_to_file(b64)
+    if image is None or len(image) == 0:
+        tooltip("Failed to temporarily save file.", period=5000)
+    else:
+        name = mw.col.media.addFile(image)
+        if name is None or len(name) == 0:
+            tooltip("Failed to add file to media col.", period=5000)
+        else:
+            index.ui.reading_modal.show_img_field_picker_modal(name)
+            os.remove(image)
+
+    # tooltip(imgBase64[:30])
+
+
 
 def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: int):
     try:
