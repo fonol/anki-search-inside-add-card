@@ -481,12 +481,14 @@ def changelog() -> List[str]:
 
     return [
         "Faster PDF loading on some Windows/Mac systems using Rust lib",
+        "Added 'Capture' button in Youtube viewer",
         "Added 'searchbar.default_mode' to the config: Allows to set either 'Add-on' or 'Browse' mode as default",
         "Added 'How to add PDFs/Youtube' to tips section",
         "Fix: Bug with invisible background on opening some webpages in PDF reader",
         "Fix: DB error when re-enabling the add-on from a specific deactived older version",
         "Fix: Last PDF color mode sometimes not applied on restarting Anki",
         "Fix: Don't display Youtube notes in the 'Text Notes' tab in the Queue Manager",
+        "Fix: Bug with Cloze modal in PDF reader when using last field button",
     ]
 
 def known_issues() -> List[str]:
