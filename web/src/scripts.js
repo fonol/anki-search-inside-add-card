@@ -173,7 +173,7 @@ window.cardMouseLeave = function(elem, nid, mode = "full") {
     }, 100);
 }
 window.tagMouseEnter = function(elem) {
-    if (!showTagInfoOnHover || !elem || !elem.parentElement)
+    if (!showTagInfoOnHover || !elem || !elem.parentElement || displayedNoteId)
         return;
     tagHoverCB = setTimeout(function () {
             if (elem && elem.parentElement && elem.parentElement.querySelector(':hover') === elem && !document.getElementById('siac-tag-info-box-' + $(elem).data('stamp'))) {
