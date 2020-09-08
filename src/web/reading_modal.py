@@ -1451,7 +1451,7 @@ class ReadingModal:
         flds        = ""
 
         for i, f in enumerate(self._editor.note.model()['flds']):
-            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`);  $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');">{3}</span><br>""".format(i, cloze_text, f["name"], f["name"])
+            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`); $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');">{3}</span><br>""".format(i, cloze_text, f["name"], f["name"])
         modal       = modal % (flds)
 
         return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
@@ -1809,11 +1809,10 @@ class ReadingModal:
                 last_btn    = f"<div class='siac-btn siac-btn-dark' style='margin-right: 15px; margin-top: 5px;' onclick=\"appendToField({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(ReadingModal.last_cloze[1], 15)}'</div>"  
 
             btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
-                                
                                 <div style='margin-top: 8px;'>
                                     %s
-                                    <div class='siac-btn siac-btn-dark' onclick='pycmd("siac-fld-cloze " +$(".siac-cl-row div").first().text());' style='margin-right: 15px; margin-top: 5px;'>Send to Field</div>
-                                    <div class='siac-btn siac-btn-dark' onclick='generateClozes();' style='margin-top: 5px;'>Generate</div>
+                                    <div class='siac-btn siac-btn-dark' onclick='pycmd("siac-fld-cloze " +$(".siac-cl-row div").first().text());' style='margin-right: 15px; margin-top: 5px;'>Send to Field...</div>
+                                    <div class='siac-btn siac-btn-dark' onclick='generateClozes();' style='margin-top: 5px;'>&nbsp;<i class='fa fa-bolt'></i>&nbsp; Generate</div>
                                 </div>
                     `;""" % last_btn
 
