@@ -126,8 +126,6 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 canvas.style.height = viewport.height + "px";
                 canvas.style.width = viewport.width + "px";
             }
-            // if (["Peach", "Sand", "Night", "X1", "X2", "Mud", "Coral"].indexOf(pdfColorMode) !== -1)
-            //     canvas.style.display = "none";
             var ctx = canvas.getContext('2d');
             var renderTask = page.render({
                 canvasContext: ctx,
