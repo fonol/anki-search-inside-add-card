@@ -1483,6 +1483,15 @@ def get_deck_mostly_linked_to_note(siac_nid: int) -> Optional[str]:
     except:
         return None
 
+def get_last_linked_notes(siac_nid: int, limit: int = 10) -> List[int]:
+    """ Returns the last linked Anki note IDs for the given add-on note. """
+    conn = _get_connection()
+    nids = conn.execute(f"select nid from notes_pdf_page where siac_nid = {siac_nid} order by rowid desc limit {limit}").fetchall()
+    conn.close()
+    if not nids:
+        return []
+    return [nid[0] for nid in nids]
+
 
 #endregion page-note linking
 
