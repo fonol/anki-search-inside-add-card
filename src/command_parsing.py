@@ -1161,7 +1161,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     
     elif cmd == "siac-rev-last-linked":
         # clicked "Review" on modal that asks if the user wants to review the last notes before reading
-        last_linked     = get_last_linked_notes(index.ui.reading_modal.note_id)
+        last_linked     = get_last_linked_notes(index.ui.reading_modal.note_id, limit=500)
         if len(last_linked) > 0:
             due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
             success     = create_filtered_deck(due_today)

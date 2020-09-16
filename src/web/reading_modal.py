@@ -414,7 +414,7 @@ class ReadingModal:
             
             rev_overlay     = ""
             # check for last linked pages
-            last_linked     = get_last_linked_notes(note_id)
+            last_linked     = get_last_linked_notes(note_id, limit = 500)
             if len(last_linked) > 0:
                 due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
                 if due_today and len(due_today) > 0:
