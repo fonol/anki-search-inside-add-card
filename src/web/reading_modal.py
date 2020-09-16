@@ -417,7 +417,7 @@ class ReadingModal:
             last_linked     = get_last_linked_notes(note_id)
             if len(last_linked) > 0:
                 due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
-                if due_today is not None and len(due_today) > 0:
+                if due_today and len(due_today) > 0:
                     rev_overlay = f""" 
                         <div class='siac-rev-overlay'>
                             <div style='text-align: center; font-size: 22px; font-weight: bold; color: lightgrey;'>
