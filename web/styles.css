@@ -887,7 +887,9 @@ table.striped tr:nth-child(even) {
 body:not(.nightMode) #leftSide .siac-btn-dark {
     color: var(--c-button-foreground);
     background: var(--c-button-background);
-    border: 1px solid  var(--c-button-border);
+    border: 2px outset var(--c-button-border);
+    font-weight: bold;
+    color: #6e6e6e;
 }
 body.nightMode .modal-content input {
     background-color: var(--c-modal-background-night);
