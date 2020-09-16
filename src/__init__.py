@@ -100,10 +100,7 @@ def init_addon():
     setup_hooks()
 
     # add shortcuts
-    aqt.editor._html += """
-    <script>
-            document.addEventListener("keydown", function (e) {globalKeydown(e); }, false);
-    </script>"""
+    aqt.editor._html += """ <script> document.addEventListener("keydown", function (e) {globalKeydown(e); }, false); </script>"""
     
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific()
@@ -113,6 +110,13 @@ def init_addon():
 
     #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
+
+    # IO add note wrapping
+    if mw.addonManager.isEnabled("1374772155"):
+        try:
+            register_io_add_hook()
+        except:
+            pass
 
 def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callable):
     """ If a pdf file is dropped, intercept and open Create Note dialog. """
@@ -453,6 +457,31 @@ def show_quick_open_pdf():
                 if can_load:
                     ix.ui.reading_modal.display(dialog.chosen_id)
             ix.ui.js_with_cb("beforeNoteQuickOpen();", cb)
+
+
+def register_io_add_hook():
+    """ Monkey patch IO note generation to save links to PDF page. """
+
+    io  = __import__("1374772155")
+    old = io.ngen.ImgOccNoteGenerator._saveMaskAndReturnNote
+
+    def snew(gen, omask_path, qmask, amask, img, note_id, nid=None):
+        old(gen, omask_path, qmask, amask, img, note_id, nid)    
+        index = get_index()
+        if index and index.ui.reading_modal.note_id and index.ui.reading_modal.note.is_pdf() and not nid:
+            stamp = utility.misc.get_milisec_stamp() - 1000
+            res = mw.col.db.list(f"select * from notes where id > {stamp}")
+            if res and len(res) > 0:
+                nid = index.ui.reading_modal.note_id 
+                def cb(page: int):
+                    if page is not None and page >= 0:
+                        for anid in res:
+                            link_note_and_page(nid, anid, page)
+                        # update sidebar if shown
+                        index.ui.js("updatePageSidebarIfShown()")
+                index.ui.reading_modal.page_displayed(cb)
+
+    io.ngen.ImgOccNoteGenerator._saveMaskAndReturnNote = snew
 
 def setup_tagedit_timer():
     global tagEditTimer
