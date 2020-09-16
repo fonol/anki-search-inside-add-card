@@ -1158,6 +1158,20 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if len(cards) > 0:
             d = AddPreviewer(self.parentWindow, mw, cards)
             d.open()
+    
+    elif cmd == "siac-rev-last-linked":
+        # clicked "Review" on modal that asks if the user wants to review the last notes before reading
+        last_linked     = get_last_linked_notes(index.ui.reading_modal.note_id)
+        if len(last_linked) > 0:
+            due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+            success     = create_filtered_deck(due_today)
+            if success:
+                mw.moveToState("review")
+                mw.activateWindow()
+            else:
+                tooltip("Failed to create filtered deck.")
+
+
 
 
     else:
@@ -1539,7 +1553,9 @@ def show_read_stats():
     if len(rec_topics) > 0:
         index.ui.js(f"drawTopics('siac-read-stats-topics-pc_2', {json.dumps(rec_topics)});")
 
-def capture_web(t:int,r:int,b:int,l:int):
+
+def capture_web(t: int, r: int, b: int, l: int):
+    """ Save the given rectangle part of the webview as image. """
 
     w       = r - l
     h       = b - t
@@ -1567,9 +1583,6 @@ def capture_web(t:int,r:int,b:int,l:int):
         else:
             index.ui.reading_modal.show_img_field_picker_modal(name)
             os.remove(image)
-
-    # tooltip(imgBase64[:30])
-
 
 
 def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: int):
@@ -1942,6 +1955,36 @@ def update_styling(cmd):
 
     elif name in ["notes.showSource", "useInEdit", "results.showFloatButton", "results.showIDButton", "results.showCIDButton"]:
         config[name] = value == "true"
+
+
+def create_filtered_deck(cids: List[int]) -> bool:
+
+    try:
+        cur = mw.col.decks.byName("PDF Review")
+        if cur:
+            did = cur["id"]
+            if hasattr(mw.col.sched, "empty_filtered_deck"):
+                mw.col.sched.empty_filtered_deck(did)
+            else:
+                mw.col.sched.emptyDyn(did)
+        else:    
+            if hasattr(mw.col.decks, "new_filtered"):
+                did = mw.col.decks.new_filtered("PDF Review")
+            else:
+                did = mw.col.decks.newDyn("PDF Review")
+        dyn = mw.col.decks.get(did)
+        dyn["terms"][0] = [" or ".join([f"cid:{cid}" for cid in cids]), 9999, 0]
+        dyn["resched"] = True
+        mw.col.decks.save(dyn)
+        if hasattr(mw.col.sched, "rebuild_filtered_deck"):
+            mw.col.sched.rebuild_filtered_deck(did)
+        else:
+            mw.col.sched.rebuildDyn(did)
+        mw.col.decks.select(did)
+        return True
+    except:
+        return False
+
 
 @js
 def write_config():
