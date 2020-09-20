@@ -1699,6 +1699,8 @@ class ReadingModal:
                     if len(res) >= 20:
                         break
 
+        res = list({x.id: x for x in res}.values())
+
         for rel in res[:20]:
             if rel.id == note_id:
                 continue
