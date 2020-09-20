@@ -315,10 +315,13 @@ class FTSIndex:
         stamp           = utility.misc.get_milisec_stamp()
         self.ui.latest  = stamp
         # compatibility with older versions (<2.1.24?)
-        if hasattr(mw.col, "find_notes"):
-            found       = mw.col.find_notes(text)
-        else:
-            found       = mw.col.findNotes(text)
+        try:
+            if hasattr(mw.col, "find_notes"):
+                found       = mw.col.find_notes(text)
+            else:
+                found       = mw.col.findNotes(text)
+        except:
+            found = []
 
         if len (found) > 0:
             if not "-1" in decks:
