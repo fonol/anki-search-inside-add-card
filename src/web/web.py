@@ -234,8 +234,11 @@ def print_starting_info(editor: Editor):
     config  = mw.addonManager.getConfig(__name__)
     index   = get_index()
     html    = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
+    db_path = config["addonNoteDBFolderPath"]
 
     if index is not None:
+
+        
         html += "Initalized in <b>%s</b> s." % index.initializationTime
         if not index.creation_info["index_was_rebuilt"]:
             html += " (No changes detected, index was <b>not</b> rebuilt)"
@@ -248,6 +251,14 @@ def print_starting_info(editor: Editor):
         html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
         html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
+
+        if not db_path or len(db_path.strip()) == 0:
+            html += """<br><p>Please provide a folder path for the config entry <b>Add-on Note DB Folder Path</b> under <b>Settings & Info</b> &gt; <b>Settings</b>. If you don't provide a path, the add-on
+                will use the <b>user_files</b> folder to store its data, which can sometimes cause problems when updating the add-on. That's why I would recommend choosing a folder outside Anki. 
+                If you already have data (e.g. PDF reading progress), 
+                you can change the folder path in the settings, and copy the 'siac-notes.db' file to that new location afterwards.
+            </p>"""
+        
 
         changes = changelog()
         if changes:
@@ -482,6 +493,8 @@ def changelog() -> List[str]:
     return [
         "Added feature to review due cards before reading a PDF",
         "Notes added on PDF page now recognizes Image Occlusion notes too",
+        "The add-on now creates a backup of its database once a day (in the same folder as the database is stored)",
+        "Some small improvements to the PDF reader search tooltip",
         "Fix small highlighting regression"
     ]
 
