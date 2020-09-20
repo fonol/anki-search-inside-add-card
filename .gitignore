@@ -7,6 +7,7 @@ addon-packed.zip
 build.bat
 .vscode/*
 user_files/siac-notes.db
+user_files/siac_backups/*
 user_files/data.json
 web/node_modules/*
 src/rs/siacrs/target/*

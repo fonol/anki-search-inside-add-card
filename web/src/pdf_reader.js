@@ -126,8 +126,6 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 canvas.style.height = viewport.height + "px";
                 canvas.style.width = viewport.width + "px";
             }
-            // if (["Peach", "Sand", "Night", "X1", "X2", "Mud", "Coral"].indexOf(pdfColorMode) !== -1)
-            //     canvas.style.display = "none";
             var ctx = canvas.getContext('2d');
             var renderTask = page.render({
                 canvasContext: ctx,
@@ -922,6 +920,8 @@ window.centerTooltip = function () {
     let w = $('#siac-pdf-top').width();
     let h = $('#siac-pdf-top').height();
     let $tt = $('#siac-pdf-tooltip');
+    document.getElementById("siac-pdf-tooltip-results-area").style.removeProperty('max-height');
+    document.getElementById("siac-pdf-tooltip").style.removeProperty('max-width');
     $tt.css({ 'top': h / 2 - ($tt.height() / 2), 'left': w / 2 - ($tt.width() / 2) });
 }
 window.destroyPDF = function () {

@@ -26,6 +26,7 @@ import typing
 from typing import List, Optional, Tuple, Any, Callable
 import aqt
 import uuid
+import base64
 import html as ihtml
 from aqt import mw
 from aqt.editor import Editor
@@ -410,6 +411,24 @@ class ReadingModal:
             img_folder      = utility.misc.img_src_base_path()
             active          = "active" if note.is_due_sometime() else ""
             page_sidebar    = str(note.is_pdf() and conf_or_def("pdf.page_sidebar_shown", True)).lower()
+            
+            rev_overlay     = ""
+            # check for last linked pages
+            last_linked     = get_last_linked_notes(note_id, limit = 500)
+            if len(last_linked) > 0:
+                due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+                if due_today and len(due_today) > 0:
+                    rev_overlay = f""" 
+                        <div class='siac-rev-overlay'>
+                            <div style='text-align: center; font-size: 22px; font-weight: bold; color: lightgrey;'>
+                               <span>Some of the last cards you made in this PDF are due today.<br>Review them before reading?</span>
+                            </div>
+                            <div style='opacity: 1; text-align: center; margin: 50px 0 30px 0; font-weight: bold;'>
+                                <div class='siac-btn siac-btn-dark' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
+                                <div class='siac-btn siac-btn-dark' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue Reading</div>
+                            </div>
+                        </div> 
+                    """
 
             if note.is_in_queue():
                 queue_btn_text      = "Done!"
@@ -461,6 +480,7 @@ class ReadingModal:
                         <div id='siac-reading-modal-center' class='' style='flex: 1 1 auto; overflow: {overflow}; font-size: 13px; padding: 0 5px 0 24px; position: relative; display: flex; flex-direction: column;' >
                             <div id='siac-rm-greyout'></div>
                             {text}
+                            {rev_overlay}
                         </div>
                         <div id='siac-reading-modal-bottom-bar'>
                             <div style='width: 100%; height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap;'>
@@ -544,7 +564,8 @@ class ReadingModal:
             queue_readings_list = self.get_queue_head_display(queue, editable)
 
             params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info, 
-            queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, notification=notification, sched_click=sched_click, page_sidebar=page_sidebar)
+            queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, 
+            notification=notification, sched_click=sched_click, page_sidebar=page_sidebar, rev_overlay = rev_overlay)
             html                = html.format_map(params)
 
             return html

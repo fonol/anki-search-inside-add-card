@@ -208,10 +208,11 @@ window.pdfKeyup = function (e) {
         if (prect.width - left < 250) {
             left -= 200;
         }
-        $('#siac-pdf-tooltip').css({ 'top': (rect.top - prect.top + rect.height) + "px", 'left': left + "px" }).show();
+        let top = rect.top - prect.top + rect.height;
+        $('#siac-pdf-tooltip').css({ 'top': top + "px", 'left': left + "px" }).show();
         pycmd("siac-pdf-selection " + text);
-        $('#siac-pdf-tooltip').data("sentences", sentences);
-        $('#siac-pdf-tooltip').data("selection", text);
+        $('#siac-pdf-tooltip').data({"sentences":  sentences, "selection": text, "top": top});
+        // $('#siac-pdf-tooltip').data("selection", text);
         // limit height again to prevent selection jumping
         $('#text-layer > span').css("height", "200px");
     } else if ((e.ctrlKey || e.metaKey) && Highlighting.colorSelected.id > 0 && windowHasSelection()) {

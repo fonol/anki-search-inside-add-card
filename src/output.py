@@ -933,15 +933,28 @@ class Output:
                     <i>%s</i>
                 </div>
             """ % (" ".join(query_set))
+            tt_height = get_config_value_or_default("pdfTooltipMaxHeight", 300)
+            tt_width  = get_config_value_or_default("pdfTooltipMaxWidth", 300) + 100
             self._editor.web.eval("""
-                document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
-                document.getElementById('siac-pdf-tooltip-results-area').scrollTop = 0; 
-                document.getElementById('siac-pdf-tooltip-top').innerHTML = `%s`
-                document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
-                document.getElementById('siac-pdf-tooltip-searchbar').style.display = "inline-block";
-
-            %s
-            """ % (html, qhtml, clz_btn_js))
+                (() => { 
+                    document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`;
+                    document.getElementById('siac-pdf-tooltip-results-area').scrollTop = 0; 
+                    document.getElementById('siac-pdf-tooltip-top').innerHTML = `%s`
+                    document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
+                    document.getElementById('siac-pdf-tooltip-searchbar').style.display = "inline-block";
+                    let total_height = document.getElementById('siac-reading-modal').offsetHeight;
+                    let h_diff = total_height - $('#siac-pdf-tooltip').data('top');
+                    let needed = %s + 100;
+                    if (h_diff < needed && needed - h_diff < 300) {
+                        document.getElementById("siac-pdf-tooltip-results-area").style.maxHeight = (h_diff - 120) + "px";
+                        document.getElementById("siac-pdf-tooltip").style.maxWidth = "%spx";
+                    } else {
+                        document.getElementById("siac-pdf-tooltip-results-area").style.removeProperty('max-height');
+                        document.getElementById("siac-pdf-tooltip").style.removeProperty('max-width');
+                    }
+                    %s
+                })();
+            """ % (html, qhtml, tt_height, tt_width, clz_btn_js))
         else:
             if query_set is None or len(query_set)  == 0:
                 message = "Query was empty after cleaning."
@@ -956,6 +969,7 @@ class Output:
                 document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
                 document.getElementById('siac-pdf-tooltip-searchbar').style.display = "inline-block";
                 %s
+
             """ % (message, clz_btn_js))
 
     

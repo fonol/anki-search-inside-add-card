@@ -120,28 +120,9 @@ def _build_index(index_up_to_date):
     index.synonyms                      = loadSynonyms()
     index.logging                       = config["logging"]
     index.searchbar_mode                = config["searchbar.default_mode"]
-
-    try:
-        limit = config['numberOfResults']
-        if limit <= 0:
-            limit = 1
-        elif limit > 5000:
-            limit = 5000
-    except KeyError:
-        limit = 500
-    index.limit                         = limit
-
-    try:
-        showRetentionScores             = config["showRetentionScores"]
-    except KeyError:
-        showRetentionScores             = True
-    index.ui.showRetentionScores        = showRetentionScores
-
-    try:
-        hideSidebar                     = config["hideSidebar"]
-    except KeyError:
-        hideSidebar                     = False
-    index.ui.hideSidebar                = hideSidebar
+    index.ui.showRetentionScores        = config["showRetentionScores"]
+    index.ui.hideSidebar                = config["hideSidebar"]
+    index.limit                         = max(10, min(5000, config["numberOfResults"]))
 
     if index.logging:
         log("\n--------------------\nInitialized index:")

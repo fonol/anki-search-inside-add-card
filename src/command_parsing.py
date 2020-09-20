@@ -169,13 +169,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         tooltip(f"Set Zoom to <b>{str(int(new * 100))}%</b>")
         update_config("searchpane.zoom", new)
 
-    elif cmd.startswith("siac-screen-capture "):
-        t = int(cmd.split()[1])
-        r = int(cmd.split()[2])
-        b = int(cmd.split()[3])
-        l = int(cmd.split()[4])
-        capture_web(t,r,b,l)
-
+ 
     elif cmd.startswith("siac-render-tags"):
         # clicked on a tag with (+n) 
         index.ui.printTagHierarchy(cmd[16:].split(" "))
@@ -465,7 +459,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-p-sort "):
         if check_index():
-            parseSortCommand(cmd[12:])
+            parse_sort_cmd(cmd[12:])
 
     elif cmd == "siac-model-dialog":
         display_model_dialog()
@@ -876,6 +870,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             index.ui.hideModal()
             default_search_with_decks(self, cmd.split()[1], ["-1"])
 
+    #
+    # Settings Dialog
+    # 
+
     elif cmd == "siac-styling":
         show_settings_modal(self)
 
@@ -892,9 +890,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         write_config()
         try_repeat_last_search(self)
 
+    #
+    # Image cutout in PDF viewer
+    # 
+
     elif cmd.startswith("siac-add-image "):
-        b64 = cmd.split()[2][13:]
-        image = utility.misc.base64_to_file(b64)
+        b64     = cmd.split()[2][13:]
+        image   = utility.misc.base64_to_file(b64)
         if image is None or len(image) == 0:
             tooltip("Failed to temporarily save file.", period=5000)
         else:
@@ -905,14 +907,24 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 index.ui.reading_modal.show_img_field_picker_modal(name)
                 os.remove(image)
 
-    # if the user clicked on cancel, the image is already added to the media folder, so we delete it
     elif cmd.startswith("siac-remove-snap-image "):
-        name = " ".join(cmd.split()[1:])
-        media_dir = mw.col.media.dir()
+        # user clicked on cancel, image is already added to the media folder, so we delete it
+        name        = " ".join(cmd.split()[1:])
+        media_dir   = mw.col.media.dir()
         try:
             os.remove(os.path.join(media_dir, name))
         except:
             pass
+    
+    elif cmd.startswith("siac-screen-capture "):
+        # capture part of webview (e.g. 'Capture' btn in Yt viewer clicked)
+
+        t = int(cmd.split()[1])
+        r = int(cmd.split()[2])
+        b = int(cmd.split()[3])
+        l = int(cmd.split()[4])
+        capture_web(t, r, b, l)
+
 
     elif cmd.startswith("siac-generate-clozes "):
         # 'Generate' clicked in the cloze modal
@@ -1158,6 +1170,20 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if len(cards) > 0:
             d = AddPreviewer(self.parentWindow, mw, cards)
             d.open()
+    
+    elif cmd == "siac-rev-last-linked":
+        # clicked "Review" on modal that asks if the user wants to review the last notes before reading
+        last_linked     = get_last_linked_notes(index.ui.reading_modal.note_id, limit=500)
+        if len(last_linked) > 0:
+            due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+            success     = create_filtered_deck(due_today)
+            if success:
+                mw.moveToState("review")
+                mw.activateWindow()
+            else:
+                tooltip("Failed to create filtered deck.")
+
+
 
 
     else:
@@ -1169,10 +1195,8 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     return (True, None)
 
 
-def parseSortCommand(cmd):
-    """
-    Helper function to parse the various sort commands (newest/remove tagged/...)
-    """
+def parse_sort_cmd(cmd):
+    """ Helper function to parse the various sort commands (newest/remove tagged/...) """
     index = get_index()
     if cmd == "newest":
         index.ui.sortByDate("desc")
@@ -1197,81 +1221,57 @@ def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
     """
     if not check_index():
         return
-    index       = get_index()
-    cmd         = " ".join(cmd.split()[1:])
-    searchtype  = cmd.split(" ")[0]
-    limit       = int(cmd.split(" ")[1])
-    decks       = cmd.split(" ")[2:]
+    index               = get_index()
+    cmd                 = " ".join(cmd.split()[1:])
+    stype               = cmd.split(" ")[0]
+    limit               = int(cmd.split(" ")[1])
+    decks               = cmd.split(" ")[2:]
+    stamp               = set_stamp()
+    index.lastSearch    = (None, decks, stype, limit)
 
-    if searchtype == "lowestPerf":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "lowestPerf")
+    if stype == "lowestPerf":
         res = findNotesWithLowestPerformance(decks, limit, index.pinned)
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "highestPerf":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "highestPerf")
+    elif stype == "highestPerf":
         res = findNotesWithHighestPerformance(decks, limit, index.pinned)
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "lastAdded":
+    elif stype == "lastAdded":
         getCreatedNotesOrderedByDate(index, editor, decks, limit, "desc")
-    elif searchtype == "firstAdded":
+    elif stype == "firstAdded":
         getCreatedNotesOrderedByDate(index, editor, decks, limit, "asc")
-    elif searchtype == "lastModified":
+    elif stype == "lastModified":
         getLastModifiedNotes(index, editor, decks, limit)
-    elif searchtype == "lowestRet":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "lowestRet")
+    elif stype == "lowestRet":
         res = findNotesWithLowestPerformance(decks, limit, index.pinned, retOnly = True)
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "highestRet":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "highestRet")
+    elif stype == "highestRet":
         res = findNotesWithHighestPerformance(decks, limit, index.pinned, retOnly = True)
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "longestText":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "highestRet")
+    elif stype == "longestText":
         res = findNotesWithLongestText(decks, limit, index.pinned)
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "randomUntagged":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "randomUntagged")
+    elif stype == "randomUntagged":
         res = getRandomUntagged(decks, limit)
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "lastUntagged":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "lastUntagged")
+    elif stype == "lastUntagged":
         res = get_last_untagged(decks, limit)
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "highestInterval":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "highestInterval", limit)
+    elif stype == "highestInterval":
         res = getSortedByInterval(decks, limit, index.pinned, "desc")
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "lowestInterval":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "lowestInterval", limit)
+    elif stype == "lowestInterval":
         res = getSortedByInterval(decks, limit, index.pinned, "asc")
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "lastReviewed":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "lastReviewed", limit)
+    elif stype == "lastReviewed":
         res = getLastReviewed(decks, limit)
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "lastLapses":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "lastLapses", limit)
+    elif stype == "lastLapses":
         res = getLastLapses(decks, limit)
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "longestTime":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "longestTime", limit)
+    elif stype == "longestTime":
         res = getByTimeTaken(decks, limit, "desc")
         index.ui.print_search_results(res, stamp)
-    elif searchtype == "shortestTime":
-        stamp = set_stamp()
-        index.lastSearch = (None, decks, "shortestTime", limit)
+    elif stype == "shortestTime":
         res = getByTimeTaken(decks, limit, "asc")
         index.ui.print_search_results(res, stamp)
 
@@ -1300,6 +1300,8 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
         content: string containing the decks selected (did) + ~ + all input fields content / search masks content
     """
     index = get_index()
+    if not index:
+        return
 
     if len(content) < 1:
         index.ui.empty_result("No results found for empty string")
@@ -1308,29 +1310,22 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
     if "~" in content:
         decks = [s.strip() for s in content[:content.index('~')].split(',') if s.strip() != ""]
 
-    if index is not None:
+    if searchDB:
+        content             = content[content.index('~ ') + 2:].strip()
+        if len(content) == 0:
+            index.ui.empty_result("No results found for empty string")
+            return
+        index.lastSearch    = (content, decks, "db")
+        search_res          = index.searchDB(content, decks)
+        if editor and editor.web:
+            index.ui.print_search_results(search_res["result"], search_res["stamp"], editor, logging=index.logging)
 
-        if searchDB:
-            content             = content[content.index('~ ') + 2:].strip()
-            if len(content) == 0:
-                index.ui.empty_result("No results found for empty string")
-                return
-            index.lastSearch    = (content, decks, "db")
-            searchRes           = index.searchDB(content, decks)
-
-        else:
-            if len(content[content.index('~ ') + 2:]) > 2000:
-                index.ui.empty_result("Query was <b>too long</b>")
-                return
-            content             = content[content.index('~ ') + 2:]
-            searchRes           = index.search(content, decks)
-
-
-        if searchDB and editor is not None and editor.web is not None:
-            if searchRes is not None and len(searchRes["result"]) > 0:
-                index.ui.print_search_results(searchRes["result"], searchRes["stamp"], editor, logging=index.logging)
-            else:
-                index.ui.empty_result("No results found")
+    else:
+        if len(content[content.index('~ ') + 2:]) > 2000:
+            index.ui.empty_result("Query was <b>too long</b>")
+            return
+        content             = content[content.index('~ ') + 2:]
+        search_res          = index.search(content, decks)
 
 
 @requires_index_loaded
@@ -1539,7 +1534,9 @@ def show_read_stats():
     if len(rec_topics) > 0:
         index.ui.js(f"drawTopics('siac-read-stats-topics-pc_2', {json.dumps(rec_topics)});")
 
-def capture_web(t:int,r:int,b:int,l:int):
+
+def capture_web(t: int, r: int, b: int, l: int):
+    """ Save the given rectangle part of the webview as image. """
 
     w       = r - l
     h       = b - t
@@ -1567,9 +1564,6 @@ def capture_web(t:int,r:int,b:int,l:int):
         else:
             index.ui.reading_modal.show_img_field_picker_modal(name)
             os.remove(image)
-
-    # tooltip(imgBase64[:30])
-
 
 
 def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: int):
@@ -1698,6 +1692,8 @@ def get_index_info():
         shortcuts += "<br>".join(state.shortcuts_failed)
         shortcuts += "<br>"
 
+    sp_on   = "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>"
+    sp_off  = "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>"
     html            = """
             <table class="striped" style='width: 100%%; margin-bottom: 18px;'>
                 
@@ -1760,14 +1756,14 @@ def get_index_info():
             index.type, 
             sqlite3.sqlite_version,
             str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if index.logging else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["renderImmediately"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
+            sp_on if index.logging else sp_off,
+            sp_on if config["renderImmediately"] else sp_off,
             "Search" if config["tagClickShouldSearch"] else "Add",
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showTimeline"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showTagInfoOnHover"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
+            sp_on if config["showTimeline"] else sp_off,
+            sp_on if config["showTagInfoOnHover"] else sp_off,
             config["tagHoverDelayInMiliSec"],
             config["imageMaxHeight"],
-            "<span style='background: green; color: white;'>&nbsp;On&nbsp;</span>" if config["showRetentionScores"] else "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>",
+            sp_on if config["showRetentionScores"] else sp_off,
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"],
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
@@ -1942,6 +1938,36 @@ def update_styling(cmd):
 
     elif name in ["notes.showSource", "useInEdit", "results.showFloatButton", "results.showIDButton", "results.showCIDButton"]:
         config[name] = value == "true"
+
+
+def create_filtered_deck(cids: List[int]) -> bool:
+
+    try:
+        cur = mw.col.decks.byName("PDF Review")
+        if cur:
+            did = cur["id"]
+            if hasattr(mw.col.sched, "empty_filtered_deck"):
+                mw.col.sched.empty_filtered_deck(did)
+            else:
+                mw.col.sched.emptyDyn(did)
+        else:    
+            if hasattr(mw.col.decks, "new_filtered"):
+                did = mw.col.decks.new_filtered("PDF Review")
+            else:
+                did = mw.col.decks.newDyn("PDF Review")
+        dyn = mw.col.decks.get(did)
+        dyn["terms"][0] = [" or ".join([f"cid:{cid}" for cid in cids]), 9999, 0]
+        dyn["resched"] = True
+        mw.col.decks.save(dyn)
+        if hasattr(mw.col.sched, "rebuild_filtered_deck"):
+            mw.col.sched.rebuild_filtered_deck(did)
+        else:
+            mw.col.sched.rebuildDyn(did)
+        mw.col.decks.select(did)
+        return True
+    except:
+        return False
+
 
 @js
 def write_config():

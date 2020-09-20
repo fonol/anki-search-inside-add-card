@@ -25,7 +25,7 @@ fn _is_asian_char(c: char) -> bool {
 fn _ascii_fold_char(c: char) -> char {
     let as_str = c.to_string().to_lowercase();
     if default_char.is_match(&as_str) {
-        return c;
+        return as_str.to_lowercase().chars().next().unwrap();
     }
     if "àáâãåāăǎ".contains(&as_str) {
         return 'a';
@@ -45,7 +45,7 @@ fn _ascii_fold_char(c: char) -> char {
     if "ýỳÿȳ".contains(&as_str) {
         return 'y';
     }
-    c
+    as_str.to_lowercase().chars().next().unwrap()
 }
 
 #[pyfunction]

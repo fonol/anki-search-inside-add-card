@@ -833,6 +833,20 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     background: #515d71 !important;
     border-radius: 4px !important;
 } 
+
+.siac-rev-overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0; 
+    left: 0;
+    background-color: rgba(0,0,0,0.8);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 13;
+}
 .siac-pdf-loader {
     width: 250px; 
     padding: 15px; 
@@ -865,11 +879,16 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     overflow: ellipsis;
     user-select: none;
     cursor: pointer;
+    color: #353535;
 }
 body.night_mode .siac-note-title-only {
     color: lightgrey;
 }
 .siac-note-title-only:hover {
+    color: #2496dc;
+}
+body.nightMode .siac-note-title-only:hover {
+    color: lightgrey;
     filter: brightness(1.4);
 }
 #siac-reading-modal-tabs-left {
