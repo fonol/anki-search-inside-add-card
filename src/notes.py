@@ -97,14 +97,28 @@ def create_db_file_if_not_exists() -> bool:
     else:
         existed = True
         conn    = sqlite3.connect(file_path)
+
+        # check for backups
+        backup_file = _get_todays_backup_path()
+        if not os.path.isfile(backup_file):
+            bu_folder = _backup_folder()
+            if not os.path.isdir(bu_folder):
+                os.mkdir(bu_folder)
+            bconn = sqlite3.connect(backup_file)
+            conn.backup(bconn)
+            bconn.close()
+            # only keep 10 newest backups, delete older ones
+            limit   = 10
+            backups = glob.glob(f"{bu_folder}siac-notes.backup.*")
+            if len(backups) > limit:
+                to_delete = sorted(backups)[:-limit]
+                for f in to_delete:
+                    os.remove(f)
     
     # disable for now
     # info_from_data_json = get_notes_info()
     # if info_from_data_json is not None and "db_last_checked" in info_from_data_json and len(info_from_data_json["db_last_checked"]) > 0:
     #     return
-
-    
-
    
     conn.execute("""
         create table if not exists read
@@ -1514,6 +1528,27 @@ def _get_db_path() -> str:
     file_path.strip()
     db_path = file_path
     return file_path
+
+def _get_todays_backup_path() -> str: 
+    """ Get the path to the timestamped backup db file. """
+
+    file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
+    if file_path is None or len(file_path) == 0:
+        file_path = utility.misc.get_user_files_folder_path()
+    file_path += f"siac_backups/siac-notes.backup.{utility.date.date_only_stamp()}.db"
+    return file_path.strip()
+
+def _backup_folder() -> str:
+    """ Get the full path to the backup folder. """
+    if db_path:
+        return db_path.replace("siac-notes.db", "siac_backups/")
+    file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
+    if file_path is None or len(file_path) == 0:
+        file_path = utility.misc.get_user_files_folder_path()
+    file_path += f"siac_backups/"
+    return file_path.strip()
+    
+
 
 def _to_notes(db_list: List[Tuple[Any, ...]], pinned: List[int] = []) -> List[SiacNote]:
     notes = list()
