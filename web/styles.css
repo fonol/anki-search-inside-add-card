@@ -1614,6 +1614,15 @@ body.nightMode .siac-prog-sq {
 .fa.siac-disabled {
     color: grey !important;
 }
+#siac-reading-modal .editor-toolbar {
+    font-size: 15px !important;
+}
+#siac-reading-modal .editor-toolbar:after {
+    margin-top: 3px !important;
+}
+#siac-reading-modal .editor-toolbar:before {
+    margin-bottom: 3px !important;
+}
 
 @media (max-width: 1000px) , (max-height: 500px) {
     #siac-right-side {
