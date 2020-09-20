@@ -920,6 +920,8 @@ window.centerTooltip = function () {
     let w = $('#siac-pdf-top').width();
     let h = $('#siac-pdf-top').height();
     let $tt = $('#siac-pdf-tooltip');
+    document.getElementById("siac-pdf-tooltip-results-area").style.removeProperty('max-height');
+    document.getElementById("siac-pdf-tooltip").style.removeProperty('max-width');
     $tt.css({ 'top': h / 2 - ($tt.height() / 2), 'left': w / 2 - ($tt.width() / 2) });
 }
 window.destroyPDF = function () {
