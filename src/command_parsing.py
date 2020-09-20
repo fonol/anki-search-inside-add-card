@@ -1300,6 +1300,8 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
         content: string containing the decks selected (did) + ~ + all input fields content / search masks content
     """
     index = get_index()
+    if not index:
+        return
 
     if len(content) < 1:
         index.ui.empty_result("No results found for empty string")
@@ -1308,29 +1310,22 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
     if "~" in content:
         decks = [s.strip() for s in content[:content.index('~')].split(',') if s.strip() != ""]
 
-    if index is not None:
+    if searchDB:
+        content             = content[content.index('~ ') + 2:].strip()
+        if len(content) == 0:
+            index.ui.empty_result("No results found for empty string")
+            return
+        index.lastSearch    = (content, decks, "db")
+        search_res          = index.searchDB(content, decks)
+        if editor and editor.web:
+            index.ui.print_search_results(search_res["result"], search_res["stamp"], editor, logging=index.logging)
 
-        if searchDB:
-            content             = content[content.index('~ ') + 2:].strip()
-            if len(content) == 0:
-                index.ui.empty_result("No results found for empty string")
-                return
-            index.lastSearch    = (content, decks, "db")
-            searchRes           = index.searchDB(content, decks)
-
-        else:
-            if len(content[content.index('~ ') + 2:]) > 2000:
-                index.ui.empty_result("Query was <b>too long</b>")
-                return
-            content             = content[content.index('~ ') + 2:]
-            searchRes           = index.search(content, decks)
-
-
-        if searchDB and editor is not None and editor.web is not None:
-            if searchRes is not None and len(searchRes["result"]) > 0:
-                index.ui.print_search_results(searchRes["result"], searchRes["stamp"], editor, logging=index.logging)
-            else:
-                index.ui.empty_result("No results found")
+    else:
+        if len(content[content.index('~ ') + 2:]) > 2000:
+            index.ui.empty_result("Query was <b>too long</b>")
+            return
+        content             = content[content.index('~ ') + 2:]
+        search_res          = index.search(content, decks)
 
 
 @requires_index_loaded
