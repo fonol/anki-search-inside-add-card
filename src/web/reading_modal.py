@@ -1686,6 +1686,7 @@ class ReadingModal:
         if len(res) < 20 and len(r.related_by_title) > 0:
             for r2 in r.related_by_title:
                 if not r2.id in ids:
+                    ids.add(r2.id)
                     res.append(r2)
                     if len(res) >= 20:
                         break
