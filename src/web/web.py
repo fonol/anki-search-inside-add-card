@@ -495,6 +495,7 @@ def changelog() -> List[str]:
         "Notes added on PDF page now recognizes Image Occlusion notes too",
         "The add-on now creates a backup of its database once a day (in the same folder as the database is stored)",
         "Some small improvements to the PDF reader search tooltip",
+        "Fix Youtube videos not starting at saved position",
         "Fix small highlighting regression"
     ]
 
