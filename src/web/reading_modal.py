@@ -647,7 +647,7 @@ class ReadingModal:
 
         if match:
             video = match.group(1)
-            if len(match.groups()) > 2:
+            if len(match.groups()) > 1:
                 time = int(match.group(2))
         
         return f"""
@@ -1721,10 +1721,21 @@ class ReadingModal:
         if read_stats[2] is not None:
             prog_bar    = self.pdf_prog_bar(read_stats[0], read_stats[2])
             pages_read  = "<div style='width: 100%%; margin-top: 3px; font-weight: bold; text-align: center; font-size: 20px;'>%s / %s</div>" % (read_stats[0], read_stats[2])
-        else:
-            text_len    = f"{len(note.text.split())} Words" if note.text is not None else "Empty"
+        elif not note.is_yt():
+            text_len    = f"{len(note.text.split())} Words" if note.text is not None and len(note.text) > 0 else "Empty"
             prog_bar    = ""
             pages_read  = f"<div style='width: 100%; margin-top: 7px; font-weight: bold; text-align: center; font-size: 16px;'>Text Note, {text_len}</div>"
+        else:
+            prog_bar    = ""
+            time        = utility.text.get_yt_time(note.source.strip())
+            if not time or time == 0:
+                time    = "Beginning"
+            else:
+                secs    = time % 60
+                if secs < 10:
+                    secs = f"0{secs}"
+                time    = f"{int(time / 60)}:{secs}"
+            pages_read  = f"<div style='width: 100%; margin-top: 7px; font-weight: bold; text-align: center; font-size: 16px;'>Video, {time}</div>"
 
         html = """
             <div style='box-sizing: border-box; width: 100%; height: 100%; padding: 10px; display: inline-block; position: relative; vertical-align: top;'>
@@ -1819,6 +1830,7 @@ class ReadingModal:
                 sentence = re.sub("^\\d+ ?[:\\-.,;] ([A-ZÖÄÜ])", r"\1", sentence)
 
                 sentence = re.sub(" ([\"“”])([?!.])$", r"\1\2", sentence)
+                sentence = re.sub("^[\u2022,\u2023,\u25E6,\u2043,\u2219]", "", sentence)
 
                 s_html += "<tr class='siac-cl-row'><td><div contenteditable class='siac-pdf-main-color'>%s</div></td></tr>" % (sentence.replace("`", "&#96;"))
             s_html += "</table>"

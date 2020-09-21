@@ -21,6 +21,7 @@ import time
 import random
 from bs4 import BeautifulSoup
 import typing
+from typing import Optional
 
 cleanWordReg    = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*$", re.I |re.U)    
 ignoreReg       = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]+$", re.I | re.U)
@@ -414,6 +415,11 @@ def get_yt_video_id(src: str) -> str:
         return match.group(1)
     return ""
 
+def get_yt_time(url: str) -> Optional[int]:
+    match   = re.match(r".+/watch\?v=([^&]+)(?:&t=(.+)s)?", url)
+    if match and len(match.groups()) > 1:
+        return int(match.group(2))
+    return None
 
    
 def clean_tags(tags):
