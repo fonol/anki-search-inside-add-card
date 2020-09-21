@@ -16,6 +16,7 @@
 
 import os
 import glob
+import shutil
 import sqlite3
 import typing
 from typing import Optional, Tuple, List, Dict, Set, Any
@@ -96,7 +97,14 @@ def create_db_file_if_not_exists() -> bool:
         conn.execute(creation_sql)
     else:
         existed = True
-        conn    = sqlite3.connect(file_path)
+        try: 
+            conn    = sqlite3.connect(file_path)
+        except sqite3.OperationalError:
+            tmp = file_path.replace("siac-notes.db", "siac-notes.tmp.db")
+            shutil.copyfile(file_path, tmp)
+            os.remove(file_path)
+            os.rename(tmp, file_path)
+            conn    = sqlite3.connect(file_path)
 
         # check for backups
         backup_file = _get_todays_backup_path()
