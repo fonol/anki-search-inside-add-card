@@ -858,6 +858,11 @@ table.siac-read-stats-table tr:hover .siac-read-box {
 .full-width {
     width: 100%;
 }
+.siac-caps {
+    font-variant: all-petite-caps;
+    font-weight: bold;
+    font-size: 15px;
+}
 table.striped {
     border-collapse: collapse;
 }
