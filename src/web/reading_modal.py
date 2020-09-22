@@ -500,7 +500,7 @@ class ReadingModal:
                                     <div id='siac-queue-infobox' onmouseleave='leaveQueueItem();'></div>
                                 </div>
                                 <div id='siac-pdf-bottom-tabs' style='display: inline-block; vertical-align: top; margin-left: 16px; user-select: none;'>
-                                    <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'>Marks</a>
+                                    <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'><i class='fa fa-star-o' style='margin-right: 5px;'></i>Marks</a>
                                     <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' style='margin-right: 10px;'>Related</a>
                                     <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'>Info</a> <br>
                                     <div id='siac-pdf-bottom-tab'>
