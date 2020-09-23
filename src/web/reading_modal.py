@@ -249,7 +249,7 @@ class ReadingModal:
             note = get_note(note_id)
             html = self.bottom_bar(note)
             html = html.replace("`", "\\`")
-            return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks();" % html
+            return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks(true);" % html
 
         else:
             return """if (document.getElementById('siac-reading-modal').style.display !== 'none' && document.getElementById('siac-reading-modal-top-bar')) {
@@ -416,7 +416,10 @@ class ReadingModal:
             # check for last linked pages
             last_linked     = get_last_linked_notes(note_id, limit = 500)
             if len(last_linked) > 0:
-                due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+                if hasattr(mw.col, "find_cards"):
+                    due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+                else:
+                    due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
                 if due_today and len(due_today) > 0:
                     rev_overlay = f""" 
                         <div class='siac-rev-overlay'>
@@ -1099,7 +1102,7 @@ class ReadingModal:
                 <tr><td>Created</td><td><b>{created}</b></td></tr>
                 <tr><td>Schedule</td><td><b>{schedule}</b></td></tr>
                 <tr>
-                    <td style='padding-top: 10px;'>Tags</td>
+                    <td style='padding-top: 10px;'><i class='fa fa-tags'></i>&nbsp; Tags</td>
                     <td style='padding-top: 10px;'>
                         <input type='text' class='siac-rm-bg' style='width: 210px; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px; color: lightgrey;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
                     </td>
@@ -1649,7 +1652,7 @@ class ReadingModal:
             return f"""{tab_js}
             $('.siac-link-btn.tab').eq(0).addClass('active');
             document.getElementById('siac-pdf-bottom-tab').innerHTML =`<div id='siac-marks-display' onclick='markClicked(event);'></div>`;
-            updatePdfDisplayedMarks()"""
+            updatePdfDisplayedMarks(false)"""
         if tab == "info":
             html = self.get_note_info_html()
             html = html.replace("`", "&#96;")
