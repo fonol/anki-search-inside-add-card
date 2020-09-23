@@ -64,7 +64,8 @@ import state
 
 """ command_parsing.py - Mainly used to catch pycmds from the web view, and trigger the appropriate actions for them. """
 
-config              = mw.addonManager.getConfig(__name__)
+config                  = mw.addonManager.getConfig(__name__)
+REV_FILTERED_DECK_NAME  = "PDF Review"
 
 def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tuple[bool, Any]:
     """
@@ -1943,10 +1944,24 @@ def update_styling(cmd):
         config[name] = value == "true"
 
 
+def empty_filtered_deck_by_name(name: str) -> bool:
+
+    try:
+        deck = mw.col.decks.byName(name)
+        if deck:
+            did = deck["id"]
+            if hasattr(mw.col.sched, "empty_filtered_deck"):
+                mw.col.sched.empty_filtered_deck(did)
+            else:
+                mw.col.sched.emptyDyn(did)
+        return True
+    except:
+        return False
+
 def create_filtered_deck(cids: List[int]) -> bool:
 
     try:
-        cur = mw.col.decks.byName("PDF Review")
+        cur = mw.col.decks.byName(REV_FILTERED_DECK_NAME)
         if cur:
             did = cur["id"]
             if hasattr(mw.col.sched, "empty_filtered_deck"):
@@ -1955,9 +1970,9 @@ def create_filtered_deck(cids: List[int]) -> bool:
                 mw.col.sched.emptyDyn(did)
         else:    
             if hasattr(mw.col.decks, "new_filtered"):
-                did = mw.col.decks.new_filtered("PDF Review")
+                did = mw.col.decks.new_filtered(REV_FILTERED_DECK_NAME)
             else:
-                did = mw.col.decks.newDyn("PDF Review")
+                did = mw.col.decks.newDyn(REV_FILTERED_DECK_NAME)
         dyn = mw.col.decks.get(did)
         dyn["terms"][0] = [" or ".join([f"cid:{cid}" for cid in cids]), 9999, 0]
         dyn["resched"] = True
