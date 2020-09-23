@@ -892,110 +892,6 @@ def get_loader_html(text):
     """ % text
     return html
 
-def default_styles():
-    return """
-        {
-        "modal" : {
-            "stripedTableBackgroundColor": "#f2f2f2",
-            "modalForegroundColor": "black",
-            "modalBackgroundColor": "white",
-            "modalBorderColor": "#2496dc"
-        },
-        "general" : {
-            "tagForegroundColor": "white",
-            "tagBackgroundColor": "#f0506e",
-            "tagFontSize" : 12,
-            "buttonBackgroundColor": "white",
-            "buttonForegroundColor": "#404040",
-            "buttonBorderColor":"#404040",
-            "keywordColor": "#2496dc",
-            "highlightBackgroundColor": "yellow",
-            "highlightForegroundColor": "black",
-            "fieldSeparatorColor" : "#2496dc",
-            "windowColumnSeparatorColor" : "lightseagreen",
-            "rankingLabelBackgroundColor": "lightseagreen",
-            "rankingLabelForegroundColor": "white",
-            "noteFontSize": 12,
-            "noteForegroundColor": "black",
-            "noteBackgroundColor": "white",
-            "noteBorderColor": "lightseagreen",
-            "noteHoverBorderColor": "#2496dc"
-        },
-        "topBar": {
-            "deckSelectFontSize": 11,
-            "deckSelectForegroundColor": "black",
-            "deckSelectBackgroundColor": "white",
-            "deckSelectHoverForegroundColor": "white",
-            "deckSelectHoverBackgroundColor": "#5f6468",
-            "deckSelectButtonForegroundColor": "grey",
-            "deckSelectButtonBorderColor": "grey",
-            "deckSelectButtonBackgroundColor": "white",
-            "deckSelectCheckmarkColor" : "green"
-        },
-        "bottomBar" : {
-            "browserSearchInputForegroundColor": "black",
-            "browserSearchInputBackgroundColor": "white",
-            "browserSearchInputBorderColor": "grey",
-            "selectForegroundColor" : "black",
-            "selectBackgroundColor": "white",
-            "timelineBoxBackgroundColor": "#595959",
-            "timelineBoxBorderColor": "#595959"
-        }
-    }
-    """
-
-def default_night_mode_styles():
-    return """
-        {
-        "bottomBar": {
-            "browserSearchInputBackgroundColor": "#2f2f31",
-            "browserSearchInputBorderColor": "grey",
-            "browserSearchInputForegroundColor": "beige",
-            "selectBackgroundColor": "#2f2f31",
-            "selectForegroundColor": "white",
-            "timelineBoxBackgroundColor": "#2b2b30",
-            "timelineBoxBorderColor": "darkorange"
-        },
-        "general": {
-            "buttonBackgroundColor": "#2f2f31",
-            "buttonBorderColor": "grey",
-            "buttonForegroundColor": "lightgrey",
-            "fieldSeparatorColor": "white",
-            "highlightBackgroundColor": "SpringGreen",
-            "highlightForegroundColor": "Black",
-            "keywordColor": "SpringGreen",
-            "noteBackgroundColor": "#2f2f31",
-            "noteBorderColor": "lightseagreen",
-            "noteFontSize": 12,
-            "noteForegroundColor": "beige",
-            "noteHoverBorderColor": "#62C9C3",
-            "rankingLabelBackgroundColor": "darkorange",
-            "rankingLabelForegroundColor": "Black",
-            "tagBackgroundColor": "darkorange",
-            "tagFontSize": 12,
-            "tagForegroundColor": "Black",
-            "windowColumnSeparatorColor": "darkorange"
-        },
-        "modal": {
-            "modalBackgroundColor": "#2f2f31",
-            "modalBorderColor": "darkorange",
-            "modalForegroundColor": "beige",
-            "stripedTableBackgroundColor": "#2b2b30"
-        },
-        "topBar": {
-            "deckSelectBackgroundColor": "#2f2f31",
-            "deckSelectButtonBackgroundColor": "#2f2f31",
-            "deckSelectButtonBorderColor": "grey",
-            "deckSelectButtonForegroundColor": "beige",
-            "deckSelectCheckmarkColor": "LawnGreen",
-            "deckSelectFontSize": 11,
-            "deckSelectForegroundColor": "beige",
-            "deckSelectHoverBackgroundColor": "darkorange",
-            "deckSelectHoverForegroundColor": "Black"
-        }
-    }
-    """
-
 def get_pdf_list_first_card():
     """
         Returns the html for the body of a card that is displayed at first position when clicking on "PDFs".
@@ -1021,7 +917,9 @@ def get_tips_html() -> List[Tuple[str, str]]:
         <li>CTRL/Meta + Click on a tag in the notes sidebar opens the Create Note modal with that tag.</li>
         <li>Not all settings are in the "Settings" dialog, some can be set only through Anki's add-on config dialog.</li>
         <li>On Anki 2.1.28+, the whole UI can be resized at once with CTRL+Mousewheel.</li>
-        <li>There is no automatic backup function, but it is sufficient to simply copy the 'siac-notes.db' file somewhere else.</li>
+        <li>If something happens to the add-on's DB file ('siac-notes.db'): Backups are created once each day (last 10 days), in the same folder as the 
+        'siac-notes.db' file. Remove the corrupted 'siac-notes.db' file, replace it with a backup file and rename it to 'siac-notes.db'.
+        </li>
     </ol>
         
 """), ("Markdown in Notes", """
