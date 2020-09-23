@@ -431,7 +431,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         pages_total     = int(cmd.split()[4])
         marks_updated   = toggle_pdf_mark(nid, page, pages_total, mark_type)
         js_maps         = utility.misc.marks_to_js_map(marks_updated)
-        self.web.eval(""" pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s; updatePdfDisplayedMarks();""" % (js_maps[0], js_maps[1]))
+        self.web.eval(""" pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s; updatePdfDisplayedMarks(true);""" % (js_maps[0], js_maps[1]))
 
     elif cmd == "siac-reading-modal-tabs-left-browse":
         # clicked on "Browse" in the tabs on the fields' side.
