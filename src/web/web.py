@@ -502,5 +502,6 @@ def known_issues() -> List[str]:
     return [
         "Tag autocomplete in Create/Update note modal only works on first tag",
         "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions",
-        "Highlights in PDFs not working on some platforms/Anki versions, workaround: set 'pdf.highlights.use_alt_render' to true in the config"
+        "Highlights in PDFs not working on some platforms/Anki versions, workaround: set 'pdf.highlights.use_alt_render' to true in the config",
+        "PDFs are not scrollable on Anki installs with older Qt versions (i.e. OS X - alternate (!) build)"
     ]
