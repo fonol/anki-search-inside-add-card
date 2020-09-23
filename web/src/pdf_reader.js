@@ -144,8 +144,8 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     rerenderPDFPage(pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
                     pageNumPending = null;
                     return null;
-                // } else if (pageTimestamp != latestRenderTimestamp) {
-                //     return null;
+                    // } else if (pageTimestamp != latestRenderTimestamp) {
+                    //     return null;
                 } else {
 
                     if (shouldScrollUp) {
@@ -162,7 +162,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     Highlighting._removeAllHighlights();
 
                     if (fetchHighlights) {
-                        updatePdfDisplayedMarks();
+                        updatePdfDisplayedMarks(true);
                     }
                     if (["Sand", "Peach", "Night", "X1", "X2", "Mud", "Coral", "Moss"].indexOf(pdfColorMode) !== -1) {
                         invertCanvas(ctx);
@@ -207,7 +207,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     Highlighting.displayHighlights();
                 }
                 if (!pageNumPending && !pdfPageRendering) {
-                
+
                     if (pagesRead.indexOf(num) !== -1) {
                         document.getElementById('siac-pdf-overlay').style.display = 'block';
                         document.getElementById('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book"></i>&nbsp; Unread';
@@ -226,9 +226,9 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                         pycmd(`siac-linked-to-page ${pdfDisplayedCurrentPage} ${pdfDisplayed.numPages}`);
                     }
                     setLastReadPage();
-                } 
+                }
             });
-            
+
         }).catch(function (err) { setTimeout(function () { console.log(err); }); });
 }
 
@@ -430,7 +430,7 @@ window.getLastReadPage = function () {
 
 window.updatePdfProgressBar = function () {
     let percs = Math.floor(pagesRead.length * 10 / numPagesExtract());
-    let html = `<span style='margin-right: 10px; display: inline-block; min-width: 35px;'>${Math.trunc(pagesRead.length * 100 / numPagesExtract())} %</span>`;
+    let html = `<span style='margin-right: 10px; display: inline-block; min-width: 35px; font-weight: bold; color: lightgrey;'>${Math.trunc(pagesRead.length * 100 / numPagesExtract())} %</span>`;
     for (var c = 0; c < 10; c++) {
         if (c < percs) {
             html += `<div class='siac-prog-sq-filled'></div>`;
@@ -777,22 +777,29 @@ window.applyFilter = function (ctx, color, filter) {
     ctx.fillStyle = color;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
-window.updatePdfDisplayedMarks = function () {
+/**
+ * When a new page is rendered, the marks display at the top has to be updated, as well as the "Marks" tab in the bottom bar.
+ */
+window.updatePdfDisplayedMarks = function (rerenderTop) {
     if (pdfDisplayedMarks == null) {
         return;
     }
-    let html = "";
-    $('.siac-mark-btn-inner').removeClass('active');
-    if (pdfDisplayedCurrentPage in pdfDisplayedMarks) {
-        for (var i = 0; i < pdfDisplayedMarks[pdfDisplayedCurrentPage].length; i++) {
-            switch (pdfDisplayedMarks[pdfDisplayedCurrentPage][i]) {
-                case 1: html += "<div class='siac-pdf-mark-lbl'>Revisit &nbsp;<b onclick='$(\".siac-mark-btn-inner-1\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-1').first().addClass('active'); break;
-                case 2: html += "<div class='siac-pdf-mark-lbl'>Hard &nbsp;<b onclick='$(\".siac-mark-btn-inner-2\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-2').first().addClass('active'); break;
-                case 3: html += "<div class='siac-pdf-mark-lbl'>More Info &nbsp;<b onclick='$(\".siac-mark-btn-inner-3\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-3').first().addClass('active'); break;
-                case 4: html += "<div class='siac-pdf-mark-lbl'>More Cards &nbsp;<b onclick='$(\".siac-mark-btn-inner-4\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-4').first().addClass('active'); break;
-                case 5: html += "<div class='siac-pdf-mark-lbl'>Bookmark &nbsp;<b onclick='$(\".siac-mark-btn-inner-5\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-5').first().addClass('active'); break;
+    if (rerenderTop) {
+        let html = "";
+        $('.siac-mark-btn-inner').removeClass('active');
+        if (pdfDisplayedCurrentPage in pdfDisplayedMarks) {
+            for (var i = 0; i < pdfDisplayedMarks[pdfDisplayedCurrentPage].length; i++) {
+                switch (pdfDisplayedMarks[pdfDisplayedCurrentPage][i]) {
+                    case 1: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Revisit &nbsp;<b onclick='$(\".siac-mark-btn-inner-1\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-1').first().addClass('active'); break;
+                    case 2: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Hard &nbsp;<b onclick='$(\".siac-mark-btn-inner-2\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-2').first().addClass('active'); break;
+                    case 3: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; More Info &nbsp;<b onclick='$(\".siac-mark-btn-inner-3\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-3').first().addClass('active'); break;
+                    case 4: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; More Cards &nbsp;<b onclick='$(\".siac-mark-btn-inner-4\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-4').first().addClass('active'); break;
+                    case 5: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Bookmark &nbsp;<b onclick='$(\".siac-mark-btn-inner-5\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-5').first().addClass('active'); break;
+                }
             }
         }
+        if (document.getElementById("siac-pdf-overlay-top-lbl-wrap"))
+            document.getElementById("siac-pdf-overlay-top-lbl-wrap").innerHTML = html;
     }
     let w1 = document.getElementById("siac-queue-readings-list").offsetWidth;
     let w2 = document.getElementById("siac-queue-actions").offsetWidth;
@@ -818,9 +825,17 @@ window.updatePdfDisplayedMarks = function () {
     if (tableHtml.length) {
         tableHtml = `<table style='user-select: none; table-layout: fixed; max-width: ${w}px;'>` + tableHtml + "</table>";
     }
-    if (document.getElementById("siac-pdf-overlay-top-lbl-wrap"))
-        document.getElementById("siac-pdf-overlay-top-lbl-wrap").innerHTML = html;
-    if (document.getElementById("siac-marks-display")) { document.getElementById("siac-marks-display").innerHTML = tableHtml; }
+
+    if (document.getElementById("siac-marks-display")) {
+        if (tableHtml.length) {
+            document.getElementById("siac-marks-display").innerHTML = tableHtml;
+        } else {
+            document.getElementById("siac-marks-display").innerHTML = `<div style='display: flex; flex-direction: column; justify-content: center; height: 80px; width: 135px; text-align: center; color: grey;'>
+                    <div class='siac-caps'><i class="fa fa-star-o"></i>&nbsp; No marks</div>
+                </div>`;
+        }
+
+    }
     onMarkBtnClicked(document.getElementById("siac-mark-jump-btn"));
 
 }
@@ -1032,7 +1047,7 @@ window.onReadingModalClose = function () {
     if (siacYt.player) {
         try {
             siacYt.player.destroy();
-        } catch(e) { }
+        } catch (e) { }
     }
     document.getElementById("siac-reading-modal-center").innerHTML = "";
     onWindowResize();

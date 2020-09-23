@@ -556,7 +556,7 @@ window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1
         if (stamp > -1 && document.getElementById("info-took")) {
             if (printTiming) {
                 let took = new Date().getTime() - stamp;
-                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'>&#9432;</b>`;
+                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'><i class='fa fa-info-circle'></i></b>`;
             } else {
                 document.getElementById("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
             }
@@ -568,7 +568,7 @@ window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1
         if (stamp > -1 && document.getElementById("info-took")) {
             if (printTiming) {
                 let took = new Date().getTime() - stamp;
-                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'>&#9432;</b>`;
+                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'><i class='fa fa-info-circle'></i></b>`;
             } else {
                 document.getElementById("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
             }
