@@ -354,7 +354,7 @@ class Output:
 
         if not self.hideSidebar:
             infoMap = {
-                "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`siac-last-timing`)'>&#9432;</b>" if printTimingInfo else ""),
+                "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`siac-last-timing`)'><i class='fa fa-info-circle'></i></b>" if printTimingInfo else ""),
                 "Found" :  "<b>%s</b> notes" % (len(notes) if len(notes) > 0 else "<span style='color: red;'>0</span>")
             }
             info = self.build_info_table(infoMap, tags, allText)
@@ -540,7 +540,7 @@ class Output:
         for key, value in infoMap.items():
             infoStr         = f"{infoStr}<tr><td>{key}</td><td id='info-{key}'>{value}</td></tr>"
 
-        infoStr             = f"{infoStr}</table><div class='searchInfoTagSep'><span class='tag-symbol'>&#9750;</span>&nbsp;Tags:</div><div id='tagContainer'>"
+        infoStr             = f"{infoStr}</table><div class='searchInfoTagSep'><i class='fa fa-tags'></i>&nbsp; Tags:</div><div id='tagContainer'>"
         tagStr              = ""
         if len(tags) == 0:
             infoStr         += "No tags in the results."
