@@ -35,6 +35,9 @@ window.pageSnapshot = function() {
     cropSelection(pdfC, 0, 0, pdfC.offsetWidth, pdfC.offsetHeight, insertImage);
 }
 window.cropSelection = function(canvasSrc, offsetX, offsetY, width, height, callback) {
+    if (width < 2 || height < 2) {
+        return;
+    }
     let temp = document.createElement('canvas');
     let tctx = temp.getContext('2d');
     temp.width = width;
