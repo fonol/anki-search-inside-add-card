@@ -491,12 +491,9 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added feature to review due cards before reading a PDF",
-        "Notes added on PDF page now recognizes Image Occlusion notes too",
-        "The add-on now creates a backup of its database once a day (in the same folder as the database is stored)",
-        "Some small improvements to the PDF reader search tooltip",
-        "Fix Youtube videos not starting at saved position",
-        "Fix small highlighting regression"
+        "Fix: opening a PDF with linked notes throwing error on older Anki versions",
+        "Fix: Search highlighting not working on uppercased terms on Mac",
+        "Added some icons in the PDF viewer"
     ]
 
 def known_issues() -> List[str]:
@@ -504,5 +501,6 @@ def known_issues() -> List[str]:
 
     return [
         "Tag autocomplete in Create/Update note modal only works on first tag",
-        "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions"
+        "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions",
+        "Highlights in PDFs not working on some platforms/Anki versions, workaround: set 'pdf.highlights.use_alt_render' to true in the config"
     ]
