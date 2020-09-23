@@ -815,7 +815,7 @@ class ReadingModal:
                             <div id='siac-queue-infobox' onmouseleave='leaveQueueItem();'></div>
                         </div>
                         <div id='siac-pdf-bottom-tabs' style='display: inline-block; vertical-align: top; margin-left: 16px; user-select: none;'>
-                            <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'>Marks</a>
+                            <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'><i class='fa fa-star-o' style='margin-right: 5px;'></i>Marks</a>
                             <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' style='margin-right: 10px;'>Related</a>
                             <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'>Info</a> <br>
                             <div id='siac-pdf-bottom-tab'>
@@ -1098,7 +1098,7 @@ class ReadingModal:
 
         html = f"""
             <table style='color: grey; min-width: 190px; line-height: 1.2;'>
-                <tr><td>ID</td><td><b>{note.id}</b></td></tr>
+                <tr><td>ID</td><td><b>{note.id}</b> &nbsp;<b style='color: #ababab; cursor: pointer;' onclick='pycmd("siac-copy-to-cb {note.id}")'>[Copy]</b></td></tr>
                 <tr><td>Created</td><td><b>{created}</b></td></tr>
                 <tr><td>Schedule</td><td><b>{schedule}</b></td></tr>
                 <tr>
