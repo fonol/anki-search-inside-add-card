@@ -99,7 +99,7 @@ def create_db_file_if_not_exists() -> bool:
         existed = True
         try: 
             conn    = sqlite3.connect(file_path)
-        except sqite3.OperationalError:
+        except sqlite3.OperationalError:
             tmp = file_path.replace("siac-notes.db", "siac-notes.tmp.db")
             shutil.copyfile(file_path, tmp)
             os.remove(file_path)
