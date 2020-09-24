@@ -60,6 +60,7 @@ class Sidebar:
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs")'>PDFs</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs-unread")'>PDFs - Unread</div>
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs-in-progress")'>PDFs - In Progress</div>
+                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-video-notes")'>Videos</div>
                       <!--  <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-last-done")'>Last Done</div>-->
                         <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-stats")'>Read Stats</div>
                         {sched_today_menu_item}
