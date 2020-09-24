@@ -195,7 +195,19 @@ class SiacNote(Printable):
 
         # yt vids are prepended with thumbnail image    
         if self.is_yt():
-            body = f"{body}<img src='http://img.youtube.com/vi/{utility.text.get_yt_video_id(src)}/0.jpg' style='height: 100px;'/>"
+            time = utility.text.get_yt_time_verbose(self.source)
+            if len(body.strip()) > 0:
+                body += "<br/><hr style='border-top: dotted 2px;'>"
+            body = f"""{body}<p style='display: flex; margin: 0;'>
+                        <img src='http://img.youtube.com/vi/{utility.text.get_yt_video_id(src)}/0.jpg' style='height: 100px; margin-right: 20px;'/>
+                        <span style='display: flex; flex-direction: column; justify-content: center;'>
+                            <span class='siac-caps' style='font-size: 13px;'>Saved At
+                            <br>
+                            <span style='font-size: 25px; line-height: 1em;'>{time}</span>
+                            </span>
+                        </span>
+                        </p>     
+                    """
      
         
         title   = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
@@ -206,7 +218,7 @@ class SiacNote(Printable):
                 src = src[src.rindex("/") +1:]
             if self.is_yt():
                 src = f"<a href='{src}'>{src}</a>"
-            src = f"<br/><hr style='border-top: dotted 2px;'><i>Source: {src}</i>"
+            src = f"<hr style='border-top: dotted 2px;'><i>Source: {src}</i>"
         else:
             src = ""
       
