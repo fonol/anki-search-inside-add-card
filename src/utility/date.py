@@ -68,6 +68,9 @@ def schedule_is_due_in_the_future(schedule: str) -> bool:
     due         = schedule.split("|")[1]
     return due[:10] > date_only_stamp()
     
+def day_of_year() -> int:
+    now = datetime.now()
+    return (now - datetime(now.year, 1, 1)).days + 1
 
 def schedule_verbose(sched: str) -> str:
     """ Returns a natural language representation of the given schedule string. """
