@@ -491,10 +491,13 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Fix: opening a PDF with linked notes throwing error on older Anki versions",
+        "Added 'Videos' category in the sidebar",
+        "Video (Youtube) notes now have a thumbnail",
+        "Fix: Adapt rewiew last linked cards message for video notes",
+        "Fix: Opening a PDF with linked notes throwing error on older Anki versions",
         "Fix: Search highlighting not working on uppercased terms on Mac",
         "Added some icons in the PDF viewer",
-        "Added Avg. pages read / day and Most Read pages / day to Read Stats"
+        "Added Avg. Pages Read / Day and Most Read Pages / Day to Read Stats"
     ]
 
 def known_issues() -> List[str]:
