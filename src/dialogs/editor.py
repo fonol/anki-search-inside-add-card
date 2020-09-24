@@ -451,7 +451,7 @@ class CreateTab(QWidget):
         t_h.addWidget(text_lbl)
 
         self.tb = QToolBar("Format")
-        self.tb.setStyleSheet("background-color: transparent; border: 0px;")
+        # self.tb.setStyleSheet("background-color: transparent; border: 0px;")
 
         self.tb.setHidden(False)
         self.tb.setOrientation(Qt.Horizontal)
