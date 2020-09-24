@@ -421,7 +421,20 @@ def get_yt_time(url: str) -> Optional[int]:
         return int(match.group(2))
     return None
 
-   
+def get_yt_time_verbose(url: str) -> str:
+    time = get_yt_time(url)
+    if not time or time == 0:
+        return "--:--"
+    secs    = time % 60
+    if secs < 10:
+        secs = f"0{secs}"
+    mins    = int(time/60)
+    if mins < 10:
+        mins = f"0{mins}"
+    return f"{mins}:{secs}"
+
+    
+
 def clean_tags(tags):
     if tags is None or len(tags.strip()) == 0:
         return ""
