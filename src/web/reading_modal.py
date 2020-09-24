@@ -421,14 +421,23 @@ class ReadingModal:
                 else:
                     due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
                 if due_today and len(due_today) > 0:
+                    act         = "Reading"
+                    if note.is_pdf(): 
+                        ntype = "PDF"
+                    elif note.is_yt(): 
+                        ntype = "video"
+                        act   = "Watching"
+                    else: 
+                        ntype = "note"
+
                     rev_overlay = f""" 
                         <div class='siac-rev-overlay'>
                             <div style='text-align: center; font-size: 22px; font-weight: bold; color: lightgrey;'>
-                               <span>Some of the last cards you made in this PDF are due today.<br>Review them before reading?</span>
+                               <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
                             </div>
                             <div style='opacity: 1; text-align: center; margin: 50px 0 30px 0; font-weight: bold;'>
                                 <div class='siac-btn siac-btn-dark' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
-                                <div class='siac-btn siac-btn-dark' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue Reading</div>
+                                <div class='siac-btn siac-btn-dark' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
                             </div>
                         </div> 
                     """
