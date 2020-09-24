@@ -1463,9 +1463,15 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
 
     if state.last_search_cmd is None:
         return
+    
+    ix = get_index()
+
+    # if index is not initialized or reading modal is active, abort
+    if ix is None or ix.ui.reading_modal.note_id is not None:
+        return
 
     if editor is None:
-        editor = get_index().ui._editor
+        editor = ix.ui._editor
 
     # executing the last cmd again will reset state.last_page_requested, so store it before
     page = state.last_page_requested
@@ -1477,7 +1483,7 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
     # So now that we have executed the last search cmd again, which refreshed the results,
     # go to that page again.
     if page is not None:
-        get_index().ui.show_page(editor, page)
+        ix.ui.show_page(editor, page)
     
 def show_schedule_dialog(parent_window):
     """ Show the dialog that allows to change the schedule of a note """
