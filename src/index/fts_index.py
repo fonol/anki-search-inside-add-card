@@ -73,12 +73,14 @@ class FTSIndex:
             else:
                 sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs)"
 
-            cleaned = self._cleanText(corpus)
+            cleaned     = self._cleanText(corpus)
+            file_path   = self.dir + "search-data.db"
             try:
-                os.remove(self.dir + "search-data.db")
+                os.remove(file_path)
             except OSError:
                 pass
-            conn = sqlite3.connect(self.dir + "search-data.db")
+
+            conn = sqlite3.connect(file_path)
             conn.execute("drop table if exists notes")
             try:
                 conn.execute(sql % 5)
