@@ -64,6 +64,9 @@ def init_addon():
     """ Executed once on Anki startup. """
     global origEditorContextMenuEvt
 
+    # create user_files folder if not existing
+    utility.misc.create_user_files_folder()
+
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
     
     #todo: Find out if there is a better moment to start index creation
