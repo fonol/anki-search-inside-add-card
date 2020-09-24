@@ -214,39 +214,38 @@ def marks_to_js_map(marks):
 
 
 def get_milisec_stamp():
+    """ UTC miliseconds. """
     return int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds() * 1000)
 
+def create_user_files_folder():
+    """ Create the user_files folder in the add-on's folder if not existing. """
+    folder = get_user_files_folder_path()
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+
 def get_user_files_folder_path():
-    """
-    Path ends with /
-    """
+    """ Path ends with / """
     dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
     if not dir.endswith("/"):
         return dir + "/user_files/"
     return dir + "user_files/"
 
 def get_whoosh_index_folder_path():
-    """
-    Path ends with /
-    """
+    """ Path ends with / """
     dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
     if not dir.endswith("/"):
         return dir + "/index/"
     return dir + "index/"
 
 def get_addon_base_folder_path():
-    """
-    Path ends with /
-    """
+    """ Path ends with / """
     dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
     if not dir.endswith("/"):
         return dir + "/"
     return dir
 
 def get_web_folder_path():
-    """
-    Path ends with /
-    """
+    """ Path ends with / """
     dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
     if not dir.endswith("/"):
         return dir + "/web/"
