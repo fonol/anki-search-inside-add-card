@@ -1506,11 +1506,14 @@ def show_read_stats():
     index       = get_index()
     stamp       = set_stamp()
     res         = []
+
+    # first card: Read pages heatmap
     t_counts    = get_read_last_n_days_by_day(365)
     body        = read_counts_by_date_card_body(t_counts)
     t_counts    = utility.date.counts_to_timestamps(t_counts)
     res.append(SiacNote.mock(f"Pages read per day ({datetime.now().year})", body, "Meta"))
 
+    # second card: Pie charts with tags
     topics      = pdf_topic_distribution()
     rec_topics  = pdf_topic_distribution_recently_read(7)
 
