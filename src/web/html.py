@@ -658,7 +658,24 @@ def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
             </center>
         """
 
-    html = """<div id='siac-read-time-ch' style='width: 100%; margin: 30px auto 10px auto;'></div>"""
+    doy     = utility.date.day_of_year()
+    v_sum   = sum(counts.values())
+    v_max   = max(counts.values())
+    avg_r   = round(v_sum / doy, 1)
+
+    html = f"""
+        <div id='siac-read-time-ch' style='width: 100%; margin: 30px auto 10px auto;'></div>
+        <table style='margin-top: 15px;'>
+            <tr>
+                <td class='siac-caps'>Avg. read pages / day:</td>
+                <td><b style='margin-left: 20px;'>{avg_r}</b></td>
+            </tr>
+            <tr>
+                <td class='siac-caps'>Most read pages on a single day:</td>
+                <td><b style='margin-left: 20px;'>{v_max}</b></td>
+            </tr>
+        </table>
+    """
     return html
 
 
