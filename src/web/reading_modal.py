@@ -661,7 +661,7 @@ class ReadingModal:
                     <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
                         <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
                         <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {self.note_id}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
-                        <div class='siac-btn siac-btn-dark' onclick='pycmd("siac-yt-save-time " + ytCurrentTime()); readerNotification("Saved Position.");' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save Position&nbsp;</b></div>
+                        <div class='siac-btn siac-btn-dark' onclick='ytSavePosition();' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save Position&nbsp;</b></div>
                         <div class='siac-btn siac-btn-dark' onclick='ytScreenCapture();' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-camera"></i> &nbsp;Capture&nbsp;</b></div>
                     </div>
                 </div>
