@@ -193,6 +193,9 @@ class SiacNote(Printable):
 
             body += "<br></ul></b></i></em></span></p></a></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
 
+        # yt vids are prepended with thumbnail image    
+        if self.is_yt():
+            body = f"{body}<img src='http://img.youtube.com/vi/{utility.text.get_yt_video_id(src)}/0.jpg' style='height: 100px;'/>"
      
         
         title   = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
@@ -201,7 +204,9 @@ class SiacNote(Printable):
         if src is not None and len(src) > 0 and get_config_value_or_default("notes.showSource", True):
             if "/" in src and src.endswith(".pdf"):
                 src = src[src.rindex("/") +1:]
-            src = "<br/><hr style='border-top: dotted 2px;'><i>Source: %s</i>" % (src)
+            if self.is_yt():
+                src = f"<a href='{src}'>{src}</a>"
+            src = f"<br/><hr style='border-top: dotted 2px;'><i>Source: {src}</i>"
         else:
             src = ""
       
