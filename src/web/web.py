@@ -493,7 +493,8 @@ def changelog() -> List[str]:
     return [
         "Fix: opening a PDF with linked notes throwing error on older Anki versions",
         "Fix: Search highlighting not working on uppercased terms on Mac",
-        "Added some icons in the PDF viewer"
+        "Added some icons in the PDF viewer",
+        "Added Avg. pages read / day and Most Read pages / day to Read Stats"
     ]
 
 def known_issues() -> List[str]:
