@@ -32,3 +32,11 @@ window.ytScreenCapture = function() {
     pycmd(`siac-screen-capture ${Math.trunc(r.top)} ${Math.trunc(r.right)} ${Math.trunc(r.bottom)} ${Math.trunc(r.left)}`);
 
 };
+
+window.ytSavePosition = function() {
+    let time = ytCurrentTime();
+    let secs = time%60;
+    if (secs === 0) { secs = "00"; }
+    pycmd("siac-yt-save-time " + time); 
+    readerNotification(`Saved Position.<br>Video will resume at ${Math.trunc(time / 60.0)}:${secs}`);
+};
