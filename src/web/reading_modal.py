@@ -1689,15 +1689,28 @@ class ReadingModal:
         """ Context: Clicked on 'Page' tab in the bottom bar. """
 
         pages = get_read_pages(self.note_id)
-        total = get_read_stats(self.note_id)[2]
+        total = get_read_stats(self.note_id)
+        if total is None or total[2] <= 0:
+            return ""
+        total = total[2]
         html  = ""
-        for ix in range(1, total + 1):
+        e_st  = 0 if not self.note.extract_start else self.note.extract_start
+        c     = 0
+        limit = 25
+        for ix in range(max(1, e_st), max(1, e_st) + total):
+
+            if c % limit == 0:
+                if c > 0:
+                    html = f"{html}<br>"
+                html = f"{html}<span class='sq-lbl'>{c+1}-{c + min(limit, total - c)}</span>"
+            c += 1
             if ix in pages:
                 html = f"{html}<i class='sq-r sq-rg' onclick='pdfGotoPg({ix})'></i>"
             else:
                 html = f"{html}<i class='sq-r' onclick='pdfGotoPg({ix})'></i>"
+                
         if total < 50:
-            html = f"<div style='line-height: 1em; max-width: 200px; margin-top: 10px;'>{html}</div>"
+            html = f"<div style='line-height: 1em; margin-top: 10px;'>{html}</div>"
         else:
             html = f"<div style='line-height: 1em;'>{html}</div>"
         return html
