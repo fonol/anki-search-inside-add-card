@@ -527,6 +527,9 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     margin-top: 4px;
     padding: 0 5px 0 0;
     box-sizing: border-box;
+    max-width: 380px;
+    white-space: normal;
+    line-height: 1.2em;
 }
 .siac-reading-modal-button-bar-wrapper {
     flex: 0 0 30px; 

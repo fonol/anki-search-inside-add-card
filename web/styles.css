@@ -644,9 +644,22 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
 .addon-hidden {
     display: none !important;
 }
-
 .hidden {
     display: none;
+}
+.sq-r {
+    display: inline-block;
+    width: 8px; 
+    height: 8px;
+    border-radius: 1px;
+    margin-right: 2px;
+    background: rgb(167, 167, 167);
+}
+.sq-rg {
+    background: coral;
+}
+.sq-r:hover {
+    filter: brightness(1.4);
 }
 .flexCol.right {
     flex-grow: 1;
