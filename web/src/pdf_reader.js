@@ -52,6 +52,7 @@ window.pdfFullscreen = false;
 window.pdfBarsHidden = false;
 window.displayedNoteId = null;
 window.pdfTextLayerMetaKey = false;
+window.bottomBarTabDisplayed = "marks";
 window.pdfNotification = {
     queue: [],
     current: ""
@@ -439,6 +440,9 @@ window.updatePdfProgressBar = function () {
         }
     }
     document.getElementById("siac-prog-bar-wr").innerHTML = html;
+    if (bottomBarTabDisplayed === 'pages') {
+        pycmd(`siac-pdf-show-bottom-tab ${displayedNoteId} pages`);
+    }
 }
 window.numPagesExtract = function () {
     if (!pdfExtract) {
@@ -870,7 +874,13 @@ window.jumpFirstPageShortcut = function () {
     pdfDisplayedCurrentPage = 1;
     queueRenderPage(1, true);
 }
-
+window.pdfGotoPg = function(page) {
+    if (pdfLoading || noteLoading || modalShown || !pdfDisplayed) {
+        return;
+    }
+    pdfDisplayedCurrentPage = page;
+    queueRenderPage(page, true);
+}
 
 window.togglePDFSelect = function (elem) {
     if (!elem) {
