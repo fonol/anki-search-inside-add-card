@@ -493,11 +493,13 @@ def changelog() -> List[str]:
     return [
         "Added 'Videos' category in the sidebar",
         "Video (Youtube) notes now have a thumbnail",
+        "Added Avg. Pages Read / Day and Most Read Pages / Day to Read Stats",
+        "Added some icons in the PDF viewer",
+        "Added 'Pages' tab in PDF viewer bottom bar",
         "Fix: Adapt rewiew last linked cards message for video notes",
         "Fix: Opening a PDF with linked notes throwing error on older Anki versions",
         "Fix: Search highlighting not working on uppercased terms on Mac",
-        "Added some icons in the PDF viewer",
-        "Added Avg. Pages Read / Day and Most Read Pages / Day to Read Stats"
+        "Fix: 'Related' tab in PDF viewer throwing error if related note's title contains \"'\"",
     ]
 
 def known_issues() -> List[str]:
