@@ -645,7 +645,7 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     display: none !important;
 }
 .hidden {
-    display: none;
+    display: none !important;
 }
 .sq-r {
     display: inline-block;
@@ -656,10 +656,15 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     background: rgb(167, 167, 167);
 }
 .sq-rg {
-    background: coral;
+    background: #2496dc;
 }
 .sq-r:hover {
     filter: brightness(1.4);
+}
+.sq-lbl {
+    display: inline-block;
+    min-width: 70px;
+    color: grey;
 }
 .flexCol.right {
     flex-grow: 1;
