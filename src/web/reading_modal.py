@@ -514,7 +514,8 @@ class ReadingModal:
                                 <div id='siac-pdf-bottom-tabs' style='display: inline-block; vertical-align: top; margin-left: 16px; user-select: none;'>
                                     <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'><i class='fa fa-star-o' style='margin-right: 5px;'></i>Marks</a>
                                     <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' style='margin-right: 10px;'>Related</a>
-                                    <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'>Info</a> <br>
+                                    <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")' style='margin-right: 10px;'>Info</a>
+                                    <a class='siac-link-btn {hide_page_map} tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} pages")'>Pages</a><br>
                                     <div id='siac-pdf-bottom-tab'>
                                         <div id='siac-marks-display' onclick='markClicked(event);'></div>
                                     </div>
@@ -527,6 +528,7 @@ class ReadingModal:
                 <script>
                 destroyPDF();
                 pageSidebarDisplayed = {page_sidebar};
+                bottomBarTabDisplayed = 'marks';
                 if (readingTimer != null)  {{
                     $('#siac-timer-play-btn').html('Pause').removeClass('inactive');
                 }} else if (remainingSeconds !== 1800) {{
@@ -549,13 +551,16 @@ class ReadingModal:
                 </script>
             """
 
-            #check if it is a pdf or feed
             overflow        = "auto"
             notification    = ""
+            hide_page_map   = "hidden"
             editable        = False
+            #check note type
             if note.is_pdf() and utility.misc.file_exists(source):
-                overflow    = "hidden" 
-                text        = self.pdf_viewer_html(source, note.get_title(), priority)
+                overflow        = "hidden" 
+                hide_page_map   = ""
+                text            = self.pdf_viewer_html(source, note.get_title(), priority)
+
                 if "/" in source:
                     source  = source[source.rindex("/") +1:]
             elif note.is_feed():
@@ -577,7 +582,7 @@ class ReadingModal:
 
             params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info, 
             queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, 
-            notification=notification, sched_click=sched_click, page_sidebar=page_sidebar, rev_overlay = rev_overlay)
+            notification=notification, sched_click=sched_click, page_sidebar=page_sidebar, rev_overlay = rev_overlay, hide_page_map = hide_page_map)
             html                = html.format_map(params)
 
             return html
@@ -826,7 +831,8 @@ class ReadingModal:
                         <div id='siac-pdf-bottom-tabs' style='display: inline-block; vertical-align: top; margin-left: 16px; user-select: none;'>
                             <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'><i class='fa fa-star-o' style='margin-right: 5px;'></i>Marks</a>
                             <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' style='margin-right: 10px;'>Related</a>
-                            <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'>Info</a> <br>
+                            <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")' style='margin-right: 10px;'>Info</a>
+                            <a class='siac-link-btn {hide_page_map} tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} pages")'>Pages</a><br>
                             <div id='siac-pdf-bottom-tab'>
                                 <div id='siac-marks-display' onclick='markClicked(event);'></div>
                             </div>
@@ -837,6 +843,7 @@ class ReadingModal:
 
         editable            = not note.is_feed() and not note.is_pdf() and len(text) < 50000
         queue_info          = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
+        hide_page_map       = "hidden" if not note.is_pdf() else ""
         if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
             queue_info      = "Scheduled for future date."
         # queue_info_short = f"Queue [{note.position + 1}]" if note.is_in_queue() else "Unqueued"
@@ -844,7 +851,7 @@ class ReadingModal:
         queue_readings_list = self.get_queue_head_display(queue, editable)
 
         params              = dict(note_id = note_id, time_str = time_str, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, queue_info = queue_info, queue_info_short = queue_info_short, 
-        queue_readings_list = queue_readings_list, schedule_btns=schedule_btns, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, sched_click=sched_click )
+        queue_readings_list = queue_readings_list, schedule_btns=schedule_btns, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, sched_click=sched_click, hide_page_map = hide_page_map)
 
         html                = html.format_map(params)
 
@@ -1656,24 +1663,45 @@ class ReadingModal:
     def show_pdf_bottom_tab(self, note_id: int, tab: str):
         """ Context: Clicked on a tab (Marks / Related / Info) in the bottom bar. """
 
-        tab_js = "$('.siac-link-btn.tab').removeClass('active');"
+        tab_js = f"$('.siac-link-btn.tab').removeClass('active'); bottomBarTabDisplayed = '{tab}';"
         if tab == "marks":
             return f"""{tab_js}
             $('.siac-link-btn.tab').eq(0).addClass('active');
             document.getElementById('siac-pdf-bottom-tab').innerHTML =`<div id='siac-marks-display' onclick='markClicked(event);'></div>`;
-            updatePdfDisplayedMarks(false)"""
+            updatePdfDisplayedMarks(false);"""
         if tab == "info":
-            html = self.get_note_info_html()
-            html = html.replace("`", "&#96;")
+            html = self.get_note_info_html().replace("`", "&#96;")
             return f"""{tab_js}
             $('.siac-link-btn.tab').eq(2).addClass('active');
             document.getElementById('siac-pdf-bottom-tab').innerHTML =`{html}`;"""
         if tab == "related":
-            html = self.get_related_notes_html()
-            html = html.replace("`", "&#96;")
+            html = self.get_related_notes_html().replace("`", "&#96;")
             return f"""{tab_js}
             $('.siac-link-btn.tab').eq(1).addClass('active');
             document.getElementById('siac-pdf-bottom-tab').innerHTML =`{html}`;"""
+        if tab == "pages":
+            html = self.get_page_map_html().replace("`", "&#96;")
+            return f"""{tab_js}
+            $('.siac-link-btn.tab').eq(3).addClass('active');
+            document.getElementById('siac-pdf-bottom-tab').innerHTML =`{html}`;"""
+
+    def get_page_map_html(self) -> str:
+        """ Context: Clicked on 'Page' tab in the bottom bar. """
+
+        pages = get_read_pages(self.note_id)
+        total = get_read_stats(self.note_id)[2]
+        html  = ""
+        for ix in range(1, total + 1):
+            if ix in pages:
+                html = f"{html}<i class='sq-r sq-rg' onclick='pdfGotoPg({ix})'></i>"
+            else:
+                html = f"{html}<i class='sq-r' onclick='pdfGotoPg({ix})'></i>"
+        if total < 50:
+            html = f"<div style='line-height: 1em; max-width: 200px; margin-top: 10px;'>{html}</div>"
+        else:
+            html = f"<div style='line-height: 1em;'>{html}</div>"
+        return html
+
 
     def get_related_notes_html(self) -> str:
         """ Context: Clicked on 'Related' tab in the bottom bar. """
