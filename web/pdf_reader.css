@@ -530,7 +530,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     max-width: 380px;
     white-space: normal;
     line-height: 1.2em;
-    min-height: 50px;
+    min-height: 70px;
 }
 .siac-reading-modal-button-bar-wrapper {
     flex: 0 0 30px; 
