@@ -55,7 +55,9 @@ from ..markdown import markdown
 
 
 try: 
-    from ..rs.siacrs.siacrs import *
+    # from ..rs.siacrs.siacrs import *
+    utility.misc.load_rust_lib()
+    from siacrs import *
     state.rust_lib = True
 
 except:
