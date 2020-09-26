@@ -21,11 +21,18 @@ from glob import glob
 from datetime import datetime
 import os
 import re
+import sys
 import time
+import typing
+import pathlib
+import shutil
+import importlib.util
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import tooltip, showInfo
 from urllib.parse import urlparse
+from anki.utils import isMac, isLin
+
 
 
 def file_exists(full_path):
@@ -211,9 +218,7 @@ def marks_to_js_map(marks):
     t = "{%s}" % t
     return (s,t)
         
-
-
-def get_milisec_stamp():
+def get_milisec_stamp() -> int:
     """ UTC miliseconds. """
     return int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds() * 1000)
 
@@ -222,6 +227,35 @@ def create_user_files_folder():
     folder = get_user_files_folder_path()
     if not os.path.isdir(folder):
         os.mkdir(folder)
+
+def get_application_data_path() -> str:
+    """ Get a path to an application data folder for the current OS. """
+    try:
+        home = pathlib.Path.home()
+        path = ""
+        if sys.platform == "win32":
+            path = f"{home}/AppData/Local/"
+        elif sys.platform.startswith("linux"):
+            # path = "/usr/local/share"
+            # if not os.path.isdir(path)
+            path =  f"{home}/.local/share/"
+            if not os.path.isdir(path) or not os.access(path, os.W_OK):
+                path = f"{home}/usr/share/"
+        elif sys.platform == "darwin":
+            path = f"{home}/Library/Application Support/"
+            if not os.path.isdir(path) or not os.access(path, os.W_OK):
+                path = os.getenv("HOME")
+        if not path:
+            return get_user_files_folder_path()
+        if not path.endswith("/"):
+            path += "/"
+        return path.replace("\\", "/") + ".anki-siac-addon-data/"
+    except:
+        # if all fails, use the user_files folder
+        return get_user_files_folder_path()
+
+
+    
 
 def get_user_files_folder_path():
     """ Path ends with / """
@@ -250,6 +284,13 @@ def get_web_folder_path():
     if not dir.endswith("/"):
         return dir + "/web/"
     return dir + "web/"
+
+def get_rust_folder_path():
+    dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
+    if not dir.endswith("/"):
+        return dir + "/src/rs/siacrs/"
+    return dir + "src/rs/siacrs/"
+
 
 def get_addon_id():
     dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
@@ -350,6 +391,21 @@ def find_pdf_files_in_dir_recursive(directory, cut_path=True):
     result = _find_rec(directory, cut_path)
 
     return result
+
+def load_rust_lib():
+    if isLin:
+        return
+    lib  = "siacrs.so" if isMac else "siacrs.pyd"
+    path = get_application_data_path()
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    rs_file = os.path.join(get_rust_folder_path(), lib)
+    if not os.path.isfile(os.path.join(path, lib)):
+        shutil.copyfile(rs_file, os.path.join(path, lib))
+
+    spec = importlib.util.spec_from_file_location("siacrs", os.path.join(path, lib))
+    mod  = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
 
 def subdirs_fullpath(path):
     return [entry.path for entry in os.scandir(path) if entry.is_dir()]
