@@ -234,7 +234,6 @@ def print_starting_info(editor: Editor):
     config  = mw.addonManager.getConfig(__name__)
     index   = get_index()
     html    = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
-    db_path = config["addonNoteDBFolderPath"]
 
     if index is not None:
 
@@ -243,40 +242,42 @@ def print_starting_info(editor: Editor):
         if not index.creation_info["index_was_rebuilt"]:
             html += " (No changes detected, index was <b>not</b> rebuilt)"
         html += "<br/>Index contains <b>%s</b> notes." % index.get_number_of_notes()
-        html += "<br/>Index is always rebuilt if smaller than <b>%s</b> notes." % config["alwaysRebuildIndexIfSmallerThan"]
         html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
-        html += "<br/>Results are rendered <b>%s</b>." % ("immediately" if config["renderImmediately"] else "with fade-in")
         html += "<br/>Tag Info on hover is <b>%s</b>.%s" % ("shown" if config["showTagInfoOnHover"] else "not shown", (" Delay: [<b>%s</b> ms]" % config["tagHoverDelayInMiliSec"]) if config["showTagInfoOnHover"] else "")
         html += "<br/>Image max height is <b>%s</b> px." % config["imageMaxHeight"]
         html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
         html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
 
-        if not db_path or len(db_path.strip()) == 0:
-            html += """<br><p>Please provide a folder path for the config entry <b>Add-on Note DB Folder Path</b> under <b>Settings & Info</b> &gt; <b>Settings</b>. If you don't provide a path, the add-on
-                will use the <b>user_files</b> folder to store its data, which can sometimes cause problems when updating the add-on. That's why I would recommend choosing a folder outside Anki. 
-                If you already have data (e.g. PDF reading progress), 
-                you can change the folder path in the settings, and copy the 'siac-notes.db' file to that new location afterwards.
-            </p>"""
-        
-
         changes = changelog()
         if changes:
             html += "<br/><br/><b>Changelog:</b><hr>"
             for ix, c in enumerate(changes):
-                html += f"<br>{ix + 1}. {c}"
+                html += f"{ix + 1}. {c}<br>"
 
         issues = known_issues()
         if issues:
-            html += "<br/><br/><b>Known Issues:</b><hr>"
+            html += "<br/><b>Known Issues:</b><hr>"
             for ix, i in enumerate(issues):
-                html += f"<br>{ix + 1}. {i}"
+                html += f"{ix + 1}. {i}<br>"
         
-        html += """ 
-            <br><br>
-            For bug reports, feedback or suggestions: <a href='https://github.com/fonol/anki-search-inside-add-card/issues'>Github Repository</a>
+        html += f""" 
             <br>
-            If you want to support this project: <a href='https://www.patreon.com/tomtomtom'>Patreon</a>
+            <div style='text-align: center; width: fit-content;'>
+                <div style='display: flex; margin-bottom: 20px;'>
+                    <div style='text-align: center;'>
+                        <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BUGS & FEEDBACK</div>
+                        <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github repository'><img src='{utility.misc.img_src("github_light.png" if state.night_mode else "github_dark.png")}' style='height: 32px;'/></a>
+                    </div>
+                    <div style='text-align: center; margin-left: 30px;'>
+                        <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BECOME A PATRON</div>
+                        <a href='https://www.patreon.com/tomtomtom' title='Patreon site'><img src='{utility.misc.img_src("patreon.png")}' style='height: 32px;'/></a>
+                    </div>
+                </div>
+                <span class='siac-caps' style='opacity: 0.8;'>
+                    Thanks to all supporters of the project!
+                </span>
+            </div>
             """
     
     if not state.db_file_existed:
@@ -491,6 +492,8 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
+        "Fix: Change default save location of the add-on's databases to prevent errors on updating",
+        "Fix: Add-on layout sometimes shrinked on first opening of the Add dialog",
         "Added 'Videos' category in the sidebar",
         "Video (Youtube) notes now have a thumbnail",
         "Added Avg. Pages Read / Day and Most Read Pages / Day to Read Stats",
