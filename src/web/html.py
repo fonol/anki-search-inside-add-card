@@ -406,22 +406,36 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
         `;
         %s  
         $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
-        updatePinned();
-        var there = false;
-        onWindowResize();
+            let aFn = () => {
+                if (typeof(updatePinned) === "undefined") {
+                    setTimeout(aFn, 200);
+                    return;
+                }
+                updatePinned();
+                onWindowResize();
+            }
+            aFn();
+            var there = false;
          
         } else {
            var there = true;
         }
-        if (siacState.searchOnTyping) {
-            $('.field').off('siac').on('keydown.siac', fieldKeypress);
-        } 
-        $('.field').attr('onmouseup', 'getSelectionText()');
-        window.$fields = $('.field');
-        window.$searchInfo = $('#searchInfo');
-        window.addEventListener('resize', onWindowResize, true);
-        $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
-        $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
+        let sFn = () => {
+            if (typeof(siacState) === 'undefined') {
+                setTimeout(sFn, 200);
+                return;
+            } 
+            if (siacState.searchOnTyping) {
+                $('.field').off('siac').on('keydown.siac', fieldKeypress);
+            } 
+            $('.field').attr('onmouseup', 'getSelectionText()');
+            window.$fields = $('.field');
+            window.$searchInfo = $('#searchInfo');
+            window.addEventListener('resize', onWindowResize, true);
+            $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
+            $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
+        };
+        sFn();
         return there; 
         
         })();
@@ -779,7 +793,7 @@ def stylingModal(config):
             </fieldset>
             <br/>
             <fieldset>
-                <span>This is the absolute path to the folder where the addon should store its notes. If not present already, the addon will create a file named <i>siac-notes.db</i> in that folder. If empty, user_files will be used.
+                <span>This is the absolute path to the folder where the addon should store its notes. If not present already, the addon will create a file named <i>siac-notes.db</i> in that folder.
                 <br>If you have existing data, after changing this value, you should close Anki, copy your existing <i>siac-notes.db</i> to that new location, and then start again.
                 </span>
                 <table style="width: 100%%">
