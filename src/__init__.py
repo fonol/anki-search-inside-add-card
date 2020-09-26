@@ -39,6 +39,7 @@ import functools
 import typing
 from typing import Dict, Any, List, Tuple, Optional, Callable
 import sys
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 import utility.tags
@@ -63,9 +64,6 @@ config = mw.addonManager.getConfig(__name__)
 def init_addon():
     """ Executed once on Anki startup. """
     global origEditorContextMenuEvt
-
-    # create user_files folder if not existing
-    utility.misc.create_user_files_folder()
 
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
     

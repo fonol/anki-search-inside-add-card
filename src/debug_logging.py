@@ -20,6 +20,7 @@ import json
 from datetime import datetime
 from aqt import mw
 import time
+import typing
 
 
 try:
@@ -50,7 +51,6 @@ def persist_index_info(search_index):
     if search_index is None:
         return
 
-    config                              = mw.addonManager.getConfig(__name__)
     c_json                              = _get_data_file_content() 
 
     if c_json is None:
@@ -97,8 +97,7 @@ def get_notes_info():
     return None
 
 def _get_data_file_content():
-    dir = utility.misc.get_user_files_folder_path()
-    f = dir + "data.json"
+    f = _data_file_path() 
     if not utility.misc.file_exists(f):
         return None
     try:
@@ -110,7 +109,7 @@ def _get_data_file_content():
         return None
 
 def _write_to_data_file(c_json):
-    f = utility.misc.get_user_files_folder_path() + "data.json"
+    f = _data_file_path()
     with open(f, "w", encoding="utf-8") as json_file:
         json.dump(c_json, json_file, indent=2)
         
@@ -118,5 +117,13 @@ def toggle_should_rebuild():
     c_json                              = _get_data_file_content() 
     c_json["index"]["shouldRebuild"]    = not c_json["index"]["shouldRebuild"]
     _write_to_data_file(c_json)
+
+def _data_file_path() -> str:
+    config = mw.addonManager.getConfig(__name__)
+    dir = config["addon.data_folder"]
+    if not dir:
+        dir = utility.misc.get_application_data_path()
+    f = os.path.join(dir, "data.json")
+    return f
 
 

@@ -1664,6 +1664,7 @@ def get_index_info():
     """ Returns the html that is rendered in the popup that appears on clicking the "info" button """
 
     index           = get_index()
+    config          = mw.addonManager.getConfig(__name__)
     excluded_fields = config["fieldsToExclude"]
     field_c         = 0
 
@@ -1689,6 +1690,7 @@ def get_index_info():
     notes_db_path   = ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db"
     notes_db_folder = config["addonNoteDBFolderPath"] if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() 
     notes_db_bu     = notes_db_folder + ("siac_backups/" if notes_db_folder.endswith("/") else "/siac_backups/")
+    data_folder     = config["addon.data_folder"]
 
     # last update
     last_mod        = ""
@@ -1736,6 +1738,7 @@ def get_index_info():
                <tr><td>Fields Excluded:</td><td>  %s</td></tr>
                <tr><td>Path to Note DB</td><td>  <b>%s &nbsp;<a class='keyword' onclick='pycmd("siac-open-folder %s")'>[Open Folder]</a></b></td></tr>
                <tr><td>Path to Note DB Backups</td><td>  <b>%s &nbsp;<a class='keyword' onclick='pycmd("siac-open-folder %s")'>[Open Folder]</a></b></td></tr>
+               <tr><td>Path to Search Data DB</td><td>  <b>%s &nbsp;<a class='keyword' onclick='pycmd("siac-open-folder %s")'>[Open Folder]</a></b></td></tr>
 
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Right / Ctrl+J</b></td></tr>
@@ -1783,6 +1786,7 @@ def get_index_info():
             config["toggleShortcut"],
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
             notes_db_path, notes_db_folder, notes_db_bu, notes_db_bu, 
+            data_folder, data_folder,
             config["notes.editor.shortcut"],
             config["pdf.shortcuts.toggle_search_on_select"],
             config["pdf.shortcuts.jump_to_first_page"],

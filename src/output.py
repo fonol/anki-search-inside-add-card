@@ -42,7 +42,9 @@ import utility.misc
 import state
 
 try:
-    from .rs.siacrs.siacrs import rs_mark_highlights
+    # from .rs.siacrs.siacrs import rs_mark_highlights
+    utility.misc.load_rust_lib()
+    from siacrs import *
     state.rust_lib = True
 except:
     state.rust_lib = False

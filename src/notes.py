@@ -1531,9 +1531,27 @@ def _get_db_path() -> str:
     global db_path
     if db_path is not None:
         return db_path
-    file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
-    if file_path is None or len(file_path) == 0:
-        file_path = utility.misc.get_user_files_folder_path()
+    config    = mw.addonManager.getConfig(__name__)
+    file_path = config["addonNoteDBFolderPath"]
+    # if db file path is not set yet, pick application data folder
+    if file_path is None or len(file_path.strip()) == 0:
+        file_path = utility.misc.get_application_data_path()
+        config["addonNoteDBFolderPath"] = file_path
+        mw.addonManager.writeConfig(__name__, config)
+        if not os.path.isdir(file_path):
+            os.mkdir(file_path)
+        ex = utility.misc.get_user_files_folder_path() + "siac-notes.db"
+        # there might be an existing file in user_files, if so, copy it to new location
+        try:
+            if os.path.isfile(ex):
+                shutil.copyfile(ex, file_path + "siac-notes.db")
+                if os.path.isfile(file_path + "siac-notes.db"):
+                    os.remove(ex)
+        except:
+            pass
+
+    if not os.path.isdir(file_path):
+        os.mkdir(file_path)
     file_path += "siac-notes.db"
     file_path.strip()
     db_path = file_path
