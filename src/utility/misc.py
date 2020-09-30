@@ -21,17 +21,39 @@ from glob import glob
 from datetime import datetime
 import os
 import re
+import sys
 import time
+import typing
+import pathlib
+import shutil
+import importlib.util
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import tooltip, showInfo
 from urllib.parse import urlparse
+from anki.utils import isMac, isLin
 
 
-def file_exists(full_path):
+# region File / Folder Utils
+
+def file_exists(full_path: str) -> bool:
     if full_path is None or len(full_path) < 2:
         return False
     return os.path.isfile(full_path)
+
+def create_folder_if_not_exists(path: str):
+
+    if not os.path.isdir(path):
+        os.mkdir(path)
+
+def create_user_files_folder():
+    """ Create the user_files folder in the add-on's folder if not existing. """
+    folder = get_user_files_folder_path()
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+
+# endregion File / Folder Utils
+
 
 def base64_to_file(b64):
     """
@@ -95,17 +117,10 @@ def pdf_to_base64(path):
 def count_cards_added_today():
     return len(mw.col.findCards("added:1"))
 
-def is_dark_color(r,g,b):
-    """
-    Used for guessing if a dark theme (e.g. nightmode) is active.
-    """
-    return r*0.299 + g*0.587 + b*0.114 < 186 
-
 def dark_mode_is_used(config):
     """
     Used for guessing if a dark theme (e.g. nightmode) is active.
     """
-    
 
     colors = []
     colors.append(config["styling"]["modal"]["modalBackgroundColor"])
@@ -144,53 +159,15 @@ def dark_mode_is_used(config):
     return True
 
 
-def hex_to_rgb(h):
-    h = h.lstrip('#')
-    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-
-def rgb_to_hex(r, g, b):
-    return "#{:02x}{:02x}{:02x}".format(r,g,b)
-
-def color_to_hex(cs):
-    cs = cs.strip()
-    if cs.startswith("#"):
-        return cs
-    if cs.lower().startswith("rgb"):
-        r = int(cs[4:-1].split(",")[0])
-        g = int(cs[4:-1].split(",")[1])
-        b = int(cs[4:-1].split(",")[2])
-        return rgb_to_hex(r, g, b)
-    return color_name_to_hex(cs)
-
-def date_diff_to_string(diff):
-    """
-    Takes a datetime obj representing a difference between two dates, returns e.g.
-    "5 minutes", "6 hours", ...
-    """
-    time_str = "%s %s"
-
-    if diff.total_seconds() / 60 < 2.0:
-        time_str = time_str % ("1", "minute")
-    elif diff.total_seconds() / 3600 < 1.0:
-        time_str = time_str % (int(diff.total_seconds() / 60), "minutes")
-    elif diff.total_seconds() / 86400 < 1.0:
-        if int(diff.total_seconds() / 3600) == 1:
-            time_str = time_str % (int(diff.total_seconds() / 3600), "hour")
-        else:
-            time_str = time_str % (int(diff.total_seconds() / 3600), "hours")
-    elif diff.total_seconds() / 86400 >= 1.0 and diff.total_seconds() / 86400 < 2.0:
-        time_str = time_str % ("1", "day")
-    else:
-        time_str = time_str % (int(diff.total_seconds() / 86400), "days")
-    return time_str
 
 def marks_to_js_map(marks):
     """
         Takes a list of pdf page marks, returns a str representation of a js dict,
         that has pages as keys, and arrays of mark types as values.
     """
-    d = dict()
-    table = dict()
+    d       = dict()
+    table   = dict()
+
     for m in marks:
         if not m[0] in d:
             d[m[0]] = []
@@ -198,59 +175,90 @@ def marks_to_js_map(marks):
             table[m[4]] = []
         d[m[0]].append(str(m[4]))
         table[m[4]].append(m[0])
-    s = ""
-    t = ""
+
+    s       = ""
+    t       = ""
+
     for k,v in d.items():
         s += ",%s:[%s]" % (k,",".join(v))
     for k,v in table.items():
         v.sort()
         t += ",%s:[%s]" % (k,",".join([str(page) for page in v]))
+
     s = s[1:] 
     s = "{%s}" % s
     t = t[1:] 
     t = "{%s}" % t
+
     return (s,t)
         
-
-
-def get_milisec_stamp():
+def get_milisec_stamp() -> int:
+    """ UTC miliseconds. """
     return int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds() * 1000)
 
+# region Folder Paths
+
 def get_user_files_folder_path():
-    """
-    Path ends with /
-    """
+    """ Path ends with / """
     dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
     if not dir.endswith("/"):
         return dir + "/user_files/"
     return dir + "user_files/"
 
 def get_whoosh_index_folder_path():
-    """
-    Path ends with /
-    """
+    """ Path ends with / """
     dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
     if not dir.endswith("/"):
         return dir + "/index/"
     return dir + "index/"
 
 def get_addon_base_folder_path():
-    """
-    Path ends with /
-    """
+    """ Path ends with / """
     dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
     if not dir.endswith("/"):
         return dir + "/"
     return dir
 
 def get_web_folder_path():
-    """
-    Path ends with /
-    """
+    """ Path ends with / """
     dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
     if not dir.endswith("/"):
         return dir + "/web/"
     return dir + "web/"
+
+def get_rust_folder_path():
+    dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
+    if not dir.endswith("/"):
+        return dir + "/src/rs/siacrs/"
+    return dir + "src/rs/siacrs/"
+
+def get_application_data_path() -> str:
+    """ Get a path to an application data folder for the current OS. """
+    try:
+        home = pathlib.Path.home()
+        path = ""
+        if sys.platform == "win32":
+            path = f"{home}/AppData/Local/"
+        elif sys.platform.startswith("linux"):
+            # path = "/usr/local/share"
+            # if not os.path.isdir(path)
+            path =  f"{home}/.local/share/"
+            if not os.path.isdir(path) or not os.access(path, os.W_OK):
+                path = f"{home}/usr/share/"
+        elif sys.platform == "darwin":
+            path = f"{home}/Library/Application Support/"
+            if not os.path.isdir(path) or not os.access(path, os.W_OK):
+                path = os.getenv("HOME")
+        if not path:
+            return get_user_files_folder_path()
+        if not path.endswith("/"):
+            path += "/"
+        return path.replace("\\", "/") + ".anki-siac-addon-data/"
+    except:
+        # if all fails, use the user_files folder
+        return get_user_files_folder_path()
+
+# endregion Folder Paths
 
 def get_addon_id():
     dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
@@ -323,7 +331,7 @@ def find_pdf_files_in_dir(dir, cut_path=True):
         if cut_path:
             res = [r[max(r.rfind("\\"),r.rfind("/"))+1:] for r in res]
         return res
-    except Exception as e:
+    except Exception:
         return []
 
 def find_pdf_files_in_dir_recursive(directory, cut_path=True):
@@ -345,15 +353,60 @@ def find_pdf_files_in_dir_recursive(directory, cut_path=True):
             for sub_dir in sub_dirs:
                 res += _find_rec(sub_dir, cut_path)
             return res
-        except Exception as e:
+        except Exception:
             return []
 
     result = _find_rec(directory, cut_path)
 
     return result
 
+def load_rust_lib():
+    """ Attempt to load the Rust library which should be in the addon data folder. """
+
+    if isLin:
+        # no built lib for linux yet
+        return
+    lib  = "siacrs.so" if isMac else "siacrs.pyd"
+    path = get_application_data_path()
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    rs_file = os.path.join(get_rust_folder_path(), lib)
+    # if the lib is not there yet, copy it from the add-on folder to the add-on data folder
+    if not os.path.isfile(os.path.join(path, lib)):
+        shutil.copyfile(rs_file, os.path.join(path, lib))
+
+    spec = importlib.util.spec_from_file_location("siacrs", os.path.join(path, lib))
+    mod  = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
 def subdirs_fullpath(path):
     return [entry.path for entry in os.scandir(path) if entry.is_dir()]
+
+# region Color Utils
+
+def hex_to_rgb(h):
+    h = h.lstrip('#')
+    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+def rgb_to_hex(r, g, b):
+    return "#{:02x}{:02x}{:02x}".format(r,g,b)
+
+def color_to_hex(cs):
+    cs = cs.strip()
+    if cs.startswith("#"):
+        return cs
+    if cs.lower().startswith("rgb"):
+        r = int(cs[4:-1].split(",")[0])
+        g = int(cs[4:-1].split(",")[1])
+        b = int(cs[4:-1].split(",")[2])
+        return rgb_to_hex(r, g, b)
+    return color_name_to_hex(cs)
+
+def is_dark_color(r,g,b):
+    """
+    Used for guessing if a dark theme (e.g. nightmode) is active.
+    """
+    return r*0.299 + g*0.587 + b*0.114 < 186 
 
 def _retToColor(retention):
     if retention < (100 / 7.0):
@@ -369,8 +422,6 @@ def _retToColor(retention):
     if retention < (100 / 7.0) * 6:
         return "#7fff00"
     return "#32ff00"
-
-
 
 def color_name_to_hex(cs):
     colors = {
@@ -525,3 +576,5 @@ def color_name_to_hex(cs):
     if not cs.lower() in colors:
         return None
     return colors[cs.lower()]
+
+# endregion Color Utils

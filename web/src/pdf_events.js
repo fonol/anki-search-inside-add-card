@@ -1,6 +1,23 @@
+// anki-search-inside-add-card
+// Copyright (C) 2019 - 2020 Tom Z.
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 /** Experimental function to improve copy+paste from the text layer. */
 window.onPDFCopy = function (e) {
-    sel = getSelection();
+    let sel = getSelection();
     let r = sel.getRangeAt(0);
     let nodes = nodesInSelection(r);
     if (!nodes) { return; }
@@ -128,11 +145,11 @@ window.pdfTooltipClozeKeyup = function (event) {
             if (!text || text.length === 0) {
                 return;
             }
-            let c_text = document.getElementById("siac-pdf-tooltip-results-area").innerHTML;
+            let c_text = byId("siac-pdf-tooltip-results-area").innerHTML;
             for (var i = 1; i < 20; i++) {
                 if (c_text.indexOf("{{c" + i + "::") === -1) {
                     c_text = c_text.split(text).join("<span style='color: lightblue;'>{{c" + i + "::" + text + "}}</span>");
-                    document.getElementById("siac-pdf-tooltip-results-area").innerHTML = c_text;
+                    byId("siac-pdf-tooltip-results-area").innerHTML = c_text;
                     break;
                 }
             }
@@ -146,6 +163,15 @@ window.markClicked = function (event) {
     if (event.target.className === "siac-page-mark-link") {
         pdfDisplayedCurrentPage = Number(event.target.innerHTML);
         queueRenderPage(pdfDisplayedCurrentPage, true);
+    }
+}
+
+window.iframeBtnClicked = function(event) {
+    event.preventDefault();
+    $(event.target).toggleClass("expanded");
+    event.stopPropagation();
+    if ($(event.target).hasClass("expanded")) {
+        $(event.target).find("input").first().focus();
     }
 }
 
@@ -201,9 +227,9 @@ window.pdfKeyup = function (e) {
             text = joinTextLayerNodeTexts(nodesInSel, text);
         }
         let rect = r.getBoundingClientRect();
-        let prect = document.getElementById("siac-reading-modal").getBoundingClientRect();
-        document.getElementById('siac-pdf-tooltip-results-area').innerHTML = '<center>Searching...</center>';
-        document.getElementById('siac-pdf-tooltip-searchbar').value = "";
+        let prect = byId("siac-reading-modal").getBoundingClientRect();
+        byId('siac-pdf-tooltip-results-area').innerHTML = '<center>Searching...</center>';
+        byId('siac-pdf-tooltip-searchbar').value = "";
         let left = rect.left - prect.left;
         if (prect.width - left < 250) {
             left -= 200;
@@ -235,4 +261,9 @@ window.pdfMouseWheel = function (event) {
         pdfScaleChange("down");
     }
     event.preventDefault();
+}
+
+window.afterRemovedFromQueue = function () {
+    toggleQueue();
+    $('.siac-queue-sched-btn').first().addClass("active").html('Unqueued');
 }

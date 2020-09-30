@@ -64,7 +64,8 @@ import state
 
 """ command_parsing.py - Mainly used to catch pycmds from the web view, and trigger the appropriate actions for them. """
 
-config              = mw.addonManager.getConfig(__name__)
+config                  = mw.addonManager.getConfig(__name__)
+REV_FILTERED_DECK_NAME  = "PDF Review"
 
 def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tuple[bool, Any]:
     """
@@ -383,15 +384,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         dialog = UrlImporter(self.parentWindow)
         if dialog.exec_():
             if dialog.chosen_url:
-                sched = dialog.queue_schedule
-                name = dialog.get_name()
-                path = config["pdfUrlImportSavePath"]
-                if path is None or len(path) == 0:
-                    tooltip("""You have to set a save path for imported URLs first.
-                        <center>Config value: <i>pdfUrlImportSavePath</i></center>
-                    """, period=4000)
-                    return (True, None)
-                path = utility.misc.get_pdf_save_full_path(path, name)
+                sched   = dialog.queue_schedule
+                name    = dialog.get_name()
+                path    = get_config_value("pdfUrlImportSavePath")
+                path    = utility.misc.get_pdf_save_full_path(path, name)
                 utility.misc.url_to_pdf(dialog.chosen_url, path, lambda *args: tooltip("Generated PDF Note.", period=4000))
                 title = dialog._chosen_name
                 if title is None or len(title) == 0:
@@ -431,7 +427,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         pages_total     = int(cmd.split()[4])
         marks_updated   = toggle_pdf_mark(nid, page, pages_total, mark_type)
         js_maps         = utility.misc.marks_to_js_map(marks_updated)
-        self.web.eval(""" pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s; updatePdfDisplayedMarks();""" % (js_maps[0], js_maps[1]))
+        self.web.eval(""" pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s; updatePdfDisplayedMarks(true);""" % (js_maps[0], js_maps[1]))
 
     elif cmd == "siac-reading-modal-tabs-left-browse":
         # clicked on "Browse" in the tabs on the fields' side.
@@ -1175,7 +1171,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         # clicked "Review" on modal that asks if the user wants to review the last notes before reading
         last_linked     = get_last_linked_notes(index.ui.reading_modal.note_id, limit=500)
         if len(last_linked) > 0:
-            due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+            if hasattr(mw.col, "find_cards"):
+                due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+            else:
+                due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
             success     = create_filtered_deck(due_today)
             if success:
                 mw.moveToState("review")
@@ -1459,9 +1458,15 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
 
     if state.last_search_cmd is None:
         return
+    
+    ix = get_index()
+
+    # if index is not initialized or reading modal is active, abort
+    if ix is None or ix.ui.reading_modal.note_id is not None:
+        return
 
     if editor is None:
-        editor = get_index().ui._editor
+        editor = ix.ui._editor
 
     # executing the last cmd again will reset state.last_page_requested, so store it before
     page = state.last_page_requested
@@ -1473,7 +1478,7 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
     # So now that we have executed the last search cmd again, which refreshed the results,
     # go to that page again.
     if page is not None:
-        get_index().ui.show_page(editor, page)
+        ix.ui.show_page(editor, page)
     
 def show_schedule_dialog(parent_window):
     """ Show the dialog that allows to change the schedule of a note """
@@ -1502,11 +1507,14 @@ def show_read_stats():
     index       = get_index()
     stamp       = set_stamp()
     res         = []
+
+    # first card: Read pages heatmap
     t_counts    = get_read_last_n_days_by_day(365)
     body        = read_counts_by_date_card_body(t_counts)
     t_counts    = utility.date.counts_to_timestamps(t_counts)
     res.append(SiacNote.mock(f"Pages read per day ({datetime.now().year})", body, "Meta"))
 
+    # second card: Pie charts with tags
     topics      = pdf_topic_distribution()
     rec_topics  = pdf_topic_distribution_recently_read(7)
 
@@ -1651,6 +1659,7 @@ def get_index_info():
     """ Returns the html that is rendered in the popup that appears on clicking the "info" button """
 
     index           = get_index()
+    config          = mw.addonManager.getConfig(__name__)
     excluded_fields = config["fieldsToExclude"]
     field_c         = 0
 
@@ -1675,6 +1684,8 @@ def get_index_info():
     dir_name        = utility.misc.get_addon_id()
     notes_db_path   = ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db"
     notes_db_folder = config["addonNoteDBFolderPath"] if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() 
+    notes_db_bu     = notes_db_folder + ("siac_backups/" if notes_db_folder.endswith("/") else "/siac_backups/")
+    data_folder     = config["addon.data_folder"]
 
     # last update
     last_mod        = ""
@@ -1721,6 +1732,8 @@ def get_index_info():
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>Fields Excluded:</td><td>  %s</td></tr>
                <tr><td>Path to Note DB</td><td>  <b>%s &nbsp;<a class='keyword' onclick='pycmd("siac-open-folder %s")'>[Open Folder]</a></b></td></tr>
+               <tr><td>Path to Note DB Backups</td><td>  <b>%s &nbsp;<a class='keyword' onclick='pycmd("siac-open-folder %s")'>[Open Folder]</a></b></td></tr>
+               <tr><td>Path to Search Data DB</td><td>  <b>%s &nbsp;<a class='keyword' onclick='pycmd("siac-open-folder %s")'>[Open Folder]</a></b></td></tr>
 
                <tr><td>&nbsp;</td><td>  <b></b></td></tr>
                <tr><td>PDF: Page Right</td><td>  <b>Ctrl+Right / Ctrl+J</b></td></tr>
@@ -1767,7 +1780,8 @@ def get_index_info():
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"],
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
-            notes_db_path, notes_db_folder, 
+            notes_db_path, notes_db_folder, notes_db_bu, notes_db_bu, 
+            data_folder, data_folder,
             config["notes.editor.shortcut"],
             config["pdf.shortcuts.toggle_search_on_select"],
             config["pdf.shortcuts.jump_to_first_page"],
@@ -1940,10 +1954,24 @@ def update_styling(cmd):
         config[name] = value == "true"
 
 
+def empty_filtered_deck_by_name(name: str) -> bool:
+
+    try:
+        deck = mw.col.decks.byName(name)
+        if deck:
+            did = deck["id"]
+            if hasattr(mw.col.sched, "empty_filtered_deck"):
+                mw.col.sched.empty_filtered_deck(did)
+            else:
+                mw.col.sched.emptyDyn(did)
+        return True
+    except:
+        return False
+
 def create_filtered_deck(cids: List[int]) -> bool:
 
     try:
-        cur = mw.col.decks.byName("PDF Review")
+        cur = mw.col.decks.byName(REV_FILTERED_DECK_NAME)
         if cur:
             did = cur["id"]
             if hasattr(mw.col.sched, "empty_filtered_deck"):
@@ -1952,9 +1980,9 @@ def create_filtered_deck(cids: List[int]) -> bool:
                 mw.col.sched.emptyDyn(did)
         else:    
             if hasattr(mw.col.decks, "new_filtered"):
-                did = mw.col.decks.new_filtered("PDF Review")
+                did = mw.col.decks.new_filtered(REV_FILTERED_DECK_NAME)
             else:
-                did = mw.col.decks.newDyn("PDF Review")
+                did = mw.col.decks.newDyn(REV_FILTERED_DECK_NAME)
         dyn = mw.col.decks.get(did)
         dyn["terms"][0] = [" or ".join([f"cid:{cid}" for cid in cids]), 9999, 0]
         dyn["resched"] = True

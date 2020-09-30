@@ -32,6 +32,9 @@ window.tagHoverTimeout = 750;
 window.searchMaskTimer = null;
 window.$fields = null;
 
+window.byId = function(id) {
+    return document.getElementById(id);
+};
 
 window.sendContent = function(event) {
     if ((event && event.repeat) || pdfDisplayed != null || siacState.isFrozen) {
@@ -46,7 +49,7 @@ window.sendContent = function(event) {
         html += elem.innerHTML + "\u001f";
     });
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
-}
+};
 window.searchCurrentField = function() {
     if (displayedNoteId || siacState.isFrozen) {return;}
     let f = $('.field:focus').first();
@@ -56,10 +59,10 @@ window.searchCurrentField = function() {
     showLoading("Typing");
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + t);
 
-}
+};
 window.sendSearchFieldContent = function() {
     showLoading("Searchbar");
-    html = document.getElementById('siac-browser-search-inp').value + "\u001f";
+    html = byId('siac-browser-search-inp').value + "\u001f";
     pycmd('siac-r-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 
@@ -143,7 +146,7 @@ window.cardMouseEnter = function(elem, nid, mode = "full") {
 }
 window.showLoading = function(source) {
     loadingTimer = setTimeout(function () {
-        document.getElementById('searchInfo').innerHTML = `<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>${source}</i></td></tr></table>`;
+        byId('searchInfo').innerHTML = `<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>${source}</i></td></tr></table>`;
     }, 1000);
 }
 window.totalOffset = function(elem) {
@@ -176,7 +179,7 @@ window.tagMouseEnter = function(elem) {
     if (!showTagInfoOnHover || !elem || !elem.parentElement || displayedNoteId)
         return;
     tagHoverCB = setTimeout(function () {
-            if (elem && elem.parentElement && elem.parentElement.querySelector(':hover') === elem && !document.getElementById('siac-tag-info-box-' + $(elem).data('stamp'))) {
+            if (elem && elem.parentElement && elem.parentElement.querySelector(':hover') === elem && !byId('siac-tag-info-box-' + $(elem).data('stamp'))) {
                 pycmd("siac-tag-info " + $(elem).data("stamp") + " " + $(elem).data("name"));
             }
     }, tagHoverTimeout);
@@ -191,15 +194,15 @@ window.showTagInfo = function(elem) {
     offset.top += 17;
     let existing = document.getElementsByClassName("siac-tag-info-box");
         if (elem.parentElement.id && elem.parentElement.id ===  "tagContainer") {
-            offset.top -= document.getElementById("tagContainer").scrollTop;
+            offset.top -= byId("tagContainer").scrollTop;
         } else if (existing.length > 1) {
             if (elem.parentElement.parentElement.parentElement.className.indexOf("siac-tag-info-box-left") >= 0) {
                 offset.top -= elem.parentElement.parentElement.parentElement.scrollTop;
             }
-        } else if (document.getElementById('cal-info').offsetParent !== null) {
-            offset.top -= document.getElementById("cal-info-notes").scrollTop;
+        } else if (byId('cal-info').offsetParent !== null) {
+            offset.top -= byId("cal-info-notes").scrollTop;
         } else {
-            offset.top -= document.getElementById("searchResults").scrollTop;
+            offset.top -= byId("searchResults").scrollTop;
         }
     let id = 'siac-tag-info-box-' + stamp;
 
@@ -215,15 +218,15 @@ window.showTagInfo = function(elem) {
 
     $('#siac-tag-info-box-' + stamp).css("top", offset.top).css("left", offset.left).css("z-index", highestZ + 1);
     if (offset.top > window.outerHeight - offset.top) {
-        document.getElementById(id).style.visibility = "hidden";
-        document.getElementById(id).style.display = "block";
+        byId(id).style.visibility = "hidden";
+        byId(id).style.display = "block";
         let diff = 17;
         if (existing.length > 1)
             diff = 15;
         $('#' + id).css('top', offset.top - $('#' + id).outerHeight() - diff);
-        document.getElementById(id).style.visibility = "visible";
+        byId(id).style.visibility = "visible";
     } else {
-        document.getElementById(id).style.display = "block";
+        byId(id).style.display = "block";
     }
 }
 
@@ -254,7 +257,7 @@ window.tagMouseLeave = function(elem) {
         }
     }
     $(`.tagLbl[data-stamp='${stamp}']`).first().css("z-index", "4");
-    if (document.getElementById("siac-tag-info-box-"+ stamp))
+    if (byId("siac-tag-info-box-"+ stamp))
         $('#siac-tag-info-box-' + stamp).remove();
     if (!existing || existing.length < 1) {
          $("#greyout").hide();
@@ -319,8 +322,8 @@ window.searchUserNoteTag = function(e, tag) {
     }
 }
 window.switchLeftRight = function() {
-    let flds = document.getElementById("leftSide");
-    let addon = document.getElementById("siac-right-side");
+    let flds = byId("leftSide");
+    let addon = byId("siac-right-side");
     if (flds.parentNode.children[0].id === "leftSide") {
         flds.parentNode.insertBefore(addon, flds);
         $(document.body).addClass("siac-left-right-switched");
@@ -335,14 +338,14 @@ window.switchLeftRight = function() {
 
 window.onWindowResize = function(fitPdfToPage = true) {
    
-    let offsetTop = document.getElementById("topbutsOuter").offsetHeight + 3;
-    document.getElementById("outerWr").style.marginTop = offsetTop + "px";
-    document.getElementById("outerWr").style.height = `calc(100vh - ${offsetTop}px)`;
+    let offsetTop = byId("topbutsOuter").offsetHeight + 3;
+    byId("outerWr").style.marginTop = offsetTop + "px";
+    byId("outerWr").style.height = `calc(100vh - ${offsetTop}px)`;
 
     if (!$('#switchBtn').is(":visible")) {
         $('#leftSide').css("display", "flex");
         $('#outerWr').css('display', 'flex').removeClass('onesided');
-        document.getElementById('switchBtn').innerHTML = "&#10149; Search";
+        byId('switchBtn').innerHTML = "&#10149; Search";
     }
     if (fitPdfToPage && typeof pdfDisplayed !== "undefined" && pdfDisplayed) {
         if(this.resizeTimeout) clearTimeout(this.resizeTimeout);
@@ -396,7 +399,7 @@ window.noteSidebarCollapseAll = function() {
     });
 }
 window.deleteNote = function(id) {
-    document.getElementById('siac-del-modal').innerHTML = '<center style="margin: 20px 0 20px 0;">Deleting...</center>';
+    byId('siac-del-modal').innerHTML = '<center style="margin: 20px 0 20px 0;">Deleting...</center>';
     setTimeout(function() {
         pycmd("siac-delete-user-note " + id);
     }, 80);
@@ -471,11 +474,11 @@ window.searchMaskKeypress = function(event) {
 window.pinCard = function(elem, nid) {
     $('#cW-' + nid).css('padding', '3px 4px 5px 5px');
     $('#cW-' + nid).css('font-size', '9px');
-    let info = document.getElementById('cW-' + nid).getElementsByClassName("rankingLblAddInfo")[0];
-    let editedStamp = document.getElementById('cW-' + nid).getElementsByClassName("editedStamp")[0];
+    let info = byId('cW-' + nid).getElementsByClassName("rankingLblAddInfo")[0];
+    let editedStamp = byId('cW-' + nid).getElementsByClassName("editedStamp")[0];
     $('#cW-' + nid).html('<span>&#128204;</span>');
-    document.getElementById('cW-' + nid).appendChild(info);
-    document.getElementById('cW-' + nid).appendChild(editedStamp);
+    byId('cW-' + nid).appendChild(info);
+    byId('cW-' + nid).appendChild(editedStamp);
     $('#' + nid).parents().first().addClass('pinned');
     updatePinned();
 }
@@ -485,7 +488,7 @@ window.searchCard = function(elem) {
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 window.searchCardFromFloated = function(id) {
-    let html = document.getElementById(id).innerHTML;
+    let html = byId(id).innerHTML;
     showLoading("Note Search");
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
@@ -508,8 +511,8 @@ window.clearSearchResults = function() {
         notes_old[i].remove();
     }
     try {
-        document.getElementById("startInfo").remove();
-        document.getElementById("greyout").style.display = "none";
+        byId("startInfo").remove();
+        byId("greyout").style.display = "none";
     } catch(e) {}
 
     $('.siac-tag-info-box,#siac-results-loader-wrapper').remove();
@@ -519,7 +522,7 @@ window.clearSearchResults = function() {
 window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1, total = 50, cacheSize = -1, stamp = -1, printTiming = false, isRerender= false) {
     let rStart = new Date().getTime();
     clearSearchResults();
-    var sr = document.getElementById("searchResults");
+    var sr = byId("searchResults");
     sr.style.overflowY = 'hidden';
     sr.style.paddingRight = '24px';
     sr.innerHTML += html;
@@ -530,13 +533,13 @@ window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1
     }
     let c = 1;
     clearTimeout(loadingTimer);
-    if (infoMap && lastHadResults && document.getElementById("info-Took")) {
-        document.getElementById("info-Took").innerHTML = infoMap["Took"];
-        document.getElementById("info-Found").innerHTML = infoMap["Found"];
-        document.getElementById("tagContainer").innerHTML = infoMap["Tags"];
-        document.getElementById("keywordContainer").innerHTML = infoMap["Keywords"];
+    if (infoMap && lastHadResults && byId("info-Took")) {
+        byId("info-Took").innerHTML = infoMap["Took"];
+        byId("info-Found").innerHTML = infoMap["Found"];
+        byId("tagContainer").innerHTML = infoMap["Tags"];
+        byId("keywordContainer").innerHTML = infoMap["Keywords"];
     } else {
-        document.getElementById('searchInfo').innerHTML = infoStr;
+        byId('searchInfo').innerHTML = infoStr;
     }
   
     if (infoMap)
@@ -550,27 +553,27 @@ window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1
             $('#searchResults .cardWrapper').show();
         sr.style.overflowY = 'auto';
         sr.style.paddingRight = '10px';
-        document.getElementById("greyout").style.display = "none";
+        byId("greyout").style.display = "none";
         displayPagination(page, pageMax, total, html.length > 0, cacheSize);
 
-        if (stamp > -1 && document.getElementById("info-took")) {
+        if (stamp > -1 && byId("info-took")) {
             if (printTiming) {
                 let took = new Date().getTime() - stamp;
-                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'>&#9432;</b>`;
+                byId("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'><i class='fa fa-info-circle'></i></b>`;
             } else {
-                document.getElementById("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
+                byId("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
             }
         }
     }
     else {
         time = gridView ? 100 : 130;
         count = gridView ? 16 : 10;
-        if (stamp > -1 && document.getElementById("info-took")) {
+        if (stamp > -1 && byId("info-took")) {
             if (printTiming) {
                 let took = new Date().getTime() - stamp;
-                document.getElementById("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'>&#9432;</b>`;
+                byId("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'><i class='fa fa-info-circle'></i></b>`;
             } else {
-                document.getElementById("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
+                byId("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
             }
         }
         function renderLoop() {
@@ -589,7 +592,7 @@ window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1
                         $('#searchResults .cardWrapper').show();
                     sr.style.overflowY = 'auto';
                     sr.style.paddingRight = '10px';
-                    document.getElementById("greyout").style.display = "none";
+                    byId("greyout").style.display = "none";
                 }
             }, time);
         }
@@ -606,13 +609,13 @@ window.displayPagination = function(page, pageMax, total, resultsFound, cacheSiz
                 c_html += `<span onclick='pycmd("siac-rerender ${cacheSize - i - 2}")'>${i+1}</span>`;
             }
         }
-        document.getElementById("siac-cache-displ").innerHTML = c_html;
+        byId("siac-cache-displ").innerHTML = c_html;
     }
 
     let html = "";
     if (pageMax === 0 || !resultsFound) { 
-        document.getElementById("siac-pagination-status").innerHTML = "";
-        document.getElementById("siac-pagination-wrapper").innerHTML = "";
+        byId("siac-pagination-status").innerHTML = "";
+        byId("siac-pagination-wrapper").innerHTML = "";
         return; 
     }
     if (page === 1 && pageMax == 1) {
@@ -638,8 +641,8 @@ window.displayPagination = function(page, pageMax, total, resultsFound, cacheSiz
             html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${pageMax}")'>&#187;</div>`;
 
     }
-    document.getElementById("siac-pagination-status").innerHTML = `Showing ${50 * (page - 1) + 1} - ${Math.min(total, 50 * page)} of ${total}`;
-    document.getElementById("siac-pagination-wrapper").innerHTML = html;
+    byId("siac-pagination-status").innerHTML = `Showing ${50 * (page - 1) + 1} - ${Math.min(total, 50 * page)} of ${total}`;
+    byId("siac-pagination-wrapper").innerHTML = html;
 }
 
 window.sendClickedInformation = function(x, y) {
@@ -721,9 +724,9 @@ window.predefSearchFromSidebar = function(type) {
 }
 /** Predefined searches, activated from the bottom row. */
 window.predefSearch = function() {
-    let e       = document.getElementById("predefSearchSelect");
+    let e       = byId("predefSearchSelect");
     let search  = e.options[e.selectedIndex].value;
-    let c       = document.getElementById("predefSearchNumberSel");
+    let c       = byId("predefSearchNumberSel");
     let count   = c.options[c.selectedIndex].value;
     let decks   = siacState.selectedDecks.toString();
     // show a loader for the longer-taking searches
@@ -737,14 +740,14 @@ window.predefSearch = function() {
     }
 }
 window.sort = function() {
-    let e = document.getElementById("sortSelect");
+    let e = byId("sortSelect");
     let sort = e.options[e.selectedIndex].value;
     pycmd("siac-p-sort " + sort);
 
 }
 window.toggleAddon = function() {
     try {
-        if (document.getElementById('siac-reading-modal').style.display !== "none" && pdfFullscreen) {
+        if (byId('siac-reading-modal').style.display !== "none" && pdfFullscreen) {
             if ($(document.body).hasClass("siac-fullscreen-show-fields")) {
                 $(document.body).removeClass("siac-fullscreen-show-fields").addClass("siac-fullscreen-show-right");
             } else {
@@ -770,22 +773,22 @@ window.toggleAddon = function() {
 window.showSearchPaneOnLeftSide = function() {
     if ($('#outerWr').hasClass("onesided")) {
         $('#leftSide').show();
-        document.getElementById('switchBtn').innerHTML = "&#10149; Search";
+        byId('switchBtn').innerHTML = "&#10149; Search";
         $('#outerWr').css('display', 'flex').removeClass('onesided');
     } else {
         $('#leftSide').hide();
         $('#siac-right-side').removeClass("addon-hidden");
-        document.getElementById('switchBtn').innerHTML = "&#10149; Back";
+        byId('switchBtn').innerHTML = "&#10149; Back";
         $('#outerWr').css('display', 'block').addClass('onesided');
         onWindowResize();
     }
 }
 window.updateSwitchBtn = function(count) {
     if (!$('#outerWr').hasClass("onesided"))
-        document.getElementById('switchBtn').innerHTML = `&#10149; Search (${count})`;
+        byId('switchBtn').innerHTML = `&#10149; Search (${count})`;
 }
 window.removeNote = function(nid) {
-    $(document.getElementById("cW-" + nid).parentElement.parentElement).remove();
+    $(byId("cW-" + nid).parentElement.parentElement).remove();
     updatePinned();
 }
 window.getOffset = function(el) {
@@ -811,7 +814,7 @@ window.displayCalInfo = function(elem) {
     let offset = getOffset(elem.children[0]);
 
     let offsetLeft = offset.left - 153;
-    let offsetRight = document.getElementById("siac-second-col-wrapper").clientWidth  - offset.left - 153;
+    let offsetRight = byId("siac-second-col-wrapper").clientWidth  - offset.left - 153;
     if (offsetLeft < 0) {
         offsetLeft -= (offset.left - 153);
         document.documentElement.style.setProperty('--tleft', (offset.left) + 'px')
@@ -823,14 +826,14 @@ window.displayCalInfo = function(elem) {
         offsetLeft += offsetRight;
     }
     $('#cal-info').css("left", offsetLeft + "px").css("top", (offset.top - 275) + "px");
-    document.getElementById('cal-info').style.display = "block";
+    byId('cal-info').style.display = "block";
     pycmd("siac-cal-info " + $(elem.children[0]).data("index"));
 }
 
 window.calMouseLeave = function() {
     calTimer = setTimeout(function () {
         if (!$('#cal-row').is(":hover") && !$('#cal-info').is(":hover"))
-            document.getElementById('cal-info').style.display = "none";
+            byId('cal-info').style.display = "none";
         calTimer = null;
     }, 300);
 }
@@ -854,7 +857,7 @@ window.fieldsBtnClicked = function() {
 window.showModalSubpage = function(html) {
     $('#modalText').hide();
     $('#modal-subpage-inner').html(html);
-    document.getElementById('modal-subpage').style.display = "flex";
+    byId('modal-subpage').style.display = "flex";
 }
 window.hideModalSubpage = function() {
     $('#modal-subpage-inner').html('');
@@ -864,7 +867,7 @@ window.hideModalSubpage = function() {
 
 window.showPDFLoader = function() {
     let margin = pageSidebarDisplayed ? 230 : 0;
-    document.getElementById('siac-reading-modal-center').innerHTML += `
+    byId('siac-reading-modal-center').innerHTML += `
     <div id='siac-pdf-loader-wrapper'>
         <div class='siac-pdf-loader' style='margin-right: ${margin}px'>
             <div style='margin-top: 7px;'> 
@@ -875,10 +878,10 @@ window.showPDFLoader = function() {
     </div>`;
 }
 window.showSearchLoader = function(text) {
-    if (document.getElementById('siac-results-loader-wrapper')) {
+    if (byId('siac-results-loader-wrapper')) {
         return;
     }
-    let sr = document.getElementById("searchResults");
+    let sr = byId("searchResults");
     sr.scrollTop = 0;
     sr.style.overflowY = 'hidden';
     $(sr).append(`
@@ -908,7 +911,7 @@ window.globalKeydown = function(e) {
 }
 
 window.toggleNoteSidebar = function(){
-    if (document.getElementById("siac-notes-sidebar")) {
+    if (byId("siac-notes-sidebar")) {
         pycmd("siac-hide-note-sidebar");
     } else {
         pycmd("siac-show-note-sidebar");
@@ -916,8 +919,8 @@ window.toggleNoteSidebar = function(){
 }
 
 window.focusSearchShortcut = function() {
-    if (displayedNoteId === null && document.getElementById("siac-browser-search-inp")) {
-        document.getElementById("siac-browser-search-inp").focus();
+    if (displayedNoteId === null && byId("siac-browser-search-inp")) {
+        byId("siac-browser-search-inp").focus();
     }
 }
 window.triggerSearchShortcut = function() {
@@ -930,13 +933,13 @@ window.triggerSearchShortcut = function() {
 /** ############# Floating notes */
 window.addFloatingNote = function(nid) {
     let onedit = $('#' + nid.toString()).hasClass('siac-user-note') ? `pycmd("siac-edit-user-note ${nid}")`  : `edit(${nid})`;
-    let content = document.getElementById(nid).innerHTML;
+    let content = byId(nid).innerHTML;
     content = content.replace(/<\/?mark>/g, "");
     $('#cW-' + nid).parent().parent().remove();
     let btnBar = `<div class='floatingBtnBar'>
         <div class="floatingBtnBarItem" onclick='${onedit}'>Edit</div>&nbsp;&#65372;
         <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>&nbsp;&#65372;
-        <div class="floatingBtnBarItem" id='rem-${nid}' onclick='document.getElementById("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div>
+        <div class="floatingBtnBarItem" id='rem-${nid}' onclick='byId("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div>
     </div>`;
     let floatingNote = `<div id="nF-${nid}" class='noteFloating'>
             <div id="nFH-${nid}" class='noteFloatingHeader' onmousedown='dragElement(this.parentElement, "nFH-${nid}")'>&nbsp;${btnBar}</div>
@@ -947,13 +950,13 @@ window.addFloatingNote = function(nid) {
         $('.field').first().after(floatingNote);
     else
         $('.field').last().after(floatingNote);
-    dragElement(document.getElementById("nF-" + nid), `nFH-${nid}`);
+    dragElement(byId("nF-" + nid), `nFH-${nid}`);
     updatePinned();
 }
 window.dragElement = function(elmnt, headerId, inModal=false) {
     var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0, lMYSum = 0, lMXSum = 0;
-    if (document.getElementById(headerId)) {
-        document.getElementById(headerId).onmousedown = dragMouseDown;
+    if (byId(headerId)) {
+        byId(headerId).onmousedown = dragMouseDown;
     } else {
         elmnt.onmousedown = dragMouseDown;
     }
@@ -1014,7 +1017,7 @@ window.drawHeatmap = function(id, data) {
     let cellPadding = 2;
     let domainLabelFormat = "%B";
     // crude check for available size, reduce cell size if not enough space
-    let srw = document.getElementById("searchResults").offsetWidth;
+    let srw = byId("searchResults").offsetWidth;
 
     if (srw < 500) {
         // cellSize = 4;

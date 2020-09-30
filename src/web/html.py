@@ -26,6 +26,7 @@ from aqt.utils import showInfo
 from typing import List, Tuple, Dict, Optional
 
 from .note_templates import *
+from .templating import filled_template
 from ..stats import getRetentions
 from ..state import get_index, check_index
 from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str
@@ -49,16 +50,7 @@ def get_synonym_dialog() -> str:
     synonyms    = loadSynonyms()
 
     if not synonyms:
-        return """
-            <b>Synonym sets</b>
-            <hr class='siac-modal-sep'/>
-            <br>
-            No synonyms defined yet. Input a set of terms, separated by ',' and hit enter.<br>
-            If a search is triggered that at least contains one word from a synonym set, all the other words in the set will be inserted in the search query too. 
-            <br/><br/>
-
-            <input type='text' id='siac-syn-inp' onkeyup='synInputKeyup(event, this)'/>
-        """
+        return filled_template("synonyms_empty", {})
 
     st          = ""
     for c, sList in enumerate(synonyms):
@@ -67,26 +59,13 @@ def get_synonym_dialog() -> str:
                         <div contenteditable='true' onkeydown='synonymSetKeydown(event, this, %s)'>%s</div>
                     </td>
                     <td style='text-align: right; height: 20px;'>
-                        <div class='siac-btn-smaller' onclick='pycmd(\"siac-delete-synonyms %s\")'>Del</div>
-                        <div class='siac-btn-smaller' style='margin-left: 4px;' onclick='searchSynset(this)'>Search</div>
+                        <i class='fa fa-trash blue-hover' onclick='pycmd(\"siac-delete-synonyms %s\")'></i>
+                        <i class='fa fa-search blue-hover' style='margin-left: 4px;' onclick='searchSynset(this)'></i>
                     </td>
                 </tr>""" % (c, ", ".join(sList), c)
-    return f"""
-    <b>Synonym sets ({len(synonyms)})</b>
-    <hr class='siac-modal-sep'/>
-    If a search is triggered that at least contains one word from a synonym set, all the other words in the set will be inserted in the search query too. 
-    Click inside a set to edit it.
-    <br><br>
-    <div style='max-height: 300px; overflow-y: auto; padding-right: 10px; margin-top: 4px;'>
-        <table id='synTable' style='width: 100%; border-collapse: collapse;' class='striped'>
-            <thead><tr style='margin-bottom: 20px;'><th style='word-wrap: break-word; max-width: 100px;'></th><th style='width: 100px; text-align: center;'></th></thead>
-            {st}
-        </table>
-    </div>
-    <br/>
-    <span>Input a set of terms, separated by ',' and hit enter.</span>
-    <input type='text' id='siac-syn-inp' onkeyup='synInputKeyup(event, this)'/>
-    """
+    
+    params = dict(len = len(synonyms), sets = st)
+    return filled_template("synonyms", params)
 
 def saveSynonyms(synonyms):
     config              = mw.addonManager.getConfig(__name__)
@@ -164,10 +143,18 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
     if not isinstance(leftSideWidth, int) or leftSideWidth <= 0 or leftSideWidth > 100:
         leftSideWidth = 50
 
-    rightSideWidth      = 100 - leftSideWidth
-    hideSidebar         = conf_or_def("hideSidebar", False)
-    search_bar_mode     = "Add-on" if not get_index() else get_index().searchbar_mode
+    html_params                             = {}
+    html_params["rightSideWidth"]           = 100 - leftSideWidth
+    html_params["noteScale"]                = conf_or_def("noteScale", 1.0)
+    html_params["leftSideWidthInPercent"]   = leftSideWidth
+    html_params["showLoader"]               = "display: none;" if indexIsLoaded else ""
+    html_params["sidebarHidden"]            = "hidden" if conf_or_def("hideSidebar", False) else ""
+    html_params["calendar"]                 = get_calendar_html() if conf_or_def("showTimeline", True) else ""
+    html_params["shortcutFilter"]           = conf_or_def("shortcuts.trigger_current_filter", "CTRL+K")
+    html_params["searchbarMode"]            = "Add-on" if not get_index() else get_index().searchbar_mode
+    html_params["shortcutPredef"]           = conf_or_def("shortcuts.trigger_predef_search", "ALT+K")
 
+    # if left and right side are switched, the insert code looks a bit different
     if conf_or_def("switchLeftRight", False):
         insert_code = """
             $(toInsert).insertBefore('#leftSide');
@@ -177,266 +164,54 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
         insert_code = """
             $(toInsert).insertAfter('#leftSide');   
         """
+
+    # fill the main_ui template
+    main_ui = filled_template("main_ui", html_params)
   
+    # the javascript that inserts the add-on's UI. The anonymous function returns a bool indicating whether the UI was already
+    # present or not.
     return """
-        //check if ui has been rendered already
         (() => { 
-        if (!$('#outerWr').length) {
-        $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
-        document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
-        let toInsert = `
-        <div class='siac-col' style='width: %s%%; flex-grow: 1;' id='siac-right-side'>
-            <div id='siac-second-col-wrapper'>
-                <div id="greyout"></div>
-                <div id="a-modal" class="modal">
-                    <div class="modal-content">
-                        <div id="modalText"></div>
-                        <div id="modal-subpage">
-                            <div style='flex: 0 0 auto;'>
-                                <button class='modal-close siac-btn-small' onclick='hideModalSubpage()'>&#8592; Back</button>
-                            </div>
-                            <div id="modal-subpage-inner"></div>
-                        </div>
-                        <div style='flex: 0 0 auto; text-align: right; padding-top:15px;'>
-                            <button class='modal-close siac-btn-small' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
-                        </div>
-                    </div>
-                </div>
-                <div id='siac-search-modal'>
-                    <div id='siac-search-modal-wrapper'>
-                        <div id='siac-search-modal-header'></div>
-                        <input type='text' id='siac-search-modal-inp'/>
-                        <div style='text-align: center; margin-top: 10px;'>
-                            <span id='siac-search-modal-close' class='siac-btn-small' onclick='document.getElementById("siac-search-modal").style.display = "none";'>&nbsp;Close &times;</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flexContainer" id="topContainer">
-                    <div class='flexCol' style='margin-left: 0px; padding-bottom: 7px; padding-left: 0px;'>
-                        <div id='siac-switch-deck-btn' class='siac-btn-small'  onmouseleave='$(this).removeClass("expanded")' style='display: inline-block; position: relative; min-width: 200px; width: calc(100%% - 1px); text-align: center; box-sizing: border-box;' >
-                        <div class='siac-switch-deck-btn-inner' onclick="pycmd('siac-fill-deck-select')"><b>Decks</b></div>
-                        <div class='siac-switch-deck-btn-inner right' onclick="pycmd('siac-fill-tag-select')"><b>Tags</b></div>
-                            <div class='siac-btn-small-dropdown click'>
-                                <div id='deckSelWrapper'>
-                                    <div id='deck-sel-info-lbl' style='flex: 0 1 auto; margin: 5px 0 4px 5px;'><b>Only selected decks are used when searching</b></div>
-                                    <div id='siac-deck-sel-btn-wrapper' style='flex: 0 1 auto; margin-top: 3px; margin-bottom: 5px; white-space: nowrap; font-size: 0;'>
-                                        <div class='deck-list-button' onclick='selectAllDecks(); event.stopPropagation();'>All</div>
-                                        <div class='deck-list-button' onclick='unselectAllDecks(); event.stopPropagation();'>None</div>
-                                        <div class='deck-list-button' onclick="pycmd('siac-decks-select-current'); event.stopPropagation();">Current</div>
-                                        <div class='deck-list-button' onclick="pycmd('siac-decks-select-current-and-subdecks'); event.stopPropagation();">Current and Subdecks</div>
-                                    </div>
-                                    <div id='deckSelQuickWrapper' style='flex: 0 0 auto; overflow-y: auto; max-height: 120px;'>
-                                        <div style='font-weight: bold; margin: 4px 0 4px 4px;'>Recent:</div>
-                                        <table id='deckSelQuick'></table>
-                                    </div>
-                                    <div id='siac-deck-sel-q-sep' style='display: none;'>
-                                        <hr style='margin: 5px 5px 5px 5px'/>
-                                    </div>
-                                    <div style='flex: 1 1 auto; overflow-y: auto; margin-bottom: 10px;'>
-                                        <table id='deckSel'></table>
-                                    </div>
-                                </div>
-                             
-                            </div>
-                        </div>
-                    </div>
-                    <div class='flexCol right' style="position: relative; padding-bottom: 7px; padding-right: 0px; white-space: nowrap;">
-                            <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'><b>&nbsp;&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;&nbsp;</b>
-                                <div class='siac-btn-small-dropdown click'>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-search"); event.stopPropagation();'>&nbsp;Search ...</div>
-                                        <hr>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-head"); event.stopPropagation();'>&nbsp;<b>Read Next</b></div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-read-random"); event.stopPropagation();'>&nbsp;Read [Rnd]</div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-url-dialog"); event.stopPropagation();'>&nbsp;Url to PDF</div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-user-note-queue-picker -1"); event.stopPropagation();'>&nbsp;Queue Man.</div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-zotero-import"); event.stopPropagation();'>&nbsp;Zotero Imp.</div>
-                                        <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]</div>
-                                </div>
-                            </div>
-                            <div id='siac-settings-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; min-width: 140px; text-align: center;'><b>&nbsp; Settings & Info &nbsp;</b>
-                                        <div class='siac-btn-small-dropdown click' onclick='event.stopPropagation();' >
-                                                <table style='width: 100%%;'>
-                                                    <tr><td class='tbLb'><label class='blue-hover' for='selectionCb'>Search on Selection</label></td><td><input type='checkbox' id='selectionCb' checked onchange='siacState.searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
-                                                    <tr><td class='tbLb'><label class='blue-hover' for='typingCb'>Search on Typing</label></td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
-                                                    <tr><td class='tbLb'><label for='highlightCb'><mark>&nbsp;Highlighting&nbsp;</mark></label></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
-                                                    <tr><td class='tbLb'><label class='blue-hover' for='gridCb'>Grid</label></td><td><input type='checkbox' id='gridCb' onchange='toggleGrid(this)'/></td></tr>
-                                                </table>
-                                                <span>Note Scale</span>
-                                                <hr>
-                                                <input type='range' min='0.5' max='1.5' step='0.1' value='%s' list='siac-scale-tickmarks' onfocusout='pycmd("siac-scale " + this.value)'/>
-                                                <datalist id="siac-scale-tickmarks">
-                                                    <option value="0.5" label="0.5"></option>
-                                                    <option value="0.6"></option>
-                                                    <option value="0.7"></option>
-                                                    <option value="0.8"></option>
-                                                    <option value="0.9"></option>
-                                                    <option value="1.0" label="1.0"></option>
-                                                    <option value="1.1"></option>
-                                                    <option value="1.2"></option>
-                                                    <option value="1.3"></option>
-                                                    <option value="1.4"></option>
-                                                    <option value="1.5" label="1.5"></option>
-                                                </datalist>
-                                                <br>
-                                                <span>Fields - Add-on</span>
-                                                <hr>
-                                                <input id='siac-partition-slider' type='range' min='0' max='100' step='1' value='%s' onchange='pycmd("siac-left-side-width " + this.value)'/>
-                                                <br>
-                                                <span>Menus</span>
-                                                <hr>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-index-info");'>&nbsp;Info</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-r-show-tips");'>&nbsp;Tips</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-synonyms");'>&nbsp;Synonyms</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='pycmd("siac-styling");'>&nbsp;Settings</div>
-                                                <div class='siac-dropdown-item' style='width: 100%%;' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
-                                        </div>
-                            </div>
-                            <div id='siac-switch-lr-btn' class='siac-btn-small' onclick='switchLeftRight();' style='float: right;'>&#8596;</div>
-                    </div>
-                </div>
-                <div id="icns-large">
-                    <div class='rnd-icon' title='Read First in Queue' onclick='pycmd("siac-user-note-queue-read-head")'><i class="fa fa-inbox"></i></div>
-                    <div class='rnd-icon' title='PDF Notes' onclick='pycmd("siac-r-show-pdfs")'> <i class="fa fa-file-pdf-o"></i></div>
-                    <div class='rnd-icon' title='Text Notes' onclick='pycmd("siac-r-show-text-notes")'> <i class="fa fa-file-text-o"></i></div>
-                    <div class='rnd-icon' title='Video Notes' onclick='pycmd("siac-r-show-video-notes")'> <i class="fa fa-file-video-o"></i></div>
-                    <div class='rnd-icon' title='Toggle Sidebar' onclick='toggleNoteSidebar();'><i class="fa fa-bars"></i></div>
-                    <div class='rnd-icon' title='Search for fields content' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span><i class="fa fa-search"></i></div>
-                    <div class='rnd-icon' title='Random Anki Notes' onclick='pycmd("siac-r-random-notes " + siacState.selectedDecks.toString())'><i class="fa fa-random"></i></div>
-                    <div class='freeze-icon' title='Freeze results' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
-                    <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
-                </div>
-                <div id="resultsArea" style="">
-                    <div id='loader' style='%s'> 
-                        <div class='signal'></div>
-                        <br><span style='font-size: 15px; margin-top: 20px;'>Preparing index...</span>
-                    </div>
-                    <div id='resultsWrapper'>
-                        <div id='searchResults'></div>
-                        <div id='searchInfo' class='%s'></div>
-                    </div>
-                </div>
-                <div id='bottomContainer' style='display: block;'>
-                    <div id='siac-pagination'>
-                        <div id='siac-pagination-status'></div>
-                        <div id='siac-pagination-wrapper'>&nbsp;</div>
-                        <div id='siac-cache-displ'></div>
-                    </div>
-                    <div style='position: relative;' id='cal-wrapper'>
-                        %s
-                    </div>
-                    <div class="flexContainer">
-                        <div class='flexCol' style='padding-left: 0px; padding-top: 3px; '>
-                            <div class='flexContainer' style="flex-wrap: nowrap;">
-                                <fieldset id="sortCol" style="flex: 0 0 auto; font-size: 0.85em;">
-                                    <legend>Sorting & Filtering</legend>
-                                    <div class='siac-table-container' style='height: 20px;'>
-                                        <div class='siac-table-cell'>
-                                            <select id='sortSelect' class='h-100'>
-                                                <option value='newest' selected='true'>Sort By Newest</option>
-                                                <option value='oldest' selected='true'>Sort By Oldest</option>
-                                                <option value='remUntagged'>Remove Untagged</option>
-                                                <option value='remTagged'>Remove Tagged</option>
-                                                <option value='remUnreviewed'>Remove Unreviewed</option>
-                                                <option value='remReviewed'>Remove Reviewed</option>
-                                                <option value='remSuspended'>Remove Suspended</option>
-                                                <option value='remUnsuspended'>Remove Unsuspended</option>
-                                            </select>
-                                        </div>
-                                        <div class='siac-table-cell'>
-                                            <div class='siac-table-cell-btn' style='margin-left: 5px;' onclick='sort();' title='%s'>GO</div>
-                                        </div>
-                                    </div>
-                                </fieldset>
-
-                                <fieldset id="searchMaskCol" style="flex: 1 1 auto; font-size: 0.85em;">
-                                    <legend id="siac-search-inp-mode-lbl" onclick='toggleSearchbarMode(this);'>Mode: %s</legend>
-                                    <span class='siac-search-icn' style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
-                                    <input id='siac-browser-search-inp' placeholder='' onkeyup='searchMaskKeypress(event)'></input>
-                                </fieldset>
-
-                                <fieldset id="predefCol" style="flex: 0 0 auto; font-size: 0.85em;">
-                                    <legend>Predefined Searches</legend>
-                                    <div class='siac-table-container' style='height: 20px;'>
-                                        <div class='siac-table-cell'>
-                                            <select id='predefSearchSelect' class='h-100'>
-                                                <option value='lastAdded' selected='true'>Last Added</option>
-                                                <option value='firstAdded'>First Added</option>
-                                                <option value='lastModified'>Last Modified</option>
-                                                <option value='lastReviewed'>Last Reviewed</option>
-                                                <option value='lastLapses'>Last Lapses</option>
-                                                <option value='highestPerf'>Performance (desc.)</option>
-                                                <option value='lowestPerf'>Performance (asc.)</option>
-                                                <option value='highestRet'>Pass Rate (desc.)</option>
-                                                <option value='lowestRet'>Pass Rate (asc.)</option>
-                                                <option value='longestTime'>Time Taken (desc.)</option>
-                                                <option value='shortestTime'>Time Taken (asc.)</option>
-                                                <option value='highestInterval'>Interval (desc.)</option>
-                                                <option value='lowestInterval'>Interval (asc.)</option>
-                                                <option value='longestText'>Longest HTML</option>
-                                                <option value='lastUntagged'>Newest Untagged</option>
-                                                <option value='randomUntagged'>Random Untagged</option>
-                                            </select>
-                                        </div>
-                                        <div class='siac-table-cell'>
-                                            <select id='predefSearchNumberSel' class='h-100'>
-                                                <option value='10'>10</option>
-                                                <option value='50' selected='true'>50</option>
-                                                <option value='100'>100</option>
-                                                <option value='200'>200</option>
-                                                <option value='500'>500</option>
-                                            </select>
-                                        </div>
-                                        <div class='siac-table-cell'>
-                                            <div class='siac-table-cell-btn' onclick='predefSearch();' title='%s'>GO</div>
-                                        </div>
-                                    </div>
-                                </fieldset>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id='cal-info' onmouseleave='calMouseLeave()'></div>
-                <div id='siac-reading-modal'></div>
-            </div>
-        </div>
-        `;
-        %s  
-        $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
-        updatePinned();
-        var there = false;
-        onWindowResize();
-         
-        } else {
-           var there = true;
-        }
-        if (siacState.searchOnTyping) {
-            $('.field').off('siac').on('keydown.siac', fieldKeypress);
-        } 
-        $('.field').attr('onmouseup', 'getSelectionText()');
-        window.$fields = $('.field');
-        window.$searchInfo = $('#searchInfo');
-        window.addEventListener('resize', onWindowResize, true);
-        $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
-        $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
-        return there; 
-        
+            if (document.getElementById('outerWr') == null) {
+                $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
+                document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
+                let toInsert = `%s`;
+                %s  
+                $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
+                let aFn = () => {
+                    if (typeof(updatePinned) === "undefined") {
+                        setTimeout(aFn, 100);
+                        return;
+                    }
+                    updatePinned();
+                    onWindowResize();
+                }
+                aFn();
+                var there = false;
+            } else {
+            var there = true;
+            }
+            let sFn = () => {
+                if (typeof(siacState) === 'undefined') {
+                    setTimeout(sFn, 100);
+                    return;
+                } 
+                if (siacState.searchOnTyping) {
+                    $('.field').off('siac').on('keydown.siac', fieldKeypress);
+                } 
+                $('.field').attr('onmouseup', 'getSelectionText()');
+                window.$fields = $('.field');
+                window.$searchInfo = $('#searchInfo');
+                window.addEventListener('resize', onWindowResize, true);
+                $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
+                $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
+            };
+            sFn();
+            return there; 
         })();
-
     """ % (
     leftSideWidth,
-    rightSideWidth,
-    conf_or_def("noteScale", 1.0),
-    conf_or_def("leftSideWidthInPercent", 40),
-    "display: none;" if indexIsLoaded else "",
-    "hidden" if hideSidebar else "",
-    get_calendar_html() if conf_or_def("showTimeline", True) else "",
-    conf_or_def("shortcuts.trigger_current_filter", "CTRL+K"),
-    search_bar_mode,
-    conf_or_def("shortcuts.trigger_predef_search", "ALT+K"),
+    main_ui,
     insert_code
     )
 
@@ -658,7 +433,24 @@ def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
             </center>
         """
 
-    html = """<div id='siac-read-time-ch' style='width: 100%; margin: 30px auto 10px auto;'></div>"""
+    doy     = utility.date.day_of_year()
+    v_sum   = sum(counts.values())
+    v_max   = max(counts.values())
+    avg_r   = round(v_sum / doy, 1)
+
+    html = f"""
+        <div id='siac-read-time-ch' style='width: 100%; margin: 30px auto 10px auto;'></div>
+        <table style='margin-top: 15px;'>
+            <tr>
+                <td class='siac-caps'>Avg. read pages / day:</td>
+                <td><b style='margin-left: 20px;'>{avg_r}</b></td>
+            </tr>
+            <tr>
+                <td class='siac-caps'>Most read pages on a single day:</td>
+                <td><b style='margin-left: 20px;'>{v_max}</b></td>
+            </tr>
+        </table>
+    """
     return html
 
 
@@ -673,15 +465,18 @@ def get_note_delete_confirm_modal_html(nid: int) -> Optional[str]:
 
     return """
 
-    <div id='siac-del-modal' style='position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5; height: 100%%; text-align: center; background: rgba(0,0,0,0.4); display:flex; align-items: center; justify-content: center; border-radius: 5px;'>
+    <div id='siac-del-modal'>
        <div class='siac-modal-small'>
-            <p style='text-align: center; font-size: 14px;'><b>Delete the following note?</b></p>
+            <p class='ta_center' style='font-size: 14px;'><b>Delete the following note?</b></p>
             <hr class='siac-modal-sep'/>
             <br>
-            <div style='text-align: center; font-size: 14px; margin-bottom: 4px;'><b>%s</b></div>
-            <div style='text-align: center; font-size: 14px;'><i>%s</i></div>
+            <div class='ta_center' style='font-size: 14px; margin-bottom: 4px;'><b>%s</b></div>
+            <div class='ta_center' style='font-size: 14px;'><i>%s</i></div>
             <br><br>
-            <div style='text-align: center;'><div class='siac-btn-small bold' onclick='deleteNote(%s);' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div><div class='siac-btn-small bold' onclick='$(this.parentNode.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div></div>
+            <div class='ta_center'>
+                <div class='siac-btn siac-btn-small bold' onclick='deleteNote(%s);' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div>
+                <div class='siac-btn siac-btn-small bold' onclick='$(this.parentNode.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div>
+            </div>
        </div>
     </div>
     """ % (title, creation_date, nid)
@@ -696,121 +491,121 @@ def stylingModal(config):
             <br/>
             <fieldset>
             <span><mark>Important:</mark> Modify this value to scale the editor. Useful e.g. when working on a small screen. This is essentially the same as zooming in a web browser with CTRL+Mousewheel.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Zoom</b></td><td style='text-align: right;'><input placeholder="" type="number" step="0.1" style='width: 60px;' onchange="pycmd('siac-styling searchpane.zoom ' + this.value)" value="%s"/></td></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>Controls whether the results are faded in or not.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Render Immediately</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling renderImmediately ' + this.checked)" %s/></td></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>This controls how the window is split into search pane and field input. A value of 40 means the left side will take 40%% and the right side will take 60%%.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Left Side Width</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" min="0" max="100" style='width: 60px;' onchange="pycmd('siac-styling leftSideWidthInPercent ' + this.value)" value="%s"/> %%</td></tr>
                 </table>
             </fieldset>
              <br/>
             <fieldset>
                 <span>This controls whether the sidebar (containing the tags and found keywords) is visible or not.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Hide Sidebar</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling hideSidebar ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
              <br/>
               <fieldset>
                 <span>This controls whether the timeline row (added notes over the year) is visible or not.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Show Timeline</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling showTimeline ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
               <fieldset>
                 <span>This controls whether the small info box will be shown when a tag is hovered over with the mouse. Currently only works with the default scaling.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Show Tag Info on Hover</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling showTagInfoOnHover ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>This controls how long you have to hover over a tag until the info box is shown. Allowed values are 0 (not recommended) to 10000.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Tag Hover Delay in Miliseconds</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="10000" style='width: 60px;' onchange="pycmd('siac-styling tagHoverDelayInMiliSec ' + this.value)" value="%s"/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>If the number of notes that would go into the index (only notes from the included decks are counted) is lower than this value the index should always be rebuilt.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Always Rebuild Index If Smaller Than</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="100000" style='width: 60px;' onchange="pycmd('siac-styling alwaysRebuildIndexIfSmallerThan ' + this.value)" value="%s"/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>If you have problems with the display of search results (e.g. notes nested into each other), most likely, your note's html contains at least one unmatched opening/closing &lt;div&gt; tag. If set to true, this setting will remove all div tags from the note html before displaying.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Remove &lt;div&gt; Tags from Output</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling removeDivsFromOutput ' + this.checked)" %s/></tr>
                 </table>
                 <span>Try to hide Cloze brackets in the rendered results, instead show only their contained text.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Hide {{c1:: ... }} Cloze brackets in output</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.hide_cloze_brackets ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
-                <span>This is the absolute path to the folder where the addon should store its notes. If not present already, the addon will create a file named <i>siac-notes.db</i> in that folder. If empty, user_files will be used.
+                <span>This is the absolute path to the folder where the addon should store its notes. If not present already, the addon will create a file named <i>siac-notes.db</i> in that folder.
                 <br>If you have existing data, after changing this value, you should close Anki, copy your existing <i>siac-notes.db</i> to that new location, and then start again.
                 </span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Addon Note DB Folder Path</b></td><td style='text-align: right;'><input type="text"  style='min-width: 250px;' onfocusout="pycmd('siac-styling addonNoteDBFolderPath ' + this.value)" value="%s"/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>This is the location where PDFs generated from URLs will be saved. This needs to be set for the URL import to work.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>PDF Url-Import Save Path</b></td><td style='text-align: right;'><input type="text" style='min-width: 250px;' onfocusout="pycmd('siac-styling pdfUrlImportSavePath ' + this.value)" value="%s"/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>This controls if the addon's notes shall be displayed with their source field (on the bottom: "Source: ..."), or not.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Notes - Show Source</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling notes.showSource ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>This controls if the add-on is displayed in the edit dialog ("Edit" from the reviewer) too. <b>Please notice</b>: This add-on does not work with multiple instances. So if you have an Add Card dialog open while you are reviewing, and then open the Edit dialog, this add-on will not work properly anymore. So if you use this option, make sure the Add Card dialog is closed during review.</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Use in Edit</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling useInEdit ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>Show the float note button (&#10063;) in the rendered search results. <b>Needs a restart to apply.</b></span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Show Float Note Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showFloatButton ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span>Show NID/CID button (to copy the note's ID / ID of its (first) card on click) in the rendered search results. <b>Needs a restart to apply</b></span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Show NID Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showIDButton ' + this.checked)" %s/></tr>
                 </table>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Show CID Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showCIDButton ' + this.checked)" %s/></tr>
                 </table>
             </fieldset>
             <br/>
             <fieldset>
                 <span class='tagLbl' style='float: none; margin-left: 0;'>Tag Colors</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Tag Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.tagForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
                     <tr><td><b>Tag Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.tagBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
                     <tr><td><b>Tag Foreground Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.tagForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
@@ -820,7 +615,7 @@ def stylingModal(config):
             <br/>
             <fieldset>
                 <mark>Highlight Colors</mark>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Highlight Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.highlightForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
                     <tr><td><b>Highlight Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.highlightBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
                     <tr><td><b>Highlight Foreground Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.highlightForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
@@ -830,7 +625,7 @@ def stylingModal(config):
             <br/>
             <fieldset>
                 <span class='siac-susp-lbl' style='position: static; margin-left: 0;'>Suspended Label Colors</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Suspended Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.suspendedForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
                     <tr><td><b>Suspended Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.suspendedBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
                 </table>
@@ -838,7 +633,7 @@ def stylingModal(config):
             <br/>
             <fieldset>
                 <span>Modal Border Color</span>
-                <table style="width: 100%%">
+                <table class='w-100'>
                     <tr><td><b>Modal Border Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.modalBorderColor ' + this.value)" type="color" value="%s"></td></tr>
                     <tr><td><b>Modal Border Color (Night)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.modalBorderColor ' + this.value)" type="color" value="%s"></td></tr>
                 </table>
@@ -892,110 +687,6 @@ def get_loader_html(text):
     """ % text
     return html
 
-def default_styles():
-    return """
-        {
-        "modal" : {
-            "stripedTableBackgroundColor": "#f2f2f2",
-            "modalForegroundColor": "black",
-            "modalBackgroundColor": "white",
-            "modalBorderColor": "#2496dc"
-        },
-        "general" : {
-            "tagForegroundColor": "white",
-            "tagBackgroundColor": "#f0506e",
-            "tagFontSize" : 12,
-            "buttonBackgroundColor": "white",
-            "buttonForegroundColor": "#404040",
-            "buttonBorderColor":"#404040",
-            "keywordColor": "#2496dc",
-            "highlightBackgroundColor": "yellow",
-            "highlightForegroundColor": "black",
-            "fieldSeparatorColor" : "#2496dc",
-            "windowColumnSeparatorColor" : "lightseagreen",
-            "rankingLabelBackgroundColor": "lightseagreen",
-            "rankingLabelForegroundColor": "white",
-            "noteFontSize": 12,
-            "noteForegroundColor": "black",
-            "noteBackgroundColor": "white",
-            "noteBorderColor": "lightseagreen",
-            "noteHoverBorderColor": "#2496dc"
-        },
-        "topBar": {
-            "deckSelectFontSize": 11,
-            "deckSelectForegroundColor": "black",
-            "deckSelectBackgroundColor": "white",
-            "deckSelectHoverForegroundColor": "white",
-            "deckSelectHoverBackgroundColor": "#5f6468",
-            "deckSelectButtonForegroundColor": "grey",
-            "deckSelectButtonBorderColor": "grey",
-            "deckSelectButtonBackgroundColor": "white",
-            "deckSelectCheckmarkColor" : "green"
-        },
-        "bottomBar" : {
-            "browserSearchInputForegroundColor": "black",
-            "browserSearchInputBackgroundColor": "white",
-            "browserSearchInputBorderColor": "grey",
-            "selectForegroundColor" : "black",
-            "selectBackgroundColor": "white",
-            "timelineBoxBackgroundColor": "#595959",
-            "timelineBoxBorderColor": "#595959"
-        }
-    }
-    """
-
-def default_night_mode_styles():
-    return """
-        {
-        "bottomBar": {
-            "browserSearchInputBackgroundColor": "#2f2f31",
-            "browserSearchInputBorderColor": "grey",
-            "browserSearchInputForegroundColor": "beige",
-            "selectBackgroundColor": "#2f2f31",
-            "selectForegroundColor": "white",
-            "timelineBoxBackgroundColor": "#2b2b30",
-            "timelineBoxBorderColor": "darkorange"
-        },
-        "general": {
-            "buttonBackgroundColor": "#2f2f31",
-            "buttonBorderColor": "grey",
-            "buttonForegroundColor": "lightgrey",
-            "fieldSeparatorColor": "white",
-            "highlightBackgroundColor": "SpringGreen",
-            "highlightForegroundColor": "Black",
-            "keywordColor": "SpringGreen",
-            "noteBackgroundColor": "#2f2f31",
-            "noteBorderColor": "lightseagreen",
-            "noteFontSize": 12,
-            "noteForegroundColor": "beige",
-            "noteHoverBorderColor": "#62C9C3",
-            "rankingLabelBackgroundColor": "darkorange",
-            "rankingLabelForegroundColor": "Black",
-            "tagBackgroundColor": "darkorange",
-            "tagFontSize": 12,
-            "tagForegroundColor": "Black",
-            "windowColumnSeparatorColor": "darkorange"
-        },
-        "modal": {
-            "modalBackgroundColor": "#2f2f31",
-            "modalBorderColor": "darkorange",
-            "modalForegroundColor": "beige",
-            "stripedTableBackgroundColor": "#2b2b30"
-        },
-        "topBar": {
-            "deckSelectBackgroundColor": "#2f2f31",
-            "deckSelectButtonBackgroundColor": "#2f2f31",
-            "deckSelectButtonBorderColor": "grey",
-            "deckSelectButtonForegroundColor": "beige",
-            "deckSelectCheckmarkColor": "LawnGreen",
-            "deckSelectFontSize": 11,
-            "deckSelectForegroundColor": "beige",
-            "deckSelectHoverBackgroundColor": "darkorange",
-            "deckSelectHoverForegroundColor": "Black"
-        }
-    }
-    """
-
 def get_pdf_list_first_card():
     """
         Returns the html for the body of a card that is displayed at first position when clicking on "PDFs".
@@ -1021,7 +712,9 @@ def get_tips_html() -> List[Tuple[str, str]]:
         <li>CTRL/Meta + Click on a tag in the notes sidebar opens the Create Note modal with that tag.</li>
         <li>Not all settings are in the "Settings" dialog, some can be set only through Anki's add-on config dialog.</li>
         <li>On Anki 2.1.28+, the whole UI can be resized at once with CTRL+Mousewheel.</li>
-        <li>There is no automatic backup function, but it is sufficient to simply copy the 'siac-notes.db' file somewhere else.</li>
+        <li>If something happens to the add-on's DB file ('siac-notes.db'): Backups are created once each day (last 10 days), in the same folder as the 
+        'siac-notes.db' file. Remove the corrupted 'siac-notes.db' file, replace it with a backup file and rename it to 'siac-notes.db'.
+        </li>
     </ol>
         
 """), ("Markdown in Notes", """
@@ -1068,8 +761,8 @@ def get_unsuspend_modal(nid):
             if t["ord"] == c[3]:
                 temp_name = utility.text.trim_if_longer_than(t["name"], 60)
                 break
-        susp = "<span class='siac-susp' style='border-radius: 3px; padding: 2px 3px 2px 3px; font-weight: bold;'>SUSPENDED</span>" if c[2] == -1 else ""
-        btn = f"<div class='siac-btn' onclick='pycmd(\"siac-unsuspend {nid} {c[0]}\");'>Unsuspend</div>" if c[2] == -1 else ""
+        susp = "<span class='siac-susp bold' style='border-radius: 3px; padding: 2px 3px 2px 3px;'>SUSPENDED</span>" if c[2] == -1 else ""
+        btn = f"<div class='siac-btn siac-btn-small bold' onclick='pycmd(\"siac-unsuspend {nid} {c[0]}\");'>Unsuspend</div>" if c[2] == -1 else ""
         ivl = f"{c[1]} days" if c[1] >= 0 else f"{c[1]} seconds"
         cards_html += f"""
             <tr>
@@ -1080,16 +773,22 @@ def get_unsuspend_modal(nid):
             </tr>
         """
     return f"""
-            <center style='margin: 10px 0 20px 0;'>
-                <b>{len(cards)}</b> Card(s) for Note <b>{nid}</b> 
-                <table style='min-width: 500px; margin-top: 20px;'>
-                    {cards_html}
-                </table>
-            </center>
-            <hr style='margin-top: 20px; margin-bottom: 20px;'>
-            <center>
-                <div class='siac-btn' onclick='pycmd(\"siac-unsuspend {nid} {unsuspend_all[:-1]}\")'>Unsuspend All</div> 
-            </center>
+            <div style='min-height: 250px; overflow: hidden;' class='flex-col'>
+                <div style='flex: 1 1 auto;'>
+                    <center style='margin: 10px 0 20px 0;'>
+                        <span style='font-size: 18px;'><b>{len(cards)}</b> Card(s) for Note <b>{nid}</b></span>
+                        <table style='min-width: 500px; margin-top: 20px;'>
+                            {cards_html}
+                        </table>
+                    </center>
+                </div>
+                <div>
+                    <hr style='margin-top: 20px; margin-bottom: 20px;'>
+                    <center style='margin-bottom: 5px;'>
+                        <div class='siac-btn siac-btn-small bold' onclick='pycmd(\"siac-unsuspend {nid} {unsuspend_all[:-1]}\")'>Unsuspend All</div> 
+                    </center>
+                </div>
+            </div>
             """
 
 

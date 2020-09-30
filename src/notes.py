@@ -16,6 +16,7 @@
 
 import os
 import glob
+import shutil
 import sqlite3
 import typing
 from typing import Optional, Tuple, List, Dict, Set, Any
@@ -96,7 +97,14 @@ def create_db_file_if_not_exists() -> bool:
         conn.execute(creation_sql)
     else:
         existed = True
-        conn    = sqlite3.connect(file_path)
+        try: 
+            conn    = sqlite3.connect(file_path)
+        except sqlite3.OperationalError:
+            tmp = file_path.replace("siac-notes.db", "siac-notes.tmp.db")
+            shutil.copyfile(file_path, tmp)
+            os.remove(file_path)
+            os.rename(tmp, file_path)
+            conn    = sqlite3.connect(file_path)
 
         # check for backups
         backup_file = _get_todays_backup_path()
@@ -709,6 +717,7 @@ def get_unqueued_notes_for_tag(tag: str) -> List[SiacNote]:
             query = f"{query}lower(tags) like '% {t} %' or lower(tags) like '% {t}::%' or lower(tags) like '%::{t} %' or lower(tags) like '{t} %' or lower(tags) like '%::{t}::%'"
     conn = _get_connection()
     res = conn.execute("select * from notes where (%s) and position is null order by id desc" %(query)).fetchall()
+    conn.close()
     return _to_notes(res)
 
 def get_read_pages(nid: int) -> List[int]:
@@ -974,8 +983,8 @@ def find_by_tag(tag_str, to_output_list=True):
                 query += " or "
             query = f"{query}lower(tags) like '% {t} %' or lower(tags) like '% {t}::%' or lower(tags) like '%::{t} %' or lower(tags) like '{t} %' or lower(tags) like '%::{t}::%'"
     conn = _get_connection()
-
     res = conn.execute("select * from notes %s order by id desc" %(query)).fetchall()
+    conn.close()
     if not to_output_list:
         return res
     return _to_notes(res, pinned)
@@ -988,6 +997,7 @@ def find_notes(text: str) -> List[SiacNote]:
     q = ""
     for token in text.lower().split():
         if len(token) > 1:
+            token = token.replace("'", "")
             q = f"{q} or lower(title) like '%{token}%'"
     q = q[4:] if len(q) > 0 else "" 
     if len(q) == 0:
@@ -1108,22 +1118,21 @@ def get_invalid_pdfs() -> List[SiacNote]:
     return _to_notes(filtered) 
 
 def get_recently_used_tags() -> List[str]:
-    """
-        Returns a [str] of max 10 tags, ordered by their usage desc.
-    """
-    counts  = _get_recently_used_tags_counts(30)
-    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:10]
+    """ Returns a [str] of max 20 tags, ordered by their usage desc. """
+
+    counts  = _get_recently_used_tags_counts(100)
+    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:20]
     return ordered
 
 def get_recently_used_tags_with_counts() -> Dict[str, int]:
-    """
-        Returns a {str, int} of max 10 tags, ordered by their usage desc.
-    """
+    """ Returns a {str, int} of max 10 tags, ordered by their usage desc. """
+
     counts  = _get_recently_used_tags_counts(10)
     ordered = dict(sorted(counts.items(), key=lambda item: item[1], reverse = True))
     return ordered
 
 def _get_recently_used_tags_counts(limit: int) -> Dict[str, int]:
+
     conn    = _get_connection()
     res     = conn.execute("select tags from notes where tags is not null order by id desc limit %s" % limit).fetchall()
     conn.close()
@@ -1208,7 +1217,7 @@ def set_priority_list(ids: List[int]):
     conn.execute('update notes set position = NULL;')
     conn.executemany('update notes set position = ? where id = ?', ulist)
     conn.commit()
-    conn.close
+    conn.close()
 
 def empty_priority_list():
     conn = _get_connection()
@@ -1521,9 +1530,27 @@ def _get_db_path() -> str:
     global db_path
     if db_path is not None:
         return db_path
-    file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
-    if file_path is None or len(file_path) == 0:
-        file_path = utility.misc.get_user_files_folder_path()
+    config    = mw.addonManager.getConfig(__name__)
+    file_path = config["addonNoteDBFolderPath"]
+    # if db file path is not set yet, pick application data folder
+    if file_path is None or len(file_path.strip()) == 0:
+        file_path = utility.misc.get_application_data_path()
+        config["addonNoteDBFolderPath"] = file_path
+        mw.addonManager.writeConfig(__name__, config)
+        if not os.path.isdir(file_path):
+            os.mkdir(file_path)
+        ex = utility.misc.get_user_files_folder_path() + "siac-notes.db"
+        # there might be an existing file in user_files, if so, copy it to new location
+        try:
+            if os.path.isfile(ex):
+                shutil.copyfile(ex, file_path + "siac-notes.db")
+                if os.path.isfile(file_path + "siac-notes.db"):
+                    os.remove(ex)
+        except:
+            pass
+
+    if not os.path.isdir(file_path):
+        os.mkdir(file_path)
     file_path += "siac-notes.db"
     file_path.strip()
     db_path = file_path

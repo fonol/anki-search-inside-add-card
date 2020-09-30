@@ -42,7 +42,9 @@ import utility.misc
 import state
 
 try:
-    from .rs.siacrs.siacrs import rs_mark_highlights
+    # from .rs.siacrs.siacrs import rs_mark_highlights
+    utility.misc.load_rust_lib()
+    from siacrs import *
     state.rust_lib = True
 except:
     state.rust_lib = False
@@ -354,7 +356,7 @@ class Output:
 
         if not self.hideSidebar:
             infoMap = {
-                "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`siac-last-timing`)'>&#9432;</b>" if printTimingInfo else ""),
+                "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`siac-last-timing`)'><i class='fa fa-info-circle'></i></b>" if printTimingInfo else ""),
                 "Found" :  "<b>%s</b> notes" % (len(notes) if len(notes) > 0 else "<span style='color: red;'>0</span>")
             }
             info = self.build_info_table(infoMap, tags, allText)
@@ -540,7 +542,7 @@ class Output:
         for key, value in infoMap.items():
             infoStr         = f"{infoStr}<tr><td>{key}</td><td id='info-{key}'>{value}</td></tr>"
 
-        infoStr             = f"{infoStr}</table><div class='searchInfoTagSep'><span class='tag-symbol'>&#9750;</span>&nbsp;Tags:</div><div id='tagContainer'>"
+        infoStr             = f"{infoStr}</table><div class='searchInfoTagSep'><i class='fa fa-tags'></i>&nbsp; Tags:</div><div id='tagContainer'>"
         tagStr              = ""
         if len(tags) == 0:
             infoStr         += "No tags in the results."
@@ -805,7 +807,7 @@ class Output:
         return tags
 
     def printTagHierarchy(self, tags):
-        cmd = """document.getElementById('modalText').innerHTML = `%s`;
+        cmd = """document.getElementById('modalText').innerHTML = `<div style='min-height: 200px'>%s</div>`;
         $('.tag-list-item').click(function(e) {
             e.stopPropagation();
             let icn = $(this).find('.tag-btn').first();
@@ -837,7 +839,7 @@ class Output:
                     "[-]" if value else "" ,
                     utility.text.delete_chars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]),
                     key,
-                    "+" if not config["tagClickShouldSearch"] else "<div class='siac-btn-small'>Search</div>",
+                    "+" if not config["tagClickShouldSearch"] else "<div class='siac-btn siac-btn-small'>Search</div>",
                 iterateMap(value, full))
             html += "</ul>"
             return html

@@ -68,6 +68,9 @@ def schedule_is_due_in_the_future(schedule: str) -> bool:
     due         = schedule.split("|")[1]
     return due[:10] > date_only_stamp()
     
+def day_of_year() -> int:
+    now = datetime.now()
+    return (now - datetime(now.year, 1, 1)).days + 1
 
 def schedule_verbose(sched: str) -> str:
     """ Returns a natural language representation of the given schedule string. """
@@ -114,3 +117,25 @@ def get_new_reminder(stype: str, svalue: str) -> str:
         return f"{now}|{dt_to_stamp(next_date_due)}|id:{svalue}"
         
 
+
+def date_diff_to_string(diff):
+    """
+    Takes a datetime obj representing a difference between two dates, returns e.g.
+    "5 minutes", "6 hours", ...
+    """
+    time_str = "%s %s"
+
+    if diff.total_seconds() / 60 < 2.0:
+        time_str = time_str % ("1", "minute")
+    elif diff.total_seconds() / 3600 < 1.0:
+        time_str = time_str % (int(diff.total_seconds() / 60), "minutes")
+    elif diff.total_seconds() / 86400 < 1.0:
+        if int(diff.total_seconds() / 3600) == 1:
+            time_str = time_str % (int(diff.total_seconds() / 3600), "hour")
+        else:
+            time_str = time_str % (int(diff.total_seconds() / 3600), "hours")
+    elif diff.total_seconds() / 86400 >= 1.0 and diff.total_seconds() / 86400 < 2.0:
+        time_str = time_str % ("1", "day")
+    else:
+        time_str = time_str % (int(diff.total_seconds() / 86400), "days")
+    return time_str

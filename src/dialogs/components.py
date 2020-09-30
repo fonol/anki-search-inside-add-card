@@ -354,8 +354,6 @@ class ScheduleEditTab(QWidget):
             self.container3.setEnabled(False)
 
     def parse_schedule(self, schedule):
-        created = schedule.split("|")[0]
-        due     = schedule.split("|")[1]
         stype   = schedule.split("|")[2]
 
         if stype.startswith("td:"):

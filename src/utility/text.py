@@ -21,6 +21,7 @@ import time
 import random
 from bs4 import BeautifulSoup
 import typing
+from typing import Optional
 
 cleanWordReg    = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*$", re.I |re.U)    
 ignoreReg       = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]+$", re.I | re.U)
@@ -356,6 +357,13 @@ def is_html(text: str) -> bool:
         return True
     return False
 
+def remove_html(text: str) -> str:
+
+    if text is None:
+        return ""
+    text = re.sub("<[^<]+?>", "", text)
+    return text
+
 
 def clean_file_name(name):
     name = re.sub("[^a-zA-Z0-9]", "-", name)
@@ -414,8 +422,28 @@ def get_yt_video_id(src: str) -> str:
         return match.group(1)
     return ""
 
+def get_yt_time(url: str) -> Optional[int]:
+    match   = re.match(r".+/watch\?v=([^&]+)(?:&t=(.+)s)?", url)
+    if match and len(match.groups()) > 1:
+        if match.group(2) is not None and len(match.group(2)) > 0:
+            return int(match.group(2))
+        return None
+    return None
 
-   
+def get_yt_time_verbose(url: str) -> str:
+    time = get_yt_time(url)
+    if not time or time == 0:
+        return "--:--"
+    secs    = time % 60
+    if secs < 10:
+        secs = f"0{secs}"
+    mins    = int(time/60)
+    if mins < 10:
+        mins = f"0{mins}"
+    return f"{mins}:{secs}"
+
+    
+
 def clean_tags(tags):
     if tags is None or len(tags.strip()) == 0:
         return ""

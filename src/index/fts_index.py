@@ -38,7 +38,6 @@ class FTSIndex:
         self.limit              = 20
         self.pinned             = []
         self.highlighting       = True
-        self.dir                = utility.misc.get_user_files_folder_path()
         self.stopWords          = []
         self.fields_to_exclude  = {}
 
@@ -49,6 +48,25 @@ class FTSIndex:
         self.ui                 = Output()
 
         config                  = mw.addonManager.getConfig(__name__)
+
+        # get the directory to store 'search-data.db' in
+        self.dir                = config["addon.data_folder"]
+        # if folder path has not been set, use an os-appropriate application files path
+        # and save the value in the config
+        if not self.dir or len(self.dir.strip()) == 0:
+            self.dir            = utility.misc.get_application_data_path()
+            config["addon.data_folder"] = self.dir
+            mw.addonManager.writeConfig(__name__, config)
+            # delete old db file if existing in user_files folder
+            ex = utility.misc.get_user_files_folder_path() + "search-data.db"
+            try:
+                if os.path.isfile(ex):
+                    os.remove(ex)
+            except:
+                pass
+        if not os.path.isdir(self.dir):
+            os.mkdir(self.dir)
+
         try:
             self.stopWords      = set(config['stopwords'])
         except KeyError:
@@ -73,12 +91,14 @@ class FTSIndex:
             else:
                 sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs)"
 
-            cleaned = self._cleanText(corpus)
+            cleaned     = self._cleanText(corpus)
+            file_path   = self.dir + "search-data.db"
             try:
-                os.remove(self.dir + "search-data.db")
+                os.remove(file_path)
             except OSError:
                 pass
-            conn = sqlite3.connect(self.dir + "search-data.db")
+
+            conn = sqlite3.connect(file_path)
             conn.execute("drop table if exists notes")
             try:
                 conn.execute(sql % 5)
@@ -243,6 +263,8 @@ class FTSIndex:
             if self.logging:
                 log("Executing db query threw exception: " + str(e))
             res                     = []
+        finally:
+            conn.close()
         if self.logging:
             log("dbStr was: " + dbStr)
             log("Result length of db query: " + str(len(res)))
@@ -260,7 +282,6 @@ class FTSIndex:
                 if c >= self.limit:
                     break
 
-        conn.close()
 
         if self.logging:
             log("Query was: " + query)
@@ -404,13 +425,17 @@ class FTSIndex:
         return row_id
 
     def get_number_of_notes(self):
+        res     = 0
+        conn    = None
         try:
             conn = sqlite3.connect(self.dir + "search-data.db")
             res = conn.cursor().execute("select count(*) from notes_content").fetchone()[0]
-            conn.close()
-            return res
         except:
-            return 0
+            res = 0
+        finally:
+            if conn:
+                conn.close()
+        return res
 
 
 def _parseMatchInfo(buf):

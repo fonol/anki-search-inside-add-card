@@ -39,6 +39,7 @@ import functools
 import typing
 from typing import Dict, Any, List, Tuple, Optional, Callable
 import sys
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 import utility.tags
@@ -315,7 +316,6 @@ def insert_scripts():
         script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/{pdf_theme}';
         document.body.appendChild(script);
 
-
         script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = 'https://www.youtube.com/iframe_api';
@@ -440,10 +440,11 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     _try_register(config["shortcuts.search_for_current_field"], lambda: editor.web.eval("searchCurrentField()"))
 
 def show_note_modal():
+    """ Displays the Create/Update dialog if not already shown. """
     if not state.note_editor_shown:
         ix              = get_index()
         read_note_id    = ix.ui.reading_modal.note_id
-        NoteEditor(ix.ui._editor.parentWindow, note_id=None, add_only=False, read_note_id=read_note_id)
+        NoteEditor(ix.ui._editor.parentWindow, note_id=None, add_only=read_note_id is not None, read_note_id=read_note_id)
 
 def show_quick_open_pdf():
     """ Ctrl + O pressed -> show small dialog to quickly open a PDF. """

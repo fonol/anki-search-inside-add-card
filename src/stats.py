@@ -483,7 +483,7 @@ def calculateStats(nid, gridView):
 def _build_similarity_table(similar_res_by_cid, card_ivl_by_id):
     html = """
             <br/>
-            <h3 class='full-width' style='text-align: center;'>Similar Cards</h3>
+            <h3 class='full-width ta_center'>Similar Cards</h3>
                 Cards whose review history is similar to the given card one's. Similarity is measured among the interval steps (only in reviews) 
                 that a card went through. If our card has an interval of 95 days at the 4th review, and another card has 90 days at the 4th review, 
                 the similarity at this step is <br/>
@@ -497,7 +497,7 @@ def _build_similarity_table(similar_res_by_cid, card_ivl_by_id):
             <b>Average Pass Rate:</b> <i>Sum of each sample's pass rate</i> / <i>Sample Size</i><br/>
             """
     for cid, similar_res in similar_res_by_cid.items():
-        html += "<br/><div class='full-width' style='text-align: center; margin-bottom: 10px;'>Similar cards for " + str(cid) + ":</div>"
+        html += "<br/><div class='full-width ta_center' style='margin-bottom: 10px;'>Similar cards for " + str(cid) + ":</div>"
         
         if len(similar_res[0]) == 1 and 50 in similar_res[0] and similar_res[0][50]["sample_size"] == 0:
             html += "Could not find any samples that have at least an average similarity of 50%."
@@ -515,7 +515,7 @@ def _build_similarity_table(similar_res_by_cid, card_ivl_by_id):
                         """
         rows = ""
         for k, v in similar_res[0].items():
-            rows += """<tr class='sa-blue-hover sa-cursor-pointer' onclick='pycmd("similarForCard %s %s")'>
+            rows += """<tr class='sa-blue-hover cursor-pointer' onclick='pycmd("similarForCard %s %s")'>
                                 <td style='%s'>%s Cards w. Similarity > %s %%</td>
                                 <td style='%s'>%s %%</td>
                                 <td>%s %s</td>
@@ -546,14 +546,14 @@ def _buildTable(tables, reviewPlotData, ivlPlotData, timePlotData, namesByCid):
     for k, v in tables.items():
         if len(v) > 0:
             rows += "<fieldset style='margin-bottom: 10px; font-size: 11px;'><legend>%s</legend>" % k
-            rows += "<table class='striped' style='width: 100%; margin-bottom: 5px;'>"
+            rows += "<table class='striped w-100' style='margin-bottom: 5px;'>"
         scount = 0
         for table in v:
             scount += 1
             if scount > 1:
                 rows += "<tr><td>&nbsp;</td><td>&nbsp;</td></tr>"
             for key, value in table.items():
-                rows += "<tr style='width: 100%%'><td>%s</td><td><b>%s</b></td></tr>" % (
+                rows += "<tr class='w-100'><td>%s</td><td><b>%s</b></td></tr>" % (
                     key, value)
         #     if scount != len(v):
         #         rows += "<tr><td> </td><td></td> </tr>"
@@ -591,21 +591,21 @@ def _buildTable(tables, reviewPlotData, ivlPlotData, timePlotData, namesByCid):
         for k, v in reviewPlotData.items():
             if k in namesByCid and len(v) > 1:
                 c += 1
-                s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Reviews over time for <i>%s</i>:</h3>" % namesByCid[
+                s += "<div class='ta_center w-100'><h3 style='margin-top: 10px;'>Reviews over time for <i>%s</i>:</h3>" % namesByCid[
                     k]
                 s += "<div id='graph-" + \
                     str(c) + "' style='width: %s; height: %s; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 55px;'></div></div>" % (graphWidth, graphHeight)
         for k, v in ivlPlotData.items():
             if k in namesByCid and len(v) > 1:
                 c += 1
-                s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Interval over time for <i>%s</i>:</h3>" % namesByCid[
+                s += "<div class='ta_center w-100'><h3 style='margin-top: 10px;'>Interval over time for <i>%s</i>:</h3>" % namesByCid[
                     k]
                 s += "<div id='graph-" + \
                     str(c) + "' style='width: %s; height: %s; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 55px;'></div></div>" % (graphWidth, graphHeight)
         for k, v in timePlotData.items():
             if k in namesByCid and len(v) > 1:
                 c += 1
-                s += "<div style='text-align: center; width: 100%%;'><h3 style='margin-top: 10px;'>Answer times for <i>%s</i>:</h3>" % namesByCid[
+                s += "<div class='ta_center w-100'><h3 style='margin-top: 10px;'>Answer times for <i>%s</i>:</h3>" % namesByCid[
                     k]
                 s += "<div id='graph-" + \
                     str(c) + "' style='width: %s; height: %s; margin-left: auto; margin-right: auto; margin-top: 5px; margin-bottom: 55px;'></div></div>" % (graphWidth, graphHeight)

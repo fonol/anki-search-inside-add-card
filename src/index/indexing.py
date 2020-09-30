@@ -160,7 +160,9 @@ def _should_rebuild():
         return True
 
     #if db file / index dir is not existing, rebuild
-    file_path = utility.misc.get_user_files_folder_path()  + "search-data.db"
+    if not config["addon.data_folder"]:
+        return True
+    file_path = os.path.join(config["addon.data_folder"], "search-data.db")
     if not os.path.isfile(file_path):
         return True
     try:

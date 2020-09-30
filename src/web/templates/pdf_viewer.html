@@ -1,0 +1,147 @@
+<div id='siac-pdf-overlay'>PAGE &nbsp;<i class="fa fa-book" aria-hidden="true"></i>&nbsp; READ</div>
+<div id='siac-pdf-overlay-top'>
+    <div id='siac-pdf-mark-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><img src='{marks_img_src}' style='width: 17px; height: 17px; margin: 0;'/>
+        <div style='margin-left: 7px;'>
+            <div class='siac-mark-btn-inner siac-mark-btn-inner-1' onclick='pycmd("siac-pdf-mark 1 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Revisit</div>
+            <div class='siac-mark-btn-inner siac-mark-btn-inner-2' onclick='pycmd("siac-pdf-mark 2 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Hard</div>
+            <div class='siac-mark-btn-inner siac-mark-btn-inner-3' onclick='pycmd("siac-pdf-mark 3 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>More Info</div>
+            <div class='siac-mark-btn-inner siac-mark-btn-inner-4' onclick='pycmd("siac-pdf-mark 4 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>More Cards</div>
+            <div class='siac-mark-btn-inner siac-mark-btn-inner-5' onclick='pycmd("siac-pdf-mark 5 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Bookmark</div>
+        </div> 
+    </div>
+    {extract}
+    <div style='display: inline-block; vertical-align: top;' id='siac-pdf-overlay-top-lbl-wrap'></div>
+</div>
+<div id='siac-iframe-btn' style='top: 50px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
+    <div clas='fg_lightgrey' style='margin-left: 5px; margin-top: 4px; width: calc(100% - 35px); text-align: right; font-size: 13px;'>Note: Not all sites allow embedding!</div>
+    <div class='w-100' style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box;'>
+        <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) { pdfUrlSearch(this.value); this.value = ''; }"></input> 
+        <br/>
+    {search_sources}
+    </div>
+</div>
+<div id="siac-toc-btn" style='position: absolute; top: 97px; left: 0; display: none;' onclick='tocBtnClicked()' class='siac-btn siac-btn-dark siac-toc-btn'>
+    <i class='fa fa-list-ol'></i>
+</div>
+<div class='ta_center' style='position: absolute; left: 0; bottom: 150px;'>
+    <div style='border-color: grey;' data-id="0" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn bright-hover ta_center fg_lightgrey'>T</div>
+    <br>
+    <div style='background: #e65100;' data-id="1" data-color="#e65100" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
+    <div style='background: #558b2f;' data-id="2" data-color="#558b2f" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
+    <div style='background: #2196f3;' data-id="3" data-color="#2196f3" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
+    <div style='background: #ffee58;' data-id="4" data-color="#ffee58" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
+    <div style='background: #ab47bc;' data-id="5" data-color="#ab47bc" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
+    <br> 
+    <div style='background: #e65100;' data-id="6" data-color="#e65100" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-ul-btn'></div>
+    <div style='background: #558b2f;' data-id="7" data-color="#558b2f" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-ul-btn'></div>
+    <div style='background: #2196f3;' data-id="8" data-color="#2196f3" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-ul-btn'></div>
+</div>
+
+<div class='siac-btn siac-btn-dark' id='siac-pdf-search-btn' onclick='$(this).toggleClass("expanded"); onPDFSearchBtnClicked(this);'><img src='{pdf_search_img_src}' style='width: 16px; height: 16px;'/>
+    <div id='siac-pdf-search-btn-inner' class='expanded-hidden white-hover'>
+        <input class='siac-rm-bg fg_lightgrey' style='width: 200px; border:none; padding-left: 2px;' onclick='event.stopPropagation();' onkeyup='onPDFSearchInput(this.value, event);'/>
+        <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); readerNotification("Searching..."); nextPDFSearchResult(dir="left");'><b>&lt;</b></div>
+        <div class='siac-btn siac-btn-dark' onclick='event.stopPropagation(); readerNotification("Searching..."); nextPDFSearchResult(dir="right");'><b>&gt;</b></div>
+    </div>
+</div>
+<div class='siac-btn siac-btn-dark' id='siac-mark-jump-btn' onclick='$(this).toggleClass("expanded"); onMarkBtnClicked(this);'><img src='{marks_grey_img_src}' style='width: 16px; height: 16px;'/>
+    <div id='siac-mark-jump-btn-inner' class='expanded-hidden white-hover fg_lightgrey ta_center' style='margin: 0 2px 0 5px;'></div>
+</div>
+{quick_sched_btn} 
+<div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark fg_lightgrey' onclick='pycmd("siac-close-iframe")'><b>&times; &nbsp;CLOSE</b></div>
+<div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" oncopy='onPDFCopy(event)' onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
+    <div id='siac-pdf-wrapper'>
+        <div id='siac-pdf-overflow'>
+            <div id='siac-pdf-loader-wrapper'>
+                <div class='siac-pdf-loader'>
+                    <div> 
+                        <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><br/>
+                        <div id='siac-pdf-loader-text'>Loading PDF...</div>
+                    </div>
+                </div>
+            </div>
+            <canvas id="siac-pdf-canvas"></canvas>
+            <canvas id="siac-pdf-canvas_1"></canvas>
+            <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
+        </div>
+        <div id='siac-pdf-br-notify'> </div>
+        <div id='siac-toc'></div>
+    </div>
+    <div id='siac-page-sidebar'>
+        <div class='flex-col h-100' style='justify-content: center;'>
+            <div> 
+                <div class='signal' style='margin-left: auto; margin-right: auto;'></div>
+            </div>
+        </div>
+    </div>
+</div>
+<iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
+<div class='siac-reading-modal-button-bar-wrapper'>
+    <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
+        <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
+        <div class='siac-btn siac-btn-dark' style="margin-left: 2px; width: 18px;" onclick='pdfScaleChange("down");'>-</div>
+        <div class='siac-btn siac-btn-dark' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
+        <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
+        <div class='siac-btn siac-btn-dark' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986;</b></div>
+        <div class='siac-btn siac-btn-dark active' id='siac-pdf-tooltip-toggle' onclick='togglePDFSelect(this)' style='margin-left: 5px;'><div class='siac-search-icn-dark'></div></div>
+        <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
+    </div>
+    <div id='siac-page-btns' class='siac-rm-bg'>
+        <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b>&lt;</b></div>
+        <span id='siac-pdf-page-lbl'>Loading...</span>
+        <div class='siac-btn siac-btn-dark' onclick='pdfPageRight();'><b>&gt;</b></div>
+    </div>
+
+    <div style='position: absolute; right: 0; display: inline-block; user-select: none;'>
+        <div style='position: relative; display: inline-block; width: 70px; margin-right: 7px;'>
+            <div id='siac-pdf-color-mode-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'><span>Day</span>
+                <div class='siac-btn-small-dropdown-inverted click' style='height: 200px; top: -178px; left: -42px; width: 100px;'>
+                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Day")'><b>Day</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Night")'><b>Night</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("X1")'><b>X1</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("X2")'><b>X2</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Mud")'><b>Mud</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Sand")'><b>Sand</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Peach")'> <b>Peach</b> </div>
+                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Rose")'> <b>Rose</b> </div>
+                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Moss")'> <b>Moss</b> </div>
+                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Coral")'> <b>Coral</b> </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 75px;' onclick='togglePageRead({nid});'>\u2713&nbsp; Read</div>
+        <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
+            <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
+                <div class='siac-btn-small-dropdown-inverted click'>
+                    <div class='siac-dropdown-inverted-item' onclick='pageSnapshot()'><b>Page Snapshot</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-create-pdf-extract " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); event.stopPropagation();'><b>Extract ...</b></div>
+                    <hr>
+                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Last Read Page</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>First Unread Page</b></div>
+                    <hr>
+                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + numPagesExtract()); markReadUpToCurrent();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + numPagesExtract()); event.stopPropagation();'><b>Mark Range ...</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pagesRead = []; pdfHidePageReadMark(); updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + numPagesExtract()); setAllPagesRead(); updatePdfProgressBar();event.stopPropagation();'>
+                        <b>Mark all as Read</b>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <input id="siac-pdf-page-inp" style="width: 50px;margin-right: 5px;" value="1" type="number" min="1" onkeyup="pdfJumpToPage(event, this);"></input>
+        <div class='siac-btn siac-btn-dark' onclick='togglePageSidebar()'><i class="fa fa-bars"></i></div>
+    </div>
+</div>
+<script>
+    greyoutBottom();
+    $('#siac-pdf-color-mode-btn > span').first().text(pdfColorMode);
+    $('#siac-pdf-top').addClass("siac-pdf-" + pdfColorMode.toLowerCase());
+    if (pdfTooltipEnabled) {
+        $('#siac-pdf-tooltip-toggle').addClass('active');
+    } else {
+        $('#siac-pdf-tooltip-toggle').removeClass('active');
+    }
+    $('.siac-pdf-color-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
+    $('.siac-pdf-ul-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
+</script>
