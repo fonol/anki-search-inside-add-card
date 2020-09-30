@@ -1,0 +1,44 @@
+<div id='siac-schedule-dialog' class="siac-modal-small dark ta_center">
+    Change the main color of the reader.<br><br>
+    <div class='flex-row' style='user-select: none;'>
+        <div style='flex: 1'>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader.css")'>Orange</a><br>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightblue.css")'>Lightblue</a><br>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_khaki.css")'>Khaki</a><br>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_darkseagreen.css")'>Darkseagreen</a><br>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_tan.css")'>Tan</a><br>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightgreen.css")'>Lightgreen</a><br>
+        </div>
+        <div style='flex: 1'>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightsalmon.css")'>Lightsalmon</a><br>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_yellow.css")'>Yellow</a><br>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_crimson.css")'>Crimson</a><br>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_coral.css")'>Coral</a><br>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_steelblue.css")'>Steelblue</a><br>
+            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightsteelblue.css")'>Light Steelblue</a><br>
+        </div>
+    </div>
+    <br>
+    Background Color:
+    <br><br>
+    <div class='flex-row' style='user-select: none;' id='siac-modal-bg-update'>
+        <div style='flex: 1'>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2f2f31")'>Default</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor black")'>Black</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #00193C")'>Darkblue</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #020D1E")'>Darkbluegrey</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #102212")'>Darkgreen</a><br>
+        </div>
+        <div style='flex: 1'>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #343741")'>Lightgrey</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #0B2A2A")'>Darkturquoise</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2F1202")'>Darkbrown</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #381313")'>Darkred</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor " + getComputedStyle(document.body, null)["backgroundColor"])'>Window</a><br>
+        </div>
+    </div>
+    <br>
+    <div style='text-align: right;'>
+        <div class='siac-btn siac-btn-dark' style='margin-right: 10px;' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Ok</div>
+    </div>
+</div>

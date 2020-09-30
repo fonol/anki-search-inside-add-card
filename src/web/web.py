@@ -492,17 +492,12 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Fix: Change default save location of the add-on's databases to prevent errors on updating",
-        "Fix: Add-on layout sometimes shrinked on first opening of the Add dialog",
-        "Added 'Videos' category in the sidebar",
-        "Video (Youtube) notes now have a thumbnail",
-        "Added Avg. Pages Read / Day and Most Read Pages / Day to Read Stats",
-        "Added some icons in the PDF viewer",
-        "Added 'Pages' tab in PDF viewer bottom bar",
-        "Fix: Adapt rewiew last linked cards message for video notes",
-        "Fix: Opening a PDF with linked notes throwing error on older Anki versions",
-        "Fix: Search highlighting not working on uppercased terms on Mac",
-        "Fix: 'Related' tab in PDF viewer throwing error if related note's title contains \"'\"",
+       "Use add-on data folder for URL import by default (if no path is set in config)",
+       "Some small styling improvements",
+       "Fix: 'Random' in 'Notes' dropdown not working", 
+       "Fix: Error when searching for video with no time set",
+       "Fix: Tag tree not updating when using 'Create & Keep Open' in Create Note dialog",
+       "Fix: Error when pressing CTRL + unused number in Quick Open (CTRL+O) dialog"
     ]
 
 def known_issues() -> List[str]:

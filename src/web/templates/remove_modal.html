@@ -1,0 +1,20 @@
+<div id='siac-schedule-dialog' class="siac-modal-small dark ta_center">
+    Remove / delete this note?<br><br>
+    {title}
+
+    <div class='siac-pdf-main-color-border-bottom siac-pdf-main-color-border-top cursor-pointer' style='text-align: left; user-select: none;  margin: 10px 0 10px 0; padding: 15px;'>
+        <label class='blue-hover' for='siac-rb-1'>
+            <input id='siac-rb-1' type='radio' {rem_cl} name='del' data-pycmd="1">
+            <span>Remove from Queue</span>
+        </label><br>
+        <label class='blue-hover' for='siac-rb-2'>
+            <input id='siac-rb-2' type='radio' {del_cl} name='del' data-pycmd="2">
+            <span>Delete Note</span>
+        </label><br>
+
+    </div>
+    <div style='text-align: right;'>
+        <div class='siac-btn siac-btn-dark' style='margin-right: 10px;' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Cancel</div>
+        <div class='siac-btn siac-btn-dark' onclick='removeDialogOk({note_id})'>Ok</div>
+    </div>
+</div>

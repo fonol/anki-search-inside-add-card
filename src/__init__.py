@@ -316,7 +316,6 @@ def insert_scripts():
         script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/{pdf_theme}';
         document.body.appendChild(script);
 
-
         script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = 'https://www.youtube.com/iframe_api';

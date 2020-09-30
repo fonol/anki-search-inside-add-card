@@ -357,6 +357,13 @@ def is_html(text: str) -> bool:
         return True
     return False
 
+def remove_html(text: str) -> str:
+
+    if text is None:
+        return ""
+    text = re.sub("<[^<]+?>", "", text)
+    return text
+
 
 def clean_file_name(name):
     name = re.sub("[^a-zA-Z0-9]", "-", name)
@@ -418,7 +425,9 @@ def get_yt_video_id(src: str) -> str:
 def get_yt_time(url: str) -> Optional[int]:
     match   = re.match(r".+/watch\?v=([^&]+)(?:&t=(.+)s)?", url)
     if match and len(match.groups()) > 1:
-        return int(match.group(2))
+        if match.group(2) is not None and len(match.group(2)) > 0:
+            return int(match.group(2))
+        return None
     return None
 
 def get_yt_time_verbose(url: str) -> str:

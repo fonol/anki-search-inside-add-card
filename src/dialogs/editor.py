@@ -263,6 +263,8 @@ class NoteEditor(QDialog):
         if self.create_tab.source.text().endswith(".pdf"):
             self.create_tab.source.setText("")
         self.create_tab.title.setFocus()
+        self.create_tab.tree.clear()
+        self.create_tab.build_tree(get_all_tags_as_hierarchy(include_anki_tags=self.create_tab.all_tags_cb.isChecked()))
         
 
     def on_update_clicked(self):
@@ -311,6 +313,15 @@ class CreateTab(QWidget):
         self.original_bg        = None
         self.original_fg        = None
         web_path                = utility.misc.get_web_folder_path()
+        config                  = mw.addonManager.getConfig(__name__)
+        if self.parent.dark_mode_used:
+            tag_bg                  = config["styles.night.tagBackgroundColor"]
+            tag_fg                  = config["styles.night.tagForegroundColor"]
+            hover_bg                = "palette(light)"
+        else:
+            tag_bg                  = config["styles.tagBackgroundColor"]
+            tag_fg                  = config["styles.tagForegroundColor"]
+            hover_bg                = "palette(dark)"
 
         self.tree.setColumnCount(1)
         self.tree.setIconSize(QSize(0,0))
@@ -319,7 +330,18 @@ class CreateTab(QWidget):
         self.tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.tree.setMinimumHeight(150)
         self.tree.setMinimumWidth(220)
+        self.tree.setSelectionMode(QAbstractItemView.NoSelection)
+        # self.tree.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         self.tree.setHeaderHidden(True)
+        self.tree.setStyleSheet(f"""
+        QTreeWidget::item:hover,QTreeWidget::item:hover:selected {{
+            border:none;
+            border-radius:5px;
+            font-weight: bold;
+            background-color: {tag_bg};
+            color: {tag_fg};
+        }}
+        """)
 
         self.highlight_map      = {
             "ob": [0,0,0,232,151,0],
@@ -331,22 +353,20 @@ class CreateTab(QWidget):
          
         recently_used_tags      = get_recently_used_tags()
         
-        config                  = mw.addonManager.getConfig(__name__)
-        if self.parent.dark_mode_used:
-            tag_bg                  = config["styles.night.tagBackgroundColor"]
-            tag_fg                  = config["styles.night.tagForegroundColor"]
-        else:
-            tag_bg                  = config["styles.tagBackgroundColor"]
-            tag_fg                  = config["styles.tagForegroundColor"]
 
         self.recent_tbl         = QWidget()
         self.recent_tbl.setObjectName("recentDisp")
         self.recent_tbl.setStyleSheet("background-color: transparent;")
         bs = f"""
+            QPushButton {{
             background-color: {tag_bg};
             color: {tag_fg};
             padding: 2px 3px 2px 3px;
-            border-radius: 5px;
+            border-radius: 4px;
+            }}
+            QPushButton:hover {{
+                background-color: {hover_bg};
+            }}
         """
         lo = FlowLayout()
         self.recent_tbl.setLayout(lo)
@@ -373,13 +393,25 @@ class CreateTab(QWidget):
         tag_hb.setAlignment(Qt.AlignLeft)
         tag_hb.addWidget(tag_lbl)
         tag_hb.addWidget(QLabel("Tags (Click to Add)"))
-
+        
         vbox_left.addLayout(tag_hb)
 
         vbox_left.addWidget(self.tree)
         self.all_tags_cb = QCheckBox("Include Anki Tags")
         self.all_tags_cb.stateChanged.connect(self.tag_cb_changed)
-        vbox_left.addWidget(self.all_tags_cb)
+        hbox_tag_b = QHBoxLayout()
+        hbox_tag_b.addWidget(self.all_tags_cb)
+
+        # exp_btn = QToolButton()
+        # exp_btn.setText("\u2bc6")
+        # col_btn = QToolButton()
+        # col_btn.setText("\u2bc5")
+        # button1.setIcon(button1.style().standardIcon(QStyle.SP_MediaSeekBackward))
+        hbox_tag_b.addStretch(1)
+        # hbox_tag_b.addWidget(col_btn)
+        # hbox_tag_b.addWidget(exp_btn)
+        vbox_left.addLayout(hbox_tag_b)
+
         if len(recently_used_tags) > 0:
             tag_lbl1 = QLabel()
             tag_lbl1.setPixmap(tag_icn)
@@ -457,24 +489,24 @@ class CreateTab(QWidget):
         self.tb.setOrientation(Qt.Horizontal)
         self.tb.setIconSize(QSize(12, 12))
 
-        clean_btn = QToolButton()
+        clean_btn = QPushButton()
         clean_btn.setText("Clean...  ")
-        clean_btn.setPopupMode(QToolButton.InstantPopup)
         clean_btn.setFocusPolicy(Qt.NoFocus)
         clean_menu = QMenu(clean_btn)
         if self.parent.dark_mode_used:
             clean_menu.setStyleSheet("""
-                QMenu { background: #3a3a3a; color: lightgrey; }
-                QMenu:item:selected { background: #aaa; color: white; }
+                QMenu { background: #3a3a3a; color: lightgrey; font-size: 10px; }
+                QMenu:item:selected { background: steelblue; color: white; }
             """)
         else:
             clean_menu.setStyleSheet("""
-                QMenu { background: white; color: black; }
+                QMenu { background: white; color: black; font-size: 10px;}
                 QMenu:item:selected { background: #2496dc; color: white; }
             """)
         
 
         clean_menu.addAction("Remove all Formatting").triggered.connect(self.on_remove_formatting)
+        clean_menu.addAction("Remove HTML").triggered.connect(self.on_remove_html)
         # clean_menu.addAction("Remove all Headers (#)").triggered.connect(self.on_remove_headers_clicked)
         clean_btn.setMenu(clean_menu)
         self.tb.addWidget(clean_btn)
@@ -588,6 +620,7 @@ class CreateTab(QWidget):
         vbox.setAlignment(Qt.AlignTop)
         vbox.addSpacing(10)
         vbox.addLayout(hbox)
+        vbox.setSpacing(5)
         self.layout.addSpacing(5)
         self.layout.addLayout(vbox, 73)
         self.setLayout(self.layout)
@@ -784,6 +817,11 @@ class CreateTab(QWidget):
         text = utility.text.html_to_text(html)
         self.text.setPlainText(text)
 
+    def on_remove_html(self):
+        html = self.text.toPlainText()
+        cleaned = utility.text.remove_html(html)
+        self.text.setPlainText(cleaned)
+
     def on_text_cursor_change(self):
         cursor = self.text.textCursor()
         line = cursor.blockNumber() + 1
@@ -880,8 +918,8 @@ class PriorityTab(QWidget):
 
             tags = pitem.tags
             if tags is not None and len(tags.strip()) > 0:
-                tag_sep = "&nbsp;</span> <span style='color: %s; background-color: %s; margin-right: 5px; border-radius: 5px;'>&nbsp;" % (tag_fg, tag_bg)
-                tags = "<span style='color: %s; background-color: %s; margin-right: 5px; border-radius: 5px;'>&nbsp;%s&nbsp;</span>" % (tag_fg, tag_bg, tag_sep.join([t for t in tags.split(" ") if len(t) > 0]))
+                tag_sep = "&nbsp;</span> <span style='color: %s; background-color: %s; margin-right: 5px; border: none; border-radius: 5px;'>&nbsp;" % (tag_fg, tag_bg)
+                tags = "<span style='color: %s; background-color: %s; margin-right: 5px; border: none; border-radius: 5px;'>&nbsp;%s&nbsp;</span>" % (tag_fg, tag_bg, tag_sep.join([t for t in tags.split(" ") if len(t) > 0]))
 
             item = QStandardItem(text)
             item.setData(QVariant(pitem.id))

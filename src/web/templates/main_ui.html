@@ -1,0 +1,218 @@
+<div class='siac-col' style='width: {rightSideWidth}%; flex-grow: 1;' id='siac-right-side'>
+    <div id='siac-second-col-wrapper'>
+        <div id="greyout"></div>
+        <div id="a-modal" class="modal">
+            <div class="modal-content">
+                <div id="modalText"></div>
+                <div id="modal-subpage">
+                    <div style='flex: 0 0 auto;'>
+                        <button class='modal-close siac-btn-small' onclick='hideModalSubpage()'>&#8592; Back</button>
+                    </div>
+                    <div id="modal-subpage-inner"></div>
+                </div>
+                <div style='flex: 0 0 auto; text-align: right; padding-top:15px;'>
+                    <button class='modal-close siac-btn-small' onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
+                </div>
+            </div>
+        </div>
+        <div id='siac-search-modal'>
+            <div id='siac-search-modal-wrapper'>
+                <div id='siac-search-modal-header'></div>
+                <input type='text' id='siac-search-modal-inp'/>
+                <div class='ta_center' style='margin-top: 10px;'>
+                    <span id='siac-search-modal-close' class='siac-btn-small' onclick='document.getElementById("siac-search-modal").style.display = "none";'>&nbsp;Close &times;</span>
+                </div>
+            </div>
+        </div>
+        <div class="flexContainer" id="topContainer">
+            <div class='flexCol' style='margin-left: 0px; padding-bottom: 7px; padding-left: 0px;'>
+                <div id='siac-switch-deck-btn' class='siac-btn-small'  onmouseleave='$(this).removeClass("expanded")' style='display: inline-block; position: relative; min-width: 200px; width: calc(100% - 1px); text-align: center; box-sizing: border-box;' >
+                <div class='siac-switch-deck-btn-inner' onclick="pycmd('siac-fill-deck-select')"><b>Decks</b></div>
+                <div class='siac-switch-deck-btn-inner right' onclick="pycmd('siac-fill-tag-select')"><b>Tags</b></div>
+                    <div class='siac-btn-small-dropdown click'>
+                        <div id='deckSelWrapper'>
+                            <div id='deck-sel-info-lbl' style='flex: 0 1 auto; margin: 5px 0 4px 5px;'><b>Only selected decks are used when searching</b></div>
+                            <div id='siac-deck-sel-btn-wrapper' style='flex: 0 1 auto; margin-top: 3px; margin-bottom: 5px; white-space: nowrap; font-size: 0;'>
+                                <div class='deck-list-button' onclick='selectAllDecks(); event.stopPropagation();'>All</div>
+                                <div class='deck-list-button' onclick='unselectAllDecks(); event.stopPropagation();'>None</div>
+                                <div class='deck-list-button' onclick="pycmd('siac-decks-select-current'); event.stopPropagation();">Current</div>
+                                <div class='deck-list-button' onclick="pycmd('siac-decks-select-current-and-subdecks'); event.stopPropagation();">Current and Subdecks</div>
+                            </div>
+                            <div id='deckSelQuickWrapper' style='flex: 0 0 auto; overflow-y: auto; max-height: 120px;'>
+                                <div style='font-weight: bold; margin: 4px 0 4px 4px;'>Recent:</div>
+                                <table id='deckSelQuick'></table>
+                            </div>
+                            <div id='siac-deck-sel-q-sep' style='display: none;'>
+                                <hr style='margin: 5px 5px 5px 5px'/>
+                            </div>
+                            <div style='flex: 1 1 auto; overflow-y: auto; margin-bottom: 10px;'>
+                                <table id='deckSel'></table>
+                            </div>
+                        </div>
+                     
+                    </div>
+                </div>
+            </div>
+            <div class='flexCol right' style="position: relative; padding-bottom: 7px; padding-right: 0px; white-space: nowrap;">
+                    <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; margin-right: 6px;' onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'><b>&nbsp;&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;&nbsp;</b>
+                        <div class='siac-btn-small-dropdown click'>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-r-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-r-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-user-note-search"); event.stopPropagation();'>&nbsp;Search ...</div>
+                                <hr>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-r-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>&nbsp;<b>Queue</b></div>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-user-note-queue-read-head"); event.stopPropagation();'>&nbsp;<b>Read Next</b></div>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-user-note-queue-read-random"); event.stopPropagation();'>&nbsp;Read [Rnd]</div>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-url-dialog"); event.stopPropagation();'>&nbsp;Url to PDF</div>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-user-note-queue-picker -1"); event.stopPropagation();'>&nbsp;Queue Man.</div>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-zotero-import"); event.stopPropagation();'>&nbsp;Zotero Imp.</div>
+                                <div class='siac-dropdown-item w-100' onclick='pycmd("siac-r-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]</div>
+                        </div>
+                    </div>
+                    <div id='siac-settings-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='position: relative; display:inline-block; min-width: 140px; text-align: center;'><b>&nbsp; Settings & Info &nbsp;</b>
+                                <div class='siac-btn-small-dropdown click' onclick='event.stopPropagation();' >
+                                        <table class='w-100'>
+                                            <tr><td class='tbLb'><label class='blue-hover' for='selectionCb'>Search on Selection</label></td><td><input type='checkbox' id='selectionCb' checked onchange='siacState.searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();'/></td></tr>
+                                            <tr><td class='tbLb'><label class='blue-hover' for='typingCb'>Search on Typing</label></td><td><input type='checkbox' id='typingCb' checked onchange='setSearchOnTyping($(this).is(":checked"));'/></td></tr>
+                                            <tr><td class='tbLb'><label for='highlightCb'><mark>&nbsp;Highlighting&nbsp;</mark></label></td><td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)'/></td></tr>
+                                            <tr><td class='tbLb'><label class='blue-hover' for='gridCb'>Grid</label></td><td><input type='checkbox' id='gridCb' onchange='toggleGrid(this)'/></td></tr>
+                                        </table>
+                                        <span>Note Scale</span>
+                                        <hr>
+                                        <input type='range' min='0.5' max='1.5' step='0.1' value='{noteScale}' list='siac-scale-tickmarks' onfocusout='pycmd("siac-scale " + this.value)'/>
+                                        <datalist id="siac-scale-tickmarks">
+                                            <option value="0.5" label="0.5"></option>
+                                            <option value="0.6"></option>
+                                            <option value="0.7"></option>
+                                            <option value="0.8"></option>
+                                            <option value="0.9"></option>
+                                            <option value="1.0" label="1.0"></option>
+                                            <option value="1.1"></option>
+                                            <option value="1.2"></option>
+                                            <option value="1.3"></option>
+                                            <option value="1.4"></option>
+                                            <option value="1.5" label="1.5"></option>
+                                        </datalist>
+                                        <br>
+                                        <span>Fields - Add-on</span>
+                                        <hr>
+                                        <input id='siac-partition-slider' type='range' min='0' max='100' step='1' value='{leftSideWidthInPercent}' onchange='pycmd("siac-left-side-width " + this.value)'/>
+                                        <br>
+                                        <span>Menus</span>
+                                        <hr>
+                                        <div class='siac-dropdown-item w-100' onclick='pycmd("siac-index-info");'>&nbsp;Info</div>
+                                        <div class='siac-dropdown-item w-100' onclick='pycmd("siac-r-show-tips");'>&nbsp;Tips</div>
+                                        <div class='siac-dropdown-item w-100' onclick='pycmd("siac-synonyms");'>&nbsp;Synonyms</div>
+                                        <div class='siac-dropdown-item w-100' onclick='pycmd("siac-styling");'>&nbsp;Settings</div>
+                                        <div class='siac-dropdown-item w-100' onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
+                                </div>
+                    </div>
+                    <div id='siac-switch-lr-btn' class='siac-btn-small' onclick='switchLeftRight();' style='float: right;'>&#8596;</div>
+            </div>
+        </div>
+        <div id="icns-large">
+            <div class='rnd-icon' title='Read First in Queue' onclick='pycmd("siac-user-note-queue-read-head")'><i class="fa fa-inbox"></i></div>
+            <div class='rnd-icon' title='PDF Notes' onclick='pycmd("siac-r-show-pdfs")'> <i class="fa fa-file-pdf-o"></i></div>
+            <div class='rnd-icon' title='Text Notes' onclick='pycmd("siac-r-show-text-notes")'> <i class="fa fa-file-text-o"></i></div>
+            <div class='rnd-icon' title='Video Notes' onclick='pycmd("siac-r-show-video-notes")'> <i class="fa fa-file-video-o"></i></div>
+            <div class='rnd-icon' title='Toggle Sidebar' onclick='toggleNoteSidebar();'><i class="fa fa-bars"></i></div>
+            <div class='rnd-icon' title='Search for fields content' onclick='fieldsBtnClicked()'> <span class='icns-add'>FIELDS </span><i class="fa fa-search"></i></div>
+            <div class='rnd-icon' title='Random Anki Notes' onclick='pycmd("siac-r-random-notes " + siacState.selectedDecks.toString())'><i class="fa fa-random"></i></div>
+            <div class='freeze-icon' title='Freeze results' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE </span>&#10052; </div>
+            <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
+        </div>
+        <div id="resultsArea">
+            <div id='loader' style='{showLoader}'> 
+                <div class='signal'></div>
+                <br><span class='siac-caps' style='font-size: 15px; margin-top: 20px; opacity: 0.8;'>Preparing index...</span>
+            </div>
+            <div id='resultsWrapper'>
+                <div id='searchResults'></div>
+                <div id='searchInfo' class='{sidebarHidden}'></div>
+            </div>
+        </div>
+        <div id='bottomContainer' style='display: block;'>
+            <div id='siac-pagination'>
+                <div id='siac-pagination-status'></div>
+                <div id='siac-pagination-wrapper'>&nbsp;</div>
+                <div id='siac-cache-displ'></div>
+            </div>
+            <div style='position: relative;' id='cal-wrapper'>
+                {calendar}
+            </div>
+            <div class="flexContainer">
+                <div class='flexCol' style='padding-left: 0px; padding-top: 3px; '>
+                    <div class='flexContainer' style="flex-wrap: nowrap;">
+                        <fieldset id="sortCol" style="flex: 0 0 auto; font-size: 0.85em;">
+                            <legend>Sorting & Filtering</legend>
+                            <div class='siac-table-container' style='height: 20px;'>
+                                <div class='siac-table-cell'>
+                                    <select id='sortSelect' class='h-100'>
+                                        <option value='newest' selected='true'>Sort By Newest</option>
+                                        <option value='oldest' selected='true'>Sort By Oldest</option>
+                                        <option value='remUntagged'>Remove Untagged</option>
+                                        <option value='remTagged'>Remove Tagged</option>
+                                        <option value='remUnreviewed'>Remove Unreviewed</option>
+                                        <option value='remReviewed'>Remove Reviewed</option>
+                                        <option value='remSuspended'>Remove Suspended</option>
+                                        <option value='remUnsuspended'>Remove Unsuspended</option>
+                                    </select>
+                                </div>
+                                <div class='siac-table-cell'>
+                                    <div class='siac-table-cell-btn' style='margin-left: 5px;' onclick='sort();' title='{shortcutFilter}'>GO</div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset id="searchMaskCol" style="flex: 1 1 auto; font-size: 0.85em;">
+                            <legend id="siac-search-inp-mode-lbl" onclick='toggleSearchbarMode(this);'>Mode: {searchbarMode}</legend>
+                            <span class='siac-search-icn' style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
+                            <input id='siac-browser-search-inp' placeholder='' onkeyup='searchMaskKeypress(event)'></input>
+                        </fieldset>
+
+                        <fieldset id="predefCol" style="flex: 0 0 auto; font-size: 0.85em;">
+                            <legend>Predefined Searches</legend>
+                            <div class='siac-table-container' style='height: 20px;'>
+                                <div class='siac-table-cell'>
+                                    <select id='predefSearchSelect' class='h-100'>
+                                        <option value='lastAdded' selected='true'>Last Added</option>
+                                        <option value='firstAdded'>First Added</option>
+                                        <option value='lastModified'>Last Modified</option>
+                                        <option value='lastReviewed'>Last Reviewed</option>
+                                        <option value='lastLapses'>Last Lapses</option>
+                                        <option value='highestPerf'>Performance (desc.)</option>
+                                        <option value='lowestPerf'>Performance (asc.)</option>
+                                        <option value='highestRet'>Pass Rate (desc.)</option>
+                                        <option value='lowestRet'>Pass Rate (asc.)</option>
+                                        <option value='longestTime'>Time Taken (desc.)</option>
+                                        <option value='shortestTime'>Time Taken (asc.)</option>
+                                        <option value='highestInterval'>Interval (desc.)</option>
+                                        <option value='lowestInterval'>Interval (asc.)</option>
+                                        <option value='longestText'>Longest HTML</option>
+                                        <option value='lastUntagged'>Newest Untagged</option>
+                                        <option value='randomUntagged'>Random Untagged</option>
+                                    </select>
+                                </div>
+                                <div class='siac-table-cell'>
+                                    <select id='predefSearchNumberSel' class='h-100'>
+                                        <option value='10'>10</option>
+                                        <option value='50' selected='true'>50</option>
+                                        <option value='100'>100</option>
+                                        <option value='200'>200</option>
+                                        <option value='500'>500</option>
+                                    </select>
+                                </div>
+                                <div class='siac-table-cell'>
+                                    <div class='siac-table-cell-btn' onclick='predefSearch();' title='shortcutPredef'>GO</div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id='cal-info' onmouseleave='calMouseLeave()'></div>
+        <div id='siac-reading-modal'></div>
+    </div>
+</div>

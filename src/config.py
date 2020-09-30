@@ -37,7 +37,7 @@ def get_config_value_or_default(key, default):
     config = _get_config(_get_cache_key())
     try:
         if isinstance(key, str):
-                return config[key]
+            return config[key]
         else:
             d = config
             for k in key:

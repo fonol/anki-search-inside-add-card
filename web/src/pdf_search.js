@@ -1,4 +1,22 @@
-/** PDF search */
+// anki-search-inside-add-card
+// Copyright (C) 2019 - 2020 Tom Z.
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+/** PDF search state */
 window.pdfSearchOngoing = false;
 window.pdfCurrentSearch = {
     query: null,
@@ -203,7 +221,7 @@ window.getNextPagesToSearchIn = function(dir) {
     return { s, n };
 }
 window.highlightPDFText = function(query, n = 0) {
-    var tlEls = document.getElementById('text-layer').querySelectorAll('span');
+    var tlEls = byId('text-layer').querySelectorAll('span');
     if (tlEls.length === 0) {
         if (n < 3)
             setTimeout(function () { highlightPDFText(query, n + 1); }, 200);
@@ -218,7 +236,7 @@ window.highlightPDFText = function(query, n = 0) {
             }
         }
     }
-    document.getElementById("siac-pdf-top").scrollTop = Math.max(0, $('#text-layer .tl-highlight').first()[0].parentElement.offsetTop - 50);
+    byId("siac-pdf-top").scrollTop = Math.max(0, $('#text-layer .tl-highlight').first()[0].parentElement.offsetTop - 50);
 }
 
 

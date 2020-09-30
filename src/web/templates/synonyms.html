@@ -1,0 +1,14 @@
+<b class='siac-caps'>Synonym sets ({len})</b>
+<hr class='siac-modal-sep'/>
+If a search is triggered that at least contains one word from a synonym set, all the other words in the set will be inserted in the search query too. 
+Click inside a set to edit it.
+<br><br>
+<div style='max-height: 300px; overflow-y: auto; padding-right: 10px; margin-top: 4px;'>
+    <table id='synTable' style='border-collapse: collapse;' class='w-100 striped'>
+        <thead><tr style='margin-bottom: 20px;'><th style='word-wrap: break-word; max-width: 100px;'></th><th class='ta_center' style='width: 100px;'></th></thead>
+        {sets}
+    </table>
+</div>
+<br/>
+<span>Input a set of terms, separated by ',' and hit enter.</span>
+<input type='text' id='siac-syn-inp' onkeyup='synInputKeyup(event, this)'/>

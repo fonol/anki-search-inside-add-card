@@ -67,6 +67,28 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     transform: scale(1.03);
     filter: brightness(1.4);
 }
+.siac-toc-btn {
+    border: 3px outset #2496dc !important;
+    color: lightgrey;
+}
+#siac-toc {
+    display: none;
+    position: absolute;
+    left: 25px;
+    top: 20px;
+    bottom: 10px;
+    width: 280px;
+    border: 3px outset #c72c41;
+    padding: 10px;
+    background-color: var(--c-reading-modal-background);
+    z-index: 10;
+    text-align: left;
+    flex-direction: column;
+}
+.siac-toc-item {
+    color: lightgrey;
+    font-weight: bold;
+}
 .siac-btn-small-dropdown-inverted {
     display: none;
     position: absolute;
@@ -343,8 +365,8 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 #siac-close-iframe-btn:hover {
     border-color: #67c3fc;
 }
-#siac-iframe-btn:hover {
-    border-color: #67c3fc;
+#siac-iframe-btn:hover,#siac-toc-btn:hover {
+    border-color: #67c3fc !important;
 }
 #siac-iframe-btn > div {
     display: none;
@@ -423,6 +445,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 .siac-url-ch {
    color: #c72c41; 
    margin-bottom: 4px;
+   white-space: nowrap;
 }
 .siac-url-ch:hover {
     filter: brightness(1.4);

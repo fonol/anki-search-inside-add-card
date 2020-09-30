@@ -1,0 +1,38 @@
+<div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
+    <div class='fg_lightgrey' style='margin-left: 5px; margin-top: 4px; width: calc(100% - 35px); text-align: right; font-size: 13px;'>Note: Not all sites allow embedding!</div>
+    <div class='w-100' style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box;'>
+        <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) { pdfUrlSearch(this.value); this.value = ''; }"></input> 
+        <br/>
+    {search_sources}
+    </div>
+</div>
+{quick_sched_btn}
+<div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark fg_lightgrey' onclick='pycmd("siac-close-iframe")'><b>&times; &nbsp;CLOSE</b></div>
+<div id='siac-text-top-wr' style='height: calc(100% - 42px);'>
+    <div id='siac-text-top'>
+        <textarea class='w-100 h-100' spellcheck='false'>{text}</textarea>
+    </div>
+</div>
+<iframe id='siac-iframe' sandbox='allow-scripts' style='height: calc(100% - 47px);'></iframe>
+<div class="siac-reading-modal-button-bar-wrapper">
+    <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
+        <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
+        <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
+        <div class='siac-btn siac-btn-dark' id='siac-extract-text-btn' onclick='tryExtractTextFromTextNote()' style='margin-left: 5px;'>&nbsp;<i class="fa fa-clone"></i> &nbsp;<b>Copy to new Note</b></div>
+        <div class='siac-btn siac-btn-dark' onclick='saveTextNote({nid}, remove=false)' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save&nbsp;</b></div>
+        <span id='siac-text-note-status' class='fg_grey' style='margin-left: 30px;'></span>
+    </div>
+</div>
+<div id='siac-pdf-br-notify'>
+</div>
+<script>
+    pdfLoading = false;
+    if (pdfBarsHidden) {
+        readerNotification("{title}");
+    }
+    pdfDisplayedMarks = null;   
+    pdfDisplayedMarksTable = null;
+    displayedNoteId = {nid};
+    editorMDInit();
+    noteLoading = false;
+</script>

@@ -113,6 +113,8 @@ class QuickOpenPDF(QDialog):
             self.accept()
 
     def accept_nth(self, n):
+        if n == -1 or n >= len(self.displayed):
+            return
         self.chosen_id = self.displayed[n].id
         self.accept()
  

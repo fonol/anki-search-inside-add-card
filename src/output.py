@@ -807,7 +807,7 @@ class Output:
         return tags
 
     def printTagHierarchy(self, tags):
-        cmd = """document.getElementById('modalText').innerHTML = `%s`;
+        cmd = """document.getElementById('modalText').innerHTML = `<div style='min-height: 200px'>%s</div>`;
         $('.tag-list-item').click(function(e) {
             e.stopPropagation();
             let icn = $(this).find('.tag-btn').first();
@@ -839,7 +839,7 @@ class Output:
                     "[-]" if value else "" ,
                     utility.text.delete_chars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]),
                     key,
-                    "+" if not config["tagClickShouldSearch"] else "<div class='siac-btn-small'>Search</div>",
+                    "+" if not config["tagClickShouldSearch"] else "<div class='siac-btn siac-btn-small'>Search</div>",
                 iterateMap(value, full))
             html += "</ul>"
             return html

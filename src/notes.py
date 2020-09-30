@@ -1118,22 +1118,21 @@ def get_invalid_pdfs() -> List[SiacNote]:
     return _to_notes(filtered) 
 
 def get_recently_used_tags() -> List[str]:
-    """
-        Returns a [str] of max 10 tags, ordered by their usage desc.
-    """
-    counts  = _get_recently_used_tags_counts(30)
-    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:10]
+    """ Returns a [str] of max 20 tags, ordered by their usage desc. """
+
+    counts  = _get_recently_used_tags_counts(100)
+    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:20]
     return ordered
 
 def get_recently_used_tags_with_counts() -> Dict[str, int]:
-    """
-        Returns a {str, int} of max 10 tags, ordered by their usage desc.
-    """
+    """ Returns a {str, int} of max 10 tags, ordered by their usage desc. """
+
     counts  = _get_recently_used_tags_counts(10)
     ordered = dict(sorted(counts.items(), key=lambda item: item[1], reverse = True))
     return ordered
 
 def _get_recently_used_tags_counts(limit: int) -> Dict[str, int]:
+
     conn    = _get_connection()
     res     = conn.execute("select tags from notes where tags is not null order by id desc limit %s" % limit).fetchall()
     conn.close()

@@ -25,7 +25,7 @@ from aqt.utils import showInfo
 
 
 from ..notes import *
-from ..config import get_config_value_or_default
+from ..config import get_config_value, update_config
 from .components import QtPrioritySlider
 import utility.text
 import utility.misc
@@ -54,7 +54,11 @@ class UrlImporter(QDialog):
         hbox = QHBoxLayout()
         hbox.addWidget(QLabel("Save Path:"))
 
-        save_path = get_config_value_or_default("pdfUrlImportSavePath", "user_files (add-on folder)")
+        save_path = get_config_value("pdfUrlImportSavePath")
+        if save_path is None or len(save_path.strip()) == 0:
+            save_path = utility.misc.get_application_data_path() + "pdf_imports/"
+            utility.misc.create_folder_if_not_exists(save_path)
+            update_config("pdfUrlImportSavePath", save_path)
         save_path_disp = QLineEdit()
         save_path_disp.setText(save_path)
         save_path_disp.setDisabled(True)

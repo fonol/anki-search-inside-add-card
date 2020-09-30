@@ -70,10 +70,10 @@ def get_cal_info_context(day_of_year : int):
         html_content += """<div class='cal-block-week %s %s' data-index='%s' onclick='pycmd("siac-cal-info %s")'>%s</div>""" % (color, "cal-lg" if i == 3 else "", day_of_year - (3 - i),day_of_year - (3 - i), cnt)
     html = """
     
-    <div style='text-align: center; margin-bottom: 4px;'>
+    <div class='ta_center' style='margin-bottom: 4px;'>
         <span>%s</span> 
     </div>
-    <div style='width: 100%%; text-align: center;'>%s</div>""" % (date_then_str, html_content)    
+    <div class='ta_center w-100'>%s</div>""" % (date_then_str, html_content)    
 
     return html
 

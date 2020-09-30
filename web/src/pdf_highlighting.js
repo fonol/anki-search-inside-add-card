@@ -1,3 +1,20 @@
+// anki-search-inside-add-card
+// Copyright (C) 2019 - 2020 Tom Z.
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 export const Highlighting = {
 
     /**
@@ -21,8 +38,8 @@ export const Highlighting = {
             return;
         }
         let rects = this._fuseOverlappingClientRects(clientRects);
-        let rectCanvas = document.getElementById("text-layer").getBoundingClientRect();
-        let offset = document.getElementById('text-layer').offsetLeft;
+        let rectCanvas = byId("text-layer").getBoundingClientRect();
+        let offset = byId('text-layer').offsetLeft;
         //page group type [x,y,w,h]+ # text
         let cmd = pdfDisplayedCurrentPage + " -1 " + this.colorSelected.id + " ";
 
@@ -57,8 +74,8 @@ export const Highlighting = {
         pycmd(cmd);
     },
     insertText: function (event) {
-        let rectCanvas = document.getElementById("text-layer").getBoundingClientRect();
-        let offset = document.getElementById('text-layer').offsetLeft;
+        let rectCanvas = byId("text-layer").getBoundingClientRect();
+        let offset = byId('text-layer').offsetLeft;
 
         let x = event.clientX - rectCanvas.x;
         let y = event.clientY - rectCanvas.y;
@@ -79,7 +96,7 @@ export const Highlighting = {
         this._removeAllHighlights();
         let canvas = activeCanvas();
         if (!canvas) { return; }
-        let st = document.getElementById("siac-pdf-overflow").scrollTop;
+        let st = byId("siac-pdf-overflow").scrollTop;
 
         this.current.forEach((r) => {
             let x0 = r[0];
@@ -98,7 +115,7 @@ export const Highlighting = {
             this._createHighlightDiv(x, y, w, h, t, id, text);
 
         });
-        document.getElementById("siac-pdf-overflow").scrollTop = st;
+        byId("siac-pdf-overflow").scrollTop = st;
     },
 
     _removeAllHighlights: function () {
@@ -243,7 +260,7 @@ export const Highlighting = {
             el.dataset.ow = el.offsetWidth;
             el.dataset.oh = el.clientHeight;
 
-            let rectCanvas = document.getElementById("text-layer").getBoundingClientRect();
+            let rectCanvas = byId("text-layer").getBoundingClientRect();
             let x0 = el.offsetLeft - activeCanvas().offsetLeft;
             let y0 = el.offsetTop ;
             let x1 = x0 + el.offsetWidth - 6; 
@@ -333,7 +350,7 @@ export const Highlighting = {
             el.setAttribute("onkeyup", "Highlighting.onTextKeyup(this);");
         }
 
-        document.getElementById("siac-pdf-overflow").append(el);
+        byId("siac-pdf-overflow").append(el);
         return el;
     }
 };

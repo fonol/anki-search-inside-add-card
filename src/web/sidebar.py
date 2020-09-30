@@ -181,11 +181,11 @@ class Sidebar:
 
         html = f"""
             <div id='siac-notes-sidebar'>
-                <div style='display: flex; flex-direction: column; height: 100%;'>
+                <div class='h-100 flex-col'>
                     <div style='flex: 0 1 auto;'>
                         <div class='siac-btn-small' style='position: relative; float: right; display: inline-block; min-width: 90px;' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")'>
                             <div id='siac-sidebar-selected' class='blue-hover'>{tab_displayed_name}</div>
-                            <div class='siac-btn-small-dropdown click' style='text-align: center; z-index: 3;' onclick='event.stopPropagation();'>
+                            <div class='siac-btn-small-dropdown click ta_center' style='z-index: 3;' onclick='event.stopPropagation();'>
                                 <div class='blue-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-notes-tab")'>
                                     <b>Add-on Notes</b>
                                 </div>

@@ -384,15 +384,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         dialog = UrlImporter(self.parentWindow)
         if dialog.exec_():
             if dialog.chosen_url:
-                sched = dialog.queue_schedule
-                name = dialog.get_name()
-                path = config["pdfUrlImportSavePath"]
-                if path is None or len(path) == 0:
-                    tooltip("""You have to set a save path for imported URLs first.
-                        <center>Config value: <i>pdfUrlImportSavePath</i></center>
-                    """, period=4000)
-                    return (True, None)
-                path = utility.misc.get_pdf_save_full_path(path, name)
+                sched   = dialog.queue_schedule
+                name    = dialog.get_name()
+                path    = get_config_value("pdfUrlImportSavePath")
+                path    = utility.misc.get_pdf_save_full_path(path, name)
                 utility.misc.url_to_pdf(dialog.chosen_url, path, lambda *args: tooltip("Generated PDF Note.", period=4000))
                 title = dialog._chosen_name
                 if title is None or len(title) == 0:
