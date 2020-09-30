@@ -17,7 +17,7 @@
 
 /** Experimental function to improve copy+paste from the text layer. */
 window.onPDFCopy = function (e) {
-    sel = getSelection();
+    let sel = getSelection();
     let r = sel.getRangeAt(0);
     let nodes = nodesInSelection(r);
     if (!nodes) { return; }
