@@ -497,7 +497,7 @@ def _build_similarity_table(similar_res_by_cid, card_ivl_by_id):
             <b>Average Pass Rate:</b> <i>Sum of each sample's pass rate</i> / <i>Sample Size</i><br/>
             """
     for cid, similar_res in similar_res_by_cid.items():
-        html += "<br/><div class='full-width ta_center' style='margin-bottom: 10px;'>Similar cards for " + str(cid) + ":</div>"
+        html += "<br/><div class='full-width ta_center mb-10'>Similar cards for " + str(cid) + ":</div>"
         
         if len(similar_res[0]) == 1 and 50 in similar_res[0] and similar_res[0][50]["sample_size"] == 0:
             html += "Could not find any samples that have at least an average similarity of 50%."
@@ -545,8 +545,8 @@ def _buildTable(tables, reviewPlotData, ivlPlotData, timePlotData, namesByCid):
     rows = ""
     for k, v in tables.items():
         if len(v) > 0:
-            rows += "<fieldset style='margin-bottom: 10px; font-size: 11px;'><legend>%s</legend>" % k
-            rows += "<table class='striped w-100' style='margin-bottom: 5px;'>"
+            rows += "<fieldset class='mb-10' style='font-size: 11px;'><legend>%s</legend>" % k
+            rows += "<table class='striped w-100 mb-5'>"
         scount = 0
         for table in v:
             scount += 1

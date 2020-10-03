@@ -445,13 +445,24 @@ def get_reminder(nid: int) -> str:
     conn.close()
     return res[0]
 
-def get_priority(nid: int) -> int:
+def get_priority(nid: int) -> Optional[int]:
     conn = _get_connection()
     res = conn.execute(f"select prio from queue_prio_log where nid = {nid} order by created desc limit 1").fetchone()
-    if res is None:
+    if res is None or len(res) == 0:
         return None
     conn.close()
     return res[0]
+
+def get_priorities(nids: List[int]) -> Dict[int, int]:
+    nid_str = ",".join([str(nid) for nid in nids])
+    conn = _get_connection()
+    res = conn.execute(f"select nid, prio, max(created) from queue_prio_log where nid in ({nid_str}) group by nid").fetchall()
+    conn.close()
+    d = dict()
+    for r in res:
+        d[r[0]] = r[1]
+    return d
+
 
 def get_priority_as_str(nid: int) -> str:
     """ Get a str representation of the priority of the given note, e.g. 'Very high' """
@@ -1024,6 +1035,7 @@ def find_pdf_notes_by_title(text: str) -> List[SiacNote]:
 def find_unqueued_pdf_notes(text: str) -> Optional[List[SiacNote]]:
     q = ""
     for token in text.lower().split():
+        token = token.replace("'", "")
         if len(token) > 0:
             q = f"{q} or lower(title) like '%{token}%'"
 
@@ -1038,6 +1050,7 @@ def find_unqueued_pdf_notes(text: str) -> Optional[List[SiacNote]]:
 def find_unqueued_text_notes(text: str) -> Optional[List[SiacNote]]:
     q = ""
     for token in text.lower().split():
+        token = token.replace("'", "")
         if len(token) > 0:
             q = f"{q} or lower(title) like '%{token}%'"
 
@@ -1046,6 +1059,21 @@ def find_unqueued_text_notes(text: str) -> Optional[List[SiacNote]]:
         return
     conn = _get_connection()
     res = conn.execute(f"select * from notes where ({q}) and not lower(source) like '%.pdf' and not lower(source) like '%youtube.com/watch%' and (position is null or position < 0) order by id desc").fetchall()
+    conn.close()
+    return _to_notes(res)
+
+def find_unqueued_video_notes(text: str) -> Optional[List[SiacNote]]:
+    q = ""
+    for token in text.lower().split():
+        token = token.replace("'", "")
+        if len(token) > 0:
+            q = f"{q} or lower(title) like '%{token}%'"
+
+    q = q[4:] if len(q) > 0 else "" 
+    if len(q) == 0:
+        return
+    conn = _get_connection()
+    res = conn.execute(f"select * from notes where ({q}) and lower(source) like '%youtube.com/watch%' and (position is null or position < 0) order by id desc").fetchall()
     conn.close()
     return _to_notes(res)
 
@@ -1282,6 +1310,12 @@ def get_pdf_notes_last_read_first() -> List[SiacNote]:
     conn.close()
     return _to_notes(res)
 
+def get_pdf_notes_ordered_by_size(order: str) -> List[SiacNote]:
+    conn = _get_connection()
+    res = conn.execute(f"select notes.id,notes.title,notes.text,notes.source,notes.tags,notes.nid,notes.created,notes.modified,notes.reminder,notes.lastscheduled,notes.position,notes.extract_start,notes.extract_end,notes.delay from notes join read on notes.id == read.nid where lower(notes.source) like '%.pdf' group by notes.id order by max(read.pagestotal) {order}").fetchall()
+    conn.close()
+    return _to_notes(res)
+
 def get_pdf_notes_not_in_queue() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where lower(source) like '%.pdf' and position is null order by id desc").fetchall()
@@ -1291,6 +1325,12 @@ def get_pdf_notes_not_in_queue() -> List[SiacNote]:
 def get_text_notes_not_in_queue() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where not lower(source) like '%.pdf' and not lower(source) like '%youtube.com/watch%' and position is null order by id desc").fetchall()
+    conn.close()
+    return _to_notes(res)
+
+def get_video_notes_not_in_queue() -> List[SiacNote]:
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%youtube.com/watch%' and position is null order by id desc").fetchall()
     conn.close()
     return _to_notes(res)
 

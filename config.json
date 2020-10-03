@@ -104,5 +104,6 @@
 "shortcuts.search_for_current_field": "Alt+J",
 "shortcuts.trigger_current_filter": "Alt+F",
 "searchbar.default_mode": "Add-on",
-"addon.data_folder": ""
+"addon.data_folder": "",
+"dev_mode" : false
 }

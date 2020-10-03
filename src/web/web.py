@@ -263,13 +263,13 @@ def print_starting_info(editor: Editor):
         
         html += f""" 
             <br>
-            <div style='text-align: center; width: fit-content;'>
-                <div style='display: flex; margin-bottom: 20px;'>
-                    <div style='text-align: center;'>
+            <div class='ta_center' style='width: fit-content;'>
+                <div class='flex-row' style='margin-bottom: 20px;'>
+                    <div class='ta_center'>
                         <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BUGS & FEEDBACK</div>
                         <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github repository'><img src='{utility.misc.img_src("github_light.png" if state.night_mode else "github_dark.png")}' style='height: 32px;'/></a>
                     </div>
-                    <div style='text-align: center; margin-left: 30px;'>
+                    <div class='ta_center' style='margin-left: 30px;'>
                         <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BECOME A PATRON</div>
                         <a href='https://www.patreon.com/tomtomtom' title='Patreon site'><img src='{utility.misc.img_src("patreon.png")}' style='height: 32px;'/></a>
                     </div>
@@ -305,7 +305,7 @@ def show_settings_modal(editor):
     """ Display the Settings modal. """
 
     config  = mw.addonManager.getConfig(__name__)
-    html    = stylingModal(config)
+    html    = get_settings_modal_html(config)
     index   = get_index()
 
     index.ui.showInModal(html)
@@ -492,12 +492,15 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
+        "Reworked the Queue Manager dialog",
        "Use add-on data folder for URL import by default (if no path is set in config)",
-       "Some small styling improvements",
+       "Added 'Order by Size' in PDF meta card",
+       "Small styling improvements",
        "Fix: 'Random' in 'Notes' dropdown not working", 
        "Fix: Error when searching for video with no time set",
        "Fix: Tag tree not updating when using 'Create & Keep Open' in Create Note dialog",
-       "Fix: Error when pressing CTRL + unused number in Quick Open (CTRL+O) dialog"
+       "Fix: Error when pressing CTRL + unused number in Quick Open (CTRL+O) dialog",
+       "Fix: 'Review' button not bringing main window to the top on OS X"
     ]
 
 def known_issues() -> List[str]:

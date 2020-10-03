@@ -33,6 +33,7 @@ deck_map            : Optional[Dict[str, int]]          = None
 edit                : Optional[Editor]                  = None
 night_mode          : Optional[bool]                    = None
 rust_lib            : Optional[bool]                    = None
+dev_mode            : bool                              = False
 
 # last cmd send from the web view, see command_parsing.py
 last_cmd            : Optional[str]                     = None

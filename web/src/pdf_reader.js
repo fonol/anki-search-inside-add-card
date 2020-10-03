@@ -23,6 +23,7 @@ window.Highlighting = Highlighting;
 window.remainingSeconds = 30 * 60;
 window.readingTimer = null;
 
+/** TODO: Move all the PDF stuff into some object, e.g. window.pdf = { ... }; */
 /** PDF rendering */
 window.pdfDisplayed = null;
 window.pdfDisplayedViewPort = null;
@@ -30,7 +31,6 @@ window.pdfPageRendering = false;
 window.pdfDisplayedCurrentPage = null;
 window.pdfDisplayedScale = 2.0;
 window.pdfHighDPIWasUsed = false;
-// window.pdfColorMode = "Day";
 window.pageNumPending = null;
 window.latestRenderTimestamp = null;
 window.pdfTOC = null;
@@ -844,7 +844,6 @@ window.toggleReadingModalFullscreen = function () {
         pycmd("siac-notification Press toggle shortcut (default Ctrl+F) to switch.");
 
     } else {
-
         $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
         if ($('#switchBtn').is(":visible")) {
             $('#outerWr').addClass("onesided");
@@ -986,10 +985,6 @@ window.updatePageSidebarIfShown = function () {
         pycmd(`siac-linked-to-page ${pdfDisplayedCurrentPage} ${pdfDisplayed.numPages}`);
     }
 }
-
-
-
-
 
 window.modalBgUpdate = function () {
     $("#siac-modal-bg-update .siac-link-btn").addClass('siac-disabled');

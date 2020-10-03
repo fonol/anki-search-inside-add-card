@@ -158,8 +158,10 @@ class NoteEditor(QDialog):
             self.save_and_stay.setFocusPolicy(Qt.NoFocus)
             self.save_and_stay.clicked.connect(self.on_create_and_keep_open_clicked)
             self.save_and_stay.setShortcut("Ctrl+Shift+Return")
+            self.save_and_stay.setToolTip("Ctrl+Shift+Return")
 
         self.save.setShortcut("Ctrl+Return")
+        self.save.setToolTip("Ctrl+Return")
         self.save.setFocus(True)
         self.cancel = QPushButton("Cancel")
         self.cancel.clicked.connect(self.reject)
@@ -171,7 +173,7 @@ class NoteEditor(QDialog):
         self.create_tab = CreateTab(self)
         
         #self.browse_tab = BrowseTab()
-        self.tabs.addTab(self.create_tab, "Create")
+        self.tabs.addTab(self.create_tab, "Create" if self.note_id is None else "Edit")
         if not self.add_only:
             self.priority_tab = PriorityTab(priority_list, self)
             self.tabs.addTab(self.priority_tab, "Queue")

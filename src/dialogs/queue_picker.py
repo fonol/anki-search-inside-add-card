@@ -20,11 +20,16 @@ from aqt.utils import tooltip
 import aqt
 import random
 import os
+import functools
 from .editor import NoteEditor
 from .components import QtPrioritySlider
+from .priority_dialog import PriorityDialog
 from ..notes import *
 from ..notes import _get_priority_list
 from ..internals import perf_time
+from ..hooks import run_hooks, add_tmp_hook
+from ..state import get_index
+from ..config import get_config_value
 import utility.text
 import utility.misc
 import utility.tags
@@ -80,6 +85,8 @@ class QueuePicker(QDialog):
             self.sched_widget.setVisible(True)
             self.sched_widget.refresh()
 
+   
+
     
 class PDFsTab(QWidget):
     
@@ -96,38 +103,18 @@ class PDFsTab(QWidget):
         self.search_bar_right = QLineEdit()
         self.search_bar_right.textChanged.connect(self.search_enter)
         self.vbox_right.addWidget(self.search_bar_right)
-        self.t_view_right = QListWidget()
+        self.t_view_right = NoteList(self)
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
         
-        lbl = QLabel("Drag slider to assign priority to selected item (add to queue).")
-        lbl.setAlignment(Qt.AlignCenter)
-        self.vbox_right.addWidget(lbl)
-        self.slider = QtPrioritySlider(0, show_spec_sched=False)
-        self.slider.set_released_fn(self.enqueue)
-        btn_hbox = QHBoxLayout()
-        btn_hbox.addWidget(self.slider)
-
-        self.vbox_right.addLayout(btn_hbox)
         self.setLayout(self.vbox_right)
-        self.t_view_right.itemClicked.connect(self.item_clicked_right_side)
     
     def refresh(self):
         self.search_bar_right.clear()
         self.fill_list(get_pdf_notes_not_in_queue())
 
     def fill_list(self, db_list):
-        self.t_view_right.clear()
-        # icon_provider = QFileIconProvider()
-        icon = None
-        for ix, n in enumerate(db_list):
-            if icon is None:
-                icon = QIcon(utility.misc.get_web_folder_path() + "icons/pdf-icon.png")
-                # icon = icon_provider.icon(QFileInfo(n.source))
-            title = n.get_title()
-            title_i = QListWidgetItem(icon, title)
-            title_i.setData(Qt.UserRole, QVariant(n.id))
-            self.t_view_right.insertItem(ix, title_i)
+        self.t_view_right.fill(db_list)
 
     def search_enter(self):
         inp = self.search_bar_right.text()
@@ -138,22 +125,40 @@ class PDFsTab(QWidget):
         self.t_view_right.clear()
         self.fill_list(res)
 
-    def enqueue(self, sched):
-        if sched == 0: 
-            return
-        sels = self.t_view_right.selectedItems()
-        if sels is None or len(sels) == 0:
-            return
-        nid = sels[0].data(Qt.UserRole)
-        self.parent.set_chosen(-1, "")
-        update_priority_list(nid, sched)
-        self.parent.refresh_queue_list()
-        self.refresh()
-        tooltip(f"Moved in Queue, with priority <b>{dynamic_sched_to_str(sched)}</b>")
+class VideosTab(QWidget):
+    
+    def __init__(self, parent):
+        self.parent = parent
+        QWidget.__init__(self)
+        self.setup_ui()
 
-    def item_clicked_right_side(self, item):
-        self.parent.clear_selection("left")
-        self.parent.set_chosen(item.data(Qt.UserRole), item.text())
+    def setup_ui(self):
+        self.vbox_right = QVBoxLayout()
+        r_lbl = QLabel("Video notes, not in Queue") 
+        r_lbl.setAlignment(Qt.AlignCenter)
+        self.vbox_right.addWidget(r_lbl)
+        self.search_bar_right = QLineEdit()
+        self.search_bar_right.textChanged.connect(self.search_enter)
+        self.vbox_right.addWidget(self.search_bar_right)
+        self.t_view_right = NoteList(self)
+        self.vbox_right.addWidget(self.t_view_right)
+        self.vbox_right.setAlignment(Qt.AlignHCenter)
+        self.setLayout(self.vbox_right)
+    
+    def refresh(self):
+        self.search_bar_right.clear()
+        self.fill_list(get_video_notes_not_in_queue())
+
+    def fill_list(self, db_list):
+        self.t_view_right.fill(db_list)
+
+    def search_enter(self):
+        inp = self.search_bar_right.text()
+        if inp is None or len(inp.strip()) == 0:
+            self.fill_list(get_video_notes_not_in_queue())
+            return
+        res = find_unqueued_video_notes(inp)
+        self.fill_list(res)
 
 class TextNotesTab(QWidget):
     
@@ -163,42 +168,27 @@ class TextNotesTab(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        self.vbox_right = QVBoxLayout()
-        r_lbl = QLabel("Text notes, not in Queue") 
+        self.vbox_right         = QVBoxLayout()
+        r_lbl                   = QLabel("Text notes, not in Queue") 
         r_lbl.setAlignment(Qt.AlignCenter)
         self.vbox_right.addWidget(r_lbl)
-        self.search_bar_right = QLineEdit()
+
+        self.search_bar_right   = QLineEdit()
         self.search_bar_right.textChanged.connect(self.search_enter)
         self.vbox_right.addWidget(self.search_bar_right)
-        self.t_view_right = QListWidget()
-        self.vbox_right.addWidget(self.t_view_right)
-        self.vbox_right.setAlignment(Qt.AlignHCenter)
-    
-        lbl = QLabel("Drag slider to assign priority to selected item (add to queue).")
-        lbl.setAlignment(Qt.AlignCenter)
-        self.vbox_right.addWidget(lbl)
-        self.slider = QtPrioritySlider(0, show_spec_sched=False)
-        self.slider.set_released_fn(self.enqueue)
-        btn_hbox = QHBoxLayout()
-        btn_hbox.addWidget(self.slider)
 
-        self.vbox_right.addLayout(btn_hbox)
+        self.t_view_right       = NoteList(self)
+        self.vbox_right.addWidget(self.t_view_right)
+
+        self.vbox_right.setAlignment(Qt.AlignHCenter)
         self.setLayout(self.vbox_right)
-        self.t_view_right.itemClicked.connect(self.item_clicked_right_side)
 
     def refresh(self):
         self.search_bar_right.clear()
         self.fill_list(get_text_notes_not_in_queue())
 
     def fill_list(self, db_list):
-        self.t_view_right.clear()
-        style = QApplication.style()
-        icon = style.standardIcon(QStyle.SP_FileIcon)
-        for ix, n in enumerate(db_list):
-            title = n.get_title()
-            title_i = QListWidgetItem(icon, title)
-            title_i.setData(Qt.UserRole, QVariant(n.id))
-            self.t_view_right.insertItem(ix, title_i)
+        self.t_view_right.fill(db_list)
 
     def search_enter(self):
         inp = self.search_bar_right.text()
@@ -206,26 +196,7 @@ class TextNotesTab(QWidget):
             self.fill_list(get_text_notes_not_in_queue())
             return
         res = find_unqueued_text_notes(inp)
-        self.t_view_right.clear()
         self.fill_list(res)
-
-    def enqueue(self, sched):
-        if sched == 0: 
-            return
-        sels = self.t_view_right.selectedItems()
-        if sels is None or len(sels) == 0:
-            return
-        nid = sels[0].data(Qt.UserRole)
-        self.parent.set_chosen(-1, "")
-        update_priority_list(nid, sched)
-        self.parent.refresh_queue_list()
-        self.refresh()
-        tooltip(f"Moved in Queue, with priority <b>{dynamic_sched_to_str(sched)}</b>")
-
-    def item_clicked_right_side(self, item):
-        self.parent.clear_selection("left")
-        self.parent.set_chosen(item.data(Qt.UserRole), item.text())
-
 
 class FoldersTab(QWidget):
     
@@ -339,11 +310,14 @@ class FoldersTab(QWidget):
         full_path = item_clicked.data(Qt.UserRole)
 
         if not state.note_editor_shown:
-            e = NoteEditor(self.parent, add_only=True, source_prefill=full_path)
             if self.path_displayed is not None:
-                self.load_folders_unused_pdfs(self.path_displayed) 
-                self.parent.refresh_queue_list()
-                self.parent.pdfs_tab.refresh()
+                tab = self
+                def after():
+                    tab.load_folders_unused_pdfs(tab.path_displayed) 
+                    tab.parent.refresh_queue_list()
+                    tab.parent.pdfs_tab.refresh()
+                add_tmp_hook("user-note-created", after)
+            e = NoteEditor(self.parent, add_only=True, source_prefill=full_path)
         else:
             tooltip("Close the opened Note dialog first!")
 
@@ -356,47 +330,63 @@ class TagsTab(QWidget):
 
 
     def setup_ui(self):
-        self.vbox_left = QVBoxLayout()
-        r_lbl = QLabel("Tags") 
+
+        self.vbox_left                  = QVBoxLayout()
+        r_lbl                           = QLabel("Tags") 
         r_lbl.setAlignment(Qt.AlignCenter)
+
         self.vbox_left.addWidget(r_lbl)
         self.vbox_left.setAlignment(r_lbl, Qt.AlignTop)
  
-        self.tag_tree = QTreeWidget()
+        if state.night_mode:
+            self.tag_fg                 = get_config_value("styles.night.tagForegroundColor")
+            self.tag_bg                 = get_config_value("styles.night.tagBackgroundColor")
+        else:
+            self.tag_fg                 = get_config_value("styles.tagForegroundColor")
+            self.tag_bg                 = get_config_value("styles.tagBackgroundColor")
+
+
+        self.tag_tree                   = QTreeWidget()
         self.tag_tree.setColumnCount(1)
         self.tag_tree.setHeaderHidden(True)
         self.tag_tree.setMaximumWidth(370)
-        self.tag_icon = QIcon(utility.misc.get_web_folder_path()+ "icons/icon-tag-24.png")
-        self.pdf_icon = QIcon(utility.misc.get_web_folder_path()+ "icons/pdf-icon.png")
-        style = QApplication.style()
-        self.text_note_icon = style.standardIcon(QStyle.SP_FileIcon)
+        self.tag_icon                   = QIcon(utility.misc.get_web_folder_path()+ "icons/icon-tag-24.png")
+
+        self.tag_tree.setStyleSheet(f"""
+        QTreeWidget::item:hover,QTreeWidget::item:hover:selected {{
+            border:none;
+            border-radius:5px;
+            font-weight: bold;
+            background-color: {self.tag_bg};
+            color: {self.tag_fg};
+        }}
+        """)
         self.vbox_left.addWidget(self.tag_tree)
         self.tag_displayed = None
 
-        self.vbox_right = QVBoxLayout()
-        self.lbl = QLabel("Notes, unqueued.")
-        self.list = QListWidget()
-        self.list.itemClicked.connect(self.list_item_clicked)
-        self.vbox_right.addWidget(self.lbl)
+        self.vbox_right                 = QVBoxLayout()
+        self.lbl                        = QLabel("Notes, unqueued.")
+        self.tag_lbl                    = QLabel("")
+        hbox_top                        = QHBoxLayout()
+        hbox_top.addWidget(self.lbl)
+        hbox_top.addWidget(self.tag_lbl)
+        hbox_top.addStretch()
+        self.list                       = NoteList(self)
+        self.vbox_right.addLayout(hbox_top)
         self.vbox_right.addWidget(self.list)
-        self.enqueue_all_btn = QPushButton("Enqueue All")
+        self.enqueue_all_btn            = QPushButton("+ Enqueue All...")
         self.enqueue_all_btn.clicked.connect(self.enqueue_all)
-        self.empty_and_enqueue_all_btn = QPushButton("Empty Queue and Enqueue All")
+        self.empty_and_enqueue_all_btn  = QPushButton("+ Empty Queue and Enqueue All...")
         self.empty_and_enqueue_all_btn.clicked.connect(self.empty_queue_and_enqueue_all)
-        self.vbox_right.addWidget(self.enqueue_all_btn)
-        self.vbox_right.addWidget(self.empty_and_enqueue_all_btn)
-     
-        plbl = QLabel("Drag slider to assign priority to selected item (add to queue).")
-        plbl.setAlignment(Qt.AlignCenter)
-        self.vbox_right.addWidget(plbl)
-        self.slider = QtPrioritySlider(0, show_spec_sched=False)
-        self.slider.set_released_fn(self.enqueue)
-        btn_hbox = QHBoxLayout()
-        btn_hbox.addWidget(self.slider)
+
+        btn_hbox                        = QHBoxLayout()
+        btn_hbox.addWidget(self.enqueue_all_btn)
+        btn_hbox.addWidget(self.empty_and_enqueue_all_btn)
+        btn_hbox.addStretch()
         self.vbox_right.addLayout(btn_hbox)
-        # self.list.itemDoubleClicked.connect(self.add_pdf_note)
+     
         self.tag_tree.itemClicked.connect(self.tree_item_clicked)
-        hbox = QHBoxLayout()
+        hbox                            = QHBoxLayout()
         hbox.addLayout(self.vbox_left)
         hbox.addLayout(self.vbox_right)
         self.setLayout(hbox) 
@@ -419,15 +409,12 @@ class TagsTab(QWidget):
         notes = get_unqueued_notes_for_tag(tag)
         self.fill_list(notes)
         self.tag_displayed = tag
-        self.lbl.setText(f"Unqueued Notes for \"{utility.text.trim_if_longer_than(tag, 50)}\"")
+        self.lbl.setText(f"Unqueued Notes for")
+        self.tag_lbl.setText(utility.text.trim_if_longer_than(tag, 50))
+        self.tag_lbl.setStyleSheet(f"background-color: {self.tag_bg}; color: {self.tag_fg}; border-radius: 3px; padding: 3px;")
 
     def fill_list(self, notes):
-        self.list.clear()
-        for ix, n in enumerate(notes):
-            icon = self.text_note_icon if not n.is_pdf() else self.pdf_icon
-            title_i = QListWidgetItem(icon, n.get_title())
-            title_i.setData(Qt.UserRole, QVariant(n.id))
-            self.list.insertItem(ix, title_i)
+        self.list.fill(notes)
 
     def fill_tree(self, tags):
         self.tag_tree.clear()
@@ -477,22 +464,36 @@ class TagsTab(QWidget):
     def empty_queue_and_enqueue_all(self):
         if self.tag_displayed is None:
             return
-        empty_priority_list()
         notes = get_unqueued_notes_for_tag(self.tag_displayed)
-        set_priority_list([n.id for n in notes])
-        self.parent.refresh_queue_list()
-        self.refresh()
-        tooltip(f"Emptied Queue, inserted all with tag <b>{self.tag_displayed}</b>")
+        if len(notes) == 0:
+            return
+        dialog = PriorityDialog(self)
+        
+        if dialog.exec_():
+            empty_priority_list()
+            prio = dialog.value
+            for n in notes:
+                update_priority_list(n.id, prio)
+            self.parent.refresh_queue_list()
+            self.refresh()
+            tooltip(f"Emptied Queue, inserted all with tag <b>{self.tag_displayed}</b>")
 
     def enqueue_all(self):
         if self.tag_displayed is None:
             return
+        
         notes = get_unqueued_notes_for_tag(self.tag_displayed)
-        queue = _get_priority_list()
-        set_priority_list([e.id for e in queue] + [n.id for n in notes])
-        self.parent.refresh_queue_list()
-        self.refresh()
-        tooltip(f"Added all with tag <b>{self.tag_displayed}</b>")
+        if len(notes) == 0:
+            return
+        dialog = PriorityDialog(self)
+        
+        if dialog.exec_():
+            prio = dialog.value
+            for n in notes:
+                update_priority_list(n.id, prio)
+            self.parent.refresh_queue_list()
+            self.refresh()
+            tooltip(f"Added all with tag <b>{self.tag_displayed}</b>")
 
 
 class ScheduleMWidget(QWidget):
@@ -556,44 +557,64 @@ class QueueWidget(QWidget):
 
         queue           = _get_priority_list()
 
-        self.fill_list(self.t_view_left, queue, with_nums = True, with_icons = True)
+        self.fill_list(self.t_view_left, queue)
         self.tabs_changed(0) 
     
     def setup_ui(self):
 
         self.vbox_left      = QVBoxLayout()
+        self.title_hbox          = QHBoxLayout()
         l_lbl               = QLabel("Queue") 
-        l_lbl.setAlignment(Qt.AlignCenter)
-        self.vbox_left.addWidget(l_lbl)
-        self.t_view_left    = QListWidget()
+        self.title_hbox.addWidget(l_lbl)
+        self.title_hbox.addStretch()
+        self.vbox_left.addLayout(self.title_hbox)
+        self.t_view_left    = QTableWidget()
         self.tabs           = QTabWidget()
         self.tags_tab       = TagsTab(self)
         self.pdfs_tab       = PDFsTab(self)
         self.notes_tab      = TextNotesTab(self)
+        self.videos_tab     = VideosTab(self)
         self.folders_tab    = FoldersTab(self)
 
         self.tabs.currentChanged.connect(self.tabs_changed)
         self.tabs.addTab(self.tags_tab, "Unqueued Notes, By Tag")
         self.tabs.addTab(self.pdfs_tab, "PDFs")
         self.tabs.addTab(self.notes_tab, "Text Notes")
+        self.tabs.addTab(self.videos_tab, "Videos")
         self.tabs.addTab(self.folders_tab, "Folders - Import")
 
-        self.t_view_left.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.t_view_left.setColumnCount(5)
+        self.t_view_left.setHorizontalHeaderLabels(["", "Title", "Prio", "", ""])
+        self.t_view_left.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.t_view_left.setSelectionMode(QAbstractItemView.NoSelection)
+        self.t_view_left.setFocusPolicy(Qt.NoFocus)
+        self.t_view_left.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.t_view_left.cellDoubleClicked.connect(self.cell_clicked)
+
         self.t_view_left.setMinimumWidth(470)
-        self.t_view_left.setUniformItemSizes(True)
         self.t_view_left.itemClicked.connect(self.item_clicked)
         self.vbox_left.addWidget(self.t_view_left)
-        self.unqueue_btn = QPushButton("Dequeue Selected")
-        self.unqueue_btn.clicked.connect(self.remove_from_queue)
 
-        self.unqueue_all_btn = QPushButton("Empty Queue")
-        self.unqueue_all_btn.clicked.connect(self.remove_all_from_queue)
+        # buttons under queue table
+        self.unqueue_btn = QPushButton(" Remove Selected")
+        self.unqueue_btn.setDisabled(True)
+        self.unqueue_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
+        self.unqueue_btn.clicked.connect(self.rem_selected_clicked)
+
+        self.unqueue_all_btn = QPushButton(" Empty Queue ...")
+        self.unqueue_all_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
+        self.unqueue_all_btn.clicked.connect(self.empty_clicked)
 
         btn_hbox_l = QHBoxLayout()
         btn_hbox_l.addWidget(self.unqueue_btn)
         btn_hbox_l.addWidget(self.unqueue_all_btn)
-        self.vbox_left.addLayout(btn_hbox_l)
+        btn_hbox_l.addStretch()
 
+        self.vbox_left.addLayout(btn_hbox_l)
         self.vbox = QVBoxLayout()
 
         self.hbox = QHBoxLayout()
@@ -603,17 +624,7 @@ class QueueWidget(QWidget):
         self.vbox.addLayout(self.hbox)
         
         bottom_box = QHBoxLayout()
-        self.accept_btn = QPushButton("Read")
-        self.accept_btn.clicked.connect(self.parent.accept)
-        self.accept_btn.setEnabled(False)
-        self.chosen_lbl = QLabel("")
-        boldf = QFont()
-        boldf.setBold(True)
-        self.chosen_lbl.setFont(boldf)
-        bottom_box.addWidget(self.chosen_lbl)
         bottom_box.addStretch(1)
-        bottom_box.addWidget(self.accept_btn)
-        bottom_box.addSpacing(8)
         self.reject_btn = QPushButton("Close")
         self.reject_btn.clicked.connect(self.parent.reject)
         bottom_box.addWidget(self.reject_btn)
@@ -623,8 +634,14 @@ class QueueWidget(QWidget):
         self.setLayout(self.vbox)
         # self.resize(770, 480)
 
+        styles = """
+            QTableWidget::item:hover {
+                background-color: #2496dc;
+                color: white;
+            }
+        """
         if self.parent.dark_mode_used:
-            styles = """
+            styles += """
                 QTabBar {
                 background: #222;
                 color: #666;
@@ -663,7 +680,7 @@ class QueueWidget(QWidget):
                     color: lightgrey;
                 }
             """
-            self.setStyleSheet(styles)
+        self.setStyleSheet(styles)
 
     def tabs_changed(self, ix):
         if ix == 0:
@@ -673,98 +690,273 @@ class QueueWidget(QWidget):
         elif ix == 2:
             self.notes_tab.fill_list(get_text_notes_not_in_queue())
         elif ix == 3:
+            self.videos_tab.fill_list(get_video_notes_not_in_queue())
+        elif ix == 4:
             self.folders_tab.fill_tree(get_most_used_pdf_folders())
         
 
-    def fill_list(self, t_view, db_res, with_nums = False, with_icons = True):
-        t_view.clear()
-        icon_provider = QFileIconProvider()
-        pdf_icon = None
-        icon = QApplication.style().standardIcon(QStyle.SP_FileIcon)
-        for ix, n in enumerate(db_res):
-            title = n.title if n.title is not None and len(n.title) > 0 else "Untitled"
-            if with_nums:
-                title = f"{ix+1}.  {title}"
-            if pdf_icon is None and n.is_pdf():
-                #pdf_icon = icon_provider.icon(QFileInfo(n.source))
-                pdf_icon = QIcon(utility.misc.get_web_folder_path() + "icons/pdf-icon.png")
-            i = pdf_icon if n.is_pdf() else icon
-            if with_icons:
-                title_i = QListWidgetItem(i, title)
-            else:
-                title_i = QListWidgetItem(title)
-            title_i.setData(Qt.UserRole, QVariant(n.id))
-            t_view.insertItem(ix, title_i)
-        
-    def item_clicked(self, item):
-        self.clear_selection("right")
-        self.set_chosen(item.data(Qt.UserRole), item.text()[item.text().index(".") + 2:])
-    
-    def on_list_reorder(self):
-        nids = []
-        for i in range(self.t_view_left.count()):
-            item = self.t_view_left.item(i)
-            nids.append(item.data(Qt.UserRole))
-            item.setText(str(i+1) + ". " + item.text()[item.text().index(".")+2:])
-        set_priority_list(nids)
-            
+    def fill_list(self, t_view, db_res):
+        """ Fill the queue list. """
 
-    def set_chosen(self, id, name):
-        self.chosen_id = id
-        if len(name) > 0:
-            self.chosen_lbl.setText("Chosen:  " + name)
-            self.accept_btn.setEnabled(True)
-            self.accept_btn.setText(f" Read \"{utility.text.trim_if_longer_than(name.strip(), 30)}\" ")
-        else: 
-            self.chosen_lbl.setText("")
-            self.accept_btn.setText("Read")
-            self.accept_btn.setEnabled(False)
-
-    def clear_selection(self, list):
-        if list == "left":
-            lw = self.t_view_left
+        t_view.clearContents()
+        if db_res is None:
+            t_view.setRowCount(0)
+            return
         else:
-            lw = self.pdfs_tab.t_view_right
-        for i in range(lw.count()):
-            lw.item(i).setSelected(False)
+            t_view.setRowCount(len(db_res))
 
-    def refresh_queue_list(self):
-        self.fill_list(self.t_view_left, _get_priority_list(), with_nums = True)
+        open_icon       = QApplication.style().standardIcon(QStyle.SP_FileDialogContentsView)
+        rem_icon        = QApplication.style().standardIcon(QStyle.SP_TrashIcon)
+        prios           = get_priorities([n.id for n in db_res])
+        self.priorities = prios
+        note_types      = {}
 
-    def refill_list_views(self, left_list, right_list):
-        self.t_view_left.clear()
-        for ix, n in enumerate(left_list):
-            title = n.title if n.title is not None and len(n.title) > 0 else "Untitled"
-            title_i = QListWidgetItem(str(ix + 1) + ".  " + title)
+        for ix, n in enumerate(db_res):
+            t = n.get_note_type()
+            if not t in note_types:
+                note_types[t] = 1
+            else:
+                note_types[t] += 1
+            title       = n.title if n.title is not None and len(n.title) > 0 else "Untitled"
+            title_i     = QTableWidgetItem(title)
             title_i.setData(Qt.UserRole, QVariant(n.id))
-            self.t_view_left.insertItem(ix, title_i)
 
-        self.pdfs_tab.fill_list(right_list)
+            cb          = QTableWidgetItem()
+            cb.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+            cb.setCheckState(Qt.Unchecked)
 
-    def shuffle_queue(self):
-        priority_list = _get_priority_list()
-        if priority_list is None or len(priority_list) == 0:
-            return
-        random.shuffle(priority_list)
-        self.fill_list(self.t_view_left, priority_list, with_nums = True)
-        ids = [p.id for p in priority_list]
-        #persist reordering to db
-        set_priority_list(ids)
+            read_btn    = QToolButton()
+            read_btn.setIcon(open_icon)
+            read_btn.setToolTip("Open")
+            read_btn.clicked.connect(functools.partial(self.read_btn_clicked, n.id))
 
-    def remove_all_from_queue(self):
-        empty_priority_list()
-        self.fill_list(self.t_view_left, [], with_nums = True)
-        self.tabs.currentWidget().refresh()
-        tooltip(f"Queue emptied.")
+            rem_btn     = QToolButton()
+            rem_btn.setIcon(rem_icon)
+            rem_btn.setToolTip("Remove from Queue")
+            rem_btn.clicked.connect(functools.partial(self.rem_btn_clicked, n.id))
 
-    def remove_from_queue(self):
-        sels = self.t_view_left.selectedItems()
-        if sels is None or len(sels) == 0:
-            return
-        nid = sels[0].data(Qt.UserRole)
-        if self.chosen_id == nid:
-            self.set_chosen(-1, "")
-        remove_from_priority_list(nid)
+            prio_lbl    = QLabel(str(prios[n.id]))
+            prio_lbl.setStyleSheet(f"background-color: {self._prio_color(prios[n.id])}; color: white; font-size: 14px; text-align: center;")
+            prio_lbl.setAlignment(Qt.AlignCenter)
+
+            t_view.setItem(ix, 0, cb)
+            t_view.setItem(ix, 1, title_i)
+            t_view.setCellWidget(ix, 2, prio_lbl)
+            t_view.setCellWidget(ix, 3, read_btn)
+            t_view.setCellWidget(ix, 4, rem_btn)
+        
+        # clear title layout 
+        for i in reversed(range(self.title_hbox.count())): 
+            if self.title_hbox.itemAt(i).widget():
+                self.title_hbox.itemAt(i).widget().setParent(None)
+        
+        if len(db_res) == 0:
+            self.unqueue_all_btn.setDisabled(True)
+            self.title_hbox.insertWidget(max(0,self.title_hbox.count() - 2), QLabel(f"Queue, empty"))
+        else:
+            self.unqueue_all_btn.setDisabled(False)
+            self.title_hbox.insertWidget(max(0,self.title_hbox.count() - 2), QLabel(f"Queue, {len(db_res)} items"))
+
+        avg_prio        = round(sum(prios.values()) / len(prios), 1) if len(prios) > 0 else 0
+        avg_prio_lbl    = QLabel()
+        avg_prio_lbl.setText(f"Avg. Prio: {avg_prio}")
+        avg_prio_lbl.setStyleSheet(f"background-color: {self._prio_color(avg_prio)}; padding: 4px; color: white; text-align: center;")
+        self.title_hbox.insertWidget(self.title_hbox.count() - 1, avg_prio_lbl)
+        
+        if len(note_types) > 0:
+            for k,v in note_types.items():
+                lbl = QLabel(f"{k}: {v}")
+                lbl.setStyleSheet("background-color: #2496dc; color: white; padding: 4px;")
+                self.title_hbox.insertWidget(self.title_hbox.count() - 1, lbl)
+
+        self.unqueue_btn.setText(f"Remove Selected")
+        self.unqueue_btn.setDisabled(True)
+
+    def selected(self):
+        r = []
+        for ix in range(self.t_view_left.rowCount()):
+            if self.t_view_left.item(ix, 0).checkState() == Qt.Checked:
+                r.append(self.t_view_left.item(ix, 1).data(Qt.UserRole))
+        return r
+
+    def rem_btn_clicked(self, id):
+
+        remove_from_priority_list(id)
         self.refresh_queue_list()
         self.tabs.currentWidget().refresh()
         tooltip(f"Removed Note from Queue.")
+
+    def rem_selected_clicked(self):
+        selected = self.selected()
+        if len(selected) > 0:
+            for id in selected:
+                remove_from_priority_list(id)
+            self.refresh_queue_list()
+            self.tabs.currentWidget().refresh()
+            if len(selected) == 1:
+                tooltip(f"Removed note from queue.")
+            else:
+                tooltip(f"Removed {len(selected)} notes from queue.")
+            self.unqueue_btn.setText(f"Remove Selected")
+            self.unqueue_btn.setDisabled(True)
+        else: 
+            tooltip("Select some items first")
+    
+    def empty_clicked(self):
+        reply = QMessageBox.question(self, 'Empty Queue', "This will remove all items from the queue. Are you sure?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+        if reply == QMessageBox.Yes:
+            empty_priority_list()
+            self.refresh_queue_list()
+            self.tabs.currentWidget().refresh()
+
+    def read_btn_clicked(self, id):
+        self.set_chosen(id, "")
+        self.parent.accept()
+
+    def cell_clicked(self, row, col):
+        if col == 1:
+            nid = int(self.t_view_left.item(row, col).data(Qt.UserRole))
+            self.display_note_modal(nid)
+
+
+    def item_clicked(self, item):
+        if item.column() == 0:
+            sel_len = len(self.selected())
+            if sel_len == 0:
+                self.unqueue_btn.setText(f" Remove Selected")
+                self.unqueue_btn.setDisabled(True)
+            else:
+                self.unqueue_btn.setDisabled(False)
+                self.unqueue_btn.setText(f" Remove Selected ({sel_len})")
+
+    def display_note_modal(self, id):
+        """ Open the edit modal for the given ID. """
+
+        if get_index().ui.reading_modal.note_id == id:
+            showInfo("Cannot edit that note: It is currently opened in the reader.")
+            return
+        if not state.note_editor_shown:
+            add_tmp_hook("user-note-edited", self.refresh_all)
+            dialog = NoteEditor(self, id, add_only=True, read_note_id=None)
+
+    def set_chosen(self, id, name):
+        self.chosen_id = id
+
+    def refresh_all(self):
+        self.refresh_queue_list()
+        self.tabs.currentWidget().refresh()
+
+    def refresh_queue_list(self):
+        self.fill_list(self.t_view_left, _get_priority_list())
+
+    def _prio_color(self, prio):
+        if prio > 90:
+            return "#7c0101"
+        if prio > 80:
+            return "#761900"
+        if prio > 70:
+            return "#6e2600"
+        if prio > 60:
+            return "#653000"
+        if prio > 50:
+            return "#5b3800"
+        if prio > 40:
+            return "#503f00"
+        if prio > 30:
+            return "#444400"
+        if prio > 20:
+            return "#374900"
+        if prio > 10:
+            return "#294d00"
+        return "#155001"
+
+
+class NoteList(QTableWidget):
+    """ Used for the note lists displayed on the right side of the dialog. """
+
+    def __init__(self, parent):
+        self.parent = parent
+        super(NoteList, self).__init__(parent)
+        self.setColumnCount(4)
+        self.setHorizontalHeaderLabels(["Title", "", "", ""])
+        self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.setSelectionMode(QAbstractItemView.NoSelection)
+        self.setFocusPolicy(Qt.NoFocus)
+        self.cellDoubleClicked.connect(self.cell_clicked)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    
+
+    def fill(self, notes):
+        self.clearContents()
+        if notes is None or len(notes) == 0:
+            self.setRowCount(0)
+            return
+        self.setRowCount(len(notes))
+
+        open_icon = QApplication.style().standardIcon(QStyle.SP_FileDialogContentsView)
+        del_icon = QApplication.style().standardIcon(QStyle.SP_TrashIcon)
+        for ix, n in enumerate(notes):
+
+            title = QTableWidgetItem(n.get_title())
+            title.setData(Qt.UserRole, QVariant(n.id))
+
+            open_btn = QToolButton()
+            open_btn.setIcon(open_icon)
+            open_btn.setToolTip("Open")
+            open_btn.clicked.connect(functools.partial(self.open_btn_clicked, n.id))
+
+            del_btn = QToolButton()
+            del_btn.setIcon(del_icon)
+            del_btn.setToolTip("Delete Note...")
+            del_btn.clicked.connect(functools.partial(self.del_btn_clicked, n.id))
+
+            add_btn = QToolButton()
+            add_btn.setText("+")
+            add_btn.setToolTip("Add to Queue...")
+            add_btn.clicked.connect(functools.partial(self.add_btn_clicked, n.id))
+
+            self.setItem(ix, 0, title)
+            self.setCellWidget(ix, 1, open_btn)
+            self.setCellWidget(ix, 2, del_btn)
+            self.setCellWidget(ix, 3, add_btn)
+
+    
+    def open_btn_clicked(self, id):
+        self.parent.parent.set_chosen(id, "")
+        win = mw.app.activeWindow()
+        win.accept()
+
+    def del_btn_clicked(self, id):
+        
+        reply = QMessageBox.question(self, 'Delete Note?', "This will irreversibly delete the chosen note. \nAre you sure?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+        if reply == QMessageBox.Yes:
+            delete_note(id)
+            if get_index() is not None:
+                get_index().deleteNote(id)
+            run_hooks("user-note-deleted")
+            self.parent.refresh()
+
+    def cell_clicked(self, row, col):
+        if col == 0:
+            nid = int(self.item(row, col).data(Qt.UserRole))
+            self.parent.parent.display_note_modal(nid)
+
+
+    def add_btn_clicked(self, id):
+        dialog = PriorityDialog(self)
+        if dialog.exec_():
+            prio = dialog.value
+            update_priority_list(id, prio)
+            self.parent.parent.refresh_queue_list()
+            self.parent.refresh()
+            tooltip(f"Moved in Queue, with priority <b>{dynamic_sched_to_str(prio)}</b>")
+
+
+
+    
+    
+
+    

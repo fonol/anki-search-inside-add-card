@@ -1,6 +1,6 @@
 <div id='siac-schedule-dialog' class="siac-modal-small dark ta_center">
     Change the main color of the reader.<br><br>
-    <div class='flex-row' style='user-select: none;'>
+    <div class='flex-row user_sel_none'>
         <div style='flex: 1'>
             <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader.css")'>Orange</a><br>
             <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightblue.css")'>Lightblue</a><br>
@@ -21,7 +21,7 @@
     <br>
     Background Color:
     <br><br>
-    <div class='flex-row' style='user-select: none;' id='siac-modal-bg-update'>
+    <div class='flex-row user_sel_none' id='siac-modal-bg-update'>
         <div style='flex: 1'>
             <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2f2f31")'>Default</a><br>
             <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor black")'>Black</a><br>
@@ -38,7 +38,7 @@
         </div>
     </div>
     <br>
-    <div style='text-align: right;'>
-        <div class='siac-btn siac-btn-dark' style='margin-right: 10px;' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Ok</div>
+    <div class='ta_right'>
+        <div class='siac-btn siac-btn-dark mr-10' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Ok</div>
     </div>
 </div>

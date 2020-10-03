@@ -65,6 +65,9 @@ def init_addon():
     """ Executed once on Anki startup. """
     global origEditorContextMenuEvt
 
+    if config["dev_mode"]:
+        state.dev_mode = True
+
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
     
     #todo: Find out if there is a better moment to start index creation
@@ -448,6 +451,11 @@ def show_note_modal():
 
 def show_quick_open_pdf():
     """ Ctrl + O pressed -> show small dialog to quickly open a PDF. """
+
+    win = aqt.mw.app.activeWindow()
+    # dont trigger keypress in edit dialogs opened within the add dialog
+    if isinstance(win, EditDialog) or isinstance(win, Browser):
+        return
 
     ix      = get_index()
     dialog  = QuickOpenPDF(ix.ui._editor.parentWindow)

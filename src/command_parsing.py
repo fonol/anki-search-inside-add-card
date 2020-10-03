@@ -22,7 +22,7 @@ import aqt.webview
 import aqt.editor
 import aqt.stats
 from anki.notes import Note
-from aqt.utils import tooltip, showInfo
+from aqt.utils import tooltip, showInfo, isMac
 import os
 import time
 import urllib.parse
@@ -291,6 +291,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-r-pdf-last-added":
         stamp = set_stamp()
         notes = get_pdf_notes_last_added_first()
+        sp_body = get_pdf_list_first_card()
+        notes.insert(0, SiacNote.mock("PDF Meta", sp_body, "Meta"))
+        index.ui.print_search_results(notes, stamp)
+
+    elif cmd.startswith("siac-r-pdf-size "):
+        stamp = set_stamp()
+        notes = get_pdf_notes_ordered_by_size(cmd.split()[1])
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote.mock("PDF Meta", sp_body, "Meta"))
         index.ui.print_search_results(notes, stamp)
@@ -1179,10 +1186,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             if success:
                 mw.moveToState("review")
                 mw.activateWindow()
+                # workaround, as activateWindow doesn't seem to bring the main window on top on OSX
+                if isMac:
+                    mw.raise_()
             else:
                 tooltip("Failed to create filtered deck.")
-
-
 
 
     else:
@@ -1831,12 +1839,12 @@ def show_timing_modal(render_time = None):
     """ Builds the html and shows the modal which gives some info about the last executed search (timing, query after stopwords etc.) """
 
     index   = get_index()
-    html    = "<h4>Query (stopwords removed, checked Synsets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % index.lastResDict["query"]
+    html    = "<h4>Query (stopwords removed, checked Synsets):</h4><div class='w-100 oflow_y_auto mb-10' style='max-height: 200px;'><i>%s</i></div>" % index.lastResDict["query"]
 
     if "decks" in index.lastResDict:
-        html += "<h4>Decks:</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % ", ".join([str(d) for d in index.lastResDict["decks"]])
+        html += "<h4>Decks:</h4><div class='w-100 oflow_y_auto mb-10' style='max-height: 200px;'><i>%s</i></div>" % ", ".join([str(d) for d in index.lastResDict["decks"]])
 
-    html += "<h4>Execution time:</h4><table style='width: 100%'>"
+    html += "<h4>Execution time:</h4><table class='w-100'>"
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", index.lastResDict["time-stopwords"] if index.lastResDict["time-stopwords"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking Synsets", index.lastResDict["time-synonyms"] if index.lastResDict["time-synonyms"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("SQLite: Executing Query", index.lastResDict["time-query"] if index.lastResDict["time-query"] > 0 else "< 1")

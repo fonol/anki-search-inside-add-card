@@ -1,0 +1,24 @@
+<div class='mt-10' style='flex: 0 1 auto;'>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-user-note-newest");'>Newest</div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs")'>PDFs</div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs-unread")'>PDFs - Unread</div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs-in-progress")'>PDFs - In Progress</div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-video-notes")'>Videos</div>
+  <!--  <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-last-done")'>Last Done</div>-->
+    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-stats")'>Read Stats</div>
+    {sched_today_menu_item}
+    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-user-note-untagged")'>Untagged</div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-user-note-random");'>Random</div>
+    <div class='flex-row mt-10' style='align-items: center'>
+        <input type='text' id='siac-sidebar-inp' class='siac-sidebar-inp' style='flex: 1 1 auto; box-sizing: border-box; border-radius: 4px; padding-left: 4px;' onkeyup='searchForUserNote(event, this);'/>
+        <i class='fa fa-search blue-hover ml-5' onclick='pycmd("siac-r-user-note-search-inp " + byId("siac-sidebar-inp").value);'></i>
+    </div>
+    <div class='w-100' style='margin-top: 20px;'><b>Tags ({tag_len})</b>
+        <b class='siac-tags-exp-icon' style='margin-right: 15px; padding: 0 2px 0 2px;' onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
+        <b class='siac-tags-exp-icon mr-5' style='padding: 0 2px 0 2px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
+    </div>
+    <hr style='margin-right: 15px;'/>
+</div>
+<div class='mb-5 mr-5 oflow_y_auto' style='flex: 1 1 auto; padding-right: 5px;'>
+    {tag_html}
+</div>

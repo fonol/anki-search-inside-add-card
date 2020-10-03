@@ -546,6 +546,8 @@ window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1
         lastHadResults = true;
     else
         lastHadResults = false;
+    if (!$searchInfo.hasClass('hidden'))
+        $searchInfo.get(0).style.display = "block";
     if (renderImmediately) {
         if (gridView)
             $('#searchResults .cardWrapper').css("display", "inline-block");

@@ -15,7 +15,7 @@
     </div>
     <div id='siac-reading-modal-top-bar' data-nid='{note_id}'>
         <div style='flex: 1 1; overflow: hidden;'>
-            <h2 style='margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; vertical-align:middle;'>{title}</h2>
+            <h2 id='siac-rm-title' class='oflow_hidden' style='margin: 0 0 5px 0; white-space: nowrap; vertical-align:middle;'>{title}</h2>
             <h4 class='fg_lightgrey' style='white-space: nowrap; margin: 5px 0 6px 0;'>Source: <i>{source}</i></h4>
             <div id='siac-prog-bar-wr'></div>
         </div>
@@ -43,9 +43,9 @@
             {schedule_btns}
             <div id='siac-queue-actions'>
                 <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
-                <span class='fg_lightgrey' style='margin-top: 5px;'>{time_str}</span> <br>
+                <span class='fg_lightgrey mt-5'>{time_str}</span> <br>
                 <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;&nbsp;<i class="fa fa-folder-o cursor-pointer siac-icn-hover siac-pdf-main-color" onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {return;}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
-                <a onclick='if (!pdfLoading && !modalShown) { noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("{queue_btn_action}");}' class='siac-link-btn' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
+                <a onclick='if (!pdfLoading && !modalShown) { noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("{queue_btn_action}");}' class='siac-link-btn bold' style='font-size: 16px;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
                 {delay_btn}<br>
                 <a onclick='if (!pdfLoading && !modalShown) { noteLoading = true; greyoutBottom(); destroyPDF(); pycmd("siac-user-note-queue-read-random");}' class='siac-link-btn'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
                 <a onclick='if (!pdfLoading && !modalShown) { modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}' class='siac-link-btn'>Remove</a>
@@ -55,9 +55,9 @@
                 <div id='siac-queue-infobox' onmouseleave='leaveQueueItem();'></div>
             </div>
             <div id='siac-pdf-bottom-tabs' style='display: inline-block; vertical-align: top; margin-left: 16px; user-select: none;'>
-                <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'><i class='fa fa-star-o' style='margin-right: 5px;'></i>Marks</a>
-                <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' style='margin-right: 10px;'>Related</a>
-                <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")' style='margin-right: 10px;'>Info</a>
+                <a class='siac-link-btn tab mr-10 active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")'><i class='fa fa-star-o mr-5'></i>Marks</a>
+                <a class='siac-link-btn tab mr-10' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")'>Related</a>
+                <a class='siac-link-btn tab mr-10' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'>Info</a>
                 <a class='siac-link-btn {hide_page_map} tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} pages")'>Pages</a><br>
                 <div id='siac-pdf-bottom-tab'>
                     <div id='siac-marks-display' onclick='markClicked(event);'></div>
