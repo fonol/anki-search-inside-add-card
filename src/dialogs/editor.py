@@ -295,6 +295,7 @@ class NoteEditor(QDialog):
         self.reject()
 
     def reject(self):
+        run_hooks("user-note-closed")
         if not self.add_only:
             self.priority_tab.t_view.setModel(None)
         state.note_editor_shown = False
