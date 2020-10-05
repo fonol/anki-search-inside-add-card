@@ -836,7 +836,7 @@ class QueueWidget(QWidget):
             showInfo("Cannot edit that note: It is currently opened in the reader.")
             return
         if not state.note_editor_shown:
-            add_tmp_hook("user-note-edited", self.refresh_all)
+            add_tmp_hook("user-note-closed", self.refresh_all)
             dialog = NoteEditor(self, id, add_only=True, read_note_id=None)
 
     def set_chosen(self, id, name):
