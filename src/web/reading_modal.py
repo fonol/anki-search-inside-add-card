@@ -107,11 +107,15 @@ class ReadingModal:
     @requires_index_loaded
     def display(self, note_id: int):
 
-        index                   = get_index()
+        if not note_id or note_id <= 0:
+            return
+
         note                    = get_note(note_id)
 
         if not note:
             return
+
+        index                   = get_index()
 
         if ReadingModal.last_opened is None or (self.note_id is not None and int(note_id) != self.note_id):
             ReadingModal.last_opened = self.note_id if ReadingModal.last_opened else note_id
@@ -165,12 +169,25 @@ class ReadingModal:
                     i = self._editor.note._fieldOrd(f)
                     self._editor.web.eval(f"$('.field').eq({i}).text(`{title}`);")
 
-    def display_head_of_queue(self):
+    def read_head_of_queue(self):
+        """ Will open the first item in the queue if existing, if not, show a tooltip. """
+
+        nid = get_head_of_queue()
+        if nid is not None and nid >= 0:
+            self.display(nid)
+        else:
+            self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
+            tooltip("Queue is Empty! Add some items first.", period=4000)
+
+
+    def display_head_of_queue_after_sched_modal(self):
+
         recalculate_priority_queue()
         nid = get_head_of_queue()
         if nid is not None and nid >= 0:
             self.display(nid)
         else:
+            self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
             tooltip("Queue is empty.")
 
     def done(self):
@@ -963,7 +980,7 @@ class ReadingModal:
         if not unscheduled:
             back_btn = """<a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.display_schedule_dialog()")'>Back</a>"""
         else:
-            back_btn = """<a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.display_head_of_queue()")'>Proceed without scheduling</a>"""
+            back_btn = """<a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.display_head_of_queue_after_sched_modal()")'>Proceed without scheduling</a>"""
 
         params = dict(title=title, back_btn=back_btn)
         body   = filled_template("schedule_change", params)
