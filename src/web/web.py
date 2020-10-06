@@ -492,15 +492,7 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Reworked the Queue Manager dialog",
-       "Use add-on data folder for URL import by default (if no path is set in config)",
-       "Added 'Order by Size' in PDF meta card",
-       "Small styling improvements",
-       "Fix: 'Random' in 'Notes' dropdown not working", 
-       "Fix: Error when searching for video with no time set",
-       "Fix: Tag tree not updating when using 'Create & Keep Open' in Create Note dialog",
-       "Fix: Error when pressing CTRL + unused number in Quick Open (CTRL+O) dialog",
-       "Fix: 'Review' button not bringing main window to the top on OS X"
+       "Added 'mix_reviews_and_reading' config option, see config dialog for an explanation",
     ]
 
 def known_issues() -> List[str]:
