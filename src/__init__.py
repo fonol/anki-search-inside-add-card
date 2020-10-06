@@ -55,9 +55,11 @@ from .notes import *
 from .hooks import add_hook
 from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.quick_open_pdf import QuickOpenPDF
+from .dialogs.review_read_interrupt import ReviewReadInterruptDialog
 from .internals import requires_index_loaded
 from .config import get_config_value_or_default as conf_or_def
 from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search, search_by_tags
+from .api import try_open_first_in_queue, queue_has_items
 
 config = mw.addonManager.getConfig(__name__)
 
@@ -67,6 +69,9 @@ def init_addon():
 
     if config["dev_mode"]:
         state.dev_mode = True
+
+    if config["mix_reviews_and_reading"]:
+        gui_hooks.reviewer_did_answer_card.append(on_reviewer_did_answer)
 
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
     
@@ -138,7 +143,24 @@ def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callab
                     return
     _old(web, evt)
 
+def on_reviewer_did_answer(reviewer, card, ease):
+    
+    if state.rr_mix_disabled:
+        return
+    if ease > 1:
+        # don't care for type of review
+        state.review_counter += 1
+        if state.review_counter >= config["mix_reviews_and_reading.interrupt_every_nth_card"]:
+            state.review_counter = 0
+            if queue_has_items():
+                dialog = ReviewReadInterruptDialog(mw)
+                if dialog.exec_():
+                    try_open_first_in_queue("Reading time!")
+        
+
 def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
+    """ Used in the edit dialog for Anki notes to update the index on saving an edited note. """
+
     _old(dialog)
     # update index
     index = get_index()
@@ -505,7 +527,7 @@ def tag_edit_keypress(self, evt, _old):
     _old(self, evt)
     win = aqt.mw.app.activeWindow()
     # dont trigger keypress in edit dialogs opened within the add dialog
-    if isinstance(win, EditDialog) or isinstance(win, Browser):
+    if not isinstance(win, AddCards):
         return
     modifiers = evt.modifiers()
     if modifiers == Qt.ControlModifier or modifiers == Qt.AltModifier or modifiers == Qt.MetaModifier:
