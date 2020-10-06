@@ -32,8 +32,17 @@ corpus              : Optional[List[Tuple[Any, ...]]]   = None
 deck_map            : Optional[Dict[str, int]]          = None
 edit                : Optional[Editor]                  = None
 night_mode          : Optional[bool]                    = None
+
+# Indicates whether the Rust lib has been successfully loaded or not
 rust_lib            : Optional[bool]                    = None
+
+# for developing, if True, HTML templates won't be cached
 dev_mode            : bool                              = False
+
+# if mix_reviews_and_reading is set to true in config, this counts the done reviews
+review_counter      : int                               = 0
+rr_mix_disabled     : bool                              = False
+
 
 # last cmd send from the web view, see command_parsing.py
 last_cmd            : Optional[str]                     = None
