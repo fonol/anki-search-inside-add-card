@@ -666,7 +666,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                     update_reminder(nid, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
                 update_priority_list(nid, new_prio)
                 nid = get_head_of_queue()
-                index.ui.reading_modal.display(nid)
+                if not nid or nid <= 0:
+                    index.ui.reading_modal.update_reading_bottom_bar(index.ui.reading_modal.note_id)
+                else:
+                    index.ui.reading_modal.display(nid)
                 if new_prio == 0:
                     tooltip(f"<center>Removed from Queue.</center>")
                 else:
@@ -710,12 +713,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             tooltip("Queue is Empty! Add some items first.", period=4000)
 
     elif cmd == "siac-user-note-queue-read-head":
-        nid = get_head_of_queue()
-        if nid is not None and nid >= 0:
-            index.ui.reading_modal.display(nid)
-        else:
-            index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
-            tooltip("Queue is Empty! Add some items first.", period=4000)
+        index.ui.reading_modal.read_head_of_queue() 
 
     elif cmd == "siac-user-note-done":
         # hit "Done" button in reading modal
