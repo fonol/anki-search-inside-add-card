@@ -61,3 +61,10 @@ For some reason, the highlights are not displaying correctly on some environment
 
 ### searchbar.default_mode 
 Determines what mode (Add-on or Browser) the searchbar at the bottom of the UI will have on Anki startup.
+
+### mix_reviews_and_reading
+If true, while in review, the add-on will ask you at regular intervals if you want to open the next item in the queue, that way, you can interleave 
+working on your queue and reviewing.
+
+### mix_reviews_and_reading.interrupt_every_nth_card
+Determines after how many cards you will be interrupted and asked if you want to open the queue.

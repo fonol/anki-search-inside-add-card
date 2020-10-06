@@ -105,5 +105,7 @@
 "shortcuts.trigger_current_filter": "Alt+F",
 "searchbar.default_mode": "Add-on",
 "addon.data_folder": "",
-"dev_mode" : false
+"dev_mode" : false,
+"mix_reviews_and_reading": false,
+"mix_reviews_and_reading.interrupt_every_nth_card" : 50
 }
