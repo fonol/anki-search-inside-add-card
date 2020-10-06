@@ -362,10 +362,10 @@ class CreateTab(QWidget):
         self.recent_tbl.setStyleSheet("background-color: transparent;")
         bs = f"""
             QPushButton {{
-            background-color: {tag_bg};
-            color: {tag_fg};
-            padding: 2px 3px 2px 3px;
-            border-radius: 4px;
+                background-color: {tag_bg};
+                color: {tag_fg};
+                padding: 2px 3px 2px 3px;
+                border-radius: 4px;
             }}
             QPushButton:hover {{
                 background-color: {hover_bg};
