@@ -39,16 +39,18 @@ def try_open_first_in_queue(message: Optional[str] = None):
         try:
             win = mw.app.activeWindow()
             if isinstance(win, aqt.addcards.AddCards):
-                win.showMaximized()
+                if not isMac:
+                    win.showMaximized()
                 if isMac:
                     win.raise_()
             else:
                 win = aqt.dialogs._dialogs["AddCards"]
                 if win:
-                    win.showMaximized()
+                    if not isMac:
+                        win.showMaximized()
                     if isMac:
                         win.raise_()
-        except: 
+        except:
             pass
 
         def _open():
@@ -57,23 +59,6 @@ def try_open_first_in_queue(message: Optional[str] = None):
                 tooltip(message, period=5000)
 
         _timer = aqt.qt.QTimer()
-        _timer.setSingleShot(True) 
-        _timer.timeout.connect(_open) 
+        _timer.setSingleShot(True)
+        _timer.timeout.connect(_open)
         _timer.start(1500)
-
-
-
-        # get_index().ui.reading_modal.read_head_of_queue()
-    
-
-
-        # .activateWindow()
-        #         # workaround, as activateWindow doesn't seem to bring the main window on top on OSX
-        #         if isMac:
-        #             mw.raise_()
-
-
-
-
-
-
