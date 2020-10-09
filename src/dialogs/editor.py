@@ -285,12 +285,16 @@ class NoteEditor(QDialog):
         tags                    = self.create_tab.tag.text()
         priority                = self.create_tab.slider.value()
         if not self.create_tab.slider.has_changed_value():
+            # -1 = unchanged
             priority = -1
         specific_schedule       = self.create_tab.slider.schedule()
 
         NoteEditor.last_tags    = tags
         update_note(self.note_id, title, text, source, tags, specific_schedule, priority)
         run_hooks("user-note-edited", self.note_id)
+
+        if self.create_tab.slider.has_changed_value():
+            run_hooks("updated-schedule")
 
         self.reject()
 
@@ -383,7 +387,7 @@ class CreateTab(QWidget):
 
         queue_len = len(parent.priority_list)
         schedule = None if self.parent.note is None else self.parent.note.reminder
-        self.slider = QtPrioritySlider(self.parent.priority, schedule=schedule)
+        self.slider = QtPrioritySlider(self.parent.priority, self.parent.note_id, schedule=schedule)
 
         self.layout = QHBoxLayout()
         vbox_left = QVBoxLayout()

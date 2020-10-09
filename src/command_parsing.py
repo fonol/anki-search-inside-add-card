@@ -647,45 +647,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         text = " ".join(cmd.split(" ")[2:])
         update_note_text(id, text)
 
-    elif cmd.startswith("siac-requeue "):
-        # priority slider released
-        nid         = int(cmd.split()[1])
-        new_prio    = int(cmd.split()[2])
-        note        = get_note(nid)
-
-        if note.is_due_sometime() and note.schedule_type() == "td":
-            add_to_prio_log(nid, new_prio)
-            index.ui.reading_modal.display_schedule_dialog()
-        else:
-            if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
-                add_to_prio_log(nid, new_prio)
-                # update_priority_list(nid, new_prio)
-                index.ui.reading_modal.show_schedule_change_modal(unscheduled=True)
-            else:
-                if note.is_due_sometime():
-                    update_reminder(nid, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
-                update_priority_list(nid, new_prio)
-                nid = get_head_of_queue()
-                if not nid or nid <= 0:
-                    index.ui.reading_modal.update_reading_bottom_bar(index.ui.reading_modal.note_id)
-                else:
-                    index.ui.reading_modal.display(nid)
-                if new_prio == 0:
-                    tooltip(f"<center>Removed from Queue.</center>")
-                else:
-                    tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
-
-
-    elif cmd.startswith("siac-update-prio "):
-        # prio slider in bottom bar released on value != 0
-        # not used atm
-        nid         = int(cmd.split()[1])
-        new_prio    = int(cmd.split()[2])
-        update_priority_without_timestamp(nid, new_prio)
-        # todo: find a better solution
-        recalculate_priority_queue()
-        index.ui.reading_modal.update_reading_bottom_bar(nid)
-        tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
 
     elif cmd.startswith("siac-remove-from-queue "):
         to_remove = int(cmd.split(" ")[1])
@@ -1491,17 +1452,26 @@ def show_schedule_dialog(parent_window):
     
     index           = get_index()
     original_sched  = index.ui.reading_modal.note.reminder
+    nid             = index.ui.reading_modal.note_id
     dialog          = ScheduleDialog(index.ui.reading_modal.note, parent_window)
     if dialog.exec_():
         schedule = dialog.schedule()
-        if schedule is not None and schedule != original_sched:
-            update_reminder(index.ui.reading_modal.note_id, schedule)
-            index.ui.reading_modal.note.reminder = schedule
-            if schedule == "":
+        if schedule != original_sched:
+            update_reminder(nid, schedule)
+            # set position to null before recalculating queue
+            prio = get_priority(nid)
+            print(f"prio: {prio}")
+            if not prio or prio == 0:
+                null_position(nid)
+            # null_position(index.ui.reading_modal.note_id)
+            index.ui.reading_modal.note = get_note(nid)
+            print(f"ix.ui.rm.note.reminder: {index.ui.reading_modal.note.reminder}")
+            # index.ui.reading_modal.note.reminder = schedule
+            if original_sched is not None and original_sched != "" and (schedule == "" or schedule is None):
                 tooltip(f"Removed schedule.")
-                if not get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True):
-                    # removed schedule, and config was set to not show scheduled notes in the queue, so now we have to insert it again
-                    update_priority_list(index.ui.reading_modal.note_id, get_priority(index.ui.reading_modal.note_id))
+                # removed schedule, and config was set to not show scheduled notes in the queue, so now we have to insert it again
+                # TODO
+                # update_priority_list(index.ui.reading_modal.note_id, get_priority(index.ui.reading_modal.note_id))
             else:
                 tooltip(f"Updated schedule.")
             run_hooks("updated-schedule")

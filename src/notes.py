@@ -50,11 +50,17 @@ PRIORITY_SCALE_FACTOR   : int           = get_config_value_or_default("notes.que
 # how should priority be weighted 
 PRIORITY_MOD            : float         = get_config_value_or_default("notes.queue.priorityMod", 1.0) 
 
+
+# TODO
 # if a note was scheduled for some time point in the past, but not done, 
 # 1. schedule can be removed ('remove-schedule'), 
 # 2. note can be placed in front of the queue ('place-front') or
 # 3. note can be scheduled again from the missed due date on ('new-schedule')
-MISSED_NOTES_HANDLING   : str           = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
+# 
+# MISSED_NOTES_HANDLING   : str           = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
+
+# 2020-10-06 Simplify scheduling
+MISSED_NOTES_HANDLING   : str           = "place-front"
 
 
 
@@ -187,8 +193,11 @@ def create_db_file_if_not_exists() -> bool:
     # and ignore any sql errors thrown if the modifications did already exist.
     #
     try:
-        conn.execute(""" ALTER TABLE notes ADD COLUMN extract_start INTEGER; """)
-        conn.execute(""" ALTER TABLE notes ADD COLUMN extract_end INTEGER;""")
+        # conn.execute(""" ALTER TABLE notes ADD COLUMN priority INTEGER; """)
+        # conn.execute(""" ALTER TABLE notes ADD COLUMN last_done TEXT; """)
+        # conn.execute(""" ALTER TABLE notes ADD COLUMN in_queue BOOLEAN; """)
+        # conn.execute(""" ALTER TABLE notes ADD COLUMN extract_start INTEGER; """)
+        # conn.execute(""" ALTER TABLE notes ADD COLUMN extract_end INTEGER;""")
         conn.commit()
     except:
         pass
@@ -208,7 +217,7 @@ def create_db_file_if_not_exists() -> bool:
         pass
     try:
         conn.execute(""" ALTER TABLE notes add column delay TEXT;""")
-        con.commit()
+        conn.commit()
     except:
         pass
     finally:
@@ -314,14 +323,16 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
     nid_was_included        = False
     now                     = datetime.now()
 
-    include_future_scheds   = get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True)
+    # TODO
+    # include_future_scheds   = get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True)
 
 
     for nid, last_prio, last_prio_creation, current_position, rem, delay in current:
 
+        # TODO
         # if a note is scheduled for the future and should not appear in the queue now, skip it
-        if not include_future_scheds and utility.date.schedule_is_due_in_the_future(rem):
-            continue
+        # if not include_future_scheds and utility.date.schedule_is_due_in_the_future(rem):
+            # continue
 
         # last prio might be null, because of legacy queue system
         if last_prio is None:
@@ -330,17 +341,17 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
             now                 += timedelta(seconds=1)
             ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
             last_prio_creation  = ds
-            to_update_in_log.append((nid, ds, schedule))
+            # to_update_in_log.append((nid, ds, schedule))
             
         # assert(current_position >= 0)
         
         if nid == nid_to_update:
             nid_was_included    = True
-            score               = _calc_score(schedule, 0)
-            if schedule == 0:
+            if schedule == 0 or schedule is None:
                 # if not in queue, remove from log
                 to_remove_from_log.append(nid)
             else:
+                score = _calc_score(schedule, 0)
                 now += timedelta(seconds=1)
                 ds  = now.strftime('%Y-%m-%d-%H-%M-%S')
                 if not nid in [x[0] for x in to_update_in_log]:
@@ -463,6 +474,15 @@ def get_priorities(nids: List[int]) -> Dict[int, int]:
         d[r[0]] = r[1]
     return d
 
+def get_avg_priority() -> float:
+    conn = _get_connection()
+    res = conn.execute(f"select avg(prio) from (select prio, max(created) from queue_prio_log group by nid)").fetchone()
+    conn.close()
+    if res is None or len(res) == 0:
+        return 0
+    return res[0]
+
+
 
 def get_priority_as_str(nid: int) -> str:
     """ Get a str representation of the priority of the given note, e.g. 'Very high' """
@@ -488,6 +508,8 @@ def dynamic_sched_to_str(sched: int) -> str:
     return "Not in Queue (0)"
 
 def update_reminder(nid: int, rem: str):
+    if rem is None:
+        rem = ""
     conn    = _get_connection()
     sql     = "update notes set reminder=?, modified=datetime('now', 'localtime') where id=? "
     conn.execute(sql, (rem, nid))
@@ -500,7 +522,8 @@ def recalculate_priority_queue(is_addon_start: bool = False):
         priority log. Has to be done at least once on startup to incorporate the changed difference in days.
     """
 
-    include_future_scheds   = get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True)
+    # TODO
+    # include_future_scheds   = get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True)
 
     for i in range(0,2):
         current             = _get_priority_list_with_last_prios()
@@ -514,9 +537,16 @@ def recalculate_priority_queue(is_addon_start: bool = False):
 
         for nid, last_prio, last_prio_creation, current_position, reminder, delay in current:
 
+            if nid == 828:
+                print("aaa")
+                print(last_prio)
+                print(current_position)
+                print(f"reminder: {reminder}")
+
+            # TODO
             # if a note is scheduled for the future and should not appear in the queue now, skip it
-            if not include_future_scheds and utility.date.schedule_is_due_in_the_future(reminder):
-                continue
+            # if not include_future_scheds and utility.date.schedule_is_due_in_the_future(reminder):
+                # continue
 
             # last prio might be null, because of legacy queue system
             if last_prio is None:
@@ -525,7 +555,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
                 now                 += timedelta(seconds=1)
                 ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
                 last_prio_creation  = ds
-                to_update_in_log.append((nid, ds, last_prio))
+                # to_update_in_log.append((nid, ds, last_prio))
                 
             # assert(current_position >= 0)
             days_delta = max(0, (datetime.now() - _dt_from_date_str(last_prio_creation)).total_seconds() / 86400.0)
@@ -617,6 +647,15 @@ def recalculate_priority_queue(is_addon_start: bool = False):
         conn.commit()
         conn.close()
 
+
+def find_notes_with_similar_prio(nid_excluded: int, prio: int) -> List[Tuple[int, str]]:
+    conn = _get_connection()
+    if nid_excluded is not None:
+        res = conn.execute(f"select p.prio, notes.title from (select nid, prio from (select distinct nid, prio from queue_prio_log group by nid order by max(created) desc) order by abs(prio - {prio}) asc limit 10) as p join notes on p.nid = notes.id where notes.id != {nid_excluded}").fetchall()
+    else:
+        res = conn.execute(f"select p.prio, notes.title from (select nid, prio from (select distinct nid, prio from queue_prio_log group by nid order by max(created) desc) order by abs(prio - {prio}) asc limit 10) as p join notes on p.nid = notes.id").fetchall()
+    conn.close()
+    return res
 
 def get_notes_scheduled_for_today() -> List[SiacNote]:
     today_dt = _date_now_str()[:4] + _date_now_str()[5:7] + _date_now_str()[8:10]
@@ -1095,6 +1134,12 @@ def get_position(nid: int) -> Optional[int]:
         return None 
     return res[0]
 
+def null_position(nid: int):
+    conn = _get_connection()
+    conn.execute("update notes set position = null where id = %s" % nid)
+    conn.commit()
+    conn.close()
+
 def delete_note(id: int):
     update_priority_list(id, 0)
     conn = _get_connection()
@@ -1190,12 +1235,14 @@ def _get_priority_list(nid_to_exclude: int = None) -> List[SiacNote]:
     conn.close()
     return _to_notes(res)
 
+
 def _get_priority_list_with_last_prios() -> List[Tuple[Any, ...]]:
     """ Returns (nid, last prio, last prio creation, current position, schedule) """
 
+    stp     = utility.date.date_x_days_ago_stamp(7)
     sql     = f""" select notes.id, prios.prio, prios.created, notes.position, notes.reminder, notes.delay 
                         from notes left join (select distinct nid, prio, max(created) as created, type from queue_prio_log group by nid) as prios on prios.nid = notes.id 
-                        where notes.position >= 0 or substr(notes.reminder, 21, 10) >= '{utility.date.date_x_days_ago_stamp(60)}' 
+                        where notes.position >= 0 or (substr(notes.reminder, 21, 10) <= '{utility.date.date_only_stamp()}' and substr(notes.reminder, 21, 10) >= '{stp}')
                         order by position asc"""
     conn    = _get_connection()
     res     = conn.execute(sql).fetchall()
@@ -1208,9 +1255,7 @@ def get_priority_list() -> List[SiacNote]:
         Result is in the form that Output.print_search_results wants.
     """
     conn    = _get_connection()
-    sql     = """
-       select * from notes where position >= 0 order by position asc
-    """
+    sql     = """ select * from notes where position >= 0 order by position asc """
     res     = conn.execute(sql).fetchall()
     conn.close()
     return _to_notes(res)

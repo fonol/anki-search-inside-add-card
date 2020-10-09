@@ -467,7 +467,7 @@ class TagsTab(QWidget):
         notes = get_unqueued_notes_for_tag(self.tag_displayed)
         if len(notes) == 0:
             return
-        dialog = PriorityDialog(self)
+        dialog = PriorityDialog(self, None)
         
         if dialog.exec_():
             empty_priority_list()
@@ -485,7 +485,7 @@ class TagsTab(QWidget):
         notes = get_unqueued_notes_for_tag(self.tag_displayed)
         if len(notes) == 0:
             return
-        dialog = PriorityDialog(self)
+        dialog = PriorityDialog(self, None)
         
         if dialog.exec_():
             prio = dialog.value
@@ -735,8 +735,12 @@ class QueueWidget(QWidget):
             rem_btn.setToolTip("Remove from Queue")
             rem_btn.clicked.connect(functools.partial(self.rem_btn_clicked, n.id))
 
-            prio_lbl    = QLabel(str(prios[n.id]))
-            prio_lbl.setStyleSheet(f"background-color: {self._prio_color(prios[n.id])}; color: white; font-size: 14px; text-align: center;")
+            if n.id in prios:
+                prio_lbl    = QLabel(str(prios[n.id]))
+                prio_lbl.setStyleSheet(f"background-color: {utility.misc.prio_color(prios[n.id])}; color: white; font-size: 14px; text-align: center;")
+            else:
+                prio_lbl    = QLabel("-")
+                prio_lbl.setStyleSheet(f"font-size: 14px; text-align: center;")
             prio_lbl.setAlignment(Qt.AlignCenter)
 
             t_view.setItem(ix, 0, cb)
@@ -760,7 +764,7 @@ class QueueWidget(QWidget):
         avg_prio        = round(sum(prios.values()) / len(prios), 1) if len(prios) > 0 else 0
         avg_prio_lbl    = QLabel()
         avg_prio_lbl.setText(f"Avg. Prio: {avg_prio}")
-        avg_prio_lbl.setStyleSheet(f"background-color: {self._prio_color(avg_prio)}; padding: 4px; color: white; text-align: center;")
+        avg_prio_lbl.setStyleSheet(f"background-color: {utility.misc.prio_color(avg_prio)}; padding: 4px; color: white; text-align: center;")
         self.title_hbox.insertWidget(self.title_hbox.count() - 1, avg_prio_lbl)
         
         if len(note_types) > 0:
@@ -849,26 +853,7 @@ class QueueWidget(QWidget):
     def refresh_queue_list(self):
         self.fill_list(self.t_view_left, _get_priority_list())
 
-    def _prio_color(self, prio):
-        if prio > 90:
-            return "#7c0101"
-        if prio > 80:
-            return "#761900"
-        if prio > 70:
-            return "#6e2600"
-        if prio > 60:
-            return "#653000"
-        if prio > 50:
-            return "#5b3800"
-        if prio > 40:
-            return "#503f00"
-        if prio > 30:
-            return "#444400"
-        if prio > 20:
-            return "#374900"
-        if prio > 10:
-            return "#294d00"
-        return "#155001"
+    
 
 
 class NoteList(QTableWidget):
@@ -946,7 +931,7 @@ class NoteList(QTableWidget):
 
 
     def add_btn_clicked(self, id):
-        dialog = PriorityDialog(self)
+        dialog = PriorityDialog(self, id)
         if dialog.exec_():
             prio = dialog.value
             update_priority_list(id, prio)
