@@ -648,12 +648,12 @@ def recalculate_priority_queue(is_addon_start: bool = False):
         conn.close()
 
 
-def find_notes_with_similar_prio(nid_excluded: int, prio: int) -> List[Tuple[int, str]]:
+def find_notes_with_similar_prio(nid_excluded: int, prio: int) -> List[Tuple[int, int, str]]:
     conn = _get_connection()
     if nid_excluded is not None:
-        res = conn.execute(f"select p.prio, notes.title from (select nid, prio from (select distinct nid, prio from queue_prio_log group by nid order by max(created) desc) order by abs(prio - {prio}) asc limit 10) as p join notes on p.nid = notes.id where notes.id != {nid_excluded}").fetchall()
+        res = conn.execute(f"select p.prio, notes.id, notes.title from (select nid, prio from (select distinct nid, prio from queue_prio_log group by nid order by max(created) desc) order by abs(prio - {prio}) asc limit 10) as p join notes on p.nid = notes.id where notes.id != {nid_excluded} order by p.prio desc").fetchall()
     else:
-        res = conn.execute(f"select p.prio, notes.title from (select nid, prio from (select distinct nid, prio from queue_prio_log group by nid order by max(created) desc) order by abs(prio - {prio}) asc limit 10) as p join notes on p.nid = notes.id").fetchall()
+        res = conn.execute(f"select p.prio, notes.id, notes.title from (select nid, prio from (select distinct nid, prio from queue_prio_log group by nid order by max(created) desc) order by abs(prio - {prio}) asc limit 10) as p join notes on p.nid = notes.id order by p.prio desc").fetchall()
     conn.close()
     return res
 
