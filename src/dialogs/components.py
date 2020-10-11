@@ -16,7 +16,7 @@
 from aqt.qt import *
 import aqt
 import typing
-from ..notes import dynamic_sched_to_str, find_notes_with_similar_prio, get_avg_priority
+from ..notes import dynamic_sched_to_str, find_notes_with_similar_prio, get_avg_priority, get_note
 from .calendar_dialog import CalendarDialog 
 from ..config import get_config_value_or_default, update_config
 from ..models import SiacNote
@@ -38,6 +38,9 @@ class QtPrioritySlider(QWidget):
         self.has_schedule       = schedule is not None and len(schedule.strip()) > 0
         self.show_spec_sched    = show_spec_sched
         self.nid                = nid
+        if nid and nid > 0:
+            self.note               = get_note(self.nid)
+            self.note_title         = self.note.get_title()
         self.avg_prio           = round(get_avg_priority(), 1)
 
         box                     = QGroupBox("Priority and Scheduling" if self.show_spec_sched else "Priority")
@@ -135,10 +138,14 @@ class QtPrioritySlider(QWidget):
                 val = self.slider.value()
                 similar = find_notes_with_similar_prio(self.nid, val)
                 if similar and len(similar) > 0:
+                    if self.note:
+                        similar.append((val, self.nid, self.note_title))
                     txt = ""
-                    for (p, title) in similar:
-                        title = utility.text.trim_if_longer_than(title, 50)
-                        txt = f"{txt}<b>{p}</b>:  {title}<br>"
+                    for (p, nid, title) in sorted(similar, key=lambda x: x[0], reverse=True):
+                        title   = utility.text.trim_if_longer_than(title, 50)
+                        if nid == self.nid:
+                            title = f"<font color='#2496dc'><b>{title}</b></font>"
+                        txt     = f"{txt}<b>{p}</b>:  {title}<br>"
                     self.similar.setText(f"Similar Priority: <br><br>" + txt)
                 else:
                     self.similar.setText(f"Similar Priority: <br><br>No results." )
@@ -150,6 +157,8 @@ class QtScheduleComponent(QWidget):
         QWidget.__init__(self)
 
         self.initial_schedule   = schedule
+        self.initial_stype      = schedule.split("|")[2][0:2] if self.initial_schedule and len(self.initial_schedule.strip()) > 0 else None
+
         self.has_schedule       = self.initial_schedule is not None and len(self.initial_schedule.strip()) > 0
         self.setup_ui()
             
@@ -177,16 +186,6 @@ class QtScheduleComponent(QWidget):
         return new != self.initial_schedule
 
     def priority_set_to_zero(self):
-        # if self.has_schedule:
-        #     self.edit_tab.remove_sched_rb.setChecked(True)
-        #     self.edit_tab.no_sched_rb.setEnabled(False)
-        # else:
-        #     self.edit_tab.no_sched_rb.setChecked(True)
-
-        # self.edit_tab.td_rb.setEnabled(False)
-        # self.edit_tab.tpd_rb.setEnabled(False)
-        # self.edit_tab.tpwd_rb.setEnabled(False)
-        
         self.edit_tab.sched_radio_clicked()
 
     def priority_set_to_non_zero(self):
@@ -531,8 +530,19 @@ class ScheduleEditTab(QWidget):
             return f"{now}|{due}|wd:{wds}"
 
         if self.tgd_rb.isChecked():
+            # edge case: check if schedule is equal to initial schedule is not straightforward here:
+            # initial schedule might have ivl with decimals, but the slider only knows whole numbers for the start interval
+
             factor = self.fac_inp.value()
             start  = self.tgd_inp.value()
+            if self.parent.has_schedule and self.parent.initial_stype == "gd":
+                orig_stype      = self.parent.initial_schedule.split("|")[2]
+                orig_sval       = orig_stype[3:]
+                orig_fac        = float(orig_sval.split(";")[0])
+                orig_ivl        = float(orig_sval.split(";")[1])
+                if orig_fac == factor and int(orig_ivl) == start:
+                    return self.parent.initial_schedule
+                
             due = (datetime.now() + timedelta(days=int(start))).strftime('%Y-%m-%d-%H-%M-%S')
             return f"{now}|{due}|gd:{factor};{start}"
 
