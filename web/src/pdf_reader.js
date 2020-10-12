@@ -808,10 +808,10 @@ window.hideQueueInfobox = function () {
     }
 }
 window.greyoutBottom = function () {
-    $('#siac-reading-modal-bottom-bar .siac-link-btn,#siac-reading-modal-bottom-bar .fa,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').addClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-link-btn,#siac-reading-modal-bottom-bar .fa,.siac-bb-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').addClass("siac-disabled");
 }
 window.ungreyoutBottom = function () {
-    $('#siac-reading-modal-bottom-bar .siac-link-btn,#siac-reading-modal-bottom-bar .fa,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').removeClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-link-btn,#siac-reading-modal-bottom-bar .fa,.siac-bb-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').removeClass("siac-disabled");
 }
 window.unhideQueue = function (nid) {
     if (pdfLoading || noteLoading || modalShown) { return; }
