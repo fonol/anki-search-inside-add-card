@@ -50,6 +50,8 @@ def openEditor(mw, nid):
 class EditDialog(QDialog):
     """ Edit dialog for Anki notes. """
 
+    last_geom = None
+
     def __init__(self, mw, note):
 
         QDialog.__init__(self, None, Qt.Window)
@@ -65,7 +67,10 @@ class EditDialog(QDialog):
         self.setWindowTitle(_("Edit Note"))
         self.setMinimumHeight(400)
         self.setMinimumWidth(500)
-        self.resize(500, 850)
+        if EditDialog.last_geom:
+            self.setGeometry(EditDialog.last_geom)
+        else:
+            self.resize(500, 850)
         self.editor.setNote(note, focusTo=0)
         addHook("reset", self.onReset)
         self.mw.requireReset()
@@ -97,6 +102,7 @@ class EditDialog(QDialog):
     def _saveAndClose(self):
         remHook("reset", self.onReset)
         self.editor.cleanup()
+        EditDialog.last_geom = self.geometry()
         QDialog.reject(self)
 
     def closeWithCallback(self, onsuccess):
@@ -109,6 +115,7 @@ class NoteEditor(QDialog):
     """ The editor window for non-anki notes. """
 
     last_tags = ""
+    last_geom = None
 
     def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None, text_prefill = None, title_prefill = None, prio_prefill = None):
 
@@ -190,8 +197,13 @@ class NoteEditor(QDialog):
 
         # self.exec_()
         state.note_editor_shown = True
+
+        if NoteEditor.last_geom is not None:
+            self.setGeometry(NoteEditor.last_geom)
         self.show()
 
+    def save_geom(self):
+        NoteEditor.last_geom = self.geometry()
 
     def on_create_clicked(self):
         
@@ -299,7 +311,10 @@ class NoteEditor(QDialog):
         self.reject()
 
     def reject(self):
+        """ Called in any case (Save, Cancel, Close Button on top right) """
+
         run_hooks("user-note-closed")
+        self.save_geom()
         if not self.add_only:
             self.priority_tab.t_view.setModel(None)
         state.note_editor_shown = False
@@ -332,7 +347,8 @@ class CreateTab(QWidget):
 
         self.tree.setColumnCount(1)
         self.tree.setIconSize(QSize(0,0))
-        self.build_tree(get_all_tags_as_hierarchy(False))
+        include_anki_tags = get_config_value_or_default("notes.editor.include_anki_tags", False)
+        self.build_tree(get_all_tags_as_hierarchy(include_anki_tags=include_anki_tags))
         self.tree.itemClicked.connect(self.tree_item_clicked)
         self.tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.tree.setMinimumHeight(150)
@@ -382,8 +398,6 @@ class CreateTab(QWidget):
             btn.setStyleSheet(bs)
             btn.clicked.connect(functools.partial(self.add_tag, t))
             lo.addWidget(btn)
-        self.recent_tbl.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        self.recent_tbl.setMaximumHeight(100)
 
         queue_len = len(parent.priority_list)
         schedule = None if self.parent.note is None else self.parent.note.reminder
@@ -405,6 +419,7 @@ class CreateTab(QWidget):
 
         vbox_left.addWidget(self.tree)
         self.all_tags_cb = QCheckBox("Include Anki Tags")
+        self.all_tags_cb.setChecked(include_anki_tags)
         self.all_tags_cb.stateChanged.connect(self.tag_cb_changed)
         hbox_tag_b = QHBoxLayout()
         hbox_tag_b.addWidget(self.all_tags_cb)
@@ -429,12 +444,11 @@ class CreateTab(QWidget):
             tag_hb1.addWidget(QLabel("Recent (Click to Add)"))
             vbox_left.addLayout(tag_hb1)
             qs = QScrollArea()
-            qs.setStyleSheet("""
-                QScrollArea { background-color: transparent; } 
-            """)
+            qs.setStyleSheet(""" QScrollArea { background-color: transparent; } """)
             qs.setFrameShape(QFrame.NoFrame)
             qs.setWidgetResizable(True)
-           
+            qs.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+            qs.setMaximumHeight(100)
             qs.setWidget(self.recent_tbl)
             vbox_left.addWidget(qs)
 
@@ -690,11 +704,13 @@ class CreateTab(QWidget):
     def tag_cb_changed(self, state):
         self.tree.clear()
         tmap = None
+
         if state == Qt.Checked:
             tmap = get_all_tags_as_hierarchy(include_anki_tags = True)
         else:
             tmap = get_all_tags_as_hierarchy(include_anki_tags = False)
         self.build_tree(tmap)
+        update_config("notes.editor.include_anki_tags", state == Qt.Checked)
 
     def build_tree(self, tmap):
         for t, children in tmap.items():
