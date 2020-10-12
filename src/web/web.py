@@ -493,6 +493,8 @@ def changelog() -> List[str]:
 
     return [
        "Added 'mix_reviews_and_reading' config option, see config dialog for an explanation",
+       "Create/Update Note dialog should remember its size now",
+       "Remember 'Include Anki Tags' in Create/Update Note dialog"
     ]
 
 def known_issues() -> List[str]:
