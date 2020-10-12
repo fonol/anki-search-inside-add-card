@@ -338,14 +338,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     top: 50px; */
     top: 5px; left: 0px;
 }
-#siac-schedule-dialog-btn {
-    margin-left: 8px;
-}
-#siac-schedule-dialog-btn > svg {
-    vertical-align: middle;
-    margin-bottom: 2px;
-}
-#siac-schedule-dialog-btn.active > svg {
+#siac-schedule-dialog-btn.active > .fa {
     filter: brightness(1.4);
 }
 #siac-close-iframe-btn {
@@ -646,16 +639,11 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 #siac-queue-actions {
     display: inline-block; 
     vertical-align: top; 
-    margin-left: 20px; 
-    margin-top: 3px; 
+    /* margin-left: 20px;  */
+    /* margin-top: 3px;  */
     user-select: none; 
     z-index: 1;
     min-width: 130px;
-}
-#siac-queue-lbl {
-    font-variant-caps: all-petite-caps;
-    font-size: medium;
-    line-height: 1em;
 }
 .siac-queue-picker-icn {
     margin-left: 25px; cursor: pointer; font-weight: bold; color: #c72c41;
@@ -1055,6 +1043,26 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     background-color: black;
     z-index: 12;
 }
+.siac-bb-btn {
+    border: 2px outset #c72c41;
+    border-radius: 4px;
+    margin: 3px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1em;
+    padding: 2px 5px 2px 5px;
+    font-variant: small-caps;
+    font-weight: 600;
+    cursor: pointer;
+    color: lightgrey;
+}
+.siac-bb-btn:not(.siac-disabled):hover {
+    filter: brightness(1.4);
+}
+.siac-bb-btn.siac-disabled {
+    color: grey !important;
+}
+
 .siac-prio-slider, .siac-prio-slider-small {
     width: 190px;
     -webkit-appearance: none; 
