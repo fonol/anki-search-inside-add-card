@@ -46,7 +46,6 @@ from .hooks import run_hooks
 from .output import Output
 from .dialogs.editor import openEditor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
-from .dialogs.quick_schedule import QuickScheduler
 from .dialogs.url_import import UrlImporter
 from .dialogs.pdf_extract import PDFExtractDialog
 from .dialogs.zotero_import import ZoteroImporter
@@ -411,6 +410,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-schedule-dialog":
         # show the dialog that allows to change the schedule of a note
         show_schedule_dialog(self.parentWindow)
+    
+    elif cmd == "siac-prio-dialog":
+        index.ui.reading_modal.show_prio_dialog()
 
     elif cmd == "siac-delay-note":
         # "Later" button pressed in the reading modal
@@ -761,14 +763,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-left-side-width":
         index.ui.reading_modal.show_width_picker()
-
-    elif cmd.startswith("siac-quick-schedule "):
-        # not used, wip
-        nid = int(cmd.split()[1])
-        scheduler = QuickScheduler(self.parentWindow, nid)
-        if scheduler.exec_() and scheduler.queue_schedule is not None:
-            update_priority_list(nid, scheduler.queue_schedule)
-            index.ui.reading_modal.reload_bottom_bar(nid)
 
     elif cmd.startswith("siac-left-side-width "):
         value = int(cmd.split()[1])
@@ -1475,6 +1469,7 @@ def show_schedule_dialog(parent_window):
             else:
                 tooltip(f"Updated schedule.")
             run_hooks("updated-schedule")
+
 
 
 def show_read_stats():
