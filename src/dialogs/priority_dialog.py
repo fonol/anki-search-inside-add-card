@@ -20,19 +20,23 @@ from aqt.utils import tooltip
 import typing
 import os
 from .components import QtPrioritySlider
+from ..notes import get_priority
 
 class PriorityDialog(QDialog):
 
     def __init__(self, parent, note_id):
         QDialog.__init__(self, parent)
-        self.note_id = note_id
+        self.note_id        = note_id
+        self.initial_prio   = get_priority(note_id)
+        if self.initial_prio is None or self.initial_prio == 0:
+            self.initial_prio = 50
         self.setup_ui()
 
     def setup_ui(self):
         self.setWindowTitle("Choose a priority")
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        self.slider = QtPrioritySlider(50, self.note_id, False, None)
+        self.slider = QtPrioritySlider(self.initial_prio, self.note_id, False, None)
         self.layout.addWidget(self.slider)
 
         self.accept_btn = QPushButton("Ok")
