@@ -80,6 +80,7 @@
 "notes.editor.autoHideLeftPaneOnOpen": false,
 "notes.editor.shortcut": "Ctrl+Shift+n",
 "notes.editor.defaultTagsIfEmpty": "",
+"notes.editor.include_anki_tags": false,
 "results.showFloatButton": false,
 "results.showIDButton": false,
 "results.showCIDButton": false,
