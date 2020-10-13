@@ -59,9 +59,6 @@ def try_open_first_in_queue(message: Optional[str] = None):
                 tooltip(message, period=5000)
 
         _timer = aqt.qt.QTimer()
-        _timer.setSingleShot(True) 
-        _timer.timeout.connect(_open) 
+        _timer.setSingleShot(True)
+        _timer.timeout.connect(_open)
         _timer.start(1500)
-
-
-
