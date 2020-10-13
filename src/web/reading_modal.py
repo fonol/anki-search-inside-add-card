@@ -48,6 +48,7 @@ from .html import *
 from .web import try_select_deck
 from ..dialogs.done_dialog import DoneDialog
 from ..dialogs.priority_dialog import PriorityDialog
+from ..dialogs.postpone_dialog import PostponeDialog
 from .templating import filled_template
 from .note_templates import *
 from ..internals import js, requires_index_loaded, perf_time
@@ -265,7 +266,41 @@ class ReadingModal:
             else:
                 update_priority_list(self.note_id, prio)
                 tooltip(f"Updated priority and added to queue.")
-            self.reload_bottom_bar(self.note_id)
+            self.reload_bottom_bar()
+
+    def show_postpone_dialog(self):
+        """ Show a dialog to move the note either back in the queue or schedule for a future day. """
+
+        dialog          = PostponeDialog(self._editor.parentWindow, self.note_id)
+        if dialog.exec_():
+            self.note = get_note(self.note_id)
+            # 1. option: later today (move back in queue)
+            if dialog.value == 0:
+                qlen = len(_get_priority_list())
+                if qlen > 2:
+                    delay = int(qlen/3) 
+                    if self.note.position < 3:
+                        delay += (3 - self.note.position)
+                    set_delay(self.note_id, delay)
+                    recalculate_priority_queue()
+                    tooltip("Moved note back in queue")
+                    self.read_head_of_queue()
+                else:
+                    tooltip("Later only works if 3+ items are in the queue.")
+            else:
+                # 2. option: schedule note to appear in x days
+                days_delta = dialog.value
+                if self.note.has_schedule():
+                    new_reminder = utility.date.postpone_reminder(self.note.reminder, days_delta)
+                else:
+                    new_reminder = utility.date.get_new_reminder("td", str(days_delta))
+                update_reminder(self.note_id, new_reminder)
+                prio = get_priority(self.note_id)
+                if prio and prio > 0:
+                    update_priority_list(self.note_id, 0)
+                else:
+                    recalculate_priority_queue()
+                self.read_head_of_queue()
 
     @js
     def show_width_picker(self):
@@ -316,21 +351,16 @@ class ReadingModal:
 
 
     @js
-    def reload_bottom_bar(self, note_id: int = None):
+    def reload_bottom_bar(self):
         """
             Called after queue picker dialog has been closed without opening a new note.
         """
-        if note_id is not None:
-
-            note = get_note(note_id)
-            html = self.bottom_bar(note)
-            html = html.replace("`", "\\`")
-            return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks(true);" % html
-
-        else:
-            return """if (document.getElementById('siac-reading-modal').style.display !== 'none' && document.getElementById('siac-reading-modal-top-bar')) {
-                        pycmd('siac-reload-reading-modal-bottom '+ $('#siac-reading-modal-top-bar').data('nid'));
-                    }"""
+        if self.note_id is None:
+            return
+        note = get_note(self.note_id)
+        html = self.bottom_bar(note)
+        html = html.replace("`", "\\`")
+        return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks(true);" % html
 
 
     def _display_pdf(self, full_path: str, note_id: int):
@@ -1174,23 +1204,24 @@ class ReadingModal:
 
     #endregion page sidebar
 
-    @js
-    def update_reading_bottom_bar(self, nid: int):
-        """ Refresh the bottom bar. """
+    # todo
+    # @js
+    # def update_reading_bottom_bar(self):
+    #     """ Refresh the bottom bar. """
 
-        queue   = _get_priority_list()
-        pos_lbl = ""
-        if queue is not None and len(queue) > 0:
-            pos_lbl     = "Priority: " + get_priority_as_str(nid)
-        else:
-            pos_lbl     = "Unqueued"
+    #     queue   = _get_priority_list()
+    #     pos_lbl = ""
+    #     if queue is not None and len(queue) > 0:
+    #         pos_lbl     = "Priority: " + get_priority_as_str(nid)
+    #     else:
+    #         pos_lbl     = "Unqueued"
 
-        qd = self.get_queue_head_display(queue)
-        return """
-            document.getElementById('siac-queue-lbl').innerHTML = '%s';
-            $('#siac-queue-lbl').fadeIn('slow');
-            $('#siac-queue-readings-list').replaceWith(`%s`);
-            """ % (pos_lbl, qd)
+    #     qd = self.get_queue_head_display(queue)
+    #     return """
+    #         document.getElementById('siac-queue-lbl').innerHTML = '%s';
+    #         $('#siac-queue-lbl').fadeIn('slow');
+    #         $('#siac-queue-readings-list').replaceWith(`%s`);
+    #         """ % (pos_lbl, qd)
 
     @js
     def show_pdf_bottom_tab(self, note_id: int, tab: str):
@@ -1381,8 +1412,11 @@ class ReadingModal:
 
     @js
     def display_cloze_modal(self, editor: Editor, selection: str, extracted: List[str]):
-        s_html = "<table style='margin-top: 5px; font-size: 15px;'>"
-        sentences = [s for s in extracted if len(s) < 300 and len(s.strip()) > 0]
+        """ Displays the modal to view and edit the generated cloze. """
+
+        s_html      = "<table style='margin-top: 5px; font-size: 15px;'>"
+        sentences   = [s for s in extracted if len(s) < 300 and len(s.strip()) > 0]
+
         if len(sentences) == 0:
             for s in extracted:
                 if len(s) >= 300:
@@ -1390,12 +1424,14 @@ class ReadingModal:
                     if f is not None and len(f) < 300:
                         sentences.append(f)
 
+        # we use a list here, but atm, there is only one sentence
         if len(sentences) > 0 and sentences != [""]:
             selection = re.sub("  +", " ", selection).strip()
             for sentence in sentences:
                 sentence = re.sub("  +", " ", sentence).strip()
                 sentence = sentence.replace(selection, " <span style='color: lightblue;'>{{c1::%s}}</span> " % selection)
 
+                # try to get some sensible formatting (mostly trimming whitespaces where they not belong)
                 # needs cleaning
                 sentence = sentence.replace("  ", " ").replace("</span> ,", "</span>,")
                 sentence = re.sub(" ([\"“”\\[(]) <span", " \\1<span", sentence)
@@ -1415,8 +1451,9 @@ class ReadingModal:
                 sentence = re.sub(" ([?!.])$", r"\1", sentence)
                 sentence = re.sub("^[:.?!,;)] ", "", sentence)
                 sentence = re.sub("^\\d+ ?[:\\-.,;] ([A-ZÖÄÜ])", r"\1", sentence)
-
                 sentence = re.sub(" ([\"“”])([?!.])$", r"\1\2", sentence)
+
+                # remove enumeration dots from the beginning of the sentence
                 sentence = re.sub("^[\u2022,\u2023,\u25E6,\u2043,\u2219]", "", sentence)
 
                 s_html += "<tr class='siac-cl-row'><td><div contenteditable class='siac-pdf-main-color'>%s</div></td></tr>" % (sentence.replace("`", "&#96;"))
@@ -1462,17 +1499,6 @@ class ReadingModal:
                 $('.siac-modal-small').remove();
                 $('#siac-rm-greyout').show();
                 $('#siac-reading-modal-center').append('%s');""" % modal.replace("\n", "").replace("'", "\\'")
-
-    @js
-    def update_bottom_bar_positions(self, nid: int, new_index: int, queue_len: int):
-        queue_readings_list = self.get_queue_head_display(nid).replace("`", "\\`")
-        priority_str = get_priority_as_str(nid)
-        return f"""
-            document.getElementById('siac-queue-lbl').innerHTML = 'Priority: {priority_str}';
-            $('#siac-queue-lbl').fadeIn('slow');
-            $('.siac-queue-sched-btn:first').html('Priority');
-            $('#siac-queue-readings-list').replaceWith(`{queue_readings_list}`);
-        """
 
     @js
     def show_timer_elapsed_popup(self, nid: int):
