@@ -430,7 +430,6 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
 def _apply_delays(schedule_list: List[Tuple[Any]]):
     """ Modify the queue order by moving back notes that have a delay set. """
     updated_list        = []
-    delays              = {}
     for ix, s in enumerate(schedule_list):
         d = _delay(s[5])
         if d > 0: 
