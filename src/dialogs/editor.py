@@ -216,7 +216,7 @@ class NoteEditor(QDialog):
 
         # if reading modal is open, we might have to update the bottom bar
         if self.read_note_id is not None:
-            get_index().ui.reading_modal.update_reading_bottom_bar(self.read_note_id)
+            get_index().ui.reading_modal.reload_bottom_bar()
 
     def on_create_and_keep_open_clicked(self):
         success = self._create_note()
@@ -224,7 +224,7 @@ class NoteEditor(QDialog):
             return
         run_hooks("user-note-created")
         if self.read_note_id is not None:
-            get_index().ui.reading_modal.update_reading_bottom_bar(self.read_note_id)
+            get_index().ui.reading_modal.reload_bottom_bar()
 
         self._reset()
 
