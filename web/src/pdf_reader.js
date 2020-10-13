@@ -430,6 +430,7 @@ window.toggleQueue = function () {
         $('.siac-queue-sched-btn:first').removeClass("active");
     }
     $wr.toggleClass('active');
+    pycmd('siac-load-queue')
 }
 window.queueSchedBtnClicked = function (btn_el) {
     $('#siac-queue-lbl').hide();
@@ -807,10 +808,10 @@ window.hideQueueInfobox = function () {
     }
 }
 window.greyoutBottom = function () {
-    $('#siac-reading-modal-bottom-bar .siac-link-btn,#siac-reading-modal-bottom-bar .fa,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').addClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-link-btn,#siac-reading-modal-bottom-bar .fa,.siac-bb-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn,#siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').addClass("siac-disabled");
 }
 window.ungreyoutBottom = function () {
-    $('#siac-reading-modal-bottom-bar .siac-link-btn,#siac-reading-modal-bottom-bar .fa,.siac-queue-sched-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').removeClass("siac-disabled");
+    $('#siac-reading-modal-bottom-bar .siac-link-btn,#siac-reading-modal-bottom-bar .fa,.siac-bb-btn,#siac-reading-modal-bottom-bar .siac-queue-picker-icn, #siac-reading-modal-bottom-bar .blue-hover, .siac-page-mark-link,.siac-sched-icn').removeClass("siac-disabled");
 }
 window.unhideQueue = function (nid) {
     if (pdfLoading || noteLoading || modalShown) { return; }
@@ -822,12 +823,12 @@ window.hideQueue = function (nid) {
 }
 window.toggleReadingModalBars = function () {
     if (!pdfBarsHidden) {
-        byId("siac-reading-modal-top-bar").style.display = "none";
-        byId("siac-reading-modal-bottom-bar").style.display = "none";
+        byId("siac-reading-modal-top-bar").classList.add("top-hidden");
+        byId("siac-reading-modal-bottom-bar").classList.add("bottom-hidden");
         pdfBarsHidden = true;
     } else {
-        byId("siac-reading-modal-top-bar").style.display = "flex";
-        byId("siac-reading-modal-bottom-bar").style.display = "block";
+        byId("siac-reading-modal-top-bar").classList.remove("top-hidden");
+        byId("siac-reading-modal-bottom-bar").classList.remove("bottom-hidden")
         pdfBarsHidden = false;
     }
 }
@@ -915,16 +916,7 @@ window.prioVerbose = function (prio) {
         return `Very low (<b>${prio}</b>)`;
     return "Remove from Queue (<b>0</b>)";
 }
-window.schedChanged = function (slider, nid) {
-    $('#siac-quick-sched-btn').removeClass('expanded');
-    pycmd("siac-requeue " + nid + " " + slider.value);
-}
-window.schedSmallChanged = function (slider, nid) {
-    pycmd("siac-requeue " + nid + " " + slider.value);
-}
-window.schedSmallChange = function (slider) {
-    byId('siac-slider-small-lbl').innerHTML = slider.value;
-}
+
 
 window.scheduleDialogQuickAction = function () {
     let cmd = $("input[name=sched]:checked").data("pycmd");

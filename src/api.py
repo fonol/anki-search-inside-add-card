@@ -39,18 +39,18 @@ def try_open_first_in_queue(message: Optional[str] = None):
         try:
             win = mw.app.activeWindow()
             if isinstance(win, aqt.addcards.AddCards):
-                if not isMac:
-                    win.showMaximized()
                 if isMac:
                     win.raise_()
+                else:
+                    win.showMaximized()
             else:
                 win = aqt.dialogs._dialogs["AddCards"]
                 if win:
-                    if not isMac:
-                        win.showMaximized()
                     if isMac:
                         win.raise_()
-        except:
+                    else:
+                        win.showMaximized()
+        except: 
             pass
 
         def _open():

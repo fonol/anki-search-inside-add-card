@@ -16,28 +16,27 @@
 
 
 from aqt.qt import *
-from aqt.utils import tooltip
 import typing
 import os
-from .components import QtPrioritySlider
-from ..notes import get_priority
 
-class PriorityDialog(QDialog):
 
-    def __init__(self, parent, note_id):
+class CalendarDialog(QDialog):
+
+    def __init__(self, parent):
         QDialog.__init__(self, parent)
-        self.note_id        = note_id
-        self.initial_prio   = get_priority(note_id)
-        if self.initial_prio is None or self.initial_prio == 0:
-            self.initial_prio = 50
+        self.date = None
         self.setup_ui()
 
     def setup_ui(self):
-        self.setWindowTitle("Choose a priority")
+
+        self.setWindowTitle("Pick a date")
         self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-        self.slider = QtPrioritySlider(self.initial_prio, self.note_id, False, None)
-        self.layout.addWidget(self.slider)
+
+        self.calendar = QCalendarWidget()
+        self.calendar.setGridVisible(True)
+        self.calendar.setMinimumDate(QDate.currentDate().addDays(1))
+        self.calendar.setMaximumDate(QDate.currentDate().addYears(10))
+        self.layout.addWidget(self.calendar)
 
         self.accept_btn = QPushButton("Ok")
         self.accept_btn.clicked.connect(self.on_accept)
@@ -50,12 +49,10 @@ class PriorityDialog(QDialog):
         self.hbox.addWidget(self.reject_btn)
 
         self.layout.addLayout(self.hbox)
+
+        self.setLayout(self.layout)
         self.setMinimumWidth(300)
             
-            
     def on_accept(self):
-        if self.slider.value() == 0:
-            tooltip("Value must be > 0")
-        else:
-            self.value = self.slider.value()
-            self.accept()
+        self.date = self.calendar.selectedDate().toPyDate()
+        self.accept()

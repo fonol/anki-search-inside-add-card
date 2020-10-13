@@ -41,7 +41,10 @@ class SiacNote(Printable):
 
     _ct_timestamp   = 0
     note_type       = "user"
-    MISSED_NOTES    = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
+
+    # 2020-10-06 Simplify scheduling
+    # MISSED_NOTES    = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
+    MISSED_NOTES    = "place-front"
 
     def __init__(self, props: Tuple[Any, ...]):
         self.id             : int           = props[0]
@@ -139,7 +142,7 @@ class SiacNote(Printable):
         if not self.has_schedule():
             return False
         dt = datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
-        return dt.date() <= datetime.today().date()
+        return dt.date() >= (datetime.today()  - timedelta(days=7)).date() and dt.date() <= datetime.today().date()
     
     def is_due_sometime(self) -> bool:
         return self.has_schedule()

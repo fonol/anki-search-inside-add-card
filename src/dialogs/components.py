@@ -15,25 +15,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from aqt.qt import *
 import aqt
-from ..notes import dynamic_sched_to_str
+import typing
+from ..notes import dynamic_sched_to_str, find_notes_with_similar_prio, get_avg_priority, get_note
+from .calendar_dialog import CalendarDialog 
 from ..config import get_config_value_or_default, update_config
 from ..models import SiacNote
 from ..hooks import run_hooks
 
 from datetime import datetime, timedelta
 import utility.date
+import utility.misc
 import utility.text
 
 class QtPrioritySlider(QWidget):
 
 
-    def __init__(self, prio_default, show_spec_sched=True, schedule=None):
+    def __init__(self, prio_default, nid, show_spec_sched=True, schedule=None):
         QWidget.__init__(self)
 
         self.prio_default       = prio_default
         self.released_fn        = None
         self.has_schedule       = schedule is not None and len(schedule.strip()) > 0
         self.show_spec_sched    = show_spec_sched
+        self.nid                = nid
+        if nid and nid > 0:
+            self.note               = get_note(self.nid)
+            self.note_title         = self.note.get_title()
+        self.avg_prio           = round(get_avg_priority(), 1)
 
         box                     = QGroupBox("Priority and Scheduling" if self.show_spec_sched else "Priority")
         vbox                    = QVBoxLayout()
@@ -51,7 +59,20 @@ class QtPrioritySlider(QWidget):
 
         self.value_lbl          = QLabel(str(prio_default))
         self.value_lbl.setAlignment(Qt.AlignCenter)
-        vbox.addWidget(self.value_lbl)
+        hvalue = QHBoxLayout()
+        hvalue.addSpacing(40)
+        hvalue.addStretch()
+        hvalue.addWidget(self.value_lbl)
+        hvalue.addStretch()
+        avg_lbl = QLabel(f"Ø: {self.avg_prio}")
+        avg_lbl.setStyleSheet(f"padding-left: 4px; padding-right: 4px; color: white; background-color: {utility.misc.prio_color(self.avg_prio)};")
+        hvalue.addWidget(avg_lbl)
+        vbox.addLayout(hvalue)
+        
+        if not self.show_spec_sched:
+            self.similar = QLabel("")
+            vbox.addWidget(self.similar)
+        vbox.addStretch()
 
         if show_spec_sched:
             self.scheduler = QtScheduleComponent(schedule) 
@@ -64,10 +85,11 @@ class QtPrioritySlider(QWidget):
         self.setLayout(vbox_outer)
     
         self.update_lbl()
-        if show_spec_sched:
-            self.scheduler.edit_tab.sched_radio_clicked()
         self.slider.valueChanged.connect(self.update_lbl)
         self.slider.sliderReleased.connect(self.slider_released)
+
+        if not show_spec_sched:
+            self.slider_released()
 
     def value(self):
         return self.slider.value()
@@ -92,6 +114,7 @@ class QtPrioritySlider(QWidget):
     def slider_released(self):
         if self.released_fn:
             self.released_fn(self.slider.value())
+     
 
     def update_lbl(self):
         """
@@ -102,12 +125,30 @@ class QtPrioritySlider(QWidget):
             # If 0 priority, disable setting specific schedule
             if self.show_spec_sched:
                 self.scheduler.priority_set_to_zero() 
+            else:
+                self.similar.setText(f"<br>Info: A note without a priority won't appear in <br>the queue, unless it has a schedule<br>which is due on that day.")
             self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #c62828; border-radius: 3px; }")
+            
         else:
             self.value_lbl.setText(dynamic_sched_to_str(self.slider.value()).replace("(", "(<b>").replace(")", "</b>)"))
             self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #2496dc; border-radius: 3px;}")
             if self.show_spec_sched:
                 self.scheduler.priority_set_to_non_zero()
+            else:
+                val = self.slider.value()
+                similar = find_notes_with_similar_prio(self.nid, val)
+                if similar and len(similar) > 0:
+                    if self.note:
+                        similar.append((val, self.nid, self.note_title))
+                    txt = ""
+                    for (p, nid, title) in sorted(similar, key=lambda x: x[0], reverse=True):
+                        title   = utility.text.trim_if_longer_than(title, 50)
+                        if nid == self.nid:
+                            title = f"<font color='#2496dc'><b>{title}</b></font>"
+                        txt     = f"{txt}<b>{p}</b>:  {title}<br>"
+                    self.similar.setText(f"Similar Priority: <br><br>" + txt)
+                else:
+                    self.similar.setText(f"Similar Priority: <br><br>No results." )
 
             
 class QtScheduleComponent(QWidget):
@@ -116,36 +157,35 @@ class QtScheduleComponent(QWidget):
         QWidget.__init__(self)
 
         self.initial_schedule   = schedule
+        self.initial_stype      = schedule.split("|")[2][0:2] if self.initial_schedule and len(self.initial_schedule.strip()) > 0 else None
+
         self.has_schedule       = self.initial_schedule is not None and len(self.initial_schedule.strip()) > 0
         self.setup_ui()
             
         
     def setup_ui(self):
 
-        self.tabs           = QTabWidget()
+        # self.tabs           = QTabWidget()
         self.edit_tab       = ScheduleEditTab(self)
-        self.settings_tab   = ScheduleSettingsTab()
+        # self.settings_tab   = ScheduleSettingsTab()
         
-        self.tabs.addTab(self.edit_tab, "Edit")
-        self.tabs.addTab(self.settings_tab, "Settings")
+        # self.tabs.addTab(self.edit_tab, "Edit")
+        # self.tabs.addTab(self.settings_tab, "Settings")
 
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0,0,0,0)
-        self.layout().addWidget(self.tabs)
+        self.layout().addWidget(self.edit_tab)
 
     def _get_schedule(self):
         return self.edit_tab._get_schedule()
+    
+    def schedule_has_changed(self) -> bool:
+        new = self._get_schedule()
+        if (self.initial_schedule is None or self.initial_schedule == "") and (new is None or new == ""):
+            return False
+        return new != self.initial_schedule
 
     def priority_set_to_zero(self):
-        if self.has_schedule:
-            self.edit_tab.remove_sched_rb.setChecked(True)
-            self.edit_tab.no_sched_rb.setEnabled(False)
-        else:
-            self.edit_tab.no_sched_rb.setChecked(True)
-
-        self.edit_tab.td_rb.setEnabled(False)
-        self.edit_tab.tpd_rb.setEnabled(False)
-        self.edit_tab.tpwd_rb.setEnabled(False)
         self.edit_tab.sched_radio_clicked()
 
     def priority_set_to_non_zero(self):
@@ -157,6 +197,9 @@ class QtScheduleComponent(QWidget):
         if self.has_schedule:
             self.edit_tab.remove_sched_rb.setEnabled(True)
 
+
+        
+# Unused atm (10.10.20)
 class ScheduleSettingsTab(QWidget):
     def __init__(self):
         QWidget.__init__(self)
@@ -171,26 +214,28 @@ class ScheduleSettingsTab(QWidget):
         line.setFrameShadow(QFrame.Sunken)
         self.layout().addWidget(line)
 
-        self.layout().addWidget(QLabel("How to deal with <b>missed schedules</b>? (Needs restart)"))
-        self.missed_rb_1 = QRadioButton("Place in front of queue")
-        self.missed_rb_2 = QRadioButton("Remove schedule, keep in queue")
-        self.missed_rb_3 = QRadioButton("Reschedule based on previous schedule")
+        # self.layout().addWidget(QLabel("How to deal with <b>missed schedules</b>? (Needs restart)"))
+        # self.missed_rb_1 = QRadioButton("Place in front of queue")
+        # self.missed_rb_2 = QRadioButton("Remove schedule, keep in queue")
+        # self.missed_rb_3 = QRadioButton("Reschedule based on previous schedule")
         
-        self.layout().addWidget(self.missed_rb_1)
-        self.layout().addWidget(self.missed_rb_2)
-        self.layout().addWidget(self.missed_rb_3)
+        # self.layout().addWidget(self.missed_rb_1)
+        # self.layout().addWidget(self.missed_rb_2)
+        # self.layout().addWidget(self.missed_rb_3)
 
-        self.missed_rb_1.clicked.connect(self.missed_rb_clicked)
-        self.missed_rb_2.clicked.connect(self.missed_rb_clicked)
-        self.missed_rb_3.clicked.connect(self.missed_rb_clicked)
+        # self.missed_rb_1.clicked.connect(self.missed_rb_clicked)
+        # self.missed_rb_2.clicked.connect(self.missed_rb_clicked)
+        # self.missed_rb_3.clicked.connect(self.missed_rb_clicked)
 
-        handling = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
-        if handling == "remove-schedule":
-            self.missed_rb_2.setChecked(True)
-        elif handling == "place-front":
-            self.missed_rb_1.setChecked(True)
-        elif handling == "new-schedule":
-            self.missed_rb_3.setChecked(True)
+        # # 2020-10-06 Simplify scheduling
+        # # handling = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
+        # handling = "place-front"
+        # if handling == "remove-schedule":
+        #     self.missed_rb_2.setChecked(True)
+        # elif handling == "place-front":
+        #     self.missed_rb_1.setChecked(True)
+        # elif handling == "new-schedule":
+        #     self.missed_rb_3.setChecked(True)
         
         self.layout().addStretch()
         
@@ -204,10 +249,10 @@ class ScheduleSettingsTab(QWidget):
         self.ivl_includes_today_cb.setChecked(get_config_value_or_default("notes.queue.intervalSchedulesStartToday", True))
         self.ivl_includes_today_cb.clicked.connect(self.ivl_includes_today_cb_checked)
 
-        self.show_in_q_cb = QCheckBox("Items scheduled for future days should still appear in the queue")
-        self.layout().addWidget(self.show_in_q_cb)
-        self.show_in_q_cb.setChecked(get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True))
-        self.show_in_q_cb.clicked.connect(self.show_in_q_cb_checked)
+        # self.show_in_q_cb = QCheckBox("Items scheduled for future days should still appear in the queue")
+        # self.layout().addWidget(self.show_in_q_cb)
+        # self.show_in_q_cb.setChecked(get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True))
+        # self.show_in_q_cb.clicked.connect(self.show_in_q_cb_checked)
 
 
     def show_sched_cb_clicked(self):
@@ -217,9 +262,10 @@ class ScheduleSettingsTab(QWidget):
         update_config("notes.queue.intervalSchedulesStartToday", self.ivl_includes_today_cb.isChecked())
         run_hooks("updated-schedule")
 
-    def show_in_q_cb_checked(self):
-        update_config("notes.queue.include_future_scheduled_in_queue", self.show_in_q_cb.isChecked())
-        run_hooks("updated-schedule")
+    # TODO
+    # def show_in_q_cb_checked(self):
+    #     update_config("notes.queue.include_future_scheduled_in_queue", self.show_in_q_cb.isChecked())
+    #     run_hooks("updated-schedule")
         
 
     def missed_rb_clicked(self):
@@ -259,13 +305,14 @@ class ScheduleEditTab(QWidget):
         self.td_rb      = QRadioButton("Show in ")
         self.tpwd_rb    = QRadioButton("Show on weekday(s):")
         self.tpd_rb     = QRadioButton("Show every ")
+        self.tgd_rb     = QRadioButton("Growing Ivl.")
         self.group.addButton(self.no_sched_rb, 0)
         self.group.addButton(self.td_rb, 1)
         self.group.addButton(self.tpwd_rb, 2)
         self.group.addButton(self.tpd_rb, 3)
+        self.group.addButton(self.tgd_rb, 4)
         
-
-        for rb in [self.no_sched_rb, self.td_rb, self.tpwd_rb, self.tpd_rb]:
+        for rb in [self.no_sched_rb, self.td_rb, self.tpwd_rb, self.tpd_rb, self.tgd_rb]:
             rb.clicked.connect(self.sched_radio_clicked)
 
         self.vbox.addWidget(self.no_sched_rb)
@@ -278,12 +325,17 @@ class ScheduleEditTab(QWidget):
         hbox1 = QHBoxLayout()
         self.td_inp = QDoubleSpinBox()
         self.td_inp.setMinimum(1)
+        self.td_inp.setMaximum(10000)
         self.td_inp.setDecimals(0)
         self.td_inp.setSuffix(" day(s)")
 
         hbox1.addWidget(self.td_rb)
         hbox11 = QHBoxLayout()
         hbox11.addWidget(self.td_inp)
+        cal_btn = QToolButton()
+        cal_btn.setText("Date")
+        cal_btn.clicked.connect(self.cal_btn_clicked)
+        hbox11.addWidget(cal_btn)
 
         self.container1 = QWidget()
         self.container1.setLayout(hbox11)
@@ -318,7 +370,6 @@ class ScheduleEditTab(QWidget):
         self.tpd_inp.setMinimum(1)
         self.tpd_inp.setDecimals(0)
         self.tpd_inp.setSuffix(" day(s)")
-        # self.tpd_inp.setValidator(val)
     
         hbox3.addWidget(self.tpd_rb)
         hbox33 = QHBoxLayout()
@@ -327,7 +378,34 @@ class ScheduleEditTab(QWidget):
         self.container3.setLayout(hbox33)
         hbox3.addWidget(self.container3)
         self.vbox.addLayout(hbox3)
+
+        # intervals with growth factor
+        hbox4 = QHBoxLayout()
+        self.tgd_inp = QDoubleSpinBox()
+        self.tgd_inp.setMinimum(1)
+        self.tgd_inp.setDecimals(0)
+        self.tgd_inp.setSuffix(" day(s) start ivl")
+
+        self.fac_inp = QDoubleSpinBox()
+        self.fac_inp.setMinimum(1)
+        self.fac_inp.setDecimals(1)
+        self.fac_inp.setValue(1.2)
+        self.fac_inp.setSingleStep(0.1)
+        self.fac_inp.setPrefix("Factor ")
+
+        hbox4.addWidget(self.tgd_rb)
+        hbox44 = QHBoxLayout()
+        hbox44.addWidget(self.tgd_inp)
+        hbox44.addWidget(self.fac_inp)
+        self.container4 = QWidget()
+        self.container4.setLayout(hbox44)
+        hbox4.addWidget(self.container4)
+        self.vbox.addLayout(hbox4)
+        
+        self.vbox.setContentsMargins(0,0,0,0)
         self.setLayout(self.vbox)
+
+        self.sched_radio_clicked()
 
         if self.parent.has_schedule:
             self.parse_schedule(self.parent.initial_schedule)
@@ -338,20 +416,39 @@ class ScheduleEditTab(QWidget):
             self.container1.setEnabled(False)
             self.container2.setEnabled(False)
             self.container3.setEnabled(False)
+            self.container4.setEnabled(False)
         elif self.td_rb.isChecked():
             self.container1.setEnabled(True)
             self.container2.setEnabled(False)
             self.container3.setEnabled(False)
+            self.container4.setEnabled(False)
         
         elif self.tpd_rb.isChecked():
             self.container1.setEnabled(False)
             self.container2.setEnabled(False)
             self.container3.setEnabled(True)
+            self.container4.setEnabled(False)
 
         elif self.tpwd_rb.isChecked():
             self.container1.setEnabled(False)
             self.container2.setEnabled(True)
             self.container3.setEnabled(False)
+            self.container4.setEnabled(False)
+
+        elif self.tgd_rb.isChecked():
+            self.container1.setEnabled(False)
+            self.container2.setEnabled(False)
+            self.container3.setEnabled(False)
+            self.container4.setEnabled(True)
+
+    def cal_btn_clicked(self):
+        dialog = CalendarDialog(self)
+        if dialog.exec_():
+           date = dialog.date
+           if date:
+               diff = (date - datetime.today().date()).days
+               if diff > 0:
+                   self.td_inp.setValue(diff)
 
     def parse_schedule(self, schedule):
         stype   = schedule.split("|")[2]
@@ -369,10 +466,17 @@ class ScheduleEditTab(QWidget):
                 elif d == "7": self.sun_cb.setChecked(True)
         elif stype.startswith("id:"):
             self.tpd_inp.setValue(float(stype[3:]))
+        elif stype.startswith("gd:"):
+            sval    = stype[3:]
+            factor  = float(sval.split(";")[0])
+            ivl     = float(sval.split(";")[1])
+            self.tgd_inp.setValue(int(ivl))
+            self.fac_inp.setValue(factor)
+
 
     def _get_schedule(self):
         if self.no_sched_rb.isChecked():
-            return None
+            return self.parent.initial_schedule
         if self.parent.has_schedule and self.remove_sched_rb.isChecked():
             return ""
         now = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
@@ -425,7 +529,22 @@ class ScheduleEditTab(QWidget):
             due = (datetime.now() + timedelta(days=n)).strftime('%Y-%m-%d-%H-%M-%S')
             return f"{now}|{due}|wd:{wds}"
 
+        if self.tgd_rb.isChecked():
+            # edge case: check if schedule is equal to initial schedule is not straightforward here:
+            # initial schedule might have ivl with decimals, but the slider only knows whole numbers for the start interval
 
+            factor = self.fac_inp.value()
+            start  = self.tgd_inp.value()
+            if self.parent.has_schedule and self.parent.initial_stype == "gd":
+                orig_stype      = self.parent.initial_schedule.split("|")[2]
+                orig_sval       = orig_stype[3:]
+                orig_fac        = float(orig_sval.split(";")[0])
+                orig_ivl        = float(orig_sval.split(";")[1])
+                if orig_fac == factor and int(orig_ivl) == start:
+                    return self.parent.initial_schedule
+                
+            due = (datetime.now() + timedelta(days=int(start))).strftime('%Y-%m-%d-%H-%M-%S')
+            return f"{now}|{due}|gd:{factor};{start}"
 
 
 class MDTextEdit(QTextEdit):

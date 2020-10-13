@@ -46,6 +46,8 @@ from ..special_searches import get_last_added_anki_notes
 from ..models import SiacNote, IndexNote, Printable
 from .html import *
 from .web import try_select_deck
+from ..dialogs.done_dialog import DoneDialog
+from ..dialogs.priority_dialog import PriorityDialog
 from .templating import filled_template
 from .note_templates import *
 from ..internals import js, requires_index_loaded, perf_time
@@ -196,7 +198,7 @@ class ReadingModal:
         if nid is not None and nid >= 0:
             self.display(nid)
         else:
-            self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
+            self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;onReadingModalClose();")
             tooltip("Queue is Empty! Add some items first.", period=4000)
 
 
@@ -214,22 +216,55 @@ class ReadingModal:
         """ Hit "Done" button. """
 
         note = self.note
-        # if note is scheduled for today or some point in the future, show the schedule dialog,
-        # but only if type is 'td', i.e. the note was not scheduled for a regular interval.
-        if note.is_due_sometime() and note.schedule_type() == "td":
-            self.display_schedule_dialog()
-        else:
-            prio = get_priority(self.note_id)
-            if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
-                add_to_prio_log(self.note_id, prio)
-                self.show_schedule_change_modal(unscheduled=True)
+        done_dialog = DoneDialog(self._editor.parentWindow, self.note_id)
+        if done_dialog.exec_():
+            new_priority        = done_dialog.priority
+            new_schedule        = done_dialog.schedule
+            sched_has_changed   = done_dialog.schedule_has_changed
+            if sched_has_changed:
+                update_reminder(self.note_id, new_schedule)
             else:
-                if note.is_due_sometime():
-                    update_reminder(self.note_id, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
-                update_priority_list(self.note_id, prio)
-                nid = get_head_of_queue()
-                self.display(nid)
+                if note.has_schedule():
+                    new_schedule = utility.date.get_new_reminder(note.schedule_type(), note.schedule_value())
+                    update_reminder(self.note_id, new_schedule)
 
+            update_priority_list(self.note_id, new_priority)
+            self.read_head_of_queue()
+        else:
+            self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
+
+
+
+
+        # # if note is scheduled for today or some point in the future, show the schedule dialog,
+        # # but only if type is 'td', i.e. the note was not scheduled for a regular interval.
+        # if note.is_due_sometime() and note.schedule_type() == "td":
+        #     self.display_schedule_dialog()
+        # else:
+        #     prio = get_priority(self.note_id)
+        #     if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
+        #         add_to_prio_log(self.note_id, prio)
+        #         self.show_schedule_change_modal(unscheduled=True)
+        #     else:
+        #         if note.is_due_sometime():
+        #             update_reminder(self.note_id, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
+        #         update_priority_list(self.note_id, prio)
+        #         nid = get_head_of_queue()
+        #         self.display(nid)
+
+    def show_prio_dialog(self):
+        dialog          = PriorityDialog(self._editor.parentWindow, self.note_id)
+        if dialog.exec_():
+            initial = get_priority(self.note_id)
+            prio    = dialog.value
+
+            if initial and initial > 0:
+                update_priority_without_timestamp(self.note_id, prio)
+                tooltip(f"Updated priority.")
+            else:
+                update_priority_list(self.note_id, prio)
+                tooltip(f"Updated priority and added to queue.")
+            self.reload_bottom_bar(self.note_id)
 
     @js
     def show_width_picker(self):
@@ -430,15 +465,12 @@ class ReadingModal:
     def html(self) -> str:
         """ Builds the html which has to be inserted into the webview to display the reading modal. """
 
-        index       = get_index()
         note        = self.note
         note_id     = self.note_id
         text        = note.text
-        tags        = note.tags
         created_dt  = datetime.datetime.strptime(note.created, '%Y-%m-%d %H:%M:%S')
         diff        = datetime.datetime.now() - created_dt
         queue       = _get_priority_list()
-        queue_len   = len(queue)
         time_str    = "Added %s ago." % utility.date.date_diff_to_string(diff)
 
         if check_index():
@@ -447,12 +479,11 @@ class ReadingModal:
             title           = utility.text.trim_if_longer_than(title, 70)
             title           = ihtml.escape(title)
             source          = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
-            source_icn      = ""
             priority        = get_priority(note_id)
             schedule_btns   = self.schedule_btns(priority)
-            sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
+            # TODO
+            sched_click     = "toggleQueue();" #if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
             img_folder      = utility.misc.img_src_base_path()
-            active          = "active" if note.is_due_sometime() else ""
             page_sidebar    = str(note.is_pdf() and conf_or_def("pdf.page_sidebar_shown", True)).lower()
 
             rev_overlay     = ""
@@ -485,26 +516,12 @@ class ReadingModal:
                         </div>
                     """
 
-            if note.is_in_queue():
-                queue_btn_text      = "Done!"
-                queue_btn_action    = "siac-user-note-done"
-                schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
-                delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-link-btn'>Later</a>"""
-
-            else:
-                queue_btn_text      = "First in Queue"
-                queue_btn_action    = "siac-user-note-queue-read-head"
-                schedule_dialog_btn = "" if not utility.date.schedule_is_due_in_the_future(note.reminder) else f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
-                delay_btn           = ""
-
             overflow        = "auto"
             notification    = ""
-            hide_page_map   = "hidden"
             editable        = False
             #check note type
             if note.is_pdf() and utility.misc.file_exists(source):
-                overflow        = "hidden"
-                hide_page_map   = ""
+                overflow        = "hidden" 
                 text            = self.pdf_viewer_html(source, note.get_title(), priority)
 
                 if "/" in source:
@@ -517,19 +534,15 @@ class ReadingModal:
                 editable    = len(text) < 100000
                 overflow    = "hidden"
                 text        = self.text_note_html(editable, priority)
-
-
-            queue_info          = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
+            bottom_bar      = self.bottom_bar(note)
+        
             if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
-                queue_info      = "Scheduled for future date."
                 notification    = f"readerNotification('Scheduled for {note.due_date_str()}');"
-            queue_info_short    = f"Priority" if note.is_in_queue() else "Unqueued"
-            queue_readings_list = self.get_queue_head_display(queue, editable)
 
-            params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info,
-            queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn,
-            notification=notification, sched_click=sched_click, page_sidebar=page_sidebar, rev_overlay = rev_overlay, hide_page_map = hide_page_map)
-
+            params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, text = text, 
+            schedule_btns=schedule_btns, overflow=overflow, 
+            notification=notification, sched_click=sched_click, page_sidebar=page_sidebar, rev_overlay = rev_overlay, bottom_bar=bottom_bar)
+            
             html = filled_template("reading_modal", params)
 
             return html
@@ -544,7 +557,6 @@ class ReadingModal:
         """
 
         nid                     = self.note_id
-        dir                     = utility.misc.get_web_folder_path()
         text                    = self.note.text if not utility.text.is_html(self.note.text) else utility.text.html_to_text(self.note.text)
         search_sources          = ""
         config                  = mw.addonManager.getConfig(__name__)
@@ -553,7 +565,6 @@ class ReadingModal:
         if urls is not None and len(urls) > 0:
             search_sources = self.iframe_dialog(urls)
 
-        is_content_editable     = "true" if editable else "false"
         title                   = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
         quick_sched             = self.quick_sched_btn(priority)
         params                  = dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, title=title)
@@ -607,23 +618,29 @@ class ReadingModal:
     def quick_sched_btn(self, priority: int) -> str:
         """ The button at the left side of the pdf/note pane, which allows to quickly mark as done and/or update the priority. """
 
-        nid         = self.note_id
-        value       = 0 if priority is None or priority < 0 else priority
-        onclick     = "onQuickSchedBtnClicked(this);" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not self.note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
+        # TODO Cleanup - function not needed anymore 2020-10-09
 
-        if value == 0:
-            current_btn = ""
-        else:
-            current_btn = f"""<div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-user-note-done");'><b>Current</b></div>"""
-        return f"""
-            <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='{onclick}'><i class='fa fa-check'></i>
-                <div class='expanded-hidden white-hover fg_lightgrey ta_center' style='margin: 0 0 0 6px;'>
-                    <input id='siac-prio-slider-small' type='range' class='siac-prio-slider-small' max='100' min='0' value='{value}' oninput='schedSmallChange(this)' onchange='schedSmallChanged(this, {nid})'/>
-                    <span id='siac-slider-small-lbl mr-5 ml-5'>{value}</span>
-                    {current_btn}
-                </div>
-            </div>
-        """
+        return f"""<div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='pycmd("siac-user-note-done")'><i class='fa fa-check'></i></div> """
+
+        # nid         = self.note_id
+        # value       = 0 if priority is None or priority < 0 else priority
+        # onclick     = """pycmd("siac-user-note-done");"""
+        # onclick     = "onQuickSchedBtnClicked(this);"# if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not self.note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
+
+        # if value == 0: 
+        #     current_btn = ""
+        # else:
+        #     current_btn = f"""<div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-user-note-done");'><b>Current</b></div>"""
+
+        # return f"""
+        #     <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='{onclick}'><i class='fa fa-check'></i>
+        #         <div class='expanded-hidden white-hover fg_lightgrey ta_center' style='margin: 0 0 0 6px;'>
+        #             <input id='siac-prio-slider-small' type='range' class='siac-prio-slider-small' max='100' min='0' value='{value}' oninput='schedSmallChange(this)' onchange='schedSmallChanged(this, {nid})'/>
+        #             <span id='siac-slider-small-lbl mr-5 ml-5'>{value}</span>
+        #             {current_btn}
+        #         </div>
+        #     </div>
+        # """
 
     def get_feed_html(self, nid, source):
         """ Not used currently. """
@@ -699,23 +716,28 @@ class ReadingModal:
         queue           = _get_priority_list()
         priority        = get_priority(note_id)
         schedule_btns   = self.schedule_btns(priority)
-        sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
+        # TODO
+        sched_click     = "toggleQueue();"# if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
         time_str        = "Added %s ago." % utility.date.date_diff_to_string(diff)
-        active          = "active" if note.is_due_sometime() else ""
+        has_schedule    = "active" if note.is_due_sometime() else ""
+        
+        queue_btn_action    = "siac-user-note-done"
 
         if note.is_in_queue():
             queue_btn_text      = "Done!"
-            queue_btn_action    = "siac-user-note-done"
-            schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
             delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-link-btn'>Later</a>"""
         else:
-            queue_btn_text      = "First in Queue"
-            queue_btn_action    = "siac-user-note-queue-read-head"
-            schedule_dialog_btn = "" if not utility.date.schedule_is_due_in_the_future(note.reminder) else f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
+            queue_btn_text      = "Add to Queue"
             delay_btn           = ""
 
         editable            = not note.is_feed() and not note.is_pdf() and len(text) < 50000
-        queue_info          = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
+        if note.is_in_queue() and priority:
+            queue_info      = "Priority: %s" % (dynamic_sched_to_str(priority))
+        elif note.is_in_queue():
+            queue_info      = "Scheduled for today"
+        else:
+            queue_info      = "Unqueued"
+
         hide_page_map       = "hidden" if not note.is_pdf() else ""
         if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
             queue_info      = "Scheduled for future date."
@@ -723,8 +745,8 @@ class ReadingModal:
         queue_info_short    = f"Priority" if note.is_in_queue() else "Unqueued"
         queue_readings_list = self.get_queue_head_display(queue, editable)
 
-        params              = dict(note_id = note_id, time_str = time_str, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, queue_info = queue_info, queue_info_short = queue_info_short,
-        queue_readings_list = queue_readings_list, schedule_btns=schedule_btns, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, sched_click=sched_click, hide_page_map = hide_page_map)
+        params              = dict(note_id = note_id, time_str = time_str, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, queue_info = queue_info, queue_info_short = queue_info_short, 
+        queue_readings_list = queue_readings_list, schedule_btns=schedule_btns, has_schedule=has_schedule, delay_btn=delay_btn, sched_click=sched_click, hide_page_map = hide_page_map)
 
         html                = filled_template("reading_modal_bottom", params)
 
@@ -880,98 +902,6 @@ class ReadingModal:
         return search_sources
 
     @js
-    def display_schedule_dialog(self):
-        """ Called when the currently opened note has a schedule and after it is finished reading. """
-
-        delta = self.note.due_days_delta() if self.note.is_due_sometime() else 0
-
-        if delta == 0:
-            header = "This note was scheduled for <b>today</b>."
-        elif delta == 1:
-            header = "This note was scheduled for <b>yesterday</b>, but not marked as done."
-        elif delta  == -1:
-            header = "This note is due <b>tomorrow</b>."
-        elif delta < -1:
-            header = f"This note is due in <b>{abs(delta)}</b> days."
-        else:
-            header = f"This note was due <b>{delta}</b> days ago, but not marked as done."
-
-        header +="<br>How do you want to proceed?"
-        options = ""
-
-        if delta < 0:
-            options += """
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Keep that Schedule</span>
-                    </label><br>
-            """
-        else:
-            if self.note.schedule_type() == "td":
-                days_delta = int(self.note.reminder.split("|")[2][3:])
-                s = "s" if days_delta > 1 else ""
-                options += f"""
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Show again in <b>{days_delta}</b> day{s}</span>
-                    </label><br>
-                """
-            elif self.note.schedule_type() == "wd":
-                weekdays_due    = [int(d) for d in self.note.reminder.split("|")[2][3:]]
-                next_date_due   = utility.date.next_instance_of_weekdays(weekdays_due)
-                weekday_name    = utility.date.weekday_name(next_date_due.weekday() + 1)
-                options += f"""
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Show again next <b>{weekday_name}</b></span>
-                    </label><br>
-                """
-            elif self.note.schedule_type() == "id":
-                days_delta = int(self.note.reminder.split("|")[2][3:])
-                s = "s" if days_delta > 1 else ""
-                options += f"""
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Show again in <b>{days_delta}</b> day{s}</span>
-                    </label><br>
-                """
-
-        options += """
-                <label class='blue-hover' for='siac-rb-2'>
-                    <input id='siac-rb-2' type='radio' name='sched' data-pycmd="2">
-                    <span>Rem. Schedule, but keep in Queue</span>
-                </label><br>
-                <label class='blue-hover' for='siac-rb-3'>
-                    <input id='siac-rb-3' type='radio' name='sched' data-pycmd="3">
-                    <span>Remove from Queue</span>
-                </label><br>
-            """
-
-        modal = f"""
-            <div id='siac-schedule-dialog' class="siac-modal-small dark ta_center">
-                {header}
-
-                <div class='siac-pdf-main-color-border-bottom siac-pdf-main-color-border-top user_sel_none cursor-pointer' style='text-align: left; margin: 10px 0 10px 0; padding: 15px;'>
-                  {options}
-                </div>
-                <div style='text-align: left;'>
-                    <a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.show_schedule_change_modal()")'>Change Scheduling</a>
-                    <div class='siac-btn siac-btn-dark' style='float: right;' onclick='scheduleDialogQuickAction()'>Ok</div>
-                </div>
-
-            </div>
-        """
-        return """modalShown=true;
-            $('#siac-rm-greyout').show();
-            if (document.getElementById('siac-schedule-dialog')) {
-                $('#siac-schedule-dialog').replaceWith(`%s`);
-            } else {
-                $('#siac-reading-modal-center').append(`%s`);
-            }
-            """ % (modal, modal)
-
-
-    @js
     def show_remove_dialog(self, nid: Optional[int] = None):
         """ Shows a dialog to either remove the current note from the queue or to delete it altogether. """
 
@@ -979,10 +909,12 @@ class ReadingModal:
             note = get_note(nid)
         else:
             note = self.note
+        
+        prio = get_priority(note.id)
 
         title   = utility.text.trim_if_longer_than(note.get_title(), 40).replace("`", "")
-        rem_cl  = "checked" if note.position is not None and note.position >= 0 else "disabled"
-        del_cl  = "checked" if note.position is None or note.position < 0 else ""
+        rem_cl  = "checked" if note.position is not None and note.position >= 0 and prio and prio > 0 else "disabled"
+        del_cl  = "checked" if rem_cl == "disabled" else ""
         note_id = note.id
 
         modal   = filled_template("remove_modal", dict(title = title, rem_cl = rem_cl, del_cl = del_cl, note_id = note_id))
@@ -992,26 +924,7 @@ class ReadingModal:
             $('#siac-reading-modal-center').append(`%s`);
             """ % modal
 
-    @js
-    def show_schedule_change_modal(self, unscheduled: bool = False):
-        """ Show a modal that allows to change the schedule of the current note. """
-
-        title = "Set a new Schedule" if not unscheduled else "This note had no schedule before."
-        if not unscheduled:
-            back_btn = """<a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.display_schedule_dialog()")'>Back</a>"""
-        else:
-            back_btn = """<a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.display_head_of_queue_after_sched_modal()")'>Proceed without scheduling</a>"""
-
-        params = dict(title=title, back_btn=back_btn)
-        body   = filled_template("schedule_change", params)
-        return f"""
-            if (document.getElementById('siac-schedule-dialog')) {{
-                document.getElementById("siac-schedule-dialog").innerHTML = `{body}`;
-            }} else {{
-                $('#siac-reading-modal-center').append(`<div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">{body}</div>`);
-            }}
-        """
-
+   
     def schedule_note(self, option: int):
         """ Will update the schedule of the note according to the chosen option.
             This function is called after an option in the dialog of display_schedule_dialog() has been selected. """
