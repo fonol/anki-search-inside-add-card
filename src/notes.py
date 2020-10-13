@@ -537,12 +537,6 @@ def recalculate_priority_queue(is_addon_start: bool = False):
 
         for nid, last_prio, last_prio_creation, current_position, reminder, delay in current:
 
-            if nid == 828:
-                print("aaa")
-                print(last_prio)
-                print(current_position)
-                print(f"reminder: {reminder}")
-
             # TODO
             # if a note is scheduled for the future and should not appear in the queue now, skip it
             # if not include_future_scheds and utility.date.schedule_is_due_in_the_future(reminder):
