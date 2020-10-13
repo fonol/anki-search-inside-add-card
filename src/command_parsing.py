@@ -44,7 +44,7 @@ from .notes import *
 from .notes import _get_priority_list
 from .hooks import run_hooks
 from .output import Output
-from .dialogs.editor import openEditor, NoteEditor
+from .dialogs.editor import open_editor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
 from .dialogs.url_import import UrlImporter
 from .dialogs.pdf_extract import PDFExtractDialog
@@ -133,7 +133,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-edit-note "):
         # "Edit" clicked on a normal (Anki) note
-        openEditor(mw, int(cmd[15:]))
+        open_editor(mw, int(cmd[15:]))
 
     elif cmd.startswith("siac-eval "):
         # direct eval, saves code
@@ -1016,7 +1016,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     #   Checkboxes
     #
 
-    elif (cmd.startswith("siac-toggle-highlight ")):
+    elif cmd.startswith("siac-toggle-highlight "):
         if check_index():
             index.highlighting = cmd.split()[1] == "on"
             config["highlighting"] = cmd.split()[1] == "on"
