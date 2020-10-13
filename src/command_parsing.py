@@ -410,24 +410,8 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-schedule-dialog":
         # show the dialog that allows to change the schedule of a note
         show_schedule_dialog(self.parentWindow)
-    
-    elif cmd == "siac-prio-dialog":
-        index.ui.reading_modal.show_prio_dialog()
 
-    elif cmd == "siac-delay-note":
-        # "Later" button pressed in the reading modal
-        qlen = len(_get_priority_list())
-        if qlen > 2:
-            delay = int(qlen/3) 
-            if index.ui.reading_modal.note.position < 3:
-                delay += (3 - index.ui.reading_modal.note.position)
-            set_delay(index.ui.reading_modal.note_id, delay)
-            recalculate_priority_queue()
-            nid = get_head_of_queue()
-            index.ui.reading_modal.display(nid)
-            tooltip("Moved note back in queue")
-        else:
-            tooltip("Later only works if 3+ items are in the queue.")
+    
 
     elif cmd.startswith("siac-pdf-mark "):
         mark_type       = int(cmd.split()[1])
@@ -626,11 +610,8 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             index.ui.reading_modal.display(picker.chosen_id())
         else:
             if nid >= 0:
-                index.ui.reading_modal.reload_bottom_bar(nid)
+                index.ui.reading_modal.reload_bottom_bar()
 
-    elif cmd.startswith("siac-reload-reading-modal-bottom "):
-        nid = int(cmd.split()[1])
-        index.ui.reading_modal.reload_bottom_bar(nid)
 
     elif cmd == "siac-user-note-update-btns":
         queue_count = get_queue_count()
@@ -750,16 +731,14 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.ui.js("updatePageSidebarIfShown()")
 
     elif cmd.startswith("siac-unhide-pdf-queue "):
-        nid = int(cmd.split()[1])
         config["pdf.queue.hide"] = False
         write_config()
-        index.ui.reading_modal.update_reading_bottom_bar(nid)
+        index.ui.reading_modal.reload_bottom_bar()
 
     elif cmd.startswith("siac-hide-pdf-queue "):
-        nid = int(cmd.split()[1])
         config["pdf.queue.hide"] = True
         write_config()
-        index.ui.reading_modal.update_reading_bottom_bar(nid)
+        index.ui.reading_modal.reload_bottom_bar()
 
     elif cmd == "siac-left-side-width":
         index.ui.reading_modal.show_width_picker()
@@ -1454,12 +1433,10 @@ def show_schedule_dialog(parent_window):
             update_reminder(nid, schedule)
             # set position to null before recalculating queue
             prio = get_priority(nid)
-            print(f"prio: {prio}")
             if not prio or prio == 0:
                 null_position(nid)
             # null_position(index.ui.reading_modal.note_id)
             index.ui.reading_modal.note = get_note(nid)
-            print(f"ix.ui.rm.note.reminder: {index.ui.reading_modal.note.reminder}")
             # index.ui.reading_modal.note.reminder = schedule
             if original_sched is not None and original_sched != "" and (schedule == "" or schedule is None):
                 tooltip(f"Removed schedule.")
