@@ -72,6 +72,13 @@ def day_of_year() -> int:
     now = datetime.now()
     return (now - datetime(now.year, 1, 1)).days + 1
 
+def postpone_reminder(reminder: str, days_delta: int) -> str:
+    due     = reminder.split("|")[1]
+    due_dt  = dt_from_stamp(due)
+    new_due = dt_to_stamp(due_dt + timedelta(days=days_delta))
+    return reminder.split("|")[0] + "|" + new_due + "|" + reminder.split("|")[2]
+
+
 def schedule_verbose(sched: str) -> str:
     """ Returns a natural language representation of the given schedule string. """
 
