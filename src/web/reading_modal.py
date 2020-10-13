@@ -1169,18 +1169,15 @@ class ReadingModal:
             except:
                 pos = -1
             pos_lbl     = "Priority: " + get_priority_as_str(nid)
-            pos_lbl_btn = f"Priority" if pos >= 0 else "Unqueued"
         else:
             pos_lbl     = "Unqueued"
-            pos_lbl_btn = "<b>Unqueued</b>"
 
         qd = self.get_queue_head_display(queue)
         return """
             document.getElementById('siac-queue-lbl').innerHTML = '%s';
             $('#siac-queue-lbl').fadeIn('slow');
-            $('.siac-queue-sched-btn:first').html('%s');
             $('#siac-queue-readings-list').replaceWith(`%s`);
-            """ % (pos_lbl, pos_lbl_btn, qd)
+            """ % (pos_lbl, qd)
 
     @js
     def show_pdf_bottom_tab(self, note_id: int, tab: str):
