@@ -43,7 +43,7 @@ import utility.text
 import utility.misc
 import state
 
-def openEditor(mw, nid):
+def open_editor(mw, nid):
     note = mw.col.getNote(nid)
     dialog = EditDialog(mw, note)
 
