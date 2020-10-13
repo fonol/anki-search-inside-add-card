@@ -30,10 +30,12 @@ class PriorityDialog(QDialog):
         self.initial_prio   = get_priority(note_id)
         if self.initial_prio is None or self.initial_prio == 0:
             self.initial_prio = 50
+            self.setWindowTitle("Choose a priority")
+        else:
+            self.setWindowTitle("Edit priority")
         self.setup_ui()
 
     def setup_ui(self):
-        self.setWindowTitle("Choose a priority")
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.slider = QtPrioritySlider(self.initial_prio, self.note_id, False, None)
