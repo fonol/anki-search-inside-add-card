@@ -4,10 +4,10 @@
 
     
         <div id='siac-queue-actions' class='flex-col'>
-            <div id='siac-queue-lbl' class='siac-bb-btn' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-prio-dialog");}'>{queue_info}</div>
+            <div id='siac-queue-lbl' class='siac-bb-btn' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-eval index.ui.reading_modal.show_prio_dialog()");}'>{queue_info}</div>
             <div class='w-100 flex-row'>
                 <div class='siac-bb-btn {has_schedule}' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-schedule-dialog");}' id='siac-schedule-dialog-btn' style='flex: 1 1 auto;'><i class="fa fa-clock-o mr-5"></i>Schedule</div>
-                <div class='siac-bb-btn' style='flex: 1 1 auto;'>Postpone</div>
+                <div class='siac-bb-btn' id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-eval index.ui.reading_modal.show_postpone_dialog()");}' style='flex: 1 1 auto;'>Postpone</div>
             </div>
             <div id='siac-first-in-queue-btn' class='siac-bb-btn' onclick='if (!pdfLoading && !modalShown) { noteLoading = true; greyoutBottom(); pycmd("{queue_btn_action}") }'>{queue_btn_text}</div>
             <div class='w-100 flex-row'>
