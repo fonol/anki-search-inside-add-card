@@ -103,6 +103,6 @@ class PostponeDialog(QDialog):
         elif self.tomorrow_rb.isChecked():
             self.value = 1
         elif self.days_rb.isChecked():
-            self.value = self.days_inp.value()
+            self.value = int(self.days_inp.value())
 
         self.accept()
