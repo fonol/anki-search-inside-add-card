@@ -175,14 +175,15 @@ class ReadingModal:
 
 
     def fill_sources(self, editor):
-        showInfo("debug")
+        """ Check if any of the fields in pdf.onOpen.autoFillFieldsWithPDFName are present, if yes, fill them with the note's title. """
+
         siacnote = self.note
 
         if siacnote:
-            note = self._editor.note
+            note                = self._editor.note
 
-            fields_to_prefill = get_config_value_or_default("pdf.onOpen.autoFillFieldsWithPDFName", [])
-            title = siacnote.get_title().replace("`", "&#96;")
+            fields_to_prefill   = get_config_value_or_default("pdf.onOpen.autoFillFieldsWithPDFName", [])
+            title               = siacnote.get_title().replace("`", "&#96;")
 
             if len(fields_to_prefill) > 0:
                 for f in fields_to_prefill:
@@ -470,7 +471,6 @@ class ReadingModal:
         text        = note.text
         created_dt  = datetime.datetime.strptime(note.created, '%Y-%m-%d %H:%M:%S')
         diff        = datetime.datetime.now() - created_dt
-        queue       = _get_priority_list()
         time_str    = "Added %s ago." % utility.date.date_diff_to_string(diff)
 
         if check_index():
@@ -651,7 +651,6 @@ class ReadingModal:
         except:
             return "<center>Could not load feed. Please check the URL.</center>"
         res             = read(feed_url)
-        dir             = utility.misc.get_web_folder_path()
         search_sources  = ""
         config          = mw.addonManager.getConfig(__name__)
         urls            = config["searchUrls"]
@@ -1182,10 +1181,6 @@ class ReadingModal:
         queue   = _get_priority_list()
         pos_lbl = ""
         if queue is not None and len(queue) > 0:
-            try:
-                pos = next(i for i,v in enumerate(queue) if v.id == nid)
-            except:
-                pos = -1
             pos_lbl     = "Priority: " + get_priority_as_str(nid)
         else:
             pos_lbl     = "Unqueued"
@@ -1433,8 +1428,6 @@ class ReadingModal:
             last_btn = ""
             if ReadingModal.last_cloze is not None and model_id == ReadingModal.last_cloze[0]:
                 ix          = [f["name"] for f in self._editor.note.model()["flds"]].index(ReadingModal.last_cloze[1])
-                # remove the blue color from the cloze brackets again
-                txt         = sentence.replace("`", "").replace("\n", "").replace("<span style='color: lightblue;'>", "").replace("}}</span>", "}}")
                 last_btn    = f"<div class='siac-btn siac-btn-dark mt-5' style='margin-right: 15px;' onclick=\"appendToField({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(ReadingModal.last_cloze[1], 15)}'</div>"
 
             btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
