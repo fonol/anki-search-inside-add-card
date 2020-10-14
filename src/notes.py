@@ -583,38 +583,6 @@ def recalculate_priority_queue(is_addon_start: bool = False):
                     to_decrease_delay.append((x[0], ix))
                 elif _delay(x[5]) <= 0:
                     to_decrease_delay.append((x[0], 0))
-
-        if MISSED_NOTES_HANDLING != "place-front":
-            for f in final_list:
-                if f[4] is None or len(f[4].strip()) == 0:
-                    continue
-                if _specific_schedule_was_due_before_today(f[4]):
-                    n           = SiacNote([None for i in range(15)])
-                    n.reminder  = f[4]
-                    if MISSED_NOTES_HANDLING == "remove-schedule" and n.schedule_type() == "td":
-                        to_remove_schedules.append(f[0])
-                    elif MISSED_NOTES_HANDLING == "new-schedule" or (n.schedule_type() == "wd" or n.schedule_type() == "id"):
-                        delta   = n.due_days_delta()
-                        now     = _date_now_str()
-                        if n.schedule_type() == "td":
-                            # show again in n days
-                            days_delta      = int(n.reminder.split("|")[2][3:])
-                            next_date_due   = datetime.now() + timedelta(days=days_delta)
-                            new_reminder    = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|td:{days_delta}"
-
-                        elif n.schedule_type() == "wd":
-                            # show again on next weekday instance
-                            wd_part         = n.reminder.split("|")[2]
-                            weekdays_due    = [int(d) for d in wd_part[3:]]
-                            next_date_due   = utility.date.next_instance_of_weekdays(weekdays_due)
-                            new_reminder    = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|{wd_part}"
-
-                        elif n.schedule_type() == "id":
-                            # show again according to interval
-                            days_delta      = int(n.reminder.split("|")[2][3:])
-                            next_date_due   = datetime.now() + timedelta(days=days_delta)
-                            new_reminder    = f"{now}|{utility.date.dt_to_stamp(next_date_due)}|id:{days_delta}"
-                        to_reschedule.append((f[0], new_reminder))
         
         # assert(len(scores) == 0 or len(final_list)  >0)
         # for s in scores:
