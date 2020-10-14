@@ -649,20 +649,3 @@ l422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120
 </g>
 </svg>
     """ % (w, h)
-
-def clock_svg(greyout):
-    greyout = "grey" if greyout else ""
-    return f"""
-<svg  class='siac-sched-icn {greyout}'  width="12" height="12" xmlns="http://www.w3.org/2000/svg">
- <g>
-  <rect fill="none" id="canvas_background" height="14" width="14" y="-1" x="-1"/>
- </g>
- <g>
-  <ellipse stroke="#000" ry="4.97339" rx="4.88163" id="svg_2" cy="5.91646" cx="6.192696" fill="none"/>
-  <line stroke-linecap="null" stroke-linejoin="null" id="svg_3" y2="6.338556" x2="6.009176" y1="2.961789" x1="6.009176" fill-opacity="null" stroke-opacity="null" stroke="#000" fill="none"/>
-  <line stroke-linecap="null" stroke-linejoin="null" id="svg_4" y2="6.522076" x2="9.606167" y1="6.55878" x1="6.04588" fill-opacity="null" stroke-opacity="null" stroke="#000" fill="none"/>
-  <line stroke-linecap="null" stroke-linejoin="null" id="svg_5" y2="6.999228" x2="5.788952" y1="6.37526" x1="6.009176" fill-opacity="null" stroke-opacity="null" stroke="#000" fill="none"/>
- </g>
-</svg>
-    """
-
