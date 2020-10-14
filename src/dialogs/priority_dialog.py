@@ -32,7 +32,7 @@ class PriorityDialog(QDialog):
             self.initial_prio = 50
             self.setWindowTitle("Choose a priority")
         else:
-            self.setWindowTitle("Edit priority")
+            self.setWindowTitle("Edit Priority")
         self.setup_ui()
 
     def setup_ui(self):
