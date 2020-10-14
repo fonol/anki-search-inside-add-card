@@ -191,21 +191,6 @@ window.textlayerClicked = function (event, el) {
     }
 }
 
-/**
- * Right click on a queue item in the bottom bar of the reading modal. 
- */
-window.queueLinkContextMenu = function (event, nid) {
-    event.preventDefault();
-    document.body.style.overflowY = "hidden";
-    $(document.body).append(`
-        <div onmouseleave='$(this).remove();' style='position: absolute; z-index: 1000; left: ${event.pageX}px; top: ${event.pageY - 30}px; width: 100px; height: 20px; text-align: center;' class='siac-pdf-contextmenu'> 
-            <div>    
-                <a class='siac-link-btn' style='color: lightgrey;' onclick='pycmd("siac-eval index.ui.reading_modal.show_remove_dialog(${nid})")'>Remove / Delete</a>
-            </div>
-        </div>
-    `);
-    return false;
-}
 
 /**
  *  executed after keyup in the pdf pane
