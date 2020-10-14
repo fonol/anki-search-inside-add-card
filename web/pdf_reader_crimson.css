@@ -567,6 +567,18 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     vertical-align: top;
     height: 100%;
 }
+.siac-queue-btn {
+    display: inline-block;
+    border: 2px outset #9c9c9c;
+    padding: 1px 5px 1px 5px;
+    font-size: 10px;
+    border-radius: 3px;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+.siac-queue-btn.siac-disabled {
+    color: grey !important;
+}
 .siac-related-notes-item {
     color: grey;
     cursor: pointer;
@@ -646,10 +658,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     z-index: 1;
     min-width: 130px;
 }
-.siac-queue-picker-icn {
-    margin-left: 25px; cursor: pointer; font-weight: bold; color: #c72c41;
-    display: inline-block;
-}
+
 .siac-queue-picker-icn:not(.siac-disabled):hover {
     transform: scale(1.4);
     filter: brightness(140%);
@@ -1047,7 +1056,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
 .siac-bb-btn {
     border: 2px outset #c72c41;
     border-radius: 4px;
-    margin: 3px;
+    margin: 4px 3px 3px 3px;
     text-align: center;
     font-size: 14px;
     line-height: 1em;
@@ -1063,37 +1072,19 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
 .siac-bb-btn.siac-disabled {
     color: grey !important;
 }
-
-.siac-prio-slider, .siac-prio-slider-small {
-    width: 190px;
-    -webkit-appearance: none; 
-    appearance: none;
-    background: #d3d3d3; 
-    outline: none;
-    opacity: 0.7; 
-    transition: opacity .2s;
-    height: 10px;
+.siac-prio-lbl {
+    color: white;
+    padding: 1px 3px 1px 3px;
     border-radius: 3px;
+    font-size: 10px;
+    font-weight: normal;
+    display: inline-block;
+    text-align: center;
+    min-width: 14px;
 }
-.siac-prio-slider-small {
-    width: 150px;
-    height: 8px;
+.siac-prio-lbl.siac-disabled {
+    opacity: 0.6;
 }
-.siac-prio-slider:hover, .siac-prio-slider-small:hover {
-    opacity: 1;
-  }
-  .siac-prio-slider::-webkit-slider-thumb, .siac-prio-slider-small::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 15px;
-    height: 20px;
-    background: #2496dc;
-    cursor: pointer;
-    border-radius: 3px;
-  }
-  .siac-prio-slider::-webkit-slider-thumb:hover, .siac-prio-slider-small::-webkit-slider-thumb:hover {
-      filter: brightness(1.4);
-  }
 label input:checked ~ span {
     font-weight: bold;
 }
