@@ -818,7 +818,7 @@ class ReadingModal:
             hover_actions       = "onmouseenter='showQueueInfobox(this, %s);' onmouseleave='leaveQueueItem(this);'" % (queue_item.id) if not hide else ""
             #if the note is a pdf or feed, show a loader on click
             pdf_or_feed         = queue_item.is_feed() or queue_item.is_pdf()
-            clock               = clock_svg(len(should_greyout) > 0) if queue_item.is_scheduled() else ""
+            clock               = "&nbsp; <i class='fa fa-calendar'/>&nbsp;" if queue_item.is_scheduled() else ""
             should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showPDFLoader();' if pdf_or_feed else ""
             queue_head_readings +=  "<a oncontextmenu='queueLinkContextMenu(event, %s)' onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-link-btn bold %s' style='font-size: 12px;' %s >%s.%s %s</a><br>" % (queue_item.id, should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
             if ix > 3:
