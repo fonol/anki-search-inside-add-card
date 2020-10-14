@@ -268,9 +268,13 @@ class ReadingModal:
     def show_postpone_dialog(self):
         """ Show a dialog to move the note either back in the queue or schedule for a future day. """
 
+        self.note = get_note(self.note_id)
+        if self.note.position is None:
+            tooltip("Cannot postpone a note that is not in the queue.", period=5000)
+            return
+
         dialog          = PostponeDialog(self._editor.parentWindow, self.note_id)
         if dialog.exec_():
-            self.note = get_note(self.note_id)
             # 1. option: later today (move back in queue)
             if dialog.value == 0:
                 qlen = len(_get_priority_list())
