@@ -543,17 +543,18 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 }
 #siac-pdf-bottom-tab {
     display: inline-block;
-    max-height: 89px;
     overflow: hidden;
     overflow-y: auto;
     vertical-align: top;
     margin-top: 4px;
     padding: 0 5px 0 0;
     box-sizing: border-box;
-    max-width: 380px;
     white-space: normal;
     line-height: 1.2em;
+    min-width: 220px;
+    max-width: 380px;
     min-height: 70px;
+    max-height: 89px;
 }
 .siac-reading-modal-button-bar-wrapper {
     flex: 0 0 30px; 
