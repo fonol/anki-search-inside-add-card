@@ -885,7 +885,7 @@ window.onReadingModalClose = function () {
     if (siacState.searchOnTyping) {
         setSearchOnTyping(true, false);
     }
-    pycmd("siac-on-reading-modal-close")
+    pycmd("siac-on-reading-modal-close");
 }
 
 
