@@ -20,6 +20,7 @@ from aqt.utils import tooltip
 import typing
 import os
 from ..config import get_config_value_or_default
+from .components import ClickableQLabel
 
 import utility.misc
 import state
@@ -41,8 +42,8 @@ class PostponeDialog(QDialog):
         self.layout = QVBoxLayout()
 
         self.later_rb       = QRadioButton("Later Today")
-        self.tomorrow_rb    = QRadioButton("Tomorrow")
-        self.days_rb        = QRadioButton("In ")
+        self.tomorrow_rb    = QRadioButton("")
+        self.days_rb        = QRadioButton("")
         self.group          = QButtonGroup()
         for ix, b in enumerate([self.later_rb, self.tomorrow_rb, self.days_rb]):
             self.group.addButton(b, ix)
@@ -65,8 +66,34 @@ class PostponeDialog(QDialog):
         self.layout.addSpacing(20)
 
         self.layout.addWidget(self.later_rb)
-        self.layout.addWidget(self.tomorrow_rb)
-        self.days_container = QHBoxLayout()
+
+        icon = "calendar_night" if state.night_mode else "calendar"
+        pmap = QPixmap(utility.misc.get_web_folder_path() + f"icons/{icon}").scaled(QSize(13, 13), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+        # Tomorrow radio button + label
+        t_hb = QHBoxLayout()
+        t_hb.addWidget(self.tomorrow_rb)
+        t_icn = ClickableQLabel()
+        t_icn.setPixmap(pmap)
+        t_icn.clicked.connect(self.toggle_tomorrow_rb)
+        t_hb.addWidget(t_icn)
+        t_lbl = ClickableQLabel("Tomorrow")
+        t_lbl.clicked.connect(self.toggle_tomorrow_rb)
+        t_hb.addWidget(t_lbl)
+        t_hb.addStretch()
+        self.layout.addLayout(t_hb)
+
+
+        # In ... days radio button + label
+        d_hb = QHBoxLayout()
+        d_lbl = ClickableQLabel("In ")
+        d_lbl.clicked.connect(self.toggle_days_rb)
+        d_hb.addWidget(self.days_rb)
+        d_icn = ClickableQLabel()
+        d_icn.setPixmap(pmap)
+        d_icn.clicked.connect(self.toggle_days_rb)
+        d_hb.addWidget(d_icn)
+        d_hb.addWidget(d_lbl)
         self.days_inp = QDoubleSpinBox()
         self.days_inp.setSingleStep(1)
         self.days_inp.setValue(3)
@@ -74,10 +101,17 @@ class PostponeDialog(QDialog):
         self.days_inp.setMaximum(10000)
         self.days_inp.setDecimals(0)
         self.days_inp.setSuffix(" day(s)")
-        self.days_container.addWidget(self.days_rb)
-        self.days_container.addWidget(self.days_inp)
-        self.days_container.addStretch()
-        self.layout.addLayout(self.days_container)
+        d_hb.addWidget(self.days_inp)
+        d_hb.addStretch()
+        self.layout.addLayout(d_hb)
+
+        # self.layout.addWidget(self.tomorrow_rb)
+        # self.days_container = QHBoxLayout()
+        
+        # self.days_container.addWidget(self.days_rb)
+        # self.days_container.addWidget(self.days_inp)
+        # self.days_container.addStretch()
+        # self.layout.addLayout(self.days_container)
 
         self.later_rb.setChecked(True)
 
@@ -97,6 +131,12 @@ class PostponeDialog(QDialog):
         self.setLayout(self.layout)
         self.setMinimumWidth(300)
             
+    def toggle_tomorrow_rb(self):
+        self.tomorrow_rb.setChecked(not self.tomorrow_rb.isChecked())
+
+    def toggle_days_rb(self):
+        self.days_rb.setChecked(not self.days_rb.isChecked())
+        
     def on_accept(self):
         if self.later_rb.isChecked():
             self.value = 0
