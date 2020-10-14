@@ -644,6 +644,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             index.ui.reading_modal.reload_bottom_bar()
         tooltip(f"<center>Removed from Queue.</center>")
 
+        # DEBUG
+        if state.dev_mode:
+            note = get_note(to_remove)
+            assert(not get_priority(to_remove))
+            assert(note.position is None or note.is_or_was_due())
+            assert(not note.is_in_queue() or note.is_or_was_due())
+
     elif cmd == "siac-on-reading-modal-close":
         index.ui.reading_modal.reset()
         run_hooks("reading-modal-closed")
