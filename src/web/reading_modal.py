@@ -295,11 +295,18 @@ class ReadingModal:
                 else:
                     new_reminder = utility.date.get_new_reminder("td", str(days_delta))
                 update_reminder(self.note_id, new_reminder)
+
+                # remove note from queue
                 prio = get_priority(self.note_id)
-                if prio and prio > 0:
-                    update_priority_list(self.note_id, 0)
-                else:
-                    recalculate_priority_queue()
+                update_priority_list(self.note_id, 0)
+
+                # DEBUG
+                if state.dev_mode: 
+                    note = get_note(self.note_id)
+                    assert(get_priority(self.note_id) is None)
+                    assert(not note.is_in_queue())
+                    assert(note.position is None)
+
                 self.read_head_of_queue()
 
     @js
