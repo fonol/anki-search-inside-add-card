@@ -287,6 +287,12 @@ def add_to_prio_log(nid: int, prio: int):
     conn.commit()
     conn.close()
 
+def remove_delay(nid: int):
+    """ Clear the delay field for the given note. """
+    conn = _get_connection()
+    conn.execute(f"update notes set delay = NULL where id={nid}")
+    conn.commit()
+    conn.close()
 
 def set_delay(nid: int, delay: int):
     """ Update the delay field for the given note. """
@@ -323,26 +329,17 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
     nid_was_included        = False
     now                     = datetime.now()
 
-    # TODO
-    # include_future_scheds   = get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True)
-
-
     for nid, last_prio, last_prio_creation, current_position, rem, delay in current:
 
-        # TODO
-        # if a note is scheduled for the future and should not appear in the queue now, skip it
-        # if not include_future_scheds and utility.date.schedule_is_due_in_the_future(rem):
-            # continue
-
-        # last prio might be null, because of legacy queue system
         if last_prio is None:
-            # lazy solution: set to average priority
-            last_prio           = 50
-            now                 += timedelta(seconds=1)
-            ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
-            last_prio_creation  = ds
-            # to_update_in_log.append((nid, ds, schedule))
-            
+            if not _specific_schedule_is_due_today(rem):
+                continue
+            else:
+                last_prio           = 50
+                now                 += timedelta(seconds=1)
+                ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
+                last_prio_creation  = ds
+
         # assert(current_position >= 0)
         
         if nid == nid_to_update:
@@ -521,9 +518,6 @@ def recalculate_priority_queue(is_addon_start: bool = False):
         priority log. Has to be done at least once on startup to incorporate the changed difference in days.
     """
 
-    # TODO
-    # include_future_scheds   = get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True)
-
     for i in range(0,2):
         current             = _get_priority_list_with_last_prios()
         scores              = []
@@ -536,19 +530,22 @@ def recalculate_priority_queue(is_addon_start: bool = False):
 
         for nid, last_prio, last_prio_creation, current_position, reminder, delay in current:
 
-            # TODO
-            # if a note is scheduled for the future and should not appear in the queue now, skip it
-            # if not include_future_scheds and utility.date.schedule_is_due_in_the_future(reminder):
-                # continue
-
-            # last prio might be null, because of legacy queue system
             if last_prio is None:
-                # lazy solution: set to average priority
-                last_prio           = 50
-                now                 += timedelta(seconds=1)
-                ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
-                last_prio_creation  = ds
+                if not _specific_schedule_is_due_today(reminder):
+                    continue
+                else:
+                    last_prio = 50
+                    now                 += timedelta(seconds=1)
+                    ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
+                    last_prio_creation  = ds
+
+                # # lazy solution: set to average priority
+                # last_prio           = 50
+                # now                 += timedelta(seconds=1)
+                # ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
+                # last_prio_creation  = ds
                 # to_update_in_log.append((nid, ds, last_prio))
+
                 
             # assert(current_position >= 0)
             days_delta = max(0, (datetime.now() - _dt_from_date_str(last_prio_creation)).total_seconds() / 86400.0)
