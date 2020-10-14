@@ -52,8 +52,6 @@ class ScheduleDialog(QDialog):
         self.layout().addLayout(hbox)
         self.layout().addSpacing(16)
 
-
-
         self.layout().addWidget(self.scheduler)
         accept = QPushButton("Save")
         accept.clicked.connect(self.accept)
