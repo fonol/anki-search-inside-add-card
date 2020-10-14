@@ -40,6 +40,20 @@ class ScheduleDialog(QDialog):
 
         self.setLayout(QVBoxLayout())
 
+        c_lbl = QLabel(self)
+        c_icon   = "calendar_night.png" if state.night_mode else "calendar.png"
+        c_pixmap  = QPixmap(utility.misc.get_web_folder_path() + f"icons/{c_icon}").scaled(QSize(35, 35), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        c_lbl.setPixmap(c_pixmap)
+        hbox    = QHBoxLayout()
+        hbox.addStretch()
+        hbox.addWidget(c_lbl)
+        hbox.addStretch()
+        self.layout().addSpacing(10)
+        self.layout().addLayout(hbox)
+        self.layout().addSpacing(16)
+
+
+
         self.layout().addWidget(self.scheduler)
         accept = QPushButton("Save")
         accept.clicked.connect(self.accept)
