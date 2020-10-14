@@ -775,6 +775,11 @@ class ReadingModal:
 
         config              = mw.addonManager.getConfig(__name__)
         hide                = config["pdf.queue.hide"]
+        position            = str(note.position+1) if note .position is not None else "-"
+        avg_prio            = round(get_avg_priority(), 1)
+        show_prios          = config["notes.queue.show_priorities"]
+        if show_prios:
+            priorities      = get_priorities([n.id for n in queue[:5]])
         queue_head_readings = ""
 
         for ix, queue_item in enumerate(queue):
@@ -791,21 +796,37 @@ class ReadingModal:
             pdf_or_feed         = queue_item.is_feed() or queue_item.is_pdf()
             clock               = "&nbsp; <i class='fa fa-calendar'/>&nbsp;" if queue_item.is_scheduled() else ""
             should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showPDFLoader();' if pdf_or_feed else ""
-            queue_head_readings +=  "<a oncontextmenu='queueLinkContextMenu(event, %s)' onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-link-btn bold %s' style='font-size: 12px;' %s >%s.%s %s</a><br>" % (queue_item.id, should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
+            if show_prios:
+                if queue_item.id in priorities:
+                    prio_lbl        = priorities[queue_item.id]
+                    prio_lbl        = f"<span class='mr-5 ml-5 siac-prio-lbl' style='background: {utility.misc.prio_color(prio_lbl)};'>{prio_lbl}</span>"
+                else:
+                    prio_lbl        = f"<span class='mr-5 ml-5 siac-prio-lbl fg_lightgrey' style='background: #5a5a5a;'>-</span>"
+            else: 
+                prio_lbl = ""
+            queue_head_readings +=  "<a onclick='if (!pdfLoading && !modalShown) {%s destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-link-btn bold %s' style='font-size: 12px;' %s >%s.%s%s %s</a><br>" % (should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, prio_lbl, clock, qi_title)
             if ix > 3:
                 break
 
         if hide:
-            hide_btn = """<div style='display: inline-block; margin-left: 12px;' class='blue-hover fg_grey' onclick='unhideQueue(%s)'>(Show Items)</div>""" % note_id
+            hide_btn = """<div class='fg_grey bright-hover siac-queue-btn ml-5' onclick='unhideQueue(%s)'>Show Items</div>""" % note_id
         else:
-            hide_btn = """<div style='display: inline-block; margin-left: 12px;' class='blue-hover fg_grey' onclick='hideQueue(%s)'>(Hide Items)</div>""" % note_id
+            hide_btn = """<div class='fg_grey bright-hover siac-queue-btn ml-5' onclick='hideQueue(%s)'>Hide Items</div>""" % note_id
 
-        html = """
-        <div id='siac-queue-readings-list' style='display: inline-block; vertical-align: top; margin-left: 20px; user-select: none;'>
-            <div class='fg_lightgrey' style='margin: 0px 0 1px 0; display: inline-block;'><i class="fa fa-inbox" aria-hidden="true"></i> &nbsp;Queue Head:</div>%s<br>
-                %s
+        show_prio_action    = "off" if show_prios else "on"
+        show_prio_lbl       = "Hide" if show_prios else "Show"
+        show_prio_btn       = f"""<div class='fg_grey bright-hover siac-queue-btn ml-5' onclick='pycmd("siac-toggle-show-prios {show_prio_action}")'>{show_prio_lbl} Prios</div>"""
+
+        html = f"""
+        <div id='siac-queue-readings-list' style='display: inline-block; vertical-align: top; margin-left: 20px; min-width: 300px; user-select: none;'>
+            <div class='fg_lightgrey cursor-pointer white-hover siac-queue-btn' onclick='pycmd("siac-user-note-queue-picker")'><i class="fa fa-inbox mr-10"></i>{position} / {len(queue)}</div>
+            <div class='fg_lightgrey siac-queue-btn ml-5'>&#216;&nbsp;{avg_prio}</div>
+            {hide_btn}
+            {show_prio_btn} 
+            <br>
+            {queue_head_readings} 
         </div>
-        """ % (hide_btn, queue_head_readings)
+        """
 
         return html
 
