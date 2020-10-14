@@ -601,16 +601,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             notes = find_by_tag(" ".join(cmd.split()[1:]))
             index.ui.print_search_results(notes, stamp)
 
-    elif cmd.startswith("siac-user-note-queue-picker "):
+    elif cmd == "siac-user-note-queue-picker":
         # show the queue manager dialog
-        nid     = int(cmd.split()[1])
-        picker  = QueuePicker(self.parentWindow)
-        if picker.exec_() and picker.chosen_id() is not None and picker.chosen_id() >= 0:
-            # note = get_note(nid)
-            index.ui.reading_modal.display(picker.chosen_id())
-        else:
-            if nid >= 0:
-                index.ui.reading_modal.reload_bottom_bar()
+        dialog  = QueuePicker(self.parentWindow)
+        dialog.exec_()
+        index.ui.reading_modal.reload_bottom_bar()
 
 
     elif cmd == "siac-user-note-update-btns":
@@ -744,6 +739,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-hide-pdf-queue "):
         config["pdf.queue.hide"] = True
+        write_config()
+        index.ui.reading_modal.reload_bottom_bar()
+
+    elif cmd.startswith("siac-toggle-show-prios "):
+        config["notes.queue.show_priorities"] = cmd.split(" ")[1] == "on"
         write_config()
         index.ui.reading_modal.reload_bottom_bar()
 
