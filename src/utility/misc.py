@@ -278,6 +278,13 @@ def img_src_base_path():
     port = mw.mediaServer.getPort()
     return f"http://127.0.0.1:{port}/_addons/{get_addon_id()}/web/icons/"
 
+def qlabel_image(icon_name, w, h):
+    """ Return a QLabel with the given icon as pixmap. """
+    lbl     = QLabel()
+    pixmap  = QPixmap(get_web_folder_path() + f"icons/{icon_name}").scaled(QSize(w, h), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    lbl.setPixmap(pixmap)
+    return lbl
+
 def url_to_pdf(url, output_path, cb_after_finish = None):
     """
         Save the given site as pdf. 
@@ -381,6 +388,7 @@ def load_rust_lib():
 
 def subdirs_fullpath(path):
     return [entry.path for entry in os.scandir(path) if entry.is_dir()]
+
 
 # region Color Utils
 
