@@ -559,3 +559,13 @@ class MDTextEdit(QTextEdit):
         super(MDTextEdit, self).insertFromMimeData(source)
         if source.hasText():
             self.text_was_pasted = True
+
+
+class ClickableQLabel(QLabel):
+    clicked = pyqtSignal()
+
+    def __init__(self, parent=None):
+        QLabel.__init__(self, parent)
+
+    def mousePressEvent(self, evt):
+        self.clicked.emit()
