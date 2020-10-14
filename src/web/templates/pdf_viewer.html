@@ -47,7 +47,7 @@
 <div class='siac-btn siac-btn-dark' id='siac-mark-jump-btn' onclick='$(this).toggleClass("expanded"); onMarkBtnClicked(this);'><img src='{marks_grey_img_src}' style='width: 16px; height: 16px;'/>
     <div id='siac-mark-jump-btn-inner' class='expanded-hidden white-hover fg_lightgrey ta_center' style='margin: 0 2px 0 5px;'></div>
 </div>
-{quick_sched_btn} 
+<div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='pycmd("siac-user-note-done")'><i class='fa fa-check'></i></div>
 <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark fg_lightgrey' onclick='pycmd("siac-close-iframe")'><b>&times; &nbsp;CLOSE</b></div>
 <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" oncopy='onPDFCopy(event)' onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
     <div id='siac-pdf-wrapper'>
