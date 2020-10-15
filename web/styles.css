@@ -175,6 +175,7 @@
 */
 #leftSide {
     position: relative;
+    flex-direction: column; 
 }
 #outerWr #fields {
     overflow-y: auto;
