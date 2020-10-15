@@ -50,7 +50,6 @@ window.pdfTooltipEnabled = true;
 window.iframeIsDisplayed = false;
 window.pageSidebarDisplayed = true;
 window.pdfFullscreen = false;
-window.pdfBarsHidden = false;
 window.displayedNoteId = null;
 window.pdfTextLayerMetaKey = false;
 window.bottomBarTabDisplayed = "marks";
@@ -417,34 +416,6 @@ window.setAllPagesRead = function () {
     }
 }
 
-window.toggleQueue = function () {
-    if (noteLoading || pdfLoading || modalShown) {
-        return;
-    }
-    let $wr = $("#siac-queue-sched-wrapper");
-    if ($wr.hasClass('active')) {
-        $wr.css({ "max-width": "0px", "overflow": "hidden" });
-        $('.siac-queue-sched-btn:first').addClass("active");
-    } else {
-        $wr.css({ "max-width": "500px", "overflow": "visible" });
-        $('.siac-queue-sched-btn:first').removeClass("active");
-    }
-    $wr.toggleClass('active');
-    pycmd('siac-load-queue')
-}
-window.queueSchedBtnClicked = function (btn_el) {
-    $('#siac-queue-lbl').hide();
-    $('.siac-queue-sched-btn').removeClass("active");
-    toggleQueue();
-    $(btn_el).addClass("active");
-}
-window.onQuickSchedBtnClicked = function (elem) {
-    if (!$(elem).hasClass("expanded")) {
-        pycmd("siac-quick-schedule-fill");
-    } else {
-        $(elem).toggleClass('expanded');
-    }
-}
 window.setLastReadPage = function () {
     pdfLastReadPages[displayedNoteId] = pdfDisplayedCurrentPage;
 }
@@ -821,16 +792,47 @@ window.hideQueue = function (nid) {
     if (pdfLoading || noteLoading || modalShown) { return; }
     pycmd("siac-hide-pdf-queue " + nid);
 }
-window.toggleReadingModalBars = function () {
-    if (!pdfBarsHidden) {
-        byId("siac-reading-modal-top-bar").classList.add("top-hidden");
-        byId("siac-reading-modal-bottom-bar").classList.add("bottom-hidden");
-        pdfBarsHidden = true;
+window.toggleBottomBar = function() {
+    if (byId('siac-reading-modal-bottom-bar').classList.contains('bottom-hidden')) {
+        byId('siac-reading-modal-bottom-bar').classList.remove('bottom-hidden');
+        pycmd('siac-config-bool notes.queue.hide_bottom_bar false');
     } else {
-        byId("siac-reading-modal-top-bar").classList.remove("top-hidden");
-        byId("siac-reading-modal-bottom-bar").classList.remove("bottom-hidden")
-        pdfBarsHidden = false;
+        byId('siac-reading-modal-bottom-bar').classList.add('bottom-hidden');
+        pycmd('siac-config-bool notes.queue.hide_bottom_bar true');
     }
+}
+window.toggleTopBar = function() {
+    if (byId('siac-reading-modal-top-bar').classList.contains('top-hidden')) {
+        byId('siac-reading-modal-top-bar').classList.remove('top-hidden');
+        pycmd('siac-config-bool notes.queue.hide_top_bar false');
+    } else {
+        byId('siac-reading-modal-top-bar').classList.add('top-hidden');
+        pycmd('siac-config-bool notes.queue.hide_top_bar true');
+    }
+}
+window.hideBothBars = function() {
+        byId('siac-reading-modal-top-bar').classList.add('top-hidden');
+        byId('siac-reading-modal-bottom-bar').classList.add('bottom-hidden');
+        pycmd('siac-config-bool notes.queue.hide_top_bar true');
+        pycmd('siac-config-bool notes.queue.hide_bottom_bar true');
+}
+window.toggleBothBars = function() {
+    if (byId('siac-reading-modal-bottom-bar').classList.contains('bottom-hidden')) {
+        byId('siac-reading-modal-bottom-bar').classList.remove('bottom-hidden');
+        byId('siac-reading-modal-top-bar').classList.remove('top-hidden');
+        pycmd('siac-config-bool notes.queue.hide_bottom_bar false');
+        pycmd('siac-config-bool notes.queue.hide_top_bar false');
+    } else {
+        byId('siac-reading-modal-bottom-bar').classList.add('bottom-hidden');
+        byId('siac-reading-modal-top-bar').classList.add('top-hidden');
+        pycmd('siac-config-bool notes.queue.hide_bottom_bar true');
+        pycmd('siac-config-bool notes.queue.hide_top_bar true');
+    }
+}
+window.bothBarsAreHidden = function() {
+    return byId('siac-reading-modal-top-bar').classList.contains('top-hidden') && 
+        byId('siac-reading-modal-bottom-bar').classList.contains('bottom-hidden');
+
 }
 
 window.toggleReadingModalFullscreen = function () {
@@ -840,8 +842,7 @@ window.toggleReadingModalFullscreen = function () {
         if (pdfDisplayed) {
             pdfFitToPage();
         }
-        pdfBarsHidden = false;
-        toggleReadingModalBars();
+        hideBothBars(); 
         pycmd("siac-notification Press toggle shortcut (default Ctrl+F) to switch.");
 
     } else {
@@ -858,7 +859,6 @@ window.toggleReadingModalFullscreen = function () {
 }
 window.activateReadingModalFullscreen = function () {
     pdfFullscreen = false;
-    pdfBarsHidden = true;
     toggleReadingModalFullscreen();
 }
 window.onReadingModalClose = function () {
