@@ -445,34 +445,36 @@ def _calc_score(priority: int, days_delta: float) -> float:
         return PRIORITY_SCALE_FACTOR * days_delta + PRIORITY_MOD * prio_score
 
 def get_reminder(nid: int) -> str:
-    conn = _get_connection()
-    res = conn.execute(f"select reminder from notes where id = {nid} limit 1").fetchone()
+    conn    = _get_connection()
+    res     = conn.execute(f"select reminder from notes where id = {nid} limit 1").fetchone()
     if res is None:
         return None
     conn.close()
     return res[0]
 
 def get_priority(nid: int) -> Optional[int]:
-    conn = _get_connection()
-    res = conn.execute(f"select prio from queue_prio_log where nid = {nid} order by created desc limit 1").fetchone()
+    conn    = _get_connection()
+    res     = conn.execute(f"select prio from queue_prio_log where nid = {nid} order by created desc limit 1").fetchone()
     if res is None or len(res) == 0:
         return None
     conn.close()
     return res[0]
 
 def get_priorities(nids: List[int]) -> Dict[int, int]:
-    nid_str = ",".join([str(nid) for nid in nids])
-    conn = _get_connection()
-    res = conn.execute(f"select nid, prio, max(created) from queue_prio_log where nid in ({nid_str}) group by nid").fetchall()
-    conn.close()
     d = dict()
+    if nids is None or len(nids) == 0:
+        return d
+    nid_str = ",".join([str(nid) for nid in nids])
+    conn    = _get_connection()
+    res     = conn.execute(f"select nid, prio, max(created) from queue_prio_log where nid in ({nid_str}) group by nid").fetchall()
+    conn.close()
     for r in res:
         d[r[0]] = r[1]
     return d
 
 def get_avg_priority() -> float:
-    conn = _get_connection()
-    res = conn.execute(f"select avg(prio) from (select prio, max(created) from queue_prio_log group by nid)").fetchone()
+    conn    = _get_connection()
+    res     = conn.execute(f"select avg(prio) from (select prio, max(created) from queue_prio_log group by nid)").fetchone()
     conn.close()
     if res is None or len(res) == 0:
         return 0
@@ -1527,7 +1529,7 @@ def get_linked_anki_notes_for_pdf_page(siac_nid: int, page: int) -> List[IndexNo
 
 def get_linked_anki_notes_around_pdf_page(siac_nid: int, page: int) -> List[Tuple[int, int]]:
     conn = _get_connection()
-    nps  = conn.execute(f"select page from notes_pdf_page where siac_nid = {siac_nid} and page >= {page-3} and page <= {page + 3}").fetchall()
+    nps  = conn.execute(f"select page from notes_pdf_page where siac_nid = {siac_nid} and page >= {page-6} and page <= {page + 6}").fetchall()
     conn.close()
     if not nps or len(nps) == 0:
         return []
