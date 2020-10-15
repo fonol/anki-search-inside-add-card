@@ -478,14 +478,15 @@ def get_avg_priority() -> float:
     conn.close()
     if res is None or len(res) == 0:
         return 0
+    if res[0] is None:
+        return 0
     return res[0]
-
 
 
 def get_priority_as_str(nid: int) -> str:
     """ Get a str representation of the priority of the given note, e.g. 'Very high' """
-    conn = _get_connection()
-    res = conn.execute(f"select prio from queue_prio_log where nid = {nid} order by created desc limit 1").fetchone()
+    conn    = _get_connection()
+    res     = conn.execute(f"select prio from queue_prio_log where nid = {nid} order by created desc limit 1").fetchone()
     conn.close()
     if res is None or len(res) == 0:
         return "No priority yet"
