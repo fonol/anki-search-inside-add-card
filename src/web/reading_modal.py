@@ -466,7 +466,7 @@ class ReadingModal:
                             queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
                         }
                         updatePdfProgressBar();
-                        if (pdfBarsHidden) {
+                        if (bothBarsAreHidden()) {
                             readerNotification("%s");
                         }
                         if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
@@ -573,12 +573,14 @@ class ReadingModal:
                 overflow    = "hidden"
                 text        = self.text_note_html(editable, priority)
             bottom_bar      = self.bottom_bar(note)
+
+            top_hidden      = "top-hidden" if conf_or_def("notes.queue.hide_top_bar", False) else ""
         
             if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
                 notification    = f"readerNotification('Scheduled for {note.due_date_str()}');"
 
             params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, text = text, 
-            overflow=overflow, 
+            overflow=overflow, top_hidden=top_hidden, 
             notification=notification, page_sidebar=page_sidebar, rev_overlay = rev_overlay, bottom_bar=bottom_bar)
             
             html = filled_template("reading_modal", params)
@@ -629,7 +631,7 @@ class ReadingModal:
                 <div id='siac-yt-player' class='w-100' style='flex: 1 1 auto; box-sizing: border-box; margin: 10px -15px 0 0;'></div>
                 <div class="siac-reading-modal-button-bar-wrapper">
                     <div class='user_sel_none' style='position: absolute; left: 0; z-index: 1;'>
-                        <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
+                        <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleBottomBar();'>&#x2195;</div>
                         <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {self.note_id}")'><b>&#9998; Note</b></div>
                         <div class='siac-btn siac-btn-dark ml-5' onclick='ytSavePosition();'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save Position&nbsp;</b></div>
                         <div class='siac-btn siac-btn-dark ml-5' onclick='ytScreenCapture();'><b>&nbsp;<i class="fa fa-camera"></i> &nbsp;Capture&nbsp;</b></div>
@@ -641,7 +643,7 @@ class ReadingModal:
                 pdfLoading = false;
                 noteLoading = false;
                 pdfDisplayed = null;
-                if (pdfBarsHidden) {{
+                if (bothBarsAreHidden()) {{
                     readerNotification("{title}");
                 }}
                 displayedNoteId = {self.note_id};
@@ -698,7 +700,7 @@ class ReadingModal:
             <iframe id='siac-iframe' sandbox='allow-scripts' style='height: calc(100% - 47px);'></iframe>
             <div class="siac-reading-modal-button-bar-wrapper">
                 <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
-                    <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
+                    <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleBottomBar();'>&#x2195;</div>
                     <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")'><b>&#9998; Note</b></div>
                 </div>
             </div>
@@ -752,20 +754,20 @@ class ReadingModal:
             queue_info      = "Scheduled for future date"
         queue_readings_list = self.get_queue_head_display(queue, editable)
 
+        bar_hidden          = "bottom-hidden" if get_config_value_or_default("notes.queue.hide_bottom_bar", False) else ""
+
         params              = dict(note_id = note_id, queue_btn_text = queue_btn_text, queue_info = queue_info, 
-        queue_readings_list = queue_readings_list, has_schedule=has_schedule, hide_page_map = hide_page_map)
+        queue_readings_list = queue_readings_list, has_schedule=has_schedule, hide_page_map = hide_page_map, bar_hidden = bar_hidden)
 
         html                = filled_template("reading_modal_bottom", params)
 
         return html
 
     def get_queue_head_display(self, queue: Optional[List[SiacNote]] = None, should_save: bool = False) -> str:
-        """ This returns the html for the little list at the bottom of the reading modal which shows the first 5 items in the queue. """
+        """ This builds the html for the little list at the bottom of the reading modal which shows the first 5 items in the queue. """
 
         if queue is None:
             queue = _get_priority_list()
-        if queue is None or len(queue) == 0:
-            return "<div id='siac-queue-readings-list' style='display: inline-block; vertical-align: top; margin-left: 20px; user-select: none;'></div>"
 
         note_id             = self.note_id
         note                = self.note
@@ -775,7 +777,7 @@ class ReadingModal:
 
         config              = mw.addonManager.getConfig(__name__)
         hide                = config["pdf.queue.hide"]
-        position            = str(note.position+1) if note .position is not None else "-"
+        position            = str(note.position+1) if note.position is not None else "-"
         avg_prio            = round(get_avg_priority(), 1)
         show_prios          = config["notes.queue.show_priorities"]
         if show_prios:
@@ -785,7 +787,7 @@ class ReadingModal:
         for ix, queue_item in enumerate(queue):
 
             should_greyout = "greyedout" if queue_item.id == int(note_id) else ""
-            if not hide or queue_item.id == int(note_id) :
+            if not hide or queue_item.id == int(note_id):
                 qi_title = utility.text.trim_if_longer_than(queue_item.get_title(), 40)
                 qi_title = ihtml.escape(qi_title)
             else:
@@ -818,7 +820,7 @@ class ReadingModal:
         show_prio_btn       = f"""<div class='fg_grey bright-hover siac-queue-btn ml-5' onclick='pycmd("siac-toggle-show-prios {show_prio_action}")'>{show_prio_lbl} Prios</div>"""
 
         html = f"""
-        <div id='siac-queue-readings-list' style='display: inline-block; vertical-align: top; margin-left: 20px; min-width: 300px; user-select: none;'>
+        <div id='siac-queue-readings-list'>
             <div class='fg_lightgrey cursor-pointer white-hover siac-queue-btn' onclick='pycmd("siac-user-note-queue-picker")'><i class="fa fa-inbox mr-10"></i>{position} / {len(queue)}</div>
             <div class='fg_lightgrey siac-queue-btn ml-5'>&#216;&nbsp;{avg_prio}</div>
             {hide_btn}
