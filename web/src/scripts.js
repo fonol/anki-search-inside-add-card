@@ -547,7 +547,7 @@ window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1
     else
         lastHadResults = false;
     if (!$searchInfo.hasClass('hidden'))
-        $searchInfo.get(0).style.display = "block";
+        $searchInfo.get(0).style.display = "flex";
     if (renderImmediately) {
         if (gridView)
             $('#searchResults .cardWrapper').css("display", "inline-block");
@@ -905,8 +905,9 @@ window.toggleSearchbarMode = function(elem) {
 }
 
 window.globalKeydown = function(e) {
+    // F11 : hide bars
     if (displayedNoteId && e.keyCode === 122) {
-        toggleReadingModalBars();
+        toggleBothBars();
     }  else if (pdfDisplayed && !$('.field').is(':focus')) {
         pdfViewerKeyup(e);
     }
