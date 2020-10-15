@@ -174,6 +174,8 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
         (() => { 
             if (document.getElementById('outerWr') == null) {
                 $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
+                $('#dupes').insertAfter('#fields');
+                
                 document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
                 let toInsert = `%s`;
                 %s  
