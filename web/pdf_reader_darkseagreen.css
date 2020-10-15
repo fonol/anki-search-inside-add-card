@@ -574,7 +574,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     font-size: 10px;
     border-radius: 3px;
     font-weight: bold;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
 }
 .siac-queue-btn.siac-disabled {
     color: grey !important;
