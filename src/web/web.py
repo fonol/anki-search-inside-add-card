@@ -493,8 +493,12 @@ def changelog() -> List[str]:
 
     return [
        "Added 'mix_reviews_and_reading' config option, see config dialog for an explanation",
+       "Reworked parts of the bottom bar in the reader",
+       "Top & bottom bar in the reader can now be toggled independently of each other",
        "Create/Update Note dialog should remember its size now",
-       "Remember 'Include Anki Tags' in Create/Update Note dialog"
+       "Remember 'Include Anki Tags' in Create/Update Note dialog",
+       "Fix 'Tags' in right sidebar not overflowing correctly",
+       "Partial fix to prevent creation of area highlights outside PDF boundaries"
     ]
 
 def known_issues() -> List[str]:
