@@ -620,7 +620,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     top: 7px; right: 10px;
     text-align: center;
     vertical-align: middle;
-    z-index: 6;
+    z-index: 14;
 }
 #siac-reading-modal-top-btns div:hover {
     color: white;
@@ -1084,6 +1084,13 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
 }
 .siac-prio-lbl.siac-disabled {
     opacity: 0.6;
+}
+#siac-queue-readings-list {
+    display: inline-block; 
+    vertical-align: top; 
+    margin-left: 20px; 
+    min-width: 340px; 
+    user-select: none;
 }
 label input:checked ~ span {
     font-weight: bold;
