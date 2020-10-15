@@ -3,7 +3,7 @@
         <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}switch_layout.png");' onclick='switchLeftRight();'></div>
         <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}fullscreen.png");' onclick='toggleReadingModalFullscreen();'></div>
         <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}partition.png");' onclick='pycmd("siac-left-side-width");'></div>
-        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}toggle_bars.png");' onclick='toggleReadingModalBars();'></div>
+        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}toggle_bars.png");' onclick='toggleTopBar();'></div>
         <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}close.png");' onclick='onReadingModalClose({note_id});'></div>
     </div>
 
@@ -13,7 +13,7 @@
         <div id='siac-pdf-tooltip-bottom'></div>
         <input id='siac-pdf-tooltip-searchbar' onkeyup='if (event.keyCode === 13) {pycmd("siac-pdf-tooltip-search " + this.value);}'></input>
     </div>
-    <div id='siac-reading-modal-top-bar' data-nid='{note_id}'>
+    <div id='siac-reading-modal-top-bar' class='{top_hidden}' data-nid='{note_id}'>
         <div style='flex: 1 1; overflow: hidden;'>
             <h2 id='siac-rm-title' class='oflow_hidden' style='margin: 0 0 5px 0; white-space: nowrap; vertical-align:middle;'>{title}</h2>
             <h4 class='fg_lightgrey' style='white-space: nowrap; margin: 5px 0 6px 0;'>Source: <i>{source}</i></h4>
@@ -52,10 +52,7 @@
     }
     if (pdfFullscreen) {
         activateReadingModalFullscreen();
-    } else if (pdfBarsHidden) {
-        pdfBarsHidden = false;
-        toggleReadingModalBars();
-    }
+    } 
     if (pageSidebarDisplayed) {
         pageSidebarDisplayed = false;
         togglePageSidebar(false);
