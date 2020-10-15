@@ -247,8 +247,3 @@ window.pdfMouseWheel = function (event) {
     }
     event.preventDefault();
 }
-
-window.afterRemovedFromQueue = function () {
-    toggleQueue();
-    $('.siac-queue-sched-btn').first().addClass("active").html('Unqueued');
-}
