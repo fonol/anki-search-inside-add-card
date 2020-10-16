@@ -50,15 +50,6 @@ PRIORITY_SCALE_FACTOR   : int           = get_config_value_or_default("notes.que
 # how should priority be weighted 
 PRIORITY_MOD            : float         = get_config_value_or_default("notes.queue.priorityMod", 1.0) 
 
-
-# TODO
-# if a note was scheduled for some time point in the past, but not done, 
-# 1. schedule can be removed ('remove-schedule'), 
-# 2. note can be placed in front of the queue ('place-front') or
-# 3. note can be scheduled again from the missed due date on ('new-schedule')
-# 
-# MISSED_NOTES_HANDLING   : str           = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
-
 # 2020-10-06 Simplify scheduling
 MISSED_NOTES_HANDLING   : str           = "place-front"
 
@@ -823,6 +814,18 @@ def get_all_notes() -> List[Tuple[Any, ...]]:
     res = list(conn.execute("select * from notes"))
     conn.close()
     return res
+
+def get_total_notes_count() -> int:
+    """ Returns the number of notes in the add-on's database. """
+    conn    = _get_connection()
+    c       = conn.execute("select count(*) from notes").fetchone()
+    conn.close()
+    if c is None or len(c) == 0:
+        return 0
+    if c[0] is None:
+        return 0
+    return c[0]
+
 
 def get_untagged_notes() -> List[SiacNote]:
     conn = _get_connection()
