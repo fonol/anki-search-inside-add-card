@@ -498,7 +498,9 @@ def changelog() -> List[str]:
        "Create/Update Note dialog should remember its size now",
        "Remember 'Include Anki Tags' in Create/Update Note dialog",
        "Fix 'Tags' in right sidebar not overflowing correctly",
-       "Partial fix to prevent creation of area highlights outside PDF boundaries"
+       "Partial fix to prevent creation of area highlights outside PDF boundaries",
+       "Fix 'Found Duplicate' notification causing vertical scrollbars",
+       "Performance improvements on building the search index"
     ]
 
 def known_issues() -> List[str]:
