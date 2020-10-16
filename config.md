@@ -68,3 +68,6 @@ working on your queue and reviewing.
 
 ### mix_reviews_and_reading.interrupt_every_nth_card
 Determines after how many cards you will be interrupted and asked if you want to open the queue.
+
+### anki.editor.remember_location
+If true, the "Edit Note" dialog will remember its last location and size (this does not persist after closing Anki).
