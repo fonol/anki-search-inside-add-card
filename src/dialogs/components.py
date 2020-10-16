@@ -165,13 +165,8 @@ class QtScheduleComponent(QWidget):
         
     def setup_ui(self):
 
-        # self.tabs           = QTabWidget()
         self.edit_tab       = ScheduleEditTab(self)
-        # self.settings_tab   = ScheduleSettingsTab()
-        
-        # self.tabs.addTab(self.edit_tab, "Edit")
-        # self.tabs.addTab(self.settings_tab, "Settings")
-
+    
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0,0,0,0)
         self.layout().addWidget(self.edit_tab)
@@ -214,29 +209,6 @@ class ScheduleSettingsTab(QWidget):
         line.setFrameShadow(QFrame.Sunken)
         self.layout().addWidget(line)
 
-        # self.layout().addWidget(QLabel("How to deal with <b>missed schedules</b>? (Needs restart)"))
-        # self.missed_rb_1 = QRadioButton("Place in front of queue")
-        # self.missed_rb_2 = QRadioButton("Remove schedule, keep in queue")
-        # self.missed_rb_3 = QRadioButton("Reschedule based on previous schedule")
-        
-        # self.layout().addWidget(self.missed_rb_1)
-        # self.layout().addWidget(self.missed_rb_2)
-        # self.layout().addWidget(self.missed_rb_3)
-
-        # self.missed_rb_1.clicked.connect(self.missed_rb_clicked)
-        # self.missed_rb_2.clicked.connect(self.missed_rb_clicked)
-        # self.missed_rb_3.clicked.connect(self.missed_rb_clicked)
-
-        # # 2020-10-06 Simplify scheduling
-        # # handling = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
-        # handling = "place-front"
-        # if handling == "remove-schedule":
-        #     self.missed_rb_2.setChecked(True)
-        # elif handling == "place-front":
-        #     self.missed_rb_1.setChecked(True)
-        # elif handling == "new-schedule":
-        #     self.missed_rb_3.setChecked(True)
-        
         self.layout().addStretch()
         
         self.show_sched_cb = QCheckBox("Show schedule dialog after done with unsched. note")
@@ -249,10 +221,7 @@ class ScheduleSettingsTab(QWidget):
         self.ivl_includes_today_cb.setChecked(get_config_value_or_default("notes.queue.intervalSchedulesStartToday", True))
         self.ivl_includes_today_cb.clicked.connect(self.ivl_includes_today_cb_checked)
 
-        # self.show_in_q_cb = QCheckBox("Items scheduled for future days should still appear in the queue")
-        # self.layout().addWidget(self.show_in_q_cb)
-        # self.show_in_q_cb.setChecked(get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True))
-        # self.show_in_q_cb.clicked.connect(self.show_in_q_cb_checked)
+   
 
 
     def show_sched_cb_clicked(self):
@@ -261,12 +230,6 @@ class ScheduleSettingsTab(QWidget):
     def ivl_includes_today_cb_checked(self):
         update_config("notes.queue.intervalSchedulesStartToday", self.ivl_includes_today_cb.isChecked())
         run_hooks("updated-schedule")
-
-    # TODO
-    # def show_in_q_cb_checked(self):
-    #     update_config("notes.queue.include_future_scheduled_in_queue", self.show_in_q_cb.isChecked())
-    #     run_hooks("updated-schedule")
-        
 
     def missed_rb_clicked(self):
         if self.missed_rb_1.isChecked():
