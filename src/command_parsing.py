@@ -32,8 +32,8 @@ import typing
 from typing import List, Dict, Any, Optional, Tuple
 
 
-from .state import check_index, get_index, set_index, set_corpus
-from .index.indexing import build_index, get_notes_in_collection
+from .state import check_index, get_index, set_index
+from .index.indexing import build_index
 from .debug_logging import log
 from .web.web import *
 from .web.html import *
@@ -482,7 +482,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             $('#greyout').show();
             $('#loader').show();""")
         set_index(None)
-        set_corpus(None)
         build_index(force_rebuild=True, execute_after_end=after_index_rebuilt)
 
     elif cmd.startswith("siac-searchbar-mode"):
@@ -1447,9 +1446,6 @@ def show_schedule_dialog(parent_window):
             # index.ui.reading_modal.note.reminder = schedule
             if original_sched is not None and original_sched != "" and (schedule == "" or schedule is None):
                 tooltip(f"Removed schedule.")
-                # removed schedule, and config was set to not show scheduled notes in the queue, so now we have to insert it again
-                # TODO
-                # update_priority_list(index.ui.reading_modal.note_id, get_priority(index.ui.reading_modal.note_id))
             else:
                 tooltip(f"Updated schedule.")
             run_hooks("updated-schedule")
@@ -1723,7 +1719,10 @@ def get_index_info():
             str(state.rust_lib),
             index.type, 
             sqlite3.sqlite_version,
-            str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
+            str(index.initializationTime), 
+            index.get_number_of_notes(), 
+            config["alwaysRebuildIndexIfSmallerThan"], 
+            len(config["stopwords"]),
             sp_on if index.logging else sp_off,
             sp_on if config["renderImmediately"] else sp_off,
             "Search" if config["tagClickShouldSearch"] else "Add",
@@ -1751,8 +1750,6 @@ def get_index_info():
             config["shortcuts.trigger_current_filter"],
             shortcuts
             )
-
- 
 
     changes = changelog()
 

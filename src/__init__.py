@@ -46,8 +46,8 @@ import utility.tags
 import utility.misc
 import state
 
-from .state import check_index, get_index, corpus_is_loaded, set_corpus, set_edit, get_edit
-from .index.indexing import build_index, get_notes_in_collection
+from .state import check_index, get_index, set_edit, get_edit
+from .index.indexing import build_index
 from .debug_logging import log
 from .web.web import *
 from .web.html import right_side_html
@@ -219,9 +219,6 @@ def on_load_note(editor: Editor):
             fillDeckSelect(editor)
             if index is not None and index.lastSearch is None:
                 print_starting_info(editor)
-            if not corpus_is_loaded():
-                corpus = get_notes_in_collection()
-                set_corpus(corpus)
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)

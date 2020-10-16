@@ -26,19 +26,19 @@ from aqt import *
 from aqt.utils import showInfo, tooltip
 
 from ..output import *
-from ..debug_logging import log, persist_index_info
+from ..debug_logging import log, persist_index_info, get_index_info
 from ..models import IndexNote, SiacNote
+from .indexing_data import get_notes_in_collection, index_data_size
 import utility.misc
 import utility.text
 
 class FTSIndex:
 
-    def __init__(self, corpus, index_up_to_date):
+    def __init__(self, force_rebuild = False):
 
         self.limit              = 20
         self.pinned             = []
         self.highlighting       = True
-        self.stopWords          = []
         self.fields_to_exclude  = {}
 
         # stores values useful to determine whether the index has to be rebuilt on restart or not
@@ -67,12 +67,7 @@ class FTSIndex:
         if not os.path.isdir(self.dir):
             os.mkdir(self.dir)
 
-        try:
-            self.stopWords      = set(config['stopwords'])
-        except KeyError:
-            self.stopWords      = []
-
-        self.creation_info["stopwords_size"]    = len(self.stopWords)
+        self.creation_info["stopwords_size"]    = len(set(config['stopwords']))
         self.creation_info["decks"]             = config["decks"]
         self.porter                             = config["usePorterStemmer"]
         #exclude fields
@@ -83,9 +78,14 @@ class FTSIndex:
             self.fields_to_exclude                              = {}
 
         self.ui.fields_to_exclude               = self.fields_to_exclude
+
+        # check if we have to rebuild the index
+        index_up_to_date = not force_rebuild and not self._should_rebuild()
+
         self.creation_info["index_was_rebuilt"] = not index_up_to_date
 
         if not index_up_to_date:
+            corpus = get_notes_in_collection()
             if self.porter:
                 sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs, tokenize=porter)"
             else:
@@ -122,6 +122,72 @@ class FTSIndex:
             persist_index_info(self)
 
 
+    def _should_rebuild(self):
+        """ Check if the index should be rebuilt. """
+
+        config  = mw.addonManager.getConfig(__name__)
+
+        if config["freezeIndex"]:
+            return False
+
+        info    = get_index_info()
+        if info is None:
+            return True
+
+        # not used atm, so always false
+        if info["shouldRebuild"]:
+            toggle_should_rebuild()
+            return True
+
+        #if db file / index dir is not existing, rebuild
+        if not config["addon.data_folder"]:
+            return True
+        file_path = os.path.join(config["addon.data_folder"], "search-data.db")
+        if not os.path.isfile(file_path):
+            return True
+        try:
+            conn    = sqlite3.connect(file_path)
+            row     = conn.cursor().execute("SELECT * FROM notes_content ORDER BY id ASC LIMIT 1").fetchone()
+            conn.close()
+            if row is not None and len(row) != 8:
+                return True
+        except:
+            return True
+
+        index_size = index_data_size()
+        if info["size"] != index_size:
+            return True
+
+        if index_size < config["alwaysRebuildIndexIfSmallerThan"]:
+            return True
+
+        #if the decks used when building the index the last time differ from the decks used now, rebuild
+        if len(config["decks"]) != len(info["decks"]):
+            return True
+
+        for d in config["decks"]:
+            if d not in info["decks"]:
+                return True
+
+        #if the excluded fields when building the index the last time differ from the excluded fields now, rebuild
+        if len(config["fieldsToExclude"]) != len(info["fieldsToExclude"]):
+            return True
+
+        for model_name, field_list in config["fieldsToExclude"].items():
+            if model_name not in info["fieldsToExclude"]:
+                return True
+            if len(field_list) != len(info["fieldsToExclude"][model_name]):
+                return True
+            for field_name in field_list:
+                if field_name not in info["fieldsToExclude"][model_name]:
+                    return True
+
+        # if stopwords changed, rebuild
+        if len(set(config["stopwords"])) != info["stopwordsSize"]:
+            return True
+
+        return False
+
     def _check_fts_version(self, logging):
         con = sqlite3.connect(':memory:')
         cur = con.cursor()
@@ -149,23 +215,10 @@ class FTSIndex:
             if row[4] in self.fields_to_exclude:
                 text = utility.text.remove_fields(text, self.fields_to_exclude[row[4]])
 
-            text = utility.text.clean(text, self.stopWords)
+            text = utility.text.clean(text)
             filtered.append((row[0], text, row[2], row[3], row[1], row[4], row[5]))
 
         return filtered
-
-    def removeStopwords(self, text):
-
-        cleaned = ""
-
-        for token in text.split(" "):
-            if token.lower() not in self.stopWords:
-                cleaned += token + " "
-
-        if len(cleaned) > 0:
-            return cleaned[:-1]
-
-        return ""
 
 
     def search(self, text, decks, only_user_notes = False, print_mode = "default"):
@@ -367,7 +420,7 @@ class FTSIndex:
  
 
     def clean(self, text):
-        return utility.text.clean(text, self.stopWords)
+        return utility.text.clean(text)
 
    
     def deleteNote(self, nid):
@@ -382,7 +435,7 @@ class FTSIndex:
         """
         text = utility.text.build_user_note_text(title=note[1], text=note[2], source=note[3])
         conn = sqlite3.connect(self.dir + "search-data.db")
-        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note[0], utility.text.clean(text, self.stopWords), note[4], "-1", text, "-1"))
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note[0], utility.text.clean(text), note[4], "-1", text, "-1"))
         conn.commit()
         conn.close()
         persist_index_info(self)
@@ -409,7 +462,7 @@ class FTSIndex:
         if str(note.mid) in self.fields_to_exclude:
             content = utility.text.remove_fields(content, self.fields_to_exclude[str(note.mid)])
         conn = sqlite3.connect(self.dir + "search-data.db")
-        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note.id, utility.text.clean(content, self.stopWords), tags, did, source, note.mid))
+        conn.cursor().execute("INSERT INTO notes (nid, text, tags, did, source, mid, refs) VALUES (?, ?, ?, ?, ?, ?, '')", (note.id, utility.text.clean(content), tags, did, source, note.mid))
         conn.commit()
         conn.close()
         persist_index_info(self)

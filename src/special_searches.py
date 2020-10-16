@@ -158,7 +158,6 @@ def getCreatedNotesOrderedByDate(index, editor, decks, limit, sortOrder):
     for r in res:
         #pinned items should not appear in the results
         if not str(r[0]) in index.pinned:
-            #todo get refs
             rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
 
     if check_index():

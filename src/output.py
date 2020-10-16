@@ -71,7 +71,6 @@ class Output:
         #
         self.latest                 = -1
         self.gridView               = False
-        self.stopwords              = []
         self.plotjsLoaded           = False
         self.showRetentionScores    = True
         self.lastResults            = None
@@ -574,7 +573,7 @@ class Output:
         if text is None or len(text) == 0:
             return "No keywords for empty result."
 
-        text            = utility.text.clean(text, self.stopwords)
+        text            = utility.text.clean(text)
         counts          = {}
         for token in text.split():
             if token == "" or len(token) == 1 or self.EXCLUDE_KEYWORDS.match(token):

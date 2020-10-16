@@ -22,6 +22,8 @@ import random
 from bs4 import BeautifulSoup
 import typing
 from typing import Optional
+import aqt
+import os
 
 cleanWordReg    = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*$", re.I |re.U)    
 ignoreReg       = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]+$", re.I | re.U)
@@ -47,17 +49,33 @@ normalChar      = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9
 asian_or_arabic_char    = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.U)
 asian_char              = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.U)
 
-def clean(text, stopWords):
+clean_spaces    = re.compile(u"[\r\n\t\u001f]+", re.U)
+asian_char_or_whitespace  = re.compile(u"([\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D ])", re.U)
+
+
+def _get_config():
+    # add-on id
+    dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))).replace("\\", "/")
+    if dir.endswith("/"):
+        dir = dir[:-1]
+    dir = dir[dir.rfind("/")+1:]
+    return aqt.mw.addonManager.getConfig(dir)
+
+
+stopwords       = set([s.lower() for s in _get_config()["stopwords"]])
+
+def clean(text):
 
     filtered    = ""
+
     text        = text.replace("`", "")
-    text        = text.replace("\r\n", " ").replace("\n", " ")
-    text        = text.replace("\t", " ")
-    text        = text.replace("\u001f", " ")
+    text        = clean_spaces.sub(" ", text)
+    # text        = text.replace("\r\n", " ").replace("\n", " ")
+    # text        = text.replace("\t", " ")
+    # text        = text.replace("\u001f", " ")
     text        = tagReg.sub(" ", text)
     text        = nonWordReg.sub(" ", text)
     text        = spaceReg.sub(" ", text)
-    stopWords   = [s.lower() for s in stopWords]
 
     for token in tokenize(text):
         #this will prevent indexing / searching for base64 data urls
@@ -65,10 +83,10 @@ def clean(text, stopWords):
             continue
         if ignoreReg.match(token) is not None:
             continue
-        cleaned = cleanWordReg.sub(r'\1', token.strip())
-        if (len(cleaned) <= 1 and not asian_or_arabic_char.search(cleaned)) or cleaned.lower() in stopWords:
+        token = cleanWordReg.sub(r'\1', token.strip())
+        if (len(token) <= 1 and not asian_or_arabic_char.search(token)) or token.lower() in stopwords:
             continue
-        filtered += cleaned + " "
+        filtered = f"{filtered}{token} "
 
     if len(filtered) > 0:
         return filtered[:-1]
@@ -113,12 +131,17 @@ def replace_accents_with_vowels(text):
 
 
 def tokenize(text):
-    result = []
-    spl = text.split(" ")
+
+    if not asian_char.search(text):
+        return [t for t in text.split(" ") if len(t) > 0]
+
+    result  = []
+    spl     = text.split(" ")
     for token in spl:
-        if re.search(u'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]', token):
-            for char in token:
-                result.append(str(char))
+        if token == "":
+            continue
+        if asian_char.search(token[0]):
+            result += [str(c) for c in token]
         else:
             result.append(token)
     return result
