@@ -671,25 +671,17 @@ window.toggleFreeze = function(elem) {
     }
 }
 window.hideTop = function() {
-    // let height = $('#topContainer').outerHeight(true);
-    // let formerHeight =  $("#resultsArea").outerHeight(true);
     $('#topContainer').hide();
-    // $('#resultsArea').css('height', `${formerHeight + height}px`).css('border-top', '0px');
     $('#toggleTop').children().first().html('&#10097;');
     pycmd("toggleTop off");
 }
 
 window.toggleTop = function(elem) {
-    // let height = $('#topContainer').outerHeight(true);
     $('#topContainer').toggle();
-    // let formerHeight = $("#resultsArea").outerHeight(true);
     if ($('#topContainer').is(":hidden")) {
-        // $('#resultsArea').css('height', `${formerHeight + height}px`).css('border-top', '0px');
         $(elem).children().first().html('&#10097;');
         pycmd("toggleTop off");
     } else {
-        // height = $('#topContainer').outerHeight(true);
-        // $('#resultsArea').css('height', `${formerHeight - height - 1}px`).css('border-top', '1px solid grey');
         $(elem).children().first().html('&#10096;');
         pycmd("toggleTop on");
     }
@@ -715,7 +707,7 @@ window.predefSearchFromSidebar = function(type) {
     let decks = siacState.selectedDecks.toString();
     // show a loader for the longer-taking searches
     if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(type) !== -1) {
-        showSearchLoader("Computing");
+        showSearchLoader("<i class='fa fa-spinner bold mb-10' style='font-size: 24px;' /><br>Computing ...");
         setTimeout(function() {
             pycmd('siac-predef-search ' + type + ' 200 ' + decks);
         }, 250);
@@ -733,7 +725,7 @@ window.predefSearch = function() {
     let decks   = siacState.selectedDecks.toString();
     // show a loader for the longer-taking searches
     if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(search) !== -1) {
-        showSearchLoader("Computing");
+        showSearchLoader("<i class='fa fa-spinner bold mb-10' style='font-size: 24px;' /><br>Computing ...");
         setTimeout(function() {
             pycmd("siac-predef-search " + search + " " + count + " " + decks);
         }, 250);
