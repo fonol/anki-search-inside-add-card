@@ -67,7 +67,7 @@ class EditDialog(QDialog):
         self.setWindowTitle(_("Edit Note"))
         self.setMinimumHeight(400)
         self.setMinimumWidth(500)
-        if EditDialog.last_geom:
+        if EditDialog.last_geom and get_config_value_or_default("anki.editor.remember_location", True):
             self.setGeometry(EditDialog.last_geom)
         else:
             self.resize(500, 850)
