@@ -69,16 +69,6 @@ def set_index(index: "FTSIndex"):
 def get_index() -> "FTSIndex":
     return search_index
 
-def corpus_is_loaded() -> bool:
-    return corpus is not None
-
-def set_corpus(c: List[Tuple[Any, ...]]):
-    global corpus
-    corpus = c
-
-def get_corpus() -> Optional[List[Tuple[Any, ...]]]:
-    return corpus
-
 def set_edit(e: Editor):
     global edit
     edit = e
