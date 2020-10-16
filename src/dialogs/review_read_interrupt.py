@@ -42,11 +42,18 @@ class ReviewReadInterruptDialog(QDialog):
     def setup_ui(self):
 
         self.vbox = QVBoxLayout()
-        self.vbox.addSpacing(30)
+        self.vbox.addSpacing(15)
+        icon = utility.misc.qlabel_image("graduation_cap_night.png" if state.night_mode else "graduation_cap.png", 50, 50)
+        hb_icon = QHBoxLayout()
+        hb_icon.addStretch()
+        hb_icon.addWidget(icon)
+        hb_icon.addStretch()
+        self.vbox.addLayout(hb_icon)
+        self.vbox.addSpacing(15)
         lbl = QLabel("Open the first item in the queue?")
         lbl.setAlignment(Qt.AlignCenter)
-        lbl.setStyleSheet("font-size: 20px;")
-        lbl.setMargin(20)
+        lbl.setStyleSheet("font-size: 20px;font-variant: small-caps;")
+        lbl.setMargin(15)
 
         cnt = get_read_today_count()
         s   = "s" if cnt != 1 else ""
@@ -77,7 +84,7 @@ class ReviewReadInterruptDialog(QDialog):
         self.later_btn.clicked.connect(self.later_clicked)
         bhb.addWidget(self.later_btn)
 
-        self.stop_btn = QPushButton("No more today")
+        self.stop_btn = QPushButton("Enough for today!")
         self.stop_btn.clicked.connect(self.stop_clicked)
         bhb.addWidget(self.stop_btn)
 
