@@ -275,7 +275,7 @@ def print_starting_info(editor: Editor):
                     </div>
                 </div>
                 <span class='siac-caps' style='opacity: 0.8;'>
-                    Thanks to all supporters of the project!
+                    Thanks to all supporters!
                 </span>
             </div>
             """
@@ -492,14 +492,7 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-       "Added 'mix_reviews_and_reading' config option, see config dialog for an explanation",
-       "Reworked parts of the bottom bar in the reader",
-       "Top & bottom bar in the reader can now be toggled independently of each other",
-       "Create/Update Note dialog should remember its size now",
-       "Remember 'Include Anki Tags' in Create/Update Note dialog",
-       "Fix 'Tags' in right sidebar not overflowing correctly",
-       "Partial fix to prevent creation of area highlights outside PDF boundaries",
-       "Fix 'Found Duplicate' notification causing vertical scrollbars",
+        "Added tomato timer display if the top bar in the reader is hidden",
        "Performance improvements on building the search index"
     ]
 
