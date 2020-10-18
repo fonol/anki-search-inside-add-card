@@ -31,6 +31,7 @@ from ..models import IndexNote, SiacNote
 from .indexing_data import get_notes_in_collection, index_data_size
 import utility.misc
 import utility.text
+import state
 
 class FTSIndex:
 
@@ -85,7 +86,7 @@ class FTSIndex:
         self.creation_info["index_was_rebuilt"] = not index_up_to_date
 
         if not index_up_to_date:
-            corpus = get_notes_in_collection()
+            corpus = state.index_data
             if self.porter:
                 sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs, tokenize=porter)"
             else:
@@ -154,7 +155,7 @@ class FTSIndex:
         except:
             return True
 
-        index_size = index_data_size()
+        index_size = state.index_data_size
         if info["size"] != index_size:
             return True
 
