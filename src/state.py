@@ -55,6 +55,9 @@ last_page_requested : Optional[int]                     = None
 
 shortcuts_failed    : List[str]                         = []
 
+index_data          : List[Any]                         = None
+index_data_size     : int                               = -1
+
 def check_index() -> bool:
     """ Returns True if index and ui are ready to use. """
     return (search_index is not None 
