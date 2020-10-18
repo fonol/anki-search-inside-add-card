@@ -1172,7 +1172,7 @@ class ReadingModal:
                 </div>
                 <div class='fg_lightgrey flex-col' style='flex: 1 1 auto; justify-content: center;'>
                     <div class='mb-10' style='font-size: 25px;'><i class="fa fa-graduation-cap"></i></div>
-                    <center style='padding: 20px; font-variant-caps: all-petite-caps; font-size: medium;'>No notes added while on this page.</center>
+                    <center class='bold' style='padding: 20px; font-variant-caps: small-caps; font-size: medium;'>No notes added while on this page.</center>
                 </div>
                 <div class='fg_lightgrey ta_center' style='flex: 0 1 auto; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
                     <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""},
