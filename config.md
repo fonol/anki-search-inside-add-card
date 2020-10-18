@@ -47,15 +47,27 @@ Example from the default config:
 ### pdf.import.folders_to_search
 Accepts a list of folder names, that will be scanned for .pdf files if you open the "PDF Import" tab on the sidebar.
 
+### usePorterStemmer
+If you set this to true, the search library will use the Porter Stemmer. The stemmer is best suited for english, so for other languages, your mileage may vary, and it might increase indexing time. What it does is to reduce words to some kind of base form, so you can increase your search recall: E.g. "increase" and "increasing" both get reduced to "increas", and so either will find the other term too. The stemmer starts working after you rebuilt your index.
+
 ### freezeIndex
 If you, for some reason, don't want the index to be rebuilt under any circumstances on startup, set this to true.
 
-### shortcuts.xyz
-Shortcuts for some different functions. If you change these, check for possible conflicts with existing shortcuts in the editor before.
+### shortcuts.<xyz>
+Shortcuts for some different functions. If you change these, maybe check for possible conflicts with existing shortcuts in the editor before.
 
 ### pdf.highlights.use_alt_render
-For some reason, the highlights are not displaying correctly on some environments. Until the issue is found, you can set this option to true, 
-which will make the PDF reader use an alternative way of displaying the highlights (might not look as good as the default mode).
+For some reason, the highlights are not displaying correctly on some environments (highlights cover up the highlighted text). Until the issue is resolved, you can set this option to true, which will make the PDF reader use an alternative way of displaying the highlights (might not look as good as the default mode though).
 
 ### searchbar.default_mode 
 Determines what mode (Add-on or Browser) the searchbar at the bottom of the UI will have on Anki startup.
+
+### mix_reviews_and_reading
+If true, while in review, the add-on will ask you at regular intervals if you want to open the next item in the queue, that way, you can interleave 
+working on your queue and reviewing.
+
+### mix_reviews_and_reading.interrupt_every_nth_card
+Determines after how many cards you will be interrupted and asked if you want to open the queue.
+
+### anki.editor.remember_location
+If true, the "Edit Note" dialog will remember its last location and size (this does not persist after closing Anki).

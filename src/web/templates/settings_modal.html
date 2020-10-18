@@ -1,0 +1,298 @@
+<fieldset>
+    <span>Exclude note fields from search or display.</span>
+    <button class='siac-btn siac-btn-small' style='float: right;' onclick='pycmd("siac-model-dialog")'>Set
+        Fields</button>
+</fieldset>
+<br />
+<fieldset>
+    <span><mark>Important:</mark> Modify this value to scale the editor. Useful e.g. when working on a small screen.
+        This is essentially the same as zooming in a web browser with CTRL+Mousewheel.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Zoom</b></td>
+            <td class='ta_right'><input placeholder="" type="number" step="0.1" style='width: 60px;'
+                    onchange="pycmd('siac-styling searchpane.zoom ' + this.value)" value="{zoom}" /></td>
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>Controls whether the results are faded in or not.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Render Immediately</b></td>
+            <td class='ta_right'><input type="checkbox"
+                    onclick="pycmd('siac-styling renderImmediately ' + this.checked)" {render_immediately} /></td>
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>This controls how the window is split into search pane and field input. A value of 40 means the left side will
+        take 40% and the right side will take 60%.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Left Side Width</b></td>
+            <td class='ta_right'><input placeholder="Value in px" type="number" min="0" max="100" style='width: 60px;'
+                    onchange="pycmd('siac-styling leftSideWidthInPercent ' + this.value)" value="{left_side_width}" />
+                %</td>
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>This controls whether the sidebar (containing the tags and found keywords) is visible or not.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Hide Sidebar</b></td>
+            <td class='ta_right'><input type="checkbox" onclick="pycmd('siac-styling hideSidebar ' + this.checked)"
+                    {hide_sidebar} />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>This controls whether the timeline row (added notes over the year) is visible or not.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Show Timeline</b></td>
+            <td class='ta_right'><input type="checkbox" onclick="pycmd('siac-styling showTimeline ' + this.checked)"
+                    {show_timeline} />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>This controls whether the small info box will be shown when a tag is hovered over with the mouse. Currently
+        only works with the default scaling.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Show Tag Info on Hover</b></td>
+            <td class='ta_right'><input type="checkbox"
+                    onclick="pycmd('siac-styling showTagInfoOnHover ' + this.checked)" {show_tag_info_on_hover} />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>This controls how long you have to hover over a tag until the info box is shown. Allowed values are 0 (not
+        recommended) to 10000.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Tag Hover Delay in Miliseconds</b></td>
+            <td class='ta_right'><input placeholder="Value in ms" type="number" min="0" max="10000" style='width: 60px;'
+                    onchange="pycmd('siac-styling tagHoverDelayInMiliSec ' + this.value)" value="{tag_hover_delay}" />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>If the number of notes that would go into the index (only notes from the included decks are counted) is lower
+        than this value the index should always be rebuilt.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Always Rebuild Index If Smaller Than</b></td>
+            <td class='ta_right'><input placeholder="Value in ms" type="number" min="0" max="100000"
+                    style='width: 60px;' onchange="pycmd('siac-styling alwaysRebuildIndexIfSmallerThan ' + this.value)"
+                    value="{rebuild_ix_if_smaller_than}" />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>If you have problems with the display of search results (e.g. notes nested into each other), most likely, your
+        note's html contains at least one unmatched opening/closing &lt;div&gt; tag. If set to true, this setting will
+        remove all div tags from the note html before displaying.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Remove &lt;div&gt; Tags from Output</b></td>
+            <td class='ta_right'><input type="checkbox"
+                    onclick="pycmd('siac-styling removeDivsFromOutput ' + this.checked)" {remove_divs} />
+        </tr>
+    </table>
+    <span>Try to hide Cloze brackets in the rendered results, instead show only their contained text.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Hide {{c1:: ... }} Cloze brackets in output</b></td>
+            <td class='ta_right'><input type="checkbox"
+                    onclick="pycmd('siac-styling results.hide_cloze_brackets ' + this.checked)" {hide_clozes} />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>This is the absolute path to the folder where the addon should store its notes. If not present already, the
+        addon will create a file named <i>siac-notes.db</i> in that folder.
+        <br>If you have existing data, after changing this value, you should close Anki, copy your existing
+        <i>siac-notes.db</i> to that new location, and then start again.
+    </span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Addon Note DB Folder Path</b></td>
+            <td class='ta_right'><input type="text" style='min-width: 250px;'
+                    onfocusout="pycmd('siac-styling addonNoteDBFolderPath ' + this.value)" value="{note_db_folder}" />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>This is the location where PDFs generated from URLs will be saved. This needs to be set for the URL import to
+        work.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>PDF Url-Import Save Path</b></td>
+            <td class='ta_right'><input type="text" style='min-width: 250px;'
+                    onfocusout="pycmd('siac-styling pdfUrlImportSavePath ' + this.value)"
+                    value="{pdf_url_import_folder}" />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>This controls if the addon's notes shall be displayed with their source field (on the bottom: "Source: ..."),
+        or not.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Notes - Show Source</b></td>
+            <td class='ta_right'><input type="checkbox" onclick="pycmd('siac-styling notes.showSource ' + this.checked)"
+                    {show_source} />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>This controls if the add-on is displayed in the edit dialog ("Edit" from the reviewer) too. <b>Please
+            notice</b>: This add-on does not work with multiple instances. So if you have an Add Card dialog open while
+        you are reviewing, and then open the Edit dialog, this add-on will not work properly anymore. So if you use this
+        option, make sure the Add Card dialog is closed during review.</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Use in Edit</b></td>
+            <td class='ta_right'><input type="checkbox" onclick="pycmd('siac-styling useInEdit ' + this.checked)"
+                    {use_in_edit} />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>Show the float note button (&#10063;) in the rendered search results. <b>Needs a restart to apply.</b></span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Show Float Note Button</b></td>
+            <td class='ta_right'><input type="checkbox"
+                    onclick="pycmd('siac-styling results.showFloatButton ' + this.checked)" {show_float_btn} />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>Show NID/CID button (to copy the note's ID / ID of its (first) card on click) in the rendered search results.
+        <b>Needs a restart to apply</b></span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Show NID Button</b></td>
+            <td class='ta_right'><input type="checkbox"
+                    onclick="pycmd('siac-styling results.showIDButton ' + this.checked)" {show_id_btn} />
+        </tr>
+    </table>
+    <table class='w-100'>
+        <tr>
+            <td><b>Show CID Button</b></td>
+            <td class='ta_right'><input type="checkbox"
+                    onclick="pycmd('siac-styling results.showCIDButton ' + this.checked)" {show_cid_btn} />
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span class='tagLbl' style='float: none; margin-left: 0;'>Tag Colors</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Tag Foreground Color</b></td>
+            <td class='ta_right'><input onchange="pycmd('siac-styling styles.tagForegroundColor ' + this.value)"
+                    type="color" value="{tag_fg}"></td>
+        </tr>
+        <tr>
+            <td><b>Tag Background Color</b></td>
+            <td class='ta_right'><input onchange="pycmd('siac-styling styles.tagBackgroundColor ' + this.value)"
+                    type="color" value="{tag_bg}"></td>
+        </tr>
+        <tr>
+            <td><b>Tag Foreground Color (Night Mode)</b></td>
+            <td class='ta_right'><input onchange="pycmd('siac-styling styles.night.tagForegroundColor ' + this.value)"
+                    type="color" value="{tag_fg_night}"></td>
+        </tr>
+        <tr>
+            <td><b>Tag Background Color (Night Mode)</b></td>
+            <td class='ta_right'><input onchange="pycmd('siac-styling styles.night.tagBackgroundColor ' + this.value)"
+                    type="color" value="{tag_bg_night}"></td>
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <mark>Highlight Colors</mark>
+    <table class='w-100'>
+        <tr>
+            <td><b>Highlight Foreground Color</b></td>
+            <td class='ta_right'><input onchange="pycmd('siac-styling styles.highlightForegroundColor ' + this.value)"
+                    type="color" value="{hl_fg}"></td>
+        </tr>
+        <tr>
+            <td><b>Highlight Background Color</b></td>
+            <td class='ta_right'><input onchange="pycmd('siac-styling styles.highlightBackgroundColor ' + this.value)"
+                    type="color" value="{hl_bg}"></td>
+        </tr>
+        <tr>
+            <td><b>Highlight Foreground Color (Night Mode)</b></td>
+            <td class='ta_right'><input
+                    onchange="pycmd('siac-styling styles.night.highlightForegroundColor ' + this.value)" type="color"
+                    value="{hl_fg_night}"></td>
+        </tr>
+        <tr>
+            <td><b>Highlight Background Color (Night Mode)</b></td>
+            <td class='ta_right'><input
+                    onchange="pycmd('siac-styling styles.night.highlightBackgroundColor ' + this.value)" type="color"
+                    value="{hl_bg_night}"></td>
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span class='siac-susp-lbl' style='position: static; margin-left: 0;'>Suspended Label Colors</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Suspended Foreground Color</b></td>
+            <td class='ta_right'><input onchange="pycmd('siac-styling styles.suspendedForegroundColor ' + this.value)"
+                    type="color" value="{susp_fg}"></td>
+        </tr>
+        <tr>
+            <td><b>Suspended Background Color</b></td>
+            <td class='ta_right'><input onchange="pycmd('siac-styling styles.suspendedBackgroundColor ' + this.value)"
+                    type="color" value="{susp_bg}"></td>
+        </tr>
+    </table>
+</fieldset>
+<br />
+<fieldset>
+    <span>Modal Border Color</span>
+    <table class='w-100'>
+        <tr>
+            <td><b>Modal Border Color</b></td>
+            <td class='ta_right'><input onchange="pycmd('siac-styling styles.modalBorderColor ' + this.value)"
+                    type="color" value="{modal_border}"></td>
+        </tr>
+        <tr>
+            <td><b>Modal Border Color (Night)</b></td>
+            <td class='ta_right'><input onchange="pycmd('siac-styling styles.night.modalBorderColor ' + this.value)"
+                    type="color" value="{modal_border_night}"></td>
+        </tr>
+    </table>
+</fieldset>
+<br />
+<div class='ta_center'>
+    <mark>For other settings, see the <em>config.json</em> file.</mark>
+</div>
+<br /> <br />
+<mark>&nbsp;Important:&nbsp;</mark> At the moment, if you reset your config.json to default, your custom stopwords and
+synsets will be deleted. If you want to do that, I recommend saving them somewhere first.

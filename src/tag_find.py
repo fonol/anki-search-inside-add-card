@@ -85,14 +85,14 @@ def display_tag_info(editor, stamp, tag, index):
         html = """
                 <span id='siac-tag-graph-lbl-%s'>Retention for this Topic / Reviews</span>
                 <div id="siac-tag-graph-%s" style='width: 230px; height: 130px; margin-right: auto; margin-left: auto; margin-bottom: 15px;'></div>
-                <table style='width: 100%%;'>
+                <table class='w-100'>
                     <tr><td style='text-align: left;'>Retention</td><td style='text-align: right;'><b>%s</b></td></tr>
                     <tr><td style='text-align: left;'>Notes</td><td style='text-align: right;'><b>%s</b></td></tr>
                     <tr><td style='text-align: left'>Related</td><td>%s</td></tr></table>
         """ 
     else:
         html = """
-            <div style="display: flex; width: 100%%;">
+            <div class='w-100 flex-row'>
             <div style='flex: 1 1; flex-basis: 50%%; padding: 5px; max-width: 50%%;'>
                     <span>Newest for <b>%s</b></span>
                     <div class='siac-tag-info-box-left' style='%s' id='siac-tag-info-box-left-%s'>
@@ -102,7 +102,7 @@ def display_tag_info(editor, stamp, tag, index):
             <div style='flex: 1 1; flex-basis: 50%%;'>
                 <span id='siac-tag-graph-lbl-%s'>Retention for this Topic / Reviews</span>
                 <div id="siac-tag-graph-%s" style='width: 230px; height: 130px; margin-right: auto; margin-left: auto; margin-bottom: 15px;'></div>
-                <table style='width: 100%%;'>
+                <table class='w-100'>
                     <tr><td style='text-align: left;'>Retention</td><td style='text-align: right;'><b>%s</b></td></tr>
                     <tr><td style='text-align: left;'>Notes</td><td style='text-align: right;'><b>%s</b></td></tr>
                     <tr><td style='text-align: left'>Related</td><td>%s</td></tr></table>

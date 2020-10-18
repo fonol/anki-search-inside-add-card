@@ -13,8 +13,8 @@
     <div style='display: inline-block; vertical-align: top;' id='siac-pdf-overlay-top-lbl-wrap'></div>
 </div>
 <div id='siac-iframe-btn' style='top: 50px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
-    <div clas='fg_lightgrey' style='margin-left: 5px; margin-top: 4px; width: calc(100% - 35px); text-align: right; font-size: 13px;'>Note: Not all sites allow embedding!</div>
-    <div class='w-100' style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box;'>
+    <div class='fg_lightgrey ml-5 ta_right' style='margin-top: 4px; width: calc(100% - 35px); font-size: 13px;'>Note: Not all sites allow embedding!</div>
+    <div class='w-100 mt-10 oflow_y_auto' style='padding: 0 15px 10px 15px; max-height: 500px; box-sizing: border-box;'>
         <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) { pdfUrlSearch(this.value); this.value = ''; }"></input> 
         <br/>
     {search_sources}
@@ -47,7 +47,7 @@
 <div class='siac-btn siac-btn-dark' id='siac-mark-jump-btn' onclick='$(this).toggleClass("expanded"); onMarkBtnClicked(this);'><img src='{marks_grey_img_src}' style='width: 16px; height: 16px;'/>
     <div id='siac-mark-jump-btn-inner' class='expanded-hidden white-hover fg_lightgrey ta_center' style='margin: 0 2px 0 5px;'></div>
 </div>
-{quick_sched_btn} 
+<div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='pycmd("siac-user-note-done")'><i class='fa fa-check'></i></div>
 <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark fg_lightgrey' onclick='pycmd("siac-close-iframe")'><b>&times; &nbsp;CLOSE</b></div>
 <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" oncopy='onPDFCopy(event)' onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
     <div id='siac-pdf-wrapper'>
@@ -78,13 +78,13 @@
 <iframe id='siac-iframe' sandbox='allow-scripts'></iframe>
 <div class='siac-reading-modal-button-bar-wrapper'>
     <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
-        <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
+        <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleBottomBar();'>&#x2195;</div>
         <div class='siac-btn siac-btn-dark' style="margin-left: 2px; width: 18px;" onclick='pdfScaleChange("down");'>-</div>
         <div class='siac-btn siac-btn-dark' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
         <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
-        <div class='siac-btn siac-btn-dark' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986;</b></div>
-        <div class='siac-btn siac-btn-dark active' id='siac-pdf-tooltip-toggle' onclick='togglePDFSelect(this)' style='margin-left: 5px;'><div class='siac-search-icn-dark'></div></div>
-        <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
+        <div class='siac-btn siac-btn-dark ml-5' onclick='initImageSelection()'><b>&#9986;</b></div>
+        <div class='siac-btn siac-btn-dark ml-5 active' id='siac-pdf-tooltip-toggle' onclick='togglePDFSelect(this)'><div class='siac-search-icn-dark'></div></div>
+        <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")'><b>&#9998; Note</b></div>
     </div>
     <div id='siac-page-btns' class='siac-rm-bg'>
         <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b>&lt;</b></div>
@@ -129,7 +129,7 @@
                 </div>
             </div>
         </div>
-        <input id="siac-pdf-page-inp" style="width: 50px;margin-right: 5px;" value="1" type="number" min="1" onkeyup="pdfJumpToPage(event, this);"></input>
+        <input id="siac-pdf-page-inp" class='mr-5' style="width: 50px;" value="1" type="number" min="1" onkeyup="pdfJumpToPage(event, this);"></input>
         <div class='siac-btn siac-btn-dark' onclick='togglePageSidebar()'><i class="fa fa-bars"></i></div>
     </div>
 </div>

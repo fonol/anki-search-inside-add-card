@@ -58,7 +58,7 @@ def get_synonym_dialog() -> str:
                     <td>
                         <div contenteditable='true' onkeydown='synonymSetKeydown(event, this, %s)'>%s</div>
                     </td>
-                    <td style='text-align: right; height: 20px;'>
+                    <td class='ta_right' style='height: 20px;'>
                         <i class='fa fa-trash blue-hover' onclick='pycmd(\"siac-delete-synonyms %s\")'></i>
                         <i class='fa fa-search blue-hover' style='margin-left: 4px;' onclick='searchSynset(this)'></i>
                     </td>
@@ -174,6 +174,8 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
         (() => { 
             if (document.getElementById('outerWr') == null) {
                 $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
+                $('#dupes').insertAfter('#fields');
+                
                 document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
                 let toInsert = `%s`;
                 %s  
@@ -220,7 +222,6 @@ def get_model_dialog_html() -> str:
     """ Returns the html for the "Fields" section in the settings modal. """
 
     all_models  = sorted(mw.col.models.all(), key=lambda m : m['name'])
-    index       = get_index()
     config      = mw.addonManager.getConfig(__name__)
 
     html        = """
@@ -228,15 +229,15 @@ def get_model_dialog_html() -> str:
         <p>Changes in <i>Show Field in Results</i> take effect immediately, changes in <i>Search in Field</i> need a rebuild of the index.</p>
     </div>
     <div style='flex: 0 0 auto;'>
-        <table style='width: 100%; margin: 10px 0 5px 0;'>
+        <table class='w-100 mt-10 mb-5'>
             <tr>
-                <td style='width: 80%; font-weight: bold;'>Field Name</td>
-                <td style='width: 10%; font-weight: bold;'>Search in Field</td>
-                <td style='width: 10%; font-weight: bold;'>Show Field in Results</td>
+                <td class='bold' style='width: 80%;'>Field Name</td>
+                <td class='bold' style='width: 10%;'>Search in Field</td>
+                <td class='bold' style='width: 10%;'>Show Field in Results</td>
             </tr>
         </table>
     </div>
-    <div style='overflow-y: auto; flex: 1 1 auto; width: 100%'><div class='h-100'>
+    <div class='oflow_y_auto w-100' style='flex: 1 1 auto;'><div class='h-100'>
     """
     for m in all_models:
         html += "<div class='siac-model-name'>%s</div>" % utility.text.trim_if_longer_than(m["name"], 40)
@@ -244,8 +245,8 @@ def get_model_dialog_html() -> str:
         for f in m["flds"]:
             flds += """<tr>
                             <td style='width: 80%%' class='siac-model-field'>%s</td>
-                            <td style='width: 10%%; text-align: center;'><input type='checkbox' onchange='updateFieldToExclude(this, "%s", %s)' %s/></td>
-                            <td style='width: 10%%; text-align: center;'><input type='checkbox' onchange='updateFieldToHideInResult(this, "%s", %s)' %s/></td>
+                            <td style='width: 10%%;' class='ta_center'><input type='checkbox' onchange='updateFieldToExclude(this, "%s", %s)' %s/></td>
+                            <td style='width: 10%%;' class='ta_center'><input type='checkbox' onchange='updateFieldToHideInResult(this, "%s", %s)' %s/></td>
                     </tr>""" % (
                     f['name'],
                     m['id'],
@@ -262,7 +263,7 @@ def get_model_dialog_html() -> str:
 def get_calendar_html() -> str:
     """ Html for the timeline at the bottom of the search pane. """
 
-    html                    = """<div id='cal-row' style="width: 100%%; height: 8px;" onmouseleave='calMouseLeave()'>%s</div> """
+    html                    = """<div id='cal-row' class='w-100' style="height: 8px;" onmouseleave='calMouseLeave()'>%s</div> """
     #get notes created since the beginning of the year
     day_of_year             = datetime.datetime.now().timetuple().tm_yday
     date_year_begin         = datetime.datetime(year=datetime.datetime.utcnow().year, month=1, day=1, hour=0, minute=0)
@@ -348,14 +349,14 @@ def read_counts_card_body(counts: Dict[int, int]) -> str:
 
 def topic_card_body(topics: List[Tuple[str, float]]) -> str:
     html = """
-                <div style='display: flex; width: 100%; margin-top: 20px;'>
+                <div class='flex-row w-100' style='margin-top: 20px;'>
                     <div style='width: 50%; flex: 0 1 auto;'>
-                        <div style='width: 100%; text-align:center;'><b>All PDFs</b></div>
-                        <div id='siac-read-stats-topics-pc_1' style='width: 100%; height: 400px;'></div>
+                        <div class='w-100 ta_center bold'>All PDFs</div>
+                        <div id='siac-read-stats-topics-pc_1' class='w-100' style='height: 400px;'></div>
                     </div> 
                     <div style='width: 50%; flex: 0 1 auto;'>
-                        <div style='width: 100%; text-align:center;'><b>Read last 7 days</b></div>
-                        <div id='siac-read-stats-topics-pc_2' style='width: 100%; height: 400px;'></div>
+                        <div class='w-100 ta_center bold'>Read last 7 days</div>
+                        <div id='siac-read-stats-topics-pc_2' class='w-100' style='height: 400px;'></div>
                     </div> 
                 </div> 
                 """
@@ -364,7 +365,6 @@ def topic_card_body(topics: List[Tuple[str, float]]) -> str:
 def search_results(db_list: List[IndexNote], query_set: List[str]) -> str:
     """ Prints a list of index notes. Used e.g. in the pdf viewer. """
     html                        = ""
-    epochTime                   = int(time.time() * 1000)
     timeDiffString              = ""
     newNote                     = ""
     lastNote                    = ""
@@ -439,7 +439,7 @@ def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
     avg_r   = round(v_sum / doy, 1)
 
     html = f"""
-        <div id='siac-read-time-ch' style='width: 100%; margin: 30px auto 10px auto;'></div>
+        <div id='siac-read-time-ch' class='w-100' style='margin: 30px auto 10px auto;'></div>
         <table style='margin-top: 15px;'>
             <tr>
                 <td class='siac-caps'>Avg. read pages / day:</td>
@@ -460,223 +460,49 @@ def get_note_delete_confirm_modal_html(nid: int) -> Optional[str]:
     note            = get_note(nid)
     if not note:
         return None
-    creation_date   = note.created
     title           = utility.text.trim_if_longer_than(note.get_title(), 100) 
+    priority        = get_priority(nid)
+    if priority is None:
+        priority    = "-"
 
-    return """
-
-    <div id='siac-del-modal'>
-       <div class='siac-modal-small'>
-            <p class='ta_center' style='font-size: 14px;'><b>Delete the following note?</b></p>
-            <hr class='siac-modal-sep'/>
-            <br>
-            <div class='ta_center' style='font-size: 14px; margin-bottom: 4px;'><b>%s</b></div>
-            <div class='ta_center' style='font-size: 14px;'><i>%s</i></div>
-            <br><br>
-            <div class='ta_center'>
-                <div class='siac-btn siac-btn-small bold' onclick='deleteNote(%s);' style='margin-right: 10px;'><div class='siac-trash-icn'></div>&nbsp;Delete&nbsp;</div>
-                <div class='siac-btn siac-btn-small bold' onclick='$(this.parentNode.parentNode.parentNode).remove(); $("#greyout").hide();'>&nbsp;Cancel&nbsp;</div>
-            </div>
-       </div>
-    </div>
-    """ % (title, creation_date, nid)
+    return filled_template("note_delete", dict(title = title, creation_date = note.created, priority = priority, nid = nid))
 
 
-def stylingModal(config):
-    html = """
-            <fieldset>
-                <span>Exclude note fields from search or display.</span>
-                <button class='siac-btn siac-btn-small' style='float: right;' onclick='pycmd("siac-model-dialog")'>Set Fields</button>
-            </fieldset>
-            <br/>
-            <fieldset>
-            <span><mark>Important:</mark> Modify this value to scale the editor. Useful e.g. when working on a small screen. This is essentially the same as zooming in a web browser with CTRL+Mousewheel.</span>
-                <table class='w-100'>
-                    <tr><td><b>Zoom</b></td><td style='text-align: right;'><input placeholder="" type="number" step="0.1" style='width: 60px;' onchange="pycmd('siac-styling searchpane.zoom ' + this.value)" value="%s"/></td></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>Controls whether the results are faded in or not.</span>
-                <table class='w-100'>
-                    <tr><td><b>Render Immediately</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling renderImmediately ' + this.checked)" %s/></td></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>This controls how the window is split into search pane and field input. A value of 40 means the left side will take 40%% and the right side will take 60%%.</span>
-                <table class='w-100'>
-                    <tr><td><b>Left Side Width</b></td><td style='text-align: right;'><input placeholder="Value in px" type="number" min="0" max="100" style='width: 60px;' onchange="pycmd('siac-styling leftSideWidthInPercent ' + this.value)" value="%s"/> %%</td></tr>
-                </table>
-            </fieldset>
-             <br/>
-            <fieldset>
-                <span>This controls whether the sidebar (containing the tags and found keywords) is visible or not.</span>
-                <table class='w-100'>
-                    <tr><td><b>Hide Sidebar</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling hideSidebar ' + this.checked)" %s/></tr>
-                </table>
-            </fieldset>
-             <br/>
-              <fieldset>
-                <span>This controls whether the timeline row (added notes over the year) is visible or not.</span>
-                <table class='w-100'>
-                    <tr><td><b>Show Timeline</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling showTimeline ' + this.checked)" %s/></tr>
-                </table>
-            </fieldset>
-            <br/>
-              <fieldset>
-                <span>This controls whether the small info box will be shown when a tag is hovered over with the mouse. Currently only works with the default scaling.</span>
-                <table class='w-100'>
-                    <tr><td><b>Show Tag Info on Hover</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling showTagInfoOnHover ' + this.checked)" %s/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>This controls how long you have to hover over a tag until the info box is shown. Allowed values are 0 (not recommended) to 10000.</span>
-                <table class='w-100'>
-                    <tr><td><b>Tag Hover Delay in Miliseconds</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="10000" style='width: 60px;' onchange="pycmd('siac-styling tagHoverDelayInMiliSec ' + this.value)" value="%s"/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>If the number of notes that would go into the index (only notes from the included decks are counted) is lower than this value the index should always be rebuilt.</span>
-                <table class='w-100'>
-                    <tr><td><b>Always Rebuild Index If Smaller Than</b></td><td style='text-align: right;'><input placeholder="Value in ms" type="number" min="0" max="100000" style='width: 60px;' onchange="pycmd('siac-styling alwaysRebuildIndexIfSmallerThan ' + this.value)" value="%s"/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>If you have problems with the display of search results (e.g. notes nested into each other), most likely, your note's html contains at least one unmatched opening/closing &lt;div&gt; tag. If set to true, this setting will remove all div tags from the note html before displaying.</span>
-                <table class='w-100'>
-                    <tr><td><b>Remove &lt;div&gt; Tags from Output</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling removeDivsFromOutput ' + this.checked)" %s/></tr>
-                </table>
-                <span>Try to hide Cloze brackets in the rendered results, instead show only their contained text.</span>
-                <table class='w-100'>
-                    <tr><td><b>Hide {{c1:: ... }} Cloze brackets in output</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.hide_cloze_brackets ' + this.checked)" %s/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>This is the absolute path to the folder where the addon should store its notes. If not present already, the addon will create a file named <i>siac-notes.db</i> in that folder.
-                <br>If you have existing data, after changing this value, you should close Anki, copy your existing <i>siac-notes.db</i> to that new location, and then start again.
-                </span>
-                <table class='w-100'>
-                    <tr><td><b>Addon Note DB Folder Path</b></td><td style='text-align: right;'><input type="text"  style='min-width: 250px;' onfocusout="pycmd('siac-styling addonNoteDBFolderPath ' + this.value)" value="%s"/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>This is the location where PDFs generated from URLs will be saved. This needs to be set for the URL import to work.</span>
-                <table class='w-100'>
-                    <tr><td><b>PDF Url-Import Save Path</b></td><td style='text-align: right;'><input type="text" style='min-width: 250px;' onfocusout="pycmd('siac-styling pdfUrlImportSavePath ' + this.value)" value="%s"/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>This controls if the addon's notes shall be displayed with their source field (on the bottom: "Source: ..."), or not.</span>
-                <table class='w-100'>
-                    <tr><td><b>Notes - Show Source</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling notes.showSource ' + this.checked)" %s/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>This controls if the add-on is displayed in the edit dialog ("Edit" from the reviewer) too. <b>Please notice</b>: This add-on does not work with multiple instances. So if you have an Add Card dialog open while you are reviewing, and then open the Edit dialog, this add-on will not work properly anymore. So if you use this option, make sure the Add Card dialog is closed during review.</span>
-                <table class='w-100'>
-                    <tr><td><b>Use in Edit</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling useInEdit ' + this.checked)" %s/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>Show the float note button (&#10063;) in the rendered search results. <b>Needs a restart to apply.</b></span>
-                <table class='w-100'>
-                    <tr><td><b>Show Float Note Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showFloatButton ' + this.checked)" %s/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>Show NID/CID button (to copy the note's ID / ID of its (first) card on click) in the rendered search results. <b>Needs a restart to apply</b></span>
-                <table class='w-100'>
-                    <tr><td><b>Show NID Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showIDButton ' + this.checked)" %s/></tr>
-                </table>
-                <table class='w-100'>
-                    <tr><td><b>Show CID Button</b></td><td style='text-align: right;'><input type="checkbox" onclick="pycmd('siac-styling results.showCIDButton ' + this.checked)" %s/></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span class='tagLbl' style='float: none; margin-left: 0;'>Tag Colors</span>
-                <table class='w-100'>
-                    <tr><td><b>Tag Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.tagForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
-                    <tr><td><b>Tag Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.tagBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
-                    <tr><td><b>Tag Foreground Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.tagForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
-                    <tr><td><b>Tag Background Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.tagBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <mark>Highlight Colors</mark>
-                <table class='w-100'>
-                    <tr><td><b>Highlight Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.highlightForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
-                    <tr><td><b>Highlight Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.highlightBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
-                    <tr><td><b>Highlight Foreground Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.highlightForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
-                    <tr><td><b>Highlight Background Color (Night Mode)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.highlightBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span class='siac-susp-lbl' style='position: static; margin-left: 0;'>Suspended Label Colors</span>
-                <table class='w-100'>
-                    <tr><td><b>Suspended Foreground Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.suspendedForegroundColor ' + this.value)" type="color" value="%s"></td></tr>
-                    <tr><td><b>Suspended Background Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.suspendedBackgroundColor ' + this.value)" type="color" value="%s"></td></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <fieldset>
-                <span>Modal Border Color</span>
-                <table class='w-100'>
-                    <tr><td><b>Modal Border Color</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.modalBorderColor ' + this.value)" type="color" value="%s"></td></tr>
-                    <tr><td><b>Modal Border Color (Night)</b></td><td style='text-align: right;'><input onchange="pycmd('siac-styling styles.night.modalBorderColor ' + this.value)" type="color" value="%s"></td></tr>
-                </table>
-            </fieldset>
-            <br/>
-            <div style='text-align: center'><mark>For other settings, see the <em>config.json</em> file.</mark></div>
-                        """ % (
-                        config["searchpane.zoom"],
-                        "checked='true'" if config["renderImmediately"] else "",
-                        config["leftSideWidthInPercent"],
-                        "checked='true'" if config["hideSidebar"] else "",
-                        "checked='true'" if config["showTimeline"] else "",
-                        "checked='true'" if config["showTagInfoOnHover"] else "",
-                        config["tagHoverDelayInMiliSec"],
-                       config["alwaysRebuildIndexIfSmallerThan"],
-                       "checked='true'" if config["removeDivsFromOutput"] else "",
-                       "checked='true'" if config["results.hide_cloze_brackets"] else "",
-                       config["addonNoteDBFolderPath"],
-                       config["pdfUrlImportSavePath"],
-                       "checked='true'" if config["notes.showSource"] else "",
-                       "checked='true'" if config["useInEdit"] else "",
-                       "checked='true'" if config["results.showFloatButton"] else "",
-                       "checked='true'" if config["results.showIDButton"] else "",
-                       "checked='true'" if config["results.showCIDButton"] else "",
-                       utility.misc.color_to_hex(config["styles.tagForegroundColor"]), 
-                       utility.misc.color_to_hex(config["styles.tagBackgroundColor"]),
-                       utility.misc.color_to_hex(config["styles.night.tagForegroundColor"]),
-                       utility.misc.color_to_hex(config["styles.night.tagBackgroundColor"]),
-                       utility.misc.color_to_hex(config["styles.highlightForegroundColor"]),
-                       utility.misc.color_to_hex(config["styles.highlightBackgroundColor"]),
-                       utility.misc.color_to_hex(config["styles.night.highlightForegroundColor"]),
-                       utility.misc.color_to_hex(config["styles.night.highlightBackgroundColor"]),
-                       utility.misc.color_to_hex(config["styles.suspendedForegroundColor"]), 
-                       utility.misc.color_to_hex(config["styles.suspendedBackgroundColor"]),
-                       utility.misc.color_to_hex(config["styles.modalBorderColor"]), 
-                       utility.misc.color_to_hex(config["styles.night.modalBorderColor"]),
-                        )
-    html += """
-    <br/> <br/>
-    <mark>&nbsp;Important:&nbsp;</mark> At the moment, if you reset your config.json to default, your custom stopwords and synsets will be deleted. If you want to do that, I recommend saving them somewhere first.
-    </div>
-    """
-    return html
+def get_settings_modal_html(config):
+    """ Returns the HTML for the settings/styling modal. """
+
+    params = dict(
+        zoom = config["searchpane.zoom"],
+        render_immediately = "checked='true'" if config["renderImmediately"] else "",
+        left_side_width = config["leftSideWidthInPercent"],
+        hide_sidebar = "checked='true'" if config["hideSidebar"] else "",
+        show_timeline = "checked='true'" if config["showTimeline"] else "",
+        show_tag_info_on_hover = "checked='true'" if config["showTagInfoOnHover"] else "",
+        tag_hover_delay = config["tagHoverDelayInMiliSec"],
+        rebuild_ix_if_smaller_than = config["alwaysRebuildIndexIfSmallerThan"],
+        remove_divs = "checked='true'" if config["removeDivsFromOutput"] else "",
+        hide_clozes = "checked='true'" if config["results.hide_cloze_brackets"] else "",
+        note_db_folder = config["addonNoteDBFolderPath"],
+        pdf_url_import_folder = config["pdfUrlImportSavePath"],
+        show_source = "checked='true'" if config["notes.showSource"] else "",
+        use_in_edit = "checked='true'" if config["useInEdit"] else "",
+        show_float_btn = "checked='true'" if config["results.showFloatButton"] else "",
+        show_id_btn = "checked='true'" if config["results.showIDButton"] else "",
+        show_cid_btn = "checked='true'" if config["results.showCIDButton"] else "",
+        tag_fg = utility.misc.color_to_hex(config["styles.tagForegroundColor"]), 
+        tag_bg = utility.misc.color_to_hex(config["styles.tagBackgroundColor"]),
+        tag_fg_night = utility.misc.color_to_hex(config["styles.night.tagForegroundColor"]),
+        tag_bg_night = utility.misc.color_to_hex(config["styles.night.tagBackgroundColor"]),
+        hl_fg = utility.misc.color_to_hex(config["styles.highlightForegroundColor"]),
+        hl_bg = utility.misc.color_to_hex(config["styles.highlightBackgroundColor"]),
+        hl_fg_night = utility.misc.color_to_hex(config["styles.night.highlightForegroundColor"]),
+        hl_bg_night = utility.misc.color_to_hex(config["styles.night.highlightBackgroundColor"]),
+        susp_fg = utility.misc.color_to_hex(config["styles.suspendedForegroundColor"]), 
+        susp_bg = utility.misc.color_to_hex(config["styles.suspendedBackgroundColor"]),
+        modal_border = utility.misc.color_to_hex(config["styles.modalBorderColor"]), 
+        modal_border_night = utility.misc.color_to_hex(config["styles.night.modalBorderColor"]),
+    )
+    return filled_template("settings_modal", params)
 
 
 def get_loader_html(text):
@@ -692,9 +518,11 @@ def get_pdf_list_first_card():
         Returns the html for the body of a card that is displayed at first position when clicking on "PDFs".
     """
     html = """
-        <div>
+        <div style='user-select: none;'>
             <a class='keyword' onclick='pycmd("siac-r-pdf-last-read")'>Order by Last Read</a><br>
             <a class='keyword' onclick='pycmd("siac-r-pdf-last-added")'>Order by Last Added</a><br>
+            <a class='keyword' onclick='pycmd("siac-r-pdf-size desc")'>Order by Size (Descending)</a><br>
+            <a class='keyword' onclick='pycmd("siac-r-pdf-size asc")'>Order by Size (Ascending)</a><br>
             <a class='keyword' onclick='pycmd("siac-r-pdf-find-invalid")'>Find Invalid Paths</a>
         </div>
        
@@ -773,7 +601,7 @@ def get_unsuspend_modal(nid):
             </tr>
         """
     return f"""
-            <div style='min-height: 250px; overflow: hidden;' class='flex-col'>
+            <div style='min-height: 250px;' class='flex-col oflow_hidden'>
                 <div style='flex: 1 1 auto;'>
                     <center style='margin: 10px 0 20px 0;'>
                         <span style='font-size: 18px;'><b>{len(cards)}</b> Card(s) for Note <b>{nid}</b></span>
@@ -784,7 +612,7 @@ def get_unsuspend_modal(nid):
                 </div>
                 <div>
                     <hr style='margin-top: 20px; margin-bottom: 20px;'>
-                    <center style='margin-bottom: 5px;'>
+                    <center class='mb-5'>
                         <div class='siac-btn siac-btn-small bold' onclick='pycmd(\"siac-unsuspend {nid} {unsuspend_all[:-1]}\")'>Unsuspend All</div> 
                     </center>
                 </div>
@@ -823,20 +651,3 @@ l422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120
 </g>
 </svg>
     """ % (w, h)
-
-def clock_svg(greyout):
-    greyout = "grey" if greyout else ""
-    return f"""
-<svg  class='siac-sched-icn {greyout}'  width="12" height="12" xmlns="http://www.w3.org/2000/svg">
- <g>
-  <rect fill="none" id="canvas_background" height="14" width="14" y="-1" x="-1"/>
- </g>
- <g>
-  <ellipse stroke="#000" ry="4.97339" rx="4.88163" id="svg_2" cy="5.91646" cx="6.192696" fill="none"/>
-  <line stroke-linecap="null" stroke-linejoin="null" id="svg_3" y2="6.338556" x2="6.009176" y1="2.961789" x1="6.009176" fill-opacity="null" stroke-opacity="null" stroke="#000" fill="none"/>
-  <line stroke-linecap="null" stroke-linejoin="null" id="svg_4" y2="6.522076" x2="9.606167" y1="6.55878" x1="6.04588" fill-opacity="null" stroke-opacity="null" stroke="#000" fill="none"/>
-  <line stroke-linecap="null" stroke-linejoin="null" id="svg_5" y2="6.999228" x2="5.788952" y1="6.37526" x1="6.009176" fill-opacity="null" stroke-opacity="null" stroke="#000" fill="none"/>
- </g>
-</svg>
-    """
-

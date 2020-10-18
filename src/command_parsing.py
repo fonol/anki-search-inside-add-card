@@ -22,7 +22,7 @@ import aqt.webview
 import aqt.editor
 import aqt.stats
 from anki.notes import Note
-from aqt.utils import tooltip, showInfo
+from aqt.utils import tooltip, showInfo, isMac
 import os
 import time
 import urllib.parse
@@ -32,8 +32,8 @@ import typing
 from typing import List, Dict, Any, Optional, Tuple
 
 
-from .state import check_index, get_index, set_index, set_corpus
-from .index.indexing import build_index, get_notes_in_collection
+from .state import check_index, get_index, set_index
+from .index.indexing import build_index
 from .debug_logging import log
 from .web.web import *
 from .web.html import *
@@ -44,9 +44,8 @@ from .notes import *
 from .notes import _get_priority_list
 from .hooks import run_hooks
 from .output import Output
-from .dialogs.editor import openEditor, NoteEditor
+from .dialogs.editor import open_editor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
-from .dialogs.quick_schedule import QuickScheduler
 from .dialogs.url_import import UrlImporter
 from .dialogs.pdf_extract import PDFExtractDialog
 from .dialogs.zotero_import import ZoteroImporter
@@ -134,7 +133,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-edit-note "):
         # "Edit" clicked on a normal (Anki) note
-        openEditor(mw, int(cmd[15:]))
+        open_editor(mw, int(cmd[15:]))
 
     elif cmd.startswith("siac-eval "):
         # direct eval, saves code
@@ -295,6 +294,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         notes.insert(0, SiacNote.mock("PDF Meta", sp_body, "Meta"))
         index.ui.print_search_results(notes, stamp)
 
+    elif cmd.startswith("siac-r-pdf-size "):
+        stamp = set_stamp()
+        notes = get_pdf_notes_ordered_by_size(cmd.split()[1])
+        sp_body = get_pdf_list_first_card()
+        notes.insert(0, SiacNote.mock("PDF Meta", sp_body, "Meta"))
+        index.ui.print_search_results(notes, stamp)
+
     elif cmd == "siac-r-pdf-find-invalid":
         stamp = set_stamp()
         notes = get_invalid_pdfs()
@@ -405,20 +411,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         # show the dialog that allows to change the schedule of a note
         show_schedule_dialog(self.parentWindow)
 
-    elif cmd == "siac-delay-note":
-        # "Later" button pressed in the reading modal
-        qlen = len(_get_priority_list())
-        if qlen > 2:
-            delay = int(qlen/3) 
-            if index.ui.reading_modal.note.position < 3:
-                delay += (3 - index.ui.reading_modal.note.position)
-            set_delay(index.ui.reading_modal.note_id, delay)
-            recalculate_priority_queue()
-            nid = get_head_of_queue()
-            index.ui.reading_modal.display(nid)
-            tooltip("Moved note back in queue")
-        else:
-            tooltip("Later only works if 3+ items are in the queue.")
+    
 
     elif cmd.startswith("siac-pdf-mark "):
         mark_type       = int(cmd.split()[1])
@@ -489,7 +482,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             $('#greyout').show();
             $('#loader').show();""")
         set_index(None)
-        set_corpus(None)
         build_index(force_rebuild=True, execute_after_end=after_index_rebuilt)
 
     elif cmd.startswith("siac-searchbar-mode"):
@@ -608,20 +600,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             notes = find_by_tag(" ".join(cmd.split()[1:]))
             index.ui.print_search_results(notes, stamp)
 
-    elif cmd.startswith("siac-user-note-queue-picker "):
+    elif cmd == "siac-user-note-queue-picker":
         # show the queue manager dialog
-        nid     = int(cmd.split()[1])
-        picker  = QueuePicker(self.parentWindow)
-        if picker.exec_() and picker.chosen_id() is not None and picker.chosen_id() >= 0:
-            # note = get_note(nid)
-            index.ui.reading_modal.display(picker.chosen_id())
-        else:
-            if nid >= 0:
-                index.ui.reading_modal.reload_bottom_bar(nid)
+        dialog  = QueuePicker(self.parentWindow)
+        dialog.exec_()
+        index.ui.reading_modal.reload_bottom_bar()
 
-    elif cmd.startswith("siac-reload-reading-modal-bottom "):
-        nid = int(cmd.split()[1])
-        index.ui.reading_modal.reload_bottom_bar(nid)
 
     elif cmd == "siac-user-note-update-btns":
         queue_count = get_queue_count()
@@ -640,42 +624,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         text = " ".join(cmd.split(" ")[2:])
         update_note_text(id, text)
 
-    elif cmd.startswith("siac-requeue "):
-        # priority slider released
-        nid         = int(cmd.split()[1])
-        new_prio    = int(cmd.split()[2])
-        note        = get_note(nid)
-
-        if note.is_due_sometime() and note.schedule_type() == "td":
-            add_to_prio_log(nid, new_prio)
-            index.ui.reading_modal.display_schedule_dialog()
-        else:
-            if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
-                add_to_prio_log(nid, new_prio)
-                # update_priority_list(nid, new_prio)
-                index.ui.reading_modal.show_schedule_change_modal(unscheduled=True)
-            else:
-                if note.is_due_sometime():
-                    update_reminder(nid, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
-                update_priority_list(nid, new_prio)
-                nid = get_head_of_queue()
-                index.ui.reading_modal.display(nid)
-                if new_prio == 0:
-                    tooltip(f"<center>Removed from Queue.</center>")
-                else:
-                    tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
-
-
-    elif cmd.startswith("siac-update-prio "):
-        # prio slider in bottom bar released on value != 0
-        # not used atm
-        nid         = int(cmd.split()[1])
-        new_prio    = int(cmd.split()[2])
-        update_priority_without_timestamp(nid, new_prio)
-        # todo: find a better solution
-        recalculate_priority_queue()
-        index.ui.reading_modal.update_reading_bottom_bar(nid)
-        tooltip(f"<center>Set priority to: <b>{dynamic_sched_to_str(new_prio)}</b></center><center>Recalculated Priority Queue.</center>")
 
     elif cmd.startswith("siac-remove-from-queue "):
         to_remove = int(cmd.split(" ")[1])
@@ -690,6 +638,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             index.ui.reading_modal.reload_bottom_bar()
         tooltip(f"<center>Removed from Queue.</center>")
 
+        # DEBUG
+        if state.dev_mode:
+            note = get_note(to_remove)
+            assert(not get_priority(to_remove))
+            assert(note.position is None or note.is_or_was_due())
+            assert(not note.is_in_queue() or note.is_or_was_due())
+
     elif cmd == "siac-on-reading-modal-close":
         index.ui.reading_modal.reset()
         run_hooks("reading-modal-closed")
@@ -703,12 +658,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             tooltip("Queue is Empty! Add some items first.", period=4000)
 
     elif cmd == "siac-user-note-queue-read-head":
-        nid = get_head_of_queue()
-        if nid is not None and nid >= 0:
-            index.ui.reading_modal.display(nid)
-        else:
-            index.ui.js("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
-            tooltip("Queue is Empty! Add some items first.", period=4000)
+        index.ui.reading_modal.read_head_of_queue() 
 
     elif cmd == "siac-user-note-done":
         # hit "Done" button in reading modal
@@ -782,27 +732,22 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.ui.js("updatePageSidebarIfShown()")
 
     elif cmd.startswith("siac-unhide-pdf-queue "):
-        nid = int(cmd.split()[1])
         config["pdf.queue.hide"] = False
         write_config()
-        index.ui.reading_modal.update_reading_bottom_bar(nid)
+        index.ui.reading_modal.reload_bottom_bar()
 
     elif cmd.startswith("siac-hide-pdf-queue "):
-        nid = int(cmd.split()[1])
         config["pdf.queue.hide"] = True
         write_config()
-        index.ui.reading_modal.update_reading_bottom_bar(nid)
+        index.ui.reading_modal.reload_bottom_bar()
+
+    elif cmd.startswith("siac-toggle-show-prios "):
+        config["notes.queue.show_priorities"] = cmd.split(" ")[1] == "on"
+        write_config()
+        index.ui.reading_modal.reload_bottom_bar()
 
     elif cmd == "siac-left-side-width":
         index.ui.reading_modal.show_width_picker()
-
-    elif cmd.startswith("siac-quick-schedule "):
-        # not used, wip
-        nid = int(cmd.split()[1])
-        scheduler = QuickScheduler(self.parentWindow, nid)
-        if scheduler.exec_() and scheduler.queue_schedule is not None:
-            update_priority_list(nid, scheduler.queue_schedule)
-            index.ui.reading_modal.reload_bottom_bar(nid)
 
     elif cmd.startswith("siac-left-side-width "):
         value = int(cmd.split()[1])
@@ -1077,7 +1022,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     #   Checkboxes
     #
 
-    elif (cmd.startswith("siac-toggle-highlight ")):
+    elif cmd.startswith("siac-toggle-highlight "):
         if check_index():
             index.highlighting = cmd.split()[1] == "on"
             config["highlighting"] = cmd.split()[1] == "on"
@@ -1179,10 +1124,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             if success:
                 mw.moveToState("review")
                 mw.activateWindow()
+                # workaround, as activateWindow doesn't seem to bring the main window on top on OSX
+                if isMac:
+                    mw.raise_()
             else:
                 tooltip("Failed to create filtered deck.")
-
-
 
 
     else:
@@ -1485,20 +1431,25 @@ def show_schedule_dialog(parent_window):
     
     index           = get_index()
     original_sched  = index.ui.reading_modal.note.reminder
+    nid             = index.ui.reading_modal.note_id
     dialog          = ScheduleDialog(index.ui.reading_modal.note, parent_window)
     if dialog.exec_():
         schedule = dialog.schedule()
-        if schedule is not None and schedule != original_sched:
-            update_reminder(index.ui.reading_modal.note_id, schedule)
-            index.ui.reading_modal.note.reminder = schedule
-            if schedule == "":
+        if schedule != original_sched:
+            update_reminder(nid, schedule)
+            # set position to null before recalculating queue
+            prio = get_priority(nid)
+            if not prio or prio == 0:
+                null_position(nid)
+            # null_position(index.ui.reading_modal.note_id)
+            index.ui.reading_modal.note = get_note(nid)
+            # index.ui.reading_modal.note.reminder = schedule
+            if original_sched is not None and original_sched != "" and (schedule == "" or schedule is None):
                 tooltip(f"Removed schedule.")
-                if not get_config_value_or_default("notes.queue.include_future_scheduled_in_queue", True):
-                    # removed schedule, and config was set to not show scheduled notes in the queue, so now we have to insert it again
-                    update_priority_list(index.ui.reading_modal.note_id, get_priority(index.ui.reading_modal.note_id))
             else:
                 tooltip(f"Updated schedule.")
             run_hooks("updated-schedule")
+
 
 
 def show_read_stats():
@@ -1768,7 +1719,10 @@ def get_index_info():
             str(state.rust_lib),
             index.type, 
             sqlite3.sqlite_version,
-            str(index.initializationTime), index.get_number_of_notes(), config["alwaysRebuildIndexIfSmallerThan"], len(index.stopWords),
+            str(index.initializationTime), 
+            index.get_number_of_notes(), 
+            config["alwaysRebuildIndexIfSmallerThan"], 
+            len(config["stopwords"]),
             sp_on if index.logging else sp_off,
             sp_on if config["renderImmediately"] else sp_off,
             "Search" if config["tagClickShouldSearch"] else "Add",
@@ -1796,8 +1750,6 @@ def get_index_info():
             config["shortcuts.trigger_current_filter"],
             shortcuts
             )
-
- 
 
     changes = changelog()
 
@@ -1831,12 +1783,12 @@ def show_timing_modal(render_time = None):
     """ Builds the html and shows the modal which gives some info about the last executed search (timing, query after stopwords etc.) """
 
     index   = get_index()
-    html    = "<h4>Query (stopwords removed, checked Synsets):</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % index.lastResDict["query"]
+    html    = "<h4>Query (stopwords removed, checked Synsets):</h4><div class='w-100 oflow_y_auto mb-10' style='max-height: 200px;'><i>%s</i></div>" % index.lastResDict["query"]
 
     if "decks" in index.lastResDict:
-        html += "<h4>Decks:</h4><div style='width: 100%%; max-height: 200px; overflow-y: auto; margin-bottom: 10px;'><i>%s</i></div>" % ", ".join([str(d) for d in index.lastResDict["decks"]])
+        html += "<h4>Decks:</h4><div class='w-100 oflow_y_auto mb-10' style='max-height: 200px;'><i>%s</i></div>" % ", ".join([str(d) for d in index.lastResDict["decks"]])
 
-    html += "<h4>Execution time:</h4><table style='width: 100%'>"
+    html += "<h4>Execution time:</h4><table class='w-100'>"
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Removing Stopwords", index.lastResDict["time-stopwords"] if index.lastResDict["time-stopwords"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("Checking Synsets", index.lastResDict["time-synonyms"] if index.lastResDict["time-synonyms"] > 0 else "< 1")
     html += "<tr><td>%s</td><td><b>%s</b> ms</td></tr>" % ("SQLite: Executing Query", index.lastResDict["time-query"] if index.lastResDict["time-query"] > 0 else "< 1")

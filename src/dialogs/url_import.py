@@ -79,7 +79,7 @@ class UrlImporter(QDialog):
        
         if self.show_schedule:
             
-            self.slider = QtPrioritySlider(0)
+            self.slider = QtPrioritySlider(0, None)
             self.vbox.addWidget(self.slider)
 
         self.vbox.addSpacing(15)

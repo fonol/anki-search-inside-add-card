@@ -73,7 +73,9 @@
 "notes.queue.scheduleDialogOnDoneUnscheduledNotes": false,
 "notes.queue.intervalSchedulesStartToday": true,
 "notes.queue.priorityMod": 1.0,
-"notes.queue.include_future_scheduled_in_queue": true,
+"notes.queue.show_priorities": false,
+"notes.queue.hide_bottom_bar": false,
+"notes.queue.hide_top_bar": false,
 "pdf.theme": "pdf_reader.css",
 "pdf.color_mode": "Day",
 "pdf.page_sidebar_shown": true,
@@ -81,6 +83,8 @@
 "notes.editor.autoHideLeftPaneOnOpen": false,
 "notes.editor.shortcut": "Ctrl+Shift+n",
 "notes.editor.defaultTagsIfEmpty": "",
+"notes.editor.include_anki_tags": false,
+"anki.editor.remember_location": true,
 "results.showFloatButton": false,
 "results.showIDButton": false,
 "results.showCIDButton": false,
@@ -104,5 +108,8 @@
 "shortcuts.search_for_current_field": "Alt+J",
 "shortcuts.trigger_current_filter": "Alt+F",
 "searchbar.default_mode": "Add-on",
-"addon.data_folder": ""
+"addon.data_folder": "",
+"dev_mode" : false,
+"mix_reviews_and_reading": false,
+"mix_reviews_and_reading.interrupt_every_nth_card" : 50
 }

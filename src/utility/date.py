@@ -72,6 +72,11 @@ def day_of_year() -> int:
     now = datetime.now()
     return (now - datetime(now.year, 1, 1)).days + 1
 
+def postpone_reminder(reminder: str, days_delta: int) -> str:
+    new_due = dt_to_stamp(datetime.now() + timedelta(days=days_delta))
+    return date_now_stamp() + "|" + new_due + "|" + reminder.split("|")[2]
+
+
 def schedule_verbose(sched: str) -> str:
     """ Returns a natural language representation of the given schedule string. """
 
@@ -80,10 +85,12 @@ def schedule_verbose(sched: str) -> str:
     stype       = sched.split("|")[2][0:2]
     stype_val   = sched.split("|")[2][3:]
 
+    # weekdays
     if stype == "wd":
         days = ", ".join([weekday_name_abbr(int(c)) for c in stype_val])
         return f"Scheduled for every {days}."
 
+    # every nth day
     if stype == "id":
         if stype_val == "2":
             return f"Scheduled for every second day."
@@ -91,13 +98,27 @@ def schedule_verbose(sched: str) -> str:
             return f"Scheduled to appear everyday."
         return f"Scheduled to appear every {stype_val} days."
 
+    # once, in n days
     if stype == "td":
         delta_days = (datetime.now().date() - dt_from_stamp(created).date()).days
         if delta_days == 0:
-            return f"Scheduled today to appear in {stype_val} day(s)."
+            if stype_val == "1":
+                return f"Scheduled today to appear tomorrow."
+            else:
+                return f"Scheduled today to appear in {stype_val} day(s)."
         if delta_days == 1:
-            return f"Scheduled yesterday to appear in {stype_val} day(s)."
+            if stype_val == "1":
+                return f"Scheduled yesterday to appear today."
+            elif stype_val == 2:
+                return f"Scheduled yesterday to appear tomorrow."
+            else:
+                return f"Scheduled yesterday to appear in {stype_val} day(s)."
         return f"Scheduled {delta_days} days ago to appear in {stype_val} day(s)."
+    
+    # growing ivl
+    if stype == "gd":
+        factor = stype_val.split(";")[0]
+        return f"Scheduled with growing interval (factor {round(float(factor), 1)})"
 
 
 def get_new_reminder(stype: str, svalue: str) -> str:
@@ -115,6 +136,13 @@ def get_new_reminder(stype: str, svalue: str) -> str:
         # show again according to interval
         next_date_due = datetime.now() + timedelta(days=int(svalue))
         return f"{now}|{dt_to_stamp(next_date_due)}|id:{svalue}"
+    elif stype == "gd":
+        # show again according to interval * factor
+        factor = float(svalue.split(";")[0])
+        last   = float(svalue.split(";")[1])
+        new    = factor * last
+        next_date_due = datetime.now() + timedelta(days=int(new))
+        return f"{now}|{dt_to_stamp(next_date_due)}|gd:{factor};{new}"
         
 
 

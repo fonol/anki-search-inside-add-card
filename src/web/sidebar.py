@@ -3,9 +3,9 @@ from typing import List, Optional, Tuple, Any
 from aqt.editor import Editor
 from anki.utils import isMac, isLin
 
-
 from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority_as_str, get_notes_scheduled_for_today
 from ..config import get_config_value_or_default as conf_or_def
+from .templating import filled_template
 import utility.misc
 import utility.tags
 import utility.text
@@ -54,31 +54,8 @@ class Sidebar:
             else:
                 sched_today_menu_item = ""
 
-            tab_html = f"""
-                    <div style='flex: 0 1 auto; margin-top: 10px;'>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-user-note-newest");'>Newest</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs")'>PDFs</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs-unread")'>PDFs - Unread</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-pdfs-in-progress")'>PDFs - In Progress</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-video-notes")'>Videos</div>
-                      <!--  <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-last-done")'>Last Done</div>-->
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-stats")'>Read Stats</div>
-                        {sched_today_menu_item}
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-user-note-untagged")'>Untagged</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-user-note-random");'>Random</div>
-                        <input type='text' class='siac-sidebar-inp' style='width: calc(100% - 35px); box-sizing: border-box; border-radius: 4px; padding-left: 4px; margin-top: 10px;' onkeyup='searchForUserNote(event, this);'/>
-                        <span class='siac-search-icn' style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
-                        <div class='w-100' style='margin-top: 20px;'><b>Tags ({tag_len})</b>
-                            <b class='siac-tags-exp-icon' style='margin-right: 15px; padding: 0 2px 0 2px;' onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
-                            <b class='siac-tags-exp-icon' style='margin-right: 5px; padding: 0 2px 0 2px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
-                        </div>
-                        <hr style='margin-right: 15px;'/>
-                    </div>
-                    <div style='flex: 1 1 auto; padding-right: 5px; margin-right: 5px; margin-bottom: 5px; overflow-y: auto;'>
-                        {tag_html}
-                    </div>
+            tab_html = filled_template("sidebar_addon_tab", dict(sched_today_menu_item = sched_today_menu_item, tag_len = tag_len, tag_html = tag_html))
 
-            """
         elif self.tab == self.PDF_IMPORT_TAB:
 
             folders_to_search = conf_or_def("pdf.import.folders_to_search", [])
@@ -137,74 +114,26 @@ class Sidebar:
                         {folders} 
                     </div>"""
                     exp = f"""
-                        <div style='flex: 0 1 auto; padding-right: 5px; margin-right: 5px; margin-bottom: 5px;'>
+                        <div class='mr-5 mb-5' style='flex: 0 1 auto; padding-right: 5px;'>
                             <div class='w-100' style='margin-top: 20px;'><b>PDFs in Folders</b>
                                 <b class='siac-tags-exp-icon' style='margin-right: 15px; padding: 0 2px 0 2px;' onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
-                                <b class='siac-tags-exp-icon' style='margin-right: 5px; padding: 0 2px 0 2px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
+                                <b class='siac-tags-exp-icon mr-5' style='padding: 0 2px 0 2px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
                             </div>
                         </div>
                     """
 
             tab_html = f"""
                 {exp}
-                <div style='flex: 1 1 auto; padding-right: 5px; margin-right: 5px; margin-bottom: 5px; overflow-y: auto;'>
+                <div class='mr-5 mb-5' style='flex: 1 1 auto; padding-right: 5px; overflow-y: auto;'>
                     {folders}
                 </div>
             """
 
         elif self.tab == self.SPECIAL_SEARCHES_TAB:
 
-            tab_html = f"""
-                    <div style='flex: 1 1 auto; margin-top: 15px; margin-right: 10px; overflow-y: auto; overflow-x: hidden;'>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastAdded")'>Last Added</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("firstAdded")'>First Added</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastModified")'>Last Modified</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastReviewed")'>Last Reviewed</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastLapses")'>Last Lapses</div>
-                        <br><br>
+            tab_html = filled_template("sidebar_anki_tab", {})
 
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("highestPerf")'>Best Performance</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestPerf")'>Worst Performance</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestRet")'>Worst Pass Rate</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("highestRet")'>Best Pass Rate</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("longestTime")'>Time Taken (desc.)</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("shortestTime")'>Time Taken (asc.)</div>
-                        <br><br>
-
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("longestText")'>Longest HTML</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("randomUntagged")'>Random Untagged</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastUntagged")'>Newest Untagged</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("highestInterval")'>Highest Interval</div>
-                        <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestInterval")'>Lowest Interval</div>
-                    </div>
-            """
-
-        html = f"""
-            <div id='siac-notes-sidebar'>
-                <div class='h-100 flex-col'>
-                    <div style='flex: 0 1 auto;'>
-                        <div class='siac-btn-small' style='position: relative; float: right; display: inline-block; min-width: 90px;' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")'>
-                            <div id='siac-sidebar-selected' class='blue-hover'>{tab_displayed_name}</div>
-                            <div class='siac-btn-small-dropdown click ta_center' style='z-index: 3;' onclick='event.stopPropagation();'>
-                                <div class='blue-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-notes-tab")'>
-                                    <b>Add-on Notes</b>
-                                </div>
-                                <div class='blue-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-special-tab")'>
-                                    <b>Anki Notes</b><br>
-                                </div>
-                                <div class='blue-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-import-tab")'>
-                                    <b>PDF Import</b><br>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {tab_html}
-                </div>
-
-            </div>
-
-        """
-        return html
+        return filled_template("sidebar", dict(tab_html = tab_html, tab_displayed_name = tab_displayed_name))
 
     def display(self):
         html = self._html()

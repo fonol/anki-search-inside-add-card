@@ -19,14 +19,8 @@ from .components import QtScheduleComponent
 from aqt.qt import *
 import aqt.editor
 import aqt
-import functools
-import re
-import random
-from ..notes import *
-from ..config import get_config_value_or_default
-import utility.text
 import utility.misc
-import utility.date
+import state
 
 class ScheduleDialog(QDialog):
     """ Edit the schedule of a note. """
@@ -45,6 +39,19 @@ class ScheduleDialog(QDialog):
         self.scheduler = QtScheduleComponent(self.note.reminder)
 
         self.setLayout(QVBoxLayout())
+
+        c_lbl = QLabel(self)
+        c_icon   = "calendar_night.png" if state.night_mode else "calendar.png"
+        c_pixmap  = QPixmap(utility.misc.get_web_folder_path() + f"icons/{c_icon}").scaled(QSize(35, 35), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        c_lbl.setPixmap(c_pixmap)
+        hbox    = QHBoxLayout()
+        hbox.addStretch()
+        hbox.addWidget(c_lbl)
+        hbox.addStretch()
+        self.layout().addSpacing(10)
+        self.layout().addLayout(hbox)
+        self.layout().addSpacing(16)
+
         self.layout().addWidget(self.scheduler)
         accept = QPushButton("Save")
         accept.clicked.connect(self.accept)

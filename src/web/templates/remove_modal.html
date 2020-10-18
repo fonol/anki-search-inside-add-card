@@ -1,20 +1,20 @@
 <div id='siac-schedule-dialog' class="siac-modal-small dark ta_center">
-    Remove / delete this note?<br><br>
-    {title}
+    <div> <i class='fa fa-trash mb-10' style='font-size: 34px; margin-bottom: 20px;'></i></div>
+    <b>{title}</b>
 
-    <div class='siac-pdf-main-color-border-bottom siac-pdf-main-color-border-top cursor-pointer' style='text-align: left; user-select: none;  margin: 10px 0 10px 0; padding: 15px;'>
+    <div class='siac-pdf-main-color-border-top cursor-pointer' style='text-align: left; user-select: none;  margin: 10px 0 30px 0; padding: 15px;'>
         <label class='blue-hover' for='siac-rb-1'>
-            <input id='siac-rb-1' type='radio' {rem_cl} name='del' data-pycmd="1">
-            <span>Remove from Queue</span>
+            <input id='siac-rb-1' type='radio' style='vertical-align: middle;' {rem_cl} name='del' data-pycmd="1">
+            <span style='vertical-align: middle;'><i class='fa fa-minus-square mr-5'></i>Remove from Queue</span>
         </label><br>
         <label class='blue-hover' for='siac-rb-2'>
-            <input id='siac-rb-2' type='radio' {del_cl} name='del' data-pycmd="2">
-            <span>Delete Note</span>
+            <input id='siac-rb-2' type='radio' style='vertical-align: middle;' {del_cl} name='del' data-pycmd="2">
+            <span style='vertical-align: middle;'><i class='fa fa-trash mr-5'></i>Delete Note</span>
         </label><br>
 
     </div>
-    <div style='text-align: right;'>
-        <div class='siac-btn siac-btn-dark' style='margin-right: 10px;' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Cancel</div>
-        <div class='siac-btn siac-btn-dark' onclick='removeDialogOk({note_id})'>Ok</div>
+    <div class='ta_right'>
+        <div class='siac-btn siac-btn-dark mr-10' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Cancel</div>
+        <div class='siac-btn siac-btn-dark' onclick='removeDialogOk({note_id})'><i class='fa fa-trash mr-5'></i>OK</div>
     </div>
 </div>
