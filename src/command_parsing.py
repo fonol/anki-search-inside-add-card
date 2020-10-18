@@ -603,8 +603,13 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-user-note-queue-picker":
         # show the queue manager dialog
         dialog  = QueuePicker(self.parentWindow)
-        dialog.exec_()
-        index.ui.reading_modal.reload_bottom_bar()
+        if dialog.exec_():
+            if dialog.chosen_id() is not None and dialog.chosen_id() > 0:
+                index.ui.reading_modal.display(dialog.chosen_id())
+            else:
+                index.ui.reading_modal.reload_bottom_bar()
+        else:
+            index.ui.reading_modal.reload_bottom_bar()
 
 
     elif cmd == "siac-user-note-update-btns":
