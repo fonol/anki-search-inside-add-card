@@ -19,9 +19,12 @@ import { Highlighting } from "./pdf_highlighting.js";
 
 window.Highlighting = Highlighting;
 
-/** Pomodoro timer */
-window.remainingSeconds = 30 * 60;
-window.readingTimer = null;
+/** Tomato timer */
+window.tomato = {
+    remainingSeconds : 30 * 60,
+    readingTimer : null,
+    lastStart: 30
+}
 
 /** TODO: Move all the PDF stuff into some object, e.g. window.pdf = { ... }; */
 /** PDF rendering */
@@ -468,56 +471,62 @@ window.markReadUpToCurrent = function () {
 
 /**
  * ###########################################
- *  Pomodoro timer
+ *  Tomato timer
  * ###########################################
  */
 
 
-window._startTimer = function (elementToUpdateId) {
-    if (readingTimer) { clearInterval(readingTimer); }
-    readingTimer = setInterval(function () {
-        remainingSeconds--;
-        byId(elementToUpdateId).innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds % 60 < 10 ? "0" + remainingSeconds % 60 : remainingSeconds % 60);
-        if (remainingSeconds <= 0) {
-            clearInterval(readingTimer);
-            remainingSeconds = 1800;
-            $('#siac-timer-play-btn').html("Start").addClass("inactive");
-            $('.siac-timer-btn').removeClass('active');
-            $('.siac-timer-btn').eq(4).addClass('active');
-            byId(elementToUpdateId).innerHTML = "30 : 00";
+window._startTimer = function () {
+    if (tomato.readingTimer) { clearInterval(tomato.readingTimer); }
+    tomato.readingTimer = setInterval(function () {
+        tomato.remainingSeconds--;
+        $('.siac-reading-modal-timer-lbl').text(Math.floor(tomato.remainingSeconds / 60) + " : " + (tomato.remainingSeconds % 60 < 10 ? "0" + tomato.remainingSeconds % 60 : tomato.remainingSeconds % 60));
+        if (tomato.remainingSeconds <= 0) {
+            clearInterval(tomato.readingTimer);
+            tomato.remainingSeconds = tomato.lastStart * 60;
+            $('.siac-timer-play-btn').html("<i class='fa fa-play mr-5'></i>Start").addClass("inactive");
+            setTimerActive(tomato.lastStart);
+            let rs = tomato.remainingSeconds;
+            $('.siac-reading-modal-timer-lbl').text(Math.floor(rs / 60) + " : " + (rs % 60 < 10 ? "0" + rs % 60 : rs % 60));
             pycmd('siac-timer-elapsed ' + $('#siac-reading-modal-top-bar').data('nid'));
-            readingTimer = null;
+            tomato.readingTimer = null;
         }
     }, 999);
 }
-window.toggleTimer = function (timer) {
-    if ($(timer).hasClass('inactive')) {
-        $(timer).removeClass("inactive");
-        timer.innerHTML = "Pause";
-        _startTimer("siac-reading-modal-timer");
+window.toggleTimer = function () {
+    if ($('.siac-timer-play-btn').first().hasClass('inactive')) {
+        $('.siac-timer-play-btn').removeClass("inactive");
+        $('.siac-timer-play-btn').html("<i class='fa fa-pause mr-5'></i>Pause");
+        _startTimer();
     } else {
-        clearInterval(readingTimer);
-        readingTimer = null;
-        $(timer).addClass("inactive");
-        timer.innerHTML = "Start";
+        clearInterval(tomato.readingTimer);
+        tomato.readingTimer = null;
+        $('.siac-timer-play-btn').addClass("inactive");
+        $('.siac-timer-play-btn').html("<i class='fa fa-play mr-5'></i>Start");
     }
 }
 window.resetTimer = function (elem) {
-    clearInterval(readingTimer);
-    readingTimer = null;
+    clearInterval(tomato.readingTimer);
+    tomato.readingTimer = null;
     $('.siac-timer-btn').removeClass('active');
-    $(elem).addClass('active');
-    remainingSeconds = Number(elem.innerHTML) * 60;
-    byId("siac-reading-modal-timer").innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds % 60 < 10 ? "0" + remainingSeconds % 60 : remainingSeconds % 60);
-    $('#siac-timer-play-btn').addClass("inactive").html("Start");
+    let period = Number(elem.innerHTML);
+    $('.siac-timer-btn.' + period).addClass('active');
+    tomato.remainingSeconds = period * 60;
+    tomato.lastStart = period;
+    let rs = tomato.remainingSeconds;
+    $('.siac-reading-modal-timer-lbl').text(Math.floor(rs / 60) + " : " + (rs % 60 < 10 ? "0" + rs % 60 : rs % 60));
+    $('.siac-timer-play-btn').addClass("inactive").html("<i class='fa fa-play mr-5'></i>Start");
 }
+/**
+ * Called from the timer elapsed popup dialog. 
+ */
 window.startTimer = function (mins) {
-    $('.siac-timer-btn').each((i, e) => {
-        if (e.innerHTML === mins.toString()) {
-            resetTimer(e);
-            $('#siac-timer-play-btn').trigger('click');
-        }
-    });
+    resetTimer($('.siac-timer-btn.' + mins).get(0));
+    $('.siac-timer-play-btn').first().trigger('click');
+}
+window.setTimerActive = function(min) {
+    $('.siac-timer-btn').removeClass('active');
+    $('.siac-timer-btn.' + min).addClass('active');
 }
 window.escapeRegExp = function (string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -804,14 +813,17 @@ window.toggleBottomBar = function() {
 window.toggleTopBar = function() {
     if (byId('siac-reading-modal-top-bar').classList.contains('top-hidden')) {
         byId('siac-reading-modal-top-bar').classList.remove('top-hidden');
+        byId('siac-reading-modal-top-btns').classList.remove('top-hidden');
         pycmd('siac-config-bool notes.queue.hide_top_bar false');
     } else {
         byId('siac-reading-modal-top-bar').classList.add('top-hidden');
+        byId('siac-reading-modal-top-btns').classList.add('top-hidden');
         pycmd('siac-config-bool notes.queue.hide_top_bar true');
     }
 }
 window.hideBothBars = function() {
         byId('siac-reading-modal-top-bar').classList.add('top-hidden');
+        byId('siac-reading-modal-top-btns').classList.add('top-hidden');
         byId('siac-reading-modal-bottom-bar').classList.add('bottom-hidden');
         pycmd('siac-config-bool notes.queue.hide_top_bar true');
         pycmd('siac-config-bool notes.queue.hide_bottom_bar true');
@@ -820,11 +832,13 @@ window.toggleBothBars = function() {
     if (byId('siac-reading-modal-bottom-bar').classList.contains('bottom-hidden')) {
         byId('siac-reading-modal-bottom-bar').classList.remove('bottom-hidden');
         byId('siac-reading-modal-top-bar').classList.remove('top-hidden');
+        byId('siac-reading-modal-top-btns').classList.remove('top-hidden');
         pycmd('siac-config-bool notes.queue.hide_bottom_bar false');
         pycmd('siac-config-bool notes.queue.hide_top_bar false');
     } else {
         byId('siac-reading-modal-bottom-bar').classList.add('bottom-hidden');
         byId('siac-reading-modal-top-bar').classList.add('top-hidden');
+        byId('siac-reading-modal-top-btns').classList.add('top-hidden');
         pycmd('siac-config-bool notes.queue.hide_bottom_bar true');
         pycmd('siac-config-bool notes.queue.hide_top_bar true');
     }
