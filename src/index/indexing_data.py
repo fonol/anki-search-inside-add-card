@@ -60,7 +60,6 @@ def get_notes_in_collection():
 def index_data_size() -> int:
     """ Returns the amount of notes that would go into the index. """
 
-    s = time.time() * 1000
     config              = mw.addonManager.getConfig(__name__)
     deckList            = config['decks']
     deckStr             = ""
@@ -84,7 +83,5 @@ def index_data_size() -> int:
 
     c_anki              = int(c_anki)
     c_addon             = get_total_notes_count()
-    #load addon notes
 
-    print(time.time() * 1000 - s)
     return c_anki + c_addon
