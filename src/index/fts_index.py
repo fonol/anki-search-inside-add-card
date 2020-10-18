@@ -121,6 +121,8 @@ class FTSIndex:
             self.type = self._check_fts_version(config["logging"])
         if not index_up_to_date:
             persist_index_info(self)
+            
+        state.index_data = None
 
 
     def _should_rebuild(self):
