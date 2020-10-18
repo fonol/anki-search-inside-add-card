@@ -577,12 +577,19 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
 .cardWrapper.siac-sc-1-5 {
     zoom: 1.5;
 }
-.cardWrapper.grid {
-    max-width: calc(50% - 29px);
+.cardWrapper.grid:not(.meta) {
+    /* max-width: calc(50% - 29px); */
+    width: calc(50% - 10px);
+    box-sizing: border-box;
     vertical-align: top;
     margin-left: 5px !important;
+    display: inline-block;
 }
-.cardWrapper.grid-full {
+.cardWrapper.grid.meta {
+    display: block !important;
+}
+
+/* .cardWrapper.grid-full {
     display: block !important;
     max-width: none;
 }
@@ -600,7 +607,7 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
 }
 .cardWrapper.grid.pdf.extract {
     min-width: 340px !important;
-}
+} */
 .cardWrapper .tag-symbol {
     color: grey;
 }

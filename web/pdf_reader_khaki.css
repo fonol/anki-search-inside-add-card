@@ -1033,6 +1033,10 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     background: green !important;
     mix-blend-mode: luminosity;
 }
+/* 17.10.2020: For some reason, the play button in the youtube player has a really large height, this is a fix. */
+.ytp-play-button {
+    max-height: 36px !important;
+}
 #siac-reading-modal-center.siac-page-sidebar #siac-page-btns {
     margin-right: 235px;
 }
