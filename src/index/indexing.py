@@ -27,12 +27,16 @@ from ..debug_logging import *
 from ..web.web import show_search_result_area, print_starting_info, fillDeckSelect, setup_ui_after_index_built
 from ..web.html import loadSynonyms
 from .fts_index import FTSIndex
+from .indexing_data import get_notes_in_collection, index_data_size
 from ..notes import get_all_notes
 import utility.misc
+import state
 
 
 def build_index(force_rebuild = False, execute_after_end = None):
 
+    state.index_data        = get_notes_in_collection()
+    state.index_data_size   = index_data_size()
     if get_index() is None:
         p               = ProcessRunnable(_build_index, force_rebuild)
 
