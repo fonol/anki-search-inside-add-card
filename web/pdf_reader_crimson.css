@@ -622,22 +622,21 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     vertical-align: middle;
     z-index: 14;
 }
-#siac-reading-modal-top-btns div:hover {
+#siac-reading-modal-top-btns.top-hidden #siac-reading-modal-tomato-alt {
+    display: inline-block;
+}
+#siac-reading-modal-top-btns .siac-btn:hover {
     color: white;
 }
-#siac-reading-modal-top-btns siac-btn {
+#siac-reading-modal-top-btns .siac-btn {
     line-height: 13px;
 }
 #siac-reading-modal-top-btns span {
-    border: 1px solid lightgrey; 
     height: 11px; 
     width: 4px;
     margin: 0;
     vertical-align: middle;
     display: inline-block;
-}
-#siac-reading-modal-top-btns div:hover span {
-    border-color: white;
 }
 #siac-reading-modal-change-theme {
     position: absolute;
@@ -652,8 +651,6 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 #siac-queue-actions {
     display: inline-block; 
     vertical-align: top; 
-    /* margin-left: 20px;  */
-    /* margin-top: 3px;  */
     user-select: none; 
     z-index: 1;
     min-width: 130px;
@@ -807,11 +804,47 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 .siac-pa-sq.empty.current {
     border: 3px solid #2496dc;
 }
+#siac-reading-modal-tomato-alt {
+    display: none;
+    width: auto !important;
+    height: auto !important;
+    margin-right: 60px;
+    vertical-align: top;
+}
+#siac-reading-modal-tomato-alt > span {
+    width: auto; 
+    height: auto;
+}
+#siac-reading-modal-tomato-alt .siac-btn {
+    color: #a2a2a2 !important;
+    border-color: #ababab !important;
+}
+#siac-reading-modal-tomato-alt .siac-timer-btn.active {
+    color: lightgrey !important;
+}
+#siac-reading-modal-tomato-alt .siac-timer-btn:hover {
+    color: white !important;
+    transform: none !important;
+}
+#siac-reading-modal-tomato-alt .siac-reading-modal-timer-lbl {
+    font-size: 20px;
+    vertical-align: top;
+    line-height: 1em;
+    min-width: 65px;
+    color: lightgrey;
+}
 #siac-reading-modal-timer {
     font-size: 30px;
     user-select: none;
     font-weight: bold;
     line-height: 1em;
+}
+.siac-timer-btn-alt {
+    cursor: pointer;
+    margin-right: 5px;
+    font-size: 11px;
+    line-height: 1em;
+    display: inline-block;
 }
 .siac-timer-btn {
     cursor: pointer;
@@ -828,15 +861,19 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     color: #c72c41;
     font-weight: bold;
 }
-#siac-timer-play-btn {
+.siac-timer-play-btn {
     font-size: 19px;
     line-height: 19px;
     cursor: pointer;
     user-select: none;
     display: inline-block;
 }
-#siac-timer-play-btn:hover {
+.siac-timer-play-btn:hover {
     transform: scale(1.05);
+}
+#siac-reading-modal-tomato-alt .siac-timer-play-btn:hover {
+    color: white !important;
+    transform: none;
 }
 #siac-reading-modal-center img {
     display: block;
@@ -904,7 +941,6 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     color: lightgrey;
 }
 #siac-text-top-wr > div {
-    /* height: 100% !important; */
     flex: 1 1 auto;
 }
 
