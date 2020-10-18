@@ -1,5 +1,18 @@
 <div class='w-100 flex-col'>
-    <div id='siac-reading-modal-top-btns'>
+   
+    <div id='siac-reading-modal-top-btns' class='{top_hidden}'>
+        <div id='siac-reading-modal-tomato-alt'>
+                <span class='siac-timer-btn 5 siac-btn siac-btn-dark fg_grey' onclick='resetTimer(this)'>5</span>
+                <span class='siac-timer-btn 10 siac-btn siac-btn-dark' onclick='resetTimer(this)'>10</span>
+                <span class='siac-timer-btn 15 siac-btn siac-btn-dark' onclick='resetTimer(this)'>15</span>
+                <span class='siac-timer-btn 25 siac-btn siac-btn-dark' onclick='resetTimer(this)'>25</span>
+                <span class='siac-timer-btn 30 siac-btn siac-btn-dark default active' onclick='resetTimer(this)'>30</span>
+                <span class='siac-reading-modal-timer siac-reading-modal-timer-lbl ml-10 mr-10 bold'>30 : 00</span>
+                <span class='siac-timer-btn 45 siac-btn siac-btn-dark' onclick='resetTimer(this)'>45</span>
+                <span class='siac-timer-btn 60 siac-btn siac-btn-dark' onclick='resetTimer(this)'>60</span>
+                <span class='siac-timer-btn 90 siac-btn siac-btn-dark' onclick='resetTimer(this)'>90</span>
+                <span class='siac-timer-play-btn siac-btn siac-btn-dark inactive' style='min-width: 58px;' onclick='toggleTimer();'><i class='fa fa-play mr-5'></i>Start</span>
+        </div>
         <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}switch_layout.png");' onclick='switchLeftRight();'></div>
         <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}fullscreen.png");' onclick='toggleReadingModalFullscreen();'></div>
         <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}partition.png");' onclick='pycmd("siac-left-side-width");'></div>
@@ -19,10 +32,10 @@
             <h4 class='fg_lightgrey' style='white-space: nowrap; margin: 5px 0 6px 0;'>Source: <i>{source}</i></h4>
             <div id='siac-prog-bar-wr'></div>
         </div>
-        <div style='flex: 0 0; min-width: 130px; padding: 0 120px 0 10px;'>
-            <span class='siac-timer-btn' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn active' onclick='resetTimer(this)'>30</span><br>
-            <span id='siac-reading-modal-timer'>30 : 00</span><br>
-            <span class='siac-timer-btn' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn' onclick='resetTimer(this)'>90</span><span id='siac-timer-play-btn' class='inactive' onclick='toggleTimer(this);'>Start</span>
+        <div style='flex: 0 0; min-width: 130px; padding: 0 130px 0 10px;'>
+            <span class='siac-timer-btn 5' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn 10' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn 15' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn 25' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn 30 default active' onclick='resetTimer(this)'>30</span><br>
+            <span id='siac-reading-modal-timer' class='siac-reading-modal-timer-lbl'>30 : 00</span><br>
+            <span class='siac-timer-btn 45' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn 60' onclick='resetTimer(this)'>60</span><span class='siac-timer-btn 90' onclick='resetTimer(this)'>90</span><span class='siac-timer-play-btn inactive ml-5' onclick='toggleTimer();'><i class='fa fa-play mr-5'></i>Start</span>
         
         </div>
         <div id='siac-reading-modal-change-theme'>
@@ -45,10 +58,13 @@
     destroyPDF();
     pageSidebarDisplayed = {page_sidebar};
     bottomBarTabDisplayed = 'marks';
-    if (readingTimer != null)  {
-        $('#siac-timer-play-btn').html('Pause').removeClass('inactive');
-    } else if (remainingSeconds !== 1800) {
-        document.getElementById("siac-reading-modal-timer").innerHTML = Math.floor(remainingSeconds / 60) + " : " + (remainingSeconds % 60 < 10 ? "0" + remainingSeconds % 60 : remainingSeconds % 60);
+    if (tomato.readingTimer != null)  {
+        $('.siac-timer-play-btn').html('<i class="fa fa-pause mr-5"></i>Pause').removeClass('inactive');
+        setTimerActive(tomato.lastStart);
+    } else {
+        let rs = tomato.remainingSeconds;
+        $('.siac-reading-modal-timer-lbl').html(Math.floor(rs / 60) + " : " + (rs % 60 < 10 ? "0" + rs % 60 : rs % 60));
+        setTimerActive(tomato.lastStart);
     }
     if (pdfFullscreen) {
         activateReadingModalFullscreen();
