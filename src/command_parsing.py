@@ -455,7 +455,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-r-added-same-day "):
         if check_index():
-            getCreatedSameDay(index, self, int(cmd.split()[1]))
+            get_created_same_day(index, self, int(cmd.split()[1]))
 
     elif cmd == "siac-last-timing":
         if index is not None and index.lastResDict is not None:
@@ -800,15 +800,15 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if check_index():
             index.ui.showInModal(get_synonym_dialog())
     elif cmd.startswith("siac-save-synonyms "):
-        newSynonyms(cmd[19:])
+        new_synonyms(cmd[19:])
         index.ui.showInModal(get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-edit-synonyms "):
-        editSynonymSet(cmd[19:])
+        edit_synonym_set(cmd[19:])
         index.ui.showInModal(get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-delete-synonyms "):
-        deleteSynonymSet(cmd[21:])
+        delete_synonym_set(int(cmd[21:].strip()))
         index.ui.showInModal(get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-r-synset-search "):
@@ -1147,6 +1147,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
 def parse_sort_cmd(cmd):
     """ Helper function to parse the various sort commands (newest/remove tagged/...) """
+
     index = get_index()
     if cmd == "newest":
         index.ui.sortByDate("desc")
@@ -1166,9 +1167,8 @@ def parse_sort_cmd(cmd):
         index.ui.remove_unsuspended()
 
 def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
-    """
-    Helper function to parse the various predefined searches (last added/longest text/...)
-    """
+    """ Helper function to parse the various predefined searches (last added/longest text/...) """
+
     if not check_index():
         return
     index               = get_index()
@@ -1181,49 +1181,37 @@ def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
 
     if stype == "lowestPerf":
         res = findNotesWithLowestPerformance(decks, limit, index.pinned)
-        index.ui.print_search_results(res, stamp)
     elif stype == "highestPerf":
         res = findNotesWithHighestPerformance(decks, limit, index.pinned)
-        index.ui.print_search_results(res, stamp)
     elif stype == "lastAdded":
-        getCreatedNotesOrderedByDate(index, editor, decks, limit, "desc")
+        res = get_notes_by_created_date(index, editor, decks, limit, "desc")
     elif stype == "firstAdded":
-        getCreatedNotesOrderedByDate(index, editor, decks, limit, "asc")
+        res = get_notes_by_created_date(index, editor, decks, limit, "asc")
     elif stype == "lastModified":
-        getLastModifiedNotes(index, editor, decks, limit)
+        res = get_last_modified_notes(index, editor, decks, limit)
     elif stype == "lowestRet":
         res = findNotesWithLowestPerformance(decks, limit, index.pinned, retOnly = True)
-        index.ui.print_search_results(res, stamp)
     elif stype == "highestRet":
         res = findNotesWithHighestPerformance(decks, limit, index.pinned, retOnly = True)
-        index.ui.print_search_results(res, stamp)
     elif stype == "longestText":
         res = findNotesWithLongestText(decks, limit, index.pinned)
-        index.ui.print_search_results(res, stamp)
     elif stype == "randomUntagged":
         res = getRandomUntagged(decks, limit)
-        index.ui.print_search_results(res, stamp)
     elif stype == "lastUntagged":
         res = get_last_untagged(decks, limit)
-        index.ui.print_search_results(res, stamp)
     elif stype == "highestInterval":
         res = getSortedByInterval(decks, limit, index.pinned, "desc")
-        index.ui.print_search_results(res, stamp)
     elif stype == "lowestInterval":
         res = getSortedByInterval(decks, limit, index.pinned, "asc")
-        index.ui.print_search_results(res, stamp)
     elif stype == "lastReviewed":
         res = getLastReviewed(decks, limit)
-        index.ui.print_search_results(res, stamp)
     elif stype == "lastLapses":
         res = getLastLapses(decks, limit)
-        index.ui.print_search_results(res, stamp)
     elif stype == "longestTime":
         res = getByTimeTaken(decks, limit, "desc")
-        index.ui.print_search_results(res, stamp)
     elif stype == "shortestTime":
         res = getByTimeTaken(decks, limit, "asc")
-        index.ui.print_search_results(res, stamp)
+    index.ui.print_search_results(res, stamp)
 
 
 def set_stamp() -> Optional[str]:

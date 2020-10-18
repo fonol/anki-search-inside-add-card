@@ -67,7 +67,7 @@ def get_synonym_dialog() -> str:
     params = dict(len = len(synonyms), sets = st)
     return filled_template("synonyms", params)
 
-def saveSynonyms(synonyms):
+def save_synonyms(synonyms):
     config              = mw.addonManager.getConfig(__name__)
     filtered            = []
 
@@ -77,13 +77,15 @@ def saveSynonyms(synonyms):
     config["synonyms"]  = filtered
     mw.addonManager.writeConfig(__name__, config)
 
-def newSynonyms(sListStr):
+def new_synonyms(sListStr):
+    """ Save/merge input synonyms. """
+
     existing    = loadSynonyms()
     sList       = [utility.text.clean_synonym(s) for s in sListStr.split(",") if len(utility.text.clean_synonym(s)) > 1]
     if not sList:
         return
-    found = []
-    foundIndex = []
+    found       = []
+    foundIndex  = []
     for c, eList in enumerate(existing):
         for s in sList:
             if s in eList:
@@ -94,16 +96,16 @@ def newSynonyms(sListStr):
         existing.append(list(set(sList + found)))
     else:
         existing.append(sList)
-    saveSynonyms(existing)
+    save_synonyms(existing)
 
-def deleteSynonymSet(cmd: str):
-    index = int(cmd.strip())
-    existing = loadSynonyms()
-    if index >= 0 and index < len(existing):
-        existing.pop(index)
-    saveSynonyms(existing)
+def delete_synonym_set(ix: int):
 
-def editSynonymSet(cmd: str):
+    existing    = loadSynonyms()
+    if ix >= 0 and index < len(existing):
+        existing.pop(ix)
+    save_synonyms(existing)
+
+def edit_synonym_set(cmd: str):
     index       = int(cmd.strip().split()[0])
     existing    = loadSynonyms()
     existing.pop(index)
@@ -122,7 +124,7 @@ def editSynonymSet(cmd: str):
         existing.append(list(set(sList + found)))
     else:
         existing.append(sList)
-    saveSynonyms(existing)
+    save_synonyms(existing)
 
 def loadSynonyms() -> List[List[str]]:
     config = mw.addonManager.getConfig(__name__)
@@ -365,9 +367,7 @@ def topic_card_body(topics: List[Tuple[str, float]]) -> str:
 def search_results(db_list: List[IndexNote], query_set: List[str]) -> str:
     """ Prints a list of index notes. Used e.g. in the pdf viewer. """
     html                        = ""
-    timeDiffString              = ""
     newNote                     = ""
-    lastNote                    = ""
     nids                        = [r.id for r in db_list]
     show_ret                    = conf_or_def("showRetentionScores", True)
     fields_to_hide_in_results   = conf_or_def("fieldsToHideInResults", {})
@@ -472,35 +472,34 @@ def get_settings_modal_html(config):
     """ Returns the HTML for the settings/styling modal. """
 
     params = dict(
-        zoom = config["searchpane.zoom"],
-        render_immediately = "checked='true'" if config["renderImmediately"] else "",
-        left_side_width = config["leftSideWidthInPercent"],
-        hide_sidebar = "checked='true'" if config["hideSidebar"] else "",
-        show_timeline = "checked='true'" if config["showTimeline"] else "",
-        show_tag_info_on_hover = "checked='true'" if config["showTagInfoOnHover"] else "",
-        tag_hover_delay = config["tagHoverDelayInMiliSec"],
-        rebuild_ix_if_smaller_than = config["alwaysRebuildIndexIfSmallerThan"],
-        remove_divs = "checked='true'" if config["removeDivsFromOutput"] else "",
-        hide_clozes = "checked='true'" if config["results.hide_cloze_brackets"] else "",
-        note_db_folder = config["addonNoteDBFolderPath"],
-        pdf_url_import_folder = config["pdfUrlImportSavePath"],
-        show_source = "checked='true'" if config["notes.showSource"] else "",
-        use_in_edit = "checked='true'" if config["useInEdit"] else "",
-        show_float_btn = "checked='true'" if config["results.showFloatButton"] else "",
-        show_id_btn = "checked='true'" if config["results.showIDButton"] else "",
-        show_cid_btn = "checked='true'" if config["results.showCIDButton"] else "",
-        tag_fg = utility.misc.color_to_hex(config["styles.tagForegroundColor"]), 
-        tag_bg = utility.misc.color_to_hex(config["styles.tagBackgroundColor"]),
-        tag_fg_night = utility.misc.color_to_hex(config["styles.night.tagForegroundColor"]),
-        tag_bg_night = utility.misc.color_to_hex(config["styles.night.tagBackgroundColor"]),
-        hl_fg = utility.misc.color_to_hex(config["styles.highlightForegroundColor"]),
-        hl_bg = utility.misc.color_to_hex(config["styles.highlightBackgroundColor"]),
-        hl_fg_night = utility.misc.color_to_hex(config["styles.night.highlightForegroundColor"]),
-        hl_bg_night = utility.misc.color_to_hex(config["styles.night.highlightBackgroundColor"]),
-        susp_fg = utility.misc.color_to_hex(config["styles.suspendedForegroundColor"]), 
-        susp_bg = utility.misc.color_to_hex(config["styles.suspendedBackgroundColor"]),
-        modal_border = utility.misc.color_to_hex(config["styles.modalBorderColor"]), 
-        modal_border_night = utility.misc.color_to_hex(config["styles.night.modalBorderColor"]),
+        zoom                        = config["searchpane.zoom"],
+        left_side_width             = config["leftSideWidthInPercent"],
+        hide_sidebar                = "checked='true'" if config["hideSidebar"] else "",
+        show_timeline               = "checked='true'" if config["showTimeline"] else "",
+        show_tag_info_on_hover      = "checked='true'" if config["showTagInfoOnHover"] else "",
+        tag_hover_delay             = config["tagHoverDelayInMiliSec"],
+        rebuild_ix_if_smaller_than  = config["alwaysRebuildIndexIfSmallerThan"],
+        remove_divs                 = "checked='true'" if config["removeDivsFromOutput"] else "",
+        hide_clozes                 = "checked='true'" if config["results.hide_cloze_brackets"] else "",
+        note_db_folder              = config["addonNoteDBFolderPath"],
+        pdf_url_import_folder       = config["pdfUrlImportSavePath"],
+        show_source                 = "checked='true'" if config["notes.showSource"] else "",
+        use_in_edit                 = "checked='true'" if config["useInEdit"] else "",
+        show_float_btn              = "checked='true'" if config["results.showFloatButton"] else "",
+        show_id_btn                 = "checked='true'" if config["results.showIDButton"] else "",
+        show_cid_btn                = "checked='true'" if config["results.showCIDButton"] else "",
+        tag_fg                      = utility.misc.color_to_hex(config["styles.tagForegroundColor"]), 
+        tag_bg                      = utility.misc.color_to_hex(config["styles.tagBackgroundColor"]),
+        tag_fg_night                = utility.misc.color_to_hex(config["styles.night.tagForegroundColor"]),
+        tag_bg_night                = utility.misc.color_to_hex(config["styles.night.tagBackgroundColor"]),
+        hl_fg                       = utility.misc.color_to_hex(config["styles.highlightForegroundColor"]),
+        hl_bg                       = utility.misc.color_to_hex(config["styles.highlightBackgroundColor"]),
+        hl_fg_night                 = utility.misc.color_to_hex(config["styles.night.highlightForegroundColor"]),
+        hl_bg_night                 = utility.misc.color_to_hex(config["styles.night.highlightBackgroundColor"]),
+        susp_fg                     = utility.misc.color_to_hex(config["styles.suspendedForegroundColor"]), 
+        susp_bg                     = utility.misc.color_to_hex(config["styles.suspendedBackgroundColor"]),
+        modal_border                = utility.misc.color_to_hex(config["styles.modalBorderColor"]), 
+        modal_border_night          = utility.misc.color_to_hex(config["styles.night.modalBorderColor"]),
     )
     return filled_template("settings_modal", params)
 
