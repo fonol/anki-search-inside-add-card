@@ -710,6 +710,11 @@ class ReadingModal:
                 }} else {{
                     $('#siac-pdf-tooltip-toggle').removeClass('active');
                 }}
+                if (pdfLinksEnabled) {{
+                    $('#siac-pdf-links-toggle').addClass('active');
+                }} else {{
+                    $('#siac-pdf-links-toggle').removeClass('active');
+                }}
                 ungreyoutBottom();
             </script>
         """.format_map(dict(text = text, nid = nid, search_sources=search_sources))

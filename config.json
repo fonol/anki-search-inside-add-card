@@ -63,6 +63,7 @@
 "pdf.onOpen.autoFillFieldsWithPDFName": [],
 "pdf.import.folders_to_search" : [],
 "pdf.shortcuts.toggle_search_on_select": "CTRL+S",
+"pdf.shortcuts.toggle_pdf_links": "CTRL+Shift+S",
 "pdf.shortcuts.toggle_page_read": "CTRL+Space",
 "pdf.shortcuts.done": "CTRL+Y",
 "pdf.shortcuts.later": "CTRL+Shift+Y",

@@ -50,6 +50,7 @@ window.noteLoading = false;
 window.pdfLoading = false;
 window.modalShown = false;
 window.pdfTooltipEnabled = true;
+window.pdfLinksEnabled = false;
 window.iframeIsDisplayed = false;
 window.pageSidebarDisplayed = true;
 window.pdfFullscreen = false;
@@ -186,6 +187,100 @@ window.queueRenderPage = function (num, shouldScrollUp = true, fitToPage = false
         rerenderPDFPage(num, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
     }
 }
+window.setupAnnotations = function (page, viewport, canvas, $annotationLayerDiv) {
+  var canvasOffset = $(canvas).offset();
+
+  var promise = page.getAnnotations().then(function (annotationsData) {
+    viewport = viewport.clone({
+      dontFlip: true
+    });
+
+    $annotationLayerDiv.children().remove();
+
+    // Find the largest annotation rectangle, for later use.
+    var maxArea = 0.001;
+    for (var i = 0; i < annotationsData.length; i++) {
+      var data = annotationsData[i];
+      var rect = data.rect;
+      var width = rect[2] - rect[0];
+      var height = rect[3] - rect[1];
+      var area = width * height;
+      if (area > maxArea) {
+        maxArea = area;
+      }
+    }
+
+    for (var i = 0; i < annotationsData.length; i++) {
+      var data = annotationsData[i];
+      var rect = data.rect;
+      var width = rect[2] - rect[0];
+      var height = rect[3] - rect[1];
+      var area = width * height;
+      // From 0 to 1, what is the ratio from this area to the largest one?
+      var indexFactor = area / maxArea;
+
+      if (data.subtype !== 'Link') {
+        continue; // We don't handle non-link annotations
+      }
+      if (!data.url) {
+        continue; // We don't handle document-internal links (yet?)
+      }
+
+      var element = $("<a>").attr("href", data.url).get(0);
+
+      var rect = data.rect;
+      var view = page.view;
+
+      rect = pdfjsLib.Util.normalizeRect([
+        rect[0],
+        view[3] - rect[1] + view[1],
+        rect[2],
+        view[3] - rect[3] + view[1]]);
+
+      var width = rect[2] - rect[0];
+      var height = rect[3] - rect[1];
+      var area = width * height;
+
+      // I have no idea why this magic "12" is necessary, but stuff isn't
+      // aligned correctly without it.
+      element.style.left = (12 + canvasOffset.left + rect[0]) + 'px';
+      element.style.top = (canvasOffset.top + rect[1]) + 'px';
+      element.style.width = width + 'px';
+      element.style.height = height + 'px';
+      element.style.position = 'absolute';
+
+      // This is a kind of lazy way of accomplishing what we're trying to
+      // accomplish here:
+      //
+      // With all of the links set to zIndex 4, we have problems because the
+      // annotation data from pdfjsLib doesn't actually just cover the linked
+      // text; it gives the maximum bounding rectangle of the link. This covers
+      // the entirety of two lines of text if a link spans two lines. While
+      // unappealing, this works ok in general use, but it can sometimes
+      // overshadow a smaller link that lives entirely within one of those
+      // lines.
+      //
+      // Here, we assign all links a zIndex in the range 4 to 12
+      // (siac-rev-overlay is 13), with a higher value the smaller the bounding
+      // rectangle of the link. This makes smaller links take higher precedence
+      // than larger ones.
+      //
+      // A better solution would be to somehow get better link/annotation data
+      // that just covers the text rather than the weird max bounding box data
+      // we have right now.
+      element.style.zIndex = 12 - Math.round(8*indexFactor);
+
+      var transform = viewport.transform;
+      var transformStr = 'matrix(' + transform.join(',') + ')';
+      element.style.transform = transformStr;
+      var transformOriginStr = -rect[0] + 'px ' + -rect[1] + 'px';
+      element.style.transformOrigin = transformOriginStr;
+
+      $annotationLayerDiv.append(element);
+    }
+  });
+  return promise;
+}
 window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false, isInitial = false, query = '', fetchHighlights = true) {
     if (!pdfDisplayed || iframeIsDisplayed) {
         return;
@@ -232,6 +327,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 return Promise.reject();
             }
             renderTask.promise.then(function () {
+                setupAnnotations(page, viewport, canvas, $('.annotationLayer'));
 
                 pdfPageRendering = false;
                 if (pageNumPending !== null) {
@@ -681,6 +777,25 @@ window.pdfGotoPg = function (page) {
     }
     pdfDisplayedCurrentPage = page;
     queueRenderPage(page, true);
+}
+
+window.togglePDFLinks = function (elem) {
+    if (!elem) {
+        elem = byId('siac-pdf-links-toggle');
+    }
+    if (!elem) {
+        return;
+    }
+    pdfLinksEnabled = !pdfLinksEnabled;
+    if (pdfLinksEnabled) {
+        $(elem).addClass('active');
+        $('.annotationLayer').show();
+        readerNotification("PDF Links enabled.", true);
+    } else {
+        $(elem).removeClass('active');
+        $('.annotationLayer').hide();
+        readerNotification("PDF Links disabled.", true);
+    }
 }
 
 window.togglePDFSelect = function (elem) {
