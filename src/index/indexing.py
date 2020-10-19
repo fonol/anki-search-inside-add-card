@@ -35,8 +35,11 @@ import state
 
 def build_index(force_rebuild = False, execute_after_end = None):
 
+    # it would be more elegant to fetch the data in the index class
+    # but older versions of Anki don't like the db being accessed from a different thread
     state.index_data        = get_notes_in_collection()
     state.index_data_size   = index_data_size()
+
     if get_index() is None:
         p               = ProcessRunnable(_build_index, force_rebuild)
 
