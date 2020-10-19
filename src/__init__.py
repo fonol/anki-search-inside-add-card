@@ -445,6 +445,9 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     # toggle pdf links in pdf reader
     _try_register(config["pdf.shortcuts.toggle_pdf_links"], lambda: editor.web.eval("togglePDFLinks()"))
 
+    # image selection (scissor tool) in pdf reader
+    _try_register(config["pdf.shortcuts.scissor_tool"], lambda: editor.web.eval("initImageSelection()"))
+
     # toggle page read in pdf reader
     _try_register(config["pdf.shortcuts.toggle_page_read"], lambda: editor.web.eval("togglePageRead()"))
 
