@@ -1689,6 +1689,7 @@ def get_index_info():
                <tr><td>PDF: Quick Open</td><td>  <b>Ctrl+O</b></td></tr>
                <tr><td>PDF: Toggle Top & Bottom Bar</td><td>  <b>F11</b></td></tr>
                <tr><td>PDF: Toggle Search on Select</td><td>  <b>%s</b></td></tr>
+               <tr><td>PDF: Toggle PDF Links</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Jump to first Page</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Jump to last Page</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Toggle Page Read</td><td>  <b>%s</b></td></tr>
