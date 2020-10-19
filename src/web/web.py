@@ -493,6 +493,7 @@ def changelog() -> List[str]:
 
     return [
         "Added tomato timer display if the top bar in the reader is hidden",
+        "Links in PDFs can now be used (thanks to Burke Libbey)",
        "Performance improvements on building the search index"
     ]
 
