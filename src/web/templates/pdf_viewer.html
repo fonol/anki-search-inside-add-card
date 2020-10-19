@@ -146,8 +146,10 @@
     }
     if (pdfLinksEnabled) {
         $('#siac-pdf-links-toggle').addClass('active');
+        $('.annotationLayer').show();
     } else {
         $('#siac-pdf-links-toggle').removeClass('active');
+        $('.annotationLayer').hide();
     }
     $('.siac-pdf-color-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
     $('.siac-pdf-ul-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
