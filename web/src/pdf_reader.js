@@ -281,6 +281,11 @@ window.setupAnnotations = function (page, viewport, canvas, $annotationLayerDiv)
   });
   return promise;
 }
+
+window.refreshPDFPage = function() {
+    rerenderPDFPage(pdfDisplayedCurrentPage, false, false, false, '', true); 
+}
+
 window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false, isInitial = false, query = '', fetchHighlights = true) {
     if (!pdfDisplayed || iframeIsDisplayed) {
         return;
@@ -327,7 +332,9 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 return Promise.reject();
             }
             renderTask.promise.then(function () {
-                setupAnnotations(page, viewport, canvas, $('.annotationLayer'));
+                if (pdfLinksEnabled) {
+                    setupAnnotations(page, viewport, canvas, $('.annotationLayer'));
+                }
 
                 pdfPageRendering = false;
                 if (pageNumPending !== null) {
@@ -796,6 +803,7 @@ window.togglePDFLinks = function (elem) {
         $('.annotationLayer').hide();
         readerNotification("PDF Links disabled.", true);
     }
+    refreshPDFPage();
 }
 
 window.togglePDFSelect = function (elem) {
