@@ -1784,6 +1784,7 @@ def get_index_info():
             data_folder, data_folder,
             config["notes.editor.shortcut"],
             config["pdf.shortcuts.toggle_search_on_select"],
+            config["pdf.shortcuts.toggle_pdf_links"],
             config["pdf.shortcuts.jump_to_first_page"],
             config["pdf.shortcuts.jump_to_last_page"],
             config["pdf.shortcuts.toggle_page_read"],

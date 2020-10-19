@@ -420,6 +420,9 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     # toggle search on select in pdf reader
     _try_register(config["pdf.shortcuts.toggle_search_on_select"], lambda: editor.web.eval("togglePDFSelect()"))
 
+    # toggle pdf links in pdf reader
+    _try_register(config["pdf.shortcuts.toggle_pdf_links"], lambda: editor.web.eval("togglePDFLinks()"))
+
     # toggle page read in pdf reader
     _try_register(config["pdf.shortcuts.toggle_page_read"], lambda: editor.web.eval("togglePageRead()"))
 

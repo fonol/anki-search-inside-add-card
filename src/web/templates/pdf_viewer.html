@@ -61,6 +61,7 @@
                 </div>
             </div>
             <canvas id="siac-pdf-canvas"></canvas>
+            <div class="annotationLayer"></div>
             <canvas id="siac-pdf-canvas_1"></canvas>
             <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
         </div>
@@ -83,6 +84,7 @@
         <div class='siac-btn siac-btn-dark' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
         <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
         <div class='siac-btn siac-btn-dark' onclick='initImageSelection()' style='margin-left: 5px;'><b>&#9986;</b></div>
+        <div class='siac-btn siac-btn-dark' id='siac-pdf-links-toggle' onclick='togglePDFLinks(this)' style='margin-left: 5px;'><div class='siac-link-icn-dark'></div></div>
         <div class='siac-btn siac-btn-dark active' id='siac-pdf-tooltip-toggle' onclick='togglePDFSelect(this)' style='margin-left: 5px;'><div class='siac-search-icn-dark'></div></div>
         <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
     </div>
@@ -141,6 +143,11 @@
         $('#siac-pdf-tooltip-toggle').addClass('active');
     } else {
         $('#siac-pdf-tooltip-toggle').removeClass('active');
+    }
+    if (pdfLinksEnabled) {
+        $('#siac-pdf-links-toggle').addClass('active');
+    } else {
+        $('#siac-pdf-links-toggle').removeClass('active');
     }
     $('.siac-pdf-color-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
     $('.siac-pdf-ul-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
