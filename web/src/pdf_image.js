@@ -75,6 +75,12 @@ window.pdfImgMouseDown = function(event) {
     drawSquare();
 }
 window.initImageSelection = function() {
+
+    // Function can be called from Qt-controlled shortcut,
+    // so it might be that there is no PDF opened when called.
+    if (!pdfDisplayed) {
+        return;
+    }
     if ($('#text-layer').is(":hidden")) {
         $(pdfImgSel.canvas).remove();
         $('#text-layer').show();
