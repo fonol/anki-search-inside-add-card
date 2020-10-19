@@ -71,7 +71,6 @@ class Output:
         #
         self.latest                 = -1
         self.gridView               = False
-        self.stopwords              = []
         self.plotjsLoaded           = False
         self.showRetentionScores    = True
         self.lastResults            = None
@@ -152,7 +151,6 @@ class Output:
         epochTime                   = int(time.time() * 1000)
         timeDiffString              = ""
         newNote                     = ""
-        lastNote                    = ""
         ret                         = 0
         self.last_had_timing_info   = printTimingInfo
 
@@ -203,8 +201,6 @@ class Output:
                 retInfo = """<div class='retMark' style='%s'>%s</div>""" % (retMark, int(ret))
             else:
                 retInfo = ""
-
-            lastNote = newNote
 
             #non-anki notes should be displayed differently, we distinguish between title, text and source here
             #confusing: 'source' on notes from the index means the original note content (without stopwords removed etc.),
@@ -577,7 +573,7 @@ class Output:
         if text is None or len(text) == 0:
             return "No keywords for empty result."
 
-        text            = utility.text.clean(text, self.stopwords)
+        text            = utility.text.clean(text)
         counts          = {}
         for token in text.split():
             if token == "" or len(token) == 1 or self.EXCLUDE_KEYWORDS.match(token):
@@ -606,7 +602,6 @@ class Output:
         epochTime       = int(time.time() * 1000)
         timeDiffString  = ""
         newNote         = ""
-        lastNote        = ""
         ret             = 0
         nids            = [r.id for r in db_list]
 
@@ -629,7 +624,6 @@ class Output:
             else:
                 retInfo = ""
 
-            lastNote = newNote
             text = res.get_content()
 
             # hide fields that should not be shown

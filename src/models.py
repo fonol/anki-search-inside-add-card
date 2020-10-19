@@ -41,7 +41,10 @@ class SiacNote(Printable):
 
     _ct_timestamp   = 0
     note_type       = "user"
-    MISSED_NOTES    = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
+
+    # 2020-10-06 Simplify scheduling
+    # MISSED_NOTES    = get_config_value_or_default("notes.queue.missedNotesHandling", "remove-schedule")
+    MISSED_NOTES    = "place-front"
 
     def __init__(self, props: Tuple[Any, ...]):
         self.id             : int           = props[0]
@@ -93,6 +96,13 @@ class SiacNote(Printable):
     def is_yt(self) -> bool:
         return self.source is not None and re.match("(?:https?://)?www\.youtube\..+", self.source.strip().lower())
     
+    def get_note_type(self) -> str:
+        if self.is_pdf():
+            return "PDF"
+        if self.is_yt():
+            return "Video"
+        return "Text"
+    
     def is_in_queue(self) -> bool:
         return self.position is not None and self.position >= 0
 
@@ -132,7 +142,7 @@ class SiacNote(Printable):
         if not self.has_schedule():
             return False
         dt = datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
-        return dt.date() <= datetime.today().date()
+        return dt.date() >= (datetime.today()  - timedelta(days=7)).date() and dt.date() <= datetime.today().date()
     
     def is_due_sometime(self) -> bool:
         return self.has_schedule()
@@ -191,16 +201,16 @@ class SiacNote(Printable):
                 if last_close_bracket < last_open_bracket:
                     body = body[:last_open_bracket]
 
-            body += "<br></ul></b></i></em></span></p></a></p><p style='text-align: center; user-select: none;'><b>(Text was cut - too long to display)</b></p>"
+            body += "<br></ul></b></i></em></span></p></a></p><p class='ta_center' style='user-select: none;'><b>(Text was cut - too long to display)</b></p>"
 
         # yt vids are prepended with thumbnail image    
         if self.is_yt():
             time = utility.text.get_yt_time_verbose(self.source)
             if len(body.strip()) > 0:
                 body += "<br/><hr style='border-top: dotted 2px;'>"
-            body = f"""{body}<p style='display: flex; margin: 0;'>
+            body = f"""{body}<p class='flex-row' style='margin: 0;'>
                         <img src='http://img.youtube.com/vi/{utility.text.get_yt_video_id(src)}/0.jpg' style='height: 100px; margin-right: 20px;'/>
-                        <span style='display: flex; flex-direction: column; justify-content: center;'>
+                        <span class='flex-col' style='justify-content: center;'>
                             <span class='siac-caps' style='font-size: 13px;'>Saved At
                             <br>
                             <span style='font-size: 25px; line-height: 1em;'>{time}</span>
@@ -210,7 +220,7 @@ class SiacNote(Printable):
                     """
      
         
-        title   = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr style='margin-bottom: 5px; border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
+        title   = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5' style='border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
 
         # add the source, separated by a line
         if src is not None and len(src) > 0 and get_config_value_or_default("notes.showSource", True):

@@ -278,6 +278,13 @@ def img_src_base_path():
     port = mw.mediaServer.getPort()
     return f"http://127.0.0.1:{port}/_addons/{get_addon_id()}/web/icons/"
 
+def qlabel_image(icon_name, w, h):
+    """ Return a QLabel with the given icon as pixmap. """
+    lbl     = QLabel()
+    pixmap  = QPixmap(get_web_folder_path() + f"icons/{icon_name}").scaled(QSize(w, h), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    lbl.setPixmap(pixmap)
+    return lbl
+
 def url_to_pdf(url, output_path, cb_after_finish = None):
     """
         Save the given site as pdf. 
@@ -382,6 +389,7 @@ def load_rust_lib():
 def subdirs_fullpath(path):
     return [entry.path for entry in os.scandir(path) if entry.is_dir()]
 
+
 # region Color Utils
 
 def hex_to_rgb(h):
@@ -424,6 +432,7 @@ def _retToColor(retention):
     return "#32ff00"
 
 def color_name_to_hex(cs):
+
     colors = {
     "aliceblue": "#f0f8ff",
     "antiquewhite": "#faebd7",
@@ -576,5 +585,27 @@ def color_name_to_hex(cs):
     if not cs.lower() in colors:
         return None
     return colors[cs.lower()]
+
+def prio_color(prio):
+        if prio > 90:
+            return "#7c0101"
+        if prio > 80:
+            return "#761900"
+        if prio > 70:
+            return "#6e2600"
+        if prio > 60:
+            return "#653000"
+        if prio > 50:
+            return "#5b3800"
+        if prio > 40:
+            return "#503f00"
+        if prio > 30:
+            return "#444400"
+        if prio > 20:
+            return "#374900"
+        if prio > 10:
+            return "#294d00"
+        return "#155001"
+
 
 # endregion Color Utils

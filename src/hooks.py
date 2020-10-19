@@ -17,7 +17,8 @@
 import typing
 from typing import Callable, Dict, Optional, Any
 
-hooks: Dict[str, Callable] = dict()
+hooks       : Dict[str, Callable] = dict()
+tmp_hooks   : Dict[str, Callable] = dict()
 
 def add_hook(name: str, fn: Callable):
     name = name.lower()
@@ -25,6 +26,14 @@ def add_hook(name: str, fn: Callable):
         hooks[name].append(fn)
     else:
         hooks[name] = [fn]
+
+def add_tmp_hook(name: str, fn: Callable):
+    """ This hook will be removed after one use. """
+    name = name.lower()
+    if name in tmp_hooks:
+        tmp_hooks[name].append(fn)
+    else:
+        tmp_hooks[name] = [fn]
 
 
 def run_hooks(name: str, arg: Optional[Any] = None):
@@ -38,3 +47,13 @@ def run_hooks(name: str, arg: Optional[Any] = None):
                     fn()
             else:
                 fn()
+    if name in tmp_hooks:
+        for fn in tmp_hooks[name]:
+            if arg:
+                try:
+                    fn(arg)
+                except:
+                    fn()
+            else:
+                fn()
+        del tmp_hooks[name]

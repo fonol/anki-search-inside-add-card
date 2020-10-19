@@ -81,7 +81,7 @@ noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {gr
                         <div id='cW-{nid}' class='rankingLbl' onclick='pycmd("siac-copy-to-cb {nid}")'>{counter} &nbsp;SIAC<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
                     </div>
                     <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
-                        <div class='deleteLbl' onclick='pycmd("siac-delete-user-note-modal {nid}"); '><div class='siac-trash-icn'></div></div>
+                        <div class='deleteLbl' onclick='pycmd("siac-delete-user-note-modal {nid}"); '><i class='fa fa-trash'></i></div>
                         <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'><i class="fa fa-pencil"></i></div>
                         <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
                         <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>

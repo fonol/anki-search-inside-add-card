@@ -79,7 +79,7 @@ class ZoteroImporter(QDialog):
         self.gb.setLayout(gb_vbox)
         self.vbox.addWidget(self.gb)
 
-        self.slider = QtPrioritySlider(0)
+        self.slider = QtPrioritySlider(0, None)
         self.vbox.addWidget(self.slider)
         self.vbox.addSpacing(15)
 

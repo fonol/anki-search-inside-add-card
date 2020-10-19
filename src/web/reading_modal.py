@@ -28,7 +28,7 @@ import aqt
 import uuid
 import base64
 import html as ihtml
-from aqt import mw
+from aqt import mw, gui_hooks
 from aqt.editor import Editor
 from aqt.utils import showInfo, tooltip
 
@@ -46,6 +46,9 @@ from ..special_searches import get_last_added_anki_notes
 from ..models import SiacNote, IndexNote, Printable
 from .html import *
 from .web import try_select_deck
+from ..dialogs.done_dialog import DoneDialog
+from ..dialogs.priority_dialog import PriorityDialog
+from ..dialogs.postpone_dialog import PostponeDialog
 from .templating import filled_template
 from .note_templates import *
 from ..internals import js, requires_index_loaded, perf_time
@@ -55,7 +58,7 @@ from ..stats import getRetentions
 from ..markdown import markdown
 
 
-try: 
+try:
     # from ..rs.siacrs.siacrs import *
     utility.misc.load_rust_lib()
     from siacrs import *
@@ -83,14 +86,21 @@ class ReadingModal:
 
         self.sidebar            : ReadingModalSidebar   = ReadingModalSidebar()
 
+
     def set_editor(self, editor):
         self._editor            = editor
         self.sidebar.set_editor(editor)
+
+        # ugly fix
+        gui_hooks.editor_did_load_note.remove(self.fill_sources)
+        gui_hooks.editor_did_load_note.append(self.fill_sources)
 
     def reset(self):
         self.note_id                = None
         self.note                   = None
         self.sidebar.tab_displayed  = None
+
+
 
     def page_displayed(self, cb: Callable):
         """ Evaluates the currently read page from the webview, and calls the given callback function with the page number. """
@@ -107,11 +117,15 @@ class ReadingModal:
     @requires_index_loaded
     def display(self, note_id: int):
 
-        index                   = get_index()
+        if not note_id or note_id <= 0:
+            return
+
         note                    = get_note(note_id)
 
         if not note:
             return
+
+        index                   = get_index()
 
         if ReadingModal.last_opened is None or (self.note_id is not None and int(note_id) != self.note_id):
             ReadingModal.last_opened = self.note_id if ReadingModal.last_opened else note_id
@@ -149,50 +163,154 @@ class ReadingModal:
                     selected = try_select_deck(deck_name)
 
             else:
-                message = "Could not load the given PDF.<br>Are you sure the path is correct?"
+                message = "<i class='fa fa-exclamation-triangle mb-10' style='font-size: 20px;'></i><br>Could not load the given PDF.<br>Are you sure the path is correct?"
                 self.notification(message)
 
         # auto fill tag entry if pdf has tags and config option is set
         if note.tags is not None and len(note.tags.strip()) > 0 and get_config_value_or_default("pdf.onOpen.autoFillTagsWithPDFsTags", True):
             self._editor.tags.setText(" ".join(mw.col.tags.canonify(mw.col.tags.split(note.tags))))
 
-        # auto fill user defined fields
-        fields_to_prefill = get_config_value_or_default("pdf.onOpen.autoFillFieldsWithPDFName", [])
-        if len(fields_to_prefill) > 0:
-            for f in fields_to_prefill:
-                title = note.get_title().replace("`", "&#96;")
-                if f in self._editor.note:
-                    i = self._editor.note._fieldOrd(f)
-                    self._editor.web.eval(f"$('.field').eq({i}).text(`{title}`);")
 
-    def display_head_of_queue(self):
-        recalculate_priority_queue()
+        # auto fill user defined fields
+        self.fill_sources(self._editor)
+
+
+    def fill_sources(self, editor):
+        """ Check if any of the fields in pdf.onOpen.autoFillFieldsWithPDFName are present, if yes, fill them with the note's title. """
+
+        siacnote = self.note
+
+        if siacnote:
+            note                = self._editor.note
+
+            fields_to_prefill   = get_config_value_or_default("pdf.onOpen.autoFillFieldsWithPDFName", [])
+            title               = siacnote.get_title().replace("`", "&#96;")
+
+            if len(fields_to_prefill) > 0:
+                for f in fields_to_prefill:
+                    if f in list(note.keys()):
+                        i = note._fieldOrd(f)
+                        self._editor.web.eval(f"$('.field').eq({i}).text(`{title}`);")
+
+
+    def read_head_of_queue(self):
+        """ Will open the first item in the queue if existing, if not, show a tooltip. """
+
         nid = get_head_of_queue()
         if nid is not None and nid >= 0:
             self.display(nid)
         else:
+            self.close()
+            tooltip("Queue is Empty! Add some items first.", period=4000)
+
+    def close(self):
+        """ Resets the state on the python and UI/javascript side. Will close the dialog in the UI. """
+
+        self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;onReadingModalClose();")
+        self.reset()
+
+    def display_head_of_queue_after_sched_modal(self):
+
+        recalculate_priority_queue()
+
+        nid = get_head_of_queue()
+        if nid is not None and nid >= 0:
+            self.display(nid)
+        else:
+            self.close()
             tooltip("Queue is empty.")
 
     def done(self):
-        """ Hit "Done" button. """
+        """ Hit "Done" / "Add to Queue" button. """
 
-        note = self.note
-        # if note is scheduled for today or some point in the future, show the schedule dialog,
-        # but only if type is 'td', i.e. the note was not scheduled for a regular interval.
-        if note.is_due_sometime() and note.schedule_type() == "td":
-            self.display_schedule_dialog()
-        else:
-            prio = get_priority(self.note_id)
-            if not note.is_due_sometime() and get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False):
-                add_to_prio_log(self.note_id, prio)
-                self.show_schedule_change_modal(unscheduled=True)
+        note        = self.note
+        done_dialog = DoneDialog(self._editor.parentWindow, self.note_id)
+
+        if done_dialog.exec_():
+            new_priority        = done_dialog.priority
+            new_schedule        = done_dialog.schedule
+            sched_has_changed   = done_dialog.schedule_has_changed
+            if sched_has_changed:
+                update_reminder(self.note_id, new_schedule)
             else:
-                if note.is_due_sometime():
-                    update_reminder(self.note_id, utility.date.get_new_reminder(note.schedule_type(), note.schedule_value()))
-                update_priority_list(self.note_id, prio)
-                nid = get_head_of_queue()
-                self.display(nid)
+                # if the note has a schedule and was due today, either:
+                # - update the schedule (set a new due date based on its scheduling type) 
+                # - or delete the schedule (schedule type was 'td', i.e. one-shot schedule)
 
+                if note.has_schedule() and note.is_or_was_due():
+                    if note.schedule_type() != "td":
+                        new_schedule = utility.date.get_new_reminder(note.schedule_type(), note.schedule_value())
+                        update_reminder(self.note_id, new_schedule)
+                    else:
+                        update_reminder(self.note_id, "")
+
+            remove_delay(self.note_id)
+            update_priority_list(self.note_id, new_priority)
+            self.read_head_of_queue()
+        else:
+            self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
+
+
+    def show_prio_dialog(self):
+        dialog          = PriorityDialog(self._editor.parentWindow, self.note_id)
+        if dialog.exec_():
+            initial = get_priority(self.note_id)
+            prio    = dialog.value
+
+            if initial and initial > 0:
+                update_priority_without_timestamp(self.note_id, prio)
+                tooltip(f"Updated priority.")
+            else:
+                update_priority_list(self.note_id, prio)
+                tooltip(f"Updated priority and added to queue.")
+            self.reload_bottom_bar()
+
+    def show_postpone_dialog(self):
+        """ Show a dialog to move the note either back in the queue or schedule for a future day. """
+
+        self.note = get_note(self.note_id)
+        if self.note.position is None:
+            tooltip("Cannot postpone a note that is not in the queue.", period=5000)
+            return
+
+        dialog          = PostponeDialog(self._editor.parentWindow, self.note_id)
+        if dialog.exec_():
+            # 1. option: later today (move back in queue)
+            if dialog.value == 0:
+                qlen = len(_get_priority_list())
+                if qlen > 2:
+                    delay = int(qlen/3) 
+                    if self.note.position < 3:
+                        delay += (3 - self.note.position)
+                    set_delay(self.note_id, delay)
+                    recalculate_priority_queue()
+                    tooltip("Moved note back in queue")
+                    self.read_head_of_queue()
+                else:
+                    tooltip("Later only works if 3+ items are in the queue.")
+            else:
+                # 2. option: schedule note to appear in x days
+                days_delta = dialog.value
+                if self.note.has_schedule():
+                    new_reminder = utility.date.postpone_reminder(self.note.reminder, days_delta)
+                else:
+                    new_reminder = utility.date.get_new_reminder("td", str(days_delta))
+                update_reminder(self.note_id, new_reminder)
+                # delete any delays if existent
+                remove_delay(self.note_id)
+
+                # remove note from queue
+                prio = get_priority(self.note_id)
+                update_priority_list(self.note_id, 0)
+
+                # DEBUG
+                if state.dev_mode: 
+                    note = get_note(self.note_id)
+                    assert(get_priority(self.note_id) is None)
+                    assert(not note.is_in_queue())
+                    assert(note.position is None)
+
+                self.read_head_of_queue()
 
     @js
     def show_width_picker(self):
@@ -209,13 +327,13 @@ class ReadingModal:
         """
 
         modal = """
-            <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
+            <div class="siac-modal-small dark ta_center fg_lightgrey" contenteditable="false">
                 <b>Width (%%)</b><br>
                 <b>Fields - Add-on</b>
                     <br><br>
                 <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
                     <br><br>
-                <div style='width: 100%%; text-align: right;'>
+                <div class='w-100 ta_right'>
                     <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode.parentNode).remove();">Close</div>
                 </div>
             </div>
@@ -231,9 +349,9 @@ class ReadingModal:
                 + ' ' + pdfDisplayedCurrentPage);
         }
         """ % note_id
-        modal = f""" <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
+        modal = f""" <div class="siac-modal-small dark ta_center fg_lightgrey" contenteditable="false">
                             Input a range of pages to mark as read (end incl.)<br><br>
-                            <input id='siac-range-input-min' style='width: 60px; background: #222; color: lightgrey; border-radius: 4px;' type='number' min='1' max='{num_pages}'/> &nbsp;-&nbsp; <input id='siac-range-input-max' style='width: 60px;background: #222; color: lightgrey; border-radius: 4px;' type='number' min='1' max='{num_pages}'/>
+                            <input id='siac-range-input-min' class='fg_lightgrey' style='width: 60px; background: #222; border-radius: 4px;' type='number' min='1' max='{num_pages}'/> &nbsp;-&nbsp; <input id='siac-range-input-max' style='width: 60px;background: #222; color: lightgrey; border-radius: 4px;' type='number' min='1' max='{num_pages}'/>
                             <br/> <br/>
                             <div class="siac-btn siac-btn-dark" onclick="{on_confirm} $(this.parentNode).remove();">&nbsp; Ok &nbsp;</div>
                             &nbsp;
@@ -243,21 +361,16 @@ class ReadingModal:
 
 
     @js
-    def reload_bottom_bar(self, note_id: int = None):
+    def reload_bottom_bar(self):
         """
             Called after queue picker dialog has been closed without opening a new note.
         """
-        if note_id is not None:
-
-            note = get_note(note_id)
-            html = self.bottom_bar(note)
-            html = html.replace("`", "\\`")
-            return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks(true);" % html
-
-        else:
-            return """if (document.getElementById('siac-reading-modal').style.display !== 'none' && document.getElementById('siac-reading-modal-top-bar')) {
-                        pycmd('siac-reload-reading-modal-bottom '+ $('#siac-reading-modal-top-bar').data('nid'));
-                    }"""
+        if self.note_id is None:
+            return
+        note = get_note(self.note_id)
+        html = self.bottom_bar(note)
+        html = html.replace("`", "\\`")
+        return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks(true);" % html
 
 
     def _display_pdf(self, full_path: str, note_id: int):
@@ -285,7 +398,7 @@ class ReadingModal:
         extract_js      = f"pdfExtract = [{self.note.extract_start}, {self.note.extract_end}];" if self.note.extract_start is not None else "pdfExtract = null;"
 
         # pages read are ordered by date, so take last
-        last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1 
+        last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
 
         if self.note.extract_start is not None:
             if len(pages_read) > 0:
@@ -345,7 +458,7 @@ class ReadingModal:
                         if (!document.getElementById('siac-pdf-top')) {
                             return;
                         }
-                        document.getElementById('text-layer').style.display = 'inline-block'; 
+                        document.getElementById('text-layer').style.display = 'inline-block';
                         if (pagesRead.length === pdf.numPages) {
                             pdfDisplayedCurrentPage = getLastReadPage() || 1;
                             queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
@@ -353,7 +466,7 @@ class ReadingModal:
                             queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
                         }
                         updatePdfProgressBar();
-                        if (pdfBarsHidden) {
+                        if (bothBarsAreHidden()) {
                             readerNotification("%s");
                         }
                         if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
@@ -362,12 +475,13 @@ class ReadingModal:
                 }).catch(function(err) { setTimeout(function() { console.log(err); }); });
             };
             loadFn();
-            b64 = ""; 
+            b64 = "";
             bstr = null; file = null;
         """ % (pages_read_js, marks_js, extract_js, port, addon_id, note_id, last_page_read, title, note_id)
+
         #send large files in multiple packets
-        page = self._editor.web.page()
-        chunk_size = 50000000
+        page        = self._editor.web.page()
+        chunk_size  = 50000000
         if blen > chunk_size:
             page.runJavaScript(f"var b64 = `{base64pdf[0: chunk_size]}`;")
             sent = chunk_size
@@ -393,15 +507,11 @@ class ReadingModal:
     def html(self) -> str:
         """ Builds the html which has to be inserted into the webview to display the reading modal. """
 
-        index       = get_index()
         note        = self.note
         note_id     = self.note_id
         text        = note.text
-        tags        = note.tags
         created_dt  = datetime.datetime.strptime(note.created, '%Y-%m-%d %H:%M:%S')
         diff        = datetime.datetime.now() - created_dt
-        queue       = _get_priority_list()
-        queue_len   = len(queue)
         time_str    = "Added %s ago." % utility.date.date_diff_to_string(diff)
 
         if check_index():
@@ -410,64 +520,46 @@ class ReadingModal:
             title           = utility.text.trim_if_longer_than(title, 70)
             title           = ihtml.escape(title)
             source          = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
-            source_icn      = ""
             priority        = get_priority(note_id)
-            schedule_btns   = self.schedule_btns(priority)
-            sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
             img_folder      = utility.misc.img_src_base_path()
-            active          = "active" if note.is_due_sometime() else ""
             page_sidebar    = str(note.is_pdf() and conf_or_def("pdf.page_sidebar_shown", True)).lower()
-            
+
             rev_overlay     = ""
             # check for last linked pages
             last_linked     = get_last_linked_notes(note_id, limit = 500)
             if len(last_linked) > 0:
                 if hasattr(mw.col, "find_cards"):
-                    due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+                    due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
                 else:
-                    due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+                    due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
                 if due_today and len(due_today) > 0:
                     act         = "Reading"
-                    if note.is_pdf(): 
+                    if note.is_pdf():
                         ntype = "PDF"
-                    elif note.is_yt(): 
+                    elif note.is_yt():
                         ntype = "video"
                         act   = "Watching"
-                    else: 
+                    else:
                         ntype = "note"
 
-                    rev_overlay = f""" 
+                    rev_overlay = f"""
                         <div class='siac-rev-overlay'>
-                            <div style='text-align: center; font-size: 22px; font-weight: bold; color: lightgrey;'>
+                            <div class='ta_center bold fg_lightgrey' style='font-size: 22px;'>
                                <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
                             </div>
-                            <div style='opacity: 1; text-align: center; margin: 50px 0 30px 0; font-weight: bold;'>
+                            <div class='ta_center bold' style='opacity: 1; margin: 50px 0 30px 0;'>
                                 <div class='siac-btn siac-btn-dark' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
                                 <div class='siac-btn siac-btn-dark' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
                             </div>
-                        </div> 
+                        </div>
                     """
-
-            if note.is_in_queue():
-                queue_btn_text      = "Done!"
-                queue_btn_action    = "siac-user-note-done"
-                schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
-                delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-link-btn'>Later</a>"""
-
-            else:
-                queue_btn_text      = "First in Queue"
-                queue_btn_action    = "siac-user-note-queue-read-head"
-                schedule_dialog_btn = "" if not utility.date.schedule_is_due_in_the_future(note.reminder) else f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
-                delay_btn           = ""
 
             overflow        = "auto"
             notification    = ""
-            hide_page_map   = "hidden"
             editable        = False
             #check note type
             if note.is_pdf() and utility.misc.file_exists(source):
                 overflow        = "hidden" 
-                hide_page_map   = ""
                 text            = self.pdf_viewer_html(source, note.get_title(), priority)
 
                 if "/" in source:
@@ -478,20 +570,18 @@ class ReadingModal:
                 text        = self.yt_html()
             else:
                 editable    = len(text) < 100000
-                overflow    = "hidden" 
+                overflow    = "hidden"
                 text        = self.text_note_html(editable, priority)
-            
-        
-            queue_info          = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
-            if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
-                queue_info      = "Scheduled for future date."
-                notification    = f"readerNotification('Scheduled for {note.due_date_str()}');"
-            queue_info_short    = f"Priority" if note.is_in_queue() else "Unqueued"
-            queue_readings_list = self.get_queue_head_display(queue, editable)
+            bottom_bar      = self.bottom_bar(note)
 
-            params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, text = text, queue_info = queue_info, 
-            queue_info_short = queue_info_short, schedule_btns=schedule_btns, queue_readings_list = queue_readings_list, overflow=overflow, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, 
-            notification=notification, sched_click=sched_click, page_sidebar=page_sidebar, rev_overlay = rev_overlay, hide_page_map = hide_page_map)
+            top_hidden      = "top-hidden" if conf_or_def("notes.queue.hide_top_bar", False) else ""
+        
+            if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
+                notification    = f"readerNotification('Scheduled for {note.due_date_str()}');"
+
+            params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, text = text, 
+            overflow=overflow, top_hidden=top_hidden, 
+            notification=notification, page_sidebar=page_sidebar, rev_overlay = rev_overlay, bottom_bar=bottom_bar)
             
             html = filled_template("reading_modal", params)
 
@@ -502,12 +592,11 @@ class ReadingModal:
     def text_note_html(self, editable: bool, priority: int) -> str:
         """
             Returns the html which is wrapped around the text of user notes inside the reading modal.
-            This function is used if the note is a regular, text-only note, if the note is a pdf note, 
+            This function is used if the note is a regular, text-only note, if the note is a pdf note,
             pdf_viewer_html is used instead.
         """
 
         nid                     = self.note_id
-        dir                     = utility.misc.get_web_folder_path()
         text                    = self.note.text if not utility.text.is_html(self.note.text) else utility.text.html_to_text(self.note.text)
         search_sources          = ""
         config                  = mw.addonManager.getConfig(__name__)
@@ -516,10 +605,8 @@ class ReadingModal:
         if urls is not None and len(urls) > 0:
             search_sources = self.iframe_dialog(urls)
 
-        is_content_editable     = "true" if editable else "false"
         title                   = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
-        quick_sched             = self.quick_sched_btn(priority)
-        params                  = dict(text = text, nid = nid, search_sources=search_sources, quick_sched_btn=quick_sched, title=title)
+        params                  = dict(text = text, nid = nid, search_sources=search_sources, title=title)
 
         html                    = filled_template("text_viewer", params)
         return html
@@ -531,25 +618,23 @@ class ReadingModal:
         url     = self.note.source.strip()
         match   = re.match(r".+/watch\?v=([^&]+)(?:&t=(.+)s)?", url)
         time    = 0
-        prio    = get_priority(self.note_id)
-        qsched  = self.quick_sched_btn(prio)
 
         if match:
             video = match.group(1)
             if len(match.groups()) > 1:
                 if match.group(2) is not None and len(match.group(2)) > 0:
                     time = int(match.group(2))
-        
+
         return f"""
-            {qsched}
+            <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='pycmd("siac-user-note-done")'><i class='fa fa-check'></i></div>
             <div class='w-100 h-100 flex-col' style='position: relative;'>
-                <div id='siac-yt-player' class='w-100' style='flex: 1 1 auto;  box-sizing: border-box; margin: 10px -15px 0 0;'></div>
+                <div id='siac-yt-player' class='w-100' style='flex: 1 1 auto; box-sizing: border-box; margin: 10px -15px 0 0;'></div>
                 <div class="siac-reading-modal-button-bar-wrapper">
-                    <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
-                        <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
-                        <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {self.note_id}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
-                        <div class='siac-btn siac-btn-dark' onclick='ytSavePosition();' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save Position&nbsp;</b></div>
-                        <div class='siac-btn siac-btn-dark' onclick='ytScreenCapture();' style='margin-left: 5px;'><b>&nbsp;<i class="fa fa-camera"></i> &nbsp;Capture&nbsp;</b></div>
+                    <div class='user_sel_none' style='position: absolute; left: 0; z-index: 1;'>
+                        <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleBottomBar();'>&#x2195;</div>
+                        <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {self.note_id}")'><b>&#9998; Note</b></div>
+                        <div class='siac-btn siac-btn-dark ml-5' onclick='ytSavePosition();'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save Position&nbsp;</b></div>
+                        <div class='siac-btn siac-btn-dark ml-5' onclick='ytScreenCapture();'><b>&nbsp;<i class="fa fa-camera"></i> &nbsp;Capture&nbsp;</b></div>
                     </div>
                 </div>
                 <div id='siac-pdf-br-notify'></div>
@@ -558,7 +643,7 @@ class ReadingModal:
                 pdfLoading = false;
                 noteLoading = false;
                 pdfDisplayed = null;
-                if (pdfBarsHidden) {{
+                if (bothBarsAreHidden()) {{
                     readerNotification("{title}");
                 }}
                 displayedNoteId = {self.note_id};
@@ -567,26 +652,6 @@ class ReadingModal:
 
         """
 
-    def quick_sched_btn(self, priority: int) -> str:
-        """ The button at the left side of the pdf/note pane, which allows to quickly mark as done and/or update the priority. """
-
-        nid         = self.note_id
-        value       = 0 if priority is None or priority < 0 else priority
-        onclick     = "onQuickSchedBtnClicked(this);" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not self.note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
-
-        if value == 0: 
-            current_btn = ""
-        else:
-            current_btn = f"""<div class='siac-btn siac-btn-dark-smaller' onclick='pycmd("siac-user-note-done");'><b>Current</b></div>"""
-        return f"""
-            <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='{onclick}'><i class='fa fa-check'></i>
-                <div class='expanded-hidden white-hover fg_lightgrey' style='margin: 0 0 0 6px; text-align: center;'>
-                    <input id='siac-prio-slider-small' type='range' class='siac-prio-slider-small' max='100' min='0' value='{value}' oninput='schedSmallChange(this)' onchange='schedSmallChanged(this, {nid})'/>
-                    <span id='siac-slider-small-lbl' style='margin: 0 5px 0 5px;'>{value}</span>
-                    {current_btn}
-                </div>
-            </div>
-        """
 
     def get_feed_html(self, nid, source):
         """ Not used currently. """
@@ -597,7 +662,6 @@ class ReadingModal:
         except:
             return "<center>Could not load feed. Please check the URL.</center>"
         res             = read(feed_url)
-        dir             = utility.misc.get_web_folder_path()
         search_sources  = ""
         config          = mw.addonManager.getConfig(__name__)
         urls            = config["searchUrls"]
@@ -607,7 +671,7 @@ class ReadingModal:
         templ           = """
                 <div class='siac-feed-item'>
                     <div><span class='siac-blue-outset'>%s</span> &nbsp;<a href="%s" class='siac-ul-a'>%s</a></div>
-                    <div><i>%s</i> <span style='margin-left: 15px;'>%s</span></div> 
+                    <div><i>%s</i> <span style='margin-left: 15px;'>%s</span></div>
                     <div style='margin: 15px;'>%s</div>
                 </div> """
 
@@ -624,7 +688,7 @@ class ReadingModal:
             <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='iframeBtnClicked(event)'><i class="fa fa-globe" aria-hidden="true"></i>
                 <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 35px); text-align: right; color: grey; font-size: 10px;'>Note: Not all sites allow embedding!</div>
                 <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
-                    <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input> 
+                    <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input>
                     <br/>
                 {search_sources}
                 </div>
@@ -636,8 +700,8 @@ class ReadingModal:
             <iframe id='siac-iframe' sandbox='allow-scripts' style='height: calc(100% - 47px);'></iframe>
             <div class="siac-reading-modal-button-bar-wrapper">
                 <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
-                    <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleReadingModalBars();'>&#x2195;</div>
-                    <div class='siac-btn siac-btn-dark' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")' style='margin-left: 5px;'><b>&#9998; Note</b></div>
+                    <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleBottomBar();'>&#x2195;</div>
+                    <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")'><b>&#9998; Note</b></div>
                 </div>
             </div>
             <script>
@@ -660,54 +724,55 @@ class ReadingModal:
     def bottom_bar(self, note):
         """ Returns only the html for the bottom bar, useful if the currently displayed pdf should not be reloaded, but the queue display has to be refreshed. """
 
-        index           = get_index()
         text            = note.text
         note_id         = note.id
-        source          = note.source
-        created_dt      = datetime.datetime.strptime(note.created, '%Y-%m-%d %H:%M:%S')
-        diff            = datetime.datetime.now() - created_dt
         queue           = _get_priority_list()
-        queue_len       = len(queue)
         priority        = get_priority(note_id)
-        schedule_btns   = self.schedule_btns(priority)
-        sched_click     = "toggleQueue();" if conf_or_def("notes.queue.include_future_scheduled_in_queue", True) or not note.is_due_in_future() else "readerNotification(\"Note is scheduled for future date.\");"
-        time_str        = "Added %s ago." % utility.date.date_diff_to_string(diff)
-        active          = "active" if note.is_due_sometime() else ""
-
+        has_schedule    = "active" if note.is_due_sometime() else ""
+        
         if note.is_in_queue():
             queue_btn_text      = "Done!"
-            queue_btn_action    = "siac-user-note-done"
-            schedule_dialog_btn = f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
-            delay_btn           = """&nbsp;&nbsp;&nbsp;&nbsp; <a id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) { pycmd("siac-delay-note"); }' class='siac-link-btn'>Later</a>"""
         else:
-            queue_btn_text      = "First in Queue"
-            queue_btn_action    = "siac-user-note-queue-read-head"
-            schedule_dialog_btn = "" if not utility.date.schedule_is_due_in_the_future(note.reminder) else f"""<span id='siac-schedule-dialog-btn' class='siac-queue-picker-icn {active}' onclick='pycmd("siac-schedule-dialog")'>{clock_svg(False)}</span>"""
-            delay_btn           = ""
+            queue_btn_text      = "Add to Queue"
 
         editable            = not note.is_feed() and not note.is_pdf() and len(text) < 50000
-        queue_info          = "Priority: %s" % (dynamic_sched_to_str(priority)) if note.is_in_queue() else "Unqueued."
+
+        # decide what to show in the top button
+        # 1. note is in queue and has a priority -> show the priority
+        if note.is_in_queue() and priority:
+            queue_info      = "Priority: %s" % (dynamic_sched_to_str(priority))
+        # 2. note is in queue but has no priority (it is scheduled for today/ was due in the last 7 days) 
+        elif note.is_in_queue():
+            if note.is_due_today():
+                queue_info      = "Scheduled for today"
+            else:
+                # note must have been due before but hasn't beeen done
+                if note.due_days_delta() == 1:
+                    queue_info      = "Scheduled for yesterday"
+                else:
+                    queue_info      = f"Scheduled for {note.due_days_delta()} days ago"
+        else:
+            queue_info      = "Unqueued"
+
         hide_page_map       = "hidden" if not note.is_pdf() else ""
         if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
-            queue_info      = "Scheduled for future date."
-        # queue_info_short = f"Queue [{note.position + 1}]" if note.is_in_queue() else "Unqueued"
-        queue_info_short    = f"Priority" if note.is_in_queue() else "Unqueued"
+            queue_info      = "Scheduled for future date"
         queue_readings_list = self.get_queue_head_display(queue, editable)
 
-        params              = dict(note_id = note_id, time_str = time_str, queue_btn_text = queue_btn_text, queue_btn_action = queue_btn_action, queue_info = queue_info, queue_info_short = queue_info_short, 
-        queue_readings_list = queue_readings_list, schedule_btns=schedule_btns, schedule_dialog_btn=schedule_dialog_btn, delay_btn=delay_btn, sched_click=sched_click, hide_page_map = hide_page_map)
+        bar_hidden          = "bottom-hidden" if get_config_value_or_default("notes.queue.hide_bottom_bar", False) else ""
+
+        params              = dict(note_id = note_id, queue_btn_text = queue_btn_text, queue_info = queue_info, 
+        queue_readings_list = queue_readings_list, has_schedule=has_schedule, hide_page_map = hide_page_map, bar_hidden = bar_hidden)
 
         html                = filled_template("reading_modal_bottom", params)
 
         return html
 
     def get_queue_head_display(self, queue: Optional[List[SiacNote]] = None, should_save: bool = False) -> str:
-        """ This returns the html for the little list at the bottom of the reading modal which shows the first 5 items in the queue. """
+        """ This builds the html for the little list at the bottom of the reading modal which shows the first 5 items in the queue. """
 
         if queue is None:
             queue = _get_priority_list()
-        if queue is None or len(queue) == 0:
-            return "<div id='siac-queue-readings-list' style='display: inline-block; vertical-align: top; margin-left: 20px; user-select: none;'></div>"
 
         note_id             = self.note_id
         note                = self.note
@@ -717,13 +782,18 @@ class ReadingModal:
 
         config              = mw.addonManager.getConfig(__name__)
         hide                = config["pdf.queue.hide"]
+        position            = str(note.position+1) if note.position is not None else "-"
+        avg_prio            = round(get_avg_priority(), 1)
+        show_prios          = config["notes.queue.show_priorities"]
+        if show_prios:
+            priorities      = get_priorities([n.id for n in queue[:5]])
         queue_head_readings = ""
 
         for ix, queue_item in enumerate(queue):
 
             should_greyout = "greyedout" if queue_item.id == int(note_id) else ""
-            if not hide or queue_item.id == int(note_id) :
-                qi_title = utility.text.trim_if_longer_than(queue_item.get_title(), 40) 
+            if not hide or queue_item.id == int(note_id):
+                qi_title = utility.text.trim_if_longer_than(queue_item.get_title(), 40)
                 qi_title = ihtml.escape(qi_title)
             else:
                 qi_title = utility.text.trim_if_longer_than(re.sub("[^ ]", "?",queue_item.get_title()), 40)
@@ -731,68 +801,62 @@ class ReadingModal:
             hover_actions       = "onmouseenter='showQueueInfobox(this, %s);' onmouseleave='leaveQueueItem(this);'" % (queue_item.id) if not hide else ""
             #if the note is a pdf or feed, show a loader on click
             pdf_or_feed         = queue_item.is_feed() or queue_item.is_pdf()
-            clock               = clock_svg(len(should_greyout) > 0) if queue_item.is_scheduled() else ""
+            clock               = "&nbsp; <i class='fa fa-calendar'/>&nbsp;" if queue_item.is_scheduled() else ""
             should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showPDFLoader();' if pdf_or_feed else ""
-            queue_head_readings +=  "<a oncontextmenu='queueLinkContextMenu(event, %s)' onclick='if (!pdfLoading && !modalShown) {%s  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-link-btn %s' style='font-size: 12px; font-weight: bold;' %s >%s.%s %s</a><br>" % (queue_item.id, should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, clock, qi_title)
+            if show_prios:
+                if queue_item.id in priorities:
+                    prio_lbl        = priorities[queue_item.id]
+                    prio_lbl        = f"<span class='mr-5 ml-5 siac-prio-lbl' style='background: {utility.misc.prio_color(prio_lbl)};'>{prio_lbl}</span>"
+                else:
+                    prio_lbl        = f"<span class='mr-5 ml-5 siac-prio-lbl fg_lightgrey' style='background: #5a5a5a;'>-</span>"
+            else: 
+                prio_lbl = ""
+            queue_head_readings +=  "<a onclick='if (!pdfLoading && !modalShown) {%s destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-link-btn bold %s' style='font-size: 12px;' %s >%s.%s%s %s</a><br>" % (should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, prio_lbl, clock, qi_title)
             if ix > 3:
                 break
 
         if hide:
-            hide_btn = """<div style='display: inline-block; margin-left: 12px;' class='blue-hover fg_grey' onclick='unhideQueue(%s)'>(Show Items)</div>""" % note_id
+            hide_btn = """<div class='fg_grey bright-hover siac-queue-btn ml-5' onclick='unhideQueue(%s)'>Show Items</div>""" % note_id
         else:
-            hide_btn = """<div style='display: inline-block; margin-left: 12px;' class='blue-hover fg_grey' onclick='hideQueue(%s)'>(Hide Items)</div>""" % note_id
+            hide_btn = """<div class='fg_grey bright-hover siac-queue-btn ml-5' onclick='hideQueue(%s)'>Hide Items</div>""" % note_id
 
-        html = """
-        <div id='siac-queue-readings-list' style='display: inline-block; vertical-align: top; margin-left: 20px; user-select: none;'>
-            <div style='margin: 0px 0 1px 0; display: inline-block; color: lightgrey;'><i class="fa fa-inbox" aria-hidden="true"></i> &nbsp;Queue Head:</div>%s<br>
-                %s
-        </div>
-        """ % (hide_btn, queue_head_readings)
+        show_prio_action    = "off" if show_prios else "on"
+        show_prio_lbl       = "Hide" if show_prios else "Show"
+        show_prio_btn       = f"""<div class='fg_grey bright-hover siac-queue-btn ml-5' onclick='pycmd("siac-toggle-show-prios {show_prio_action}")'>{show_prio_lbl} Prios</div>"""
 
-        return html
-
-    def schedule_btns(self, priority: int) -> str:
-        """ Returns the html for the buttons that allow to quickly reschedule the current item in the reading modal. """
-
-        note_id         = self.note_id
-        priority        = 0 if priority is None else priority
-        prio_verbose    = dynamic_sched_to_str(priority).replace("(", "(<b>").replace(")", "</b>)")
-        text            = "Release to mark as <b>done.</b>" if priority > 0 else "Release to add to queue."
-
-        return f"""
-        <div id='siac-queue-sched-wrapper'>
-            <div class='w-100 fg_lightgrey' style='text-align: center; margin-top: 5px;'>
-                {text}<br>
-                <input type="range" min="0" max="100" value="{priority}" oninput='schedChange(this)' onchange='schedChanged(this, {note_id})' class='siac-prio-slider' style='margin-top: 12px;'/>
-            </div>
-            <div class='w-100' style='text-align: center; padding-top: 10px;'>
-                <span style='font-size: 16px;' id='siac-sched-prio-val'>{prio_verbose}</span><br>
-                <span style='font-size: 12px; color: grey;' id='siac-sched-prio-lbl'></span>
-            </div>
+        html = f"""
+        <div id='siac-queue-readings-list'>
+            <div class='fg_lightgrey cursor-pointer white-hover siac-queue-btn' onclick='pycmd("siac-user-note-queue-picker")'><i class="fa fa-inbox mr-10"></i>{position} / {len(queue)}</div>
+            <div class='fg_lightgrey siac-queue-btn ml-5'>&#216;&nbsp;{avg_prio}</div>
+            {hide_btn}
+            {show_prio_btn} 
+            <br>
+            {queue_head_readings} 
         </div>
         """
 
+        return html
+
+
     def pdf_viewer_html(self, source: str, title: str, priority: int) -> str:
         """ Returns the center area of the reading modal. Use this if the displayed note is a pdf. """
-        
+
         nid                 = self.note_id
-        dir                 = utility.misc.get_web_folder_path()
         config              = mw.addonManager.getConfig(__name__)
         urls                = config["searchUrls"]
         search_sources      = self.iframe_dialog(urls) if urls else ""
         marks_img_src       = utility.misc.img_src("mark-star-24px.png")
         marks_grey_img_src  = utility.misc.img_src("mark-star-lightgrey-24px.png")
         pdf_search_img_src  = utility.misc.img_src("magnify-24px.png")
-        quick_sched         = self.quick_sched_btn(priority)
         extract             = ""
-        
+
         if self.note.extract_start:
             if self.note.extract_start == self.note.extract_end:
                 extract = f"<div class='siac-extract-marker'>&nbsp;<i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {self.note.extract_start}&nbsp;</div>"
             else:
                 extract = f"<div class='siac-extract-marker'>&nbsp;<i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {self.note.extract_start} - {self.note.extract_end}&nbsp;</div>"
 
-        params = dict(nid = nid, pdf_title = title, pdf_path = source, quick_sched_btn=quick_sched, search_sources=search_sources, marks_img_src=marks_img_src, 
+        params = dict(nid = nid, pdf_title = title, pdf_path = source, search_sources=search_sources, marks_img_src=marks_img_src,
         marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src, extract=extract)
 
         html   = filled_template("pdf_viewer", params)
@@ -846,102 +910,10 @@ class ReadingModal:
 
         search_sources += "</table>"
         if len(direct_links) > 0:
-            search_sources += "<div style='margin-bottom: 5px;'>Direct Links:</div>"
+            search_sources += "<div class='mb-5'>Direct Links:</div>"
             search_sources += direct_links
 
         return search_sources
-
-    @js
-    def display_schedule_dialog(self):
-        """ Called when the currently opened note has a schedule and after it is finished reading. """
-
-        delta = self.note.due_days_delta() if self.note.is_due_sometime() else 0
-
-        if delta == 0:
-            header = "This note was scheduled for <b>today</b>."
-        elif delta == 1:
-            header = "This note was scheduled for <b>yesterday</b>, but not marked as done."
-        elif delta  == -1:
-            header = "This note is due <b>tomorrow</b>."
-        elif delta < -1:
-            header = f"This note is due in <b>{abs(delta)}</b> days."
-        else:
-            header = f"This note was due <b>{delta}</b> days ago, but not marked as done."
-
-        header +="<br>How do you want to proceed?"
-        options = ""
-      
-        if delta < 0:
-            options += """
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Keep that Schedule</span>
-                    </label><br>
-            """
-        else:
-            if self.note.schedule_type() == "td":
-                days_delta = int(self.note.reminder.split("|")[2][3:])
-                s = "s" if days_delta > 1 else ""
-                options += f"""
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Show again in <b>{days_delta}</b> day{s}</span>
-                    </label><br>
-                """
-            elif self.note.schedule_type() == "wd":
-                weekdays_due    = [int(d) for d in self.note.reminder.split("|")[2][3:]]
-                next_date_due   = utility.date.next_instance_of_weekdays(weekdays_due)
-                weekday_name    = utility.date.weekday_name(next_date_due.weekday() + 1)
-                options += f"""
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Show again next <b>{weekday_name}</b></span>
-                    </label><br>
-                """
-            elif self.note.schedule_type() == "id":
-                days_delta = int(self.note.reminder.split("|")[2][3:])
-                s = "s" if days_delta > 1 else ""
-                options += f"""
-                    <label class='blue-hover' for='siac-rb-1'>
-                        <input id='siac-rb-1' type='radio' name='sched' data-pycmd="1" checked>
-                        <span>Show again in <b>{days_delta}</b> day{s}</span>
-                    </label><br>
-                """
-
-        options += """
-                <label class='blue-hover' for='siac-rb-2'>
-                    <input id='siac-rb-2' type='radio' name='sched' data-pycmd="2">
-                    <span>Rem. Schedule, but keep in Queue</span>
-                </label><br>
-                <label class='blue-hover' for='siac-rb-3'>
-                    <input id='siac-rb-3' type='radio' name='sched' data-pycmd="3">
-                    <span>Remove from Queue</span>
-                </label><br>
-            """
-
-        modal = f"""
-            <div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">
-                {header}
-
-                <div class='siac-pdf-main-color-border-bottom siac-pdf-main-color-border-top' style='text-align: left; user-select: none; cursor: pointer; margin: 10px 0 10px 0; padding: 15px;'>
-                  {options}
-                </div>
-                <div style='text-align: left;'>
-                    <a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.show_schedule_change_modal()")'>Change Scheduling</a>
-                    <div class='siac-btn siac-btn-dark' style='float: right;' onclick='scheduleDialogQuickAction()'>Ok</div>
-                </div>
-
-            </div>
-        """
-        return """modalShown=true;
-            $('#siac-rm-greyout').show();
-            if (document.getElementById('siac-schedule-dialog')) {
-                $('#siac-schedule-dialog').replaceWith(`%s`);
-            } else {
-                $('#siac-reading-modal-center').append(`%s`);
-            }
-            """ % (modal, modal)
-
 
     @js
     def show_remove_dialog(self, nid: Optional[int] = None):
@@ -951,10 +923,12 @@ class ReadingModal:
             note = get_note(nid)
         else:
             note = self.note
+        
+        prio    = get_priority(note.id)
 
         title   = utility.text.trim_if_longer_than(note.get_title(), 40).replace("`", "")
-        rem_cl  = "checked" if note.position is not None and note.position >= 0 else "disabled"
-        del_cl  = "checked" if note.position is None or note.position < 0 else ""
+        rem_cl  = "checked" if note.position is not None and note.position >= 0 and prio and prio > 0 else "disabled"
+        del_cl  = "checked" if rem_cl == "disabled" else ""
         note_id = note.id
 
         modal   = filled_template("remove_modal", dict(title = title, rem_cl = rem_cl, del_cl = del_cl, note_id = note_id))
@@ -964,28 +938,9 @@ class ReadingModal:
             $('#siac-reading-modal-center').append(`%s`);
             """ % modal
 
-    @js
-    def show_schedule_change_modal(self, unscheduled: bool = False):
-        """ Show a modal that allows to change the schedule of the current note. """
-
-        title = "Set a new Schedule" if not unscheduled else "This note had no schedule before."
-        if not unscheduled:
-            back_btn = """<a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.display_schedule_dialog()")'>Back</a>"""
-        else:
-            back_btn = """<a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.display_head_of_queue()")'>Proceed without scheduling</a>"""
-
-        params = dict(title=title, back_btn=back_btn)
-        body   = filled_template("schedule_change", params)
-        return f"""
-            if (document.getElementById('siac-schedule-dialog')) {{
-                document.getElementById("siac-schedule-dialog").innerHTML = `{body}`;
-            }} else {{
-                $('#siac-reading-modal-center').append(`<div id='siac-schedule-dialog' class="siac-modal-small dark" style="text-align:center;">{body}</div>`);
-            }}
-        """
-
+   
     def schedule_note(self, option: int):
-        """ Will update the schedule of the note according to the chosen option. 
+        """ Will update the schedule of the note according to the chosen option.
             This function is called after an option in the dialog of display_schedule_dialog() has been selected. """
 
         delta       = self.note.due_days_delta()
@@ -1055,10 +1010,10 @@ class ReadingModal:
         io      = ""
         if hasattr(self._editor, 'onImgOccButton') and mw.addonManager.isEnabled("1374772155"):
             io  = f"<div class='siac-btn siac-btn-dark' style='margin-right: 9px;' onclick='pycmd(\"siac-cutout-io {img_src}\"); $(this.parentNode).remove();'><i class='fa fa-eraser'></i>&nbsp; Image Occlusion</div>"
-        modal   = """<div class="siac-modal-small dark" style="text-align:center;">
+        modal   = """<div class="siac-modal-small dark ta_center">
                         <img src="%s" style="height: 90px;"/><br>
                         <b>Append to:</b><br><br>
-                        <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
+                        <div class='oflow_y_auto' style="max-height: 200px; overflow-x: hidden;">%s</div>
                         <br><br>
                         %s
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div>
@@ -1079,9 +1034,9 @@ class ReadingModal:
         """
 
         cloze_text  = cloze_text.replace("`", "").replace("\n", "")
-        modal       = """ <div class="siac-modal-small dark" style="text-align:center;">
+        modal       = """ <div class="siac-modal-small dark ta_center">
                         <b>Append to:</b><br><br>
-                        <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div><br><br>
+                        <div class='oflow_y_auto' style="max-height: 200px; overflow-x: hidden;">%s</div><br><br>
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
                     </div> """
         flds        = ""
@@ -1146,11 +1101,11 @@ class ReadingModal:
                                             <i class="fa fa-search"></i>&nbsp; %s
                                         </div>""" % (url, name)
 
-        modal = """ <div class="siac-modal-small dark" style="text-align:center;">
+        modal = """ <div class="siac-modal-small dark ta_center">
                         <label class='siac-caps'>Search Text</label>
-                        <input class='siac-rm-bg' style="width: 100%%; border-radius: 3px; padding-left: 4px; box-sizing: border-box; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input>
+                        <input class='siac-rm-bg w-100' style="border-radius: 3px; padding-left: 4px; box-sizing: border-box; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input>
                         <br/>
-                        <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden; cursor: pointer; margin-top: 15px; text-align: left;">%s</div><br><br>
+                        <div class='cursor-pointer oflow_y_auto' style="max-height: 200px; overflow-x: hidden; margin-top: 15px; text-align: left;">%s</div><br><br>
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
                     </div> """  % (inp, search_sources)
 
@@ -1182,7 +1137,7 @@ class ReadingModal:
         for p_ix in range(max(1, lower), min(upper, pages_total + 1)):
             if not p_ix in around_d:
                 around_d[p_ix] = 0
-        
+
         for p_ix in range(max(1, lower), min(upper, pages_total + 1)):
             c = around_d[p_ix]
             if c == 0:
@@ -1202,30 +1157,30 @@ class ReadingModal:
             html = f"""
                 <div class='fg_lightgrey' style='flex: 0 1 auto;'>
                     <center><b>PAGE {page}</b></center>
-                    <center style='font-size: 10px; margin-top: 5px;'>{around_s}</center>
+                    <center class='mt-5' style='font-size: 10px;'>{around_s}</center>
                     <hr style='border-top: 4px solid grey;'>
                 </div>
                 <div style='overflow-y: auto; flex: 1 1 auto; padding: 7px; text-align: left;'>
                     {html}
                 </div>
                 <div class='fg_lightgrey ta_center' style='flex: 0 1 auto; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""}, 
+                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""},
                     added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
                 </div>
             """
         else:
-            html = f""" 
+            html = f"""
                 <div class='fg_lightgrey' style='flex: 0 1 auto;'>
                     <center><b>PAGE {page}</b></center>
-                    <center style='font-size: 10px; margin-top: 5px;'>{around_s}</center>
+                    <center class='mt-5' style='font-size: 10px;'>{around_s}</center>
                     <hr style='border-top: 4px solid grey;'>
                 </div>
-                <div class='fg_lightgrey' style='flex: 1 1 auto; display: flex; justify-content: center; flex-direction: column;'>
-                    <div style='margin-bottom: 10px; font-size: 25px;'><i class="fa fa-graduation-cap"></i></div>
-                    <center style='padding: 20px; font-variant-caps: all-petite-caps; font-size: medium;'>No notes added while on this page.</center> 
+                <div class='fg_lightgrey flex-col' style='flex: 1 1 auto; justify-content: center;'>
+                    <div class='mb-10' style='font-size: 25px;'><i class="fa fa-graduation-cap"></i></div>
+                    <center class='bold' style='padding: 20px; font-variant-caps: small-caps; font-size: medium;'>No notes added while on this page.</center>
                 </div>
                 <div class='fg_lightgrey ta_center' style='flex: 0 1 auto; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""}, 
+                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""},
                     added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
                 </div>
             """
@@ -1233,31 +1188,6 @@ class ReadingModal:
         self._editor.web.eval(f"document.getElementById('siac-page-sidebar').innerHTML = `{html}`;")
 
     #endregion page sidebar
-
-    @js
-    def update_reading_bottom_bar(self, nid: int):
-        """ Refresh the bottom bar. """
-
-        queue   = _get_priority_list()
-        pos_lbl = ""
-        if queue is not None and len(queue) > 0:
-            try:
-                pos = next(i for i,v in enumerate(queue) if v.id == nid)
-            except:
-                pos = -1
-            pos_lbl     = "Priority: " + get_priority_as_str(nid)
-            pos_lbl_btn = f"Priority" if pos >= 0 else "Unqueued"
-        else:
-            pos_lbl     = "Unqueued"
-            pos_lbl_btn = "<b>Unqueued</b>"
-
-        qd = self.get_queue_head_display(queue)
-        return """
-            document.getElementById('siac-queue-lbl').innerHTML = '%s';
-            $('#siac-queue-lbl').fadeIn('slow');
-            $('.siac-queue-sched-btn:first').html('%s');
-            $('#siac-queue-readings-list').replaceWith(`%s`);
-            """ % (pos_lbl, pos_lbl_btn, qd)
 
     @js
     def show_pdf_bottom_tab(self, note_id: int, tab: str):
@@ -1308,9 +1238,9 @@ class ReadingModal:
                 html = f"{html}<i class='sq-r sq-rg' onclick='pdfGotoPg({ix})'></i>"
             else:
                 html = f"{html}<i class='sq-r' onclick='pdfGotoPg({ix})'></i>"
-                
+
         if total < 50:
-            html = f"<div style='line-height: 1em; margin-top: 10px;'>{html}</div>"
+            html = f"<div class='mt-10' style='line-height: 1em;'>{html}</div>"
         else:
             html = f"<div style='line-height: 1em;'>{html}</div>"
         return html
@@ -1321,14 +1251,13 @@ class ReadingModal:
 
         note_id = self.note_id
         r       = get_related_notes(note_id)
-        note    = get_note(note_id)
-        html    = "" 
+        html    = ""
         ids     = set()
         res     = []
 
         if r.related_by_tags:
             for r1 in r.related_by_tags:
-                res.append(r1) 
+                res.append(r1)
                 ids.add(r1.id)
                 if len(r.related_by_title) > 0:
                     i = r.related_by_title.pop(0)
@@ -1344,7 +1273,7 @@ class ReadingModal:
                     res.append(r2)
                     if len(res) >= 20:
                         break
-        
+
         if len(res) < 20 and len(r.related_by_folder) > 0:
             for r3 in r.related_by_folder:
                 if not r3.id in ids:
@@ -1373,11 +1302,11 @@ class ReadingModal:
         # pagestotal might be None (it is only available if at least one page has been read)
         if read_stats[2] is not None:
             prog_bar    = self.pdf_prog_bar(read_stats[0], read_stats[2])
-            pages_read  = "<div style='width: 100%%; margin-top: 3px; font-weight: bold; text-align: center; font-size: 20px;'>%s / %s</div>" % (read_stats[0], read_stats[2])
+            pages_read  = "<div class='bold w-100 ta_center' style='margin-top: 3px; font-size: 20px;'>%s / %s</div>" % (read_stats[0], read_stats[2])
         elif not note.is_yt():
             text_len    = f"{len(note.text.split())} Words" if note.text is not None and len(note.text) > 0 else "Empty"
             prog_bar    = ""
-            pages_read  = f"<div style='width: 100%; margin-top: 7px; font-weight: bold; text-align: center; font-size: 16px;'>Text Note, {text_len}</div>"
+            pages_read  = f"<div class='bold w-100 ta_center' style='margin-top: 7px; font-size: 16px;'>Text Note, {text_len}</div>"
         else:
             prog_bar    = ""
             time        = utility.text.get_yt_time(note.source.strip())
@@ -1388,12 +1317,12 @@ class ReadingModal:
                 if secs < 10:
                     secs = f"0{secs}"
                 time    = f"{int(time / 60)}:{secs}"
-            pages_read  = f"<div style='width: 100%; margin-top: 7px; font-weight: bold; text-align: center; font-size: 16px;'>Video, {time}</div>"
+            pages_read  = f"<div class='bold w-100 ta_center' style='margin-top: 7px; font-size: 16px;'>Video, {time}</div>"
 
         html = """
             <div class='w-100 h-100' style='box-sizing: border-box; padding: 10px; display: inline-block; position: relative; vertical-align: top;'>
-                <div class='ta_center w-100' style='white-space: nowrap; overflow: hidden; font-weight: bold; vertical-align: top; text-overflow: ellipsis;'>{title}</div>
-                <div class='fg_lightgrey ta_center w-100' style='white-space: nowrap; overflow: hidden;vertical-align: top;'>{time_str}</div>
+                <div class='ta_center w-100 bold' style='white-space: nowrap; overflow: hidden; vertical-align: top; text-overflow: ellipsis;'>{title}</div>
+                <div class='fg_lightgrey ta_center w-100 oflow_hidden' style='white-space: nowrap; vertical-align: top;'>{time_str}</div>
                 {pages_read}
                 <div class='w-100 ta_center' style='padding: 5px 0 10px 0;'>
                     <div style='display: inline-block; vertical-align: bottom;'>
@@ -1401,11 +1330,11 @@ class ReadingModal:
                     </div>
                 </div>
             </div>
-        
+
         """.format_map(dict(title = note.get_title(), pages_read=pages_read, time_str= time_str, prog_bar= prog_bar, nid = note.id))
         return html
-    
-    
+
+
     def pdf_prog_bar(self, read: Optional[int], read_total: Optional[int]) -> str:
         """ HTML for the progress bar in the top bar of the reader. """
 
@@ -1449,8 +1378,11 @@ class ReadingModal:
 
     @js
     def display_cloze_modal(self, editor: Editor, selection: str, extracted: List[str]):
-        s_html = "<table style='margin-top: 5px; font-size: 15px;'>"
-        sentences = [s for s in extracted if len(s) < 300 and len(s.strip()) > 0]
+        """ Displays the modal to view and edit the generated cloze. """
+
+        s_html      = "<table style='margin-top: 5px; font-size: 15px;'>"
+        sentences   = [s for s in extracted if len(s) < 300 and len(s.strip()) > 0]
+
         if len(sentences) == 0:
             for s in extracted:
                 if len(s) >= 300:
@@ -1458,12 +1390,14 @@ class ReadingModal:
                     if f is not None and len(f) < 300:
                         sentences.append(f)
 
+        # we use a list here, but atm, there is only one sentence
         if len(sentences) > 0 and sentences != [""]:
             selection = re.sub("  +", " ", selection).strip()
             for sentence in sentences:
                 sentence = re.sub("  +", " ", sentence).strip()
                 sentence = sentence.replace(selection, " <span style='color: lightblue;'>{{c1::%s}}</span> " % selection)
 
+                # try to get some sensible formatting (mostly trimming whitespaces where they not belong)
                 # needs cleaning
                 sentence = sentence.replace("  ", " ").replace("</span> ,", "</span>,")
                 sentence = re.sub(" ([\"“”\\[(]) <span", " \\1<span", sentence)
@@ -1474,6 +1408,8 @@ class ReadingModal:
                 sentence = re.sub(" [\"“”], [\"“”] ?", "\", \"", sentence)
                 sentence = re.sub(" [\"“”], ", "\", ", sentence)
                 sentence = re.sub(": [\"“”] ", ": \"", sentence)
+                sentence = re.sub(" \(([\"“”]) ", r" (\1", sentence)
+                sentence = re.sub(" ([\"“”])\)", r"\1)", sentence)
                 sentence = sentence.replace("[ ", "[")
                 sentence = sentence.replace(" ]", "]")
                 sentence = re.sub(" ([,;:.]) ", r"\1 ", sentence)
@@ -1481,22 +1417,21 @@ class ReadingModal:
                 sentence = re.sub(" ([?!.])$", r"\1", sentence)
                 sentence = re.sub("^[:.?!,;)] ", "", sentence)
                 sentence = re.sub("^\\d+ ?[:\\-.,;] ([A-ZÖÄÜ])", r"\1", sentence)
-
                 sentence = re.sub(" ([\"“”])([?!.])$", r"\1\2", sentence)
+
+                # remove enumeration dots from the beginning of the sentence
                 sentence = re.sub("^[\u2022,\u2023,\u25E6,\u2043,\u2219]", "", sentence)
 
                 s_html += "<tr class='siac-cl-row'><td><div contenteditable class='siac-pdf-main-color'>%s</div></td></tr>" % (sentence.replace("`", "&#96;"))
             s_html += "</table>"
             model_id = self._editor.note.model()['id']
-            
-            # if another Send to Field has been executed before, and the note type is the same, add another button 
+
+            # if another Send to Field has been executed before, and the note type is the same, add another button
             # to directly send the cloze to that last used field.
             last_btn = ""
             if ReadingModal.last_cloze is not None and model_id == ReadingModal.last_cloze[0]:
                 ix          = [f["name"] for f in self._editor.note.model()["flds"]].index(ReadingModal.last_cloze[1])
-                # remove the blue color from the cloze brackets again
-                txt         = sentence.replace("`", "").replace("\n", "").replace("<span style='color: lightblue;'>", "").replace("}}</span>", "}}")
-                last_btn    = f"<div class='siac-btn siac-btn-dark' style='margin-right: 15px; margin-top: 5px;' onclick=\"appendToField({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(ReadingModal.last_cloze[1], 15)}'</div>"  
+                last_btn    = f"<div class='siac-btn siac-btn-dark mt-5' style='margin-right: 15px;' onclick=\"appendToField({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(ReadingModal.last_cloze[1], 15)}'</div>"
 
             btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
                                 <div style='margin-top: 8px;'>
@@ -1512,7 +1447,7 @@ class ReadingModal:
 
         return """
                 document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`;
-                document.getElementById('siac-pdf-tooltip-top').innerHTML = `<span style='color: lightgrey;'>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)</span>`;
+                document.getElementById('siac-pdf-tooltip-top').innerHTML = `<span class='fg_lightgrey;'>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)</span>`;
                 document.getElementById('siac-pdf-tooltip-searchbar').style.display = "none";
                 %s
                 """ % (s_html, btn_html)
@@ -1521,7 +1456,7 @@ class ReadingModal:
     def notification(self, html: str, on_ok: Optional[str] = None):
         if on_ok is None:
             on_ok = ""
-        modal = f""" <div class="siac-modal-small dark" contenteditable="false" style="text-align:center; color: lightgrey;">
+        modal = f""" <div class="siac-modal-small dark ta_center fg_lightgrey" contenteditable="false">
                         {html}
                         <br/> <br/>
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); $('#siac-rm-greyout').hide(); {on_ok}">&nbsp; Ok &nbsp;</div>
@@ -1532,17 +1467,6 @@ class ReadingModal:
                 $('#siac-reading-modal-center').append('%s');""" % modal.replace("\n", "").replace("'", "\\'")
 
     @js
-    def update_bottom_bar_positions(self, nid: int, new_index: int, queue_len: int):
-        queue_readings_list = self.get_queue_head_display(nid).replace("`", "\\`")
-        priority_str = get_priority_as_str(nid)
-        return f"""
-            document.getElementById('siac-queue-lbl').innerHTML = 'Priority: {priority_str}';
-            $('#siac-queue-lbl').fadeIn('slow');
-            $('.siac-queue-sched-btn:first').html('Priority');
-            $('#siac-queue-readings-list').replaceWith(`{queue_readings_list}`);
-        """
-
-    @js
     def show_timer_elapsed_popup(self, nid: int):
         """
             Shows the little popup that is displayed when the timer in the reading modal finished.
@@ -1551,10 +1475,10 @@ class ReadingModal:
         added_today_count   = utility.misc.count_cards_added_today()
         html = """
         <div style='margin: 0 0 10px 0;'>
-            <div class='ta_center' style='vertical-align: middle; line-height: 50px; font-weight: bold; font-size: 40px; color: #2496dc;'>
+            <div class='ta_center bold' style='vertical-align: middle; line-height: 50px; font-size: 40px; color: #2496dc;'>
                 &#10711;
             </div>
-            <div class='ta_center' style='vertical-align: middle; line-height: 50px; font-weight: bold; font-size: 20px;'>
+            <div class='ta_center bold' style='vertical-align: middle; line-height: 50px; font-size: 20px;'>
                 Time is up!
             </div>
         </div>
@@ -1566,10 +1490,10 @@ class ReadingModal:
             Start:
         </div>
         <div class='ta_center'>
-            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;5m&nbsp;</div>
-            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;15m&nbsp;</div>
-            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(30);'>&nbsp;30m&nbsp;</div>
-            <div class='siac-btn siac-btn-dark' style='margin: 0 5px 0 5px;' onclick='this.parentNode.parentNode.style.display="none"; startTimer(60);'>&nbsp;60m&nbsp;</div>
+            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;5m&nbsp;</div>
+            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;15m&nbsp;</div>
+            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(30);'>&nbsp;30m&nbsp;</div>
+            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(60);'>&nbsp;60m&nbsp;</div>
         </div>
         <div class='ta_center' style='margin-top: 20px;'>
             <div class='siac-btn siac-btn-dark' onclick='this.parentNode.parentNode.style.display="none";'>Don't Start</div>
@@ -1600,8 +1524,8 @@ class ReadingModal:
                 }
             }
         """
-    
-    
+
+
 
     #
     # highlights
@@ -1678,15 +1602,15 @@ class ReadingModalSidebar():
             $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
             $(`
                 <div id='siac-left-tab-browse' class='flex-col'>
-                    <div class='siac-pdf-main-color-border-bottom' style='flex: 0 auto; padding: 5px 0 5px 0; user-select: none;'>
+                    <div class='siac-pdf-main-color-border-bottom user_sel_none' style='flex: 0 auto; padding: 5px 0 5px 0;'>
                         <strong class='fg_grey'>Last: </strong>
-                        <strong class='blue-hover fg_grey' style='margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-last-addon")'>Add-on</strong>
-                        <strong class='blue-hover fg_grey' style='margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-last-anki")'>Anki</strong>
+                        <strong class='blue-hover fg_grey ml-10' onclick='pycmd("siac-pdf-sidebar-last-addon")'>Add-on</strong>
+                        <strong class='blue-hover fg_grey ml-10' onclick='pycmd("siac-pdf-sidebar-last-anki")'>Anki</strong>
                     </div>
-                    <div id='siac-left-tab-browse-results' style='flex: 1 1 auto; overflow-y: auto; padding: 0 5px 0 0; margin: 10px 0 5px 0;'>
+                    <div id='siac-left-tab-browse-results' class='oflow_y_auto mt-10 mb-5' style='flex: 1 1 auto; padding: 0 5px 0 0;'>
                     </div>
                     <div style='flex: 0 auto; padding: 5px 0 5px 0;'>
-                        <input type='text' style='width: 100%; box-sizing: border-box;' onkeyup='pdfLeftTabAnkiSearchKeyup(this.value, event);'/>
+                        <input type='text' class='w-100' style='box-sizing: border-box;' onkeyup='pdfLeftTabAnkiSearchKeyup(this.value, event);'/>
                     </div>
                 </div>
             `).insertBefore('#siac-reading-modal-tabs-left');
@@ -1707,11 +1631,11 @@ class ReadingModalSidebar():
             $(`
                 <div id='siac-left-tab-pdfs' class='flex-col'>
                     <div class='siac-pdf-main-color-border-bottom' style='flex: 0 auto; padding: 5px 0 5px 0; user-select: none;'>
-                        <strong class='blue-hover fg_grey' style='margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-pdfs-in-progress")'>In Progress</strong>
-                        <strong class='blue-hover fg_grey' style='margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-pdfs-unread")'>Unread</strong>
-                        <strong class='blue-hover fg_grey' style='margin-left: 10px;' onclick='pycmd("siac-pdf-sidebar-pdfs-last-added")'>Last Added</strong>
+                        <strong class='blue-hover fg_grey ml-10' onclick='pycmd("siac-pdf-sidebar-pdfs-in-progress")'>In Progress</strong>
+                        <strong class='blue-hover fg_grey ml-10' onclick='pycmd("siac-pdf-sidebar-pdfs-unread")'>Unread</strong>
+                        <strong class='blue-hover fg_grey ml-10' onclick='pycmd("siac-pdf-sidebar-pdfs-last-added")'>Last Added</strong>
                     </div>
-                    <div id='siac-left-tab-browse-results' style='flex: 1 1 auto; overflow-y: auto; padding: 0 5px 0 0; margin: 10px 0 5px 0;'> </div>
+                    <div id='siac-left-tab-browse-results' class='oflow_y_auto mt-10 mb-5' style='flex: 1 1 auto; padding: 0 5px 0 0;'></div>
                     <div style='flex: 0 auto; padding: 5px 0 5px 0;'>
                         <input type='text' style='width: 100%; box-sizing: border-box;' onkeyup='pdfLeftTabPdfSearchKeyup(this.value, event);'/>
                     </div>
@@ -1761,7 +1685,3 @@ class ReadingModalSidebar():
             html    = html.replace("`", "\\`")
 
         self._editor.web.eval(f"document.getElementById('siac-left-tab-browse-results').innerHTML = `{html}`; document.getElementById('siac-left-tab-browse-results').scrollTop = 0;")
-
-
-
-    

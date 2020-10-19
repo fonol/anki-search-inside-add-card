@@ -1,26 +1,32 @@
-<div id='siac-reading-modal-bottom-bar'>
-    <div class='w-100' style='height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap; display: relative;'>
-
-        <div style='padding: 5px; display: inline-block; vertical-align: top;'><div class='siac-queue-sched-btn active' onclick='{sched_click}'>{queue_info_short}</div></div>
-        {schedule_btns} 
-        <div  id='siac-queue-actions'>
-            <span style='vertical-align: top;' id='siac-queue-lbl'>{queue_info}</span><br>
-            <span class='fg_lightgrey' style='margin-top: 5px;'>{time_str}</span> <br>
-            <div style='margin: 7px 0 4px 0; display: inline-block;'>Actions: &nbsp;&nbsp;<i class="fa fa-folder-o cursor-pointer siac-icn-hover siac-pdf-main-color"  onclick='if (pdfLoading||noteLoading||pdfSearchOngoing) {return;}pycmd("siac-user-note-queue-picker {note_id}")'></i>{schedule_dialog_btn}</div><br>
-            <a onclick='if (!pdfLoading && !modalShown) { noteLoading = true; greyoutBottom(); pycmd("{queue_btn_action}") }' class='siac-link-btn' style='font-size: 16px; font-weight: bold;' id='siac-first-in-queue-btn'>{queue_btn_text}</a>
-            {delay_btn}<br>
-            <a onclick='if (!pdfLoading && !modalShown) { noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random") }' class='siac-link-btn'>Random</a><span style='color: grey; user-select: none;'>&nbsp;|&nbsp;</span>
-            <a onclick='if (!pdfLoading && !modalShown) { modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}' class='siac-link-btn'>Remove</a>
+<div id='siac-reading-modal-bottom-bar' class='{bar_hidden}'>
+    <div class='w-100'
+        style='height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap; display: relative;'>
+        <div id='siac-queue-actions' class='flex-col'>
+            <div id='siac-queue-lbl' class='siac-bb-btn' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-eval index.ui.reading_modal.show_prio_dialog()");}'>{queue_info}</div>
+            <div class='w-100 flex-row'>
+                <div class='siac-bb-btn {has_schedule}' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-schedule-dialog");}' id='siac-schedule-dialog-btn' style='flex: 1 1 auto;'><i class="fa fa-calendar mr-5"></i>Schedule</div>
+                <div class='siac-bb-btn' id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-eval index.ui.reading_modal.show_postpone_dialog()");}' style='flex: 1 1 auto;'>Postpone</div>
+            </div>
+            <div id='siac-first-in-queue-btn' class='siac-bb-btn' onclick='if (!pdfLoading && !modalShown) { noteLoading = true; greyoutBottom(); pycmd("siac-user-note-done") }'>{queue_btn_text}</div>
+            <div class='w-100 flex-row'>
+                <div class='siac-bb-btn' style='flex: 1 1 auto;' onclick='if (!pdfLoading && !modalShown) { noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random")}'><i class="fa fa-random mr-5"></i>Random</div>
+                <div class='siac-bb-btn' style='flex: 1 1 auto;' onclick='if (!pdfLoading && !modalShown) { modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}'><i class="fa fa-minus-square mr-5"></i>Remove</div>
+            </div>
         </div>
         {queue_readings_list}
         <div id='siac-queue-infobox-wrapper'>
             <div id='siac-queue-infobox' onmouseleave='leaveQueueItem();'></div>
         </div>
-        <div id='siac-pdf-bottom-tabs' style='display: inline-block; vertical-align: top; margin-left: 16px; user-select: none;'>
-            <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' style='margin-right: 10px;'><i class='fa fa-star-o' style='margin-right: 5px;'></i>Marks</a>
-            <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' style='margin-right: 10px;'>Related</a>
-            <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")' style='margin-right: 10px;'>Info</a>
-            <a class='siac-link-btn {hide_page_map} tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} pages")'>Pages</a><br>
+        <div id='siac-pdf-bottom-tabs'
+            style='display: inline-block; vertical-align: top; margin-left: 16px; user-select: none;'>
+            <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")'
+                style='margin-right: 10px;'><i class='fa fa-star-o' style='margin-right: 5px;'></i>Marks</a>
+            <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")'
+                style='margin-right: 10px;'>Related</a>
+            <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'
+                style='margin-right: 10px;'>Info</a>
+            <a class='siac-link-btn {hide_page_map} tab'
+                onclick='pycmd("siac-pdf-show-bottom-tab {note_id} pages")'>Pages</a><br>
             <div id='siac-pdf-bottom-tab'>
                 <div id='siac-marks-display' onclick='markClicked(event);'></div>
             </div>

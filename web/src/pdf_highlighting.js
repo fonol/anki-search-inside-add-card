@@ -63,6 +63,12 @@ export const Highlighting = {
     createAreaHighlight: function(x, y, w, h) {
         let t = this.colorSelected.id;
         if (t < 1 || (w < 2 && h < 2)) {return;}
+        if (x + w > activeCanvas().offsetWidth) {
+            return;
+        }
+        if (y + h > activeCanvas().offsetHeight) {
+            return;
+        }
         if (t >= 6) {
             t += 3;
             x -= 3;

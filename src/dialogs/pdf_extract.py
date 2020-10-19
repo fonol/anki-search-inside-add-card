@@ -77,7 +77,7 @@ class PDFExtractDialog(QDialog):
         self.vbox.addSpacing(10)
         self.vbox.addLayout(hb)
 
-        self.scheduler = QtPrioritySlider(self.prio_default, True, self.note.reminder)    
+        self.scheduler = QtPrioritySlider(self.prio_default, self.note.id, True, self.note.reminder)    
         self.vbox.addWidget(self.scheduler)
 
         bhb = QHBoxLayout()

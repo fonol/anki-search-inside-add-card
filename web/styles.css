@@ -10,11 +10,44 @@
     width: 100% !important;
     max-width: 100% !important;
 }
-.bold {
-    font-weight: bold;
-}
 .h-100 {
     height: 100% !important;
+}
+.mt-5 {
+    margin-top: 5px !important;
+}
+.mb-5 {
+    margin-bottom: 5px !important;
+}
+.ml-5 {
+    margin-left: 5px !important;
+}
+.mr-5 {
+    margin-right: 5px !important;
+}
+.mt-10 {
+    margin-top: 10px !important;
+}
+.mb-10 {
+    margin-bottom: 10px !important;
+}
+.ml-10 {
+    margin-left: 10px !important;
+}
+.mr-10 {
+    margin-right: 10px !important;
+}
+.oflow_y_auto {
+    overflow-y: auto;
+}
+.oflow_hidden {
+    overflow: hidden;
+}
+.user_sel_none {
+    user-select: none;
+}
+.bold {
+    font-weight: bold;
 }
 .blue-hover:hover {
     cursor: pointer;
@@ -34,6 +67,12 @@
 }
 .ta_center {
     text-align: center;
+}
+.ta_right {
+    text-align: right;
+}
+.ta_left {
+    text-align: left;
 }
 .flex-col {
     display: flex; 
@@ -149,6 +188,7 @@
 */
 #leftSide {
     position: relative;
+    flex-direction: column; 
 }
 #outerWr #fields {
     overflow-y: auto;
