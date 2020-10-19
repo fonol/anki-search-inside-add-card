@@ -1147,3 +1147,19 @@ body.nightMode.siac-reading-modal-displayed.siac-left-right-switched #siac-right
 #siac-right-side {
     border-left: 2px solid #ffb385;
 }
+
+.annotationLayer {
+  display: none;
+}
+.annotationLayer > a {
+    display: block;
+    position: absolute;
+}
+.annotationLayer > a:hover {
+    opacity: 0.2;
+    background: #ff0;
+    box-shadow: 0px 2px 10px #ff0;
+}
+#siac-pdf-links-toggle.active {
+    color: #2496dc;
+}
