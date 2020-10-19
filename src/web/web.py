@@ -494,7 +494,8 @@ def changelog() -> List[str]:
     return [
         "Added tomato timer display if the top bar in the reader is hidden",
         "Links in PDFs can now be used (thanks to Burke Libbey)",
-       "Performance improvements on building the search index"
+       "Performance improvements on building the search index",
+       "Scissor Tool in PDF viewer now has a shortcut, CTRL+Shift+Q by default"
     ]
 
 def known_issues() -> List[str]:
