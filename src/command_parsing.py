@@ -1690,6 +1690,7 @@ def get_index_info():
                <tr><td>PDF: Toggle Top & Bottom Bar</td><td>  <b>F11</b></td></tr>
                <tr><td>PDF: Toggle Search on Select</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Toggle PDF Links</td><td>  <b>%s</b></td></tr>
+               <tr><td>PDF: Toggle Scissor Tool</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Jump to first Page</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Jump to last Page</td><td>  <b>%s</b></td></tr>
                <tr><td>PDF: Toggle Page Read</td><td>  <b>%s</b></td></tr>
@@ -1733,6 +1734,7 @@ def get_index_info():
             config["notes.editor.shortcut"],
             config["pdf.shortcuts.toggle_search_on_select"],
             config["pdf.shortcuts.toggle_pdf_links"],
+            config["pdf.shortcuts.scissor_tool"],
             config["pdf.shortcuts.jump_to_first_page"],
             config["pdf.shortcuts.jump_to_last_page"],
             config["pdf.shortcuts.toggle_page_read"],
@@ -1745,6 +1747,22 @@ def get_index_info():
             config["shortcuts.trigger_current_filter"],
             shortcuts
             )
+
+    # collect all currently used Qt shortcuts
+    try:
+        all_shortcuts = index.ui._editor.widget.findChildren(QShortcut)
+        all_shortcuts = sorted([f"\"{x.key().toString()}\"" for x in all_shortcuts])
+    except:
+        all_shortcuts = []
+
+    if all_shortcuts != []:
+        html += f"""
+            <b>Currently used shortcuts in the editor (this add-on + other add-ons + Anki):</b><br>
+            <span>This might help when changing shortcuts in the config.</span><br>
+            <span>Note that this list is not exhaustive, as these are only shortcuts managed by Qt, not Javascript.</span>
+            <br>
+            {", ".join(all_shortcuts)}
+        """
 
     changes = changelog()
 
@@ -1763,8 +1781,7 @@ def get_index_info():
     html += """
         <br><br>
         <b>Contact:</b>
-        <hr>
-        <br>
+        <hr class='mb-10'/>
         For bug reports, feedback or suggestions: <a href='https://github.com/fonol/anki-search-inside-add-card/issues'>Github Repository</a>
         <br>
         If you want to support this project: <a href='https://www.patreon.com/tomtomtom'>Patreon Site</a>
