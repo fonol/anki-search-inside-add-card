@@ -69,6 +69,7 @@
 "pdf.shortcuts.later": "CTRL+Shift+Y",
 "pdf.shortcuts.jump_to_last_page": "CTRL+END",
 "pdf.shortcuts.jump_to_first_page": "CTRL+HOME",
+"pdf.shortcuts.scissor_tool" : "CTRL+Shift+Q",
 "notes.queue.priorityScaleFactor": 5,
 "notes.queue.missedNotesHandling": "remove-schedule",
 "notes.queue.scheduleDialogOnDoneUnscheduledNotes": false,
