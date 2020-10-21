@@ -60,6 +60,8 @@ from .internals import requires_index_loaded
 from .config import get_config_value_or_default as conf_or_def
 from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search, search_by_tags
 from .api import try_open_first_in_queue, queue_has_items
+from .menubar import Menu
+
 
 config = mw.addonManager.getConfig(__name__)
 
@@ -74,7 +76,7 @@ def init_addon():
         gui_hooks.reviewer_did_answer_card.append(on_reviewer_did_answer)
 
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
-    
+
     #todo: Find out if there is a better moment to start index creation
     state.db_file_existed = create_db_file_if_not_exists()
 
@@ -94,23 +96,23 @@ def init_addon():
     # update notes in index when changed through the "Edit" button
     EditDialog.saveAndClose = wrap(EditDialog.saveAndClose, editor_save_with_index_update, "around")
 
-    # register add-on's shortcuts 
-    gui_hooks.editor_did_init_shortcuts.append(register_shortcuts) 
+    # register add-on's shortcuts
+    gui_hooks.editor_did_init_shortcuts.append(register_shortcuts)
     # reset state after the add/edit dialog is opened
-    gui_hooks.editor_did_init_shortcuts.append(reset_state) 
+    gui_hooks.editor_did_init_shortcuts.append(reset_state)
 
     # activate nighmode if Anki's nightmode is active
-    gui_hooks.editor_did_init_shortcuts.append(activate_nightmode) 
+    gui_hooks.editor_did_init_shortcuts.append(activate_nightmode)
 
     # set zoom factor according to config
-    gui_hooks.editor_did_init_shortcuts.append(set_zoom) 
+    gui_hooks.editor_did_init_shortcuts.append(set_zoom)
 
     # add-on internal hooks
     setup_hooks()
 
     # add shortcuts
     aqt.editor._html += """ <script> document.addEventListener("keydown", function (e) {globalKeydown(e); }, false); </script>"""
-    
+
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific()
 
@@ -126,6 +128,7 @@ def init_addon():
             register_io_add_hook()
         except:
             pass
+
 
 def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callable):
     """ If a pdf file is dropped, intercept and open Create Note dialog. """
@@ -144,7 +147,7 @@ def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callab
     _old(web, evt)
 
 def on_reviewer_did_answer(reviewer, card, ease):
-    
+
     if state.rr_mix_disabled:
         return
     if ease > 1:
@@ -156,7 +159,7 @@ def on_reviewer_did_answer(reviewer, card, ease):
                 dialog = ReviewReadInterruptDialog(mw)
                 if dialog.exec_():
                     try_open_first_in_queue("Reading time!")
-        
+
 
 def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
     """ Used in the edit dialog for Anki notes to update the index on saving an edited note. """
@@ -194,7 +197,7 @@ def on_load_note(editor: Editor):
         pdf_highlights_render   = "siac-pdf-hl-alt-render" if conf_or_def("pdf.highlights.use_alt_render", False) else ""
 
         editor.web.eval(f"""
-            var showTagInfoOnHover  = {show_tag_info_on_hover}; 
+            var showTagInfoOnHover  = {show_tag_info_on_hover};
             tagHoverTimeout         = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
             var delayWhileTyping    = {typing_delay};
             var pdfColorMode        = "{pdf_color_mode}";
@@ -223,7 +226,7 @@ def on_load_note(editor: Editor):
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
         editor.web.evalWithCallback(right_side_html(index is not None), cb)
-      
+
 
     if get_edit() is None and editor is not None:
         set_edit(editor)
@@ -232,27 +235,27 @@ def on_add_cards_init(add_cards: AddCards):
 
     if get_index() is not None and add_cards.editor is not None:
         get_index().ui.set_editor(add_cards.editor)
-        
+
 def save_pdf_page(note: Note):
 
     ix = get_index()
     if ix.ui.reading_modal.note_id is None:
         return
 
-    nid = ix.ui.reading_modal.note_id 
+    nid = ix.ui.reading_modal.note_id
     def cb(page: int):
         if page is not None and page >= 0:
             link_note_and_page(nid, note.id, page)
             # update sidebar if shown
             ix.ui.js("updatePageSidebarIfShown()")
-    
+
     ix.ui.reading_modal.page_displayed(cb)
 
 
 def insert_scripts():
     """
         Expose the scripts on the internal web server.
-        'styles.css' not included that way, because it 
+        'styles.css' not included that way, because it
         is processed ($<config value>$ placeholders are replaced) and inserted via <style> tags.
     """
 
@@ -392,7 +395,7 @@ def setup_hooks():
 
 def reset_state(shortcuts: List[Tuple], editor: Editor):
     """ After the Add Card / Edit Current dialog is opened, some state variables need to be reset. """
-    
+
     # might still be true if Create Note dialog was closed by closing its parent window, so reset it
     state.note_editor_shown = False
 
@@ -404,9 +407,9 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
 
 def set_zoom(shortcuts: List[Tuple], editor: Editor):
     """ After the Add Card / Edit Current dialog is opened, set the zoom according to 'searchpane.zoom'. """
-    
+
     win = editor.parentWindow
-    if not win or isinstance(win, Browser): 
+    if not win or isinstance(win, Browser):
         return
     if not isinstance(win, AddCards) and not get_config_value_or_default("useInEdit", False):
         return
@@ -421,7 +424,7 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     def _try_register(shortcut: str, activated: Callable):
         try:
             QShortcut(QKeySequence(shortcut), editor.widget, activated=activated)
-        except: 
+        except:
             state.shortcuts_failed.append(shortcut)
             return
         existing = editor.widget.findChildren(QShortcut)
@@ -430,7 +433,7 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
             state.shortcuts_failed.append(shortcut)
 
 
-    # toggle add-on pane 
+    # toggle add-on pane
     _try_register(config["toggleShortcut"], toggleAddon)
 
     # quick open dialog
@@ -457,7 +460,7 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     # 'Later' in reading modal
     _try_register(config["pdf.shortcuts.later"], lambda: editor.web.eval("laterShortcut()"))
 
-    # Jump to first/last page in pdf reader 
+    # Jump to first/last page in pdf reader
     _try_register(config["pdf.shortcuts.jump_to_last_page"], lambda: editor.web.eval("jumpLastPageShortcut()"))
     _try_register(config["pdf.shortcuts.jump_to_first_page"], lambda: editor.web.eval("jumpFirstPageShortcut()"))
 
@@ -500,13 +503,13 @@ def register_io_add_hook():
     old = io.ngen.ImgOccNoteGenerator._saveMaskAndReturnNote
 
     def snew(gen, omask_path, qmask, amask, img, note_id, nid=None):
-        old(gen, omask_path, qmask, amask, img, note_id, nid)    
+        old(gen, omask_path, qmask, amask, img, note_id, nid)
         index = get_index()
         if index and index.ui.reading_modal.note_id and index.ui.reading_modal.note.is_pdf() and not nid:
             stamp = utility.misc.get_milisec_stamp() - 1000
             res = mw.col.db.list(f"select * from notes where id > {stamp}")
             if res and len(res) > 0:
-                nid = index.ui.reading_modal.note_id 
+                nid = index.ui.reading_modal.note_id
                 def cb(page: int):
                     if page is not None and page >= 0:
                         for anid in res:
@@ -520,7 +523,7 @@ def register_io_add_hook():
 def setup_tagedit_timer():
     global tagEditTimer
     tagEditTimer = QTimer()
-    tagEditTimer.setSingleShot(True) 
+    tagEditTimer.setSingleShot(True)
 
 def tag_edit_keypress(self, evt, _old):
     """
@@ -542,7 +545,8 @@ def tag_edit_keypress(self, evt, _old):
         try:
             tagEditTimer.timeout.disconnect()
         except Exception: pass
-        tagEditTimer.timeout.connect(lambda: search_by_tags(text)) 
+        tagEditTimer.timeout.connect(lambda: search_by_tags(text))
         tagEditTimer.start(1000)
 
 init_addon()
+menu = Menu()
