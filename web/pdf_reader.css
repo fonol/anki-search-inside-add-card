@@ -862,8 +862,8 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     font-weight: bold;
 }
 .siac-timer-play-btn {
-    font-size: 19px;
-    line-height: 19px;
+    font-size: 17px;
+    line-height: 22px;
     cursor: pointer;
     user-select: none;
     display: inline-block;
@@ -1162,4 +1162,7 @@ body.nightMode.siac-reading-modal-displayed.siac-left-right-switched #siac-right
 }
 #siac-pdf-links-toggle.active {
     color: #2496dc;
+}
+.ytp-play-button svg {
+    max-height: 36px !important;
 }
