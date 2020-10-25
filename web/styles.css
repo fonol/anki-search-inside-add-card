@@ -998,6 +998,7 @@ table.striped tr:nth-child(even) {
     color: beige;
     border: 2px outset #b2b2a0;
     border-radius: 3px;
+    box-shadow: 2px 2px #1f1f1f;
 }
 body:not(.nightMode) #leftSide .siac-btn-dark {
     color: var(--c-button-foreground);
