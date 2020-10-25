@@ -37,14 +37,35 @@ import utility.tags
 import utility.date
 import state
 
+
+
+
+
+
+
 class QueuePicker(QDialog):
     """ Can be used to select a single note from the queue or to move pdf notes in/out of the queue. """
+
+    icons_path          = None
+    vline_icn           = None
+    branch_more_icn     = None
+    branch_end_icn      = None
+    branch_closed_icn   = None
+    branch_open_icn     = None
 
     def __init__(self, parent):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
 
         self.mw         = aqt.mw
         self.parent     = parent
+
+        if QueuePicker.icons_path is None:
+            QueuePicker.icons_path          = utility.misc.get_web_folder_path()+ "icons/"
+            QueuePicker.vline_icn           = QueuePicker.icons_path + ('vline-night' if state.night_mode else 'vline')
+            QueuePicker.branch_more_icn     = QueuePicker.icons_path + ('branch-more-night' if state.night_mode else 'branch-more')
+            QueuePicker.branch_end_icn      = QueuePicker.icons_path + ('branch-end-night' if state.night_mode else 'branch-end')
+            QueuePicker.branch_closed_icn   = QueuePicker.icons_path + ('branch-closed-night' if state.night_mode else 'branch-closed')
+            QueuePicker.branch_open_icn     = QueuePicker.icons_path + ('branch-open-night' if state.night_mode else 'branch-open')
 
         try:
             self.dark_mode_used = state.night_mode
@@ -222,6 +243,29 @@ class FoldersTab(QWidget):
         self.folders_tree.setMaximumWidth(370)
         self.folders_tree.itemExpanded.connect(self.tree_exp)
         self.folders_tree.itemCollapsed.connect(self.tree_coll)
+
+        self.folders_tree.setStyleSheet(f"""
+        QTreeWidget::branch:has-siblings:!adjoins-item {{
+            border-image: url({QueuePicker.vline_icn}.png) 0;
+        }}
+        QTreeWidget::branch:has-siblings:adjoins-item {{
+            border-image: url({QueuePicker.branch_more_icn}.png) 0;
+        }}
+        QTreeWidget::branch:!has-children:!has-siblings:adjoins-item {{
+            border-image: url({QueuePicker.branch_end_icn}.png) 0;
+        }}
+        QTreeWidget::branch:has-children:!has-siblings:closed,
+        QTreeWidget::branch:closed:has-children:has-siblings {{
+                border-image: none;
+                image: url({QueuePicker.branch_closed_icn}.png);
+        }}
+        QTreeWidget::branch:open:has-children:!has-siblings,
+        QTreeWidget::branch:open:has-children:has-siblings  {{
+                border-image: none;
+                image: url({QueuePicker.branch_open_icn}.png);
+        }}""")
+
+
         style = QApplication.style()
         self.dir_open = style.standardIcon(QStyle.SP_DirOpenIcon)
         self.dir_closed = style.standardIcon(QStyle.SP_DirClosedIcon)
@@ -345,13 +389,17 @@ class TagsTab(QWidget):
         else:
             self.tag_fg                 = get_config_value("styles.tagForegroundColor")
             self.tag_bg                 = get_config_value("styles.tagBackgroundColor")
-
+        
 
         self.tag_tree                   = QTreeWidget()
         self.tag_tree.setColumnCount(1)
         self.tag_tree.setHeaderHidden(True)
         self.tag_tree.setMaximumWidth(370)
-        self.tag_icon                   = QIcon(utility.misc.get_web_folder_path()+ "icons/icon-tag-24.png")
+        self.tag_icon                   = QIcon(QueuePicker.icons_path + "icon-tag-24.png")
+
+
+       
+
 
         self.tag_tree.setStyleSheet(f"""
         QTreeWidget::item:hover,QTreeWidget::item:hover:selected {{
@@ -360,6 +408,25 @@ class TagsTab(QWidget):
             font-weight: bold;
             background-color: {self.tag_bg};
             color: {self.tag_fg};
+        }}
+        QTreeWidget::branch:has-siblings:!adjoins-item {{
+            border-image: url({QueuePicker.vline_icn}.png) 0;
+        }}
+        QTreeWidget::branch:has-siblings:adjoins-item {{
+            border-image: url({QueuePicker.branch_more_icn}.png) 0;
+        }}
+        QTreeWidget::branch:!has-children:!has-siblings:adjoins-item {{
+            border-image: url({QueuePicker.branch_end_icn}.png) 0;
+        }}
+        QTreeWidget::branch:has-children:!has-siblings:closed,
+        QTreeWidget::branch:closed:has-children:has-siblings {{
+                border-image: none;
+                image: url({QueuePicker.branch_closed_icn}.png);
+        }}
+        QTreeWidget::branch:open:has-children:!has-siblings,
+        QTreeWidget::branch:open:has-children:has-siblings  {{
+                border-image: none;
+                image: url({QueuePicker.branch_open_icn}.png);
         }}
         """)
         self.vbox_left.addWidget(self.tag_tree)
@@ -547,7 +614,16 @@ class ScheduleMWidget(QWidget):
         v_left.addWidget(self.table)
         # v_left.addStretch()
         self.layout().addLayout(v_left)
-        self.layout().addStretch()
+
+        v_right = QVBoxLayout()
+        self.calendar = QCalendarWidget()
+        v_right.addWidget(QLabel("WIP"))
+        v_right.addWidget(self.calendar)
+        v_right.addWidget(QLabel("WIP"))
+        v_right.addStretch()
+        self.layout().addLayout(v_right)
+
+        # self.layout().addStretch()
         self.fill_table()
         
     def fill_table(self):
@@ -557,6 +633,7 @@ class ScheduleMWidget(QWidget):
         due_dates   = sorted(self.notes.keys())
         c_total     = 0
         ix          = -1
+        today_stmp  = datetime.today().strftime("%Y-%m-%d") 
 
         while ix < len(due_dates) - 1:
 
@@ -584,16 +661,16 @@ class ScheduleMWidget(QWidget):
             item = QTableWidgetItem(pretty)
             item.setTextAlignment(Qt.AlignTop)
             self.table.setItem(ix, 0, item)
-            if ix == 0 and datetime.today().strftime("%Y-%m-%d") == due_date:            
+            if ix == 0 and today_stmp == due_date:            
                 self.table.item(ix, 0).setForeground(Qt.blue if not state.night_mode else Qt.cyan)
                 self.table.item(ix, 0).setText("Today")
             elif (datetime.today().date() + timedelta(days=1)).strftime("%Y-%m-%d") == due_date:
                 self.table.item(ix, 0).setText(f"{pretty}\n(Tomorrow)")
             due     = ""
             types   = ""
+            c_total += len(self.notes[due_date]) 
             for ix_2, note in enumerate(self.notes[due_date]):
-                c_total += len(self.notes[due_date]) 
-                if note.schedule_type() != "td" and note.due_date_str() == due_date:
+                if note.schedule_type() != "td" :
                     next_rem = note.reminder
                     while True:
                         next_rem    = utility.date.get_next_reminder(next_rem)
@@ -642,7 +719,7 @@ class ScheduleMWidget(QWidget):
             # self.table.item(ix, 0).setFlags(Qt.ItemIsEnabled)
         self.table.resizeRowsToContents()
         if c_total > 0:
-            self.avg_lbl.setText(f"Avg. {round(self.table_boundary / c_total, 1)} notes / day")
+            self.avg_lbl.setText(f"Avg. {round(c_total/ self.table_boundary, 1)} notes / day")
         else:
             self.avg_lbl.setText("")
 
@@ -887,6 +964,9 @@ class QueueWidget(QWidget):
         self.unqueue_btn.setText(f"Remove Selected")
         self.unqueue_btn.setDisabled(True)
 
+        t_view.resizeRowsToContents()
+
+
     def selected(self):
         r = []
         for ix in range(self.t_view_left.rowCount()):
@@ -1018,6 +1098,8 @@ class NoteList(QTableWidget):
             self.setCellWidget(ix, 1, open_btn)
             self.setCellWidget(ix, 2, del_btn)
             self.setCellWidget(ix, 3, add_btn)
+        
+        self.resizeRowsToContents()
 
     
     def open_btn_clicked(self, id):
