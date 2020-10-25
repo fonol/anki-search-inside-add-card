@@ -65,12 +65,28 @@ window.sendSearchFieldContent = function() {
     html = byId('siac-browser-search-inp').value + "\u001f";
     pycmd('siac-r-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
-
-
 window.searchFor = function(text) {
     showLoading("Note Search");
     text += "\u001f";
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
+}
+window.searchForUserNote = function(event, elem) {
+    if (!elem || elem.value.length === 0 || !elem.value.trim()) {
+       return;
+    }
+    if (event.keyCode == 13) {
+        if (elem.id !== "siac-sidebar-inp"){
+            elem.parentElement.parentElement.style.display = 'none';
+        }
+        pycmd('siac-r-user-note-search-inp ' + elem.value);
+    } else if (elem.id && (event.key === "Escape" || event.key === "Esc")) {
+        elem.parentElement.style.display = 'none';
+    } else {
+        clearTimeout(searchMaskTimer);
+        searchMaskTimer = setTimeout(function() {
+            pycmd('siac-r-user-note-search-inp ' + elem.value);
+        }, 800);
+    }
 }
 window.updateSelectedDecks = function(elem) {
     siacState.selectedDecks = [];
@@ -296,24 +312,7 @@ window.getSelectionText = function() {
         pycmd('siac-r-fld-selected ' + siacState.selectedDecks.toString() + ' ~ ' + text);
     }
 }
-window.searchForUserNote = function(event, elem) {
-    if (!elem || elem.value.length === 0 || !elem.value.trim()) {
-       return;
-    }
-    if (event.keyCode == 13) {
-        if (elem.id){
-            elem.parentElement.parentElement.style.display = 'none';
-        }
-        pycmd('siac-r-user-note-search-inp ' + elem.value);
-    } else if (elem.id && (event.key === "Escape" || event.key === "Esc")) {
-        elem.parentElement.style.display = 'none';
-    } else {
-        clearTimeout(searchMaskTimer);
-        searchMaskTimer = setTimeout(function() {
-            pycmd('siac-r-user-note-search-inp ' + elem.value);
-        }, 800);
-    }
-}
+
 window.searchUserNoteTag = function(e, tag) {
     if (e.ctrlKey || e.metaKey) {
         pycmd('siac-create-note-tag-prefill ' + tag);
