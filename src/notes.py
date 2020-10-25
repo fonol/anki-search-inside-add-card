@@ -768,12 +768,16 @@ def get_notes_by_future_due_date() -> Dict[str, List[SiacNote]]:
     """ Get notes that have a schedule due in the future. """
 
     conn    = _get_connection()
-    res     = conn.execute(f"select * from notes where substr(reminder, 21, 10) >= '{utility.date.date_only_stamp()}'").fetchall()
+    res     = conn.execute(f"select * from notes where substr(reminder, 21, 10) >= '{utility.date.date_x_days_ago_stamp(7)}'").fetchall()
     conn.close()
     res     = _to_notes(res)
-    d = dict()
+    d       = dict()
+    today   = datetime.today().date()
     for n in res:
-        due = n.current_due_date().date().strftime("%Y-%m-%d")
+        if n.current_due_date().date() < today:
+            due = today.strftime("%Y-%m-%d")
+        else:
+            due = n.current_due_date().date().strftime("%Y-%m-%d")
         if not due in d:
             d[due] = []
         d[due].append(n)
