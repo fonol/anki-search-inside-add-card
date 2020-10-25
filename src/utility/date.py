@@ -169,12 +169,15 @@ def get_new_reminder(stype: str, svalue: str) -> str:
 def get_next_reminder(sched: str) -> datetime:
     """ Gets the next reminder after the given reminder. Difference to get_new_reminder: 
         This takes the current due date of the given reminder as basis, and not the actual date today. 
+        If the due date is in the past, today will be taken as due date. 
         So this will always return a changed reminder.
      """
 
     now         = date_now_stamp()
     due         = sched.split("|")[1]
     due_dt      = dt_from_stamp(due)
+    if due_dt.date() < datetime.today().date():
+        due_dt  = datetime.today()
     stype       = sched.split("|")[2][0:2]
     svalue      = sched.split("|")[2][3:]
 
