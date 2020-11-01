@@ -327,16 +327,18 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 }
 
 #siac-iframe {
-    width: 100%;
+    width: calc(100% - 10px);
     flex: 1 1 auto;
     display: none;
     background: white;
+    margin-top: 20px;
+    margin-left: 10px;
 }
 #siac-iframe-btn {
     position: absolute;
     /* left: 0px;
     top: 50px; */
-    top: 5px; left: 0px;
+    top: 10px; left: 0px;
 }
 #siac-schedule-dialog-btn.active > .fa {
     filter: brightness(1.4);
