@@ -21,4 +21,5 @@ WinRAR a -afzip -ep1 -ibck -r -y "addon-packed.zip" ^
 -x\src\rs\siacrs\target ^
 -x\web\package.json ^
 -x\web\package-lock.json ^
--x\web\webpack.config.js
+-x\web\webpack.config.js ^
+-x\.github\ ^
