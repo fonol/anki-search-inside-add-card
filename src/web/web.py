@@ -492,14 +492,9 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added tomato timer display if the top bar in the reader is hidden",
-        "Links in PDFs can now be used (thanks to Burke Libbey)",
-       "Performance improvements on building the search index",
-       "Scissor Tool in PDF viewer now has a shortcut, CTRL+Shift+Q by default",
-       "Add Schedule column to queue manager dialog",
-       "Fix: UI issue when hitting enter in sidebar search input",
-       "Fix: Error on 'Enqueue All' in queue manager dialog"
-
+        "Fix: Tag tree not refreshing after editing note in Queue manager",
+        "Fix: Notes with due date older than 7 days without priority still appearing in queue",
+        "Fix: Issue with opening PDF with invalid soure path"
     ]
 
 def known_issues() -> List[str]:
