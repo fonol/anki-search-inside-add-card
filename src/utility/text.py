@@ -214,7 +214,7 @@ def expand_by_synonyms(text, synonyms):
     return text
 
 def get_stamp():
-    return  str(random.randint(0, 999999999))
+    return str(random.randint(0, 999999999))
 
 def clean_user_note_text(text):
     if text is None:
@@ -344,14 +344,17 @@ def clean_user_note_title(title):
     title = title.replace("\t", "")
     return title
 
-def cleanFieldSeparators(text):
-    
+def clean_field_separators(text):
+    """ Replace field separator symbol used in Anki's db with |.
+        Also tries to move | to end of lines 
+        (to avoid having empty lines with just the | symbol in the rendered output).
+     """
     text = SEP_RE.sub("\u001f", text)
     if text.endswith("\u001f"):
         text = text[:-1]
     text = text.replace("\u001f", "<span class='fldSep'>|</span>")
     text = re.sub(r"((?:</li>(?:\n| |<br/?>)*)?</(?:p|div|ul|ol)>(?:</div>)?|<br/?>)(?:\n| )*<span class=['\"]fldSep['\"]>\|</ ?span>", r"<span class='fldSep'>|</span>\1", text)
-    # text = text.replace("</p><span class='fldSep'>|</span><p>", "<span class='fldSep'>|</span></p><p>")
+
     return text
 
 def newline_before_images(text):
