@@ -398,8 +398,6 @@ class TagsTab(QWidget):
         self.tag_icon                   = QIcon(QueuePicker.icons_path + "icon-tag-24.png")
 
 
-       
-
 
         self.tag_tree.setStyleSheet(f"""
         QTreeWidget::item:hover,QTreeWidget::item:hover:selected {{
@@ -513,6 +511,7 @@ class TagsTab(QWidget):
         return res
 
     def refresh(self):
+        self.fill_tree(get_all_tags())
         if self.tag_displayed is not None:
             self.load_tags_unused_notes(self.tag_displayed)
 
