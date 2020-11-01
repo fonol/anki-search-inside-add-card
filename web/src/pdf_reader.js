@@ -1098,12 +1098,16 @@ window.updateSchedule = function () {
 window.togglePageSidebar = function (persist = true) {
     pageSidebarDisplayed = !pageSidebarDisplayed;
     if (pageSidebarDisplayed) {
-        byId('siac-page-sidebar').style.display = 'flex';
+        if (byId('siac-page-sidebar')) {
+            byId('siac-page-sidebar').style.display = 'flex';
+        }
         $('#siac-reading-modal-center').addClass('siac-page-sidebar');
         if (persist)
             pycmd(`siac-linked-to-page ${pdfDisplayedCurrentPage} ${pdfDisplayed.numPages}`);
     } else {
-        $('#siac-page-sidebar').hide();
+        if (byId('siac-page-sidebar')) {
+            $('#siac-page-sidebar').hide();
+        }
         $('#siac-reading-modal-center').removeClass('siac-page-sidebar');
     }
     if (persist) {
