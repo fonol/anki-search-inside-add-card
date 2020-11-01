@@ -345,11 +345,12 @@ def clean_user_note_title(title):
     return title
 
 def cleanFieldSeparators(text):
+    
     text = SEP_RE.sub("\u001f", text)
     if text.endswith("\u001f"):
         text = text[:-1]
     text = text.replace("\u001f", "<span class='fldSep'>|</span>")
-    text = re.sub(r"((?:</li>(?:\n| )*)?</(?:p|div|ul|ol)>|<br/?>)(?:\n| )*<span class=['\"]fldSep['\"]>\|</ ?span>", r"<span class='fldSep'>|</span>\1", text)
+    text = re.sub(r"((?:</li>(?:\n| |<br/?>)*)?</(?:p|div|ul|ol)>(?:</div>)?|<br/?>)(?:\n| )*<span class=['\"]fldSep['\"]>\|</ ?span>", r"<span class='fldSep'>|</span>\1", text)
     # text = text.replace("</p><span class='fldSep'>|</span><p>", "<span class='fldSep'>|</span></p><p>")
     return text
 
