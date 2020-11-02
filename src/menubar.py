@@ -17,15 +17,15 @@ class Menu():
 
         import_options=( #SHORTCUT_CONF_KEY, TITLE, CALLBACK
             ("shortcuts.menubar.import.create_new", "New",           self.import_create_new),
-            ("shortcuts.menubar.import.youtube",    "YouTube",       self.import_youtube), # still dysfunctional
+            #("shortcuts.menubar.import.youtube",    "YouTube",       self.import_youtube), # still dysfunctional
             ("shortcuts.menubar.import.zotero_csv", "Zotero CSV",    self.import_zotero)
         )
 
         self.add_menu_actions(submenu_import, import_options)
 
         menu_options=( # CONF_KEY, TITLE, CALLBACK
-            ("shortcuts.menubar.queue_manager",  "Queue Manager",    self.queue_manager), #still dysfunctional
-            ("shortcuts.menubar.quick_open",     "Quick Open...",    self.quick_open), # still dysfunctional
+            ("shortcuts.menubar.queue_manager",  "Queue Manager",    self.queue_manager), # somewhat functional
+            #("shortcuts.menubar.quick_open",     "Quick Open...",    self.quick_open), # still dysfunctional
             ("shortcuts.menubar.addon_settings", "Add-On Settings",  self.settings)
         )
 
@@ -35,19 +35,19 @@ class Menu():
     def import_zotero(self):
         dialog = ZoteroImporter(mw.app.activeWindow())
 
-        #if dialog.exec_():
-        #    tooltip(f"Created {dialog.total_count} notes.")
+        if dialog.exec_():
+            tooltip(f"Created {dialog.total_count} notes.")
 
     # Import -> New
     def import_create_new(self):
         dialog = NoteEditor(mw.app.activeWindow())
 
     # Import -> Youtube
-    def import_youtube(self):
-        dialog = ZoteroImporter(mw.app.activeWindow())
+    # def import_youtube(self):
+    #    dialog = ZoteroImporter(mw.app.activeWindow())
 
-    def quick_open(self):
-        dialog = QuickOpenPDF(mw.app.activeWindow())
+    # def quick_open(self):
+    #    dialog = QuickOpenPDF(mw.app.activeWindow())
 
     def queue_manager(self):
         dialog = QueuePicker(mw.app.activeWindow())
@@ -55,6 +55,7 @@ class Menu():
     def settings(self):
         dialog = SettingsDialog(mw.app.activeWindow())
 
+    # Menu bar settings
     def get_menu(self, parent, menuName):
         menubar = parent.form.menubar
         for a in menubar.actions():
