@@ -16,17 +16,17 @@ class Menu():
         submenu_import = self.get_sub_menu(menu, "Import")
 
         import_options=( #SHORTCUT_CONF_KEY, TITLE, CALLBACK
-            (None, "New",           self.import_create_new),
-            (None, "YouTube",       self.import_youtube), # still dysfunctional
-            (None, "Zotero CSV",    self.import_zotero)
+            ("shortcuts.menubar.import.create_new", "New",           self.import_create_new),
+            ("shortcuts.menubar.import.youtube",    "YouTube",       self.import_youtube), # still dysfunctional
+            ("shortcuts.menubar.import.zotero_csv", "Zotero CSV",    self.import_zotero)
         )
 
         self.add_menu_actions(submenu_import, import_options)
 
         menu_options=( # CONF_KEY, TITLE, CALLBACK
-            (None, "Queue Manager",    self.queue_manager), #still dysfunctional
-            (None, "Quick Open...",    self.quick_open), # still dysfunctional
-            (None, "Add-On Settings",  self.settings)
+            ("shortcuts.menubar.queue_manager",  "Queue Manager",    self.queue_manager), #still dysfunctional
+            ("shortcuts.menubar.quick_open",     "Quick Open...",    self.quick_open), # still dysfunctional
+            ("shortcuts.menubar.addon_settings", "Add-On Settings",  self.settings)
         )
 
         self.add_menu_actions(menu, menu_options)

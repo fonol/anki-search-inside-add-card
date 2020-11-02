@@ -30,7 +30,7 @@ def get_config_value(key):
     config = _get_config(_get_cache_key())
     try:
         return config[key]
-    except KeyError:
+    except (KeyError, TypeError):
         return None
 
 def get_config_value_or_default(key, default):
