@@ -233,7 +233,7 @@ class Output:
                 text                = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(res.mid)]])
 
             # remove double fields separators
-            text                    = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\")
+            text                    = utility.text.clean_field_separators(text).replace("\\", "\\\\")
 
             # try to remove image occlusion fields
             text                    = utility.text.try_hide_image_occlusion(text)
@@ -638,7 +638,7 @@ class Output:
             if self.remove_divs and res.note_type != "user":
                 text = utility.text.remove_divs(text)
 
-            text        = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
+            text        = utility.text.clean_field_separators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
             text        = utility.text.try_hide_image_occlusion(text)
             #try to put fields that consist of a single image in their own line
             text        = utility.text.newline_before_images(text)
@@ -876,7 +876,7 @@ class Output:
         if len(note) > 4 and str(note[4]) in self.fields_to_hide_in_results:
             text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in self.fields_to_hide_in_results[str(note[4])]])
 
-        text    = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
+        text    = utility.text.clean_field_separators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
         text    = utility.text.try_hide_image_occlusion(text)
 
         # hide clozes if set in config

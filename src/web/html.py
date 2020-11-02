@@ -405,7 +405,7 @@ def search_results(db_list: List[IndexNote], query_set: List[str]) -> str:
         if highlighting and query_set is not None:
             text = utility.text.mark_highlights(text, query_set)
 
-        text        = utility.text.cleanFieldSeparators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
+        text        = utility.text.clean_field_separators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
         text        = utility.text.try_hide_image_occlusion(text)
         #try to put fields that consist of a single image in their own line
         text        = utility.text.newline_before_images(text)

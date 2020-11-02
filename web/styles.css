@@ -401,10 +401,16 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     color: var(--c-tag-foreground-night);
     border: 1px solid var(--c-tag-background-night);
 }
-.tagLbl:hover {
+body.nightMode .tagLbl:hover {
     filter: brightness(150%);
+    /* border: 1px solid var(--c-tag-background); */
 }
-
+.tagLbl:hover {
+    /* filter: hue-rotate(90deg); */
+    filter: contrast(200%);
+    /* box-shadow: inset 0 0 100px 100px rgba(255, 255, 255, 0.1); */
+    /* border: 1px solid color(var(--c-tag-background) brightness(150%)); */
+}
 #tagContainer .tagLbl {
     float: left;
     margin-bottom: 5px;
@@ -992,6 +998,7 @@ table.striped tr:nth-child(even) {
     color: beige;
     border: 2px outset #b2b2a0;
     border-radius: 3px;
+    box-shadow: 2px 2px #1f1f1f;
 }
 body:not(.nightMode) #leftSide .siac-btn-dark {
     color: var(--c-button-foreground);
@@ -1743,10 +1750,10 @@ body.nightMode .siac-prog-sq {
     font-size: 15px !important;
 }
 #siac-reading-modal .editor-toolbar:after {
-    margin-top: 3px !important;
+    margin-top: 0px !important;
 }
 #siac-reading-modal .editor-toolbar:before {
-    margin-bottom: 3px !important;
+    margin-bottom: 0px !important;
 }
 
 @media (max-width: 1000px) , (max-height: 500px) {

@@ -20,6 +20,7 @@ from aqt.utils import tooltip
 import aqt
 import random
 import os
+import copy
 import functools
 from .editor import NoteEditor
 from .components import QtPrioritySlider
@@ -36,14 +37,35 @@ import utility.tags
 import utility.date
 import state
 
+
+
+
+
+
+
 class QueuePicker(QDialog):
     """ Can be used to select a single note from the queue or to move pdf notes in/out of the queue. """
+
+    icons_path          = None
+    vline_icn           = None
+    branch_more_icn     = None
+    branch_end_icn      = None
+    branch_closed_icn   = None
+    branch_open_icn     = None
 
     def __init__(self, parent):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
 
         self.mw         = aqt.mw
         self.parent     = parent
+
+        if QueuePicker.icons_path is None:
+            QueuePicker.icons_path          = utility.misc.get_web_folder_path()+ "icons/"
+            QueuePicker.vline_icn           = QueuePicker.icons_path + ('vline-night' if state.night_mode else 'vline')
+            QueuePicker.branch_more_icn     = QueuePicker.icons_path + ('branch-more-night' if state.night_mode else 'branch-more')
+            QueuePicker.branch_end_icn      = QueuePicker.icons_path + ('branch-end-night' if state.night_mode else 'branch-end')
+            QueuePicker.branch_closed_icn   = QueuePicker.icons_path + ('branch-closed-night' if state.night_mode else 'branch-closed')
+            QueuePicker.branch_open_icn     = QueuePicker.icons_path + ('branch-open-night' if state.night_mode else 'branch-open')
 
         try:
             self.dark_mode_used = state.night_mode
@@ -221,6 +243,29 @@ class FoldersTab(QWidget):
         self.folders_tree.setMaximumWidth(370)
         self.folders_tree.itemExpanded.connect(self.tree_exp)
         self.folders_tree.itemCollapsed.connect(self.tree_coll)
+
+        self.folders_tree.setStyleSheet(f"""
+        QTreeWidget::branch:has-siblings:!adjoins-item {{
+            border-image: url({QueuePicker.vline_icn}.png) 0;
+        }}
+        QTreeWidget::branch:has-siblings:adjoins-item {{
+            border-image: url({QueuePicker.branch_more_icn}.png) 0;
+        }}
+        QTreeWidget::branch:!has-children:!has-siblings:adjoins-item {{
+            border-image: url({QueuePicker.branch_end_icn}.png) 0;
+        }}
+        QTreeWidget::branch:has-children:!has-siblings:closed,
+        QTreeWidget::branch:closed:has-children:has-siblings {{
+                border-image: none;
+                image: url({QueuePicker.branch_closed_icn}.png);
+        }}
+        QTreeWidget::branch:open:has-children:!has-siblings,
+        QTreeWidget::branch:open:has-children:has-siblings  {{
+                border-image: none;
+                image: url({QueuePicker.branch_open_icn}.png);
+        }}""")
+
+
         style = QApplication.style()
         self.dir_open = style.standardIcon(QStyle.SP_DirOpenIcon)
         self.dir_closed = style.standardIcon(QStyle.SP_DirClosedIcon)
@@ -344,13 +389,15 @@ class TagsTab(QWidget):
         else:
             self.tag_fg                 = get_config_value("styles.tagForegroundColor")
             self.tag_bg                 = get_config_value("styles.tagBackgroundColor")
-
+        
 
         self.tag_tree                   = QTreeWidget()
         self.tag_tree.setColumnCount(1)
         self.tag_tree.setHeaderHidden(True)
         self.tag_tree.setMaximumWidth(370)
-        self.tag_icon                   = QIcon(utility.misc.get_web_folder_path()+ "icons/icon-tag-24.png")
+        self.tag_icon                   = QIcon(QueuePicker.icons_path + "icon-tag-24.png")
+
+
 
         self.tag_tree.setStyleSheet(f"""
         QTreeWidget::item:hover,QTreeWidget::item:hover:selected {{
@@ -359,6 +406,25 @@ class TagsTab(QWidget):
             font-weight: bold;
             background-color: {self.tag_bg};
             color: {self.tag_fg};
+        }}
+        QTreeWidget::branch:has-siblings:!adjoins-item {{
+            border-image: url({QueuePicker.vline_icn}.png) 0;
+        }}
+        QTreeWidget::branch:has-siblings:adjoins-item {{
+            border-image: url({QueuePicker.branch_more_icn}.png) 0;
+        }}
+        QTreeWidget::branch:!has-children:!has-siblings:adjoins-item {{
+            border-image: url({QueuePicker.branch_end_icn}.png) 0;
+        }}
+        QTreeWidget::branch:has-children:!has-siblings:closed,
+        QTreeWidget::branch:closed:has-children:has-siblings {{
+                border-image: none;
+                image: url({QueuePicker.branch_closed_icn}.png);
+        }}
+        QTreeWidget::branch:open:has-children:!has-siblings,
+        QTreeWidget::branch:open:has-children:has-siblings  {{
+                border-image: none;
+                image: url({QueuePicker.branch_open_icn}.png);
         }}
         """)
         self.vbox_left.addWidget(self.tag_tree)
@@ -445,6 +511,7 @@ class TagsTab(QWidget):
         return res
 
     def refresh(self):
+        self.fill_tree(get_all_tags())
         if self.tag_displayed is not None:
             self.load_tags_unused_notes(self.tag_displayed)
 
@@ -501,51 +568,164 @@ class ScheduleMWidget(QWidget):
     def __init__(self, parent):
         QWidget.__init__(self)
         self.parent = parent
-        self.notes = get_notes_by_future_due_date() 
+        self.notes = {}
+        self.prios = {}
+        self.table_boundary = 14
         self.setup_ui()
+
     
     def refresh(self):
         self.notes = get_notes_by_future_due_date() 
+        self.prios = get_priorities([item.id for item in [item for sublist in self.notes.values() for item in sublist]])
         self.fill_table()
+        self.frame_cb.setCurrentIndex([14,28,60,180].index(self.table_boundary))
 
     def setup_ui(self):
         self.setLayout(QHBoxLayout())
         self.table = QTableWidget()
+        self.table.setFocusPolicy(Qt.NoFocus)
+        self.table.setSelectionMode(QAbstractItemView.NoSelection)
         self.table.setRowCount(len(self.notes))
-        self.table.setColumnCount(3)
+        self.table.setColumnCount(2)
         self.table.horizontalHeader().setVisible(False) 
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents) 
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
 
-        self.layout().addWidget(self.table)
+        v_left = QVBoxLayout()
+
+        h_frame = QHBoxLayout()
+        self.frame_cb = QComboBox()
+        self.frame_cb.addItem("14 days", QVariant(14))
+        self.frame_cb.addItem("28 days", QVariant(28))
+        self.frame_cb.addItem("60 days", QVariant(60))
+        self.frame_cb.addItem("180 days", QVariant(180))
+        self.frame_cb.currentTextChanged.connect(self.on_frame_changed)
+        self.frame_cb.setCurrentIndex([14,28,60,180].index(self.table_boundary))
+        h_frame.addWidget(QLabel("Frame: "))
+        h_frame.addWidget(self.frame_cb)
+        self.avg_lbl = QLabel("")
+        self.avg_lbl.setStyleSheet("background: #2496dc; color: white; padding-left: 5px; padding-right: 5px;")
+        h_frame.addStretch()
+        h_frame.addWidget(self.avg_lbl)
+
+        v_left.addLayout(h_frame)
+        v_left.addWidget(self.table)
+        # v_left.addStretch()
+        self.layout().addLayout(v_left)
+
+        v_right = QVBoxLayout()
+        self.calendar = QCalendarWidget()
+        v_right.addWidget(QLabel("WIP"))
+        v_right.addWidget(self.calendar)
+        v_right.addWidget(QLabel("WIP"))
+        v_right.addStretch()
+        self.layout().addLayout(v_right)
+
+        # self.layout().addStretch()
         self.fill_table()
         
     def fill_table(self):
-        due_dates = sorted(self.notes.keys())
+        self.table.clear()
+        self.table.setRowCount(len(self.notes))
+        
+        due_dates   = sorted(self.notes.keys())
+        c_total     = 0
+        ix          = -1
+        today_stmp  = datetime.today().strftime("%Y-%m-%d") 
 
-        for ix, due_date in enumerate(due_dates):
-            self.table.setItem(ix, 0, QTableWidgetItem(due_date))
-            if ix == 0 and datetime.today().strftime("%Y-%m-%d") == due_date:            
+        while ix < len(due_dates) - 1:
+
+            ix          += 1
+            due_date    = due_dates[ix]
+            dt          = utility.date.dt_from_date_only_stamp(due_date)
+
+            # only regard next n days
+            if (dt.date() - datetime.now().date()).days > self.table_boundary:
+                break
+
+            pretty      = utility.date.dt_from_date_only_stamp(due_date).strftime("%a, %d %b, %Y")
+
+            sub         = QTableWidget()
+            sub.setFocusPolicy(Qt.NoFocus)
+            sub.setSelectionMode(QAbstractItemView.NoSelection)
+            sub.setRowCount(len(self.notes[due_date]))
+            sub.setColumnCount(3)
+            sub.horizontalHeader().setVisible(False) 
+            sub.verticalHeader().setVisible(False)
+            sub.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents) 
+            sub.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+            sub.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch) 
+
+            item = QTableWidgetItem(pretty)
+            item.setTextAlignment(Qt.AlignTop)
+            self.table.setItem(ix, 0, item)
+            if ix == 0 and today_stmp == due_date:            
                 self.table.item(ix, 0).setForeground(Qt.blue if not state.night_mode else Qt.cyan)
+                self.table.item(ix, 0).setText("Today")
+            elif (datetime.today().date() + timedelta(days=1)).strftime("%Y-%m-%d") == due_date:
+                self.table.item(ix, 0).setText(f"{pretty}\n(Tomorrow)")
             due     = ""
             types   = ""
+            c_total += len(self.notes[due_date]) 
             for ix_2, note in enumerate(self.notes[due_date]):
+                if note.schedule_type() != "td" :
+                    next_rem = note.reminder
+                    while True:
+                        next_rem    = utility.date.get_next_reminder(next_rem)
+                        due         = utility.date.dt_from_stamp(next_rem.split("|")[1])
 
-                due     += note.get_title() 
-                types   += utility.date.schedule_verbose(note.reminder) 
-                if ix_2 < len(self.notes[due_date]) - 1:
-                    types += "\n"
-                    due   += "\n"
-            self.table.setItem(ix, 1, QTableWidgetItem(due))
-            self.table.setItem(ix, 2, QTableWidgetItem(types))
+                        if (due.date() - datetime.now().date()).days <= self.table_boundary:
+                            due_stamp       = due.strftime("%Y-%m-%d")
+                            copied          = copy.copy(note)
+                            copied.reminder = next_rem
+                            if due_stamp in self.notes:
+                                if not note.id in [n.id for n in self.notes[due_stamp]]:
+                                    self.notes[due_stamp].append(copied)
+                            else:
+                                self.notes[due_stamp] = [copied]
+                                self.table.setRowCount(len(self.notes))
+                                due_dates = sorted(self.notes.keys())
+                        else: 
+                            break
 
-            self.table.item(ix, 0).setFlags(Qt.ItemIsEnabled)
-            self.table.item(ix, 1).setFlags(Qt.ItemIsEnabled)
-            self.table.item(ix, 2).setFlags(Qt.ItemIsEnabled)
+                
+                if note.id in self.prios:
+                    prio = self.prios[note.id]
+                else:
+                    prio = "-"
 
-            self.table.resizeRowToContents(ix)
+                prio_lbl = QLabel(str(prio))
+                prio_lbl.setAlignment(Qt.AlignCenter)
+                if prio != "-":
+                    prio_lbl.setStyleSheet(f"background: {utility.misc.prio_color(prio)}; color: white;")
+
+                title_lbl = QLabel(note.get_title())
+                title_lbl.setStyleSheet("padding-left: 5px;")
+
+                sched_lbl = QLabel(utility.date.schedule_verbose(note.reminder))
+                sched_lbl.setStyleSheet("padding-left: 5px;")
+
+                sub.setCellWidget(ix_2, 0, prio_lbl)
+                sub.setCellWidget(ix_2, 1, title_lbl)
+                sub.setCellWidget(ix_2, 2, sched_lbl)
+
+            sub.setColumnWidth(2, 300)
+            sub.resizeRowsToContents()
+            sub.setMaximumHeight(sub.verticalHeader().length() + 5)
+          
+            self.table.setCellWidget(ix, 1, sub)
+            # self.table.item(ix, 0).setFlags(Qt.ItemIsEnabled)
+        self.table.resizeRowsToContents()
+        if c_total > 0:
+            self.avg_lbl.setText(f"Avg. {round(c_total/ self.table_boundary, 1)} notes / day")
+        else:
+            self.avg_lbl.setText("")
+
+    def on_frame_changed(self, new_text):
+        self.table_boundary = int(new_text.split()[0])
+        self.refresh()
+
 
 class QueueWidget(QWidget):
 
@@ -583,13 +763,14 @@ class QueueWidget(QWidget):
         self.tabs.addTab(self.videos_tab, "Videos")
         self.tabs.addTab(self.folders_tab, "Folders - Import")
 
-        self.t_view_left.setColumnCount(5)
-        self.t_view_left.setHorizontalHeaderLabels(["", "Title", "Prio", "", ""])
+        self.t_view_left.setColumnCount(6)
+        self.t_view_left.setHorizontalHeaderLabels(["", "Title", "Sched.", "Prio", "", ""])
         self.t_view_left.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.t_view_left.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.t_view_left.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.t_view_left.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.t_view_left.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self.t_view_left.setSelectionMode(QAbstractItemView.NoSelection)
         self.t_view_left.setFocusPolicy(Qt.NoFocus)
         self.t_view_left.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -686,11 +867,11 @@ class QueueWidget(QWidget):
         if ix == 0:
             self.tags_tab.fill_tree(get_all_tags())
         elif ix == 1:
-            self.pdfs_tab.fill_list(get_pdf_notes_not_in_queue())
+            self.pdfs_tab.refresh()
         elif ix == 2:
-            self.notes_tab.fill_list(get_text_notes_not_in_queue())
+            self.notes_tab.refresh()
         elif ix == 3:
-            self.videos_tab.fill_list(get_video_notes_not_in_queue())
+            self.videos_tab.refresh()
         elif ix == 4:
             self.folders_tab.fill_tree(get_most_used_pdf_folders())
         
@@ -721,6 +902,11 @@ class QueueWidget(QWidget):
             title_i     = QTableWidgetItem(title)
             title_i.setData(Qt.UserRole, QVariant(n.id))
 
+            sched       = utility.date.next_instance_of_schedule_verbose(n.reminder) if n.has_schedule() else "-"
+            sched_lbl   = QLabel(sched)
+            sched_lbl.setStyleSheet("padding-left: 4px; padding-right: 4px;")
+            sched_lbl.setAlignment(Qt.AlignCenter)
+
             cb          = QTableWidgetItem()
             cb.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
             cb.setCheckState(Qt.Unchecked)
@@ -745,9 +931,10 @@ class QueueWidget(QWidget):
 
             t_view.setItem(ix, 0, cb)
             t_view.setItem(ix, 1, title_i)
-            t_view.setCellWidget(ix, 2, prio_lbl)
-            t_view.setCellWidget(ix, 3, read_btn)
-            t_view.setCellWidget(ix, 4, rem_btn)
+            t_view.setCellWidget(ix, 2, sched_lbl)
+            t_view.setCellWidget(ix, 3, prio_lbl)
+            t_view.setCellWidget(ix, 4, read_btn)
+            t_view.setCellWidget(ix, 5, rem_btn)
         
         # clear title layout 
         for i in reversed(range(self.title_hbox.count())): 
@@ -775,6 +962,9 @@ class QueueWidget(QWidget):
 
         self.unqueue_btn.setText(f"Remove Selected")
         self.unqueue_btn.setDisabled(True)
+
+        t_view.resizeRowsToContents()
+
 
     def selected(self):
         r = []
@@ -907,6 +1097,8 @@ class NoteList(QTableWidget):
             self.setCellWidget(ix, 1, open_btn)
             self.setCellWidget(ix, 2, del_btn)
             self.setCellWidget(ix, 3, add_btn)
+        
+        self.resizeRowsToContents()
 
     
     def open_btn_clicked(self, id):

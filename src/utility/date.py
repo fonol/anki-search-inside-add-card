@@ -4,17 +4,20 @@ from datetime import datetime, timedelta
 import calendar
 import locale
 
-def next_instance_of_weekdays(wd: List[int]) -> datetime:
+def next_instance_of_weekdays(wd: List[int], start: datetime=None) -> datetime:
     """
         Monday = 1, ...
         Today is excluded.
     """
-    today = datetime.today()
+    if start is None: 
+        c = datetime.today()
+    else: 
+        c = start
     while True:
-        today = today + timedelta(days=1)
-        weekday = today.weekday() + 1
+        c = c + timedelta(days=1)
+        weekday = c.weekday() + 1
         if weekday in wd:
-            return today
+            return c
     
 def weekday_name(wd: int) -> str:
     return list(calendar.day_name)[wd - 1]
@@ -76,6 +79,24 @@ def postpone_reminder(reminder: str, days_delta: int) -> str:
     new_due = dt_to_stamp(datetime.now() + timedelta(days=days_delta))
     return date_now_stamp() + "|" + new_due + "|" + reminder.split("|")[2]
 
+def next_instance_of_schedule_verbose(sched: str) -> str:
+
+    if sched is None or not "|" in sched:
+        return "-"
+    due         = sched.split("|")[1]
+    due_dt      = dt_from_stamp(due)
+    dd          = (datetime.now().date() - due_dt.date()).days 
+    if dd == 0:
+        return "Today"
+    if dd == 1:
+        return "Yesterday"
+    if dd > 1:
+        return f"{abs(dd)} days ago"
+    if dd == -1:
+        return "Tomorrow"
+    if dd < -1:
+        return f"In {abs(dd)} days"
+
 
 def schedule_verbose(sched: str) -> str:
     """ Returns a natural language representation of the given schedule string. """
@@ -122,6 +143,7 @@ def schedule_verbose(sched: str) -> str:
 
 
 def get_new_reminder(stype: str, svalue: str) -> str:
+    """ Returns a new reminder with an updated due date, created date and values. """
     now = date_now_stamp()
     if stype == "td":
         # show again in n days
@@ -144,6 +166,37 @@ def get_new_reminder(stype: str, svalue: str) -> str:
         next_date_due = datetime.now() + timedelta(days=int(new))
         return f"{now}|{dt_to_stamp(next_date_due)}|gd:{factor};{new}"
         
+def get_next_reminder(sched: str) -> datetime:
+    """ Gets the next reminder after the given reminder. Difference to get_new_reminder: 
+        This takes the current due date of the given reminder as basis, and not the actual date today. 
+        If the due date is in the past, today will be taken as due date. 
+        So this will always return a changed reminder.
+     """
+
+    now         = date_now_stamp()
+    due         = sched.split("|")[1]
+    due_dt      = dt_from_stamp(due)
+    if due_dt.date() < datetime.today().date():
+        due_dt  = datetime.today()
+    stype       = sched.split("|")[2][0:2]
+    svalue      = sched.split("|")[2][3:]
+
+    if stype == "wd":
+        # show again on next weekday instance
+        weekdays_due = [int(d) for d in svalue]
+        next_date_due = next_instance_of_weekdays(weekdays_due, start= due_dt)
+        return f"{now}|{dt_to_stamp(next_date_due)}|wd:{svalue}"
+    elif stype == "id":
+        # show again according to interval
+        next_date_due = due_dt + timedelta(days=int(svalue))
+        return f"{now}|{dt_to_stamp(next_date_due)}|id:{svalue}"
+    elif stype == "gd":
+        # show again according to interval * factor
+        factor = float(svalue.split(";")[0])
+        last   = float(svalue.split(";")[1])
+        new    = factor * last
+        next_date_due = due_dt + timedelta(days=int(new))
+        return f"{now}|{dt_to_stamp(next_date_due)}|gd:{factor};{new}"
 
 
 def date_diff_to_string(diff):

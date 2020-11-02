@@ -345,7 +345,11 @@ class CreateTab(QWidget):
         self.original_bg        = None
         self.original_fg        = None
         web_path                = utility.misc.get_web_folder_path()
+        icons_path              = web_path + "icons/"
         config                  = mw.addonManager.getConfig(__name__)
+
+        self.tag_icon           = QIcon(icons_path + "icon-tag-24.png")
+
         if self.parent.dark_mode_used:
             tag_bg                  = config["styles.night.tagBackgroundColor"]
             tag_fg                  = config["styles.night.tagForegroundColor"]
@@ -356,7 +360,7 @@ class CreateTab(QWidget):
             hover_bg                = "palette(dark)"
 
         self.tree.setColumnCount(1)
-        self.tree.setIconSize(QSize(0,0))
+        # self.tree.setIconSize(QSize(0,0))
         include_anki_tags = get_config_value_or_default("notes.editor.include_anki_tags", False)
         self.build_tree(get_all_tags_as_hierarchy(include_anki_tags=include_anki_tags))
         self.tree.itemClicked.connect(self.tree_item_clicked)
@@ -366,6 +370,14 @@ class CreateTab(QWidget):
         self.tree.setSelectionMode(QAbstractItemView.NoSelection)
         # self.tree.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         self.tree.setHeaderHidden(True)
+
+        vline_icn = icons_path + ('vline-night' if state.night_mode else 'vline')
+        branch_more_icn = icons_path + ('branch-more-night' if state.night_mode else 'branch-more')
+        branch_end_icn = icons_path + ('branch-end-night' if state.night_mode else 'branch-end')
+        branch_closed_icn = icons_path + ('branch-closed-night' if state.night_mode else 'branch-closed')
+        branch_open_icn = icons_path + ('branch-open-night' if state.night_mode else 'branch-open')
+
+
         self.tree.setStyleSheet(f"""
         QTreeWidget::item:hover,QTreeWidget::item:hover:selected {{
             border:none;
@@ -373,6 +385,25 @@ class CreateTab(QWidget):
             font-weight: bold;
             background-color: {tag_bg};
             color: {tag_fg};
+        }}
+        QTreeWidget::branch:has-siblings:!adjoins-item {{
+            border-image: url({vline_icn}.png) 0;
+        }}
+        QTreeWidget::branch:has-siblings:adjoins-item {{
+            border-image: url({branch_more_icn}.png) 0;
+        }}
+        QTreeWidget::branch:!has-children:!has-siblings:adjoins-item {{
+            border-image: url({branch_end_icn}.png) 0;
+        }}
+        QTreeWidget::branch:has-children:!has-siblings:closed,
+        QTreeWidget::branch:closed:has-children:has-siblings {{
+                border-image: none;
+                image: url({branch_closed_icn}.png);
+        }}
+        QTreeWidget::branch:open:has-children:!has-siblings,
+        QTreeWidget::branch:open:has-children:has-siblings  {{
+                border-image: none;
+                image: url({branch_open_icn}.png);
         }}
         """)
 
@@ -471,7 +502,8 @@ class CreateTab(QWidget):
 
         hbox = QHBoxLayout()
 
-        self.toggle_btn = QPushButton("<")
+        self.toggle_btn = QToolButton()
+        self.toggle_btn.setText("<")
         self.toggle_btn.setFocusPolicy(Qt.NoFocus)
         self.toggle_btn.clicked.connect(self.toggle_left_pane)
         hbox.addWidget(self.toggle_btn)
@@ -596,26 +628,25 @@ class CreateTab(QWidget):
 
         if self.parent.text_prefill is not None:
             self.text.setPlainText(self.parent.text_prefill)
-
-        btn_styles = """
-        QPushButton#q_1 { padding-left: 20px; padding-right: 20px; }
-        QPushButton#q_2 { padding-left: 17px; padding-right: 17px; }
-        QPushButton#q_3 { padding-left: 13px; padding-right: 13px; }
-        QPushButton#q_4 { padding-left: 8px; padding-right: 8px; }
-        QPushButton#q_5 { padding-left: 2px; padding-right: 2px; }
-        QPushButton#q_6 { padding-left: 0px; padding-right: 0px; }
-        QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_3,QPushButton:hover#q_4,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; }
-        """
-
+            
+        # btn_styles = """
+        # QPushButton#q_1 { padding-left: 20px; padding-right: 20px; }
+        # QPushButton#q_2 { padding-left: 17px; padding-right: 17px; }
+        # QPushButton#q_3 { padding-left: 13px; padding-right: 13px; }
+        # QPushButton#q_4 { padding-left: 8px; padding-right: 8px; }
+        # QPushButton#q_5 { padding-left: 2px; padding-right: 2px; }
+        # QPushButton#q_6 { padding-left: 0px; padding-right: 0px; }
+        # QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_3,QPushButton:hover#q_4,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; }
+        # """
+     
         styles = """
             QPushButton#q_1,QPushButton#q_2,QPushButton#q_3,QPushButton#q_4,QPushButton#q_5,QPushButton#q_6 { border-radius: 5px; }
-            %s
 
             QTextEdit { border-radius: 5px; border: 1px solid #717378;  padding: 3px; }
             QLineEdit { border-radius: 5px; border: 1px solid #717378;  padding: 2px;}
             #recentDisp { margin: 5px; }
 
-        """ % btn_styles
+        """ #% btn_styles
 
         if parent.dark_mode_used:
             styles += """
@@ -686,7 +717,8 @@ class CreateTab(QWidget):
         res = []
         for t, children in map.items():
             ti = QTreeWidgetItem([t])
-            ti.setData(0, 1, QVariant(prefix + t))
+            ti.setData(1, 1, QVariant(prefix + t))
+            ti.setIcon(0, self.tag_icon)
             prefix_c = prefix + t + "::"
             for c,m in children.items():
                 ti.addChildren(self._add_to_tree({c: m}, prefix_c))
@@ -694,7 +726,7 @@ class CreateTab(QWidget):
         return res
 
     def tree_item_clicked(self, item, col):
-        tag = item.data(0, 1)
+        tag = item.data(1, 1)
         self.add_tag(tag)
 
     def recent_item_clicked(self, item):
@@ -725,7 +757,8 @@ class CreateTab(QWidget):
     def build_tree(self, tmap):
         for t, children in tmap.items():
             ti = QTreeWidgetItem([t])
-            ti.setData(0, 1, QVariant(t))
+            ti.setData(1, 1, QVariant(t))
+            ti.setIcon(0, self.tag_icon)
             ti.addChildren(self._add_to_tree(children, t + "::"))
             self.tree.addTopLevelItem(ti)
 
@@ -894,6 +927,8 @@ class PriorityTab(QWidget):
             self.t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
             self.t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
             self.t_view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        
+        self.t_view.resizeRowsToContents()
 
         self.t_view.verticalHeader().setSectionsMovable(False)
         self.t_view.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -972,20 +1007,22 @@ class PriorityTab(QWidget):
 
     def set_remove_btns(self, priority_list):
         for r in range(len(priority_list)):
-            rem_btn = QPushButton("Remove")
-            if self.parent.dark_mode_used:
-                rem_btn.setStyleSheet("border: 1px solid darkgrey; border-style: outset; font-size: 10px; background: #313233; color: white; margin: 0px; padding: 3px;")
-            else:
-                rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; color: black; margin: 0px; padding: 3px;")
-            rem_btn.setCursor(Qt.PointingHandCursor)
-            rem_btn.setMinimumHeight(18)
+            rem_btn = QToolButton()
+            rem_btn.setText(" - ")
+            # if self.parent.dark_mode_used:
+            #     rem_btn.setStyleSheet("border: 1px solid darkgrey; border-style: outset; font-size: 10px; background: #313233; color: white; margin: 0px; padding: 2px 3px;")
+            # else:
+            #     rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; color: black; margin: 0px; padding: 2px 3px;")
+            # rem_btn.setCursor(Qt.PointingHandCursor)
+            # rem_btn.setMinimumHeight(18)
             rem_btn.clicked.connect(functools.partial(self.on_remove_clicked, priority_list[r].id))
 
-            h_l = QHBoxLayout()
-            h_l.addWidget(rem_btn)
-            cell_widget = QWidget()
-            cell_widget.setLayout(h_l)
-            self.t_view.setIndexWidget(self.t_view.model().index(r,2), cell_widget)
+            # h_l = QHBoxLayout()
+            # h_l.addWidget(rem_btn)
+            # cell_widget = QWidget()
+            # cell_widget.setLayout(h_l)
+            # self.t_view.setCellWidget(r, 2, rem_btn)
+            self.t_view.setIndexWidget(self.t_view.model().index(r,2), rem_btn)
 
     def on_shuffle_btn_clicked(self):
         priority_list = _get_priority_list()

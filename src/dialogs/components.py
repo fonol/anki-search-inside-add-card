@@ -38,6 +38,7 @@ class QtPrioritySlider(QWidget):
         self.has_schedule       = schedule is not None and len(schedule.strip()) > 0
         self.show_spec_sched    = show_spec_sched
         self.nid                = nid
+        self.note               = None
         if nid and nid > 0:
             self.note               = get_note(self.nid)
             self.note_title         = self.note.get_title()
@@ -532,3 +533,16 @@ class ClickableQLabel(QLabel):
 
     def mousePressEvent(self, evt):
         self.clicked.emit()
+
+
+# WIP
+class DueCalendar(QCalendarWidget):
+
+  def __init__(self,  parent=None):
+    QCalendarWidget.__init__(self,parent)
+
+  def paintCell(self, painter, rect, date):
+    QCalendarWidget.paintCell(self, painter, rect, date)
+    
+    painter.drawText(rect.bottomLeft(), "test")
+

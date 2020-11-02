@@ -27,7 +27,7 @@ class PriorityDialog(QDialog):
     def __init__(self, parent, note_id):
         QDialog.__init__(self, parent)
         self.note_id        = note_id
-        self.initial_prio   = get_priority(note_id)
+        self.initial_prio   = get_priority(note_id) if note_id else None
         if self.initial_prio is None or self.initial_prio == 0:
             self.initial_prio = 50
             self.setWindowTitle("Choose a priority")

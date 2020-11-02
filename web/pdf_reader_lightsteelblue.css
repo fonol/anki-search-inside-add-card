@@ -322,21 +322,23 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 }   
 .CodeMirror {
     background-color: #1e211f;
-    /* color: whitesmoke; */
+    color: whitesmoke;
     flex: 1;
 }
 
 #siac-iframe {
-    width: 100%;
+    width: calc(100% - 10px);
     flex: 1 1 auto;
     display: none;
     background: white;
+    margin-top: 20px;
+    margin-left: 10px;
 }
 #siac-iframe-btn {
     position: absolute;
     /* left: 0px;
     top: 50px; */
-    top: 5px; left: 0px;
+    top: 10px; left: 0px;
 }
 #siac-schedule-dialog-btn.active > .fa {
     filter: brightness(1.4);
@@ -464,6 +466,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 }
 #siac-pdf-read-btn {
     font-weight: 700;
+    box-shadow: 2px 2px #1f1f1f;
 }
 #siac-pdf-read-btn:hover,#siac-pdf-more-btn:hover {
     color: white;
@@ -575,6 +578,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     border-radius: 3px;
     font-weight: bold;
     margin-bottom: 3px;
+    box-shadow: 3px 3px #1f1f1f;
 }
 .siac-queue-btn.siac-disabled {
     color: grey !important;
@@ -862,8 +866,8 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     font-weight: bold;
 }
 .siac-timer-play-btn {
-    font-size: 19px;
-    line-height: 19px;
+    font-size: 17px;
+    line-height: 22px;
     cursor: pointer;
     user-select: none;
     display: inline-block;
@@ -1005,12 +1009,14 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     color: lightgrey;
 }
 .siac-pdf-color-btn {
-    height: 18px; 
-    width: 18px; 
+    height: 20px; 
+    width: 20px; 
     border-radius: 4px;
     margin-bottom: 4px;
     border: 2px solid transparent;
     cursor: pointer;
+    box-shadow: 3px 3px #151515;
+    /* border: 2px outset #656565; */
 }
 .siac-pdf-color-btn.active,.siac-pdf-ul-btn.active {
     border-color: white !important;
@@ -1032,6 +1038,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     color: white;
     background: green !important;
     mix-blend-mode: luminosity;
+    border-radius: 5px;
 }
 /* 17.10.2020: For some reason, the play button in the youtube player has a really large height, this is a fix. */
 .ytp-play-button {
@@ -1047,12 +1054,14 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     display: flex;
 }
 .siac-pdf-ul-btn {
-    height: 5px; 
-    width: 18px; 
+    height: 8px; 
+    width: 20px; 
     border: 2px solid transparent;
     margin-bottom: 4px;
     border-radius: 4px;
     cursor: pointer;
+    box-shadow: 3px 3px #151515;
+    /* border: 2px outset #656565; */
 }
 #siac-reading-modal-top-btns > div {
     height: 24px;
@@ -1105,6 +1114,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     font-weight: 600;
     cursor: pointer;
     color: lightgrey;
+    box-shadow: 2px 2px #151515;
 }
 .siac-bb-btn:not(.siac-disabled):hover {
     filter: brightness(1.4);
@@ -1162,4 +1172,7 @@ body.nightMode.siac-reading-modal-displayed.siac-left-right-switched #siac-right
 }
 #siac-pdf-links-toggle.active {
     color: #2496dc;
+}
+.ytp-play-button svg {
+    max-height: 36px !important;
 }

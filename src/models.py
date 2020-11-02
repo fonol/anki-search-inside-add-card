@@ -95,7 +95,7 @@ class SiacNote(Printable):
 
     def is_yt(self) -> bool:
         return self.source is not None and re.match("(?:https?://)?www\.youtube\..+", self.source.strip().lower())
-    
+        
     def get_note_type(self) -> str:
         if self.is_pdf():
             return "PDF"
@@ -209,7 +209,7 @@ class SiacNote(Printable):
             if len(body.strip()) > 0:
                 body += "<br/><hr style='border-top: dotted 2px;'>"
             body = f"""{body}<p class='flex-row' style='margin: 0;'>
-                        <img src='http://img.youtube.com/vi/{utility.text.get_yt_video_id(src)}/0.jpg' style='height: 100px; margin-right: 20px;'/>
+                        <img src='http://img.youtube.com/vi/{utility.text.get_yt_video_id(src)}/0.jpg' style='height: 100px; margin-right: 40px;'/>
                         <span class='flex-col' style='justify-content: center;'>
                             <span class='siac-caps' style='font-size: 13px;'>Saved At
                             <br>
