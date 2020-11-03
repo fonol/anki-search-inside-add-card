@@ -1,44 +1,245 @@
-<div id='siac-schedule-dialog' class="siac-modal-small dark ta_center">
-    Change the main color of the reader.<br><br>
-    <div class='flex-row user_sel_none'>
-        <div style='flex: 1'>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader.css")'>Orange</a><br>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightblue.css")'>Lightblue</a><br>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_khaki.css")'>Khaki</a><br>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_darkseagreen.css")'>Darkseagreen</a><br>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_tan.css")'>Tan</a><br>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightgreen.css")'>Lightgreen</a><br>
+<div id='siac-schedule-dialog' class="siac-modal-small dark ta_center" style='width: 650px;'>
+    <div class='flex-row w-100' style='justify-content: center;'>
+        <div>
+            Main Color<br><br>
+
+            <table class="user_sel_none w-100">
+                <tr>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: darkorange;'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader.css")'>Orange (Default)</a><br></td>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #41b3a3;'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightblue.css")'>Lightblue</a><br>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #f6d198'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_khaki.css")'>Khaki</a><br></td>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: darkseagreen;'></div>
+                    </td>
+                    <td><a class='siac-link-btn'
+                            onclick='setPdfTheme("pdf_reader_darkseagreen.css")'>Darkseagreen</a><br></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: lightsalmon;'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightsalmon.css")'>Lightsalmon</a><br>
+                    </td>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #ffd868;'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_yellow.css")'>Yellow</a><br></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #c72c41;'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_crimson.css")'>Crimson</a><br></td>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: coral;'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_coral.css")'>Coral</a><br></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: tan;'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_tan.css")'>Tan</a><br></td>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: lightgreen;'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightgreen.css")'>Lightgreen</a><br>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #2496dc;'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_steelblue.css")'>Steelblue</a><br>
+                    </td>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #b0c4de;'></div>
+                    </td>
+                    <td><a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightsteelblue.css")'>Light
+                            Steelblue</a><br></td>
+                </tr>
+            </table>
+            <br>
+            <div>
+                Background Color:
+            </div>
+
+            <div class='flex-row user_sel_none' id='siac-modal-bg-update'>
+                <table class="w-100">
+                    <tr>
+                        <td>
+                            <div style='width: 1em; height: 1em; border-radius: 3px; background: #2f2f31'></div>
+                        </td>
+                        <td>
+                            <a class='siac-link-btn'
+                                onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2f2f31")'>Default</a>
+                        </td>
+                        <td>
+                            <div style='width: 1em; height: 1em; border-radius: 3px; background: black'></div>
+                        </td>
+                        <td>
+                            <a class='siac-link-btn'
+                                onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor black")'>Black</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><div style='width: 1em; height: 1em; border-radius: 3px; background: #00193C'></div></td>
+                        <td> <a class='siac-link-btn'
+                                onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #00193C")'>Darkblue</a>
+                        </td>
+                        <td><div style='width: 1em; height: 1em; border-radius: 3px; background: #020D1E'></div></td>
+                        <td><a class='siac-link-btn'
+                                onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #020D1E")'>Darkbluegrey</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><div style='width: 1em; height: 1em; border-radius: 3px; background: #102212'></div></td>
+                        <td><a class='siac-link-btn'
+                                onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #102212")'>Darkgreen</a>
+                        </td>
+                        <td><div style='width: 1em; height: 1em; border-radius: 3px; background: #343741'></div></td>
+                        <td><a class='siac-link-btn'
+                                onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #343741")'>Lightgrey</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><div style='width: 1em; height: 1em; border-radius: 3px; background: #0B2A2A'></div></td>
+                        <td><a class='siac-link-btn'
+                                onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #0B2A2A")'>Darkturquoise</a>
+                        </td>
+                        <td><div style='width: 1em; height: 1em; border-radius: 3px; background: #2F1202'></div></td>
+                        <td><a class='siac-link-btn'
+                                onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2F1202")'>Darkbrown</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><div style='width: 1em; height: 1em; border-radius: 3px; background: #381313'></div></td>
+                        <td><a class='siac-link-btn'
+                            onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #381313")'>Darkred</a>
+                        </td>
+                        <td>?</td>
+                        <td><a class='siac-link-btn'
+                            onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor " + getComputedStyle(document.body, null)["backgroundColor"])'>Fit
+                            to Window</a>
+                        </td>
+                    </tr>
+                </table>
+               
+            </div>
+            <br>
+            <div>Texture</div>
+            <div>
+                <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalTexture none")'>None (Default)</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_1', 120)">Checks</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_2', 300)">Circuit</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_4', 620)">Circles</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_5', 80)">Tiles</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_6', 280)">Jagged</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_3', 120)">Dots 1</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_7', 60)">Dots 2</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_8', 100)">Tapestry</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_9', 160)">Metal Plate 1</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_10', 160)">Metal Plate 2</a>,
+                <a class='siac-link-btn' onclick="modalBgUpdate();setTextureBg('texture_11', 300)">Stone</a>
+            </div>
         </div>
-        <div style='flex: 1'>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightsalmon.css")'>Lightsalmon</a><br>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_yellow.css")'>Yellow</a><br>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_crimson.css")'>Crimson</a><br>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_coral.css")'>Coral</a><br>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_steelblue.css")'>Steelblue</a><br>
-            <a class='siac-link-btn' onclick='setPdfTheme("pdf_reader_lightsteelblue.css")'>Light Steelblue</a><br>
+        <div class='siac-pdf-main-color-border-left'
+            style='padding-left: 30px; padding-right: 30px; margin-left: 30px;'>Button Border Color
+            <br>
+            <br>
+            <table class="user_sel_none">
+                <tr>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #b2b2a0;'></div>
+                    </td>
+                    <td>
+                        <a class='siac-link-btn' onclick='pycmd("siac-styling styles.readingModalButtonBorderColor #b2b2a0")'>Eagle (Default)</a>
+                    </td>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #4682b4;'></div>
+                    </td>
+                    <td>
+                        <a class='siac-link-btn' onclick='pycmd("siac-styling styles.readingModalButtonBorderColor #4682b4")'>Steelblue</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #5f9ea0;'></div>
+                    </td>
+                    <td>
+                        <a class='siac-link-btn' onclick='pycmd("siac-styling styles.readingModalButtonBorderColor #5f9ea0")'>Cadetblue</a>
+                    </td>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #8fbc8f;'></div>
+                    </td>
+                    <td>
+                        <a class='siac-link-btn' onclick='pycmd("siac-styling styles.readingModalButtonBorderColor #8fbc8f")'>Darkseagreen</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #cd853f;'></div>
+                    </td>
+                    <td>
+                        <a class='siac-link-btn'
+                            onclick='pycmd("siac-styling styles.readingModalButtonBorderColor #cd853f")'>Peru</a>
+                    </td>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #cc4721;'></div>
+                    </td>
+                    <td>
+                        <a class='siac-link-btn'
+                            onclick='pycmd("siac-styling styles.readingModalButtonBorderColor #cc4721")'>Piper</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #686868;'></div>
+                    </td>
+                    <td>
+                        <a class='siac-link-btn'
+                            onclick='pycmd("siac-styling styles.readingModalButtonBorderColor #686868")'>Dovegray</a>
+                    </td>
+                    <td>
+                        <div style='width: 1em; height: 1em; border-radius: 3px; background: #41b08b;'></div>
+                    </td>
+                    <td>
+                        <a class='siac-link-btn'
+                            onclick='pycmd("siac-styling styles.readingModalButtonBorderColor #41b08b")'>Oceangreen</a>
+                    </td>
+                </tr>
+            </table>
+
+            <br>
+            <div>Filter</div>
+            <br>
+
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalFilter none")'>No Filter (Default)</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalFilter hue-rotate(300deg)")'>Hue-rotate 300</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalFilter hue-rotate(100deg)")'>Hue-rotate 100</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalFilter contrast(1.2)")'>Increased Contrast (+)</a><br>
+            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalFilter contrast(1.4)")'>Increased Contrast (++)</a><br>
+
         </div>
-    </div>
-    <br>
-    Background Color:
-    <br><br>
-    <div class='flex-row user_sel_none' id='siac-modal-bg-update'>
-        <div style='flex: 1'>
-            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2f2f31")'>Default</a><br>
-            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor black")'>Black</a><br>
-            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #00193C")'>Darkblue</a><br>
-            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #020D1E")'>Darkbluegrey</a><br>
-            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #102212")'>Darkgreen</a><br>
-        </div>
-        <div style='flex: 1'>
-            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #343741")'>Lightgrey</a><br>
-            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #0B2A2A")'>Darkturquoise</a><br>
-            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #2F1202")'>Darkbrown</a><br>
-            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor #381313")'>Darkred</a><br>
-            <a class='siac-link-btn' onclick='modalBgUpdate();pycmd("siac-styling styles.readingModalBackgroundColor " + getComputedStyle(document.body, null)["backgroundColor"])'>Window</a><br>
-        </div>
+
     </div>
     <br>
     <div class='ta_right'>
-        <div class='siac-btn siac-btn-dark mr-10' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Ok</div>
+        <div class='siac-btn siac-btn-dark mr-10'
+            onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>
+            Ok</div>
     </div>
 </div>

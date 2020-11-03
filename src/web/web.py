@@ -94,7 +94,10 @@ def getScriptPlatformSpecific():
 def styles() -> str:
     """ Returns the content of styles.css with all config values inserted. """
 
-    dir = utility.misc.get_web_folder_path()
+    dir         = utility.misc.get_web_folder_path()
+    addon_id    = utility.misc.get_addon_id()
+    port        = mw.mediaServer.getPort()
+
     with open(dir + "styles.variables.css") as f:
         css = f.read().replace("%", "%%")
 
@@ -117,6 +120,14 @@ def styles() -> str:
     modalBorder         = str(get_config_value_or_default("styles.modalBorderColor", "#2496dc"))
     modalBorderNight    = str(get_config_value_or_default("styles.night.modalBorderColor", "darkorange"))
     readingModalBG      = str(get_config_value_or_default("styles.readingModalBackgroundColor", "#2f2f31"))
+    rm_btn_border       = str(get_config_value_or_default("styles.readingModalButtonBorderColor", "#b2b2a0"))
+    rm_filter           = str(get_config_value_or_default("styles.readingModalFilter", "none"))
+
+    rm_texture          = str(get_config_value_or_default("styles.readingModalTexture", "none"))
+    url                 = f"http://127.0.0.1:{port}/_addons/{addon_id}/web/icons/"
+    if re.match("url\(.+\)", rm_texture):
+        rm_texture      = rm_texture.replace("url('", "url('" + url)
+    rm_bg_size          = str(get_config_value_or_default("styles.readingModalBackgroundSize", "80"))
 
     css                 = css.replace("$imgMaxHeight$", imgMaxHeight)
     css                 = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
@@ -135,6 +146,10 @@ def styles() -> str:
     css                 = css.replace("$styles.modalBorderColor$", modalBorder)
     css                 = css.replace("$styles.night.modalBorderColor$", modalBorderNight)
     css                 = css.replace("$styles.readingModalBackgroundColor$", readingModalBG)
+    css                 = css.replace("$styles.readingModalButtonBorderColor$", rm_btn_border)
+    css                 = css.replace("$styles.readingModalFilter$", rm_filter)
+    css                 = css.replace("$styles.readingModalTexture$", rm_texture)
+    css                 = css.replace("$styles.readingModalBackgroundSize$", rm_bg_size)
 
     return css
 

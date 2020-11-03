@@ -123,3 +123,11 @@ window.refreshCanvas = function () {
         ctx.putImageData(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height), 0, 0);
     } catch (e) { }
 }
+
+//
+// Theme dialog
+//
+window.setTextureBg = function(bg, bg_size) {
+    pycmd("siac-update-config-str styles.readingModalBackgroundSize $1".replace('$1', bg_size));
+    pycmd("siac-styling styles.readingModalTexture url('$1.svg')".replace('$1', bg));
+}
