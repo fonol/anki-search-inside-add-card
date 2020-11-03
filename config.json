@@ -91,6 +91,7 @@
 "results.showIDButton": false,
 "results.showCIDButton": false,
 "results.hide_cloze_brackets": false,
+
 "styles.night.tagBackgroundColor": "Coral",
 "styles.night.tagForegroundColor": "Black",
 "styles.tagBackgroundColor": "#f0506e",
@@ -108,11 +109,20 @@
 "styles.readingModalTexture": "none",
 "styles.readingModalBackgroundSize": "80",
 "styles.readingModalFilter": "none",
+
 "shortcuts.focus_search_bar": "Ctrl+Shift+F",
 "shortcuts.trigger_search": "Ctrl+Shift+K",
 "shortcuts.trigger_predef_search": "Alt+P",
 "shortcuts.search_for_current_field": "Alt+J",
 "shortcuts.trigger_current_filter": "Alt+F",
+
+"shortcuts.menubar.import.youtube": "",
+"shortcuts.menubar.import.create_new": "Alt+N",
+"shortcuts.menubar.import.zotero_csv": "",
+"shortcuts.menubar.queue_manager": "",
+"shortcuts.menubar.quick_open": "Ctrl+O",
+"shortcuts.menubar.addon_settings": "",
+
 "searchbar.default_mode": "Add-on",
 "addon.data_folder": "",
 "dev_mode" : false,

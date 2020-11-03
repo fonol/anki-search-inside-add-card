@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from aqt.qt import *
-from aqt.utils import tooltip 
+from aqt.utils import tooltip
 import aqt.editor
 import aqt
 import functools
@@ -140,14 +140,14 @@ class NoteEditor(QDialog):
             if not self.note:
                 return
 
-        
+
         #self.mw.setupDialogGC(self)
         #self.setWindowModality(Qt.WindowModal)
         #self.setAttribute(Qt.WA_DeleteOnClose)
         self.setup_ui()
 
     def setup_ui(self):
-        
+
         # editing an existing note
         if self.note_id is not None:
             self.save = QPushButton("\u2714 Save")
@@ -160,7 +160,7 @@ class NoteEditor(QDialog):
             self.setWindowTitle('New Note')
             self.save.clicked.connect(self.on_create_clicked)
             self.priority = 0
-        
+
             self.save_and_stay = QPushButton(" \u2714 Create && Keep Open ")
             self.save_and_stay.setFocusPolicy(Qt.NoFocus)
             self.save_and_stay.clicked.connect(self.on_create_and_keep_open_clicked)
@@ -176,15 +176,15 @@ class NoteEditor(QDialog):
         self.priority_list = priority_list
 
         self.tabs = QTabWidget()
-         
+
         self.create_tab = CreateTab(self)
-        
+
         #self.browse_tab = BrowseTab()
         self.tabs.addTab(self.create_tab, "Create" if self.note_id is None else "Edit")
         if not self.add_only:
             self.priority_tab = PriorityTab(priority_list, self)
             self.tabs.addTab(self.priority_tab, "Queue")
-        
+
         self.settings_tab = SettingsTab(self)
         self.tabs.addTab(self.settings_tab, "Settings")
 
@@ -206,12 +206,16 @@ class NoteEditor(QDialog):
         NoteEditor.last_geom = self.geometry()
 
     def on_create_clicked(self):
-        
+
         success = self._create_note()
         if not success:
             return
-        #aqt.dialogs.close("UserNoteEditor")
-        run_hooks("user-note-created")
+
+        # maybe more elegant solution to avoid renewing search please?
+        ix = get_index()
+        if ix is not None and ix.ui is not None and ix.ui._editor is not None and ix.ui._editor.web is not None:
+            run_hooks("user-note-created")
+
         self.reject()
 
         # if reading modal is open, we might have to update the bottom bar
@@ -222,7 +226,13 @@ class NoteEditor(QDialog):
         success = self._create_note()
         if not success:
             return
-        run_hooks("user-note-created")
+
+        # maybe more elegant solution to skip updating search/sidebar refresh?
+        ix = get_index()
+        if ix is not None and ix.ui is not None and ix.ui._editor is not None and ix.ui._editor.web is not None:
+            run_hooks("user-note-created")
+
+
         if self.read_note_id is not None:
             get_index().ui.reading_modal.reload_bottom_bar()
 
@@ -230,8 +240,8 @@ class NoteEditor(QDialog):
 
     def _create_note(self):
         title = self.create_tab.title.text()
-        title = utility.text.clean_user_note_title(title) 
-     
+        title = utility.text.clean_user_note_title(title)
+
         # if this check is missing, text is sometimes saved as an empty paragraph
         if self.create_tab.text.document().isEmpty():
             text = ""
@@ -239,7 +249,7 @@ class NoteEditor(QDialog):
             # text = self.create_tab.text.toHtml()
             if self.create_tab.text.text_was_pasted:
                 text = self.create_tab.text.toMarkdown()
-            else: 
+            else:
                 text = self.create_tab.text.toPlainText()
             # text = markdown(text)
 
@@ -257,7 +267,7 @@ class NoteEditor(QDialog):
         if len(title.strip()) + len(text.strip()) == 0:
             tooltip("Either Text or Title have to be filled out.")
             return False
-        
+
         if len(tags.strip()) == 0:
             default_tags = get_config_value_or_default("notes.editor.defaultTagsIfEmpty", "")
             if len(default_tags) > 0:
@@ -279,11 +289,11 @@ class NoteEditor(QDialog):
         self.create_tab.title.setFocus()
         self.create_tab.tree.clear()
         self.create_tab.build_tree(get_all_tags_as_hierarchy(include_anki_tags=self.create_tab.all_tags_cb.isChecked()))
-        
+
 
     def on_update_clicked(self):
         title = self.create_tab.title.text()
-        title = utility.text.clean_user_note_title(title) 
+        title = utility.text.clean_user_note_title(title)
 
         # if this check is missing, text is sometimes saved as an empty paragraph
         if self.create_tab.text.document().isEmpty():
@@ -291,7 +301,7 @@ class NoteEditor(QDialog):
         else:
             if self.create_tab.text.text_was_pasted:
                 text = self.create_tab.text.toMarkdown()
-            else: 
+            else:
                 text = self.create_tab.text.toPlainText()
         source                  = self.create_tab.source.text()
         tags                    = self.create_tab.tag.text()
@@ -404,9 +414,9 @@ class CreateTab(QWidget):
             "bw": [255,255,255,2, 119,189],
             "gb": [255,255,255,34,177,76]
         }
-         
+
         recently_used_tags      = get_recently_used_tags()
-        
+
 
         self.recent_tbl         = QWidget()
         self.recent_tbl.setObjectName("recentDisp")
@@ -445,7 +455,7 @@ class CreateTab(QWidget):
         tag_hb.setAlignment(Qt.AlignLeft)
         tag_hb.addWidget(tag_lbl)
         tag_hb.addWidget(QLabel("Tags (Click to Add)"))
-        
+
         vbox_left.addLayout(tag_hb)
 
         vbox_left.addWidget(self.tree)
@@ -531,7 +541,7 @@ class CreateTab(QWidget):
         self.text.setLineWidth(2)
         # self.text.cursorPositionChanged.connect(self.on_text_cursor_change)
         if hasattr(self.text, "setTabStopDistance"):
-            self.text.setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 4) 
+            self.text.setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 4)
         t_h = QHBoxLayout()
         t_h.addWidget(text_lbl)
 
@@ -556,14 +566,14 @@ class CreateTab(QWidget):
                 QMenu { background: white; color: black; font-size: 10px;}
                 QMenu:item:selected { background: #2496dc; color: white; }
             """)
-        
+
 
         clean_menu.addAction("Remove all Formatting").triggered.connect(self.on_remove_formatting)
         clean_menu.addAction("Remove HTML").triggered.connect(self.on_remove_html)
         # clean_menu.addAction("Remove all Headers (#)").triggered.connect(self.on_remove_headers_clicked)
         clean_btn.setMenu(clean_menu)
         self.tb.addWidget(clean_btn)
-        
+
         t_h.addStretch(1)
         t_h.addWidget(self.tb)
 
@@ -588,7 +598,7 @@ class CreateTab(QWidget):
         vbox.addWidget(self.preview)
 
         self.source         = QLineEdit()
-        # if note is an extract, prevent source editing 
+        # if note is an extract, prevent source editing
         if self.parent.note is not None and self.parent.note.extract_end is not None:
             source_lbl          = QLabel("Source - Note is an extract")
             # self.source.setReadOnly(True)
@@ -608,7 +618,7 @@ class CreateTab(QWidget):
         pdf_from_url_btn.setFocusPolicy(Qt.NoFocus)
         source_hb.addWidget(pdf_from_url_btn)
 
-        # if note is an extract, prevent source editing 
+        # if note is an extract, prevent source editing
         # if self.parent.note is not None and self.parent.note.extract_end is not None:
         #     pdf_btn.setDisabled(True)
         #     pdf_from_url_btn.setDisabled(True)
@@ -618,7 +628,7 @@ class CreateTab(QWidget):
 
         if self.parent.text_prefill is not None:
             self.text.setPlainText(self.parent.text_prefill)
-
+            
         # btn_styles = """
         # QPushButton#q_1 { padding-left: 20px; padding-right: 20px; }
         # QPushButton#q_2 { padding-left: 17px; padding-right: 17px; }
@@ -631,7 +641,7 @@ class CreateTab(QWidget):
      
         styles = """
             QPushButton#q_1,QPushButton#q_2,QPushButton#q_3,QPushButton#q_4,QPushButton#q_5,QPushButton#q_6 { border-radius: 5px; }
-    
+
             QTextEdit { border-radius: 5px; border: 1px solid #717378;  padding: 3px; }
             QLineEdit { border-radius: 5px; border: 1px solid #717378;  padding: 2px;}
             #recentDisp { margin: 5px; }
@@ -652,7 +662,7 @@ class CreateTab(QWidget):
         # vbox.addStretch(1)
         tag_lbl2 = QLabel()
         tag_lbl2.setPixmap(tag_icn)
-         
+
         tag_hb2 = QHBoxLayout()
         tag_hb2.setAlignment(Qt.AlignLeft)
         tag_hb2.addWidget(tag_lbl2)
@@ -695,13 +705,13 @@ class CreateTab(QWidget):
             self.toggle_btn.setText(">")
 
         # fill tags with last tags if enabled in settings
-        if (parent.note is None 
-            and self.parent.tag_prefill is None 
+        if (parent.note is None
+            and self.parent.tag_prefill is None
             and len(NoteEditor.last_tags.strip()) > 0
             and get_config_value_or_default("notes.editor.autoFillWithLastTagsOnOpen", False)):
             self.tag.setText(NoteEditor.last_tags.lstrip())
-            
-        
+
+
 
     def _add_to_tree(self, map, prefix):
         res = []
@@ -805,7 +815,7 @@ class CreateTab(QWidget):
                         font-style: italic;
                     }}
                     dl {{
-                        border-left: 10px solid {fg}; 
+                        border-left: 10px solid {fg};
                         padding-left: 10px;
                         margin: 1.5em 10px;
 
@@ -847,15 +857,15 @@ class CreateTab(QWidget):
                 path = get_config_value_or_default("pdfUrlImportSavePath", "")
                 if path is None or len(path) == 0:
                     tooltip("""You have to set a save path for imported URLs first.
-                        <center>Config value: <i>pdfUrlImportSavePath</i></center> 
+                        <center>Config value: <i>pdfUrlImportSavePath</i></center>
                     """, period=4000)
                     return
                 path = utility.misc.get_pdf_save_full_path(path, name)
                 utility.misc.url_to_pdf(dialog.chosen_url, path)
                 self.source.setText(path)
-            else: 
+            else:
                 tooltip("Invalid URL")
-        
+
 
     def on_url_clicked(self):
         dialog = URLInputDialog(self)
@@ -888,7 +898,7 @@ class CreateTab(QWidget):
 class PriorityTab(QWidget):
 
     def __init__(self, priority_list, parent):
-        
+
         QWidget.__init__(self)
 
         self.parent     = parent
@@ -943,7 +953,7 @@ class PriorityTab(QWidget):
                 background-color: #313233;
             }
             """)
-        
+
 
     def on_remove_clicked(self, id):
         """
@@ -1045,7 +1055,7 @@ class SettingsTab(QWidget):
         self.auto_fill_with_last_tag_cb.setChecked(get_config_value_or_default("notes.editor.autoFillWithLastTagsOnOpen", False))
         self.auto_fill_with_last_tag_cb.clicked.connect(self.auto_fill_with_last_tag_cb_clicked)
         self.layout.addWidget(self.auto_fill_with_last_tag_cb)
-        
+
         self.auto_hide_left_pane_cb = QCheckBox("Hide left side by default on open")
         self.auto_hide_left_pane_cb.setChecked(get_config_value_or_default("notes.editor.autoHideLeftPaneOnOpen", False))
         self.auto_hide_left_pane_cb.clicked.connect(self.auto_hide_left_pane_cb_clicked)
@@ -1082,7 +1092,7 @@ class SettingsTab(QWidget):
 
         self.layout.addSpacing(15)
         self.layout.addWidget(QLabel("Example queue calculation with current settings:"))
-        
+
         self.qu_examples = [QLineEdit() for ix in range(0, 13)]
         for le in self.qu_examples:
             self.layout.addWidget(le)
@@ -1090,7 +1100,7 @@ class SettingsTab(QWidget):
         self.layout.addStretch(1)
         self.setLayout(self.layout)
         self.update_queue_example()
-    
+
     def auto_hide_left_pane_cb_clicked(self):
         update_config("notes.editor.autoHideLeftPaneOnOpen", self.auto_hide_left_pane_cb.isChecked())
 
@@ -1136,7 +1146,7 @@ class SettingsTab(QWidget):
             self.qu_examples[ix].setReadOnly(True)
 
 
-            
+
 
 
 
