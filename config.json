@@ -116,7 +116,7 @@
 "shortcuts.menubar.import.create_new": "Alt+N",
 "shortcuts.menubar.import.zotero_csv": "",
 "shortcuts.menubar.queue_manager": "",
-"shortcuts.menubar.quick_open": "",
+"shortcuts.menubar.quick_open": "Ctrl+O",
 "shortcuts.menubar.addon_settings": "",
 
 "searchbar.default_mode": "Add-on",

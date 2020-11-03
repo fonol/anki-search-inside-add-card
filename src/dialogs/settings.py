@@ -51,6 +51,6 @@ class SettingsDialog(QDialog):
         else:
             tooltip_text = "<b>No settings changed!</b>"
 
-        tooltip(tooltip_text, parent = mw)
+        tooltip(tooltip_text, parent = mw.app.activeWindow())
 
         self.accept()

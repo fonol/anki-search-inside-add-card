@@ -54,12 +54,11 @@ from .web.html import right_side_html
 from .notes import *
 from .hooks import add_hook
 from .dialogs.editor import EditDialog, NoteEditor
-from .dialogs.quick_open_pdf import QuickOpenPDF
 from .dialogs.review_read_interrupt import ReviewReadInterruptDialog
 from .internals import requires_index_loaded
 from .config import get_config_value_or_default as conf_or_def
 from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search, search_by_tags
-from .api import try_open_first_in_queue, queue_has_items
+from .api import try_open_first_in_queue, queue_has_items, show_quick_open_pdf
 from .menubar import Menu
 
 
@@ -437,7 +436,7 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     _try_register(config["toggleShortcut"], toggleAddon)
 
     # quick open dialog
-    _try_register("Ctrl+o", show_quick_open_pdf)
+    #_try_register("Ctrl+o", show_quick_open_pdf)
 
     # open Create/Update note modal
     _try_register(config["notes.editor.shortcut"], show_note_modal)
@@ -476,24 +475,6 @@ def show_note_modal():
         ix              = get_index()
         read_note_id    = ix.ui.reading_modal.note_id
         NoteEditor(ix.ui._editor.parentWindow, note_id=None, add_only=read_note_id is not None, read_note_id=read_note_id)
-
-def show_quick_open_pdf():
-    """ Ctrl + O pressed -> show small dialog to quickly open a PDF. """
-
-    win = aqt.mw.app.activeWindow()
-    # dont trigger keypress in edit dialogs opened within the add dialog
-    if isinstance(win, EditDialog) or isinstance(win, Browser):
-        return
-
-    ix      = get_index()
-    dialog  = QuickOpenPDF(ix.ui._editor.parentWindow)
-
-    if dialog.exec_():
-        if dialog.chosen_id is not None and dialog.chosen_id > 0:
-            def cb(can_load):
-                if can_load:
-                    ix.ui.reading_modal.display(dialog.chosen_id)
-            ix.ui.js_with_cb("beforeNoteQuickOpen();", cb)
 
 
 def register_io_add_hook():
