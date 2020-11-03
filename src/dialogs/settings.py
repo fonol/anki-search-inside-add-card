@@ -41,10 +41,15 @@ class SettingsDialog(QDialog):
         self.setLayout(self.vbox)
 
     def accept_clicked(self):
-        tooltip_text = "<b>Settings changed</b><br>" + \
-                       self.tab_appearance.save_changes() + \
-                       self.tab_shortcut.save_changes() + \
-                       "<br><i>Please restart Anki to make sure all settings are applied!</i>"
+        tooltip_changes = self.tab_appearance.save_changes() + \
+                          self.tab_shortcut.save_changes()
+
+        if tooltip_changes:
+            tooltip_text = "<b>Settings changed</b><br>" + \
+                           tooltip_changes + \
+                           "<br><i>Please restart Anki to make sure all settings are applied!</i>"
+        else:
+            tooltip_text = "<b>No settings changed!</b>"
 
         tooltip(tooltip_text, parent = mw)
 
