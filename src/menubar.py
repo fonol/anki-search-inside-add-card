@@ -1,8 +1,7 @@
 from aqt import QMenu, mw
 from aqt.qt import QAction, QKeySequence
 from .config import get_config_value
-from .api import open_or_switch_to_editor, show_queue_picker
-from . import show_quick_open_pdf
+from .api import show_queue_picker, show_quick_open_pdf
 from aqt.utils import showInfo
 from .dialogs.editor import open_editor, NoteEditor
 from .dialogs.zotero_import import ZoteroImporter
@@ -24,8 +23,8 @@ class Menu():
         add_menu_actions(submenu_import, import_options)
 
         menu_options=( # CONF_KEY, TITLE, CALLBACK
-            ("shortcuts.menubar.queue_manager",  "Queue Manager",    self.queue_picker), # somewhat functional
-            ("shortcuts.menubar.quick_open",     "Quick Open...",    self.quick_open), # still dysfunctional
+            ("shortcuts.menubar.queue_manager",  "Queue Manager",    self.queue_picker),
+            ("shortcuts.menubar.quick_open",     "Quick Open...",    self.quick_open),
             ("shortcuts.menubar.addon_settings", "Add-On Settings",  self.settings)
         )
 
@@ -50,7 +49,6 @@ class Menu():
         dialog = SettingsDialog(mw.app.activeWindow())
 
 
-# Menu bar settings
 def get_menu(parent, menuName):
     menubar = parent.form.menubar
     for a in menubar.actions():
