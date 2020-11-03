@@ -991,7 +991,7 @@ class ReadingModal:
     def show_theme_dialog(self):
         """ Display a modal to change the main color of the reader. """
 
-        modal = filled_template("theme", {})
+        modal = filled_template("theme", {}).replace('`', '\\`')
 
         return """modalShown=true;
             $('#siac-timer-popup').hide();
