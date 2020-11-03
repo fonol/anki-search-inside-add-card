@@ -1122,10 +1122,10 @@ window.updatePageSidebarIfShown = function () {
 }
 
 window.modalBgUpdate = function () {
-    $("#siac-modal-bg-update .siac-link-btn").addClass('siac-disabled');
+    $(".siac-link-btn").addClass('siac-disabled');
     setTimeout(function () {
-        $("#siac-modal-bg-update .siac-link-btn").removeClass('siac-disabled');
-    }, 1200);
+        $(".siac-link-btn").removeClass('siac-disabled');
+    }, 1400);
 }
 //
 // helpers

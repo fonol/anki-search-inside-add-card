@@ -6,6 +6,10 @@
 --zoom: $zoom$;
 
 --c-reading-modal-background: $styles.readingModalBackgroundColor$;
+--c-reading-modal-button-border-color: $styles.readingModalButtonBorderColor$;
+--c-reading-modal-filter: $styles.readingModalFilter$;
+--c-reading-modal-texture: $styles.readingModalTexture$;
+--c-reading-modal-background-size: $styles.readingModalBackgroundSize$px;
 
 --c-suspended-foreground: $styles.suspendedForegroundColor$;
 --c-suspended-background: $styles.suspendedBackgroundColor$;
