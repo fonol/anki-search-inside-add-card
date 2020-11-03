@@ -997,6 +997,7 @@ table.striped tr:nth-child(even) {
     background-color: var(--c-reading-modal-background);
     color: beige;
     border: 2px outset #b2b2a0;
+    border-color: var(--c-reading-modal-button-border-color);
     border-radius: 3px;
     box-shadow: 2px 2px #1f1f1f;
 }
