@@ -3,9 +3,11 @@ from aqt.qt import QAction, QKeySequence
 from .config import get_config_value
 from .api import show_queue_picker, show_quick_open_pdf
 from aqt.utils import showInfo
-from .dialogs.editor import open_editor, NoteEditor
+from .dialogs.editor import NoteEditor
 from .dialogs.zotero_import import ZoteroImporter
+from .dialogs.quick_youtube_import import QuickYoutubeImport
 from .dialogs.settings import SettingsDialog
+
 
 class Menu():
     def __init__(self):
@@ -16,7 +18,7 @@ class Menu():
 
         import_options=( #SHORTCUT_CONF_KEY, TITLE, CALLBACK
             ("shortcuts.menubar.import.create_new", "New",           self.import_create_new),
-            #("shortcuts.menubar.import.youtube",    "YouTube",       self.import_youtube), # still dysfunctional
+            ("shortcuts.menubar.import.youtube",    "YouTube",       self.import_youtube), # still dysfunctional
             ("shortcuts.menubar.import.zotero_csv", "Zotero CSV",    self.import_zotero)
         )
 
@@ -35,6 +37,19 @@ class Menu():
 
         if dialog.exec_():
             tooltip(f"Created {dialog.total_count} notes.")
+
+    def import_youtube(self):
+        dialog = QuickYoutubeImport(mw.app.activeWindow())
+
+        if dialog.exec_():
+            title = dialog.youtube_title
+            channel = dialog.youtube_channel
+            url = dialog.youtube_url
+
+            text=f"""Title: {title}""" + "\n" + f"""Channel: {channel}"""
+
+
+            noteeditor = NoteEditor(mw.app.activeWindow(), title_prefill = title, text_prefill = text, source_prefill = url)
 
     def import_create_new(self):
         dialog = NoteEditor(mw.app.activeWindow())
