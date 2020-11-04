@@ -55,7 +55,7 @@ from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWith
 from .models import SiacNote
 try:
     from .previewer import AddPreviewer
-except: 
+except:
     pass
 import utility.misc
 import utility.text
@@ -99,11 +99,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-page "):
         # Page button in results clicked.
-        # This is a special command, it triggers a rendering, but should not be stored 
+        # This is a special command, it triggers a rendering, but should not be stored
         # as last command in state.last_search_cmd like other cmds that start with "siac-r-".
-        # That is because the index.ui instance caches the last result, and uses that cached result to display 
+        # That is because the index.ui instance caches the last result, and uses that cached result to display
         # a requested page (but to refresh the UI, we don't want the result to be cached).
-        # So if we want to refresh the UI, state.last_search_cmd should point to the cmd that produces the search results, 
+        # So if we want to refresh the UI, state.last_search_cmd should point to the cmd that produces the search results,
         # and state.last_page_requested indicates that we are on a page other than the first at the time of refresh.
         state.last_page_requested = int(cmd.split()[1])
         index.ui.show_page(self, int(cmd.split()[1]))
@@ -169,9 +169,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         tooltip(f"Set Zoom to <b>{str(int(new * 100))}%</b>")
         update_config("searchpane.zoom", new)
 
- 
+
     elif cmd.startswith("siac-render-tags"):
-        # clicked on a tag with (+n) 
+        # clicked on a tag with (+n)
         index.ui.printTagHierarchy(cmd[16:].split(" "))
 
     elif cmd.startswith("siac-r-random-notes ") and check_index():
@@ -197,7 +197,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         try:
             QApplication.clipboard().setText(cmd[16:])
             tooltip("Copied to Clipboard!")
-        except: 
+        except:
             tooltip("Failed to copy to clipboard!")
 
     elif cmd.startswith("siac-copy-cid-to-cb "):
@@ -207,7 +207,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             try:
                 QApplication.clipboard().setText(str(cards[0]))
                 tooltip("Copied to Clipboard!")
-            except: 
+            except:
                 tooltip("Failed to copy to clipboard!")
 
     elif cmd.startswith("siac-rerender "):
@@ -265,7 +265,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             stamp = set_stamp()
             notes = get_in_progress_pdf_notes()
             index.ui.print_search_results(notes, stamp)
-    
+
     elif cmd == "siac-r-show-due-today":
         stamp = set_stamp()
         notes = get_notes_scheduled_for_today()
@@ -411,7 +411,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         # show the dialog that allows to change the schedule of a note
         show_schedule_dialog(self.parentWindow)
 
-    
+
 
     elif cmd.startswith("siac-pdf-mark "):
         mark_type       = int(cmd.split()[1])
@@ -442,7 +442,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-pdf-left-tab-pdf-search "):
         # search input coming from the "PDFs" tab in the pdf viewer
         inp = " ".join(cmd.split(" ")[1:])
-        if inp: 
+        if inp:
             notes = find_pdf_notes_by_title(inp)
             index.ui.reading_modal.sidebar.print(notes)
 
@@ -541,6 +541,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             index.deleteNote(id)
         run_hooks("user-note-deleted")
         index.ui.js(""" $('#siac-del-modal').remove(); """)
+
+    elif cmd == "siac-initialised-editor":
+        run_hooks("editor-with-siac-initialised")
 
     elif cmd.startswith("siac-delete-current-user-note "):
         # Delete a note, invoked from the reading modal
@@ -663,7 +666,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             tooltip("Queue is Empty! Add some items first.", period=4000)
 
     elif cmd == "siac-user-note-queue-read-head":
-        index.ui.reading_modal.read_head_of_queue() 
+        index.ui.reading_modal.read_head_of_queue()
 
     elif cmd == "siac-user-note-done":
         # hit "Done" button in reading modal
@@ -708,7 +711,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-yt-save-time "):
         # save time clicked in yt player
         time = int(cmd.split()[1])
-        src = index.ui.reading_modal.note.source 
+        src = index.ui.reading_modal.note.source
         set_source(index.ui.reading_modal.note_id, utility.text.set_yt_time(src, time))
 
 
@@ -818,7 +821,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     #
     # Settings Dialog
-    # 
+    #
 
     elif cmd == "siac-styling":
         show_settings_modal(self)
@@ -838,7 +841,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     #
     # Image cutout in PDF viewer
-    # 
+    #
 
     elif cmd.startswith("siac-add-image "):
         b64     = cmd.split()[2][13:]
@@ -861,7 +864,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             os.remove(os.path.join(media_dir, name))
         except:
             pass
-    
+
     elif cmd.startswith("siac-screen-capture "):
         # capture part of webview (e.g. 'Capture' btn in Yt viewer clicked)
 
@@ -881,7 +884,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         generate_clozes(sentences, pdf_path, pdf_title, page)
 
     elif cmd.startswith("siac-fld-cloze "):
-        # "Send to Field" clicked -> show modal with field list 
+        # "Send to Field" clicked -> show modal with field list
         cloze_text = " ".join(cmd.split()[1:])
         index.ui.reading_modal.show_cloze_field_picker_modal(cloze_text)
 
@@ -1116,15 +1119,15 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if len(cards) > 0:
             d = AddPreviewer(self.parentWindow, mw, cards)
             d.open()
-    
+
     elif cmd == "siac-rev-last-linked":
         # clicked "Review" on modal that asks if the user wants to review the last notes before reading
         last_linked     = get_last_linked_notes(index.ui.reading_modal.note_id, limit=500)
         if len(last_linked) > 0:
             if hasattr(mw.col, "find_cards"):
-                due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+                due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
             else:
-                due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked])) 
+                due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
             success     = create_filtered_deck(due_today)
             if success:
                 mw.moveToState("review")
@@ -1397,7 +1400,7 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
 
     if state.last_search_cmd is None:
         return
-    
+
     ix = get_index()
 
     # if index is not initialized or reading modal is active, abort
@@ -1418,10 +1421,10 @@ def try_repeat_last_search(editor: Optional[aqt.editor.Editor] = None):
     # go to that page again.
     if page is not None:
         ix.ui.show_page(editor, page)
-    
+
 def show_schedule_dialog(parent_window):
     """ Show the dialog that allows to change the schedule of a note """
-    
+
     index           = get_index()
     original_sched  = index.ui.reading_modal.note.reminder
     nid             = index.ui.reading_modal.note_id
@@ -1579,7 +1582,7 @@ def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: i
             if a > 0:
                 add_note_to_index(note)
                 if index.ui.reading_modal.note_id is not None:
-                    nid = index.ui.reading_modal.note_id 
+                    nid = index.ui.reading_modal.note_id
 
                     def cb(page: int):
                         if page >= 0:
@@ -1627,7 +1630,7 @@ def get_index_info():
     full_path       = utility.misc.get_addon_base_folder_path()
     dir_name        = utility.misc.get_addon_id()
     notes_db_path   = ("%ssiac-notes.db" % config["addonNoteDBFolderPath"]) if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() + "siac-notes.db"
-    notes_db_folder = config["addonNoteDBFolderPath"] if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path() 
+    notes_db_folder = config["addonNoteDBFolderPath"] if config["addonNoteDBFolderPath"] is not None and len(config["addonNoteDBFolderPath"]) > 0 else utility.misc.get_user_files_folder_path()
     notes_db_bu     = notes_db_folder + ("siac_backups/" if notes_db_folder.endswith("/") else "/siac_backups/")
     data_folder     = config["addon.data_folder"]
 
@@ -1651,7 +1654,7 @@ def get_index_info():
     sp_off  = "<span style='background: red; color: black;'>&nbsp;Off&nbsp;</span>"
     html            = """
             <table class="striped" style='width: 100%%; margin-bottom: 18px;'>
-                
+
                <tr><td>Add-on Folder:</td><td> <a class='keyword' onclick='pycmd("siac-open-folder %s")'><b>%s</b></a></td></tr>
                <tr><td>Last Update:</td><td> <b>%s</b></td></tr>
                <tr><td>Qt Version:</td><td> <b>%s</b></td></tr>
@@ -1712,11 +1715,11 @@ def get_index_info():
             qt_v,
             chromium_v,
             str(state.rust_lib),
-            index.type, 
+            index.type,
             sqlite3.sqlite_version,
-            str(index.initializationTime), 
-            index.get_number_of_notes(), 
-            config["alwaysRebuildIndexIfSmallerThan"], 
+            str(index.initializationTime),
+            index.get_number_of_notes(),
+            config["alwaysRebuildIndexIfSmallerThan"],
             len(config["stopwords"]),
             sp_on if index.logging else sp_off,
             sp_on if config["renderImmediately"] else sp_off,
@@ -1729,7 +1732,7 @@ def get_index_info():
             str(config["leftSideWidthInPercent"]) + " / " + str(100 - config["leftSideWidthInPercent"]),
             config["toggleShortcut"],
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
-            notes_db_path, notes_db_folder, notes_db_bu, notes_db_bu, 
+            notes_db_path, notes_db_folder, notes_db_bu, notes_db_bu,
             data_folder, data_folder,
             config["notes.editor.shortcut"],
             config["pdf.shortcuts.toggle_search_on_select"],
@@ -1942,7 +1945,7 @@ def create_filtered_deck(cids: List[int]) -> bool:
                 mw.col.sched.empty_filtered_deck(did)
             else:
                 mw.col.sched.emptyDyn(did)
-        else:    
+        else:
             if hasattr(mw.col.decks, "new_filtered"):
                 did = mw.col.decks.new_filtered(REV_FILTERED_DECK_NAME)
             else:

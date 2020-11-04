@@ -310,6 +310,10 @@ def print_starting_info(editor: Editor):
                 %s
             </div>`;""" % html)
 
+    editor.web.eval("""
+        window.onload = pycmd('siac-initialised-editor');
+        """)
+
 @requires_index_loaded
 def display_model_dialog():
     """ Called after clicking on "Set Fields" in the settings modal. """

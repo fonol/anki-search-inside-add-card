@@ -23,11 +23,13 @@ from anki.utils import isMac
 from aqt.utils import tooltip, showInfo
 from aqt.browser import Browser
 
+import state
 from .notes import get_queue_count
 from .state import get_index
 from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.quick_open_pdf import QuickOpenPDF
 from .dialogs.queue_picker import QueuePicker
+from .hooks import add_tmp_hook, add_hook
 
 _timer = None
 
@@ -36,8 +38,6 @@ def queue_has_items() -> bool:
     return get_queue_count() > 0
 
 def open_or_switch_to_editor(function):
-    global _timer
-
     aqt.dialogs.open("AddCards", mw)
 
     try:
@@ -57,10 +57,10 @@ def open_or_switch_to_editor(function):
     except:
         pass
 
-    _timer = aqt.qt.QTimer()
-    _timer.setSingleShot(True)
-    _timer.timeout.connect(function)
-    _timer.start(1500)
+    if state.editor_is_ready:
+        function()
+    else:
+        add_tmp_hook("editor-with-siac-initialised", lambda: function())
 
 def show_queue_picker():
     dialog = QueuePicker(mw.app.activeWindow())
@@ -90,7 +90,7 @@ def show_quick_open_pdf():
         if dialog.chosen_id is not None and dialog.chosen_id > 0:
             def _open_id():
                 ix      = get_index()
-                
+
                 def cb(can_load):
                     if can_load:
                         ix.ui.reading_modal.display(dialog.chosen_id)

@@ -52,7 +52,7 @@ from .debug_logging import log
 from .web.web import *
 from .web.html import right_side_html
 from .notes import *
-from .hooks import add_hook
+from .hooks import add_hook, run_hooks
 from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.review_read_interrupt import ReviewReadInterruptDialog
 from .internals import requires_index_loaded
@@ -230,6 +230,9 @@ def on_load_note(editor: Editor):
     if get_edit() is None and editor is not None:
         set_edit(editor)
 
+
+
+
 def on_add_cards_init(add_cards: AddCards):
 
     if get_index() is not None and add_cards.editor is not None:
@@ -371,8 +374,13 @@ def insert_scripts():
     </script>
     """
 
+def set_editor_ready():
+    #showInfo("Editor e")
+    state.editor_is_ready = True
+
 def setup_hooks():
     """ Todo: move more add-on code to hooks. """
+    add_hook("editor-with-siac-initialised", lambda: set_editor_ready())
 
     add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-created", lambda: try_repeat_last_search())
@@ -397,6 +405,7 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
 
     # might still be true if Create Note dialog was closed by closing its parent window, so reset it
     state.note_editor_shown = False
+    state.editor_is_ready = False
 
     def cb(night_mode: bool):
         state.night_mode = night_mode

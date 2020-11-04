@@ -32,6 +32,7 @@ corpus              : Optional[List[Tuple[Any, ...]]]   = None
 deck_map            : Optional[Dict[str, int]]          = None
 edit                : Optional[Editor]                  = None
 night_mode          : Optional[bool]                    = None
+editor_is_ready     : bool                              = False
 
 # Indicates whether the Rust lib has been successfully loaded or not
 rust_lib            : Optional[bool]                    = None
@@ -60,9 +61,9 @@ index_data_size     : int                               = -1
 
 def check_index() -> bool:
     """ Returns True if index and ui are ready to use. """
-    return (search_index is not None 
-            and search_index.ui is not None 
-            and search_index.ui._editor is not None 
+    return (search_index is not None
+            and search_index.ui is not None
+            and search_index.ui._editor is not None
             and search_index.ui._editor.web is not None)
 
 def set_index(index: "FTSIndex"):
