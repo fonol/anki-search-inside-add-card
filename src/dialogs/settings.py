@@ -12,6 +12,7 @@ class SettingsDialog(QDialog):
             parent = mw.app.activeWindow()
 
         QDialog.__init__(self, parent)
+        self.parent = parent
 
         self.setWindowTitle("SIAC Settings")
         self.setup_ui()
@@ -51,6 +52,6 @@ class SettingsDialog(QDialog):
         else:
             tooltip_text = "<b>No settings changed!</b>"
 
-        tooltip(tooltip_text, parent = mw.app.activeWindow())
+        tooltip(tooltip_text, parent = self.parent)
 
         self.accept()
