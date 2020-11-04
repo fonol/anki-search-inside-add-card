@@ -223,6 +223,8 @@ def setup_ui_after_index_built(editor, index, init_time=None):
         index.ui.set_editor(editor)
         index.ui.sidebar.display()
 
+    editor.web.eval("""pycmd('siac-initialised-editor');""")
+
 
 def show_search_result_area(editor=None, initializationTime=0):
     """ Toggle between the loader and search result area when the index has finished building. """
@@ -310,9 +312,6 @@ def print_starting_info(editor: Editor):
                 %s
             </div>`;""" % html)
 
-    editor.web.eval("""
-        pycmd('siac-initialised-editor');
-        """)
 
 @requires_index_loaded
 def display_model_dialog():
