@@ -156,9 +156,12 @@ def on_reviewer_did_answer(reviewer, card, ease):
         if state.review_counter >= get_config_value("mix_reviews_and_reading.interrupt_every_nth_card"):
             state.review_counter = 0
             if queue_has_items():
-                dialog = ReviewReadInterruptDialog(mw)
-                if dialog.exec_():
-                    try_open_first_in_queue("Reading time!")
+                if get_config_value("mix_reviews_and_reading.show_dialog"):
+                    dialog = ReviewReadInterruptDialog(mw)
+                    if not dialog.exec_():
+                        return
+
+                try_open_first_in_queue("Reading time!")
 
 
 def editor_save_with_index_update(dialog: EditDialog, _old: Callable):

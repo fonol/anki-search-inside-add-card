@@ -16,6 +16,7 @@ class setting_tab_interleaving(QWidget):
     def setup_values(self):
         self.previous_enable_interruptor = get_config_value("mix_reviews_and_reading")
         self.previous_every_n_cards = get_config_value("mix_reviews_and_reading.interrupt_every_nth_card")
+        self.previous_show_interrupt_dialog = get_config_value("mix_reviews_and_reading.show_dialog")
         self.previous_session_enabled = not state.rr_mix_disabled
 
     def update_session_cb(self, boolean):
@@ -68,6 +69,10 @@ class setting_tab_interleaving(QWidget):
         hbox.setAlignment(Qt.AlignLeft)
         vbox.addLayout(hbox)
 
+        self.cb_show_interrupt_dialog = QCheckBox("Show interrupt dialog when interrupting.")
+        self.cb_show_interrupt_dialog.setChecked(self.previous_show_interrupt_dialog)
+        vbox.addWidget(self.cb_show_interrupt_dialog)
+
         vbox.setAlignment(Qt.AlignTop)
         self.setLayout(vbox)
 
@@ -76,6 +81,7 @@ class setting_tab_interleaving(QWidget):
 
         # get current settings from checkboxes etc
         enable_interruptor = self.cb_enable_interruptor.isChecked()
+        interrupt_dialog = self.cb_show_interrupt_dialog.isChecked()
         if self.cb_session.currentIndex()== 0:
             session_enabled = True
         else:
@@ -101,6 +107,13 @@ class setting_tab_interleaving(QWidget):
             interrupt_n_cards = int(interrupt_n_cards)
             update_config("mix_reviews_and_reading.interrupt_every_nth_card", interrupt_n_cards)
             return_string += f"""Interrupt every {interrupt_n_cards} cards. """
+
+        if interrupt_dialog != self.previous_show_interrupt_dialog:
+            update_config("mix_reviews_and_reading.show_dialog", interrupt_dialog)
+            if interrupt_dialog:
+                return_string += "Show interrupt dialog. "
+            else:
+                return_string += "Do not show interrupt dialog. "
 
         if return_string != "":
             return_string += "<br>"
