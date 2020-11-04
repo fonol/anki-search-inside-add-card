@@ -1,5 +1,5 @@
 from aqt import QMenu, mw
-from aqt.qt import QAction, QKeySequence
+from aqt.qt import QAction, QKeySequence, Qt
 from .config import get_config_value
 from .api import show_queue_picker, show_quick_open_pdf
 from aqt.utils import showInfo
@@ -91,6 +91,7 @@ def add_menu_actions(menu, menu_options):
         act = QAction(t,menu)
         if hk:
             act.setShortcut(QKeySequence(hk))
+            act.setShortcutContext(Qt.ApplicationShortcut)
 
         act.triggered.connect(cb)
         menu.addAction(act)
