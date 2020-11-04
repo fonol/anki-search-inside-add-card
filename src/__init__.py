@@ -56,7 +56,7 @@ from .hooks import add_hook, run_hooks
 from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.review_read_interrupt import ReviewReadInterruptDialog
 from .internals import requires_index_loaded
-from .config import get_config_value_or_default as conf_or_def
+from .config import get_config_value_or_default as conf_or_def, get_config_value
 from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search, search_by_tags
 from .api import try_open_first_in_queue, queue_has_items, show_quick_open_pdf
 from .menubar import Menu
@@ -71,8 +71,7 @@ def init_addon():
     if config["dev_mode"]:
         state.dev_mode = True
 
-    if config["mix_reviews_and_reading"]:
-        gui_hooks.reviewer_did_answer_card.append(on_reviewer_did_answer)
+    gui_hooks.reviewer_did_answer_card.append(on_reviewer_did_answer)
 
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
 
@@ -147,12 +146,14 @@ def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callab
 
 def on_reviewer_did_answer(reviewer, card, ease):
 
+    if get_config_value("mix_reviews_and_reading") == False:
+        return
     if state.rr_mix_disabled:
         return
     if ease > 1:
         # don't care for type of review
         state.review_counter += 1
-        if state.review_counter >= config["mix_reviews_and_reading.interrupt_every_nth_card"]:
+        if state.review_counter >= get_config_value("mix_reviews_and_reading.interrupt_every_nth_card"):
             state.review_counter = 0
             if queue_has_items():
                 dialog = ReviewReadInterruptDialog(mw)
