@@ -311,7 +311,7 @@ def print_starting_info(editor: Editor):
             </div>`;""" % html)
 
     editor.web.eval("""
-        window.onload = pycmd('siac-initialised-editor');
+        pycmd('siac-initialised-editor');
         """)
 
 @requires_index_loaded
