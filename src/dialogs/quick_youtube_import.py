@@ -1,31 +1,31 @@
 from aqt.qt import *
-import aqt.editor
 import aqt
-from aqt.utils import showInfo
-import utility.text
-
 import requests
 import json
+import typing
+
+import utility.text
 
 class QuickYoutubeImport(QDialog):
     """Quickly prepare notes from YouTube videos"""
     def __init__(self, parent):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
 
-        self.parent = parent
-        self.last_yt_id = None
-        self.youtube_title = ""
-        self.youtube_channel = ""
-        self.youtube_url = ""
+        self.parent             = parent
+        self.last_yt_id         = None
+        self.youtube_title      = ""
+        self.youtube_channel    = ""
+        self.youtube_url        = ""
 
         self.setup_ui()
         self.setWindowTitle("Quick Youtube Import")
 
     def setup_ui(self):
+    
         vbox = QVBoxLayout()
 
         # Cancel and Okay Buttons
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.button_box.accepted.connect(self.accept_clicked)
         self.button_box.rejected.connect(self.reject)
 
@@ -33,9 +33,9 @@ class QuickYoutubeImport(QDialog):
         self.url_line.textChanged.connect(self.on_input)
         self.url_line.setFocus()
 
-        self.label_image = QLabel()
-        self.label_title = QLabel()
-        self.label_author = QLabel()
+        self.label_image    = QLabel()
+        self.label_title    = QLabel()
+        self.label_author   = QLabel()
 
         vbox.addWidget(self.label_title)
         vbox.addWidget(self.url_line)
@@ -49,22 +49,25 @@ class QuickYoutubeImport(QDialog):
 
         # get clipboard content
         clipboard_text = QApplication.clipboard().text()
-        test_id = utility.text.get_yt_video_id(clipboard_text)
 
-        if len(test_id) == 11:
-            self.url_line.setText(clipboard_text)
+        if utility.text.is_yt_video_url(clipboard_text):
+
+            yt_id = utility.text.get_yt_video_id(clipboard_text)
+
+            if yt_id is not None and len(yt_id) > 0:
+                self.url_line.setText(clipboard_text)
 
     def accept_clicked(self):
         self.accept()
 
-    def on_input(self, lineedit_text):
+    def on_input(self, lineedit_text: str):
         # reset everything
         image = QPixmap(320, 180)
 
         def _reset_yt_properties():
             self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
             self.last_yt_id = None
-            self.label_title.setText("<b>Title</b>")
+            self.label_title.setText("<b>Paste a Youtube video url</b>")
             self.label_author.setText("Youtube Channel")
 
             self.youtube_title = ""
@@ -120,7 +123,7 @@ class QuickYoutubeImport(QDialog):
         self.set_youtube_url(lineedit_text, yt_id)
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
 
-    def set_youtube_url(self, urlstring, yt_id):
+    def set_youtube_url(self, urlstring: str, yt_id: str):
         time = utility.text.get_yt_time(urlstring)
 
         if time is not None:
