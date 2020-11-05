@@ -449,6 +449,13 @@ def get_yt_video_id(src: str) -> str:
         return match.group(1)
     return ""
 
+def is_yt_video_url(url: str) -> bool:
+    if url is None:
+        return False
+    if re.match(r"^(https?\:\/\/)?((www\.)?youtube\.com|youtu\.?be)\/.+$", url):
+        return True
+    return False
+
 def get_yt_time(url: str) -> Optional[int]:
     match   = re.match(r".+/watch\?v=([^&]+)(?:&t=(.+)s)?", url)
     if match and len(match.groups()) > 1:
