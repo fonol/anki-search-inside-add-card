@@ -52,11 +52,11 @@ from .debug_logging import log
 from .web.web import *
 from .web.html import right_side_html
 from .notes import *
-from .hooks import add_hook
+from .hooks import add_hook, run_hooks
 from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.review_read_interrupt import ReviewReadInterruptDialog
 from .internals import requires_index_loaded
-from .config import get_config_value_or_default as conf_or_def
+from .config import get_config_value_or_default as conf_or_def, get_config_value
 from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search, search_by_tags
 from .api import try_open_first_in_queue, queue_has_items, show_quick_open_pdf
 from .menubar import Menu
@@ -71,8 +71,7 @@ def init_addon():
     if config["dev_mode"]:
         state.dev_mode = True
 
-    if config["mix_reviews_and_reading"]:
-        gui_hooks.reviewer_did_answer_card.append(on_reviewer_did_answer)
+    gui_hooks.reviewer_did_answer_card.append(on_reviewer_did_answer)
 
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
 
@@ -147,17 +146,22 @@ def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callab
 
 def on_reviewer_did_answer(reviewer, card, ease):
 
+    if get_config_value("mix_reviews_and_reading") == False:
+        return
     if state.rr_mix_disabled:
         return
     if ease > 1:
         # don't care for type of review
         state.review_counter += 1
-        if state.review_counter >= config["mix_reviews_and_reading.interrupt_every_nth_card"]:
+        if state.review_counter >= get_config_value("mix_reviews_and_reading.interrupt_every_nth_card"):
             state.review_counter = 0
             if queue_has_items():
-                dialog = ReviewReadInterruptDialog(mw)
-                if dialog.exec_():
-                    try_open_first_in_queue("Reading time!")
+                if get_config_value("mix_reviews_and_reading.show_dialog"):
+                    dialog = ReviewReadInterruptDialog(mw)
+                    if not dialog.exec_():
+                        return
+
+                try_open_first_in_queue("Reading time!")
 
 
 def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
@@ -229,6 +233,9 @@ def on_load_note(editor: Editor):
 
     if get_edit() is None and editor is not None:
         set_edit(editor)
+
+
+
 
 def on_add_cards_init(add_cards: AddCards):
 
@@ -371,8 +378,13 @@ def insert_scripts():
     </script>
     """
 
+def set_editor_ready():
+    #showInfo("Editor e")
+    state.editor_is_ready = True
+
 def setup_hooks():
     """ Todo: move more add-on code to hooks. """
+    add_hook("editor-with-siac-initialised", lambda: set_editor_ready())
 
     add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("user-note-created", lambda: try_repeat_last_search())
@@ -397,6 +409,7 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
 
     # might still be true if Create Note dialog was closed by closing its parent window, so reset it
     state.note_editor_shown = False
+    state.editor_is_ready = False
 
     def cb(night_mode: bool):
         state.night_mode = night_mode

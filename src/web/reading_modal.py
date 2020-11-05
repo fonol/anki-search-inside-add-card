@@ -52,7 +52,7 @@ from ..dialogs.postpone_dialog import PostponeDialog
 from .templating import filled_template
 from .note_templates import *
 from ..internals import js, requires_index_loaded, perf_time
-from ..config import get_config_value_or_default
+from ..config import get_config_value_or_default, get_config_value
 from ..web_import import import_webpage
 from ..stats import getRetentions
 from ..markdown import markdown
@@ -234,7 +234,7 @@ class ReadingModal:
                 update_reminder(self.note_id, new_schedule)
             else:
                 # if the note has a schedule and was due today, either:
-                # - update the schedule (set a new due date based on its scheduling type) 
+                # - update the schedule (set a new due date based on its scheduling type)
                 # - or delete the schedule (schedule type was 'td', i.e. one-shot schedule)
 
                 if note.has_schedule() and note.is_or_was_due():
@@ -279,7 +279,7 @@ class ReadingModal:
             if dialog.value == 0:
                 qlen = len(_get_priority_list())
                 if qlen > 2:
-                    delay = int(qlen/3) 
+                    delay = int(qlen/3)
                     if self.note.position < 3:
                         delay += (3 - self.note.position)
                     set_delay(self.note_id, delay)
@@ -304,7 +304,7 @@ class ReadingModal:
                 update_priority_list(self.note_id, 0)
 
                 # DEBUG
-                if state.dev_mode: 
+                if state.dev_mode:
                     note = get_note(self.note_id)
                     assert(get_priority(self.note_id) is None)
                     assert(not note.is_in_queue())
@@ -532,7 +532,7 @@ class ReadingModal:
                     due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
                 else:
                     due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
-                if due_today and len(due_today) > 0:
+                if due_today and len(due_today) > 0 and get_config_value("notes.show_linked_cards_are_due_overlay"):
                     act         = "Reading"
                     if note.is_pdf():
                         ntype = "PDF"
@@ -559,7 +559,7 @@ class ReadingModal:
             editable        = False
             #check note type
             if note.is_pdf() and utility.misc.file_exists(source):
-                overflow        = "hidden" 
+                overflow        = "hidden"
                 text            = self.pdf_viewer_html(source, note.get_title(), priority)
 
                 if "/" in source:
@@ -575,14 +575,14 @@ class ReadingModal:
             bottom_bar      = self.bottom_bar(note)
 
             top_hidden      = "top-hidden" if conf_or_def("notes.queue.hide_top_bar", False) else ""
-        
+
             if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
                 notification    = f"readerNotification('Scheduled for {note.due_date_str()}');"
 
-            params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, text = text, 
-            overflow=overflow, top_hidden=top_hidden, 
+            params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, text = text,
+            overflow=overflow, top_hidden=top_hidden,
             notification=notification, page_sidebar=page_sidebar, rev_overlay = rev_overlay, bottom_bar=bottom_bar)
-            
+
             html = filled_template("reading_modal", params)
 
             return html
@@ -729,7 +729,7 @@ class ReadingModal:
         queue           = _get_priority_list()
         priority        = get_priority(note_id)
         has_schedule    = "active" if note.is_due_sometime() else ""
-        
+
         if note.is_in_queue():
             queue_btn_text      = "Done!"
         else:
@@ -741,7 +741,7 @@ class ReadingModal:
         # 1. note is in queue and has a priority -> show the priority
         if note.is_in_queue() and priority:
             queue_info      = "Priority: %s" % (dynamic_sched_to_str(priority))
-        # 2. note is in queue but has no priority (it is scheduled for today/ was due in the last 7 days) 
+        # 2. note is in queue but has no priority (it is scheduled for today/ was due in the last 7 days)
         elif note.is_in_queue():
             if note.is_due_today():
                 queue_info      = "Scheduled for today"
@@ -761,7 +761,7 @@ class ReadingModal:
 
         bar_hidden          = "bottom-hidden" if get_config_value_or_default("notes.queue.hide_bottom_bar", False) else ""
 
-        params              = dict(note_id = note_id, queue_btn_text = queue_btn_text, queue_info = queue_info, 
+        params              = dict(note_id = note_id, queue_btn_text = queue_btn_text, queue_info = queue_info,
         queue_readings_list = queue_readings_list, has_schedule=has_schedule, hide_page_map = hide_page_map, bar_hidden = bar_hidden)
 
         html                = filled_template("reading_modal_bottom", params)
@@ -809,7 +809,7 @@ class ReadingModal:
                     prio_lbl        = f"<span class='mr-5 ml-5 siac-prio-lbl' style='background: {utility.misc.prio_color(prio_lbl)};'>{prio_lbl}</span>"
                 else:
                     prio_lbl        = f"<span class='mr-5 ml-5 siac-prio-lbl fg_lightgrey' style='background: #5a5a5a;'>-</span>"
-            else: 
+            else:
                 prio_lbl = ""
             queue_head_readings +=  "<a onclick='if (!pdfLoading && !modalShown) {%s destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note %s\"); hideQueueInfobox();}' class='siac-link-btn bold %s' style='font-size: 12px;' %s >%s.%s%s %s</a><br>" % (should_show_loader, queue_item.id, should_greyout, hover_actions, queue_item.position + 1, prio_lbl, clock, qi_title)
             if ix > 3:
@@ -829,9 +829,9 @@ class ReadingModal:
             <div class='fg_lightgrey cursor-pointer white-hover siac-queue-btn' onclick='pycmd("siac-user-note-queue-picker")'><i class="fa fa-inbox mr-10"></i>{position} / {len(queue)}</div>
             <div class='fg_lightgrey siac-queue-btn ml-5'>&#216;&nbsp;{avg_prio}</div>
             {hide_btn}
-            {show_prio_btn} 
+            {show_prio_btn}
             <br>
-            {queue_head_readings} 
+            {queue_head_readings}
         </div>
         """
 
@@ -923,7 +923,7 @@ class ReadingModal:
             note = get_note(nid)
         else:
             note = self.note
-        
+
         prio    = get_priority(note.id)
 
         title   = utility.text.trim_if_longer_than(note.get_title(), 40).replace("`", "")
@@ -938,7 +938,7 @@ class ReadingModal:
             $('#siac-reading-modal-center').append(`%s`);
             """ % modal
 
-   
+
     def schedule_note(self, option: int):
         """ Will update the schedule of the note according to the chosen option.
             This function is called after an option in the dialog of display_schedule_dialog() has been selected. """

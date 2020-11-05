@@ -56,6 +56,7 @@
 "pdf.highlights.use_alt_render": false,
 "notes.sidebar.visible": false,
 "notes.showSource": true,
+"notes.show_linked_cards_are_due_overlay": true,
 "searchpane.zoom" : 1.0,
 "switchLeftRight": false,
 "highlighting": true,
@@ -127,5 +128,6 @@
 "addon.data_folder": "",
 "dev_mode" : false,
 "mix_reviews_and_reading": false,
-"mix_reviews_and_reading.interrupt_every_nth_card" : 50
+"mix_reviews_and_reading.interrupt_every_nth_card" : 50,
+"mix_reviews_and_reading.show_dialog" : true
 }

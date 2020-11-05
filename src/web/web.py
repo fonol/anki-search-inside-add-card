@@ -160,9 +160,10 @@ def reload_styles():
     aqt.editor._html    = re.sub("<style id='siac-styles'>(?:\r\n|\n|.)+?</style>", f"<style id='siac-styles'>{css}</style>", aqt.editor._html)
     editor              = get_index().ui._editor
 
-    if editor.web is not None:
-        editor.web.eval(f"document.getElementById('siac-styles').innerHTML = `{css}`;")
-        activate_nightmode(None, editor)
+    if editor is not None:
+        if editor.web is not None:
+            editor.web.eval(f"document.getElementById('siac-styles').innerHTML = `{css}`;")
+            activate_nightmode(None, editor)
 
 
 
@@ -221,6 +222,8 @@ def setup_ui_after_index_built(editor, index, init_time=None):
     if config["notes.sidebar.visible"]:
         index.ui.set_editor(editor)
         index.ui.sidebar.display()
+
+    editor.web.eval("""pycmd('siac-initialised-editor');""")
 
 
 def show_search_result_area(editor=None, initializationTime=0):
@@ -308,6 +311,7 @@ def print_starting_info(editor: Editor):
             <div id='startInfo'>
                 %s
             </div>`;""" % html)
+
 
 @requires_index_loaded
 def display_model_dialog():
