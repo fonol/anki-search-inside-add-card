@@ -19,6 +19,8 @@ class setting_tab_interleaving(QWidget):
         self.previous_show_interrupt_dialog = get_config_value("mix_reviews_and_reading.show_dialog")
         self.previous_session_enabled = not state.rr_mix_disabled
 
+        self.previous_cards_are_due_overlay = get_config_value("notes.show_linked_cards_are_due_overlay")
+
     def update_session_cb(self, boolean):
         self.cb_session.setEnabled(boolean)
         self.sb_every_n_card.setEnabled(boolean)
@@ -27,7 +29,7 @@ class setting_tab_interleaving(QWidget):
     def setup_ui(self):
         vbox = QVBoxLayout()
 
-        # explanation
+        # Review Interruption
         vbox.addWidget(QLabel("<b>Review Interruption</b>"))
         explanation = "Review interruption will interleave your Anki reviews " +\
                       "with SIAC notes from the reading queue. This enables " + \
@@ -73,6 +75,12 @@ class setting_tab_interleaving(QWidget):
         self.cb_show_interrupt_dialog.setChecked(self.previous_show_interrupt_dialog)
         vbox.addWidget(self.cb_show_interrupt_dialog)
 
+        vbox.addWidget(QLabel("<br><b>Interleaving cards before reading</b>"))
+
+        self.cb_cards_are_due_overlay = QCheckBox("Show overlay if cards which are linked to a note are due before reading/watching/writing the note")
+        self.cb_cards_are_due_overlay.setChecked(self.previous_cards_are_due_overlay)
+        vbox.addWidget(self.cb_cards_are_due_overlay)
+
         vbox.setAlignment(Qt.AlignTop)
         self.setLayout(vbox)
 
@@ -87,6 +95,7 @@ class setting_tab_interleaving(QWidget):
         else:
             session_enabled = False
         interrupt_n_cards = self.sb_every_n_card.value()
+        cards_are_due_overlay = self.cb_cards_are_due_overlay.isChecked()
 
         # check for changes
         if enable_interruptor != self.previous_enable_interruptor:
@@ -115,7 +124,15 @@ class setting_tab_interleaving(QWidget):
             else:
                 return_string += "Do not show interrupt dialog. "
 
+        if cards_are_due_overlay != self.previous_cards_are_due_overlay:
+            update_config("notes.show_linked_cards_are_due_overlay", cards_are_due_overlay)
+            if cards_are_due_overlay:
+                return_string += "Show overlay if cards are due enabled. "
+            else:
+                return_string += "Show overlay if cards are due disabled. "
+
         if return_string != "":
             return_string += "<br>"
+
 
         return return_string
