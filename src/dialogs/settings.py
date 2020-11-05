@@ -2,9 +2,9 @@ from aqt.qt import *
 from aqt import mw
 from aqt.utils import tooltip
 
-from .setting_tabs.shortcut import setting_tab_shortcut
-from .setting_tabs.appearance import setting_tab_appearance
-from .setting_tabs.interleaving import setting_tab_interleaving
+from .setting_tabs.shortcut import ShortcutSettingsTab
+from .setting_tabs.appearance import AppearanceSettingsTab
+from .setting_tabs.interleaving import InterleavingSettingsTab
 
 
 class SettingsDialog(QDialog):
@@ -25,9 +25,9 @@ class SettingsDialog(QDialog):
         self.tabs           = QTabWidget()
 
         # Define tabs
-        self.tab_appearance = setting_tab_appearance()
-        self.tab_shortcut = setting_tab_shortcut()
-        self.tab_interleaving = setting_tab_interleaving()
+        self.tab_appearance = AppearanceSettingsTab()
+        self.tab_shortcut = ShortcutSettingsTab()
+        self.tab_interleaving = InterleavingSettingsTab()
 
         self.tabs.addTab(self.tab_appearance, "Appearance")
         self.tabs.addTab(self.tab_shortcut   , "Shortcuts")

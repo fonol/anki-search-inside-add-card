@@ -23,7 +23,7 @@ class shortcut:
 
         self.manual_button = QPushButton("Manual")
 
-class setting_tab_shortcut(QWidget):
+class ShortcutSettingsTab(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
@@ -100,8 +100,8 @@ class setting_tab_shortcut(QWidget):
                     gridbox.addWidget(item.edit_button, line, 2 + column_shift)
                     gridbox.addWidget(item.manual_button, line, 3 + column_shift)
 
-                    item.edit_button.clicked.connect(grab_key(self, item))
-                    item.manual_button.clicked.connect(manual_shortcut(self, item))
+                    item.edit_button.clicked.connect(GrabKeyDialog(self, item))
+                    item.manual_button.clicked.connect(ManualShortcut(self, item))
 
                     i+=1
 
@@ -121,7 +121,7 @@ class setting_tab_shortcut(QWidget):
         return str(count_changes) + " shortcuts changed.<br>"
 
 
-class manual_shortcut(QDialog):
+class ManualShortcut(QDialog):
     def __init__(self, parent, shortcut_item):
         QDialog.__init__(self, parent = parent)
 
@@ -162,7 +162,7 @@ largely based on Image Occlusion by Glutanimate
 which is in turn largely based on ImageResizer by searene
 (https://github.com/searene/Anki-Addons)
 """
-class grab_key(QDialog):
+class GrabKeyDialog(QDialog):
     def __init__(self, parent, shortcut_item):
         QDialog.__init__(self, parent = parent)
 
