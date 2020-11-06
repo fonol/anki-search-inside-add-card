@@ -127,7 +127,10 @@
 "searchbar.default_mode": "Add-on",
 "addon.data_folder": "",
 "dev_mode" : false,
+
 "mix_reviews_and_reading": false,
 "mix_reviews_and_reading.interrupt_every_nth_card" : 50,
-"mix_reviews_and_reading.show_dialog" : true
+"mix_reviews_and_reading.show_dialog" : true,
+"mix_reviews_and_reading.fuzz" : 0.5,
+"mix_reviews_and_reading.mode" : "every_n"
 }

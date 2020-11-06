@@ -20,7 +20,7 @@ from typing import Optional
 import aqt
 from aqt import mw
 from anki.utils import isMac
-from aqt.utils import tooltip, showInfo
+from aqt.utils import tooltip
 from aqt.browser import Browser
 
 import state
