@@ -121,7 +121,7 @@ window.pdfLeftTabAnkiSearchKeyup = function (value, event) {
 }
 
 window.initAreaHighlightShortcutPressed = function() {
-    if (Highlighting.colorSelected.id > 0) {
+    if (pdfDisplayed && !iframeIsDisplayed && Highlighting.colorSelected.id > 0) {
         readerNotification("&nbsp;Area Highlight&nbsp;");
         initAreaHighlight();
         pdfTextLayerMetaKey = false;
