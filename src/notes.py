@@ -51,6 +51,9 @@ PRIORITY_SCALE_FACTOR   : int           = get_config_value_or_default("notes.que
 # how should priority be weighted 
 PRIORITY_MOD            : float         = get_config_value_or_default("notes.queue.priorityMod", 1.0) 
 
+# due notes from how many days ago shall be considered?
+DUE_NOTES_BOUNDARY      : int           = get_config_value_or_default("notes.queue.due_note_boundary", 7)
+
 
 @unique
 class PDFMark(Enum):
@@ -250,7 +253,7 @@ def create_note(title: str, text: str, source: str, tags: str, nid: int, reminde
 def _get_priority_list_with_last_prios() -> List[Tuple[Any, ...]]:
     """ Returns (nid, last prio, last prio creation, current position, schedule) """
 
-    stp     = utility.date.date_x_days_ago_stamp(7)
+    stp     = utility.date.date_x_days_ago_stamp(DUE_NOTES_BOUNDARY)
     sql     = f""" select notes.id, prios.prio, prios.created, notes.position, notes.reminder, notes.delay 
                         from notes left join (select distinct nid, prio, max(created) as created, type from queue_prio_log group by nid) as prios on prios.nid = notes.id 
                         where notes.position >= 0 or (substr(notes.reminder, 21, 10) <= '{utility.date.date_only_stamp()}' and substr(notes.reminder, 21, 10) >= '{stp}')
@@ -269,7 +272,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
         After calling this function, the priority queue should contain:
 
         1. All notes that currently have a priority
-        2. All notes that have a reminder (special schedule) that is due today or was due in the last 7 days (older due dates are ignored)
+        2. All notes that have a reminder (special schedule) that is due today or was due in the last <DUE_NOTES_BOUNDARY> days (older due dates are ignored)
 
     """
 
@@ -285,7 +288,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
 
         if last_prio is None:
             # a note that has no priority and a reminder (special schedule) that is not due today or was due in 
-            # the last 7 days won't appear in the queue
+            # the last DUE_NOTES_BOUNDARY days won't appear in the queue
             if not _specific_schedule_is_due_today(reminder):
                 continue
             else:
@@ -305,7 +308,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
     sorted_by_scores    = sorted(scores, key=lambda x: x[3], reverse=True)
     final_list          = [s for s in sorted_by_scores if s[4] is None or len(s[4].strip()) == 0 or not _specific_schedule_is_due_today(s[4])]
 
-    # put notes whose schedule is due today or was due in the last 7 days in front
+    # put notes whose schedule is due today or was due in the last x days in front
     due_today           = [s for s in sorted_by_scores if s[4] is not None and len(s[4].strip()) > 0 and _specific_schedule_is_due_today(s[4])]
     if len(due_today) > 0:
         due_today   = sorted(due_today, key=lambda x : x[3], reverse=True)
@@ -342,7 +345,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
     c       = conn.cursor()
 
     # 1. null all positions (guarantee only the notes that are in the list calculated here will have a position (= be enqueued))
-    # This will also remove notes from the queue that don't have a priority and whose scheduled due date is < today - 7 days.
+    # This will also remove notes from the queue that don't have a priority and whose scheduled due date is < today - DUE_NOTES_BOUNDARY days.
     c.execute(f"update notes set position = NULL where position is not NULL;")
     # 2. set positions (this basically marks a note as being in the queue)
     for ix, f in enumerate(final_list):
@@ -625,7 +628,7 @@ def find_notes_with_similar_prio(nid_excluded: int, prio: int) -> List[Tuple[int
 
 def get_notes_scheduled_for_today() -> List[SiacNote]:
 
-    boundary    = utility.date.date_x_days_ago_stamp(7)
+    boundary    = utility.date.date_x_days_ago_stamp(DUE_NOTES_BOUNDARY)
     conn        = _get_connection()
     res         = conn.execute(f"select * from notes where reminder like '%|%' and substr(notes.reminder, 21, 10) <= '{utility.date.date_only_stamp()}' and substr(notes.reminder, 21, 10) >= '{boundary}'").fetchall()
     conn.close()
@@ -783,7 +786,7 @@ def get_notes_by_future_due_date() -> Dict[str, List[SiacNote]]:
     """ Get notes that have a schedule due in the future. """
 
     conn    = _get_connection()
-    res     = conn.execute(f"select * from notes where substr(reminder, 21, 10) >= '{utility.date.date_x_days_ago_stamp(7)}'").fetchall()
+    res     = conn.execute(f"select * from notes where substr(reminder, 21, 10) >= '{utility.date.date_x_days_ago_stamp(DUE_NOTES_BOUNDARY)}'").fetchall()
     conn.close()
     res     = _to_notes(res)
     d       = dict()
@@ -1644,7 +1647,7 @@ def _specific_schedule_is_due_today(sched_str: str) -> bool:
     if not "|" in sched_str:
         return False
     dt = _dt_from_date_str(sched_str.split("|")[1])
-    return dt.date() <= datetime.today().date() and dt.date() >= (datetime.today() - timedelta(days=7)).date()
+    return dt.date() <= datetime.today().date() and dt.date() >= (datetime.today() - timedelta(days=DUE_NOTES_BOUNDARY)).date()
 
 def _specific_schedule_was_due_before_today(sched_str: str) -> bool:
     if not "|" in sched_str:

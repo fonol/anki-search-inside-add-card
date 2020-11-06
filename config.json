@@ -83,6 +83,7 @@
 "notes.queue.show_priorities": false,
 "notes.queue.hide_bottom_bar": false,
 "notes.queue.hide_top_bar": false,
+"notes.queue.due_note_boundary": 7,
 "pdf.theme": "pdf_reader.css",
 "pdf.color_mode": "Day",
 "pdf.page_sidebar_shown": true,
