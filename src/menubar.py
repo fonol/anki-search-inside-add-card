@@ -2,7 +2,7 @@ from aqt import QMenu, mw
 from aqt.qt import QAction, QKeySequence, Qt
 from .config import get_config_value
 from .api import show_queue_picker, show_quick_open_pdf
-from aqt.utils import showInfo
+from aqt.utils import showInfo, tooltip
 from .dialogs.editor import NoteEditor
 from .dialogs.zotero_import import ZoteroImporter
 from .dialogs.quick_youtube_import import QuickYoutubeImport
