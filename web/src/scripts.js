@@ -899,9 +899,7 @@ window.globalKeydown = function(e) {
     // F11 : hide bars
     if (displayedNoteId && e.keyCode === 122) {
         toggleBothBars();
-    }  else if (pdfDisplayed && !$('.field').is(':focus')) {
-        pdfViewerKeyup(e);
-    }
+    }  
 }
 
 window.toggleNoteSidebar = function(){

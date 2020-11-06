@@ -120,24 +120,15 @@ window.pdfLeftTabAnkiSearchKeyup = function (value, event) {
     }
 }
 
-window.pdfViewerKeyup = function (event) {
-    if (event.ctrlKey && (event.keyCode === 39 || (event.keyCode === 32 && event.shiftKey))) {
-        if (event.shiftKey && pdfDisplayed && pagesRead.indexOf(pdfDisplayedCurrentPage) === -1 && (!pdfExtract || (pdfExtract[0] <= pdfDisplayedCurrentPage && pdfExtract[1] >= pdfDisplayedCurrentPage))) {
-            pycmd("siac-pdf-page-read " + $('#siac-pdf-top').data("pdfid") + " " + pdfDisplayedCurrentPage + " " + numPagesExtract());
-            if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
-            updatePdfProgressBar();
-        }
-        pdfPageRight();
-    } else if (event.ctrlKey && event.keyCode === 74) {
-        pdfPageRight();
-    } else if (event.ctrlKey && (event.keyCode === 37 || event.keyCode === 75)) {
-        pdfPageLeft();
-    } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.keyCode === 65 && Highlighting.colorSelected.id > 0) {
+window.initAreaHighlightShortcutPressed = function() {
+    if (Highlighting.colorSelected.id > 0) {
         readerNotification("&nbsp;Area Highlight&nbsp;");
         initAreaHighlight();
         pdfTextLayerMetaKey = false;
     }
 }
+
+
 window.pdfTooltipClozeKeyup = function (event) {
     try {
         if (event.ctrlKey && event.shiftKey && event.keyCode === 67) {

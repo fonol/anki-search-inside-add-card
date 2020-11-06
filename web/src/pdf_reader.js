@@ -454,6 +454,17 @@ window.pdfPageLeft = function () {
         queueRenderPage(pdfDisplayedCurrentPage);
     }
 }
+window.pdfToggleReadAndPageRight = function() {
+    if (!pdfDisplayed || iframeIsDisplayed) {
+        return;
+    }
+    if (pdfDisplayed && pagesRead.indexOf(pdfDisplayedCurrentPage) === -1 && (!pdfExtract || (pdfExtract[0] <= pdfDisplayedCurrentPage && pdfExtract[1] >= pdfDisplayedCurrentPage))) {
+        pycmd("siac-pdf-page-read " + $('#siac-pdf-top').data("pdfid") + " " + pdfDisplayedCurrentPage + " " + numPagesExtract());
+        if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
+        updatePdfProgressBar();
+    }
+    pdfPageRight();
+}
 
 window.togglePageRead = function (nid) {
 
