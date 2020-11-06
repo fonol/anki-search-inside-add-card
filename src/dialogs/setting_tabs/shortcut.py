@@ -55,7 +55,11 @@ class ShortcutSettingsTab(QWidget):
             shortcut("pdf.shortcuts.later",                   "Postpone",                 id_pdf),
             shortcut("pdf.shortcuts.jump_to_last_page",       "Jump to last page",        id_pdf),
             shortcut("pdf.shortcuts.jump_to_first_page",      "Jump to first page",       id_pdf),
+            shortcut("pdf.shortcuts.toggle_read_page_right",  "Read + Next Page",         id_pdf),
+            shortcut("pdf.shortcuts.page_left",               "Page Left",                id_pdf),
+            shortcut("pdf.shortcuts.page_right",              "Page Right",               id_pdf),
             shortcut("pdf.shortcuts.scissor_tool",            "Scissor Tool",             id_pdf),
+            shortcut("pdf.shortcuts.init_area_highlight",     "Area Highlight",           id_pdf),
 
             # General Shortcuts
             shortcut("shortcuts.focus_search_bar",            "Focus Search Bar",         id_general),
