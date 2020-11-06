@@ -54,7 +54,8 @@ def review_interruptor():
             if interrupt_in_n_cards >= due_cards:
                 interrupt_in_n_cards = int(due_cards)
 
-            showInfo(f"{n_cards}/{n_cards_fuzz}")
+            # debug showInfo()
+            #showInfo(f"{n_cards}/{n_cards_fuzz}")
 
     state.review_counter += 1
 
