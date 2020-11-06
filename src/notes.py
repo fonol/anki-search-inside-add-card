@@ -624,9 +624,10 @@ def find_notes_with_similar_prio(nid_excluded: int, prio: int) -> List[Tuple[int
     return res
 
 def get_notes_scheduled_for_today() -> List[SiacNote]:
-    today_dt = _date_now_str()[:4] + _date_now_str()[5:7] + _date_now_str()[8:10]
-    conn = _get_connection()
-    res = conn.execute(f"select * from notes where position is not null and reminder like '%|%' and cast((substr(reminder, 21, 4) || substr(reminder, 26,2) || substr(reminder, 29,2)) as integer) <= {today_dt}").fetchall()
+
+    boundary    = utility.date.date_x_days_ago_stamp(7)
+    conn        = _get_connection()
+    res         = conn.execute(f"select * from notes where reminder like '%|%' and substr(notes.reminder, 21, 10) <= '{utility.date.date_only_stamp()}' and substr(notes.reminder, 21, 10) >= '{boundary}'").fetchall()
     conn.close()
     return _to_notes(res)
 
