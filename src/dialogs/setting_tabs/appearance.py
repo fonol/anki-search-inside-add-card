@@ -6,7 +6,7 @@ from ...web.web import reload_styles
 from aqt.utils import showInfo
 from ...config import get_config_value_or_default, update_config
 
-class color_item:
+class ColorItem:
     def __init__(self, config_key, description, sort_id):
         self.config_key = config_key
         self.description = description
@@ -34,16 +34,17 @@ class color_item:
 
     def change_button_color(self):
         """Generate color preview pixmap and place it on button"""
-        pixmap = QPixmap(64, 18)
+        pixmap = QPixmap(48, 18)
         qcolour = QColor(0, 0, 0)
         qcolour.setNamedColor(self.current_color)
 
         pixmap.fill(qcolour)
         self.color_button.setIcon(QIcon(pixmap))
         self.color_button.setIconSize(QSize(128, 18))
+        self.color_button.setMaximumWidth(80)
 
 
-class setting_tab_appearance(QWidget):
+class AppearanceSettingsTab(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
@@ -69,22 +70,22 @@ class setting_tab_appearance(QWidget):
 
         # add items
         self.color_list = (
-            color_item("styles.night.tagBackgroundColor"      , "Tag Background Color (Night Mode)", id_tags),
-            color_item("styles.night.tagForegroundColor"      , "Tag Foreground Color (Night Mode)", id_tags),
-            color_item("styles.tagBackgroundColor"            , "Tag Background Color",              id_tags),
-            color_item("styles.tagForegroundColor"            , "Tag Foreground Color",              id_tags),
+            ColorItem("styles.night.tagBackgroundColor"      , "Tag Background Color (Night Mode)", id_tags),
+            ColorItem("styles.night.tagForegroundColor"      , "Tag Foreground Color (Night Mode)", id_tags),
+            ColorItem("styles.tagBackgroundColor"            , "Tag Background Color",              id_tags),
+            ColorItem("styles.tagForegroundColor"            , "Tag Foreground Color",              id_tags),
 
-            color_item("styles.highlightForegroundColor"      , "Highlight Foreground Color", id_highlight),
-            color_item("styles.highlightBackgroundColor"      , "Highlight Background Color", id_highlight),
-            color_item("styles.night.highlightForegroundColor", "Highlight Foreground Color (Night Mode)", id_highlight),
-            color_item("styles.night.highlightBackgroundColor", "Highlight Background Color (Night Mode)", id_highlight),
+            ColorItem("styles.highlightForegroundColor"      , "Highlight Foreground Color", id_highlight),
+            ColorItem("styles.highlightBackgroundColor"      , "Highlight Background Color", id_highlight),
+            ColorItem("styles.night.highlightForegroundColor", "Highlight Foreground Color (Night Mode)", id_highlight),
+            ColorItem("styles.night.highlightBackgroundColor", "Highlight Background Color (Night Mode)", id_highlight),
 
-            color_item("styles.suspendedForegroundColor"      , "Suspended Foreground Color", id_suspended),
-            color_item("styles.suspendedBackgroundColor"      , "Suspended Background Color", id_suspended),
+            ColorItem("styles.suspendedForegroundColor"      , "Suspended Foreground Color", id_suspended),
+            ColorItem("styles.suspendedBackgroundColor"      , "Suspended Background Color", id_suspended),
 
-            color_item("styles.modalBorderColor"              , "Modal Border Color", id_modal),
-            color_item("styles.night.modalBorderColor"        , "Modal Border Color (Night Mode)", id_modal),
-            color_item("styles.readingModalBackgroundColor"   , "Modal Background Color", id_modal)
+            ColorItem("styles.modalBorderColor"              , "Modal Border Color", id_modal),
+            ColorItem("styles.night.modalBorderColor"        , "Modal Border Color (Night Mode)", id_modal),
+            ColorItem("styles.readingModalBackgroundColor"   , "Modal Background Color", id_modal)
         )
 
         line = -1
@@ -113,6 +114,7 @@ class setting_tab_appearance(QWidget):
 
 
                     i+=1
+            gridbox.setColumnStretch(0, 1)
 
         self.setLayout(gridbox)
 

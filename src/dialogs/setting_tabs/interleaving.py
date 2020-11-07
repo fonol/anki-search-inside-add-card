@@ -6,7 +6,7 @@ from aqt.utils import showInfo
 from ...config import get_config_value, update_config
 
 
-class setting_tab_interleaving(QWidget):
+class InterleavingSettingsTab(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 

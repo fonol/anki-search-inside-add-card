@@ -23,7 +23,7 @@ class shortcut:
 
         self.manual_button = QPushButton("Manual")
 
-class setting_tab_shortcut(QWidget):
+class ShortcutSettingsTab(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
@@ -55,7 +55,11 @@ class setting_tab_shortcut(QWidget):
             shortcut("pdf.shortcuts.later",                   "Postpone",                 id_pdf),
             shortcut("pdf.shortcuts.jump_to_last_page",       "Jump to last page",        id_pdf),
             shortcut("pdf.shortcuts.jump_to_first_page",      "Jump to first page",       id_pdf),
+            shortcut("pdf.shortcuts.toggle_read_page_right",  "Read + Next Page",         id_pdf),
+            shortcut("pdf.shortcuts.page_left",               "Page Left",                id_pdf),
+            shortcut("pdf.shortcuts.page_right",              "Page Right",               id_pdf),
             shortcut("pdf.shortcuts.scissor_tool",            "Scissor Tool",             id_pdf),
+            shortcut("pdf.shortcuts.init_area_highlight",     "Area Highlight",           id_pdf),
 
             # General Shortcuts
             shortcut("shortcuts.focus_search_bar",            "Focus Search Bar",         id_general),
@@ -63,7 +67,7 @@ class setting_tab_shortcut(QWidget):
             shortcut("shortcuts.trigger_predef_search",       "Trigger predef. search",   id_general),
             shortcut("shortcuts.search_for_current_field",    "Search for current field", id_general),
             shortcut("shortcuts.trigger_current_filter",      "Trigger current filter",   id_general),
-            shortcut("toggleShortcut",                        "Toggle Add-On",            id_general),
+            shortcut("toggleShortcut",                        "Toggle Add-on",            id_general),
 
             # Shortcuts for the items in the menubar
             shortcut("shortcuts.menubar.import.create_new",    "Create New",              id_menubar),
@@ -71,7 +75,7 @@ class setting_tab_shortcut(QWidget):
             shortcut("shortcuts.menubar.import.youtube",       "Import YouTube Link",     id_menubar),
             shortcut("shortcuts.menubar.queue_manager",        "Open Queue Manager",      id_menubar),
             shortcut("shortcuts.menubar.quick_open",           "Quick Open",              id_menubar),
-            shortcut("shortcuts.menubar.addon_settings",       "Open Add-On Settings",    id_menubar)
+            shortcut("shortcuts.menubar.addon_settings",       "Open Add-on Settings",    id_menubar)
         )
 
         line = -1
@@ -100,8 +104,8 @@ class setting_tab_shortcut(QWidget):
                     gridbox.addWidget(item.edit_button, line, 2 + column_shift)
                     gridbox.addWidget(item.manual_button, line, 3 + column_shift)
 
-                    item.edit_button.clicked.connect(grab_key(self, item))
-                    item.manual_button.clicked.connect(manual_shortcut(self, item))
+                    item.edit_button.clicked.connect(GrabKeyDialog(self, item))
+                    item.manual_button.clicked.connect(ManualShortcut(self, item))
 
                     i+=1
 
@@ -121,7 +125,7 @@ class setting_tab_shortcut(QWidget):
         return str(count_changes) + " shortcuts changed.<br>"
 
 
-class manual_shortcut(QDialog):
+class ManualShortcut(QDialog):
     def __init__(self, parent, shortcut_item):
         QDialog.__init__(self, parent = parent)
 
@@ -162,7 +166,7 @@ largely based on Image Occlusion by Glutanimate
 which is in turn largely based on ImageResizer by searene
 (https://github.com/searene/Anki-Addons)
 """
-class grab_key(QDialog):
+class GrabKeyDialog(QDialog):
     def __init__(self, parent, shortcut_item):
         QDialog.__init__(self, parent = parent)
 

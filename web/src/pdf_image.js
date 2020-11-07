@@ -119,8 +119,16 @@ window.clearImgSelectionCanvas = function() {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 window.initAreaHighlight = function() {
+   
+    // remove any possibly already existing temporary canvases
+    let existing = document.getElementsByClassName('area_highlight_cv');
+    while(existing[0]) {
+        existing[0].parentNode.removeChild(existing[0]);
+    }
+
     pdfImgSel.canvas = activeCanvas();
     var lCanvasOverlay = document.createElement("canvas");
+    lCanvasOverlay.classList.add("area_highlight_cv");
     lCanvasOverlay.oncontextmenu = disableAreaHighlight;
     pdfImgSel.canvas.parentNode.insertBefore(lCanvasOverlay, pdfImgSel.canvas.nextSibling);
     $(lCanvasOverlay).css({ "width": (pdfImgSel.canvas.width / window.devicePixelRatio) + "px", "height": (pdfImgSel.canvas.height / window.devicePixelRatio) + "px", "top": "0", "left": document.getElementById('text-layer').style.left, "position": "absolute", "z-index": 999999, "opacity": 0.3, "cursor": "crosshair" });
@@ -135,6 +143,7 @@ window.initAreaHighlight = function() {
 window.disableAreaHighlight = function() {
     if (pdfImgSel.canvas) {
         $(pdfImgSel.canvas).remove();
+        pdfImgSel.canvas = null;
     }
     return false;
 }
