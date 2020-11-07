@@ -528,8 +528,18 @@ class MDTextEdit(QTextEdit):
 class ClickableQLabel(QLabel):
     clicked = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, hover_effect=False):
         QLabel.__init__(self, parent)
+        self.hover_effect = hover_effect
+            
+            
+    def enterEvent(self, event):
+        if self.hover_effect:
+            self.setStyleSheet("color: #2496dc")
+    
+    def leaveEvent(self, event):
+        if self.hover_effect:
+            self.setStyleSheet("color: none")
 
     def mousePressEvent(self, evt):
         self.clicked.emit()

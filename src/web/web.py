@@ -55,8 +55,6 @@ def getScriptPlatformSpecific():
         They could be exposed on the internal web server, but as they contain placeholders for config-defined styles,
         it is easier for now that way.
     """
-    #get path
-    dir = utility.misc.get_web_folder_path()
 
     icon_vars = """
     :root {

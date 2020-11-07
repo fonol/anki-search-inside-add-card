@@ -297,7 +297,8 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 }
 body.siac-pdf-hl-alt-render .siac-hl-c {
     mix-blend-mode: normal !important;
-    filter: opacity(0.4) contrast(200%);
+    opacity: 0.5;
+    /* filter: opacity(0.4) contrast(200%); */
 }
 .siac-extract-marker {
     display: inline-block;

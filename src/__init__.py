@@ -464,6 +464,14 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     _try_register(config["pdf.shortcuts.jump_to_last_page"], lambda: editor.web.eval("jumpLastPageShortcut()"))
     _try_register(config["pdf.shortcuts.jump_to_first_page"], lambda: editor.web.eval("jumpFirstPageShortcut()"))
 
+    # pdf page left / right
+    _try_register(config["pdf.shortcuts.page_left"], lambda: editor.web.eval("pdfPageLeft()"))
+    _try_register(config["pdf.shortcuts.page_right"], lambda: editor.web.eval("pdfPageRight()"))
+    _try_register(config["pdf.shortcuts.toggle_read_page_right"], lambda: editor.web.eval("pdfToggleReadAndPageRight()"))
+    
+    # area highlight
+    _try_register(config["pdf.shortcuts.init_area_highlight"], lambda: editor.web.eval("initAreaHighlightShortcutPressed()"))
+
     _try_register(config["shortcuts.focus_search_bar"], lambda: editor.web.eval("focusSearchShortcut()"))
     _try_register(config["shortcuts.trigger_search"], lambda: editor.web.eval("triggerSearchShortcut()"))
     _try_register(config["shortcuts.trigger_predef_search"], lambda: editor.web.eval("predefSearch()"))

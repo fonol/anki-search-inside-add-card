@@ -28,6 +28,8 @@ from .markdown import markdown
 from .markdown.extensions.fenced_code import FencedCodeExtension
 from .markdown.extensions.def_list import DefListExtension
 
+DUE_NOTES_BOUNDARY = get_config_value_or_default("notes.queue.due_note_boundary", 7)
+
 class Printable():
     
     def get_content(self) -> str:
@@ -142,7 +144,7 @@ class SiacNote(Printable):
         if not self.has_schedule():
             return False
         dt = datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
-        return dt.date() >= (datetime.today()  - timedelta(days=7)).date() and dt.date() <= datetime.today().date()
+        return dt.date() >= (datetime.today()  - timedelta(days=DUE_NOTES_BOUNDARY)).date() and dt.date() <= datetime.today().date()
     
     def is_due_sometime(self) -> bool:
         return self.has_schedule()
