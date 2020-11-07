@@ -182,7 +182,7 @@ class ReadingModal:
 
         # try to change the window title to include the title of the currently read note
         win = mw.app.activeWindow()
-        if hasattr(win, "setWindowTitle"):
+        if hasattr(win, "setWindowTitle") and isinstance(win, aqt.addcards.AddCards):
             if ReadingModal._original_win_title is None:
                 ReadingModal._original_win_title = win.windowTitle()
             win.setWindowTitle(f"{ReadingModal._original_win_title} [{self.note.get_title()}]")
