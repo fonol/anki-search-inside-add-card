@@ -28,10 +28,7 @@ class Menu():
         menu_options=( # CONF_KEY, TITLE, CALLBACK
             ("shortcuts.menubar.quick_open",     "Quick Open...",    self.quick_open),
             ("shortcuts.menubar.queue_manager",  "Queue Manager",    self.queue_picker),
-<<<<<<< Updated upstream
-=======
             ("shortcuts.menubar.knowledge_tree", "Knowledge Tree",   self.knowledge_tree),
->>>>>>> Stashed changes
             ("shortcuts.menubar.addon_settings", "Add-on Settings",  self.settings)
         )
 
