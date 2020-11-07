@@ -511,9 +511,13 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Fix: Tag tree not refreshing after editing note in Queue manager",
-        "Fix: Notes with due date older than 7 days without priority still appearing in queue",
-        "Fix: Issue with opening PDF with invalid soure path"
+        "Added menu item to access add-on's dialogs from outside the Add window (thanks to p4nix)",
+        "Added settings dialog, accessible from menu (thanks to p4nix)",
+        "Added Quick Youtube Import dialog, accessible from menu (thanks to p4nix)",
+        "Extended 'Theme' dialog in the PDF reader a bit",
+        "Page forward/backward shortcuts can be set in config now",
+        "Display title of currently read item in the Add window's title bar",
+        "Fix: Bug when hitting Area Highlight shortcut multiple times"
     ]
 
 def known_issues() -> List[str]:
