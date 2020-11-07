@@ -59,7 +59,6 @@ from ..markdown import markdown
 
 
 try:
-    # from ..rs.siacrs.siacrs import *
     utility.misc.load_rust_lib()
     from siacrs import *
     state.rust_lib = True
@@ -72,9 +71,11 @@ except:
 class ReadingModal:
     """ Used to display text and PDF notes. """
 
-    last_opened : Optional[int]             = None
+    last_opened         : Optional[int]             = None
 
-    last_cloze  : Optional[Tuple[int, str]] = None
+    last_cloze          : Optional[Tuple[int, str]] = None
+
+    _original_win_title : Optional[str]             = None
 
     def __init__(self):
         self.note_id            : Optional[int]         = None
@@ -99,7 +100,10 @@ class ReadingModal:
         self.note_id                = None
         self.note                   = None
         self.sidebar.tab_displayed  = None
-
+        if ReadingModal._original_win_title is not None:
+            win = mw.app.activeWindow()
+            if isinstance(win, aqt.addcards.AddCards):
+                win.setWindowTitle(ReadingModal._original_win_title)
 
 
     def page_displayed(self, cb: Callable):
@@ -134,6 +138,7 @@ class ReadingModal:
         self.note               = note
 
         html                    = self.html()
+
 
         index.ui.show_in_large_modal(html)
 
@@ -174,6 +179,13 @@ class ReadingModal:
         # auto fill user defined fields
         self.fill_sources(self._editor)
 
+
+        # try to change the window title to include the title of the currently read note
+        win = mw.app.activeWindow()
+        if hasattr(win, "setWindowTitle"):
+            if ReadingModal._original_win_title is None:
+                ReadingModal._original_win_title = win.windowTitle()
+            win.setWindowTitle(f"{ReadingModal._original_win_title} [{self.note.get_title()}]")
 
     def fill_sources(self, editor):
         """ Check if any of the fields in pdf.onOpen.autoFillFieldsWithPDFName are present, if yes, fill them with the note's title. """
