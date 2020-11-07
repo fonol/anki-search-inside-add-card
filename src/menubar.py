@@ -27,7 +27,7 @@ class Menu():
         menu_options=( # CONF_KEY, TITLE, CALLBACK
             ("shortcuts.menubar.queue_manager",  "Queue Manager",    self.queue_picker),
             ("shortcuts.menubar.quick_open",     "Quick Open...",    self.quick_open),
-            ("shortcuts.menubar.addon_settings", "Add-On Settings",  self.settings)
+            ("shortcuts.menubar.addon_settings", "Add-on Settings",  self.settings)
         )
 
         add_menu_actions(menu, menu_options)
