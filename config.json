@@ -128,6 +128,7 @@
 "shortcuts.menubar.queue_manager": "",
 "shortcuts.menubar.quick_open": "Ctrl+O",
 "shortcuts.menubar.addon_settings": "",
+"shortcuts.menubar.knowledge_tree": "",
 
 "searchbar.default_mode": "Add-on",
 "addon.data_folder": "",
