@@ -10,11 +10,11 @@ from .dialogs.settings import SettingsDialog
 
 
 class Menu():
-    def __init__(self):
-        menu_name = "test"
-        menu = get_menu(mw, "&SIAC")
 
-        submenu_import = get_sub_menu(menu, "Import")
+    def __init__(self):
+
+        menu            = get_menu(mw, "&SIAC")
+        submenu_import  = get_sub_menu(menu, "Import")
 
         import_options=( #SHORTCUT_CONF_KEY, TITLE, CALLBACK
             ("shortcuts.menubar.import.create_new", "New",           self.import_create_new),
@@ -42,12 +42,11 @@ class Menu():
         dialog = QuickYoutubeImport(mw.app.activeWindow())
 
         if dialog.exec_():
-            title = dialog.youtube_title
+            title   = dialog.youtube_title
             channel = dialog.youtube_channel
-            url = dialog.youtube_url
+            url     = dialog.youtube_url
 
-            text=f"""Title: {title}""" + "\n" + f"""Channel: {channel}"""
-
+            text=f"""Title: {title}""" + "  \n" + f"""Channel: {channel}"""
 
             noteeditor = NoteEditor(mw.app.activeWindow(), title_prefill = title, text_prefill = text, source_prefill = url)
 
