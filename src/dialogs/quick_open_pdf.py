@@ -26,6 +26,9 @@ from ..notes import *
 from ..web.reading_modal import ReadingModal
 from ..notes import _get_priority_list
 from ..internals import perf_time
+
+from .components import ClickableQLabel
+
 import utility.text
 import utility.misc
 import utility.tags
@@ -71,9 +74,18 @@ class QuickOpenPDF(QDialog):
 
         self.vbox.addWidget(self.sug_list)
 
-        self.vbox.addWidget(QLabel("<b>Ctrl + F</b>: Open First in Queue"))
-        self.vbox.addWidget(QLabel("<b>Ctrl + R</b>: Open Random Note"))
-        self.vbox.addWidget(QLabel("<b>Ctrl + L</b>: Open Last Opened Note"))
+        lbl_1 = ClickableQLabel(hover_effect=True)
+        lbl_1.setText("<b>Ctrl + F</b>: Open First in Queue")
+        lbl_1.clicked.connect(self.open_head)
+        self.vbox.addWidget(lbl_1)
+        lbl_2 = ClickableQLabel(hover_effect=True)
+        lbl_2.setText("<b>Ctrl + R</b>: Open Random Note")
+        lbl_2.clicked.connect(self.open_random)
+        self.vbox.addWidget(lbl_2)
+        lbl_3 = ClickableQLabel(hover_effect=True)
+        lbl_3.setText("<b>Ctrl + L</b>: Open Last Opened Note")
+        lbl_3.clicked.connect(self.open_last)
+        self.vbox.addWidget(lbl_3)
 
         self.accept_btn = QPushButton("Cancel")
         self.accept_btn.clicked.connect(self.accept)
