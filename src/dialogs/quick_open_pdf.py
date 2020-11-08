@@ -36,9 +36,9 @@ import utility.tags
 
 
 
-class QuickOpenPDF(QDialog):
+class QuickOpenNote(QDialog):
     """
-        Allows to search for a pdf note and open it.
+        Allows to search for an add-on note and open it.
     """
     def __init__(self, parent):
         self.chosen_id = None 
@@ -50,7 +50,7 @@ class QuickOpenPDF(QDialog):
         except:
             self.dark_mode_used = False
         self.setup_ui()
-        self.setWindowTitle("Quick Open: PDF")
+        self.setWindowTitle("Quick Open")
         
        
     def setup_ui(self):
@@ -134,6 +134,9 @@ class QuickOpenPDF(QDialog):
     def fill_result_list(self, notes):
         self.sug_list.clear()
         self.displayed = notes
+        if notes is None:
+            self.displayed = []
+            return
         for ix, note in enumerate(notes):
             if ix < 9:
                 item = QListWidgetItem(f"[{ix+1}] {note.get_title()}")
@@ -151,6 +154,6 @@ class QuickOpenPDF(QDialog):
         if text is None or len(text.strip()) == 0:
             self.fill_result_list(self.suggestions)
         else:
-            notes = find_pdf_notes_by_title(text)
+            notes = find_notes(text)
             self.fill_result_list(notes)
 
