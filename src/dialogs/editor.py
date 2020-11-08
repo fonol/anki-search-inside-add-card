@@ -445,8 +445,9 @@ class CreateTab(QWidget):
         self.slider = QtPrioritySlider(self.parent.priority, self.parent.note_id, schedule=schedule)
 
         self.layout = QHBoxLayout()
-        vbox_left = QVBoxLayout()
+        #vbox_left = QVBoxLayout()
 
+        vbox_taglist = QVBoxLayout()
         tag_lbl = QLabel()
         tag_icn = QPixmap(utility.misc.get_web_folder_path() + "icons/icon-tag-24.png").scaled(14,14)
         tag_lbl.setPixmap(tag_icn)
@@ -456,9 +457,9 @@ class CreateTab(QWidget):
         tag_hb.addWidget(tag_lbl)
         tag_hb.addWidget(QLabel("Tags (Click to Add)"))
 
-        vbox_left.addLayout(tag_hb)
+        vbox_taglist.addLayout(tag_hb)
 
-        vbox_left.addWidget(self.tree)
+        vbox_taglist.addWidget(self.tree)
         self.all_tags_cb = QCheckBox("Include Anki Tags")
         self.all_tags_cb.setChecked(include_anki_tags)
         self.all_tags_cb.stateChanged.connect(self.tag_cb_changed)
@@ -473,9 +474,10 @@ class CreateTab(QWidget):
         hbox_tag_b.addStretch(1)
         # hbox_tag_b.addWidget(col_btn)
         # hbox_tag_b.addWidget(exp_btn)
-        vbox_left.addLayout(hbox_tag_b)
+        vbox_taglist.addLayout(hbox_tag_b)
 
         if len(recently_used_tags) > 0:
+            vbox_recenttags = QVBoxLayout()
             tag_lbl1 = QLabel()
             tag_lbl1.setPixmap(tag_icn)
 
@@ -483,21 +485,39 @@ class CreateTab(QWidget):
             tag_hb1.setAlignment(Qt.AlignLeft)
             tag_hb1.addWidget(tag_lbl1)
             tag_hb1.addWidget(QLabel("Recent (Click to Add)"))
-            vbox_left.addLayout(tag_hb1)
+            vbox_recenttags.addLayout(tag_hb1)
             qs = QScrollArea()
             qs.setStyleSheet(""" QScrollArea { background-color: transparent; } """)
             qs.setFrameShape(QFrame.NoFrame)
             qs.setWidgetResizable(True)
-            qs.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-            qs.setMaximumHeight(100)
+            #qs.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+            #qs.setMaximumHeight(100)
             qs.setWidget(self.recent_tbl)
-            vbox_left.addWidget(qs)
+            vbox_recenttags.addWidget(qs)
 
+        vbox_priority = QVBoxLayout()
+        vbox_priority.addWidget(self.slider)
 
-        vbox_left.addWidget(self.slider)
-        vbox_left.setContentsMargins(0,0,0,0)
+        widget_taglist = QWidget()
+        widget_recenttags = QWidget()
+        widget_priority = QWidget()
+        widget_priority.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
+
+        widget_taglist.setLayout(vbox_taglist)
+        widget_recenttags.setLayout(vbox_recenttags)
+        widget_priority.setLayout(vbox_priority)
+
+        left_splitter = QSplitter()
+        left_splitter.setOrientation(Qt.Vertical)
+        left_splitter.addWidget(widget_taglist)
+        left_splitter.addWidget(widget_recenttags)
+        left_splitter.addWidget(widget_priority)
+
+        tmp_layout = QVBoxLayout()
+        tmp_layout.addWidget(left_splitter)
+
         self.left_pane = QWidget()
-        self.left_pane.setLayout(vbox_left)
+        self.left_pane.setLayout(tmp_layout)
         self.layout.addWidget(self.left_pane, 7)
 
         hbox = QHBoxLayout()
@@ -628,7 +648,7 @@ class CreateTab(QWidget):
 
         if self.parent.text_prefill is not None:
             self.text.setPlainText(self.parent.text_prefill)
-            
+
         # btn_styles = """
         # QPushButton#q_1 { padding-left: 20px; padding-right: 20px; }
         # QPushButton#q_2 { padding-left: 17px; padding-right: 17px; }
@@ -638,7 +658,7 @@ class CreateTab(QWidget):
         # QPushButton#q_6 { padding-left: 0px; padding-right: 0px; }
         # QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_3,QPushButton:hover#q_4,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; }
         # """
-     
+
         styles = """
             QPushButton#q_1,QPushButton#q_2,QPushButton#q_3,QPushButton#q_4,QPushButton#q_5,QPushButton#q_6 { border-radius: 5px; }
 
@@ -927,7 +947,7 @@ class PriorityTab(QWidget):
             self.t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
             self.t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
             self.t_view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        
+
         self.t_view.resizeRowsToContents()
 
         self.t_view.verticalHeader().setSectionsMovable(False)
