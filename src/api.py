@@ -27,7 +27,7 @@ import state
 from .notes import get_queue_count
 from .state import get_index
 from .dialogs.editor import EditDialog, NoteEditor
-from .dialogs.quick_open_pdf import QuickOpenPDF
+from .dialogs.quick_open_pdf import QuickOpenNote
 from .dialogs.queue_picker import QueuePicker
 from .hooks import add_tmp_hook, add_hook
 
@@ -84,7 +84,7 @@ def show_quick_open_pdf():
     #if isinstance(win, EditDialog) or isinstance(win, Browser):
     #    return
 
-    dialog = QuickOpenPDF(mw.app.activeWindow())
+    dialog = QuickOpenNote(mw.app.activeWindow())
 
     if dialog.exec_():
         if dialog.chosen_id is not None and dialog.chosen_id > 0:
