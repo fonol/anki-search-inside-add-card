@@ -13,6 +13,7 @@ from .dialogs.knowledge_tree import KnowledgeTree
 class Menu():
 
     def __init__(self):
+        self.kt = None
 
         menu            = get_menu(mw, "&SIAC")
         submenu_import  = get_sub_menu(menu, "Import")
@@ -62,7 +63,12 @@ class Menu():
         show_queue_picker()
 
     def knowledge_tree(self):
-        kt = KnowledgeTree()
+        if self.kt is None:
+            self.kt = KnowledgeTree()
+            self.kt.show()
+        else:
+            self.kt.close()
+            self.kt = None
 
     def settings(self):
         dialog = SettingsDialog(mw.app.activeWindow())
