@@ -22,6 +22,7 @@ from aqt import mw
 from anki.utils import isMac
 from aqt.utils import tooltip
 from aqt.browser import Browser
+from aqt.main import ResetReason
 
 import state
 from .notes import get_queue_count
@@ -61,6 +62,8 @@ def open_or_switch_to_editor(function):
         function()
     else:
         add_tmp_hook("editor-with-siac-initialised", lambda: function())
+
+    mw.requireReset(reason=ResetReason.AddCardsAddNote)
 
 def show_queue_picker():
     dialog = QueuePicker(mw.app.activeWindow())
