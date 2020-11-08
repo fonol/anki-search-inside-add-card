@@ -1032,7 +1032,7 @@ def find_by_text(text: str):
 def find_notes(text: str) -> List[SiacNote]:
     q = ""
     for token in text.lower().split():
-        if len(token) > 1:
+        if len(token) > 0:
             token = token.replace("'", "")
             q = f"{q} or lower(title) like '%{token}%'"
     q = q[4:] if len(q) > 0 else "" 
@@ -1047,6 +1047,7 @@ def find_pdf_notes_by_title(text: str) -> List[SiacNote]:
     q = ""
     for token in text.lower().split():
         if len(token) > 0:
+            token = token.replace("'", "")
             q = f"{q} or lower(title) like '%{token}%'"
 
     q = q[4:] if len(q) > 0 else "" 
