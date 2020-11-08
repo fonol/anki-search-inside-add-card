@@ -6,7 +6,6 @@ from aqt import mw
 from .api import try_open_first_in_queue, queue_has_items
 from .dialogs.review_read_interrupt import ReviewReadInterruptDialog
 from .config import get_config_value
-from aqt.utils import showInfo
 from.notes import get_notes_scheduled_for_today
 
 last_did = 0
@@ -22,20 +21,21 @@ def review_interruptor():
         interrupt_in_n_cards = get_config_value("mix_reviews_and_reading.interrupt_every_nth_card")
 
     if interruption_mode == "due_random":
+        # get number of siac notes scheduled for today
+        due_siac_notes = get_notes_scheduled_for_today()
+        if due_siac_notes is None:
+            return
+        number_siac_notes = float(len(due_siac_notes))
+        # should not happen, but better safe than sorry
+        if number_siac_notes == 0.0:
+            return
+
         current_did = mw.col.decks.selected()
 
         # check if did has changed
         if last_did != current_did:
             last_did = current_did
 
-            # get number of siac notes scheduled for today
-            due_siac_notes = get_notes_scheduled_for_today()
-            if due_siac_notes is None:
-                return
-            number_siac_notes = float(len(due_siac_notes))
-            # should not happen, but better safe than sorry
-            if number_siac_notes == 0.0:
-                return
 
             # get number of due cards for today
             counts = list(mw.col.sched.counts())
