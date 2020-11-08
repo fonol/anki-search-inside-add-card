@@ -17,7 +17,7 @@
 import base64
 import requests
 import random
-from glob import glob  
+from glob import glob
 from datetime import datetime
 import os
 import re
@@ -72,7 +72,7 @@ def find_all_images(html):
     """
     Returns a list of all <img> tags contained in the html.
     """
-    return re.findall("<img[^>]*?>", html, flags=re.IGNORECASE) 
+    return re.findall("<img[^>]*?>", html, flags=re.IGNORECASE)
 
 def try_inline_images(html: str, base_path: str) -> str:
     images_contained = find_all_images(html)
@@ -103,9 +103,9 @@ def try_inline_images(html: str, base_path: str) -> str:
             html = html.replace(image_tag, "<img src=\"data:image/%s;base64,%s\">" % (ending,base64))
         except:
             continue
-    
+
     return html
-    
+
 def url_to_base64(url):
     return base64.b64encode(requests.get(url).content).decode('ascii')
 
@@ -133,8 +133,8 @@ def dark_mode_is_used(config):
         c = c.strip().lower()
         rgb = []
         if c.startswith("#"):
-            rgb = hex_to_rgb(c) 
-        elif c.startswith("rgb"): 
+            rgb = hex_to_rgb(c)
+        elif c.startswith("rgb"):
             rgb = [int(cs) for cs in c[3:-1].split(",")]
         if rgb != []:
             if is_dark_color(rgb[0], rgb[1], rgb[2]):
@@ -185,13 +185,13 @@ def marks_to_js_map(marks):
         v.sort()
         t += ",%s:[%s]" % (k,",".join([str(page) for page in v]))
 
-    s = s[1:] 
+    s = s[1:]
     s = "{%s}" % s
-    t = t[1:] 
+    t = t[1:]
     t = "{%s}" % t
 
     return (s,t)
-        
+
 def get_milisec_stamp() -> int:
     """ UTC miliseconds. """
     return int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds() * 1000)
@@ -287,7 +287,7 @@ def qlabel_image(icon_name, w, h):
 
 def url_to_pdf(url, output_path, cb_after_finish = None):
     """
-        Save the given site as pdf. 
+        Save the given site as pdf.
         output_path has to be the full path to the output file including name.
     """
     if url is None or len(url) == 0 or output_path is None or len(output_path) == 0:
@@ -310,7 +310,9 @@ def url_to_pdf(url, output_path, cb_after_finish = None):
     temp.load(QUrl(url))
 
     def save_pdf(finished):
-        temp.page().printToPdf(output_path)
+        printer = QPrinter()
+        printer.setPageMargins(10, 10, 10, 10, QPrinter.Millimeter)
+        temp.page().printToPdf(output_path, printer.pageLayout())
 
     temp.loadFinished.connect(save_pdf)
 
@@ -325,8 +327,8 @@ def get_pdf_save_full_path(path, pdfname):
     if pdfname.lower().endswith(".pdf"):
         pdfname = pdfname[:-4]
     while os.path.isfile(os.path.join(path, pdfname + ".pdf")):
-        pdfname += "-" + str(c) 
-        c += 1 
+        pdfname += "-" + str(c)
+        c += 1
     path = os.path.join(path, pdfname + ".pdf")
     return path
 
@@ -414,7 +416,7 @@ def is_dark_color(r,g,b):
     """
     Used for guessing if a dark theme (e.g. nightmode) is active.
     """
-    return r*0.299 + g*0.587 + b*0.114 < 186 
+    return r*0.299 + g*0.587 + b*0.114 < 186
 
 def _retToColor(retention):
     if retention < (100 / 7.0):
