@@ -21,8 +21,10 @@ import aqt
 import random
 import os
 import copy
+import json
 
-from ..notes import create_note, get_priority
+from ..state import get_index
+from ..notes import create_note, get_priority, get_extracts
 from ..hooks import run_hooks
 from .components import QtPrioritySlider
 
@@ -106,8 +108,16 @@ class PDFExtractDialog(QDialog):
         if self.extract_end < self.extract_start:
             tooltip("Invalid range!")
             return
-        
+
         self.create_extract()
+
+        # if we have a pdf displayed, send the updated extract info to the js, 
+        # and reload the page
+        ix = get_index()
+        if ix.ui.reading_modal.note_id and ix.ui.reading_modal.note.is_pdf():
+            extracts = get_extracts(ix.ui.reading_modal.note_id, ix.ui.reading_modal.note.source)
+            ix.ui.js(f"pdfExtractExclude={json.dumps(extracts)}; refreshPDFPage();")
+
         run_hooks("user-note-created")
         run_hooks("updated-schedule")
         self.accept()

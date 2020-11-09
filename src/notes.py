@@ -615,7 +615,14 @@ def update_reminder(nid: int, rem: str):
     conn.close()
         
 
+def get_extracts(nid: int, source: str) -> List[Tuple[int, int]]:
 
+    c   = _get_connection()
+    res = c.execute(f"select extract_start, extract_end from notes where source = '{source}' and id != {nid} and extract_start >= 1").fetchall()
+    c.close()
+    if res is None:
+        return []
+    return res
 
 def find_notes_with_similar_prio(nid_excluded: int, prio: int) -> List[Tuple[int, int, str]]:
     conn = _get_connection()
