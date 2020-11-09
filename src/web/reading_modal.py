@@ -409,6 +409,10 @@ class ReadingModal:
         # pdf might be an extract (should only show a range of pages)
         extract_js      = f"pdfExtract = [{self.note.extract_start}, {self.note.extract_end}];" if self.note.extract_start is not None else "pdfExtract = null;"
 
+        # get possible other extracts created from the current pdf
+        extracts        = get_extracts(note_id, self.note.source)
+        extract_js      += f"pdfExtractExclude = {json.dumps(extracts)};"
+
         # pages read are ordered by date, so take last
         last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
 

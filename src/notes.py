@@ -615,7 +615,14 @@ def update_reminder(nid: int, rem: str):
     conn.close()
 
 
+def get_extracts(nid: int, source: str) -> List[Tuple[int, int]]:
 
+    c   = _get_connection()
+    res = c.execute(f"select extract_start, extract_end from notes where source = '{source}' and id != {nid} and extract_start >= 1").fetchall()
+    c.close()
+    if res is None:
+        return []
+    return res
 
 def find_notes_with_similar_prio(nid_excluded: int, prio: int) -> List[Tuple[int, int, str]]:
     conn = _get_connection()
@@ -1032,7 +1039,7 @@ def find_by_text(text: str):
 def find_notes(text: str) -> List[SiacNote]:
     q = ""
     for token in text.lower().split():
-        if len(token) > 1:
+        if len(token) > 0:
             token = token.replace("'", "")
             q = f"{q} or lower(title) like '%{token}%'"
     q = q[4:] if len(q) > 0 else ""
@@ -1047,6 +1054,7 @@ def find_pdf_notes_by_title(text: str) -> List[SiacNote]:
     q = ""
     for token in text.lower().split():
         if len(token) > 0:
+            token = token.replace("'", "")
             q = f"{q} or lower(title) like '%{token}%'"
 
     q = q[4:] if len(q) > 0 else ""

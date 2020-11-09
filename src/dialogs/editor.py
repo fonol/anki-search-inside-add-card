@@ -1029,19 +1029,7 @@ class PriorityTab(QWidget):
         for r in range(len(priority_list)):
             rem_btn = QToolButton()
             rem_btn.setText(" - ")
-            # if self.parent.dark_mode_used:
-            #     rem_btn.setStyleSheet("border: 1px solid darkgrey; border-style: outset; font-size: 10px; background: #313233; color: white; margin: 0px; padding: 2px 3px;")
-            # else:
-            #     rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; color: black; margin: 0px; padding: 2px 3px;")
-            # rem_btn.setCursor(Qt.PointingHandCursor)
-            # rem_btn.setMinimumHeight(18)
             rem_btn.clicked.connect(functools.partial(self.on_remove_clicked, priority_list[r].id))
-
-            # h_l = QHBoxLayout()
-            # h_l.addWidget(rem_btn)
-            # cell_widget = QWidget()
-            # cell_widget.setLayout(h_l)
-            # self.t_view.setCellWidget(r, 2, rem_btn)
             self.t_view.setIndexWidget(self.t_view.model().index(r,2), rem_btn)
 
     def on_shuffle_btn_clicked(self):

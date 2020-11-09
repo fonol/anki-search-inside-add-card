@@ -41,6 +41,7 @@ window.pdfTOC = null;
 /** PDF meta (pages read, marks, extract) */
 window.pagesRead = [];
 window.pdfExtract = null;
+window.pdfExtractExclude = null;
 window.pdfDisplayedMarks = null;
 window.pdfDisplayedMarksTable = null;
 window.pdfLastReadPages = {};
@@ -410,13 +411,26 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                         byId('siac-pdf-overlay').style.display = 'none';
                         byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book"></i>&nbsp; Read';
                     }
-                    if (fetchHighlights && pdfExtract) {
-                        if (pdfExtract[0] > pdfDisplayedCurrentPage || pdfExtract[1] < pdfDisplayedCurrentPage) {
+                    // check if current note is an extract 
+                    // if yes, and we are outside the extract boundaries, the page is blue'd out
+                    if (fetchHighlights) {
+                        if (pdfExtract && pdfExtract.length > 0 && (pdfExtract[0] > pdfDisplayedCurrentPage || pdfExtract[1] < pdfDisplayedCurrentPage)) {
                             $('#siac-pdf-top').addClass("extract");
                         } else {
-                            $('#siac-pdf-top').removeClass("extract");
+                            // check for pages that should be blue'd-out because there exists another note 
+                            // which is an extract that includes that page
+                            if (pdfExtractExclude.length > 0) {
+                                if (pdfExtractExclude.find(t => t[0] <= pdfDisplayedCurrentPage && t[1] >=  pdfDisplayedCurrentPage)) {
+                                    $('#siac-pdf-top').addClass("extract");
+                                } else {
+                                    $('#siac-pdf-top').removeClass("extract");
+                                }
+                            } else {
+                                $('#siac-pdf-top').removeClass("extract");
+                            }
                         }
                     }
+                    
                     if (fetchHighlights && pageSidebarDisplayed) {
                         pycmd(`siac-linked-to-page ${pdfDisplayedCurrentPage} ${pdfDisplayed.numPages}`);
                     }

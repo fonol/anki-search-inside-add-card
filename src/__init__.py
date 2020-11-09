@@ -70,6 +70,9 @@ def init_addon():
 
     if config["dev_mode"]:
         state.dev_mode = True
+    
+    if hasattr(mw.pm, "night_mode"):
+        state.night_mode = mw.pm.night_mode()
 
     gui_hooks.reviewer_did_answer_card.append(on_reviewer_did_answer)
 
@@ -399,10 +402,11 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
     state.note_editor_shown = False
     state.editor_is_ready = False
 
-    def cb(night_mode: bool):
-        state.night_mode = night_mode
 
-    editor.web.evalWithCallback("(() => {  return document.body.classList.contains('nightMode'); })();", cb)
+    if state.night_mode is None:
+        def cb(night_mode: bool):
+            state.night_mode = night_mode
+        editor.web.evalWithCallback("(() => {  return document.body.classList.contains('nightMode'); })();", cb)
 
 
 def set_zoom(shortcuts: List[Tuple], editor: Editor):
