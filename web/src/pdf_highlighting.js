@@ -41,15 +41,15 @@ export const Highlighting = {
         let rectCanvas = byId("text-layer").getBoundingClientRect();
         let offset = byId('text-layer').offsetLeft;
         //page group type [x,y,w,h]+ # text
-        let cmd = pdfDisplayedCurrentPage + " -1 " + this.colorSelected.id + " ";
+        let cmd = pdf.page + " -1 " + this.colorSelected.id + " ";
 
         rects.forEach((r) => {
             let x = r.x - rectCanvas.x;
             let y = r.y - rectCanvas.y;
-            let conv = pdfDisplayedViewPort.convertToPdfPoint(x, y);
+            let conv = pdf.displayedViewPort.convertToPdfPoint(x, y);
 
             cmd += conv[0] + " " + conv[1] + " ";
-            conv = pdfDisplayedViewPort.convertToPdfPoint(x + r.w, y + r.h);
+            conv = pdf.displayedViewPort.convertToPdfPoint(x + r.w, y + r.h);
             cmd += conv[0] + " " + conv[1] + " ";
             // text layer spans seem to be shifted to the top by some pixels, so add a small offset to the highlight div
             // this._createHighlightDiv(x + offset, y, r.w, r.h, this.colorSelected.id);
@@ -74,9 +74,9 @@ export const Highlighting = {
             x -= 3;
             y -= 3;
         }
-        let conv_xy = pdfDisplayedViewPort.convertToPdfPoint(x, y);
-        let conv_wh = pdfDisplayedViewPort.convertToPdfPoint(x + w, y + h);
-        let cmd = `siac-hl-new ${pdfDisplayedCurrentPage} -1 ${t} ${conv_xy[0]} ${conv_xy[1]} ${conv_wh[0]} ${conv_wh[1]} # `;
+        let conv_xy = pdf.displayedViewPort.convertToPdfPoint(x, y);
+        let conv_wh = pdf.displayedViewPort.convertToPdfPoint(x + w, y + h);
+        let cmd = `siac-hl-new ${pdf.page} -1 ${t} ${conv_xy[0]} ${conv_xy[1]} ${conv_wh[0]} ${conv_wh[1]} # `;
         pycmd(cmd);
     },
     insertText: function (event) {
@@ -86,10 +86,10 @@ export const Highlighting = {
         let x = event.clientX - rectCanvas.x;
         let y = event.clientY - rectCanvas.y;
         this._createHighlightDiv(x + offset, y, 100, 20, this.colorSelected.id, "");
-        let cmd = pdfDisplayedCurrentPage + " -1 0 ";
-        let conv = pdfDisplayedViewPort.convertToPdfPoint(x, y);
+        let cmd = pdf.page + " -1 0 ";
+        let conv = pdf.displayedViewPort.convertToPdfPoint(x, y);
         cmd += conv[0] + " " + conv[1] + " ";
-        conv = pdfDisplayedViewPort.convertToPdfPoint(x + 100, y + 20);
+        conv = pdf.displayedViewPort.convertToPdfPoint(x + 100, y + 20);
         cmd += conv[0] + " " + conv[1] + " #";
         pycmd("siac-hl-new " + cmd);
     },
@@ -112,7 +112,7 @@ export const Highlighting = {
             let t = r[4];
             let id = r[5];
             let text = r[6];
-            let bounds = pdfDisplayedViewPort.convertToViewportRectangle([x0, y0, x1, y1]);
+            let bounds = pdf.displayedViewPort.convertToViewportRectangle([x0, y0, x1, y1]);
             let x = Math.min(bounds[0], bounds[2]);
             x += canvas.offsetLeft;
             let y = Math.min(bounds[1], bounds[3]);
@@ -272,10 +272,10 @@ export const Highlighting = {
             let x1 = x0 + el.offsetWidth - 6; 
             let y1 = y0 + el.clientHeight; 
 
-            let conv = pdfDisplayedViewPort.convertToPdfPoint(x0, y0);
+            let conv = pdf.displayedViewPort.convertToPdfPoint(x0, y0);
             x0 = conv[0];
             y0 = conv[1];
-            conv = pdfDisplayedViewPort.convertToPdfPoint(x1, y1);
+            conv = pdf.displayedViewPort.convertToPdfPoint(x1, y1);
             x1 = conv[0];
             y1 = conv[1];
 
@@ -290,7 +290,7 @@ export const Highlighting = {
         if (!el.dataset.id) {
             return;
         }
-        pycmd(`siac-hl-text-update-text ${el.dataset.id} ${pdfDisplayedCurrentPage} ${$(el).val()}`);
+        pycmd(`siac-hl-text-update-text ${el.dataset.id} ${pdf.page} ${$(el).val()}`);
     },
 
     onTextKeyup: function(el) {

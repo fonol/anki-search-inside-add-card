@@ -17,51 +17,54 @@
 import { Highlighting } from "./pdf_highlighting.js";
 
 
-window.Highlighting = Highlighting;
+window.Highlighting         = Highlighting;
 
 /** Tomato timer */
 window.tomato = {
-    remainingSeconds : 30 * 60,
-    readingTimer : null,
-    lastStart: 30
-}
+    remainingSeconds        : 30 * 60,
+    readingTimer            : null,
+    lastStart               : 30
+};
 
-/** TODO: Move all the PDF stuff into some object, e.g. window.pdf = { ... }; */
-/** PDF rendering */
-window.pdfDisplayed = null;
-window.pdfDisplayedViewPort = null;
-window.pdfPageRendering = false;
-window.pdfDisplayedCurrentPage = null;
-window.pdfDisplayedScale = 2.0;
-window.pdfHighDPIWasUsed = false;
-window.pageNumPending = null;
-window.latestRenderTimestamp = null;
-window.pdfTOC = null;
+window.pdf = {
+    /** PDF rendering */
+    instance                : null,
+    displayedViewPort       : null,
+    pageRendering           : false,
+    page                    : null,
+    displayedScale          : 2.0,
+    highDPIWasUsed          : false,
+    pageNumPending          : null,
+    latestRenderTimestamp   : null,
+    TOC                     : null,
 
-/** PDF meta (pages read, marks, extract) */
-window.pagesRead = [];
-window.pdfExtract = null;
-window.pdfExtractExclude = null;
-window.pdfDisplayedMarks = null;
-window.pdfDisplayedMarksTable = null;
-window.pdfLastReadPages = {};
+    /** PDF meta (pages read, marks, extract) */
+    pagesRead               : [],
+    extract                 : null,
+    extractExclude          : null,
+    displayedMarks          : null,
+    displayedMarksTable     : null,
+    lastReadPages           : {},
+
+    notification            : {
+        queue               : [],
+        current             : ""
+    }
+};
 
 /** State variables */
-window.noteLoading = false;
-window.pdfLoading = false;
-window.modalShown = false;
-window.pdfTooltipEnabled = true;
-window.pdfLinksEnabled = false;
-window.iframeIsDisplayed = false;
-window.pageSidebarDisplayed = true;
-window.pdfFullscreen = false;
-window.displayedNoteId = null;
-window.pdfTextLayerMetaKey = false;
-window.bottomBarTabDisplayed = "marks";
-window.pdfNotification = {
-    queue: [],
-    current: ""
-};
+window.noteLoading              = false;
+window.pdfLoading               = false;
+window.modalShown               = false;
+window.pdfTooltipEnabled        = true;
+window.pdfLinksEnabled          = false;
+window.iframeIsDisplayed        = false;
+window.pageSidebarDisplayed     = true;
+window.pdfFullscreen            = false;
+window.displayedNoteId          = null;
+window.pdfTextLayerMetaKey      = false;
+window.bottomBarTabDisplayed    = "marks";
+
 /** SimpleMDE */
 window.textEditor = null;
 
@@ -75,7 +78,7 @@ if (typeof globalThis === "undefined") {
  * ###########################################
  *  PDF rendering
  * ###########################################
- */
+*/
 
 window.activeCanvas = function () {
     let c = byId("siac-pdf-canvas");
@@ -88,23 +91,23 @@ window.activeCanvas = function () {
     return c;
 };
 window.checkTOC = function () {
-    if (!pdfDisplayed) { return; }
-    let pdf = pdfDisplayed;
-    pdf.getOutline().then(function (outline) {
+    if (!pdf.instance) { return; }
+    let pdf_i = pdf.instance;
+    pdf_i.getOutline().then(function (outline) {
         if (!outline || outline.length === 0) { return Promise.reject(); }
         let dest = outline[0].dest;
         if (Array.isArray(dest)) {
-            pdf.getPageIndex(dest[0]).catch((e) => { console.log(e); return Promise.reject(); }).then(function (id) {
+            pdf_i.getPageIndex(dest[0]).catch((e) => { console.log(e); return Promise.reject(); }).then(function (id) {
                 if (id) {
                     byId("siac-toc-btn").style.display = "block";
                 }
             });
         } else {
-            pdf.getDestination(dest).then(function (d) {
+            pdf_i.getDestination(dest).then(function (d) {
                 if (!d) { return null; }
                 const ref = d[0];
                 return ref;
-            }).then(pdf.getPageIndex.bind(pdf)).then(function (id) {
+            }).then(pdf_i.getPageIndex.bind(pdf_i)).then(function (id) {
                 if (id) {
                     byId("siac-toc-btn").style.display = "block";
                 }
@@ -113,16 +116,17 @@ window.checkTOC = function () {
     })
 };
 
-/** Extract the TOC if possible. */
+/** Extract the TOC if possible. 
+ *  TODO: needs some improvement (only works a fraction of the time)
+*/
 window.loadTOC = function () {
 
-    if (!pdfDisplayed) {
+    if (!pdf.instance) {
         return;
     }
-    let pdf = pdfDisplayed;
-    window.pdfTOC = [];
-    pdf.getOutline().then(function (outline) {
-        console.log(outline)
+    let pdf_i = pdf.instance;
+    window.pdf.TOC = [];
+    pdf_i.getOutline().then(function (outline) {
         if (outline) {
             let promises = [];
             for (let i = 0; i < outline.length; i++) {
@@ -130,21 +134,21 @@ window.loadTOC = function () {
                 const title = outline[i].title;
                 if (Array.isArray(dest)) {
                     promises.push(
-                        pdf.getPageIndex(dest).catch((e) => { console.log(e); return Promise.resolve(); }).then(function (id) {
+                        pdf_i.getPageIndex(dest).catch((e) => { console.log(e); return Promise.resolve(); }).then(function (id) {
                             if (id) {
-                                window.pdfTOC.push({ title: title, page: parseInt(id) + 1 });
+                                window.pdf.TOC.push({ title: title, page: parseInt(id) + 1 });
                                 return Promise.resolve();
                             }
                         }));
                 } else {
 
                     promises.push(
-                        pdf.getDestination(dest).then(function (d) {
+                        pdf_i.getDestination(dest).then(function (d) {
                             if (!d) { return null; }
                             const ref = d[0];
                             return ref;
-                        }).then(pdf.getPageIndex.bind(pdf)).then(function (id) {
-                            window.pdfTOC.push({ title: title, page: parseInt(id) + 1 });
+                        }).then(pdf_i.getPageIndex.bind(pdf_i)).then(function (id) {
+                            window.pdf.TOC.push({ title: title, page: parseInt(id) + 1 });
                             return Promise.resolve();
                         })
                     );
@@ -154,9 +158,9 @@ window.loadTOC = function () {
         }
     }).then(function () {
         let html = "";
-        if (pdfTOC && pdfTOC.length) {
-            for (var i = 0; i < pdfTOC.length; i++) {
-                html += `<div class='siac-toc-item blue-hover' onclick='pdfGotoPg(${pdfTOC[i].page})'>${pdfTOC[i].page}: ${pdfTOC[i].title}</div>`;
+        if (pdf.TOC && pdf.TOC.length) {
+            for (var i = 0; i < pdf.TOC.length; i++) {
+                html += `<div class='siac-toc-item blue-hover' onclick='pdfGotoPg(${pdf.TOC[i].page})'>${pdf.TOC[i].page}: ${pdf.TOC[i].title}</div>`;
             }
             html = `<div style='text-align: center; margin-bottom: 5px;'><b style='font-size: 15px;'>Table of Contents</b></div><div style='overflow: auto; color: lightgrey;'>${html}</div>`;
         }
@@ -178,146 +182,146 @@ window.tocBtnClicked = function () {
 
 window.pdfFitToPage = function () {
     if (!iframeIsDisplayed) {
-        rerenderPDFPage(pdfDisplayedCurrentPage, false, true, false, '', false);
+        rerenderPDFPage(pdf.page, false, true, false, '', false);
     }
 }
 window.queueRenderPage = function (num, shouldScrollUp = true, fitToPage = false, isInitial = false, query = '', fetchHighlights = true) {
-    if (pdfPageRendering) {
-        pageNumPending = num;
+    if (pdf.pageRendering) {
+        pdf.pageNumPending = num;
     } else {
         rerenderPDFPage(num, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
     }
 }
 window.setupAnnotations = function (page, viewport, canvas, $annotationLayerDiv) {
-  var canvasOffset = $(canvas).offset();
+    var canvasOffset = $(canvas).offset();
 
-  var promise = page.getAnnotations().then(function (annotationsData) {
-    viewport = viewport.clone({
-      dontFlip: true
+    var promise = page.getAnnotations().then(function (annotationsData) {
+        viewport = viewport.clone({
+            dontFlip: true
+        });
+
+        $annotationLayerDiv.children().remove();
+
+        // Find the largest annotation rectangle, for later use.
+        var maxArea = 0.001;
+        for (var i = 0; i < annotationsData.length; i++) {
+            var data = annotationsData[i];
+            var rect = data.rect;
+            var width = rect[2] - rect[0];
+            var height = rect[3] - rect[1];
+            var area = width * height;
+            if (area > maxArea) {
+                maxArea = area;
+            }
+        }
+
+        for (var i = 0; i < annotationsData.length; i++) {
+            var data = annotationsData[i];
+            var rect = data.rect;
+            var width = rect[2] - rect[0];
+            var height = rect[3] - rect[1];
+            var area = width * height;
+            // From 0 to 1, what is the ratio from this area to the largest one?
+            var indexFactor = area / maxArea;
+
+            if (data.subtype !== 'Link') {
+                continue; // We don't handle non-link annotations
+            }
+            if (!data.url) {
+                continue; // We don't handle document-internal links (yet?)
+            }
+
+            var element = $("<a>").attr("href", data.url).get(0);
+
+            var rect = data.rect;
+            var view = page.view;
+
+            rect = pdfjsLib.Util.normalizeRect([
+                rect[0],
+                view[3] - rect[1] + view[1],
+                rect[2],
+                view[3] - rect[3] + view[1]]);
+
+            var width = rect[2] - rect[0];
+            var height = rect[3] - rect[1];
+            var area = width * height;
+
+            // I have no idea why this magic "12" is necessary, but stuff isn't
+            // aligned correctly without it.
+            element.style.left = (12 + canvasOffset.left + rect[0]) + 'px';
+            element.style.top = (canvasOffset.top + rect[1]) + 'px';
+            element.style.width = width + 'px';
+            element.style.height = height + 'px';
+            element.style.position = 'absolute';
+
+            // This is a kind of lazy way of accomplishing what we're trying to
+            // accomplish here:
+            //
+            // With all of the links set to zIndex 4, we have problems because the
+            // annotation data from pdfjsLib doesn't actually just cover the linked
+            // text; it gives the maximum bounding rectangle of the link. This covers
+            // the entirety of two lines of text if a link spans two lines. While
+            // unappealing, this works ok in general use, but it can sometimes
+            // overshadow a smaller link that lives entirely within one of those
+            // lines.
+            //
+            // Here, we assign all links a zIndex in the range 4 to 12
+            // (siac-rev-overlay is 13), with a higher value the smaller the bounding
+            // rectangle of the link. This makes smaller links take higher precedence
+            // than larger ones.
+            //
+            // A better solution would be to somehow get better link/annotation data
+            // that just covers the text rather than the weird max bounding box data
+            // we have right now.
+            element.style.zIndex = 12 - Math.round(8 * indexFactor);
+
+            var transform = viewport.transform;
+            var transformStr = 'matrix(' + transform.join(',') + ')';
+            element.style.transform = transformStr;
+            var transformOriginStr = -rect[0] + 'px ' + -rect[1] + 'px';
+            element.style.transformOrigin = transformOriginStr;
+
+            $annotationLayerDiv.append(element);
+        }
     });
-
-    $annotationLayerDiv.children().remove();
-
-    // Find the largest annotation rectangle, for later use.
-    var maxArea = 0.001;
-    for (var i = 0; i < annotationsData.length; i++) {
-      var data = annotationsData[i];
-      var rect = data.rect;
-      var width = rect[2] - rect[0];
-      var height = rect[3] - rect[1];
-      var area = width * height;
-      if (area > maxArea) {
-        maxArea = area;
-      }
-    }
-
-    for (var i = 0; i < annotationsData.length; i++) {
-      var data = annotationsData[i];
-      var rect = data.rect;
-      var width = rect[2] - rect[0];
-      var height = rect[3] - rect[1];
-      var area = width * height;
-      // From 0 to 1, what is the ratio from this area to the largest one?
-      var indexFactor = area / maxArea;
-
-      if (data.subtype !== 'Link') {
-        continue; // We don't handle non-link annotations
-      }
-      if (!data.url) {
-        continue; // We don't handle document-internal links (yet?)
-      }
-
-      var element = $("<a>").attr("href", data.url).get(0);
-
-      var rect = data.rect;
-      var view = page.view;
-
-      rect = pdfjsLib.Util.normalizeRect([
-        rect[0],
-        view[3] - rect[1] + view[1],
-        rect[2],
-        view[3] - rect[3] + view[1]]);
-
-      var width = rect[2] - rect[0];
-      var height = rect[3] - rect[1];
-      var area = width * height;
-
-      // I have no idea why this magic "12" is necessary, but stuff isn't
-      // aligned correctly without it.
-      element.style.left = (12 + canvasOffset.left + rect[0]) + 'px';
-      element.style.top = (canvasOffset.top + rect[1]) + 'px';
-      element.style.width = width + 'px';
-      element.style.height = height + 'px';
-      element.style.position = 'absolute';
-
-      // This is a kind of lazy way of accomplishing what we're trying to
-      // accomplish here:
-      //
-      // With all of the links set to zIndex 4, we have problems because the
-      // annotation data from pdfjsLib doesn't actually just cover the linked
-      // text; it gives the maximum bounding rectangle of the link. This covers
-      // the entirety of two lines of text if a link spans two lines. While
-      // unappealing, this works ok in general use, but it can sometimes
-      // overshadow a smaller link that lives entirely within one of those
-      // lines.
-      //
-      // Here, we assign all links a zIndex in the range 4 to 12
-      // (siac-rev-overlay is 13), with a higher value the smaller the bounding
-      // rectangle of the link. This makes smaller links take higher precedence
-      // than larger ones.
-      //
-      // A better solution would be to somehow get better link/annotation data
-      // that just covers the text rather than the weird max bounding box data
-      // we have right now.
-      element.style.zIndex = 12 - Math.round(8*indexFactor);
-
-      var transform = viewport.transform;
-      var transformStr = 'matrix(' + transform.join(',') + ')';
-      element.style.transform = transformStr;
-      var transformOriginStr = -rect[0] + 'px ' + -rect[1] + 'px';
-      element.style.transformOrigin = transformOriginStr;
-
-      $annotationLayerDiv.append(element);
-    }
-  });
-  return promise;
+    return promise;
 }
 
-window.refreshPDFPage = function() {
-    rerenderPDFPage(pdfDisplayedCurrentPage, false, false, false, '', true); 
+window.refreshPDFPage = function () {
+    rerenderPDFPage(pdf.page, false, false, false, '', true);
 }
 
 window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false, isInitial = false, query = '', fetchHighlights = true) {
-    if (!pdfDisplayed || iframeIsDisplayed) {
+    if (!pdf.instance || iframeIsDisplayed) {
         return;
     }
     byId("siac-pdf-tooltip").style.display = "none";
-    byId("siac-pdf-page-lbl").innerHTML = `${pdfDisplayedCurrentPage} / ${pdfDisplayed.numPages}`;
+    byId("siac-pdf-page-lbl").innerHTML = `${pdf.page} / ${pdf.instance.numPages}`;
     pdfLoading = true;
     if (isInitial) {
         pdfLoaderText('Initializing Reader...');
     }
 
-    pdfDisplayed.getPage(num)
+    pdf.instance.getPage(num)
         .then(function (page) {
 
-            pdfPageRendering = true;
+            pdf.pageRendering = true;
 
             var lPage = page;
             var pageTimestamp = new Date().getTime();
-            latestRenderTimestamp = pageTimestamp;
+            pdf.latestRenderTimestamp = pageTimestamp;
             var canvas = pdf_canvas_0;
             if (canvas.style.display !== 'none')
                 canvas = pdf_canvas_1;
             if (fitToPage) {
                 var viewport = page.getViewport({ scale: 1.0 });
-                pdfDisplayedScale = (canvas.parentNode.clientWidth - 23) / viewport.width;
+                pdf.displayedScale = (canvas.parentNode.clientWidth - 23) / viewport.width;
             }
-            var viewport = page.getViewport({ scale: pdfDisplayedScale });
+            var viewport = page.getViewport({ scale: pdf.displayedScale });
             canvas.height = viewport.height * window.devicePixelRatio;
             canvas.width = viewport.width * window.devicePixelRatio;
-            if (window.devicePixelRatio !== 1 || pdfHighDPIWasUsed) {
-                pdfHighDPIWasUsed = true;
+            if (window.devicePixelRatio !== 1 || pdf.highDPIWasUsed) {
+                pdf.highDPIWasUsed = true;
                 canvas.style.height = viewport.height + "px";
                 canvas.style.width = viewport.width + "px";
             }
@@ -327,9 +331,9 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 viewport: viewport,
                 transform: window.devicePixelRatio !== 1 ? [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0] : null,
             });
-            if (pageNumPending !== null) {
-                rerenderPDFPage(pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
-                pageNumPending = null;
+            if (pdf.pageNumPending !== null) {
+                rerenderPDFPage(pdf.pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
+                pdf.pageNumPending = null;
                 return Promise.reject();
             }
             renderTask.promise.then(function () {
@@ -337,10 +341,10 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     setupAnnotations(page, viewport, canvas, $('.annotationLayer'));
                 }
 
-                pdfPageRendering = false;
-                if (pageNumPending !== null) {
-                    rerenderPDFPage(pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
-                    pageNumPending = null;
+                pdf.pageRendering = false;
+                if (pdf.pageNumPending !== null) {
+                    rerenderPDFPage(pdf.pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
+                    pdf.pageNumPending = null;
                     return Promise.reject();
                 } else {
 
@@ -366,12 +370,12 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 }
                 return lPage.getTextContent({ normalizeWhitespace: false, disableCombineTextItems: false });
             }).catch(function () { return Promise.reject(); }).then(function (textContent) {
-                if (!textContent || pdfPageRendering) {
+                if (!textContent || pdf.pageRendering) {
                     return Promise.reject();
                 }
-                if (pageNumPending) {
-                    rerenderPDFPage(pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
-                    pageNumPending = null;
+                if (pdf.pageNumPending) {
+                    rerenderPDFPage(pdf.pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
+                    pdf.pageNumPending = null;
                     return null;
                 }
                 $("#text-layer").css({ height: canvas.height / window.devicePixelRatio, width: canvas.width / window.devicePixelRatio + 1, left: canvas.offsetLeft }).html('');
@@ -395,16 +399,16 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     $('#siac-pdf-loader-wrapper').remove();
                     // setTimeout(function () { refreshCanvas(); }, 3000);
                 }
-                pdfDisplayedViewPort = viewport;
+                pdf.displayedViewPort = viewport;
                 if (fetchHighlights) {
                     Highlighting.current = [];
-                    pycmd("siac-pdf-page-loaded " + pdfDisplayedCurrentPage);
+                    pycmd("siac-pdf-page-loaded " + pdf.page);
                 } else {
                     Highlighting.displayHighlights();
                 }
-                if (!pageNumPending && !pdfPageRendering) {
+                if (!pdf.pageNumPending && !pdf.pageRendering) {
 
-                    if (pagesRead.indexOf(num) !== -1) {
+                    if (pdf.pagesRead.indexOf(num) !== -1) {
                         byId('siac-pdf-overlay').style.display = 'block';
                         byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book"></i>&nbsp; Unread';
                     } else {
@@ -414,13 +418,13 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     // check if current note is an extract 
                     // if yes, and we are outside the extract boundaries, the page is blue'd out
                     if (fetchHighlights) {
-                        if (pdfExtract && pdfExtract.length > 0 && (pdfExtract[0] > pdfDisplayedCurrentPage || pdfExtract[1] < pdfDisplayedCurrentPage)) {
+                        if (pdf.extract && pdf.extract.length > 0 && (pdf.extract[0] > pdf.page || pdf.extract[1] < pdf.page)) {
                             $('#siac-pdf-top').addClass("extract");
                         } else {
                             // check for pages that should be blue'd-out because there exists another note 
                             // which is an extract that includes that page
-                            if (pdfExtractExclude.length > 0) {
-                                if (pdfExtractExclude.find(t => t[0] <= pdfDisplayedCurrentPage && t[1] >=  pdfDisplayedCurrentPage)) {
+                            if (pdf.extractExclude.length > 0) {
+                                if (pdf.extractExclude.find(t => t[0] <= pdf.page && t[1] >= pdf.page)) {
                                     $('#siac-pdf-top').addClass("extract");
                                 } else {
                                     $('#siac-pdf-top').removeClass("extract");
@@ -430,9 +434,9 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                             }
                         }
                     }
-                    
+
                     if (fetchHighlights && pageSidebarDisplayed) {
-                        pycmd(`siac-linked-to-page ${pdfDisplayedCurrentPage} ${pdfDisplayed.numPages}`);
+                        pycmd(`siac-linked-to-page ${pdf.page} ${pdf.instance.numPages}`);
                     }
                     setLastReadPage();
                 }
@@ -451,30 +455,30 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
  */
 
 window.pdfPageRight = function () {
-    if (!pdfDisplayed || iframeIsDisplayed) {
+    if (!pdf.instance || iframeIsDisplayed) {
         return;
     }
-    if (pdfDisplayedCurrentPage < pdfDisplayed.numPages) {
-        pdfDisplayedCurrentPage++;
-        queueRenderPage(pdfDisplayedCurrentPage);
+    if (pdf.page < pdf.instance.numPages) {
+        pdf.page++;
+        queueRenderPage(pdf.page);
     }
 }
 window.pdfPageLeft = function () {
-    if (!pdfDisplayed || iframeIsDisplayed) {
+    if (!pdf.instance || iframeIsDisplayed) {
         return;
     }
-    if (pdfDisplayedCurrentPage > 1) {
-        pdfDisplayedCurrentPage--;
-        queueRenderPage(pdfDisplayedCurrentPage);
+    if (pdf.page > 1) {
+        pdf.page--;
+        queueRenderPage(pdf.page);
     }
 }
-window.pdfToggleReadAndPageRight = function() {
-    if (!pdfDisplayed || iframeIsDisplayed) {
+window.pdfToggleReadAndPageRight = function () {
+    if (!pdf.instance || iframeIsDisplayed) {
         return;
     }
-    if (pdfDisplayed && pagesRead.indexOf(pdfDisplayedCurrentPage) === -1 && (!pdfExtract || (pdfExtract[0] <= pdfDisplayedCurrentPage && pdfExtract[1] >= pdfDisplayedCurrentPage))) {
-        pycmd("siac-pdf-page-read " + $('#siac-pdf-top').data("pdfid") + " " + pdfDisplayedCurrentPage + " " + numPagesExtract());
-        if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
+    if (pdf.instance && pdf.pagesRead.indexOf(pdf.page) === -1 && (!pdf.extract || (pdf.extract[0] <= pdf.page && pdf.extract[1] >= pdf.page))) {
+        pycmd("siac-pdf-page-read " + $('#siac-pdf-top').data("pdfid") + " " + pdf.page + " " + numPagesExtract());
+        if (pdf.pagesRead.length) { pdf.pagesRead.push(pdf.page); } else { pdf.pagesRead = [pdf.page]; }
         updatePdfProgressBar();
     }
     pdfPageRight();
@@ -483,12 +487,12 @@ window.pdfToggleReadAndPageRight = function() {
 window.togglePageRead = function (nid) {
 
     // function can be called from pyqt shortcut, so it might be that no PDF is displayed when shortcut is triggered
-    if (!pdfDisplayed) {
+    if (!pdf.instance) {
         return;
     }
 
     // don't allow for blue'd out pages in pdf extracts to be marked as read
-    if (pdfExtract && (pdfDisplayedCurrentPage < pdfExtract[0] || pdfDisplayedCurrentPage > pdfExtract[1])) {
+    if (pdf.extract && (pdf.page < pdf.extract[0] || pdf.page > pdf.extract[1])) {
         return;
     }
 
@@ -496,16 +500,16 @@ window.togglePageRead = function (nid) {
         nid = displayedNoteId;
     }
 
-    if (pagesRead.indexOf(pdfDisplayedCurrentPage) === -1) {
+    if (pdf.pagesRead.indexOf(pdf.page) === -1) {
         byId('siac-pdf-overlay').style.display = 'block';
         byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book" aria-hidden="true"></i>&nbsp; Unread';
-        pycmd("siac-pdf-page-read " + nid + " " + pdfDisplayedCurrentPage + " " + numPagesExtract());
-        if (pagesRead.length) { pagesRead.push(pdfDisplayedCurrentPage); } else { pagesRead = [pdfDisplayedCurrentPage]; }
+        pycmd("siac-pdf-page-read " + nid + " " + pdf.page + " " + numPagesExtract());
+        if (pdf.pagesRead.length) { pdf.pagesRead.push(pdf.page); } else { pdf.pagesRead = [pdf.page]; }
     } else {
         byId('siac-pdf-overlay').style.display = 'none';
         byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book" aria-hidden="true"></i>&nbsp; Read';
-        pycmd("siac-pdf-page-unread " + nid + " " + pdfDisplayedCurrentPage + " " + numPagesExtract());
-        pagesRead.splice(pagesRead.indexOf(pdfDisplayedCurrentPage), 1);
+        pycmd("siac-pdf-page-unread " + nid + " " + pdf.page + " " + numPagesExtract());
+        pdf.pagesRead.splice(pdf.pagesRead.indexOf(pdf.page), 1);
     }
     updatePdfProgressBar();
 }
@@ -520,46 +524,46 @@ window.pdfJumpToPage = function (e, inp) {
         return;
     }
     let p = inp.value;
-    p = Math.min(pdfDisplayed.numPages, p);
-    pdfDisplayedCurrentPage = p;
-    queueRenderPage(pdfDisplayedCurrentPage);
+    p = Math.min(pdf.instance.numPages, p);
+    pdf.page = p;
+    queueRenderPage(pdf.page);
 }
 window.pdfScaleChange = function (mode) {
     if (mode === "up") {
-        pdfDisplayedScale += 0.1;
+        pdf.displayedScale += 0.1;
     } else {
-        pdfDisplayedScale -= 0.1;
-        pdfDisplayedScale = Math.max(0.1, pdfDisplayedScale);
+        pdf.displayedScale -= 0.1;
+        pdf.displayedScale = Math.max(0.1, pdf.displayedScale);
     }
-    queueRenderPage(pdfDisplayedCurrentPage, false, false, false, '', false);
+    queueRenderPage(pdf.page, false, false, false, '', false);
 }
 window.setAllPagesRead = function () {
-    if (!pdfExtract) {
-        pagesRead = Array.from(Array(pdfDisplayed.numPages).keys()).map(x => ++x)
+    if (!pdf.extract) {
+        pdf.pagesRead = Array.from(Array(pdf.instance.numPages).keys()).map(x => ++x)
     } else {
-        pagesRead = [];
-        for (var i = pdfExtract[0]; i <= pdfExtract[1]; i++) {
-            pagesRead.push(i);
+        pdf.pagesRead = [];
+        for (var i = pdf.extract[0]; i <= pdf.extract[1]; i++) {
+            pdf.pagesRead.push(i);
         }
     }
-    if (pagesRead.indexOf(pdfDisplayedCurrentPage) !== -1) {
+    if (pdf.pagesRead.indexOf(pdf.page) !== -1) {
         pdfShowPageReadMark();
     }
 }
 
 window.setLastReadPage = function () {
-    pdfLastReadPages[displayedNoteId] = pdfDisplayedCurrentPage;
+    pdf.lastReadPages[displayedNoteId] = pdf.page;
 }
 window.getLastReadPage = function () {
-    if (displayedNoteId && displayedNoteId in pdfLastReadPages) {
-        return pdfLastReadPages[displayedNoteId];
+    if (displayedNoteId && displayedNoteId in pdf.lastReadPages) {
+        return pdf.lastReadPages[displayedNoteId];
     }
     return null;
 }
 
 window.updatePdfProgressBar = function () {
-    let percs = Math.floor(pagesRead.length * 10 / numPagesExtract());
-    let html = `<span style='margin-right: 10px; display: inline-block; min-width: 35px; font-weight: bold; color: lightgrey;'>${Math.trunc(pagesRead.length * 100 / numPagesExtract())} %</span>`;
+    let percs = Math.floor(pdf.pagesRead.length * 10 / numPagesExtract());
+    let html = `<span style='margin-right: 10px; display: inline-block; min-width: 35px; font-weight: bold; color: lightgrey;'>${Math.trunc(pdf.pagesRead.length * 100 / numPagesExtract())} %</span>`;
     for (var c = 0; c < 10; c++) {
         if (c < percs) {
             html += `<div class='siac-prog-sq-filled'></div>`;
@@ -577,21 +581,21 @@ window.updatePdfProgressBar = function () {
  *  return the number of pages in the extract's range.
  */
 window.numPagesExtract = function () {
-    if (!pdfExtract) {
-        return pdfDisplayed.numPages;
+    if (!pdf.extract) {
+        return pdf.instance.numPages;
     }
-    return pdfExtract[1] - pdfExtract[0] + 1;
+    return pdf.extract[1] - pdf.extract[0] + 1;
 }
 
 window.markReadUpToCurrent = function () {
-    for (var i = 0; i < pdfDisplayedCurrentPage; i++) {
-        if (pagesRead.indexOf(i + 1) === -1) {
-            if (!pdfExtract || ((i + 1) >= pdfExtract[0] && (i + 1) <= pdfExtract[1])) {
-                pagesRead.push(i + 1);
+    for (var i = 0; i < pdf.page; i++) {
+        if (pdf.pagesRead.indexOf(i + 1) === -1) {
+            if (!pdf.extract || ((i + 1) >= pdf.extract[0] && (i + 1) <= pdf.extract[1])) {
+                pdf.pagesRead.push(i + 1);
             }
         }
     }
-    if (pagesRead.indexOf(pdfDisplayedCurrentPage) !== -1) {
+    if (pdf.pagesRead.indexOf(pdf.page) !== -1) {
         pdfShowPageReadMark();
     }
 }
@@ -652,7 +656,7 @@ window.startTimer = function (mins) {
     resetTimer($('.siac-timer-btn.' + mins).get(0));
     $('.siac-timer-play-btn').first().trigger('click');
 }
-window.setTimerActive = function(min) {
+window.setTimerActive = function (min) {
     $('.siac-timer-btn').removeClass('active');
     $('.siac-timer-btn.' + min).addClass('active');
 }
@@ -667,33 +671,33 @@ window.escapeRegExp = function (string) {
 window.readerNotification = function (html, immediate) {
 
     if (!html) { return; }
-    if (!immediate && pdfNotification.current != "") {
-        if (pdfNotification.queue.length > 0) {
-            if (html === pdfNotification.queue[pdfNotification.queue.length - 1]) {
+    if (!immediate && pdf.notification.current != "") {
+        if (pdf.notification.queue.length > 0) {
+            if (html === pdf.notification.queue[pdf.notification.queue.length - 1]) {
                 return;
             }
-        } else if (pdfNotification.current === html) {
+        } else if (pdf.notification.current === html) {
             return;
         }
-        pdfNotification.queue.push(html);
+        pdf.notification.queue.push(html);
         return;
     }
-    pdfNotification.current = html;
+    pdf.notification.current = html;
     byId('siac-pdf-br-notify').innerHTML = html;
     byId('siac-pdf-br-notify').style.display = "block";
 
     window.setTimeout(() => {
-        pdfNotification.current = "";
+        pdf.notification.current = "";
         if (byId('siac-pdf-br-notify')) {
             byId('siac-pdf-br-notify').style.display = "none";
-            if (pdfNotification.queue.length) {
+            if (pdf.notification.queue.length) {
                 setTimeout(function () {
-                    let next = pdfNotification.queue.shift();
+                    let next = pdf.notification.queue.shift();
                     readerNotification(next, true);
                 }, 800);
             }
         } else {
-            pdfNotification.queue = [];
+            pdf.notification.queue = [];
         }
 
     }, 3500);
@@ -714,15 +718,15 @@ window.swapReadingModal = function () {
  * When a new page is rendered, the marks display at the top has to be updated, as well as the "Marks" tab in the bottom bar.
  */
 window.updatePdfDisplayedMarks = function (rerenderTop) {
-    if (pdfDisplayedMarks == null) {
+    if (pdf.displayedMarks == null) {
         return;
     }
     if (rerenderTop) {
         let html = "";
         $('.siac-mark-btn-inner').removeClass('active');
-        if (pdfDisplayedCurrentPage in pdfDisplayedMarks) {
-            for (var i = 0; i < pdfDisplayedMarks[pdfDisplayedCurrentPage].length; i++) {
-                switch (pdfDisplayedMarks[pdfDisplayedCurrentPage][i]) {
+        if (pdf.page in pdf.displayedMarks) {
+            for (var i = 0; i < pdf.displayedMarks[pdf.page].length; i++) {
+                switch (pdf.displayedMarks[pdf.page][i]) {
                     case 1: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Revisit &nbsp;<b onclick='$(\".siac-mark-btn-inner-1\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-1').first().addClass('active'); break;
                     case 2: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Hard &nbsp;<b onclick='$(\".siac-mark-btn-inner-2\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-2').first().addClass('active'); break;
                     case 3: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; More Info &nbsp;<b onclick='$(\".siac-mark-btn-inner-3\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-3').first().addClass('active'); break;
@@ -738,7 +742,7 @@ window.updatePdfDisplayedMarks = function (rerenderTop) {
     let w2 = byId("siac-queue-actions").offsetWidth;
     let w = byId("siac-reading-modal-bottom-bar").clientWidth - w1 - w2 - 100;
     var tableHtml = "";
-    Object.keys(pdfDisplayedMarksTable).forEach(function (key) {
+    Object.keys(pdf.displayedMarksTable).forEach(function (key) {
         let name = "";
         switch (key) {
             case "1": name = "Revisit"; break;
@@ -749,8 +753,8 @@ window.updatePdfDisplayedMarks = function (rerenderTop) {
         }
         let pages = "";
 
-        for (var i = 0; i < pdfDisplayedMarksTable[key].length; i++) {
-            pages += "<span class='siac-page-mark-link'>" + pdfDisplayedMarksTable[key][i] + "</span>, ";
+        for (var i = 0; i < pdf.displayedMarksTable[key].length; i++) {
+            pages += "<span class='siac-page-mark-link'>" + pdf.displayedMarksTable[key][i] + "</span>, ";
         }
         pages = pages.length > 0 ? pages.substring(0, pages.length - 2) : pages;
         tableHtml += `<tr style='color: grey;'><td><b>${name}</b></td><td>${pages}</td></tr>`;
@@ -790,24 +794,24 @@ window.laterShortcut = function () {
     }
 }
 window.jumpLastPageShortcut = function () {
-    if (pdfLoading || noteLoading || modalShown || !pdfDisplayed) {
+    if (pdfLoading || noteLoading || modalShown || !pdf.instance) {
         return;
     }
-    pdfDisplayedCurrentPage = pdfDisplayed.numPages;
-    queueRenderPage(pdfDisplayedCurrentPage, true);
+    pdf.page = pdf.instance.numPages;
+    queueRenderPage(pdf.page, true);
 }
 window.jumpFirstPageShortcut = function () {
-    if (pdfLoading || noteLoading || modalShown || !pdfDisplayed) {
+    if (pdfLoading || noteLoading || modalShown || !pdf.instance) {
         return;
     }
-    pdfDisplayedCurrentPage = 1;
+    pdf.page = 1;
     queueRenderPage(1, true);
 }
 window.pdfGotoPg = function (page) {
-    if (pdfLoading || noteLoading || modalShown || !pdfDisplayed) {
+    if (pdfLoading || noteLoading || modalShown || !pdf.instance) {
         return;
     }
-    pdfDisplayedCurrentPage = page;
+    pdf.page = page;
     queueRenderPage(page, true);
 }
 
@@ -850,7 +854,7 @@ window.togglePDFSelect = function (elem) {
 }
 window.onMarkBtnClicked = function (elem) {
     if ($(elem).hasClass("expanded")) {
-        if (pdfDisplayedMarks && Object.keys(pdfDisplayedMarks).length > 0) {
+        if (pdf.displayedMarks && Object.keys(pdf.displayedMarks).length > 0) {
             byId("siac-mark-jump-btn-inner").innerHTML = "<b onclick='event.stopPropagation(); jumpToNextMark();' style='vertical-align: middle;'>Jump to Next Mark</b>";
         } else {
             byId("siac-mark-jump-btn-inner").innerHTML = "<b style='vertical-align:middle; color: grey;'>No Marks in PDF</b>";
@@ -858,19 +862,19 @@ window.onMarkBtnClicked = function (elem) {
     }
 }
 window.jumpToNextMark = function () {
-    if (!pdfDisplayed) {
+    if (!pdf.instance) {
         return;
     }
-    let pages = Object.keys(pdfDisplayedMarks);
+    let pages = Object.keys(pdf.displayedMarks);
     for (var i = 0; i < pages.length; i++) {
-        if (Number(pages[i]) > pdfDisplayedCurrentPage) {
-            pdfDisplayedCurrentPage = Number(pages[i]);
-            queueRenderPage(pdfDisplayedCurrentPage, true, false, false);
+        if (Number(pages[i]) > pdf.page) {
+            pdf.page = Number(pages[i]);
+            queueRenderPage(pdf.page, true, false, false);
             return;
         }
     }
-    pdfDisplayedCurrentPage = Number(pages[0]);
-    queueRenderPage(pdfDisplayedCurrentPage, true, false, false);
+    pdf.page = Number(pages[0]);
+    queueRenderPage(pdf.page, true, false, false);
 }
 window.bringPDFIntoView = function () {
     if ($('#siac-right-side').hasClass("addon-hidden") || $('#switchBtn').is(":visible")) {
@@ -881,7 +885,7 @@ window.beforeNoteQuickOpen = function () {
     if (noteLoading || pdfLoading || modalShown) {
         return false;
     }
-    if (pdfDisplayed) {
+    if (pdf.instance) {
         noteLoading = true;
         greyoutBottom();
         destroyPDF();
@@ -899,10 +903,10 @@ window.centerTooltip = function () {
     $tt.css({ 'top': h / 2 - ($tt.height() / 2), 'left': w / 2 - ($tt.width() / 2) });
 }
 window.destroyPDF = function () {
-    if (pdfDisplayed) {
-        pdfDisplayed.destroy();
+    if (pdf.instance) {
+        pdf.instance.destroy();
     }
-    pdfDisplayed = null;
+    pdf.instance = null;
 }
 window.pdfUrlSearch = function (input) {
     if (!input.length) { return; }
@@ -949,7 +953,7 @@ window.hideQueue = function (nid) {
     if (pdfLoading || noteLoading || modalShown) { return; }
     pycmd("siac-hide-pdf-queue " + nid);
 }
-window.toggleBottomBar = function() {
+window.toggleBottomBar = function () {
     if (byId('siac-reading-modal-bottom-bar').classList.contains('bottom-hidden')) {
         byId('siac-reading-modal-bottom-bar').classList.remove('bottom-hidden');
         pycmd('siac-config-bool notes.queue.hide_bottom_bar false');
@@ -958,7 +962,7 @@ window.toggleBottomBar = function() {
         pycmd('siac-config-bool notes.queue.hide_bottom_bar true');
     }
 }
-window.toggleTopBar = function() {
+window.toggleTopBar = function () {
     if (byId('siac-reading-modal-top-bar').classList.contains('top-hidden')) {
         byId('siac-reading-modal-top-bar').classList.remove('top-hidden');
         byId('siac-reading-modal-top-btns').classList.remove('top-hidden');
@@ -969,14 +973,14 @@ window.toggleTopBar = function() {
         pycmd('siac-config-bool notes.queue.hide_top_bar true');
     }
 }
-window.hideBothBars = function() {
-        byId('siac-reading-modal-top-bar').classList.add('top-hidden');
-        byId('siac-reading-modal-top-btns').classList.add('top-hidden');
-        byId('siac-reading-modal-bottom-bar').classList.add('bottom-hidden');
-        pycmd('siac-config-bool notes.queue.hide_top_bar true');
-        pycmd('siac-config-bool notes.queue.hide_bottom_bar true');
+window.hideBothBars = function () {
+    byId('siac-reading-modal-top-bar').classList.add('top-hidden');
+    byId('siac-reading-modal-top-btns').classList.add('top-hidden');
+    byId('siac-reading-modal-bottom-bar').classList.add('bottom-hidden');
+    pycmd('siac-config-bool notes.queue.hide_top_bar true');
+    pycmd('siac-config-bool notes.queue.hide_bottom_bar true');
 }
-window.toggleBothBars = function() {
+window.toggleBothBars = function () {
     if (byId('siac-reading-modal-bottom-bar').classList.contains('bottom-hidden')) {
         byId('siac-reading-modal-bottom-bar').classList.remove('bottom-hidden');
         byId('siac-reading-modal-top-bar').classList.remove('top-hidden');
@@ -991,8 +995,8 @@ window.toggleBothBars = function() {
         pycmd('siac-config-bool notes.queue.hide_top_bar true');
     }
 }
-window.bothBarsAreHidden = function() {
-    return byId('siac-reading-modal-top-bar').classList.contains('top-hidden') && 
+window.bothBarsAreHidden = function () {
+    return byId('siac-reading-modal-top-bar').classList.contains('top-hidden') &&
         byId('siac-reading-modal-bottom-bar').classList.contains('bottom-hidden');
 
 }
@@ -1001,10 +1005,10 @@ window.toggleReadingModalFullscreen = function () {
     pdfFullscreen = !pdfFullscreen;
     if (pdfFullscreen) {
         $(document.body).removeClass("siac-fullscreen-show-fields").addClass("siac-fullscreen-show-right");
-        if (pdfDisplayed) {
+        if (pdf.instance) {
             pdfFitToPage();
         }
-        hideBothBars(); 
+        hideBothBars();
         pycmd("siac-notification Press toggle shortcut (default Ctrl+F) to switch.");
 
     } else {
@@ -1013,7 +1017,7 @@ window.toggleReadingModalFullscreen = function () {
             $('#outerWr').addClass("onesided");
         }
         onWindowResize();
-        if (pdfDisplayed) {
+        if (pdf.instance) {
             pdfFitToPage();
         }
     }
@@ -1128,7 +1132,7 @@ window.togglePageSidebar = function (persist = true) {
         }
         $('#siac-reading-modal-center').addClass('siac-page-sidebar');
         if (persist)
-            pycmd(`siac-linked-to-page ${pdfDisplayedCurrentPage} ${pdfDisplayed.numPages}`);
+            pycmd(`siac-linked-to-page ${pdf.page} ${pdf.instance.numPages}`);
     } else {
         if (byId('siac-page-sidebar')) {
             $('#siac-page-sidebar').hide();
@@ -1141,8 +1145,8 @@ window.togglePageSidebar = function (persist = true) {
     }
 }
 window.updatePageSidebarIfShown = function () {
-    if (pdfDisplayed && pageSidebarDisplayed) {
-        pycmd(`siac-linked-to-page ${pdfDisplayedCurrentPage} ${pdfDisplayed.numPages}`);
+    if (pdf.instance && pageSidebarDisplayed) {
+        pycmd(`siac-linked-to-page ${pdf.page} ${pdf.instance.numPages}`);
     }
 }
 

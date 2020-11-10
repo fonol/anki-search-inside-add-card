@@ -37,7 +37,7 @@ window.byId = function(id) {
 };
 
 window.sendContent = function(event) {
-    if ((event && event.repeat) || pdfDisplayed != null || siacState.isFrozen) {
+    if ((event && event.repeat) || pdf.instance != null || siacState.isFrozen) {
         return;
     }
     if (!$fields.text()) {
@@ -346,10 +346,10 @@ window.onWindowResize = function(fitPdfToPage = true) {
         $('#outerWr').css('display', 'flex').removeClass('onesided');
         byId('switchBtn').innerHTML = "&#10149; Search";
     }
-    if (fitPdfToPage && typeof pdfDisplayed !== "undefined" && pdfDisplayed) {
+    if (fitPdfToPage && typeof pdf.instance !== "undefined" && pdf.instance) {
         if(this.resizeTimeout) clearTimeout(this.resizeTimeout);
             this.resizeTimeout = setTimeout(function() {
-                if (pdfDisplayed) {
+                if (pdf.instance) {
                     pdfFitToPage();
                 }
             }, 300);

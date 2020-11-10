@@ -23,7 +23,7 @@
 window.setPDFColorMode = function (mode) {
     $('#siac-pdf-color-mode-btn > span').first().text(mode);
     pdfColorMode = mode;
-    rerenderPDFPage(pdfDisplayedCurrentPage, false);
+    rerenderPDFPage(pdf.page, false);
     pycmd('siac-update-config-str pdf.color_mode ' + mode);
     $('#siac-pdf-top').removeClass("siac-pdf-sand siac-pdf-night siac-pdf-peach siac-pdf-day siac-pdf-rose siac-pdf-moss siac-pdf-coral siac-pdf-x1 siac-pdf-x2 siac-pdf-mud").addClass("siac-pdf-" + pdfColorMode.toLowerCase());
 }
