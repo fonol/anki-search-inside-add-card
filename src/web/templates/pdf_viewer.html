@@ -2,11 +2,11 @@
 <div id='siac-pdf-overlay-top'>
     <div id='siac-pdf-mark-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><img src='{marks_img_src}' style='width: 17px; height: 17px; margin: 0;'/>
         <div style='margin-left: 7px;'>
-            <div class='siac-mark-btn-inner siac-mark-btn-inner-1' onclick='pycmd("siac-pdf-mark 1 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Revisit</div>
-            <div class='siac-mark-btn-inner siac-mark-btn-inner-2' onclick='pycmd("siac-pdf-mark 2 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Hard</div>
-            <div class='siac-mark-btn-inner siac-mark-btn-inner-3' onclick='pycmd("siac-pdf-mark 3 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>More Info</div>
-            <div class='siac-mark-btn-inner siac-mark-btn-inner-4' onclick='pycmd("siac-pdf-mark 4 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>More Cards</div>
-            <div class='siac-mark-btn-inner siac-mark-btn-inner-5' onclick='pycmd("siac-pdf-mark 5 {nid} " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages)'>Bookmark</div>
+            <div class='siac-mark-btn-inner siac-mark-btn-inner-1' onclick='pycmd("siac-pdf-mark 1 {nid} " + pdf.page + " " + pdf.instance.numPages)'>Revisit</div>
+            <div class='siac-mark-btn-inner siac-mark-btn-inner-2' onclick='pycmd("siac-pdf-mark 2 {nid} " + pdf.page + " " + pdf.instance.numPages)'>Hard</div>
+            <div class='siac-mark-btn-inner siac-mark-btn-inner-3' onclick='pycmd("siac-pdf-mark 3 {nid} " + pdf.page + " " + pdf.instance.numPages)'>More Info</div>
+            <div class='siac-mark-btn-inner siac-mark-btn-inner-4' onclick='pycmd("siac-pdf-mark 4 {nid} " + pdf.page + " " + pdf.instance.numPages)'>More Cards</div>
+            <div class='siac-mark-btn-inner siac-mark-btn-inner-5' onclick='pycmd("siac-pdf-mark 5 {nid} " + pdf.page + " " + pdf.instance.numPages)'>Bookmark</div>
         </div> 
     </div>
     {extract}
@@ -117,14 +117,14 @@
             <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
                 <div class='siac-btn-small-dropdown-inverted click'>
                     <div class='siac-dropdown-inverted-item' onclick='pageSnapshot()'><b>Page Snapshot</b></div>
-                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-create-pdf-extract " + pdfDisplayedCurrentPage + " " + pdfDisplayed.numPages); event.stopPropagation();'><b>Extract ...</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-create-pdf-extract " + pdf.page + " " + pdf.instance.numPages); event.stopPropagation();'><b>Extract ...</b></div>
                     <hr>
                     <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Last Read Page</b></div>
                     <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>First Unread Page</b></div>
                     <hr>
-                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdfDisplayedCurrentPage + " " + numPagesExtract()); markReadUpToCurrent();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-read-up-to {nid} " + pdf.page + " " + numPagesExtract()); markReadUpToCurrent();updatePdfProgressBar();event.stopPropagation();'><b>Mark Read up to current Pg.</b></div>
                     <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-display-range-input {nid} " + numPagesExtract()); event.stopPropagation();'><b>Mark Range ...</b></div>
-                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pagesRead = []; pdfHidePageReadMark(); updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-unread {nid}"); pdf.pagesRead = []; pdfHidePageReadMark(); updatePdfProgressBar();event.stopPropagation();'><b>Mark all as Unread</b></div>
                     <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-mark-all-read {nid} " + numPagesExtract()); setAllPagesRead(); updatePdfProgressBar();event.stopPropagation();'>
                         <b>Mark all as Read</b>
                     </div>
