@@ -353,7 +353,9 @@ def clean_field_separators(text):
     if text.endswith("\u001f"):
         text = text[:-1]
     text = text.replace("\u001f", "<span class='fldSep'>|</span>")
-    text = re.sub(r"((?:</li>(?:\n| |<br/?>)*)?</(?:p|div|ul|ol)>(?:</div>)?|<br/?>)(?:\n| )*<span class=['\"]fldSep['\"]>\|</ ?span>", r"<span class='fldSep'>|</span>\1", text)
+    # this tries to move the separator after the last element in a list
+    # e.g. <ul><li>ABC</li></ul>|  -> <ul><li>ABC |</li></ul>
+    text = re.sub(r"((?:</li>(?:\s|<br/?>)*)?</(?:p|div|ul|ol)>(?:</div>)?|<br/?>)\s*<span class=['\"]fldSep['\"]>\|</ ?span>", r"<span class='fldSep'>|</span>\1", text)
 
     return text
 
