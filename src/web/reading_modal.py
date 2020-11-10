@@ -115,7 +115,7 @@ class ReadingModal:
         if not self.note.is_pdf():
             cb(1)
 
-        self._editor.web.evalWithCallback("(() => { return pdfDisplayedCurrentPage; })()", cb)
+        self._editor.web.evalWithCallback("(() => { return pdf.page; })()", cb)
 
 
     @requires_index_loaded
@@ -358,7 +358,7 @@ class ReadingModal:
         pycmd('siac-user-note-mark-range %s ' + document.getElementById('siac-range-input-min').value
                 + ' ' + document.getElementById('siac-range-input-max').value
                 + ' ' + numPagesExtract()
-                + ' ' + pdfDisplayedCurrentPage);
+                + ' ' + pdf.page);
         }
         """ % note_id
         modal = f""" <div class="siac-modal-small dark ta_center fg_lightgrey" contenteditable="false">
@@ -404,14 +404,14 @@ class ReadingModal:
         #marks are stored in two js maps, one with pages as keys, one with mark types (ints) as keys
         marks           = get_pdf_marks(note_id)
         js_maps         = utility.misc.marks_to_js_map(marks)
-        marks_js        = "pdfDisplayedMarks = %s; pdfDisplayedMarksTable = %s;" % (js_maps[0], js_maps[1])
+        marks_js        = "pdf.displayedMarks = %s; pdf.displayedMarksTable = %s;" % (js_maps[0], js_maps[1])
 
         # pdf might be an extract (should only show a range of pages)
-        extract_js      = f"pdfExtract = [{self.note.extract_start}, {self.note.extract_end}];" if self.note.extract_start is not None else "pdfExtract = null;"
+        extract_js      = f"pdf.extract = [{self.note.extract_start}, {self.note.extract_end}];" if self.note.extract_start is not None else "pdf.extract = null;"
 
         # get possible other extracts created from the current pdf
         extracts        = get_extracts(note_id, self.note.source)
-        extract_js      += f"pdfExtractExclude = {json.dumps(extracts)};"
+        extract_js      += f"pdf.extractExclude = {json.dumps(extracts)};"
 
         # pages read are ordered by date, so take last
         last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
@@ -431,14 +431,14 @@ class ReadingModal:
 
             pdfLoading = true;
             var bstr = atob(b64);
-            pagesRead = [%s];
+            pdf.pagesRead = [%s];
             %s
             %s
             var loadFn = function(retry) {
                 if (retry > 4) {
                     $('#siac-pdf-loader-wrapper').remove();
                     $('#siac-timer-popup').html(`<br><center>PDF.js could not be loaded from CDN.</center><br>`).show();
-                    pdfDisplayed = null;
+                    pdf.instance = null;
                     ungreyoutBottom();
                     fileReader = null;
                     pdfLoading = false;
@@ -460,32 +460,32 @@ class ReadingModal:
                 loadingTask.promise.catch(function(error) {
                         $('#siac-pdf-loader-wrapper').remove();
                         $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
-                        pdfDisplayed = null;
+                        pdf.instance = null;
                         ungreyoutBottom();
                         fileReader = null;
                         pdfLoading = false;
                         noteLoading = false;
                 });
-                loadingTask.promise.then(function(pdf) {
-                        pdfDisplayed = pdf;
+                loadingTask.promise.then(function(pdfDoc) {
+                        pdf.instance = pdfDoc;
                         displayedNoteId = %s;
-                        pdfDisplayedCurrentPage = getLastReadPage() || %s;
-                        pdfHighDPIWasUsed = false;
+                        pdf.page = getLastReadPage() || %s;
+                        pdf.highDPIWasUsed = false;
                         if (!document.getElementById('siac-pdf-top')) {
                             return;
                         }
                         document.getElementById('text-layer').style.display = 'inline-block';
-                        if (pagesRead.length === pdf.numPages) {
-                            pdfDisplayedCurrentPage = getLastReadPage() || 1;
-                            queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
+                        if (pdf.pagesRead.length === pdfDoc.numPages) {
+                            pdf.page = getLastReadPage() || 1;
+                            queueRenderPage(pdf.page, true, true, true);
                         } else {
-                            queueRenderPage(pdfDisplayedCurrentPage, true, true, true);
+                            queueRenderPage(pdf.page, true, true, true);
                         }
                         updatePdfProgressBar();
                         if (bothBarsAreHidden()) {
                             readerNotification("%s");
                         }
-                        if (pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
+                        if (pdf.pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
                         fileReader = null;
                         setTimeout(checkTOC, 500);
                 }).catch(function(err) { setTimeout(function() { console.log(err); }); });
@@ -658,7 +658,7 @@ class ReadingModal:
             <script>
                 pdfLoading = false;
                 noteLoading = false;
-                pdfDisplayed = null;
+                pdf.instance = null;
                 if (bothBarsAreHidden()) {{
                     readerNotification("{title}");
                 }}
@@ -1028,8 +1028,8 @@ class ReadingModal:
             io  = f"<div class='siac-btn siac-btn-dark' style='margin-right: 9px;' onclick='pycmd(\"siac-cutout-io {img_src}\"); $(this.parentNode).remove();'><i class='fa fa-eraser'></i>&nbsp; Image Occlusion</div>"
         modal   = """<div class="siac-modal-small dark ta_center">
                         <img src="%s" style="height: 90px;"/><br>
-                        <b>Append to:</b><br><br>
-                        <div class='oflow_y_auto' style="max-height: 200px; overflow-x: hidden;">%s</div>
+                        <b>Append to field:</b><br><br>
+                        <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding-left:4px; overflow-x: hidden;">%s</div>
                         <br><br>
                         %s
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div>
@@ -1038,7 +1038,7 @@ class ReadingModal:
         for i, f in enumerate(self._editor.note.model()['flds']):
             # trigger note update
             fld_update_js = "pycmd(`blur:%s:${currentNoteId}:${$(`.field:eq(%s)`).html()}`);" % (i,i)
-            flds += """<span class="siac-field-picker-opt" onclick="$('.field').get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s">%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
+            flds += """<span class="siac-field-picker-opt" onclick="$('.field').get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s"><i class='fa fa-plus-square-o mr-5'></i>%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
         modal = modal % (img_src, flds, io, img_src)
         return "$('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
@@ -1051,14 +1051,14 @@ class ReadingModal:
 
         cloze_text  = cloze_text.replace("`", "").replace("\n", "")
         modal       = """ <div class="siac-modal-small dark ta_center">
-                        <b>Append to:</b><br><br>
-                        <div class='oflow_y_auto' style="max-height: 200px; overflow-x: hidden;">%s</div><br><br>
+                        <b>Append to field:</b><br><br>
+                        <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding-left:4px; overflow-x: hidden;">%s</div><br><br>
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
                     </div> """
         flds        = ""
 
         for i, f in enumerate(self._editor.note.model()['flds']):
-            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`); $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');">{3}</span><br>""".format(i, cloze_text, f["name"], f["name"])
+            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`); $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');"><i class='fa fa-plus-square-o mr-5'></i>{3}</span><br>""".format(i, cloze_text, f["name"], f["name"])
         modal       = modal % (flds)
 
         return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
@@ -1066,7 +1066,7 @@ class ReadingModal:
     @js
     def show_iframe_overlay(self, url: Optional[str] = None):
         js = """
-            if (pdfDisplayed) {
+            if (pdf.instance) {
                 document.getElementById('siac-pdf-top').style.display = "none";
             } else {
                 document.getElementById('siac-text-top-wr').style.display = "none";
@@ -1087,7 +1087,7 @@ class ReadingModal:
             document.getElementById('siac-iframe').src = "";
             document.getElementById('siac-iframe').style.display = "none";
             document.getElementById('siac-close-iframe-btn').style.display = "none";
-            if (pdfDisplayed) {
+            if (pdf.instance) {
                 document.getElementById('siac-pdf-top').style.display = "flex";
             } else {
                 document.getElementById('siac-text-top-wr').style.display = "flex";
@@ -1158,14 +1158,14 @@ class ReadingModal:
             c = around_d[p_ix]
             if c == 0:
                 if page == p_ix:
-                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdfDisplayed.numPages)' class='siac-pa-sq empty current'>-</span>"
+                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdf.instance.numPages)' class='siac-pa-sq empty current'>-</span>"
                 else:
-                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdfDisplayed.numPages)' class='siac-pa-sq empty'>-</span>"
+                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdf.instance.numPages)' class='siac-pa-sq empty'>-</span>"
             else:
                 if page == p_ix:
-                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdfDisplayed.numPages)' class='siac-pa-sq current'>{c}</span>"
+                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdf.instance.numPages)' class='siac-pa-sq current'>{c}</span>"
                 else:
-                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdfDisplayed.numPages)' class='siac-pa-sq'>{c}</span>"
+                    around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdf.instance.numPages)' class='siac-pa-sq'>{c}</span>"
 
         if len(linked) > 0:
             html = search_results(linked, [])
@@ -1385,7 +1385,7 @@ class ReadingModal:
 
         pages_read  = get_read_pages(self.note_id)
         js          = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
-        js          = f"pagesRead = [{js}];"
+        js          = f"pdf.pagesRead = [{js}];"
 
         if current_page >= start and current_page <= end:
             js += "pdfShowPageReadMark();"
@@ -1521,20 +1521,20 @@ class ReadingModal:
     @js
     def jump_to_last_read_page(self):
         return """
-            if (pagesRead && pagesRead.length) {
-                pdfDisplayedCurrentPage = Math.max(...pagesRead);
-                rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
+            if (pdf.pagesRead && pdf.pagesRead.length) {
+                pdf.page = Math.max(...pdf.pagesRead);
+                rerenderPDFPage(pdf.page, false, true);
             }
         """
     @js
     def jump_to_first_unread_page(self):
         return """
-            if (pdfDisplayed) {
-                let start = pdfExtract ? pdfExtract[0] : 1;
+            if (pdf.instance) {
+                let start = pdf.extract ? pdf.extract[0] : 1;
                 for (var i = start; i < start + numPagesExtract(); i++) {
-                    if (!pagesRead || pagesRead.indexOf(i) === -1) {
-                        pdfDisplayedCurrentPage = i;
-                        rerenderPDFPage(pdfDisplayedCurrentPage, false, true);
+                    if (!pdf.pagesRead || pdf.pagesRead.indexOf(i) === -1) {
+                        pdf.page = i;
+                        rerenderPDFPage(pdf.page, false, true);
                         break;
                     }
                 }
