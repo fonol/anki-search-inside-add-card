@@ -858,7 +858,7 @@ def get_total_notes_count() -> int:
 
 def get_untagged_notes() -> List[SiacNote]:
     conn = _get_connection()
-    res = conn.execute("select * from notes where tags is null or trim(tags) = ''").fetchall()
+    res = conn.execute("select * from notes where tags is null or trim(tags) = '' order by id desc").fetchall()
     conn.close()
     return _to_notes(res)
 
