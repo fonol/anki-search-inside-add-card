@@ -510,7 +510,7 @@ window.clearSearchResults = function() {
         notes_old[i].remove();
     }
     try {
-        byId("startInfo").remove();
+        byId("siac-start-info").remove();
         byId("greyout").style.display = "none";
     } catch(e) {}
 
