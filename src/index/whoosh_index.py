@@ -129,7 +129,7 @@ class WhooshSearchIndex:
         worker.stamp = utility.misc.get_milisec_stamp()
         self.ui.latest = worker.stamp
         if print_mode == "default":
-            worker.signals.result.connect(self.printOutput)
+            worker.signals.result.connect(self.print_output)
         elif print_mode == "pdf":
             worker.signals.result.connect(self.print_pdf)
 
@@ -226,12 +226,12 @@ class WhooshSearchIndex:
         return utility.clean(text, self.stopWords)
 
 
-    def printOutput(self, result, stamp):
+    def print_output(self, result, stamp):
         if result is not None:
             query_set = None
             if self.highlighting and self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
                 query_set = set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
-            self.ui.print_search_results(result["results"], stamp, logging = self.logging, printTimingInfo = True, query_set=query_set)
+            self.ui.print_search_results(result["results"], stamp, timing_info = True, query_set=query_set)
 
     def print_pdf(self, result, stamp):
         query_set = None

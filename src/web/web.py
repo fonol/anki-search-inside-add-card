@@ -327,7 +327,7 @@ def show_settings_modal(editor):
     html    = get_settings_modal_html(config)
     index   = get_index()
 
-    index.ui.showInModal(html)
+    index.ui.show_in_modal(html)
     return "$('.modal-close').on('click', function() {pycmd(`siac-write-config`); })"
 
 @js
@@ -337,7 +337,7 @@ def show_unsuspend_modal(nid):
     html    = get_unsuspend_modal(nid)
     index   = get_index()
 
-    index.ui.showInModal(html)
+    index.ui.show_in_modal(html)
     return "siacState.keepPositionAtRendering = true; $('.modal-close').on('click', function() {pycmd(`siac-rerender`);$('.modal-close').off('click'); });"
 
 

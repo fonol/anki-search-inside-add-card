@@ -172,7 +172,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-render-tags"):
         # clicked on a tag with (+n)
-        index.ui.printTagHierarchy(cmd[16:].split(" "))
+        index.ui.print_tag_hierarchy(cmd[16:].split(" "))
 
     elif cmd.startswith("siac-r-random-notes ") and check_index():
         # RANDOM clicked
@@ -801,22 +801,22 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-synonyms":
         if check_index():
-            index.ui.showInModal(get_synonym_dialog())
+            index.ui.show_in_modal(get_synonym_dialog())
     elif cmd.startswith("siac-save-synonyms "):
         new_synonyms(cmd[19:])
-        index.ui.showInModal(get_synonym_dialog())
+        index.ui.show_in_modal(get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-edit-synonyms "):
         edit_synonym_set(cmd[19:])
-        index.ui.showInModal(get_synonym_dialog())
+        index.ui.show_in_modal(get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-delete-synonyms "):
         delete_synonym_set(int(cmd[21:].strip()))
-        index.ui.showInModal(get_synonym_dialog())
+        index.ui.show_in_modal(get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-r-synset-search "):
         if check_index():
-            index.ui.hideModal()
+            index.ui.hide_modal()
             default_search_with_decks(self, cmd.split()[1], ["-1"])
 
     #
@@ -923,7 +923,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-index-info":
         if check_index():
-            index.ui.showInModal(get_index_info())
+            index.ui.show_in_modal(get_index_info())
 
     elif cmd == "siac-r-show-tips":
         tips = get_tips_html()
@@ -1153,13 +1153,13 @@ def parse_sort_cmd(cmd):
 
     index = get_index()
     if cmd == "newest":
-        index.ui.sortByDate("desc")
+        index.ui.sort_by_date("desc")
     elif cmd == "oldest":
-        index.ui.sortByDate("asc")
+        index.ui.sort_by_date("asc")
     elif cmd == "remUntagged":
-        index.ui.removeUntagged()
+        index.ui.remove_untagged()
     elif cmd == "remTagged":
-        index.ui.removeTagged()
+        index.ui.remove_tagged()
     elif cmd == "remUnreviewed":
         index.ui.remove_unreviewed()
     elif cmd == "remReviewed":
@@ -1259,7 +1259,7 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
         index.lastSearch    = (content, decks, "db")
         search_res          = index.searchDB(content, decks)
         if editor and editor.web:
-            index.ui.print_search_results(search_res["result"], search_res["stamp"], editor, logging=index.logging)
+            index.ui.print_search_results(search_res["result"], search_res["stamp"], editor)
 
     else:
         if len(content[content.index('~ ') + 2:]) > 2000:
@@ -1279,7 +1279,7 @@ def search_by_tags(query: str):
     index.lastSearch    = (query, ["-1"], "tags")
     res                 = findBySameTag(query, index.limit, [], index.pinned)
 
-    index.ui.print_search_results(res["result"], stamp, index.ui._editor, logging=index.logging)
+    index.ui.print_search_results(res["result"], stamp, index.ui._editor)
 
 
 def rerenderNote(nid: int):
@@ -1288,7 +1288,7 @@ def rerenderNote(nid: int):
         res = res[0]
         index = get_index()
         if index is not None and index.ui is not None:
-            index.ui.updateSingle(res)
+            index.ui.update_single(res)
 
 @requires_index_loaded
 def default_search_with_decks(editor: aqt.editor.Editor, textRaw: Optional[str], decks: List[int]):
@@ -1359,8 +1359,6 @@ def set_pinned(cmd: str):
         if len(id) > 0:
             pinned.append(id)
     index.pinned = pinned
-    if index.logging:
-        log("Updated pinned: " + str(index.pinned))
 
 def update_field_to_hide_in_results(mid: int, fldOrd: int, value: bool):
     if not value:
@@ -1816,7 +1814,7 @@ def show_timing_modal(render_time = None):
 
     html += "</table>"
 
-    index.ui.showInModal(html)
+    index.ui.show_in_modal(html)
 
 @requires_index_loaded
 def update_styling(cmd):
