@@ -18,6 +18,7 @@ import io
 import typing
 from typing import Dict
 
+from ..internals import HTML
 import state
 
 HTML_TEMPLATES = {}
@@ -30,7 +31,7 @@ def _load_template(name: str):
         html = tf.read()
         HTML_TEMPLATES[name] = html
 
-def filled_template(name: str, values: Dict[str, str]) -> str:
+def filled_template(name: str, values: Dict[str, str]) -> HTML:
     """ Returns the given template with all {placeholders} filled out according to the given dict. """
 
     if state.dev_mode or not name in HTML_TEMPLATES:

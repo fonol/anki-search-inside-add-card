@@ -18,6 +18,7 @@
 HTML templates for search results.
 """
 from aqt import mw
+from ..internals import HTML
 config = mw.addonManager.getConfig(__name__)
 
 PREVIEWER   = """<div class='srchLbl' onclick='pycmd("siac-preview {nid}")'><i class="fa fa-id-card-o"></i></div>"""
@@ -26,12 +27,12 @@ try:
 except:
     PREVIEWER = ""
 
-FLOAT_BTN   = "<div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>" if config["results.showFloatButton"] else ""
-NID_BTN      = "<div class='floatLbl' onclick='pycmd(\"siac-copy-to-cb {nid}\")'>NID</div>" if config["results.showIDButton"] else ""
-CID_BTN      = "<div class='floatLbl' onclick='pycmd(\"siac-copy-cid-to-cb {nid}\")'>CID</div>" if config["results.showCIDButton"] else ""
+FLOAT_BTN : HTML   = "<div class='floatLbl' onclick='addFloatingNote({nid})'>&#10063;</div>" if config["results.showFloatButton"] else ""
+NID_BTN   : HTML   = "<div class='floatLbl' onclick='pycmd(\"siac-copy-to-cb {nid}\")'>NID</div>" if config["results.showIDButton"] else ""
+CID_BTN   : HTML   = "<div class='floatLbl' onclick='pycmd(\"siac-copy-cid-to-cb {nid}\")'>CID</div>" if config["results.showCIDButton"] else ""
 
 
-noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
+noteTemplate : HTML = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                     <div class='topLeftWr'>
                         <div id='cW-{nid}' class='rankingLbl' onclick="expandRankingLbl(this)">{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
                         {ret}
@@ -51,7 +52,7 @@ noteTemplate = """<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
                     <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;&nbsp;<i class="fa fa-info"></i>&nbsp;&nbsp;</div>
                 </div>""" % (PREVIEWER, FLOAT_BTN, NID_BTN, CID_BTN)
 
-noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
+noteTemplateSimple : HTML = """<div class='cardWrapper' style="display: block;">
                     <div class='topLeftWr'>
                         <div class='rankingLbl'>{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
                         {ret}
@@ -64,7 +65,7 @@ noteTemplateSimple = """<div class='cardWrapper' style="display: block;">
                     <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;&nbsp;<i class="fa fa-info"></i>&nbsp;&nbsp;</div>
                 </div>"""
 
-noteTemplateUserNoteSimple = """<div class='cardWrapper' style="display: block;">
+noteTemplateUserNoteSimple : HTML = """<div class='cardWrapper' style="display: block;">
                     <div class='topLeftWr'>
                         <div class='rankingLbl'>{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
                     </div>
@@ -76,7 +77,7 @@ noteTemplateUserNoteSimple = """<div class='cardWrapper' style="display: block;"
                     <div class='cardLeftBot' style='display: none' onclick=''></div>
                 </div>"""
 
-noteTemplateUserNote = """<div class='cardWrapper siac-user-note {pdf_class} {grid_class}' id='nWr-{counter}'>
+noteTemplateUserNote : HTML = """<div class='cardWrapper siac-user-note {pdf_class} {grid_class}' id='nWr-{counter}'>
                     <div class='topLeftWr'>
                         <div id='cW-{nid}' class='rankingLbl' onclick='pycmd("siac-copy-to-cb {nid}")'>{counter} &nbsp;SIAC<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
                     </div>

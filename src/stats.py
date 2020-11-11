@@ -483,7 +483,7 @@ def calculateStats(nid, gridView):
 def _build_similarity_table(similar_res_by_cid, card_ivl_by_id):
     html = """
             <br/>
-            <h3 class='full-width ta_center'>Similar Cards</h3>
+            <h3 class='w-100 ta_center'>Similar Cards</h3>
                 Cards whose review history is similar to the given card one's. Similarity is measured among the interval steps (only in reviews) 
                 that a card went through. If our card has an interval of 95 days at the 4th review, and another card has 90 days at the 4th review, 
                 the similarity at this step is <br/>
@@ -497,12 +497,12 @@ def _build_similarity_table(similar_res_by_cid, card_ivl_by_id):
             <b>Average Pass Rate:</b> <i>Sum of each sample's pass rate</i> / <i>Sample Size</i><br/>
             """
     for cid, similar_res in similar_res_by_cid.items():
-        html += "<br/><div class='full-width ta_center mb-10'>Similar cards for " + str(cid) + ":</div>"
+        html += "<br/><div class='w-100 ta_center mb-10'>Similar cards for " + str(cid) + ":</div>"
         
         if len(similar_res[0]) == 1 and 50 in similar_res[0] and similar_res[0][50]["sample_size"] == 0:
             html += "Could not find any samples that have at least an average similarity of 50%."
             continue
-        html += """<table class='striped full-width'>
+        html += """<table class='striped w-100'>
                         <thead>
                             <tr>
                                 <td><b>Sample</b></td>
@@ -636,7 +636,7 @@ def retention_stats_for_tag(true_ret_over_time, graph_div_id, graph_div_lbl_id):
 
 def _get_revlog_graph(cid):
     entries = mw.col.db.all("select * from revlog where cid = %s and (type = 1 or type = 2)" % cid)
-    html = "<div class='full-width'>%s</div>"
+    html = "<div class='w-100'>%s</div>"
     blocks = ""
     for _,_,_,ease,ivl,_,_,_,type in entries:
         ease = ease + 1 if type == 2 and ease > 1 else ease

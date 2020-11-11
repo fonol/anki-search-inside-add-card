@@ -121,7 +121,7 @@ window.pdfLeftTabAnkiSearchKeyup = function (value, event) {
 }
 
 window.initAreaHighlightShortcutPressed = function() {
-    if (pdfDisplayed && !iframeIsDisplayed && Highlighting.colorSelected.id > 0) {
+    if (pdf.instance && !iframeIsDisplayed && Highlighting.colorSelected.id > 0) {
         readerNotification("&nbsp;Area Highlight&nbsp;");
         initAreaHighlight();
         pdfTextLayerMetaKey = false;
@@ -152,8 +152,8 @@ window.pdfTooltipClozeKeyup = function (event) {
 
 window.markClicked = function (event) {
     if (event.target.className === "siac-page-mark-link") {
-        pdfDisplayedCurrentPage = Number(event.target.innerHTML);
-        queueRenderPage(pdfDisplayedCurrentPage, true);
+        pdf.page = Number(event.target.innerHTML);
+        queueRenderPage(pdf.page, true);
     }
 }
 
@@ -211,6 +211,7 @@ window.pdfKeyup = function (e) {
             left -= 200;
         }
         let top = rect.top - prect.top + rect.height;
+        if (top < 0) { return; }
         $('#siac-pdf-tooltip').css({ 'top': top + "px", 'left': left + "px" }).show();
         pycmd("siac-pdf-selection " + text);
         $('#siac-pdf-tooltip').data({"sentences":  sentences, "selection": text, "top": top});

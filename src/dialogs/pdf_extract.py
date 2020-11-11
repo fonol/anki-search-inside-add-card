@@ -120,7 +120,7 @@ class PDFExtractDialog(QDialog):
         ix = get_index()
         if ix.ui.reading_modal.note_id and ix.ui.reading_modal.note.is_pdf():
             extracts = get_extracts(ix.ui.reading_modal.note_id, ix.ui.reading_modal.note.source)
-            ix.ui.js(f"pdfExtractExclude={json.dumps(extracts)}; refreshPDFPage();")
+            ix.ui.js(f"pdf.extractExclude={json.dumps(extracts)}; refreshPDFPage();")
 
         run_hooks("user-note-created")
         run_hooks("updated-schedule")

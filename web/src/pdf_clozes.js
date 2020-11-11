@@ -136,7 +136,7 @@ window.generateClozes = function () {
     });
     let pdfPath = $('#siac-pdf-top').data("pdfpath");
     let pdfTitle = $('#siac-pdf-top').data("pdftitle");
-    pycmd('siac-generate-clozes $$$' + pdfTitle + "$$$" + pdfPath + "$$$" + pdfDisplayedCurrentPage + cmd);
+    pycmd('siac-generate-clozes $$$' + pdfTitle + "$$$" + pdfPath + "$$$" + pdf.page + cmd);
     $('#siac-pdf-tooltip').hide();
 }
 

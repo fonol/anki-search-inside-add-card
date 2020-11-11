@@ -78,7 +78,7 @@ window.initImageSelection = function() {
 
     // Function can be called from Qt-controlled shortcut,
     // so it might be that there is no PDF opened when called.
-    if (!pdfDisplayed) {
+    if (!pdf.instance) {
         return;
     }
     if ($('#text-layer').is(":hidden")) {

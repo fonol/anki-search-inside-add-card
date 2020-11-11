@@ -38,15 +38,15 @@ from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map
 from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
 from .html import *
-from ..internals import js, requires_index_loaded, perf_time
+from ..internals import js, requires_index_loaded, perf_time, JS, HTML
 from ..config import get_config_value_or_default
 
 @js
-def toggleAddon():
+def toggleAddon() -> JS:
     return "toggleAddon();"
 
 
-def getScriptPlatformSpecific():
+def getScriptPlatformSpecific() -> HTML:
     """
         Returns the css and js used by the add-on in <style>/<script> tags.
         Some placeholders in the scripts.js file and in the styles.css file are replaced
@@ -193,7 +193,7 @@ def activate_nightmode(shortcuts: List[Tuple], editor: Editor):
 
 
 
-def setup_ui_after_index_built(editor, index, init_time=None):
+def setup_ui_after_index_built(editor: Optional[Editor], index, init_time=None):
     #editor is None if index building finishes while add dialog is not open
     if editor is None:
         return
@@ -243,7 +243,7 @@ def show_search_result_area(editor=None, initializationTime=0):
 
 
 
-def print_starting_info(editor: Editor):
+def print_starting_info(editor: Optional[Editor]):
     """ Displays the information that is visible after the first start of the add-on. """
 
     if editor is None or editor.web is None:
@@ -306,7 +306,7 @@ def print_starting_info(editor: Editor):
 
 
     editor.web.eval("""document.getElementById('searchResults').innerHTML = `
-            <div id='startInfo'>
+            <div id='siac-start-info'>
                 %s
             </div>`;""" % html)
 
@@ -320,29 +320,29 @@ def display_model_dialog():
         get_index().ui.show_in_modal_subpage(html)
 
 @js
-def show_settings_modal(editor):
+def show_settings_modal(editor) -> JS:
     """ Display the Settings modal. """
 
     config  = mw.addonManager.getConfig(__name__)
     html    = get_settings_modal_html(config)
     index   = get_index()
 
-    index.ui.showInModal(html)
+    index.ui.show_in_modal(html)
     return "$('.modal-close').on('click', function() {pycmd(`siac-write-config`); })"
 
 @js
-def show_unsuspend_modal(nid):
+def show_unsuspend_modal(nid) -> JS:
     """ Display the modal to unsuspend cards of a note. """
 
     html    = get_unsuspend_modal(nid)
     index   = get_index()
 
-    index.ui.showInModal(html)
+    index.ui.show_in_modal(html)
     return "siacState.keepPositionAtRendering = true; $('.modal-close').on('click', function() {pycmd(`siac-rerender`);$('.modal-close').off('click'); });"
 
 
 @js
-def display_note_del_confirm_modal(editor, nid):
+def display_note_del_confirm_modal(editor, nid) -> JS:
     """ Display the modal that asks to confirm a (add-on) note deletion. """
 
     html = get_note_delete_confirm_modal_html(nid)
@@ -351,7 +351,7 @@ def display_note_del_confirm_modal(editor, nid):
     return "$('#resultsWrapper').append(`%s`);" % html
 
 
-def fillTagSelect(editor = None, expanded = False) :
+def fillTagSelect(editor = None, expanded = False):
     """
     Builds the html for the "browse tags" mode in the deck select.
     Also renders the html.
@@ -414,7 +414,7 @@ def fillTagSelect(editor = None, expanded = False) :
     else:
         get_index().ui.js(cmd)
 
-def fillDeckSelect(editor = None, expanded= False, update = True):
+def fillDeckSelect(editor: Optional[Editor] = None, expanded= False, update = True):
     """ Fill the selection with user's decks """
 
     deckMap     = dict()

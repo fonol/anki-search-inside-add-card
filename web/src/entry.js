@@ -9,4 +9,4 @@ import {  } from "./text_editor.js";
 import {  } from "./yt.js";
 
 
-import "../styles.css";
+import "../styles.entry.css";

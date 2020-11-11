@@ -25,7 +25,7 @@ def to_tag_hierarchy(tags, sep="::"):
     return tmap
 
 
-def iterateTagmap(tmap, prefix):
+def iter_tag_map(tmap, prefix):
     if len(tmap) == 0:
         return []
     res = []
@@ -35,7 +35,7 @@ def iterateTagmap(tmap, prefix):
         if type(value) is dict:
             if len(value) > 0:
                 res.append(prefix + key)
-                res +=  iterateTagmap(value, prefix + key)
+                res +=  iter_tag_map(value, prefix + key)
             else:
                 res.append(prefix + key)
     return res
@@ -88,7 +88,7 @@ def build_tag_string(tags, gridView, hover = True, maxLength = -1, maxCount = -1
         for t, s in tm.items():
             stamp = "siac-tg-" + utility.text.get_stamp()
             if len(s) > 0:
-                tagData = " ".join(iterateTagmap({t : s}, ""))
+                tagData = " ".join(iter_tag_map({t : s}, ""))
                 if len(s) == 1 and tagData.count("::") < 2 and not t in tags_split:
                     html = f"{html}<div class='tagLbl' data-stamp='{stamp}' data-tags='{tagData}' data-name='{tagData.split(' ')[1]}' {hover} onclick='tagClick(this);'>{utility.text.trim_if_longer_than(tagData.split(' ')[1], maxLength)}</div>"
                 else:
@@ -97,7 +97,7 @@ def build_tag_string(tags, gridView, hover = True, maxLength = -1, maxCount = -1
                 html = f"{html}<div class='tagLbl' data-stamp='{stamp}' {hover} data-name='{t}' onclick='tagClick(this);'>{utility.text.trim_if_longer_than(t, maxLength)}</div>"
     else:
         stamp = "siac-tg-" + utility.text.get_stamp()
-        tagData = " ".join(iterateTagmap(tm, ""))
+        tagData = " ".join(iter_tag_map(tm, ""))
         html = f"{html}<div class='tagLbl' data-stamp='{stamp}' data-tags='{tagData}' data-name='{tagData}' onclick='tagClick(this);'>{len(tm)} tags ...</div>" 
 
     return html

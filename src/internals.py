@@ -54,3 +54,11 @@ def requires_index_loaded(fn: Callable) -> Callable:
         return fn(*args, **kwargs)
 
     return _check_ix
+
+
+#
+# Type Aliases
+# 
+
+HTML = str
+JS   = str

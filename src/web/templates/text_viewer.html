@@ -9,7 +9,7 @@
 <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='pycmd("siac-user-note-done")'><i class='fa fa-check'></i></div>
 <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark fg_lightgrey' onclick='pycmd("siac-close-iframe")'><b>&times; &nbsp;CLOSE</b></div>
 <div id='siac-text-top-wr' style='height: calc(100% - 42px);'>
-    <div id='siac-text-top' class='ml-10'>
+    <div id='siac-text-top' class='ml-5'>
         <textarea class='w-100 h-100' spellcheck='false'>{text}</textarea>
     </div>
 </div>
@@ -30,8 +30,8 @@
     if (bothBarsAreHidden()) {
         readerNotification("{title}");
     }
-    pdfDisplayedMarks = null;   
-    pdfDisplayedMarksTable = null;
+    pdf.displayedMarks = null;   
+    pdf.displayedMarksTable = null;
     displayedNoteId = {nid};
     editorMDInit();
     noteLoading = false;

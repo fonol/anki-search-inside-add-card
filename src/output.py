@@ -19,11 +19,12 @@ import time
 import json
 import os
 import math
+import aqt
 from datetime import datetime
 from aqt import mw
-from aqt.utils import showInfo, tooltip
+from aqt.utils import tooltip
 import typing
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Dict, Callable
 
 from .debug_logging import log
 from .stats import getRetentions
@@ -35,6 +36,7 @@ from .web.sidebar import Sidebar
 from .config import get_config_value_or_default
 from .web.note_templates import *
 from .models import SiacNote, IndexNote
+from .internals import HTML, JS
 
 import utility.tags
 import utility.text
@@ -42,12 +44,13 @@ import utility.misc
 import state
 
 try:
-    # from .rs.siacrs.siacrs import rs_mark_highlights
     utility.misc.load_rust_lib()
     from siacrs import *
     state.rust_lib = True
 except:
     state.rust_lib = False
+
+
 
 class Output:
     """
@@ -87,7 +90,7 @@ class Output:
         self.previous_calls         = []
 
 
-    def set_editor(self, editor):
+    def set_editor(self, editor: aqt.editor.Editor):
         """
             An editor instance is needed to communicate to the web view, so the ui should always hold one.
             All included children should have a ref to the instance too.
@@ -96,27 +99,23 @@ class Output:
         self.reading_modal.set_editor(editor)
         self.sidebar.set_editor(editor)
 
-    def show_page(self, editor, page):
+    def show_page(self, editor: aqt.editor.Editor, page: int):
         """
             Results are paginated, this will display the results for the given page.
         """
         if self.lastResults is not None:
-            self.print_search_results(self.lastResults, None, editor, False, self.last_had_timing_info, page, query_set = self.last_query_set)
+            self.print_search_results(self.lastResults, None, editor, self.last_had_timing_info, page, query_set = self.last_query_set)
 
     def try_rerender_last(self):
         if self.previous_calls is not None and len(self.previous_calls) > 0:
             c = self.previous_calls[-1]
-            self.print_search_results(c[0], None, c[2], c[3], c[4], c[5], c[6], is_cached=True)
+            self.print_search_results(c[0], None, c[2], c[3], c[4], c[5], is_cached=True)
 
-    def print_search_results(self, notes, stamp, editor=None, logging=False, printTimingInfo=False, page=1, query_set=None, is_cached=False):
+    def print_search_results(self, notes, stamp, editor=None, timing_info=False, page=1, query_set=None, is_cached=False):
         """
         This is the html that gets rendered in the search results div.
         This will always print the first page.
         """
-
-        if logging:
-            log("Entering print_search_results")
-            log("Length (searchResults): " + str(len(notes)))
 
         if stamp is not None:
             if stamp != self.latest:
@@ -136,11 +135,11 @@ class Output:
             # roughly check if current call equals the last one, to set is_rerender to True
             if len(self.previous_calls) > 0:
                 nids = [n.id for n in self.previous_calls[-1][0][:30]]
-                if query_set == self.previous_calls[-1][6] and page == self.previous_calls[-1][5] and nids == [n.id for n in notes[:30]]:
+                if query_set == self.previous_calls[-1][5] and page == self.previous_calls[-1][4] and nids == [n.id for n in notes[:30]]:
                     is_rerender = True
 
             # cache all calls to be able to repeat them
-            self.previous_calls.append([notes, None, editor, logging, printTimingInfo, page, query_set])
+            self.previous_calls.append([notes, None, editor, timing_info, page, query_set])
             
             if len(self.previous_calls) > 11:
                 self.previous_calls.pop(0)
@@ -152,7 +151,7 @@ class Output:
         timeDiffString              = ""
         newNote                     = ""
         ret                         = 0
-        self.last_had_timing_info   = printTimingInfo
+        self.last_had_timing_info   = timing_info
 
         if notes is not None and len(notes) > 0:
             self.lastResults        = notes
@@ -187,10 +186,8 @@ class Output:
             nid     = res.id
             counter += (page - 1)* 50
             try:
-                timeDiffString = self._getTimeDifferenceString(nid, epochTime)
+                timeDiffString = self._get_time_diff_lbl(nid, epochTime)
             except:
-                if logging:
-                    log("Failed to determine creation date: " + str(nid))
                 timeDiffString = "Could not determine creation date"
             ret = retsByNid[int(nid)] if self.showRetentionScores and int(nid) in retsByNid else None
 
@@ -202,9 +199,9 @@ class Output:
             else:
                 retInfo = ""
 
-            #non-anki notes should be displayed differently, we distinguish between title, text and source here
-            #confusing: 'source' on notes from the index means the original note content (without stopwords removed etc.),
-            #on SiacNotes, it means the source field.
+            # non-anki notes should be displayed differently, we distinguish between title, text and source here
+            # confusing: 'source' on notes from the index means the original note content (without stopwords removed etc.),
+            # on SiacNotes, it means the source field.
             build_user_note_start   = time.time()
             text                    = res.get_content()
             progress                = ""
@@ -270,25 +267,6 @@ class Output:
 
             gridclass = "grid" if self.gridView else ""
 
-            # meta notes (graphs etc.) should be full width
-            if self.gridView and res.note_type == "user" and res.is_meta_note():
-                gridclass = ' '.join((gridclass, "grid-full"))
-
-            # pdf notes should be larger because of the progress bar
-            elif self.gridView and res.note_type == "user" and res.is_pdf():
-                gridclass = ' '.join((gridclass, "grid-large"))
-
-            elif self.gridView and len(text) < 200:
-                if self.scale < 0.8:
-                    gridclass = ' '.join((gridclass, "grid-smaller"))
-                else:
-                    gridclass = ' '.join((gridclass, "grid-small"))
-            elif self.gridView and self.scale < 0.8:
-                gridclass = ' '.join((gridclass, "grid-small"))
-
-            elif self.gridView and len(text) > 700 and self.scale > 0.8:
-                gridclass = ' '.join((gridclass, "grid-large"))
-
             if self.scale != 1.0:
                 gridclass = ' '.join([gridclass, "siac-sc-%s" % str(self.scale).replace(".", "-")])
 
@@ -300,7 +278,7 @@ class Output:
                     counter     = counter + 1, 
                     nid         = nid, 
                     creation    = "&nbsp;&#128336; " + timeDiffString, 
-                    edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
+                    edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(nid)]),
                     mouseup     = "getSelectionText()",
                     text        = text, 
                     tags        = utility.tags.build_tag_string(res.tags, self.gridView),
@@ -316,7 +294,7 @@ class Output:
                     counter     = counter + 1, 
                     nid         = nid, 
                     creation    = "&nbsp;&#128336; " + timeDiffString, 
-                    edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(nid)]),
+                    edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(nid)]),
                     mouseup     = "getSelectionText()",
                     text        = text, 
                     tags        = utility.tags.build_tag_string(res.tags, self.gridView), 
@@ -347,12 +325,12 @@ class Output:
             self.last_took = took
         else:
             took = "?"
-        timing      = "true" if printTimingInfo else "false"
+        timing      = "true" if timing_info else "false"
         rerender    = "true" if is_rerender else "false" 
 
         if not self.hideSidebar:
             infoMap = {
-                "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`siac-last-timing`)'><i class='fa fa-info-circle'></i></b>" if printTimingInfo else ""),
+                "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`siac-last-timing`)'><i class='fa fa-info-circle'></i></b>" if timing_info else ""),
                 "Found" :  "<b>%s</b> notes" % (len(notes) if len(notes) > 0 else "<span style='color: red;'>0</span>")
             }
             info = self.build_info_table(infoMap, tags, allText)
@@ -398,7 +376,7 @@ class Output:
             
         return (highlight_total * 1000, build_user_note_total)
     
-    def js(self, js):
+    def js(self, js: JS):
         """
             Use webview's eval function to execute the given js.
         """
@@ -406,12 +384,12 @@ class Output:
             return
         self._editor.web.eval(js)
 
-    def js_with_cb(self, js, cb):
+    def js_with_cb(self, js: JS, cb: Callable):
         if self._editor is None or self._editor.web is None:
             return
         self._editor.web.evalWithCallback(js, cb)
 
-    def _js(self, js, editor):
+    def _js(self, js: JS, editor: aqt.editor.Editor):
         """ Try to eval the given js, prefer if editor ref is given (through cmd parsing). """
         if editor is None or editor.web is None:
             if self._editor is not None and self._editor.web is not None:
@@ -421,7 +399,7 @@ class Output:
 
     ### Sorting & Filtering
 
-    def sortByDate(self, mode):
+    def sort_by_date(self, mode: str):
         """ Rerenders the last search results, but sorted by creation date. """
         if self.lastResults is None:
             return
@@ -433,7 +411,7 @@ class Output:
         self.print_search_results(sortedByDate, stamp)
 
 
-    def removeUntagged(self):
+    def remove_untagged(self):
         if self.lastResults is None:
             return
         stamp = utility.misc.get_milisec_stamp()
@@ -445,7 +423,7 @@ class Output:
             filtered.append(r)
         self.print_search_results(filtered, stamp)
 
-    def removeTagged(self):
+    def remove_tagged(self):
         if self.lastResults is None:
             return
         stamp = utility.misc.get_milisec_stamp()
@@ -497,8 +475,7 @@ class Output:
     ### End Sorting & Filtering
 
 
-
-    def _buildEditedInfo(self, timestamp):
+    def _build_edited_info(self, timestamp: int) -> str:
         diffInSeconds = time.time() - timestamp
         if diffInSeconds < 60:
             return "Edited just now"
@@ -508,7 +485,7 @@ class Output:
             return "Edited %s minutes ago" % int(diffInSeconds / 60)
         return "Edited today"
 
-    def _getTimeDifferenceString(self, nid, now):
+    def _get_time_diff_lbl(self, nid: int, now: int) -> str:
         """
             Helper function that builds the string that is displayed when clicking on the result number of a note.
         """
@@ -530,7 +507,7 @@ class Output:
         return ""
 
 
-    def build_info_table(self, infoMap, tags, allText):
+    def build_info_table(self, infoMap: Dict[str, str], tags: List[str], allText: str) -> Tuple[HTML, Dict[str, HTML]]:
         """ Right hand side of the result pane, shows some information about the current results (tags, keywords, time taken). """
 
         infoStr             = "<table>"
@@ -549,7 +526,7 @@ class Output:
                 if len(value)  == 0:
                     tagStr = f"{tagStr}<span class='tagLbl' data-stamp='{stamp}' data-name='{key}' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>{utility.text.trim_if_longer_than(key, 19)}</span>"
                 else:
-                    tagData = " ".join(self.iterateTagmap({key : value}, ""))
+                    tagData = " ".join(self.iter_tag_map({key : value}, ""))
                     if len(value) == 1 and tagData.count("::") < 2 and not key in tags:
                         tagStr = f"{tagStr}<span class='tagLbl' data-stamp='{stamp}' data-name='{tagData.split(' ')[1]}' data-tags='{tagData}' onclick='tagClick(this);' onmouseenter='tagMouseEnter(this)' onmouseleave='tagMouseLeave(this)'>{utility.text.trim_if_longer_than(tagData.split()[1],16)}</span>"
                     else:
@@ -567,7 +544,7 @@ class Output:
     
 
 
-    def _most_common_words(self, text):
+    def _most_common_words(self, text: str) -> HTML:
         """ Returns the html that is displayed in the right sidebar containing the clickable keywords. """
 
         if text is None or len(text) == 0:
@@ -610,7 +587,7 @@ class Output:
 
         for counter, res in enumerate(db_list):
             try:
-                timeDiffString = self._getTimeDifferenceString(res[3], epochTime)
+                timeDiffString = self._get_time_diff_lbl(res[3], epochTime)
             except:
                 timeDiffString = "Could not determine creation date"
             ret = retsByNid[int(res.id)] if self.showRetentionScores and int(res.id) in retsByNid else None
@@ -646,7 +623,7 @@ class Output:
             newNote     = template.format(
                 counter=counter+1, 
                 nid=res.id, 
-                edited="" if str(res.id) not in self.edited else "&nbsp;&#128336; " + self._buildEditedInfo(self.edited[str(res.id)]),
+                edited="" if str(res.id) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(res.id)]),
                 mouseup="getSelectionText()" if search_on_selection else "",
                 text=text, 
                 ret=retInfo,
@@ -685,11 +662,11 @@ class Output:
         self.print_search_results(notes, stamp)
 
 
-    def showInModal(self, text):
+    def show_in_modal(self, text: HTML):
         cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`;" % text
         self.js(cmd)
 
-    def show_in_large_modal(self, html):
+    def show_in_large_modal(self, html: HTML):
         html = html.replace("`", "&#96;")
         js = """
             $('#siac-reading-modal').html(`%s`); 
@@ -700,12 +677,12 @@ class Output:
         """ % (html)
         self.js(js) 
 
-    def empty_result(self, message):
+    def empty_result(self, message: str):
         if self._editor is None or self._editor.web is None:
             return
         self._editor.web.eval("setSearchResults('', `%s`, null, 1, 1, 50, %s)" % (message, len(self.previous_calls) + 1))
 
-    def show_search_modal(self, on_enter_attr, header):
+    def show_search_modal(self, on_enter_attr: JS, header: HTML):
         self._editor.web.eval("""
             document.getElementById('siac-search-modal').style.display = 'block';
             document.getElementById('siac-search-modal-header').innerHTML = `%s`;
@@ -786,7 +763,7 @@ class Output:
 
         self.js(cmd)
 
-    def hideModal(self):
+    def hide_modal(self):
         self.js("$('#a-modal').hide();")
 
     def _addToTags(self, tags, tagStr):
@@ -800,7 +777,7 @@ class Output:
             tags.append(tag)
         return tags
 
-    def printTagHierarchy(self, tags):
+    def print_tag_hierarchy(self, tags: List[str]):
         cmd = """document.getElementById('modalText').innerHTML = `<div style='min-height: 200px'>%s</div>`;
         $('.tag-list-item').click(function(e) {
             e.stopPropagation();
@@ -815,10 +792,10 @@ class Output:
             $(this).children('ul').toggle();
         });
 
-        """ % self.buildTagHierarchy(tags)
+        """ % self.build_tag_hierarchy(tags)
         self.js(cmd)
 
-    def buildTagHierarchy(self, tags):
+    def build_tag_hierarchy(self, tags: List[str]) -> HTML:
         tmap    = utility.tags.to_tag_hierarchy(tags)
         config  = mw.addonManager.getConfig(__name__)
         def iterateMap(tmap, prefix, start=False):
@@ -841,10 +818,8 @@ class Output:
         html = iterateMap(tmap, "", True)
         return html
 
-    def getTagMap(self, tags):
-        return utility.tags.to_tag_hierarchy(tags)
 
-    def iterateTagmap(self, tmap, prefix):
+    def iter_tag_map(self, tmap, prefix):
         if len(tmap) == 0:
             return []
         res = []
@@ -854,12 +829,12 @@ class Output:
             if type(value) is dict:
                 if len(value) > 0:
                     res.append(prefix + key)
-                    res +=  self.iterateTagmap(value, prefix + key)
+                    res +=  self.iter_tag_map(value, prefix + key)
                 else:
                     res.append(prefix + key)
         return res
 
-    def updateSingle(self, note):
+    def update_single(self, note):
         """
         Used after note has been edited. The edited note should be rerendered.
         To keep things simple, only note text and tags are replaced.
