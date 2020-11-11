@@ -306,7 +306,7 @@ def print_starting_info(editor: Editor):
 
 
     editor.web.eval("""document.getElementById('searchResults').innerHTML = `
-            <div id='startInfo'>
+            <div id='siac-start-info'>
                 %s
             </div>`;""" % html)
 
