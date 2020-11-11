@@ -58,10 +58,8 @@ def open_or_switch_to_editor(function):
     except:
         pass
 
-    if state.editor_is_ready:
-        function()
-    else:
-        add_tmp_hook("editor-with-siac-initialised", lambda: function())
+    function()
+    add_tmp_hook("editor-with-siac-initialised", lambda: function())
 
     mw.requireReset(reason=ResetReason.AddCardsAddNote)
 
