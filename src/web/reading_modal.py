@@ -1038,7 +1038,7 @@ class ReadingModal:
         for i, f in enumerate(self._editor.note.model()['flds']):
             # trigger note update
             fld_update_js = "pycmd(`blur:%s:${currentNoteId}:${$(`.field:eq(%s)`).html()}`);" % (i,i)
-            flds += """<span class="siac-field-picker-opt" onclick="$('.field').get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s"><i class='fa fa-plus-square-o mr-5'></i>%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
+            flds += """<span class="siac-field-picker-opt" onclick="$('.field').get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s"><i class='fa fa-plus-square-o mr-10'></i>%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
         modal = modal % (img_src, flds, io, img_src)
         return "$('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
@@ -1058,7 +1058,7 @@ class ReadingModal:
         flds        = ""
 
         for i, f in enumerate(self._editor.note.model()['flds']):
-            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`); $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');"><i class='fa fa-plus-square-o mr-5'></i>{3}</span><br>""".format(i, cloze_text, f["name"], f["name"])
+            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`); $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');"><i class='fa fa-plus-square-o mr-10'></i>{3}</span><br>""".format(i, cloze_text, f["name"], f["name"])
         modal       = modal % (flds)
 
         return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
