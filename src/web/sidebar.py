@@ -5,6 +5,7 @@ from anki.utils import isMac, isLin
 
 from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority_as_str, get_notes_scheduled_for_today
 from ..config import get_config_value_or_default as conf_or_def
+from ..internals import HTML
 from .templating import filled_template
 import utility.misc
 import utility.tags
@@ -25,7 +26,7 @@ class Sidebar:
     def set_editor(self, editor: Editor):
         self._editor = editor
 
-    def _html(self) -> str:
+    def _html(self) -> HTML:
 
         tab_displayed_name = self._tab_displayed_name()
 

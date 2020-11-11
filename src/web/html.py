@@ -31,7 +31,7 @@ from ..stats import getRetentions
 from ..state import get_index, check_index
 from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str
 from ..feeds import read
-from ..internals import perf_time
+from ..internals import perf_time, HTML, JS
 from ..config import get_config_value_or_default as conf_or_def
 from ..models import IndexNote
 import utility.misc
@@ -44,7 +44,7 @@ import utility.text
 """
 
 
-def get_synonym_dialog() -> str:
+def get_synonym_dialog() -> HTML:
     """ Returns the html for the dialog that allows input / editing of synonym sets (Settings & Info > Synonyms). """
 
     synonyms    = loadSynonyms()
@@ -67,7 +67,7 @@ def get_synonym_dialog() -> str:
     params = dict(len = len(synonyms), sets = st)
     return filled_template("synonyms", params)
 
-def save_synonyms(synonyms):
+def save_synonyms(synonyms: List[List[str]]):
     config              = mw.addonManager.getConfig(__name__)
     filtered            = []
 
@@ -77,11 +77,11 @@ def save_synonyms(synonyms):
     config["synonyms"]  = filtered
     mw.addonManager.writeConfig(__name__, config)
 
-def new_synonyms(sListStr):
+def new_synonyms(syn_input: str):
     """ Save/merge input synonyms. """
 
     existing    = loadSynonyms()
-    sList       = [utility.text.clean_synonym(s) for s in sListStr.split(",") if len(utility.text.clean_synonym(s)) > 1]
+    sList       = [utility.text.clean_synonym(s) for s in syn_input.split(",") if len(utility.text.clean_synonym(s)) > 1]
     if not sList:
         return
     found       = []
@@ -135,7 +135,7 @@ def loadSynonyms() -> List[List[str]]:
     return synonyms
 
 
-def right_side_html(indexIsLoaded: bool = False) -> str:
+def right_side_html(indexIsLoaded: bool = False) -> HTML:
     """
     Returns the javascript call that inserts the html that is essentially the right side of the add card dialog.
     The right side html is only inserted if not already present, so it is safe to call this function on every note load.
@@ -220,7 +220,7 @@ def right_side_html(indexIsLoaded: bool = False) -> str:
     )
 
 
-def get_model_dialog_html() -> str:
+def get_model_dialog_html() -> HTML:
     """ Returns the html for the "Fields" section in the settings modal. """
 
     all_models  = sorted(mw.col.models.all(), key=lambda m : m['name'])
@@ -262,7 +262,7 @@ def get_model_dialog_html() -> str:
     html += "</div></div>"
     return html
 
-def get_calendar_html() -> str:
+def get_calendar_html() -> HTML:
     """ Html for the timeline at the bottom of the search pane. """
 
     html                    = """<div id='cal-row' class='w-100' style="height: 8px;" onmouseleave='calMouseLeave()'>%s</div> """
@@ -316,7 +316,7 @@ def get_calendar_html() -> str:
     html = html % html_content
     return html
 
-def read_counts_card_body(counts: Dict[int, int]) -> str:
+def read_counts_card_body(counts: Dict[int, int]) -> HTML:
     """ Html for the card that displays today's read pages. """
 
     if counts is None or len(counts) == 0:
@@ -349,7 +349,7 @@ def read_counts_card_body(counts: Dict[int, int]) -> str:
     """
     return html
 
-def topic_card_body(topics: List[Tuple[str, float]]) -> str:
+def topic_card_body(topics: List[Tuple[str, float]]) -> HTML:
     html = """
                 <div class='flex-row w-100' style='margin-top: 20px;'>
                     <div style='width: 50%; flex: 0 1 auto;'>
@@ -364,7 +364,7 @@ def topic_card_body(topics: List[Tuple[str, float]]) -> str:
                 """
     return html
 
-def search_results(db_list: List[IndexNote], query_set: List[str]) -> str:
+def search_results(db_list: List[IndexNote], query_set: List[str]) -> HTML:
     """ Prints a list of index notes. Used e.g. in the pdf viewer. """
     html                        = ""
     newNote                     = ""
@@ -387,7 +387,6 @@ def search_results(db_list: List[IndexNote], query_set: List[str]) -> str:
         else:
             retInfo = ""
 
-        lastNote    = newNote
         text        = res.get_content()
 
         # hide fields that should not be shown
@@ -423,7 +422,7 @@ def search_results(db_list: List[IndexNote], query_set: List[str]) -> str:
     return html
 
 
-def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
+def read_counts_by_date_card_body(counts: Dict[str, int]) -> HTML:
     """ Html for the card that displays read pages / day (heatmap). """
 
     if counts is None or len(counts) == 0:
@@ -454,7 +453,7 @@ def read_counts_by_date_card_body(counts: Dict[str, int]) -> str:
     return html
 
 
-def get_note_delete_confirm_modal_html(nid: int) -> Optional[str]:
+def get_note_delete_confirm_modal_html(nid: int) -> Optional[HTML]:
     """ Html for the modal that pops up when clicking on the trash icon on an add-on note. """
 
     note            = get_note(nid)
@@ -468,7 +467,7 @@ def get_note_delete_confirm_modal_html(nid: int) -> Optional[str]:
     return filled_template("note_delete", dict(title = title, creation_date = note.created, priority = priority, nid = nid))
 
 
-def get_settings_modal_html(config):
+def get_settings_modal_html(config) -> HTML:
     """ Returns the HTML for the settings/styling modal. """
 
     params = dict(
@@ -504,7 +503,7 @@ def get_settings_modal_html(config):
     return filled_template("settings_modal", params)
 
 
-def get_loader_html(text):
+def get_loader_html(text: HTML) -> HTML:
     html = """
         <div class='siac-modal-small'>
             <div> <div class='signal'></div><br/>%s</div>
@@ -512,7 +511,7 @@ def get_loader_html(text):
     """ % text
     return html
 
-def get_pdf_list_first_card():
+def get_pdf_list_first_card() -> HTML:
     """
         Returns the html for the body of a card that is displayed at first position when clicking on "PDFs".
     """
@@ -528,7 +527,7 @@ def get_pdf_list_first_card():
     """
     return html
 
-def get_tips_html() -> List[Tuple[str, str]]:
+def get_tips_html() -> List[Tuple[str, HTML]]:
     """ Settings & Info -> Tips:  Returns a list of (title, body) pairs of html to print. """
 
     return [("General Tips", """
@@ -572,7 +571,7 @@ this is reserved on Mac OS for the finder, so you might want to try out differen
 """)
 ]
 
-def get_unsuspend_modal(nid):
+def get_unsuspend_modal(nid: int) -> HTML:
     """ Returns the html content for the modal that is opened when clicking on a SUSPENDED label. """
 
     cards           = mw.col.db.all(f"select id, ivl, queue, ord from cards where nid = {nid}")
@@ -619,34 +618,34 @@ def get_unsuspend_modal(nid):
             """
 
 
-def pdf_svg(w, h):
+def pdf_svg(w: int, h: int) -> HTML:
     return """
-<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
- width="%spx" height="%spx" viewBox="0 0 225.000000 225.000000"
- preserveAspectRatio="xMidYMid meet">
-<g transform="translate(0.000000,225.000000) scale(0.100000,-0.100000)"
-fill="currentColor" stroke="none">
-<path d="M690 2099 c-29 -12 -67 -45 -83 -74 -8 -14 -14 -134 -17 -380 l-5
--360 -120 -5 c-107 -4 -125 -8 -166 -32 -59 -35 -96 -90 -110 -163 -14 -76 -7
--389 10 -430 15 -37 75 -101 116 -123 21 -12 65 -18 150 -22 l120 -5 5 -125
-c3 -69 11 -136 17 -150 14 -32 51 -66 86 -79 19 -7 231 -11 639 -11 l610 0 40
-22 c21 12 49 38 61 58 l22 35 0 695 c0 578 -2 699 -14 720 -29 50 -363 409
--396 424 -29 14 -92 16 -487 15 -276 0 -463 -4 -478 -10z m890 -268 c0 -226
--15 -210 205 -213 l170 -3 3 -664 c2 -607 1 -666 -14 -683 -16 -17 -48 -18
--619 -18 -548 0 -604 1 -616 17 -19 22 -26 208 -9 228 11 13 76 15 434 15
-l422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120
-133 l-51 24 -421 0 c-349 0 -424 2 -433 14 -18 22 -11 667 8 689 12 15 56 17
-442 17 l429 0 0 -169z m-906 -765 c51 -21 76 -60 76 -118 0 -43 -5 -55 -33
--83 -19 -19 -46 -36 -60 -39 -15 -3 -38 -8 -52 -11 -23 -5 -25 -10 -25 -64 0
--53 -2 -59 -23 -65 -12 -3 -33 -3 -45 1 -22 5 -22 8 -22 192 0 103 3 191 7
-194 12 13 143 7 177 -7z m400 -15 c96 -60 102 -247 11 -319 -55 -43 -198 -67
--246 -42 -18 10 -19 23 -19 188 0 129 3 182 13 191 9 9 39 12 107 9 79 -3 102
--8 134 -27z m366 14 c7 -8 10 -25 6 -39 -5 -22 -12 -25 -64 -28 l-57 -3 0 -35
-0 -35 52 -3 c47 -3 54 -6 59 -27 11 -43 -1 -54 -58 -57 l-53 -3 -3 -72 c-3
--64 -5 -72 -25 -77 -13 -3 -33 -3 -45 1 -22 5 -22 8 -22 193 0 141 3 190 13
-193 6 3 51 6 98 6 65 1 90 -3 99 -14z"/>
-<path d="M928 994 c-5 -4 -8 -56 -8 -116 l0 -108 36 0 c26 0 43 8 66 30 28 29
-30 35 26 91 -3 42 -10 66 -24 80 -21 21 -84 36 -96 23z"/>
-</g>
-</svg>
+        <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+        width="%spx" height="%spx" viewBox="0 0 225.000000 225.000000"
+        preserveAspectRatio="xMidYMid meet">
+        <g transform="translate(0.000000,225.000000) scale(0.100000,-0.100000)"
+        fill="currentColor" stroke="none">
+        <path d="M690 2099 c-29 -12 -67 -45 -83 -74 -8 -14 -14 -134 -17 -380 l-5
+        -360 -120 -5 c-107 -4 -125 -8 -166 -32 -59 -35 -96 -90 -110 -163 -14 -76 -7
+        -389 10 -430 15 -37 75 -101 116 -123 21 -12 65 -18 150 -22 l120 -5 5 -125
+        c3 -69 11 -136 17 -150 14 -32 51 -66 86 -79 19 -7 231 -11 639 -11 l610 0 40
+        22 c21 12 49 38 61 58 l22 35 0 695 c0 578 -2 699 -14 720 -29 50 -363 409
+        -396 424 -29 14 -92 16 -487 15 -276 0 -463 -4 -478 -10z m890 -268 c0 -226
+        -15 -210 205 -213 l170 -3 3 -664 c2 -607 1 -666 -14 -683 -16 -17 -48 -18
+        -619 -18 -548 0 -604 1 -616 17 -19 22 -26 208 -9 228 11 13 76 15 434 15
+        l422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120
+        133 l-51 24 -421 0 c-349 0 -424 2 -433 14 -18 22 -11 667 8 689 12 15 56 17
+        442 17 l429 0 0 -169z m-906 -765 c51 -21 76 -60 76 -118 0 -43 -5 -55 -33
+        -83 -19 -19 -46 -36 -60 -39 -15 -3 -38 -8 -52 -11 -23 -5 -25 -10 -25 -64 0
+        -53 -2 -59 -23 -65 -12 -3 -33 -3 -45 1 -22 5 -22 8 -22 192 0 103 3 191 7
+        194 12 13 143 7 177 -7z m400 -15 c96 -60 102 -247 11 -319 -55 -43 -198 -67
+        -246 -42 -18 10 -19 23 -19 188 0 129 3 182 13 191 9 9 39 12 107 9 79 -3 102
+        -8 134 -27z m366 14 c7 -8 10 -25 6 -39 -5 -22 -12 -25 -64 -28 l-57 -3 0 -35
+        0 -35 52 -3 c47 -3 54 -6 59 -27 11 -43 -1 -54 -58 -57 l-53 -3 -3 -72 c-3
+        -64 -5 -72 -25 -77 -13 -3 -33 -3 -45 1 -22 5 -22 8 -22 193 0 141 3 190 13
+        193 6 3 51 6 98 6 65 1 90 -3 99 -14z"/>
+        <path d="M928 994 c-5 -4 -8 -56 -8 -116 l0 -108 36 0 c26 0 43 8 66 30 28 29
+        30 35 26 91 -3 42 -10 66 -24 80 -21 21 -84 36 -96 23z"/>
+        </g>
+        </svg>
     """ % (w, h)

@@ -51,7 +51,7 @@ from ..dialogs.priority_dialog import PriorityDialog
 from ..dialogs.postpone_dialog import PostponeDialog
 from .templating import filled_template
 from .note_templates import *
-from ..internals import js, requires_index_loaded, perf_time
+from ..internals import js, requires_index_loaded, perf_time, HTML, JS
 from ..config import get_config_value_or_default, get_config_value
 from ..web_import import import_webpage
 from ..stats import getRetentions
@@ -325,7 +325,7 @@ class ReadingModal:
                 self.read_head_of_queue()
 
     @js
-    def show_width_picker(self):
+    def show_width_picker(self) -> JS:
         html = """
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 10")'><b>10 - 90</b></div>
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 15")'><b>15 - 85</b></div>
@@ -353,7 +353,7 @@ class ReadingModal:
         return "$('#siac-reading-modal-center').append(`%s`)" % modal
 
     @js
-    def display_read_range_input(self, note_id: int, num_pages: int):
+    def display_read_range_input(self, note_id: int, num_pages: int) -> JS:
         on_confirm= """ if (document.getElementById('siac-range-input-min').value && document.getElementById('siac-range-input-max').value) {
         pycmd('siac-user-note-mark-range %s ' + document.getElementById('siac-range-input-min').value
                 + ' ' + document.getElementById('siac-range-input-max').value
@@ -373,7 +373,7 @@ class ReadingModal:
 
 
     @js
-    def reload_bottom_bar(self):
+    def reload_bottom_bar(self) -> JS:
         """
             Called after queue picker dialog has been closed without opening a new note.
         """
@@ -520,7 +520,7 @@ class ReadingModal:
     def show_pdfs_tab(self):
         self.sidebar.show_pdfs_tab()
 
-    def html(self) -> str:
+    def html(self) -> HTML:
         """ Builds the html which has to be inserted into the webview to display the reading modal. """
 
         note        = self.note
@@ -605,7 +605,7 @@ class ReadingModal:
         return ""
 
 
-    def text_note_html(self, editable: bool, priority: int) -> str:
+    def text_note_html(self, editable: bool, priority: int) -> HTML:
         """
             Returns the html which is wrapped around the text of user notes inside the reading modal.
             This function is used if the note is a regular, text-only note, if the note is a pdf note,
@@ -627,7 +627,7 @@ class ReadingModal:
         html                    = filled_template("text_viewer", params)
         return html
 
-    def yt_html(self) -> str:
+    def yt_html(self) -> HTML:
         """ Returns the HTML for the embedded youtube video player. """
 
         title   = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
@@ -669,7 +669,7 @@ class ReadingModal:
         """
 
 
-    def get_feed_html(self, nid, source):
+    def get_feed_html(self, nid, source) -> HTML:
         """ Not used currently. """
 
         #extract feed url
@@ -737,7 +737,7 @@ class ReadingModal:
         return html
 
 
-    def bottom_bar(self, note):
+    def bottom_bar(self, note) -> HTML:
         """ Returns only the html for the bottom bar, useful if the currently displayed pdf should not be reloaded, but the queue display has to be refreshed. """
 
         text            = note.text
@@ -784,7 +784,7 @@ class ReadingModal:
 
         return html
 
-    def get_queue_head_display(self, queue: Optional[List[SiacNote]] = None, should_save: bool = False) -> str:
+    def get_queue_head_display(self, queue: Optional[List[SiacNote]] = None, should_save: bool = False) -> HTML:
         """ This builds the html for the little list at the bottom of the reading modal which shows the first 5 items in the queue. """
 
         if queue is None:
@@ -854,7 +854,7 @@ class ReadingModal:
         return html
 
 
-    def pdf_viewer_html(self, source: str, title: str, priority: int) -> str:
+    def pdf_viewer_html(self, source: str, title: str, priority: int) -> HTML:
         """ Returns the center area of the reading modal. Use this if the displayed note is a pdf. """
 
         nid                 = self.note_id
@@ -878,7 +878,7 @@ class ReadingModal:
         html   = filled_template("pdf_viewer", params)
         return html
 
-    def get_note_info_html(self) -> str:
+    def get_note_info_html(self) -> HTML:
         """ Returns the html that is displayed in the "Info" tab in the bottom bar of the reading modal. """
 
         note    = self.note
@@ -908,7 +908,7 @@ class ReadingModal:
         """
         return html
 
-    def iframe_dialog(self, urls: List[str]) -> str:
+    def iframe_dialog(self, urls: List[str]) -> HTML:
         """ HTML for the button on the top left of the center pane, which allows to search for text in an iframe. """
 
         search_sources  = "<table class='cursor-pointer w-100' style='margin: 10px 0 10px 0; box-sizing: border-box;' onclick='event.stopPropagation();'>"
@@ -932,7 +932,7 @@ class ReadingModal:
         return search_sources
 
     @js
-    def show_remove_dialog(self, nid: Optional[int] = None):
+    def show_remove_dialog(self, nid: Optional[int] = None) -> JS:
         """ Shows a dialog to either remove the current note from the queue or to delete it altogether. """
 
         if nid:
@@ -1004,7 +1004,7 @@ class ReadingModal:
             """)
 
     @js
-    def show_theme_dialog(self):
+    def show_theme_dialog(self) -> JS:
         """ Display a modal to change the main color of the reader. """
 
         modal = filled_template("theme", {}).replace('`', '\\`')
@@ -1016,7 +1016,7 @@ class ReadingModal:
             """ % modal
 
     @js
-    def show_img_field_picker_modal(self, img_src: str):
+    def show_img_field_picker_modal(self, img_src: str) -> JS:
         """
             Called after an image has been selected from a PDF, should display all fields that are currently in the editor,
             let the user pick one, and on picking, insert the img into the field.
@@ -1043,7 +1043,7 @@ class ReadingModal:
         return "$('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
     @js
-    def show_cloze_field_picker_modal(self, cloze_text: str):
+    def show_cloze_field_picker_modal(self, cloze_text: str) -> JS:
         """
         Shows a modal that lists all fields of the current note.
         When a field is selected, the cloze text is appended to that field.
@@ -1064,7 +1064,7 @@ class ReadingModal:
         return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
     @js
-    def show_iframe_overlay(self, url: Optional[str] = None):
+    def show_iframe_overlay(self, url: Optional[str] = None) -> JS:
         js = """
             if (pdf.instance) {
                 document.getElementById('siac-pdf-top').style.display = "none";
@@ -1082,7 +1082,7 @@ class ReadingModal:
         return js
 
     @js
-    def hide_iframe_overlay(self):
+    def hide_iframe_overlay(self) -> JS:
         js = """
             document.getElementById('siac-iframe').src = "";
             document.getElementById('siac-iframe').style.display = "none";
@@ -1097,7 +1097,7 @@ class ReadingModal:
         return js
 
     @js
-    def show_web_search_tooltip(self, inp: str):
+    def show_web_search_tooltip(self, inp: str) -> JS:
         """ Context: Text was selected in a pdf, magnifying glass was clicked in the tooltip. """
 
         inp             = utility.text.remove_special_chars(inp)
@@ -1206,7 +1206,7 @@ class ReadingModal:
     #endregion page sidebar
 
     @js
-    def show_pdf_bottom_tab(self, note_id: int, tab: str):
+    def show_pdf_bottom_tab(self, note_id: int, tab: str) -> JS:
         """ Context: Clicked on a tab (Marks / Related / Info) in the bottom bar. """
 
         tab_js = f"$('.siac-link-btn.tab').removeClass('active'); bottomBarTabDisplayed = '{tab}';"
@@ -1231,7 +1231,7 @@ class ReadingModal:
             $('.siac-link-btn.tab').eq(3).addClass('active');
             document.getElementById('siac-pdf-bottom-tab').innerHTML =`{html}`;"""
 
-    def get_page_map_html(self) -> str:
+    def get_page_map_html(self) -> HTML:
         """ Context: Clicked on 'Page' tab in the bottom bar. """
 
         pages = get_read_pages(self.note_id)
@@ -1262,7 +1262,7 @@ class ReadingModal:
         return html
 
 
-    def get_related_notes_html(self) -> str:
+    def get_related_notes_html(self) -> HTML:
         """ Context: Clicked on 'Related' tab in the bottom bar. """
 
         note_id = self.note_id
@@ -1309,7 +1309,7 @@ class ReadingModal:
         return html
 
 
-    def get_queue_infobox(self, note: SiacNote, read_stats: Tuple[Any, ...]) -> str:
+    def get_queue_infobox(self, note: SiacNote, read_stats: Tuple[Any, ...]) -> HTML:
         """ Returns the html that is displayed in the tooltip which appears when hovering over an item in the queue head. """
 
         diff        = datetime.datetime.now() - datetime.datetime.strptime(note.created, '%Y-%m-%d %H:%M:%S')
@@ -1351,7 +1351,7 @@ class ReadingModal:
         return html
 
 
-    def pdf_prog_bar(self, read: Optional[int], read_total: Optional[int]) -> str:
+    def pdf_prog_bar(self, read: Optional[int], read_total: Optional[int]) -> HTML:
         """ HTML for the progress bar in the top bar of the reader. """
 
         if read is not None and read_total is not None:
@@ -1369,7 +1369,7 @@ class ReadingModal:
             return ""
 
     @js
-    def mark_range(self, start: int, end: int, pages_total: int, current_page: int):
+    def mark_range(self, start: int, end: int, pages_total: int, current_page: int) -> JS:
         if start <= 0:
             start = 1
         if self.note.extract_start is not None and start < self.note.extract_start:
@@ -1393,7 +1393,7 @@ class ReadingModal:
         return f"{js}updatePdfProgressBar();"
 
     @js
-    def display_cloze_modal(self, editor: Editor, selection: str, extracted: List[str]):
+    def display_cloze_modal(self, editor: Editor, selection: str, extracted: List[str]) -> JS:
         """ Displays the modal to view and edit the generated cloze. """
 
         s_html      = "<table style='margin-top: 5px; font-size: 15px;'>"
@@ -1469,7 +1469,7 @@ class ReadingModal:
                 """ % (s_html, btn_html)
 
     @js
-    def notification(self, html: str, on_ok: Optional[str] = None):
+    def notification(self, html: HTML, on_ok: Optional[JS] = None) -> JS:
         if on_ok is None:
             on_ok = ""
         modal = f""" <div class="siac-modal-small dark ta_center fg_lightgrey" contenteditable="false">
@@ -1483,7 +1483,7 @@ class ReadingModal:
                 $('#siac-reading-modal-center').append('%s');""" % modal.replace("\n", "").replace("'", "\\'")
 
     @js
-    def show_timer_elapsed_popup(self, nid: int):
+    def show_timer_elapsed_popup(self, nid: int) -> JS:
         """
             Shows the little popup that is displayed when the timer in the reading modal finished.
         """
@@ -1519,7 +1519,7 @@ class ReadingModal:
 
 
     @js
-    def jump_to_last_read_page(self):
+    def jump_to_last_read_page(self) -> JS:
         return """
             if (pdf.pagesRead && pdf.pagesRead.length) {
                 pdf.page = Math.max(...pdf.pagesRead);
@@ -1527,7 +1527,7 @@ class ReadingModal:
             }
         """
     @js
-    def jump_to_first_unread_page(self):
+    def jump_to_first_unread_page(self) -> JS:
         return """
             if (pdf.instance) {
                 let start = pdf.extract ? pdf.extract[0] : 1;
