@@ -1,0 +1,27 @@
+#siac-notes-sidebar {
+    flex: 0 230px;
+    min-width: 230px;
+    border: 3px outset lightseagreen;
+    border-radius: 5px;
+    padding: 10px;
+}
+.siac-notes-sidebar-item {
+    font-weight: bold;
+    user-select: none;
+    margin-bottom: 5px;
+    transition: margin 0.15s ease;
+}
+.siac-notes-sidebar-item:hover {
+    border-left: 5px solid lightseagreen;
+    padding-left: 5px;
+    margin-left: 5px;
+    transform: scale(1.05);
+}
+.siac-sidebar-inp {
+    background: var(--c-input-background);
+    color: var(--c-input-foreground);
+}
+#siac-sidebar-selected {
+    text-align: center;
+    font-weight: bold;
+}
