@@ -70,7 +70,7 @@ def init_addon():
 
     if config["dev_mode"]:
         state.dev_mode = True
-    
+
     if hasattr(mw.pm, "night_mode"):
         state.night_mode = mw.pm.night_mode()
 
@@ -233,6 +233,10 @@ def on_add_cards_init(add_cards: AddCards):
 
     if get_index() is not None and add_cards.editor is not None:
         get_index().ui.set_editor(add_cards.editor)
+        add_cards.editor.closeEvent().append(close_add_cards())
+
+def close_add_cards():
+    state.editor_is_ready = False
 
 def save_pdf_page(note: Note):
 
@@ -400,7 +404,6 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
 
     # might still be true if Create Note dialog was closed by closing its parent window, so reset it
     state.note_editor_shown = False
-    state.editor_is_ready = False
 
 
     if state.night_mode is None:
@@ -472,7 +475,7 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     _try_register(config["pdf.shortcuts.page_left"], lambda: editor.web.eval("pdfPageLeft()"))
     _try_register(config["pdf.shortcuts.page_right"], lambda: editor.web.eval("pdfPageRight()"))
     _try_register(config["pdf.shortcuts.toggle_read_page_right"], lambda: editor.web.eval("pdfToggleReadAndPageRight()"))
-    
+
     # area highlight
     _try_register(config["pdf.shortcuts.init_area_highlight"], lambda: editor.web.eval("initAreaHighlightShortcutPressed()"))
 
