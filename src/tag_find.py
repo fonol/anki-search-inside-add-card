@@ -130,9 +130,9 @@ def display_tag_info(editor, stamp, tag, index):
 
     for k in sortedCounts[:10]:
         if should_hide_left_side:
-            tags += "<div data-stamp='siac-tg-%s' class='tagLbl smallMarginBottom' data-name='%s' onclick='tagClick(this); event.stopPropagation();'>%s</div>" % (utility.text.get_stamp(), k[0], utility.text.trim_if_longer_than(k[0], 40))
+            tags += "<div data-stamp='siac-tg-%s' class='tagLbl' style='margin-bottom: 4px;' data-name='%s' onclick='tagClick(this); event.stopPropagation();'>%s</div>" % (utility.text.get_stamp(), k[0], utility.text.trim_if_longer_than(k[0], 40))
         else:
-            tags += "<div data-stamp='siac-tg-%s' class='tagLbl smallMarginBottom' data-name='%s' onmouseenter='tagMouseEnter(this)' onclick='tagClick(this); event.stopPropagation();' onmouseleave='tagMouseLeave(this)'>%s</div>" % (utility.text.get_stamp(), k[0], utility.text.trim_if_longer_than(k[0], 40))
+            tags += "<div data-stamp='siac-tg-%s' class='tagLbl' style='margin-bottom: 4px;' data-name='%s' onmouseenter='tagMouseEnter(this)' onclick='tagClick(this); event.stopPropagation();' onmouseleave='tagMouseLeave(this)'>%s</div>" % (utility.text.get_stamp(), k[0], utility.text.trim_if_longer_than(k[0], 40))
         total_length += len(utility.text.trim_if_longer_than(k[0], 40))
         if total_length > 120:
             break
