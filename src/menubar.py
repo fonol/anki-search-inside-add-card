@@ -25,7 +25,7 @@ class Menu():
 
         gc_icn = "graduation_cap_night.png" if nightmode else "graduation_cap.png"
 
-        menu            = get_menu(mw, "", gc_icn)
+        menu            = get_menu(mw, "&SIAC", gc_icn)
         submenu_import  = get_sub_menu(menu, "Import")
 
         menu.setStyleSheet("""
