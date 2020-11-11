@@ -90,6 +90,9 @@ def init_addon():
 
     setup_tagedit_timer()
 
+    # append close function
+    gui_hooks.add_cards_did_init.append(add_cards_did_init)
+
     # add new notes to search index when adding
     gui_hooks.add_cards_did_add_note.append(add_note_to_index)
     gui_hooks.add_cards_did_add_note.append(save_pdf_page)
@@ -226,17 +229,17 @@ def on_load_note(editor: Editor):
     if get_edit() is None and editor is not None:
         set_edit(editor)
 
+def add_cards_did_init(add_cards: AddCards):
+    add_cards.closeButton.clicked.connect(close_editor)
 
-
+def close_editor():
+    state.editor_is_ready = False
 
 def on_add_cards_init(add_cards: AddCards):
 
     if get_index() is not None and add_cards.editor is not None:
         get_index().ui.set_editor(add_cards.editor)
-        add_cards.editor.closeEvent().append(close_add_cards())
 
-def close_add_cards():
-    state.editor_is_ready = False
 
 def save_pdf_page(note: Note):
 
