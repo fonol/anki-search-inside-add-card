@@ -45,8 +45,8 @@ class PDFExtractDialog(QDialog):
         self.parent         = parent
         self.setup_ui()
         self.setWindowTitle("Extract")
-        
-       
+
+
     def setup_ui(self):
 
         self.vbox = QVBoxLayout()
@@ -55,6 +55,10 @@ class PDFExtractDialog(QDialog):
         self.title_inp = QLineEdit()
         self.title_inp.setText(self.note.title)
         self.vbox.addWidget(self.title_inp)
+
+        self.tags_inp = QLineEdit()
+        self.tags_inp.setText(self.note.tags)
+        self.vbox.addWidget(self.tags_inp)
 
         self.start_inp = QSpinBox()
         self.start_inp.setMinimum(1)
@@ -79,12 +83,12 @@ class PDFExtractDialog(QDialog):
         self.vbox.addSpacing(10)
         self.vbox.addLayout(hb)
 
-        self.scheduler = QtPrioritySlider(self.prio_default, self.note.id, True, self.note.reminder)    
+        self.scheduler = QtPrioritySlider(self.prio_default, self.note.id, True, self.note.reminder)
         self.vbox.addWidget(self.scheduler)
 
         bhb = QHBoxLayout()
         bhb.addStretch(1)
-        
+
         self.accept_btn = QPushButton("Create")
         self.accept_btn.clicked.connect(self.accept_clicked)
         bhb.addWidget(self.accept_btn)
@@ -100,7 +104,7 @@ class PDFExtractDialog(QDialog):
     def end_value_changed(self, new_value: int):
         if self.start_inp.value() > new_value:
             self.start_inp.setValue(new_value)
-    
+
     def accept_clicked(self):
         self.extract_start  = self.start_inp.value()
         self.extract_end    = self.end_inp.value()
@@ -111,7 +115,7 @@ class PDFExtractDialog(QDialog):
 
         self.create_extract()
 
-        # if we have a pdf displayed, send the updated extract info to the js, 
+        # if we have a pdf displayed, send the updated extract info to the js,
         # and reload the page
         ix = get_index()
         if ix.ui.reading_modal.note_id and ix.ui.reading_modal.note.is_pdf():
@@ -124,8 +128,6 @@ class PDFExtractDialog(QDialog):
 
     def create_extract(self):
 
-        title = self.title_inp.text() 
-        new_id = create_note(title, "", self.note.source, self.note.tags, self.note.nid, self.scheduler.schedule(), self.scheduler.value(), self.extract_start, self.extract_end)
-
-
-
+        title = self.title_inp.text()
+        tags = self.tags_inp.text()
+        new_id = create_note(title, "", self.note.source, tags, self.note.nid, self.scheduler.schedule(), self.scheduler.value(), self.extract_start, self.extract_end)
