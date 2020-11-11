@@ -230,7 +230,7 @@ def on_load_note(editor: Editor):
         set_edit(editor)
 
 def add_cards_did_init(add_cards: AddCards):
-    add_cards.closeButton.clicked.connect(close_editor)
+    add_cards.rejected.connect(close_editor)
 
 def close_editor():
     state.editor_is_ready = False
