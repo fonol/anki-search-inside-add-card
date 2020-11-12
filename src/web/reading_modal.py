@@ -1488,42 +1488,6 @@ class ReadingModal:
                 $('#siac-reading-modal-center').append('%s');""" % modal.replace("\n", "").replace("'", "\\'")
 
     @js
-    def show_timer_elapsed_popup(self, nid: int) -> JS:
-        """
-            Shows the little popup that is displayed when the timer in the reading modal finished.
-        """
-        read_today_count    = get_read_today_count()
-        added_today_count   = utility.misc.count_cards_added_today()
-        html = """
-        <div style='margin: 0 0 10px 0;'>
-            <div class='ta_center bold' style='vertical-align: middle; line-height: 50px; font-size: 40px; color: #2496dc;'>
-                &#10711;
-            </div>
-            <div class='ta_center bold' style='vertical-align: middle; line-height: 50px; font-size: 20px;'>
-                Time is up!
-            </div>
-        </div>
-        <div class='ta_center fg_lightgrey' style='margin: 10px 0 25px 0;'>
-            Read <b>%s</b> %s today.<br>
-            Added <b>%s</b> %s today.
-        </div>
-        <div class='ta_center' style='margin-bottom: 8px;'>
-            Start:
-        </div>
-        <div class='ta_center'>
-            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;5m&nbsp;</div>
-            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;15m&nbsp;</div>
-            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(30);'>&nbsp;30m&nbsp;</div>
-            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(60);'>&nbsp;60m&nbsp;</div>
-        </div>
-        <div class='ta_center' style='margin-top: 20px;'>
-            <div class='siac-btn siac-btn-dark' onclick='this.parentNode.parentNode.style.display="none";'>Don't Start</div>
-        </div>
-        """ % (read_today_count, "page" if read_today_count == 1 else "pages", added_today_count, "card" if added_today_count == 1 else "cards")
-        return "$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html
-
-
-    @js
     def jump_to_last_read_page(self) -> JS:
         return """
             if (pdf.pagesRead && pdf.pagesRead.length) {
