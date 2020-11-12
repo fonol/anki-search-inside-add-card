@@ -29,7 +29,7 @@ from .note_templates import *
 from .templating import filled_template
 from ..stats import getRetentions
 from ..state import get_index, check_index
-from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str
+from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str, get_read_today_count
 from ..feeds import read
 from ..internals import perf_time, HTML, JS
 from ..config import get_config_value_or_default as conf_or_def
@@ -502,6 +502,15 @@ def get_settings_modal_html(config) -> HTML:
     )
     return filled_template("settings_modal", params)
 
+def get_timer_elapsed_html() -> HTML:
+    read_today_count    = get_read_today_count()
+    added_today_count   = utility.misc.count_cards_added_today()
+    params              = dict(pages_read = read_today_count, 
+                                cards_added = added_today_count, 
+                                pages="page" if read_today_count == 1 else "pages", 
+                                cards="card" if added_today_count == 1 else "cards")
+
+    return filled_template("timer_elapsed", params)
 
 def get_loader_html(text: HTML) -> HTML:
     html = """
