@@ -1010,7 +1010,7 @@ def get_all_tags() -> Set[str]:
                     tag_set.add(t)
     return tag_set
 
-def find_by_tag(tag_str, to_output_list=True):
+def find_by_tag(tag_str, to_output_list=True, only_explicit_tag=False):
     if len(tag_str.strip()) == 0:
         return []
     index = get_index()
@@ -1024,7 +1024,10 @@ def find_by_tag(tag_str, to_output_list=True):
             t = t.replace("'", "''")
             if len(query) > 6:
                 query += " or "
-            query = f"{query}lower(tags) like '% {t} %' or lower(tags) like '% {t}::%' or lower(tags) like '%::{t} %' or lower(tags) like '{t} %' or lower(tags) like '%::{t}::%'"
+            if only_explicit_tag:
+                query = f"{query}lower(tags) like '% {t} %' or lower(tags) like '{t} %'"
+            else:
+                query = f"{query}lower(tags) like '% {t} %' or lower(tags) like '% {t}::%' or lower(tags) like '%::{t} %' or lower(tags) like '{t} %' or lower(tags) like '%::{t}::%'"
     conn = _get_connection()
     res = conn.execute("select * from notes %s order by id desc" %(query)).fetchall()
     conn.close()

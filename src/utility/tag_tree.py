@@ -4,7 +4,7 @@ from aqt.qt import *
 
 
 import state
-from ..notes import get_all_tags_as_hierarchy
+from ..notes import get_all_tags_as_hierarchy, find_by_tag
 from .misc import get_web_folder_path
 
 class DataCol():
@@ -12,9 +12,11 @@ class DataCol():
     Type      = 2
     Deck      = 3
     Notetype  = 4
+    NoteID    = 5
 
 class ItemType():
     AnkiCard = 0
+    SiacNote = 1
 
 class TagTree(QTreeWidget):
     def __init__(self, include_anki_tags = True, only_tags = False, knowledge_tree = False):
@@ -22,6 +24,7 @@ class TagTree(QTreeWidget):
 
         self.include_anki_tags = include_anki_tags
         self.only_tags         = only_tags
+        self.knowledge_tree    = knowledge_tree
 
         # load icon paths/icons
         web_path                = get_web_folder_path()
@@ -30,6 +33,7 @@ class TagTree(QTreeWidget):
         self.tag_icon           = QIcon(icons_path + "icon-tag-24.png")
         self.pdfsiac_icon       = QIcon(icons_path + "icon-pdf-24.png")
         self.ytsiac_icon        = QIcon(icons_path + "icon-yt-24.png")
+        self.mdsiac_icon        = QIcon(icons_path + "icon-markdown-24.png")
 
         config = mw.addonManager.getConfig(__name__)
         if state.night_mode:
@@ -44,7 +48,7 @@ class TagTree(QTreeWidget):
         self.setMinimumHeight(150)
         self.setMinimumWidth(220)
 
-        if knowledge_tree:
+        if self.knowledge_tree:
             self.setSelectionMode(QAbstractItemView.ExtendedSelection)
             self.setColumnCount(2)
             self.setHeaderLabels(["Item", "Deck"])
@@ -85,7 +89,7 @@ class TagTree(QTreeWidget):
             }}
         """
 
-        if not knowledge_tree:
+        if not self.knowledge_tree:
             stylesheet += f"""
                 QTreeWidget::item:hover,QTreeWidget::item:hover:selected,QTreeWidget::item:selected {{
                     border:none;
@@ -105,6 +109,8 @@ class TagTree(QTreeWidget):
             ti.setIcon(0, self.tag_icon)
             ti.addChildren(self._add_to_tree(children, t + "::"))
 
+            if self.knowledge_tree:
+                self.add_all_siac_with_tags(ti)
             if not self.only_tags:
                 self.add_all_cards_with_tags(ti)
 
@@ -120,15 +126,43 @@ class TagTree(QTreeWidget):
 
             for c,m in children.items():
                 ti.addChildren(self._add_to_tree({c: m}, prefix_c))
+            if self.knowledge_tree:
+                self.add_all_siac_with_tags(ti)
             if not self.only_tags:
                 self.add_all_cards_with_tags(ti)
+
 
             res.append(ti)
         return res
 
+    def add_all_siac_with_tags(self, ti):
+        tag_name = ti.data(DataCol.Name, 1)
+
+        notes = find_by_tag(tag_name, only_explicit_tag = True)
+
+        for note in notes:
+            title = note.title
+            id = note.id
+            child = QTreeWidgetItem([title])
+
+            child.setData(DataCol.Name, 1, title)
+            child.setData(DataCol.Type, 1, ItemType.SiacNote)
+            child.setData(DataCol.NoteID, 1, id)
+
+            if note.is_pdf():
+                child.setIcon(0, self.pdfsiac_icon)
+            elif note.is_yt():
+                child.setIcon(0, self.ytsiac_icon)
+            else:
+                child.setIcon(0, self.mdsiac_icon)
+
+
+            ti.addChild(child)
+
     def add_all_cards_with_tags(self, ti):
-        tag_name = ti.data(1,1)
+        tag_name = ti.data(DataCol.Name,1)
         ids = mw.col.find_notes(f"""tag:{tag_name} -"tag:{tag_name}::*" """)
+
         for id in ids:
             note = mw.col.getNote(id)
             nt = note.model()
@@ -141,5 +175,6 @@ class TagTree(QTreeWidget):
             child = QTreeWidgetItem([text, "test"])
             child.setData(DataCol.Name, 1, text)
             child.setData(DataCol.Type, 1, ItemType.AnkiCard)
+            child.setData(DataCol.NoteID, 1, id)
 
             ti.addChild(child)
