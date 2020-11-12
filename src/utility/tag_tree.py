@@ -34,6 +34,7 @@ class TagTree(QTreeWidget):
         self.pdfsiac_icon       = QIcon(icons_path + "icon-pdf-24.png")
         self.ytsiac_icon        = QIcon(icons_path + "icon-yt-24.png")
         self.mdsiac_icon        = QIcon(icons_path + "icon-markdown-24.png")
+        self.cards_icon         = QIcon(icons_path + "icon-cards-24.png")
 
         config = mw.addonManager.getConfig(__name__)
         if state.night_mode:
@@ -109,10 +110,7 @@ class TagTree(QTreeWidget):
             ti.setIcon(0, self.tag_icon)
             ti.addChildren(self._add_to_tree(children, t + "::"))
 
-            if self.knowledge_tree:
-                self.add_all_siac_with_tags(ti)
-            if not self.only_tags:
-                self.add_all_cards_with_tags(ti)
+            self.add_siacnotes_and_anki_cards(ti, "", t)
 
             self.addTopLevelItem(ti)
 
@@ -126,14 +124,20 @@ class TagTree(QTreeWidget):
 
             for c,m in children.items():
                 ti.addChildren(self._add_to_tree({c: m}, prefix_c))
-            if self.knowledge_tree:
-                self.add_all_siac_with_tags(ti)
-            if not self.only_tags:
-                self.add_all_cards_with_tags(ti)
 
+            self.add_siacnotes_and_anki_cards(ti, prefix, t)
 
             res.append(ti)
         return res
+
+    def add_siacnotes_and_anki_cards(self, ti, prefix, t):
+        if self.knowledge_tree:
+            self.add_all_siac_with_tags(ti)
+
+            ac = QTreeWidgetItem()
+            ac.setData(DataCol.Name, 1, prefix + t)
+            if self.add_all_cards_with_tags(ac):
+                ti.addChild(ac)
 
     def add_all_siac_with_tags(self, ti):
         tag_name = ti.data(DataCol.Name, 1)
@@ -162,8 +166,9 @@ class TagTree(QTreeWidget):
     def add_all_cards_with_tags(self, ti):
         tag_name = ti.data(DataCol.Name,1)
         ids = mw.col.find_notes(f"""tag:{tag_name} -"tag:{tag_name}::*" """)
-
+        i = 0
         for id in ids:
+            i += 1
             note = mw.col.getNote(id)
             nt = note.model()
             key = nt["flds"][mw.col.models.sortIdx(nt)]
@@ -178,3 +183,9 @@ class TagTree(QTreeWidget):
             child.setData(DataCol.NoteID, 1, id)
 
             ti.addChild(child)
+        if i == 0:
+            return False
+
+        ti.setText(0, f"""All Notes ({i})""")
+        ti.setIcon(0, self.cards_icon)
+        return True
