@@ -1297,6 +1297,19 @@ def shuffle_queue():
     conn.close()
     recalculate_priority_queue()
 
+def spread_priorities():
+
+    conn    = _get_connection()
+    vals    = conn.execute("select distinct nid, rowid, prio, max(created) from queue_prio_log group by nid").fetchall()
+    max_p   = max([t[2] for t in vals])
+    spread  = [(t[0], max(1, min(int((t[2] * 100) / max_p), 100)), t[3]) for t in vals]
+    row_ids = ",".join([str(t[1]) for t in vals])
+    conn.execute(f"delete from queue_prio_log where rowid in ({row_ids})")
+    conn.executemany("insert into queue_prio_log (nid, prio, created) values(?,?,?)", spread) 
+    conn.commit()
+    conn.close()
+    recalculate_priority_queue()
+
 def get_all_tags_as_hierarchy(include_anki_tags: bool) -> Dict:
     tags = None
     if include_anki_tags:
