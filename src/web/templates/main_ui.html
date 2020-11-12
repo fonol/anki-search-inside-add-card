@@ -172,6 +172,18 @@
             </div>
         </div>
         <div id="icns-large">
+
+            <div class='siac-tomato-main'>
+                    <span class='siac-timer-btn 5 siac-btn-small' onclick='resetTimer(this)'>5</span>
+                    <span class='siac-timer-btn 10 siac-btn-small ' onclick='resetTimer(this)'>10</span>
+                    <span class='siac-timer-btn 15 siac-btn-small ' onclick='resetTimer(this)'>15</span>
+                    <span class='siac-timer-btn 25 siac-btn-small ' onclick='resetTimer(this)'>25</span>
+                    <span class='siac-reading-modal-timer siac-reading-modal-timer-lbl ml-10 mr-10 bold'>30 : 00</span>
+                    <span class='siac-timer-btn 30 siac-btn-small default active' onclick='resetTimer(this)'>30</span>
+                    <span class='siac-timer-btn 45 siac-btn-small' onclick='resetTimer(this)'>45</span>
+                    <span class='siac-timer-btn 60 siac-btn-small' onclick='resetTimer(this)'>60</span>
+                    <span class='siac-timer-play-btn siac-btn-small inactive' style='min-width: 58px;' onclick='toggleTimer();'><i class='fa fa-play mr-5'></i>Start</span>
+            </div>
             <div class='rnd-icon' title='Read First in Queue' onclick='pycmd("siac-user-note-queue-read-head")'><i
                     class="fa fa-inbox"></i></div>
             <div class='rnd-icon' title='PDF Notes' onclick='pycmd("siac-r-show-pdfs")'> <i
