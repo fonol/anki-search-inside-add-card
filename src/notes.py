@@ -1280,6 +1280,23 @@ def empty_priority_list():
     conn.commit()
     conn.close()
 
+def shuffle_queue():
+    """ 
+    This will 'shuffle' the queue by setting the last done date (created column in queue_prio_log) to some random value. 
+    Priorities and schedules are unchanged.
+    This will also recalculate the queue.
+    """
+
+    now     = datetime.now()
+    conn    = _get_connection()
+    nids    = conn.execute("select distinct nid, prio, max(created) from queue_prio_log group by nid").fetchall()
+    conn.execute("delete from queue_prio_log")
+    inserts = [(t[0], t[1], (now + timedelta(days= - random.randint(1, 365))).strftime('%Y-%m-%d-%H-%M-%S')) for t in nids]
+    conn.executemany("insert into queue_prio_log (nid, prio, created) values(?,?,?)", inserts) 
+    conn.commit()
+    conn.close()
+    recalculate_priority_queue()
+
 def get_all_tags_as_hierarchy(include_anki_tags: bool) -> Dict:
     tags = None
     if include_anki_tags:
