@@ -146,7 +146,7 @@ class QtPrioritySlider(QWidget):
                         title   = utility.text.trim_if_longer_than(title, 50)
                         if nid == self.nid:
                             title = f"<font color='#2496dc'><b>{title}</b></font>"
-                        txt     = f"{txt}<b>{p}</b>:  {title}<br>"
+                        txt     = f"{txt}<b>{int(p)}</b>:  {title}<br>"
                     self.similar.setText(f"Similar Priority: <br><br>" + txt)
                 else:
                     self.similar.setText(f"Similar Priority: <br><br>No results." )

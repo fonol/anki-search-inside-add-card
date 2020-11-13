@@ -256,8 +256,9 @@ class NoteEditor(QDialog):
 
         source              = self.create_tab.source.text()
         tags                = self.create_tab.tag.text()
-        queue_schedule      = self.create_tab.slider.value()
+        priority            = self.create_tab.slider.value()
         specific_schedule   = self.create_tab.slider.schedule()
+        author              = self.create_tab.author.text()
 
         # if source is a pdf, title must be given
         if len(title.strip()) == 0 and source.lower().strip().endswith(".pdf"):
@@ -274,7 +275,7 @@ class NoteEditor(QDialog):
                 tags = default_tags
 
         NoteEditor.last_tags = tags
-        create_note(title, text, source, tags, None, specific_schedule, queue_schedule)
+        create_note(title, text, source, tags, None, specific_schedule, priority, author)
         return True
 
     def _reset(self):
@@ -304,6 +305,8 @@ class NoteEditor(QDialog):
             else:
                 text = self.create_tab.text.toPlainText()
         source                  = self.create_tab.source.text()
+        # TODO
+        author                  = self.create_tab.author.text()
         tags                    = self.create_tab.tag.text()
         priority                = self.create_tab.slider.value()
         if not self.create_tab.slider.has_changed_value():
@@ -312,7 +315,7 @@ class NoteEditor(QDialog):
         specific_schedule       = self.create_tab.slider.schedule()
 
         NoteEditor.last_tags    = tags
-        update_note(self.note_id, title, text, source, tags, specific_schedule, priority)
+        update_note(self.note_id, title, text, source, tags, specific_schedule, priority, author)
         run_hooks("user-note-edited", self.note_id)
 
         if self.create_tab.slider.has_changed_value():
@@ -646,6 +649,10 @@ class CreateTab(QWidget):
         vbox.addWidget(source_lbl)
         vbox.addLayout(source_hb)
 
+        vbox.addWidget(QLabel("Author(s)"))
+        self.author = QLineEdit()
+        vbox.addWidget(self.author)
+
         if self.parent.text_prefill is not None:
             self.text.setPlainText(self.parent.text_prefill)
 
@@ -711,6 +718,7 @@ class CreateTab(QWidget):
         if parent.note is not None:
             self.tag.setText(parent.note.tags.lstrip())
             self.title.setText(parent.note.title)
+            self.author.setText(parent.note.author)
             if utility.text.is_html(parent.note.text):
                 self.text.setHtml(parent.note.text)
                 self.text.setPlainText(self.text.toMarkdown())
@@ -1032,17 +1040,7 @@ class PriorityTab(QWidget):
             rem_btn.clicked.connect(functools.partial(self.on_remove_clicked, priority_list[r].id))
             self.t_view.setIndexWidget(self.t_view.model().index(r,2), rem_btn)
 
-    def on_shuffle_btn_clicked(self):
-        priority_list = _get_priority_list()
-        if priority_list is None or len(priority_list) == 0:
-            return
-        random.shuffle(priority_list)
-        model = self.get_model(priority_list)
-        ids = [p.id for p in priority_list]
-        #persist reordering to db
-        set_priority_list(ids)
-        self.t_view.setModel(model)
-        self.set_remove_btns(priority_list)
+   
 
 class SettingsTab(QWidget):
 
@@ -1180,7 +1178,6 @@ class PriorityListModel(QStandardItemModel):
                 ids.append(data)
             id = ids[row]
             ids = [i for ix ,i in enumerate(ids) if i != id or ix == row]
-            set_priority_list(ids)
 
             rem_btn = QPushButton("Remove")
             if self.parent.parent.dark_mode_used:

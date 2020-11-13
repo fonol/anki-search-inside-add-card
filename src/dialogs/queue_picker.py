@@ -935,7 +935,7 @@ class QueueWidget(QWidget):
             rem_btn.clicked.connect(functools.partial(self.rem_btn_clicked, n.id))
 
             if n.id in prios:
-                prio_lbl    = QLabel(str(prios[n.id]))
+                prio_lbl    = QLabel(str(int(prios[n.id])))
                 prio_lbl.setStyleSheet(f"background-color: {utility.misc.prio_color(prios[n.id])}; color: white; font-size: 14px; text-align: center;")
             else:
                 prio_lbl    = QLabel("-")

@@ -63,6 +63,9 @@ class SiacNote(Printable):
         self.extract_start  : Optional[int] = props[11]
         self.extract_end    : Optional[int] = props[12]
         self.delay          : Optional[str] = props[13]
+        self.author         : str           = props[14]
+        self.priority       : float         = props[15]
+        self.last_priority  : float         = props[16]
 
         self.mid            : int = -1
     
@@ -76,7 +79,7 @@ class SiacNote(Printable):
         body    = text.split("\u001f")[1]
         src     = text.split("\u001f")[2]
 
-        return SiacNote((id, title, body, src, index_props[2], -1, "", "", "", "", -1, None, None, None))
+        return SiacNote((id, title, body, src, index_props[2], -1, "", "", "", "", -1, None, None, None, None, None, None))
 
     @staticmethod
     def mock(title: str, body: str, tags: str) -> 'SiacNote':
@@ -84,7 +87,7 @@ class SiacNote(Printable):
 
         SiacNote._ct_timestamp += 1
         id = - (utility.misc.get_milisec_stamp() + SiacNote._ct_timestamp)
-        return SiacNote((id, title, body, "", tags, -1, "", "", "", "", -1, None, None, None))
+        return SiacNote((id, title, body, "", tags, -1, "", "", "", "", -1, None, None, None, None, None, None))
 
     def get_content(self) -> str:
         return self._build_non_anki_note_html()
