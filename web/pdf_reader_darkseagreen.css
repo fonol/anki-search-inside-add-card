@@ -570,6 +570,23 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     margin-top: 15px; 
     position: relative; 
 }
+.siac-reading-modal-button-bar-wrapper.small .siac-hide-on-small {
+    display: none;
+}
+.siac-reading-modal-button-bar-wrapper.smaller .siac-hide-on-smaller, .siac-reading-modal-button-bar-wrapper.smaller .siac-hide-on-small {
+    display: none;
+}
+.siac-reading-modal-button-bar-wrapper:not(.sidebar).smaller #siac-pdf-color-mode-btn {
+    display: none;
+}
+.siac-reading-modal-button-bar-wrapper:not(.sidebar).small #siac-pdf-read-btn b {
+    display: none;
+}
+.siac-reading-modal-button-bar-wrapper:not(.sidebar).small #siac-pdf-read-btn {
+    width: auto !important;
+    padding-left: 7px;
+    padding-right: 7px;
+}
 #siac-marks-display {
     vertical-align: top;
     height: 100%;
