@@ -84,10 +84,9 @@ class Menu():
     def knowledge_tree(self):
         if self.kt is None:
             self.kt = KnowledgeTree()
-            self.kt.show()
-        else:
-            self.kt.close()
-            self.kt = None
+
+        self.kt.show()
+        self.kt.raise_()
 
     def settings(self):
         dialog = SettingsDialog(mw.app.activeWindow())
