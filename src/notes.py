@@ -1302,10 +1302,33 @@ def spread_priorities():
     conn    = _get_connection()
     vals    = conn.execute("select distinct nid, rowid, prio, max(created) from queue_prio_log group by nid").fetchall()
     max_p   = max([t[2] for t in vals])
-    spread  = [(t[0], max(1, min(int((t[2] * 100) / max_p), 100)), t[3]) for t in vals]
+    min_p   = min([t[2] for t in vals])
+    if max_p == min_p:
+        conn.close()
+        return
+    perc    = (max_p - min_p) / 100.0
+
+    spread  = []
+    for t in vals:
+        current_prio = t[2]
+        diff         = current_prio - min_p
+        new          = min(100, max(1, int(diff / perc)))
+        spread.append((t[0], new, t[3]))
+
     row_ids = ",".join([str(t[1]) for t in vals])
     conn.execute(f"delete from queue_prio_log where rowid in ({row_ids})")
     conn.executemany("insert into queue_prio_log (nid, prio, created) values(?,?,?)", spread) 
+    conn.commit()
+    conn.close()
+    recalculate_priority_queue()
+
+def assign_random_priorities():
+    conn    = _get_connection()
+    vals    = conn.execute("select distinct nid, rowid, prio, max(created) from queue_prio_log group by nid").fetchall()
+    rand    = [(t[0], random.randint(1, 100), t[3]) for t in vals]
+    row_ids = ",".join([str(t[1]) for t in vals])
+    conn.execute(f"delete from queue_prio_log where rowid in ({row_ids})")
+    conn.executemany("insert into queue_prio_log (nid, prio, created) values(?,?,?)", rand) 
     conn.commit()
     conn.close()
     recalculate_priority_queue()
