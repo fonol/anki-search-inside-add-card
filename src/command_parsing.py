@@ -50,6 +50,7 @@ from .dialogs.url_import import UrlImporter
 from .dialogs.pdf_extract import PDFExtractDialog
 from .dialogs.zotero_import import ZoteroImporter
 from .dialogs.schedule_dialog import ScheduleDialog
+from .dialogs.timer_elapsed import TimerElapsedDialog
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 from .models import SiacNote
@@ -913,9 +914,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             return (True, None)
         index.ui.reading_modal.show_web_search_tooltip(inp)
 
-    elif cmd.startswith("siac-timer-elapsed "):
-        nid = int(cmd.split()[1])
-        index.ui.reading_modal.show_timer_elapsed_popup(nid)
+    elif cmd == "siac-timer-elapsed":
+        # timer has elapsed, show a modal
+        d = TimerElapsedDialog(aqt.mw.app.activeWindow())
+        if d.exec_():
+            if d.restart is not None:
+                index.ui.js(f"startTimer({d.restart});")
 
     #
     #  Index info modal

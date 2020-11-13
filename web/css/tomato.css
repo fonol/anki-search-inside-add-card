@@ -1,0 +1,64 @@
+
+/* Tomato timer on main screen */
+.siac-tomato-main {
+    display: inline-block;
+    color: grey;
+    vertical-align: top;
+    margin-right: 15px;
+}
+.siac-tomato-main .siac-btn-small {
+    text-align: center;
+    line-height: 1em;
+    font-weight: bold;
+    margin-right: 0;
+    padding-bottom: 1px;
+    border-width: 1px;
+    border-radius: 3px;
+    font-size: 14px !important;
+    color: grey;
+    vertical-align: top;
+}
+body:not(.nightMode) .siac-tomato-main .siac-btn-small {
+    border-color: grey;
+}
+body.nightMode .siac-tomato-main  {
+    color: grey;
+}
+body.nightMode .siac-tomato-main .siac-btn-small  {
+    color: grey;
+}
+.siac-tomato-main .siac-timer-btn.active {
+    color: #2496dc !important;
+}
+.siac-tomato-main .siac-timer-play-btn {
+   font-size: 12px !important;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    vertical-align: top;
+}
+.siac-tomato-main .siac-timer-btn:hover, .siac-tomato-main .siac-timer-play-btn:hover {
+    transform: none;
+}
+.siac-tomato-main .siac-timer-btn:hover, .siac-tomato-main .siac-timer-play-btn:hover {
+    color: #2496dc;
+}
+body.nightMode .siac-tomato-main .siac-timer-btn:hover, body.nightMode .siac-tomato-main .siac-timer-play-btn:hover{
+    color: lightgrey;
+}
+body.nightMode .siac-tomato-main .siac-timer-btn.active:hover {
+    color: #5bc1ff !important;
+}
+.siac-tomato-main .siac-reading-modal-timer-lbl {
+    display: inline-block;
+    min-width: 45px;
+    text-align: center;
+    font-size: 14px;
+    color: grey;
+    vertical-align: top;
+    line-height: 18px;
+}
+body.nightMode .siac-tomato-main .siac-reading-modal-timer-lbl {
+    color: lightgrey;
+}
+
+/* End tomato timer main screen */
