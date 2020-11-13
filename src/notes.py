@@ -260,7 +260,7 @@ def create_note(title: str,
                 values (?,?,?,?,?,datetime('now', 'localtime'),"",?,?, NULL, ?, ?, NULL, ?, ?, NULL)""", (title, text, source, tags, nid, reminder, _date_now_str(), extract_start, extract_end, author, priority)).lastrowid
     conn.commit()
     conn.close()
-    if priority is not None and priority != 0:
+    if (priority is not None and priority != 0) or (reminder is not None and reminder != ""):
         recalculate_priority_queue()
     index = get_index()
     if index is not None:
