@@ -949,6 +949,23 @@ def get_read_stats(nid: int) -> Tuple[Any, ...]:
     conn.close()
     return res
 
+def add_tags(ids: List[int], tags: List[str]):
+    if tags is None or ids is None or len(ids) == 0:
+        return
+    ids = ",".join([str(id) for id in ids]) 
+    conn = _get_connection()
+    notes = conn.execute(f"select id, tags from notes where id in ({ids})").fetchall()
+    updated = []
+    for nid, tstr in notes:
+        spl = tstr.split(" ")
+        for t in tags:
+            if not t in spl:
+                spl.append(t)
+        updated.append((" ".join(spl), nid))
+    conn.executemany("update notes set tags = ? where id= ?", updated)
+    conn.commit()
+    conn.close()
+
 #
 # highlights / annotation
 #
