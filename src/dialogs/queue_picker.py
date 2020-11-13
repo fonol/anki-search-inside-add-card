@@ -797,11 +797,15 @@ class QueueWidget(QWidget):
         self.spread_prios_btn = QPushButton(" Spread Priorities... ")
         self.spread_prios_btn.clicked.connect(self.spread_clicked)
 
+        self.random_prios_btn = QPushButton(" Randomize Priorities... ")
+        self.random_prios_btn.clicked.connect(self.random_prios_clicked)
+
         btn_hbox_l = QHBoxLayout()
         btn_hbox_l.addWidget(self.unqueue_btn)
         btn_hbox_l.addWidget(self.unqueue_all_btn)
         btn_hbox_l.addWidget(self.shuffle_queue_btn)
         btn_hbox_l.addWidget(self.spread_prios_btn)
+        btn_hbox_l.addWidget(self.random_prios_btn)
         btn_hbox_l.addStretch()
 
         self.vbox_left.addLayout(btn_hbox_l)
@@ -1028,6 +1032,16 @@ class QueueWidget(QWidget):
                                             """.replace("\n", ""), QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             spread_priorities()
+            self.refresh_queue_list()
+            self.tabs.currentWidget().refresh()
+
+    def random_prios_clicked(self):
+        reply = QMessageBox.question(self, 'Random Priorities', """
+                                            This will change the priorities of all items to a random value between 1 and 100.<br>
+                                            Are you sure?<br>
+                                            """.replace("\n", ""), QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            assign_random_priorities()
             self.refresh_queue_list()
             self.tabs.currentWidget().refresh()
 
