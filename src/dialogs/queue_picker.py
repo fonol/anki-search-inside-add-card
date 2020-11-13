@@ -445,6 +445,7 @@ class TagsTab(QWidget):
         self.empty_and_enqueue_all_btn  = QPushButton("+ Empty Queue and Enqueue All...")
         self.empty_and_enqueue_all_btn.clicked.connect(self.empty_queue_and_enqueue_all)
 
+
         btn_hbox                        = QHBoxLayout()
         btn_hbox.addWidget(self.enqueue_all_btn)
         btn_hbox.addWidget(self.empty_and_enqueue_all_btn)
@@ -786,13 +787,21 @@ class QueueWidget(QWidget):
         self.unqueue_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
         self.unqueue_btn.clicked.connect(self.rem_selected_clicked)
 
-        self.unqueue_all_btn = QPushButton(" Empty Queue ...")
+        self.unqueue_all_btn = QPushButton(" Empty Queue... ")
         self.unqueue_all_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
         self.unqueue_all_btn.clicked.connect(self.empty_clicked)
+
+        self.shuffle_queue_btn = QPushButton(" Shuffle Queue... ")
+        self.shuffle_queue_btn.clicked.connect(self.shuffle_clicked)
+
+        self.spread_prios_btn = QPushButton(" Spread Priorities... ")
+        self.spread_prios_btn.clicked.connect(self.spread_clicked)
 
         btn_hbox_l = QHBoxLayout()
         btn_hbox_l.addWidget(self.unqueue_btn)
         btn_hbox_l.addWidget(self.unqueue_all_btn)
+        btn_hbox_l.addWidget(self.shuffle_queue_btn)
+        btn_hbox_l.addWidget(self.spread_prios_btn)
         btn_hbox_l.addStretch()
 
         self.vbox_left.addLayout(btn_hbox_l)
@@ -997,9 +1006,28 @@ class QueueWidget(QWidget):
             tooltip("Select some items first")
     
     def empty_clicked(self):
-        reply = QMessageBox.question(self, 'Empty Queue', "This will remove all items from the queue. Are you sure?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+        reply = QMessageBox.question(self, 'Empty Queue', "This will remove all items from the queue.<br> Are you sure?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             empty_priority_list()
+            self.refresh_queue_list()
+            self.tabs.currentWidget().refresh()
+
+    def shuffle_clicked(self):
+        reply = QMessageBox.question(self, 'Shuffle Queue', """This will change the current order of all items in the queue.
+                                            <br>Priorities and schedules will stay the same.<br>
+                                            Are you sure?<br>""".replace("\n", ""), QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            shuffle_queue()
+            self.refresh_queue_list()
+            self.tabs.currentWidget().refresh()
+
+    def spread_clicked(self):
+        reply = QMessageBox.question(self, 'Spread Priorities', """
+                                            This will spread the current priorities between 1 and 100.<br>
+                                            Are you sure?<br>
+                                            """.replace("\n", ""), QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            spread_priorities()
             self.refresh_queue_list()
             self.tabs.currentWidget().refresh()
 

@@ -187,6 +187,135 @@ class ReadingModal:
                 ReadingModal._original_win_title = win.windowTitle()
             win.setWindowTitle(f"{ReadingModal._original_win_title} [{self.note.get_title()}]")
 
+
+    def _display_pdf(self, full_path: str, note_id: int):
+
+        # use rust based lib for better performance if possible
+        if state.rust_lib:
+            try:
+                base64pdf       = encode_file(full_path)
+            except:
+                state.rust_lib = False
+        if not state.rust_lib:
+            base64pdf       = utility.misc.pdf_to_base64(full_path)
+        blen            = len(base64pdf)
+
+        #pages read are stored in js array [int]
+        pages_read      = get_read_pages(note_id)
+        pages_read_js   = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
+
+        #marks are stored in two js maps, one with pages as keys, one with mark types (ints) as keys
+        marks           = get_pdf_marks(note_id)
+        js_maps         = utility.misc.marks_to_js_map(marks)
+        marks_js        = "pdf.displayedMarks = %s; pdf.displayedMarksTable = %s;" % (js_maps[0], js_maps[1])
+
+        # pdf might be an extract (should only show a range of pages)
+        extract_js      = f"pdf.extract = [{self.note.extract_start}, {self.note.extract_end}];" if self.note.extract_start is not None else "pdf.extract = null;"
+
+        # get possible other extracts created from the current pdf
+        extracts        = get_extracts(note_id, self.note.source)
+        extract_js      += f"pdf.extractExclude = {json.dumps(extracts)};"
+
+        # pages read are ordered by date, so take last
+        last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
+
+        if self.note.extract_start is not None:
+            if len(pages_read) > 0:
+                read_in_extract = [p for p in pages_read if p >= self.note.extract_start and p <= self.note.extract_end]
+                last_page_read = read_in_extract[-1] if len(read_in_extract) > 0 else self.note.extract_start
+            else:
+                last_page_read  = self.note.extract_start
+
+        title           = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
+        addon_id        = utility.misc.get_addon_id()
+        port            = mw.mediaServer.getPort()
+
+        init_code = """
+
+            pdfLoading = true;
+            var bstr = atob(b64);
+            pdf.pagesRead = [%s];
+            %s
+            %s
+            var loadFn = function(retry) {
+                if (retry > 4) {
+                    $('#siac-pdf-loader-wrapper').remove();
+                    $('#siac-timer-popup').html(`<br><center>PDF.js could not be loaded from CDN.</center><br>`).show();
+                    pdf.instance = null;
+                    ungreyoutBottom();
+                    fileReader = null;
+                    pdfLoading = false;
+                    noteLoading = false;
+                    return;
+                }
+                if (typeof(pdfjsLib) === 'undefined') {
+                    window.setTimeout(() => { loadFn(retry + 1);}, 800);
+                    pdfLoaderText(`PDF.js was not loaded. Retrying (${retry+1} / 5)`);
+                    return;
+                }
+                if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/pdf.worker.min.js';
+                }
+                var canvas = document.getElementById("siac-pdf-canvas");
+                window.pdf_canvas_0 = canvas;
+                window.pdf_canvas_1 = document.getElementById("siac-pdf-canvas_1");
+                var loadingTask = pdfjsLib.getDocument({data: bstr}, {nativeImageDecoderSupport: 'none'});
+                loadingTask.promise.catch(function(error) {
+                        $('#siac-pdf-loader-wrapper').remove();
+                        $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
+                        pdf.instance = null;
+                        ungreyoutBottom();
+                        fileReader = null;
+                        pdfLoading = false;
+                        noteLoading = false;
+                });
+                loadingTask.promise.then(function(pdfDoc) {
+                        pdf.instance = pdfDoc;
+                        displayedNoteId = %s;
+                        pdf.page = getLastReadPage() || %s;
+                        pdf.highDPIWasUsed = false;
+                        if (!document.getElementById('siac-pdf-top')) {
+                            return;
+                        }
+                        document.getElementById('text-layer').style.display = 'inline-block';
+                        if (pdf.pagesRead.length === pdfDoc.numPages) {
+                            pdf.page = getLastReadPage() || 1;
+                            queueRenderPage(pdf.page, true, true, true);
+                        } else {
+                            queueRenderPage(pdf.page, true, true, true);
+                        }
+                        updatePdfProgressBar();
+                        if (bothBarsAreHidden()) {
+                            readerNotification("%s");
+                        }
+                        if (pdf.pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
+                        fileReader = null;
+                        setTimeout(checkTOC, 500);
+                }).catch(function(err) { setTimeout(function() { console.log(err); }); });
+            };
+            loadFn();
+            b64 = "";
+            bstr = null; file = null;
+        """ % (pages_read_js, marks_js, extract_js, port, addon_id, note_id, last_page_read, title, note_id)
+
+        #send large files in multiple packets
+        page        = self._editor.web.page()
+        chunk_size  = 50000000
+        if blen > chunk_size:
+            page.runJavaScript(f"var b64 = `{base64pdf[0: chunk_size]}`;")
+            sent = chunk_size
+            while sent < blen:
+                page.runJavaScript(f"b64 += `{base64pdf[sent: min(blen,sent + chunk_size)]}`;")
+                sent += min(blen - sent, chunk_size)
+            page.runJavaScript(init_code)
+        else:
+            page.runJavaScript("""
+                var b64 = `%s`;
+                    %s
+            """ % (base64pdf, init_code))
+
+
+
     def fill_sources(self, editor):
         """ Check if any of the fields in pdf.onOpen.autoFillFieldsWithPDFName are present, if yes, fill them with the note's title. """
 
@@ -385,131 +514,7 @@ class ReadingModal:
         return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks(true);" % html
 
 
-    def _display_pdf(self, full_path: str, note_id: int):
 
-        # use rust based lib for better performance if possible
-        if state.rust_lib:
-            try:
-                base64pdf       = encode_file(full_path)
-            except:
-                state.rust_lib = False
-        if not state.rust_lib:
-            base64pdf       = utility.misc.pdf_to_base64(full_path)
-        blen            = len(base64pdf)
-
-        #pages read are stored in js array [int]
-        pages_read      = get_read_pages(note_id)
-        pages_read_js   = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
-
-        #marks are stored in two js maps, one with pages as keys, one with mark types (ints) as keys
-        marks           = get_pdf_marks(note_id)
-        js_maps         = utility.misc.marks_to_js_map(marks)
-        marks_js        = "pdf.displayedMarks = %s; pdf.displayedMarksTable = %s;" % (js_maps[0], js_maps[1])
-
-        # pdf might be an extract (should only show a range of pages)
-        extract_js      = f"pdf.extract = [{self.note.extract_start}, {self.note.extract_end}];" if self.note.extract_start is not None else "pdf.extract = null;"
-
-        # get possible other extracts created from the current pdf
-        extracts        = get_extracts(note_id, self.note.source)
-        extract_js      += f"pdf.extractExclude = {json.dumps(extracts)};"
-
-        # pages read are ordered by date, so take last
-        last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
-
-        if self.note.extract_start is not None:
-            if len(pages_read) > 0:
-                read_in_extract = [p for p in pages_read if p >= self.note.extract_start and p <= self.note.extract_end]
-                last_page_read = read_in_extract[-1] if len(read_in_extract) > 0 else self.note.extract_start
-            else:
-                last_page_read  = self.note.extract_start
-
-        title           = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
-        addon_id        = utility.misc.get_addon_id()
-        port            = mw.mediaServer.getPort()
-
-        init_code = """
-
-            pdfLoading = true;
-            var bstr = atob(b64);
-            pdf.pagesRead = [%s];
-            %s
-            %s
-            var loadFn = function(retry) {
-                if (retry > 4) {
-                    $('#siac-pdf-loader-wrapper').remove();
-                    $('#siac-timer-popup').html(`<br><center>PDF.js could not be loaded from CDN.</center><br>`).show();
-                    pdf.instance = null;
-                    ungreyoutBottom();
-                    fileReader = null;
-                    pdfLoading = false;
-                    noteLoading = false;
-                    return;
-                }
-                if (typeof(pdfjsLib) === 'undefined') {
-                    window.setTimeout(() => { loadFn(retry + 1);}, 800);
-                    pdfLoaderText(`PDF.js was not loaded. Retrying (${retry+1} / 5)`);
-                    return;
-                }
-                if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/pdf.worker.min.js';
-                }
-                var canvas = document.getElementById("siac-pdf-canvas");
-                window.pdf_canvas_0 = canvas;
-                window.pdf_canvas_1 = document.getElementById("siac-pdf-canvas_1");
-                var loadingTask = pdfjsLib.getDocument({data: bstr}, {nativeImageDecoderSupport: 'none'});
-                loadingTask.promise.catch(function(error) {
-                        $('#siac-pdf-loader-wrapper').remove();
-                        $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
-                        pdf.instance = null;
-                        ungreyoutBottom();
-                        fileReader = null;
-                        pdfLoading = false;
-                        noteLoading = false;
-                });
-                loadingTask.promise.then(function(pdfDoc) {
-                        pdf.instance = pdfDoc;
-                        displayedNoteId = %s;
-                        pdf.page = getLastReadPage() || %s;
-                        pdf.highDPIWasUsed = false;
-                        if (!document.getElementById('siac-pdf-top')) {
-                            return;
-                        }
-                        document.getElementById('text-layer').style.display = 'inline-block';
-                        if (pdf.pagesRead.length === pdfDoc.numPages) {
-                            pdf.page = getLastReadPage() || 1;
-                            queueRenderPage(pdf.page, true, true, true);
-                        } else {
-                            queueRenderPage(pdf.page, true, true, true);
-                        }
-                        updatePdfProgressBar();
-                        if (bothBarsAreHidden()) {
-                            readerNotification("%s");
-                        }
-                        if (pdf.pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
-                        fileReader = null;
-                        setTimeout(checkTOC, 500);
-                }).catch(function(err) { setTimeout(function() { console.log(err); }); });
-            };
-            loadFn();
-            b64 = "";
-            bstr = null; file = null;
-        """ % (pages_read_js, marks_js, extract_js, port, addon_id, note_id, last_page_read, title, note_id)
-
-        #send large files in multiple packets
-        page        = self._editor.web.page()
-        chunk_size  = 50000000
-        if blen > chunk_size:
-            page.runJavaScript(f"var b64 = `{base64pdf[0: chunk_size]}`;")
-            sent = chunk_size
-            while sent < blen:
-                page.runJavaScript(f"b64 += `{base64pdf[sent: min(blen,sent + chunk_size)]}`;")
-                sent += min(blen - sent, chunk_size)
-            page.runJavaScript(init_code)
-        else:
-            page.runJavaScript("""
-                var b64 = `%s`;
-                    %s
-            """ % (base64pdf, init_code))
 
     def show_fields_tab(self):
         self.sidebar.show_fields_tab()
@@ -1481,42 +1486,6 @@ class ReadingModal:
                 $('.siac-modal-small').remove();
                 $('#siac-rm-greyout').show();
                 $('#siac-reading-modal-center').append('%s');""" % modal.replace("\n", "").replace("'", "\\'")
-
-    @js
-    def show_timer_elapsed_popup(self, nid: int) -> JS:
-        """
-            Shows the little popup that is displayed when the timer in the reading modal finished.
-        """
-        read_today_count    = get_read_today_count()
-        added_today_count   = utility.misc.count_cards_added_today()
-        html = """
-        <div style='margin: 0 0 10px 0;'>
-            <div class='ta_center bold' style='vertical-align: middle; line-height: 50px; font-size: 40px; color: #2496dc;'>
-                &#10711;
-            </div>
-            <div class='ta_center bold' style='vertical-align: middle; line-height: 50px; font-size: 20px;'>
-                Time is up!
-            </div>
-        </div>
-        <div class='ta_center fg_lightgrey' style='margin: 10px 0 25px 0;'>
-            Read <b>%s</b> %s today.<br>
-            Added <b>%s</b> %s today.
-        </div>
-        <div class='ta_center' style='margin-bottom: 8px;'>
-            Start:
-        </div>
-        <div class='ta_center'>
-            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(5);'>&nbsp;5m&nbsp;</div>
-            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(15);'>&nbsp;15m&nbsp;</div>
-            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(30);'>&nbsp;30m&nbsp;</div>
-            <div class='siac-btn siac-btn-dark mr-5 ml-5' onclick='this.parentNode.parentNode.style.display="none"; startTimer(60);'>&nbsp;60m&nbsp;</div>
-        </div>
-        <div class='ta_center' style='margin-top: 20px;'>
-            <div class='siac-btn siac-btn-dark' onclick='this.parentNode.parentNode.style.display="none";'>Don't Start</div>
-        </div>
-        """ % (read_today_count, "page" if read_today_count == 1 else "pages", added_today_count, "card" if added_today_count == 1 else "cards")
-        return "$('#siac-timer-popup').html(`%s`); $('#siac-timer-popup').show();" % html
-
 
     @js
     def jump_to_last_read_page(self) -> JS:

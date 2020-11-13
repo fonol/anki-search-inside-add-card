@@ -29,17 +29,24 @@ class PostponeDialog(QDialog):
     """ Values can be 0 (later today), or 1+ (in x days) """
 
     def __init__(self, parent, note_id):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.FramelessWindowHint)
         self.note_id    = note_id
         self.value      = 0    
         self.setup_ui()
-        # self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
 
     def setup_ui(self):
 
         shortcut = get_config_value_or_default("pdf.shortcuts.later", "CTRL+Shift+Y")
-        self.setWindowTitle(f"Postpone ({shortcut})")
         self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(30,20,30,10)
+
+        header      = QLabel(f"Postpone ({shortcut})")
+        header.setAlignment(Qt.AlignCenter)
+        header.setStyleSheet("font-size: 15px; font-weight: bold;")
+        self.layout.addSpacing(5)
+        self.layout.addWidget(header)
+        self.layout.addSpacing(10)
+
 
         self.later_rb       = QRadioButton("Later Today")
         self.tomorrow_rb    = QRadioButton("")
@@ -105,14 +112,6 @@ class PostponeDialog(QDialog):
         d_hb.addStretch()
         self.layout.addLayout(d_hb)
 
-        # self.layout.addWidget(self.tomorrow_rb)
-        # self.days_container = QHBoxLayout()
-        
-        # self.days_container.addWidget(self.days_rb)
-        # self.days_container.addWidget(self.days_inp)
-        # self.days_container.addStretch()
-        # self.layout.addLayout(self.days_container)
-
         self.later_rb.setChecked(True)
 
         self.accept_btn = QPushButton("Postpone")
@@ -122,14 +121,24 @@ class PostponeDialog(QDialog):
 
         self.hbox = QHBoxLayout()
         self.hbox.addStretch()
-        self.hbox.addWidget(self.accept_btn)
+        self.hbox.addWidget(self.accept_btn)    
         self.hbox.addWidget(self.reject_btn)
+        self.hbox.addStretch()
 
-        self.layout.addSpacing(20)
+        self.layout.addSpacing(30)
         self.layout.addLayout(self.hbox)
+        self.layout.addSpacing(10)
         self.layout.setAlignment(Qt.AlignHCenter)
         self.setLayout(self.layout)
         self.setMinimumWidth(300)
+
+        self.setObjectName("postpone")
+        self.setStyleSheet("""
+            #postpone {
+                border: 3px outset #2496dc; 
+                border-radius: 5px;
+            } 
+        """)
             
     def toggle_tomorrow_rb(self):
         self.tomorrow_rb.setChecked(not self.tomorrow_rb.isChecked())

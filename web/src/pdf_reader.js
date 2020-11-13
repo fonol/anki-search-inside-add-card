@@ -620,7 +620,7 @@ window._startTimer = function () {
             setTimerActive(tomato.lastStart);
             let rs = tomato.remainingSeconds;
             $('.siac-reading-modal-timer-lbl').text(Math.floor(rs / 60) + " : " + (rs % 60 < 10 ? "0" + rs % 60 : rs % 60));
-            pycmd('siac-timer-elapsed ' + $('#siac-reading-modal-top-bar').data('nid'));
+            pycmd('siac-timer-elapsed');
             tomato.readingTimer = null;
         }
     }, 999);
