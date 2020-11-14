@@ -181,6 +181,10 @@ class NoteEditor(QDialog):
 
         #self.browse_tab = BrowseTab()
         self.tabs.addTab(self.create_tab, "Create" if self.note_id is None else "Edit")
+
+        self.metadata_tab = MetadataTab(self)
+        self.tabs.addTab(self.metadata_tab, "Metadata")
+
         if not self.add_only:
             self.priority_tab = PriorityTab(priority_list, self)
             self.tabs.addTab(self.priority_tab, "Queue")
@@ -258,7 +262,7 @@ class NoteEditor(QDialog):
         tags                = self.create_tab.tag.text()
         priority            = self.create_tab.slider.value()
         specific_schedule   = self.create_tab.slider.schedule()
-        author              = self.create_tab.author.text()
+        author              = self.metadata_tab.author.text()
 
         # if source is a pdf, title must be given
         if len(title.strip()) == 0 and source.lower().strip().endswith(".pdf"):
@@ -306,7 +310,7 @@ class NoteEditor(QDialog):
                 text = self.create_tab.text.toPlainText()
         source                  = self.create_tab.source.text()
         # TODO
-        author                  = self.create_tab.author.text()
+        author                  = self.metadata_tab.author.text()
         tags                    = self.create_tab.tag.text()
         priority                = self.create_tab.slider.value()
         if not self.create_tab.slider.has_changed_value():
@@ -649,10 +653,6 @@ class CreateTab(QWidget):
         vbox.addWidget(source_lbl)
         vbox.addLayout(source_hb)
 
-        vbox.addWidget(QLabel("Author(s)"))
-        self.author = QLineEdit()
-        vbox.addWidget(self.author)
-
         if self.parent.text_prefill is not None:
             self.text.setPlainText(self.parent.text_prefill)
 
@@ -718,7 +718,6 @@ class CreateTab(QWidget):
         if parent.note is not None:
             self.tag.setText(parent.note.tags.lstrip())
             self.title.setText(parent.note.title)
-            self.author.setText(parent.note.author)
             if utility.text.is_html(parent.note.text):
                 self.text.setHtml(parent.note.text)
                 self.text.setPlainText(self.text.toMarkdown())
@@ -1040,7 +1039,23 @@ class PriorityTab(QWidget):
             rem_btn.clicked.connect(functools.partial(self.on_remove_clicked, priority_list[r].id))
             self.t_view.setIndexWidget(self.t_view.model().index(r,2), rem_btn)
 
+
+class MetadataTab(QWidget):
+    def __init__(self, parent):
+        QWidget.__init__(self)
+        self.parent = parent
+        self.setup_ui()
    
+    def setup_ui(self):
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(QLabel("Author(s)"))
+        self.author = QLineEdit()
+        self.layout.addWidget(self.author)
+        self.layout.addStretch()
+        self.setLayout(self.layout)
+
+        if self.parent.note is not None:
+            self.author.setText(self.parent.note.author)
 
 class SettingsTab(QWidget):
 
