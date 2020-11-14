@@ -58,7 +58,7 @@
     color: white;
 }
 .deck-list-button {
-    border: 3px outset var(--c-button-border);
+    border: 2px outset var(--c-button-border);
     background: var(--c-button-background);
     color: var(--c-button-color);
     cursor: pointer;
@@ -70,6 +70,7 @@
     margin-right: 10px;
     border-radius: 5px;
 }
+
 .deck-list-button:hover {
     color: #2496dc;
 }

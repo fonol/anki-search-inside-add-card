@@ -44,7 +44,7 @@ body.nightMode .modal-content input {
     padding: 1px 4px 2px 4px;
     color: var(--c-button-color);
     background: var(--c-button-background);
-    border: 3px outset var(--c-button-border);
+    border: 2px outset var(--c-button-border);
     border-radius: 5px;
     cursor: pointer;
     user-select: none;
@@ -71,7 +71,7 @@ body.nightMode .modal-content input {
     color: var(--c-button-color); 
     background-color: var(--c-button-background);
     width: calc(100% - 8px);
-    margin-left: -7px;
+    margin-left: -6px;
     padding: 0px 4px 0px 4px;
     font-size: 12px !important;
     border: 0px solid white;
@@ -81,10 +81,9 @@ body.nightMode .modal-content input {
     transition: max-height 0.3s;
 }
 
-.siac-btn-small:hover .siac-btn-small-dropdown.hover,.siac-btn-small.expanded .siac-btn-small-dropdown.click {
-    border: 3px outset var(--c-button-border);
+.siac-btn-small:hover .siac-btn-small-dropdown.hover, .siac-btn-small.expanded .siac-btn-small-dropdown.click {
+    border: 2px outset var(--c-button-border);
     max-height: 355px;
-    /* border-top: 1px solid var(--c-button-border); */
 }
 
 .siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {

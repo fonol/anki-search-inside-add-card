@@ -1,5 +1,5 @@
 .siac-inner-card {
-    border: 3px outset var(--c-note-border);
+    border: 2px outset var(--c-note-border);
     border-radius: 5px;
     padding: 8px 12px 17px 12px;
     position: relative;
@@ -12,7 +12,7 @@
     min-width: 95px;
   }
   #siac-reading-modal .siac-inner-card {
-    border: 3px outset var(--c-note-border-night);
+    border: 2px outset var(--c-note-border-night);
     color: var(--c-note-foreground-night);
     background: var(--c-note-background-night);
   }
@@ -56,7 +56,7 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     display: inline;
 }
 .siac-inner-card:hover {
-     border: 3px outset var(--c-note-hover-border);
+     border: 2px outset var(--c-note-hover-border);
 }
 .btnBar {
     display: flex;
@@ -253,7 +253,7 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     bottom: 2px;
     left: 0px;
     z-index:3;
-    border: 3px outset var(--c-note-border);
+    border: 2px outset var(--c-note-border);
     border-radius: 4px;
     background:  var(--c-note-background);
     color: var(--c-note-foreground);
@@ -265,7 +265,7 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     white-space: nowrap;
 }
 #siac-reading-modal .cardLeftBot {
-    border: 3px outset var(--c-note-border-night);
+    border: 2px outset var(--c-note-border-night);
     background:  var(--c-note-background-night);
     color: var(--c-note-foreground-night);
 }
