@@ -787,11 +787,11 @@ class QueueWidget(QWidget):
         self.unqueue_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
         self.unqueue_btn.clicked.connect(self.rem_selected_clicked)
 
-        self.unqueue_all_btn = QPushButton(" Empty Queue... ")
+        self.unqueue_all_btn = QPushButton(" Empty ... ")
         self.unqueue_all_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
         self.unqueue_all_btn.clicked.connect(self.empty_clicked)
 
-        self.shuffle_queue_btn = QPushButton(" Shuffle Queue... ")
+        self.shuffle_queue_btn = QPushButton(" Shuffle ... ")
         self.shuffle_queue_btn.clicked.connect(self.shuffle_clicked)
 
         self.spread_prios_btn = QPushButton(" Spread Priorities... ")
