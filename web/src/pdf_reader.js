@@ -17,53 +17,53 @@
 import { Highlighting } from "./pdf_highlighting.js";
 
 
-window.Highlighting         = Highlighting;
+window.Highlighting = Highlighting;
 
 /** Tomato timer */
 window.tomato = {
-    remainingSeconds        : 30 * 60,
-    readingTimer            : null,
-    lastStart               : 30
+    remainingSeconds: 30 * 60,
+    readingTimer: null,
+    lastStart: 30
 };
 
 window.pdf = {
     /** PDF rendering */
-    instance                : null,
-    displayedViewPort       : null,
-    pageRendering           : false,
-    page                    : null,
-    displayedScale          : 2.0,
-    highDPIWasUsed          : false,
-    pageNumPending          : null,
-    latestRenderTimestamp   : null,
-    TOC                     : null,
+    instance: null,
+    displayedViewPort: null,
+    pageRendering: false,
+    page: null,
+    displayedScale: 2.0,
+    highDPIWasUsed: false,
+    pageNumPending: null,
+    latestRenderTimestamp: null,
+    TOC: null,
 
     /** PDF meta (pages read, marks, extract) */
-    pagesRead               : [],
-    extract                 : null,
-    extractExclude          : null,
-    displayedMarks          : null,
-    displayedMarksTable     : null,
-    lastReadPages           : {},
+    pagesRead: [],
+    extract: null,
+    extractExclude: null,
+    displayedMarks: null,
+    displayedMarksTable: null,
+    lastReadPages: {},
 
-    notification            : {
-        queue               : [],
-        current             : ""
+    notification: {
+        queue: [],
+        current: ""
     }
 };
 
 /** State variables */
-window.noteLoading              = false;
-window.pdfLoading               = false;
-window.modalShown               = false;
-window.pdfTooltipEnabled        = true;
-window.pdfLinksEnabled          = false;
-window.iframeIsDisplayed        = false;
-window.pageSidebarDisplayed     = true;
-window.pdfFullscreen            = false;
-window.displayedNoteId          = null;
-window.pdfTextLayerMetaKey      = false;
-window.bottomBarTabDisplayed    = "marks";
+window.noteLoading = false;
+window.pdfLoading = false;
+window.modalShown = false;
+window.pdfTooltipEnabled = true;
+window.pdfLinksEnabled = false;
+window.iframeIsDisplayed = false;
+window.pageSidebarDisplayed = true;
+window.pdfFullscreen = false;
+window.displayedNoteId = null;
+window.pdfTextLayerMetaKey = false;
+window.bottomBarTabDisplayed = "marks";
 
 /** SimpleMDE */
 window.textEditor = null;
@@ -410,10 +410,10 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
 
                     if (pdf.pagesRead.indexOf(num) !== -1) {
                         byId('siac-pdf-overlay').style.display = 'block';
-                        byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book"></i>&nbsp; Unread';
+                        byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book"></i><b>&nbsp; Unread</b>';
                     } else {
                         byId('siac-pdf-overlay').style.display = 'none';
-                        byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book"></i>&nbsp; Read';
+                        byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book"></i><b>&nbsp; Read</b>';
                     }
                     // check if current note is an extract 
                     // if yes, and we are outside the extract boundaries, the page is blue'd out
@@ -502,22 +502,22 @@ window.togglePageRead = function (nid) {
 
     if (pdf.pagesRead.indexOf(pdf.page) === -1) {
         byId('siac-pdf-overlay').style.display = 'block';
-        byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book" aria-hidden="true"></i>&nbsp; Unread';
+        byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book" aria-hidden="true"></i><b>&nbsp; Unread</b>';
         pycmd("siac-pdf-page-read " + nid + " " + pdf.page + " " + numPagesExtract());
         if (pdf.pagesRead.length) { pdf.pagesRead.push(pdf.page); } else { pdf.pagesRead = [pdf.page]; }
     } else {
         byId('siac-pdf-overlay').style.display = 'none';
-        byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book" aria-hidden="true"></i>&nbsp; Read';
+        byId('siac-pdf-read-btn').innerHTML = '<i class="fa fa-book" aria-hidden="true"></i><b>&nbsp; Read</b>';
         pycmd("siac-pdf-page-unread " + nid + " " + pdf.page + " " + numPagesExtract());
         pdf.pagesRead.splice(pdf.pagesRead.indexOf(pdf.page), 1);
     }
     updatePdfProgressBar();
 }
 window.pdfHidePageReadMark = function () {
-    byId("siac-pdf-overlay").style.display = "none"; byId("siac-pdf-read-btn").innerHTML = "\u2713&nbsp; Read";
+    byId("siac-pdf-overlay").style.display = "none"; byId("siac-pdf-read-btn").innerHTML = "\u2713<b>&nbsp; Read</b>";
 }
 window.pdfShowPageReadMark = function () {
-    byId("siac-pdf-overlay").style.display = "block"; byId("siac-pdf-read-btn").innerHTML = "&times; Unread";
+    byId("siac-pdf-overlay").style.display = "block"; byId("siac-pdf-read-btn").innerHTML = "&times;<b> Unread</b>";
 }
 window.pdfJumpToPage = function (e, inp) {
     if (e.keyCode !== 13) {
@@ -1167,3 +1167,30 @@ window.pdfLoaderText = function (html) {
         byId("siac-pdf-loader-text").innerHTML = html;
     } catch (e) { }
 }
+
+window.registerButtonWidthObserver = function () {
+    if ('ResizeObserver' in self) {
+        window.siac_ro = new ResizeObserver(function (entries) {
+            let entry = entries[0];
+            let el = document.getElementsByClassName('siac-reading-modal-button-bar-wrapper');
+            if (!el || el.length === 0) { return; }
+            if ($('#siac-page-sidebar').is(':visible')) {
+                el[0].classList.add("sidebar")
+            } else {
+                el[0].classList.remove("sidebar")
+            }
+            if (entry.contentRect.width <= 560) {
+                el[0].classList.add("smaller");
+                el[0].classList.add("small");
+            }
+            else if (entry.contentRect.width <= 690) {
+                el[0].classList.remove("smaller");
+                el[0].classList.add("small");
+            } else {
+                el[0].classList.remove("small");
+                el[0].classList.remove("smaller");
+            }
+        });
+        siac_ro.observe(byId("siac-pdf-overflow"));
+    }
+};

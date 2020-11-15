@@ -11,10 +11,11 @@
     line-height: 1em;
     font-weight: bold;
     margin-right: 0;
-    padding-bottom: 1px;
+    padding-bottom: 2px;
+    padding-top: 2px;
     border-width: 1px;
     border-radius: 3px;
-    font-size: 14px !important;
+    font-size: 12px !important;
     color: grey;
     vertical-align: top;
 }

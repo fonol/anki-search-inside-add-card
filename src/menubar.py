@@ -23,9 +23,9 @@ class Menu():
         if hasattr(mw.pm, "night_mode"):
             nightmode = mw.pm.night_mode()
 
-        gc_icn = "graduation_cap_night.png" if nightmode else "graduation_cap.png"
+        # gc_icn = "graduation_cap_night.png" if nightmode else "graduation_cap.png"
 
-        menu            = get_menu(mw, "&SIAC", gc_icn)
+        menu            = get_menu(mw, "&SIAC")
         submenu_import  = get_sub_menu(menu, "Import")
 
         menu.setStyleSheet("""

@@ -513,13 +513,14 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added menu item to access add-on's dialogs from outside the Add window (thanks to p4nix)",
-        "Added settings dialog, accessible from menu (thanks to p4nix)",
-        "Added Quick Youtube Import dialog, accessible from menu (thanks to p4nix)",
-        "Extended 'Theme' dialog in the PDF reader a bit",
-        "Page forward/backward shortcuts can be set in config now",
-        "Display title of currently read item in the Add window's title bar",
-        "Fix: Bug when hitting Area Highlight shortcut multiple times"
+        "Added timer to the main UI",
+        "Quick Open (CTRL+O by default) works now with all notes, not only PDF",
+        "Extracted Pages are now indicated (in blue) in the original PDF",
+        "Added Shuffle, Spread and Randomize buttons in the queue manager",
+        "Order untagged in sidebar by last created",
+        "Fix: PDF tooltip flowing out of visible area sometimes",
+
+
     ]
 
 def known_issues() -> List[str]:

@@ -37,6 +37,7 @@ from .index.indexing import build_index
 from .debug_logging import log
 from .web.web import *
 from .web.html import *
+from .config import get_config_value_or_default, get_config_value
 from .web.reading_modal import ReadingModal
 from .special_searches import *
 from .internals import requires_index_loaded, js, perf_time
@@ -391,7 +392,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         dialog = UrlImporter(self.parentWindow)
         if dialog.exec_():
             if dialog.chosen_url:
-                sched   = dialog.queue_schedule
+                prio    = dialog.queue_schedule
                 name    = dialog.get_name()
                 path    = get_config_value("pdfUrlImportSavePath")
                 path    = utility.misc.get_pdf_save_full_path(path, name)
@@ -399,7 +400,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 title = dialog._chosen_name
                 if title is None or len(title) == 0:
                     title = name
-                create_note(title, "", path, "", "", "", sched)
+                create_note(title, "", path, "", "", "", prio, "")
             else:
                 pass
 

@@ -8,14 +8,21 @@
 .siac-notes-sidebar-item {
     font-weight: bold;
     user-select: none;
-    margin-bottom: 5px;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
     transition: margin 0.15s ease;
 }
 .siac-notes-sidebar-item:hover {
-    border-left: 5px solid lightseagreen;
+    /* border-left: 5px solid lightseagreen; */
     padding-left: 5px;
     margin-left: 5px;
-    transform: scale(1.05);
+    border: 1px solid grey;
+    border-radius: 3px;
+    /* transform: scale(1.05); */
+}
+body.nightMode .siac-notes-sidebar-item:hover {
+    border: 1px solid #6b6b6b;
+    background: #383838;
 }
 .siac-sidebar-inp {
     background: var(--c-input-background);

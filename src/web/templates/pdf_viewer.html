@@ -84,9 +84,9 @@
         <div class='siac-btn siac-btn-dark' style="width: 22px;" onclick='pdfFitToPage()'>&#8596;</div>
         <div class='siac-btn siac-btn-dark' style="width: 18px;" onclick='pdfScaleChange("up");'>+</div>
         <div class='siac-btn siac-btn-dark ml-5' onclick='initImageSelection()'><b>&#9986;</b></div>
-        <div class='siac-btn siac-btn-dark' id='siac-pdf-links-toggle' onclick='togglePDFLinks(this)' style='margin-left: 5px;'><i class="fa fa-external-link"></i></div>
-        <div class='siac-btn siac-btn-dark ml-5 active' id='siac-pdf-tooltip-toggle' onclick='togglePDFSelect(this)'><div class='siac-search-icn-dark'></div></div>
-        <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")'><b>&#9998; Note</b></div>
+        <div class='siac-btn siac-btn-dark siac-hide-on-smaller' id='siac-pdf-links-toggle' onclick='togglePDFLinks(this)' style='margin-left: 5px;'><i class="fa fa-external-link"></i></div>
+        <div class='siac-btn siac-btn-dark siac-hide-on-smaller ml-5 active' id='siac-pdf-tooltip-toggle' onclick='togglePDFSelect(this)'><div class='siac-search-icn-dark'></div></div>
+        <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")'><b>&#9998;</b><b class='siac-hide-on-small'> Note</b></div>
     </div>
     <div id='siac-page-btns' class=''>
         <div class='siac-btn siac-btn-dark' onclick='pdfPageLeft();'><b><i class='fa fa-arrow-left'></i></b></div>
@@ -112,7 +112,7 @@
             </div>
         </div>
         
-        <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 75px;' onclick='togglePageRead({nid});'>\u2713&nbsp; Read</div>
+        <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 75px;' onclick='togglePageRead({nid});'>\u2713<b>&nbsp; Read</b></div>
         <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
             <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
                 <div class='siac-btn-small-dropdown-inverted click'>
@@ -153,4 +153,5 @@
     }
     $('.siac-pdf-color-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
     $('.siac-pdf-ul-btn[data-id=' + Highlighting.colorSelected.id + ']').addClass('active');
+    registerButtonWidthObserver();
 </script>

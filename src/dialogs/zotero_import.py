@@ -232,7 +232,7 @@ class ZoteroImporter(QDialog):
                         note_text = append_to_string(note_text, entry_mantags, "<b>Manual Tags:</b><br>", "<br><br>")
                         note_text = append_to_string(note_text, entry_autotags, "<b>Auto Tags:</b><br>", "<br><br>")
 
-                        create_note(note_title, note_text, attachment, tags, None, schedule, prio)
+                        create_note(note_title, note_text, attachment, tags, None, schedule, prio, entry_authors)
                         self.total_count += 1
 
 

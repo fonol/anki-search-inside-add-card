@@ -541,7 +541,7 @@ class ReadingModal:
             title           = utility.text.trim_if_longer_than(title, 70)
             title           = ihtml.escape(title)
             source          = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
-            priority        = get_priority(note_id)
+            priority        = note.priority
             img_folder      = utility.misc.img_src_base_path()
             page_sidebar    = str(note.is_pdf() and conf_or_def("pdf.page_sidebar_shown", True)).lower()
 
@@ -748,7 +748,7 @@ class ReadingModal:
         text            = note.text
         note_id         = note.id
         queue           = _get_priority_list()
-        priority        = get_priority(note_id)
+        priority        = note.priority 
         has_schedule    = "active" if note.is_due_sometime() else ""
 
         if note.is_in_queue():
@@ -826,7 +826,7 @@ class ReadingModal:
             should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showPDFLoader();' if pdf_or_feed else ""
             if show_prios:
                 if queue_item.id in priorities:
-                    prio_lbl        = priorities[queue_item.id]
+                    prio_lbl        = int(priorities[queue_item.id])
                     prio_lbl        = f"<span class='mr-5 ml-5 siac-prio-lbl' style='background: {utility.misc.prio_color(prio_lbl)};'>{prio_lbl}</span>"
                 else:
                     prio_lbl        = f"<span class='mr-5 ml-5 siac-prio-lbl fg_lightgrey' style='background: #5a5a5a;'>-</span>"
