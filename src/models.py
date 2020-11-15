@@ -212,7 +212,7 @@ class SiacNote(Printable):
         if self.is_yt():
             time = utility.text.get_yt_time_verbose(self.source)
             if len(body.strip()) > 0:
-                body += "<br/><hr style='border-top: dotted 2px;'>"
+                body += "<br/><hr class='siac-note-hr'>"
             body = f"""{body}<p class='flex-row' style='margin: 0;'>
                         <img src='http://img.youtube.com/vi/{utility.text.get_yt_video_id(src)}/0.jpg' style='height: 100px; margin-right: 40px;'/>
                         <span class='flex-col' style='justify-content: center;'>
@@ -225,7 +225,7 @@ class SiacNote(Printable):
                     """
      
         
-        title   = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5' style='border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
+        title   = "%s<b>%s</b>%s" % ("<i class='fa fa-file-pdf-o mr-5'></i>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5 siac-note-hr'>" if len(body.strip()) > 0 else "")
 
         # add the source, separated by a line
         if src is not None and len(src) > 0 and get_config_value_or_default("notes.showSource", True):
@@ -233,7 +233,7 @@ class SiacNote(Printable):
                 src = src[src.rindex("/") +1:]
             if self.is_yt():
                 src = f"<a href='{src}'>{src}</a>"
-            src = f"<hr style='border-top: dotted 2px;'><i>Source: {src}</i>"
+            src = f"<hr class='siac-note-hr'><i>Source: {src}</i>"
         else:
             src = ""
       
