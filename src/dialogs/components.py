@@ -46,6 +46,7 @@ class QtPrioritySlider(QWidget):
 
         box                     = QGroupBox("Priority and Scheduling" if self.show_spec_sched else "Priority")
         vbox                    = QVBoxLayout()
+        vbox.setContentsMargins(7,7,7,7)
 
         self.slider             = QSlider(Qt.Horizontal)
 
@@ -82,6 +83,7 @@ class QtPrioritySlider(QWidget):
         box.setLayout(vbox)
 
         vbox_outer              = QVBoxLayout()
+        vbox_outer.setContentsMargins(0,0,0,0)
         vbox_outer.addWidget(box)
         self.setLayout(vbox_outer)
     
@@ -249,6 +251,8 @@ class ScheduleEditTab(QWidget):
         QWidget.__init__(self)
         self.parent = parent
         self.vbox   = QVBoxLayout()
+        self.vbox.setSpacing(0)
+
         self.group  = QButtonGroup()
         if self.parent.has_schedule:
 

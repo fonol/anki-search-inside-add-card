@@ -26,6 +26,7 @@ import random
 from aqt.utils import saveGeom, restoreGeom
 from anki.hooks import addHook, remHook
 from anki.lang import _
+from anki.utils import isMac
 from ..notes import *
 from ..notes import _get_priority_list
 from ..hooks import run_hooks
@@ -371,64 +372,8 @@ class CreateTab(QWidget):
         include_anki_tags = get_config_value_or_default("notes.editor.include_anki_tags", False)
         self.tree = TagTree(include_anki_tags = include_anki_tags, only_tags = True, knowledge_tree = False)
         self.tree.itemClicked.connect(self.tree_item_clicked)
-#        self.tree.setColumnCount(1)
-#        # self.tree.setIconSize(QSize(0,0))
-#        include_anki_tags = get_config_value_or_default("notes.editor.include_anki_tags", False)
-#        self.build_tree(get_all_tags_as_hierarchy(include_anki_tags=include_anki_tags))
-#        self.tree.itemClicked.connect(self.tree_item_clicked)
-#        self.tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-#        self.tree.setMinimumHeight(150)
-#        self.tree.setMinimumWidth(220)
-#        self.tree.setSelectionMode(QAbstractItemView.NoSelection)
-#        # self.tree.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-#        self.tree.setHeaderHidden(True)
-#
-#        vline_icn = icons_path + ('vline-night' if state.night_mode else 'vline')
-#        branch_more_icn = icons_path + ('branch-more-night' if state.night_mode else 'branch-more')
-#        branch_end_icn = icons_path + ('branch-end-night' if state.night_mode else 'branch-end')
-#        branch_closed_icn = icons_path + ('branch-closed-night' if state.night_mode else 'branch-closed')
-#        branch_open_icn = icons_path + ('branch-open-night' if state.night_mode else 'branch-open')
-#
-#
-#        self.tree.setStyleSheet(f"""
-#        QTreeWidget::item:hover,QTreeWidget::item:hover:selected {{
-#            border:none;
-#            border-radius:5px;
-#            font-weight: bold;
-#            background-color: {tag_bg};
-#            color: {tag_fg};
-#        }}
-#        QTreeWidget::branch:has-siblings:!adjoins-item {{
-#            border-image: url({vline_icn}.png) 0;
-#        }}
-#        QTreeWidget::branch:has-siblings:adjoins-item {{
-#            border-image: url({branch_more_icn}.png) 0;
-#        }}
-#        QTreeWidget::branch:!has-children:!has-siblings:adjoins-item {{
-#            border-image: url({branch_end_icn}.png) 0;
-#        }}
-#        QTreeWidget::branch:has-children:!has-siblings:closed,
-#        QTreeWidget::branch:closed:has-children:has-siblings {{
-#                border-image: none;
-#                image: url({branch_closed_icn}.png);
-#        }}
-#        QTreeWidget::branch:open:has-children:!has-siblings,
-#        QTreeWidget::branch:open:has-children:has-siblings  {{
-#                border-image: none;
-#                image: url({branch_open_icn}.png);
-#        }}
-#        """)
-
-        self.highlight_map      = {
-            "ob": [0,0,0,232,151,0],
-            "rw": [255, 255, 255, 209, 46, 50],
-            "yb": [0,0,0,235, 239, 69],
-            "bw": [255,255,255,2, 119,189],
-            "gb": [255,255,255,34,177,76]
-        }
 
         recently_used_tags      = get_recently_used_tags()
-
 
         self.recent_tbl         = QWidget()
         self.recent_tbl.setObjectName("recentDisp")
@@ -457,10 +402,10 @@ class CreateTab(QWidget):
         self.slider = QtPrioritySlider(self.parent.priority, self.parent.note_id, schedule=schedule)
 
         self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0,0,0,0)
-        #vbox_left = QVBoxLayout()
+        self.layout.setContentsMargins(10,10,10,10)
 
         vbox_taglist = QVBoxLayout()
+        vbox_taglist.setContentsMargins(0,0,0,0)
         tag_lbl = QLabel()
         tag_icn = QPixmap(utility.misc.get_web_folder_path() + "icons/icon-tag-24.png").scaled(14,14)
         tag_lbl.setPixmap(tag_icn)
@@ -490,6 +435,7 @@ class CreateTab(QWidget):
         vbox_taglist.addLayout(hbox_tag_b)
 
         vbox_recenttags = QVBoxLayout()
+        vbox_recenttags.setContentsMargins(0,0,0,0)
         if len(recently_used_tags) > 0:
             tag_lbl1 = QLabel()
             tag_lbl1.setPixmap(tag_icn)
@@ -503,12 +449,11 @@ class CreateTab(QWidget):
             qs.setStyleSheet(""" QScrollArea { background-color: transparent; } """)
             qs.setFrameShape(QFrame.NoFrame)
             qs.setWidgetResizable(True)
-            #qs.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-            #qs.setMaximumHeight(100)
             qs.setWidget(self.recent_tbl)
             vbox_recenttags.addWidget(qs)
 
         vbox_priority = QVBoxLayout()
+        vbox_priority.setContentsMargins(0,0,0,0)
         vbox_priority.addWidget(self.slider)
 
         widget_taglist = QWidget()
@@ -672,6 +617,8 @@ class CreateTab(QWidget):
         # QPushButton#q_6 { padding-left: 0px; padding-right: 0px; }
         # QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_3,QPushButton:hover#q_4,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; }
         # """
+
+        self.setObjectName("create_tab")
 
         styles = """
             QPushButton#q_1,QPushButton#q_2,QPushButton#q_3,QPushButton#q_4,QPushButton#q_5,QPushButton#q_6 { border-radius: 5px; }
@@ -1047,7 +994,7 @@ class MetadataTab(QWidget):
         QWidget.__init__(self)
         self.parent = parent
         self.setup_ui()
-   
+
     def setup_ui(self):
         self.layout = QVBoxLayout()
         self.layout.addWidget(QLabel("Author(s)"))
