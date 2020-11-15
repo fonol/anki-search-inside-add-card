@@ -498,7 +498,7 @@ select {
     right: 0; 
     top: 0; 
     bottom: 0; 
-    z-index: 5; 
+    z-index: 7; 
     height: 100%; 
     text-align: center; 
     background: rgba(0,0,0,0.4); 

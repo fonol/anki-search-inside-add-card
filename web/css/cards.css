@@ -143,7 +143,7 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     background:  var(--c-note-background);
     user-select: none;
     cursor: pointer;
-    z-index:9999;
+    z-index:6;
 }
 .cardWrapper:not(.siac-user-note) .editLbl, .deleteLbl {
     border-top-left-radius: 4px;
