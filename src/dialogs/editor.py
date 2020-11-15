@@ -150,13 +150,13 @@ class NoteEditor(QDialog):
 
         # editing an existing note
         if self.note_id is not None:
-            self.save = QPushButton("\u2714 Save")
+            self.save = QPushButton("\u2714 Save ")
             self.setWindowTitle('Edit Note')
             self.save.clicked.connect(self.on_update_clicked)
             self.priority = get_priority(self.note_id)
         # creating a new note
         else:
-            self.save = QPushButton("\u2714 Create")
+            self.save = QPushButton("\u2714 Create ")
             self.setWindowTitle('New Note')
             self.save.clicked.connect(self.on_create_clicked)
             self.priority = 0
