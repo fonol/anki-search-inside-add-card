@@ -452,6 +452,7 @@ class CreateTab(QWidget):
         self.slider = QtPrioritySlider(self.parent.priority, self.parent.note_id, schedule=schedule)
 
         self.layout = QHBoxLayout()
+        self.layout.setContentsMargins(0,0,0,0)
         #vbox_left = QVBoxLayout()
 
         vbox_taglist = QVBoxLayout()
@@ -483,8 +484,8 @@ class CreateTab(QWidget):
         # hbox_tag_b.addWidget(exp_btn)
         vbox_taglist.addLayout(hbox_tag_b)
 
+        vbox_recenttags = QVBoxLayout()
         if len(recently_used_tags) > 0:
-            vbox_recenttags = QVBoxLayout()
             tag_lbl1 = QLabel()
             tag_lbl1.setPixmap(tag_icn)
 
@@ -522,6 +523,7 @@ class CreateTab(QWidget):
 
         tmp_layout = QVBoxLayout()
         tmp_layout.addWidget(left_splitter)
+        tmp_layout.setContentsMargins(0,0,0,0)
 
         self.left_pane = QWidget()
         self.left_pane.setLayout(tmp_layout)
