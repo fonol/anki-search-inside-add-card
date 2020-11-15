@@ -55,7 +55,10 @@ body.nightMode .deck-list-item:hover >.list-item-inner {
     color: white;
     display: none;
 }
-.list-item-inner:hover .siac-tl-plus {
+/* .list-item-inner:hover .siac-tl-plus {
+    display: inline-block;
+} */
+.deck-list-item:hover > .list-item-inner > .siac-tl-plus {
     display: inline-block;
 }
 .siac-tl-plus:hover {
