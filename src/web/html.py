@@ -463,6 +463,8 @@ def get_note_delete_confirm_modal_html(nid: int) -> Optional[HTML]:
     priority        = note.priority
     if priority is None or priority == 0:
         priority    = "-"
+    else:
+        priority    = int(priority)
 
     return filled_template("note_delete", dict(title = title, creation_date = note.created, priority = priority, nid = nid))
 
