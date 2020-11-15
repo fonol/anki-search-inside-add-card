@@ -1201,3 +1201,10 @@ body.nightMode.siac-reading-modal-displayed.siac-left-right-switched #siac-right
 .ytp-play-button svg {
     max-height: 36px !important;
 }
+body:not(.nightMode) #siac-reading-modal-tabs-left .siac-btn {
+    box-shadow: none;
+}
+
+body:not(.nightMode) #siac-reading-modal-tabs-left .siac-btn.active {
+    color: #0a4367 !important;
+}

@@ -16,6 +16,13 @@
 .list-item-inner {
     text-overflow: ellipsis;
     position: relative;
+    border-radius: 3px;
+    border: 1px solid #b1b1b1;
+    background: white;
+}
+body.nightMode .list-item-inner {
+    border: 1px solid #6b6b6b;
+    background: #383838;
 }
 .deck-list-item > div {
     display: inline-block;
@@ -24,10 +31,13 @@
      width: 100%;
      padding: 1px 4px 1px 4px;
 }
-.deck-list-item:hover >.list-item-inner {
+.deck-list-item:hover >.list-item-inner  {
     background: lightseagreen;
     color: white;
-    border-radius: 4px;
+    border: 1px solid #004440;
+}
+body.nightMode .deck-list-item:hover >.list-item-inner {
+    border: 1px solid #95fcff;
 }
 
 .check {

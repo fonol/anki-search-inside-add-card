@@ -298,3 +298,8 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     margin-block-start: 0.5em;
     margin-block-end: 0.5em;
 }
+.siac-note-hr {
+    border-top: 2px dotted !important;
+    border-bottom: 0 !important;
+    opacity: 0.5;
+}
