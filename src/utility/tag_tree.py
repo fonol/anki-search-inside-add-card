@@ -4,8 +4,9 @@ from aqt.qt import *
 
 
 import state
-from ..notes import get_all_tags_as_hierarchy, find_by_tag
+from ..notes import get_all_tags_as_hierarchy, get_tags_and_nids_from_search, find_by_tag
 from .misc import get_web_folder_path
+import utility.tags
 
 class DataCol():
     Name      = 1
@@ -26,6 +27,10 @@ class TagTree(QTreeWidget):
         self.only_tags         = only_tags
         self.knowledge_tree    = knowledge_tree
 
+        # only show selected notes
+        self.nids_anki_whitelist = None
+        self.nids_siac_whitelist = None
+
         # load icon paths/icons
         web_path                = get_web_folder_path()
         icons_path              = web_path + "icons/"
@@ -44,7 +49,7 @@ class TagTree(QTreeWidget):
             tag_bg                  = config["styles.tagBackgroundColor"]
             tag_fg                  = config["styles.tagForegroundColor"]
 
-        self.build_the_tree(get_all_tags_as_hierarchy(include_anki_tags=include_anki_tags))
+        self.recursive_build_tree(get_all_tags_as_hierarchy(include_anki_tags=include_anki_tags))
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumHeight(150)
         self.setMinimumWidth(220)
@@ -103,18 +108,19 @@ class TagTree(QTreeWidget):
 
         self.setStyleSheet(stylesheet)
 
-    def build_the_tree(self, tmap):
-        for t, children in tmap.items():
-            ti = QTreeWidgetItem([t])
-            ti.setData(DataCol.Name, 1, QVariant(t))
-            ti.setIcon(0, self.tag_icon)
-            ti.addChildren(self._add_to_tree(children, t + "::"))
+    def rebuild_tree(self, notes = None):
+        self.clear()
+        self.nids_anki_whitelist = None
+        self.nids_siac_whitelist = None
 
-            self.add_siacnotes_and_anki_cards(ti, "", t)
+        if notes == None:
+            self.recursive_build_tree(get_all_tags_as_hierarchy(include_anki_tags = self.include_anki_tags))
+        else:
+            tags, self.nids_anki_whitelist, self.nids_siac_whitelist = get_tags_and_nids_from_search(notes)
+            tag_hierarchy = utility.tags.to_tag_hierarchy(tags)
+            self.recursive_build_tree(tag_hierarchy)
 
-            self.addTopLevelItem(ti)
-
-    def _add_to_tree(self, map, prefix):
+    def recursive_build_tree(self, map, prefix = "", toplevel = True):
         res = []
         for t, children in map.items():
             ti = QTreeWidgetItem([t])
@@ -123,11 +129,15 @@ class TagTree(QTreeWidget):
             prefix_c = prefix + t + "::"
 
             for c,m in children.items():
-                ti.addChildren(self._add_to_tree({c: m}, prefix_c))
+                ti.addChildren(self.recursive_build_tree({c: m}, prefix_c, toplevel = False))
 
             self.add_siacnotes_and_anki_cards(ti, prefix, t)
 
             res.append(ti)
+
+            if toplevel:
+                self.addTopLevelItem(ti)
+
         return res
 
     def add_siacnotes_and_anki_cards(self, ti, prefix, t):
@@ -145,6 +155,8 @@ class TagTree(QTreeWidget):
         notes = find_by_tag(tag_name, only_explicit_tag = True)
 
         for note in notes:
+            if self.nids_siac_whitelist and note.id not in self.nids_siac_whitelist:
+                continue
             title = note.title
             id = note.id
             child = QTreeWidgetItem([title])
@@ -167,7 +179,8 @@ class TagTree(QTreeWidget):
         tag_name = ti.data(DataCol.Name,1)
         ids = mw.col.find_notes(f"""tag:{tag_name} -"tag:{tag_name}::*" """)
         i = 0
-        for id in ids:
+
+        for id in intersect_nids(ids, self.nids_anki_whitelist):
             i += 1
             note = mw.col.getNote(id)
             nt = note.model()
@@ -189,3 +202,11 @@ class TagTree(QTreeWidget):
         ti.setText(0, f"""All Notes ({i})""")
         ti.setIcon(0, self.cards_icon)
         return True
+
+
+# helper function
+def intersect_nids(nids1_keep, nids2_ifnotempty):
+    if nids2_ifnotempty is None:
+        return nids1_keep
+    else:
+        return set(nids1_keep).intersection(nids2_ifnotempty)

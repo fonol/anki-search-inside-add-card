@@ -1284,8 +1284,8 @@ def empty_priority_list():
     conn.close()
 
 def shuffle_queue():
-    """ 
-    This will 'shuffle' the queue by setting the last done date (created column in queue_prio_log) to some random value. 
+    """
+    This will 'shuffle' the queue by setting the last done date (created column in queue_prio_log) to some random value.
     Priorities and schedules are unchanged.
     This will also recalculate the queue.
     """
@@ -1295,7 +1295,7 @@ def shuffle_queue():
     nids    = conn.execute("select distinct nid, prio, max(created) from queue_prio_log group by nid").fetchall()
     conn.execute("delete from queue_prio_log")
     inserts = [(t[0], t[1], (now + timedelta(days= - random.randint(1, 365))).strftime('%Y-%m-%d-%H-%M-%S')) for t in nids]
-    conn.executemany("insert into queue_prio_log (nid, prio, created) values(?,?,?)", inserts) 
+    conn.executemany("insert into queue_prio_log (nid, prio, created) values(?,?,?)", inserts)
     conn.commit()
     conn.close()
     recalculate_priority_queue()
@@ -1308,7 +1308,7 @@ def spread_priorities():
     spread  = [(t[0], max(1, min(int((t[2] * 100) / max_p), 100)), t[3]) for t in vals]
     row_ids = ",".join([str(t[1]) for t in vals])
     conn.execute(f"delete from queue_prio_log where rowid in ({row_ids})")
-    conn.executemany("insert into queue_prio_log (nid, prio, created) values(?,?,?)", spread) 
+    conn.executemany("insert into queue_prio_log (nid, prio, created) values(?,?,?)", spread)
     conn.commit()
     conn.close()
     recalculate_priority_queue()
@@ -1322,6 +1322,31 @@ def get_all_tags_as_hierarchy(include_anki_tags: bool) -> Dict:
     else:
         tags = get_all_tags()
     return utility.tags.to_tag_hierarchy(tags)
+
+def get_tags_and_nids_from_search(notes):
+    tags = []
+    nids_anki = []
+    nids_siac = []
+
+    def _addToTags(tags, tagStr):
+        if tagStr == "":
+            return tags
+        for tag in tagStr.split(" "):
+            if tag == "":
+                continue
+            if tag in tags:
+                continue
+            tags.append(tag)
+        return tags
+
+    for note in notes:
+        if note.note_type != "user":
+            nids_anki.append(note.id)
+        else:
+            nids_siac.append(note.id)
+        tags = _addToTags(tags, note.tags)
+
+    return tags, nids_anki, nids_siac
 
 def get_all_text_notes() -> List[SiacNote]:
     conn = _get_connection()

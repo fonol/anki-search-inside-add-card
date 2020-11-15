@@ -288,8 +288,9 @@ class NoteEditor(QDialog):
         if self.create_tab.source.text().endswith(".pdf"):
             self.create_tab.source.setText("")
         self.create_tab.title.setFocus()
-        self.create_tab.tree.clear()
-        self.create_tab.build_tree(get_all_tags_as_hierarchy(include_anki_tags=self.create_tab.all_tags_cb.isChecked()))
+
+        self.create_tab.tree.include_anki_tags = self.create_tab.all_tags_cb.isChecked()
+        self.create_tab.rebuild_tree()
 
 
     def on_update_clicked(self):
@@ -768,14 +769,9 @@ class CreateTab(QWidget):
         self.tag.setText(" ".join(existing))
 
     def tag_cb_changed(self, state):
-        self.tree.clear()
-        tmap = None
+        self.tree.include_anki_tags = (state == Qt.Checked)
 
-        if state == Qt.Checked:
-            tmap = get_all_tags_as_hierarchy(include_anki_tags = True)
-        else:
-            tmap = get_all_tags_as_hierarchy(include_anki_tags = False)
-        self.tree.build_the_tree(tmap)
+        self.tree.rebuild_tree()
         update_config("notes.editor.include_anki_tags", state == Qt.Checked)
 
 #    def build_tree(self, tmap):
