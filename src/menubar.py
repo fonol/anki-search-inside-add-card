@@ -21,9 +21,9 @@ class Menu():
         if hasattr(mw.pm, "night_mode"):
             nightmode = mw.pm.night_mode()
 
-        gc_icn = "graduation_cap_night.png" if nightmode else "graduation_cap.png" 
+        # gc_icn = "graduation_cap_night.png" if nightmode else "graduation_cap.png" 
 
-        menu            = get_menu(mw, "", gc_icn)
+        menu            = get_menu(mw, "&SIAC")
         submenu_import  = get_sub_menu(menu, "Import")
 
         menu.setStyleSheet("""
@@ -45,7 +45,7 @@ class Menu():
             ("shortcuts.menubar.queue_manager",  "Queue Manager",       self.queue_picker),
             ("shortcuts.menubar.quick_open",     "Quick Open...",       self.quick_open),
             ("shortcuts.menubar.addon_settings", "Add-on Settings",     self.settings),
-            (None,                               "Read first in Queue", self.read_first, gc_icn)
+            (None,                               "Read first in Queue", self.read_first)
         )
 
 

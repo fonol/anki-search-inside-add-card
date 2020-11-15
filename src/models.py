@@ -63,6 +63,9 @@ class SiacNote(Printable):
         self.extract_start  : Optional[int] = props[11]
         self.extract_end    : Optional[int] = props[12]
         self.delay          : Optional[str] = props[13]
+        self.author         : str           = props[14]
+        self.priority       : float         = props[15]
+        self.last_priority  : float         = props[16]
 
         self.mid            : int = -1
     
@@ -76,7 +79,7 @@ class SiacNote(Printable):
         body    = text.split("\u001f")[1]
         src     = text.split("\u001f")[2]
 
-        return SiacNote((id, title, body, src, index_props[2], -1, "", "", "", "", -1, None, None, None))
+        return SiacNote((id, title, body, src, index_props[2], -1, "", "", "", "", -1, None, None, None, None, None, None))
 
     @staticmethod
     def mock(title: str, body: str, tags: str) -> 'SiacNote':
@@ -84,7 +87,7 @@ class SiacNote(Printable):
 
         SiacNote._ct_timestamp += 1
         id = - (utility.misc.get_milisec_stamp() + SiacNote._ct_timestamp)
-        return SiacNote((id, title, body, "", tags, -1, "", "", "", "", -1, None, None, None))
+        return SiacNote((id, title, body, "", tags, -1, "", "", "", "", -1, None, None, None, None, None, None))
 
     def get_content(self) -> str:
         return self._build_non_anki_note_html()
@@ -209,7 +212,7 @@ class SiacNote(Printable):
         if self.is_yt():
             time = utility.text.get_yt_time_verbose(self.source)
             if len(body.strip()) > 0:
-                body += "<br/><hr style='border-top: dotted 2px;'>"
+                body += "<br/><hr class='siac-note-hr'>"
             body = f"""{body}<p class='flex-row' style='margin: 0;'>
                         <img src='http://img.youtube.com/vi/{utility.text.get_yt_video_id(src)}/0.jpg' style='height: 100px; margin-right: 40px;'/>
                         <span class='flex-col' style='justify-content: center;'>
@@ -222,7 +225,7 @@ class SiacNote(Printable):
                     """
      
         
-        title   = "%s<b>%s</b>%s" % ("<span class='siac-pdf-icon'></span>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5' style='border-top: dotted 2px;'>" if len(body.strip()) > 0 else "")
+        title   = "%s<b>%s</b>%s" % ("<i class='fa fa-file-pdf-o mr-5'></i>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5 siac-note-hr'>" if len(body.strip()) > 0 else "")
 
         # add the source, separated by a line
         if src is not None and len(src) > 0 and get_config_value_or_default("notes.showSource", True):
@@ -230,7 +233,7 @@ class SiacNote(Printable):
                 src = src[src.rindex("/") +1:]
             if self.is_yt():
                 src = f"<a href='{src}'>{src}</a>"
-            src = f"<hr style='border-top: dotted 2px;'><i>Source: {src}</i>"
+            src = f"<hr class='siac-note-hr'><i>Source: {src}</i>"
         else:
             src = ""
       

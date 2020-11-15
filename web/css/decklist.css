@@ -16,6 +16,13 @@
 .list-item-inner {
     text-overflow: ellipsis;
     position: relative;
+    border-radius: 3px;
+    border: 1px solid #b1b1b1;
+    background: white;
+}
+body.nightMode .list-item-inner {
+    border: 1px solid #6b6b6b;
+    background: #383838;
 }
 .deck-list-item > div {
     display: inline-block;
@@ -24,10 +31,13 @@
      width: 100%;
      padding: 1px 4px 1px 4px;
 }
-.deck-list-item:hover >.list-item-inner {
+.deck-list-item:hover >.list-item-inner  {
     background: lightseagreen;
     color: white;
-    border-radius: 4px;
+    border: 1px solid #004440;
+}
+body.nightMode .deck-list-item:hover >.list-item-inner {
+    border: 1px solid #95fcff;
 }
 
 .check {
@@ -45,7 +55,10 @@
     color: white;
     display: none;
 }
-.list-item-inner:hover .siac-tl-plus {
+/* .list-item-inner:hover .siac-tl-plus {
+    display: inline-block;
+} */
+.deck-list-item:hover > .list-item-inner > .siac-tl-plus {
     display: inline-block;
 }
 .siac-tl-plus:hover {
@@ -58,7 +71,7 @@
     color: white;
 }
 .deck-list-button {
-    border: 3px outset var(--c-button-border);
+    border: 2px outset var(--c-button-border);
     background: var(--c-button-background);
     color: var(--c-button-color);
     cursor: pointer;
@@ -70,6 +83,7 @@
     margin-right: 10px;
     border-radius: 5px;
 }
+
 .deck-list-button:hover {
     color: #2496dc;
 }
