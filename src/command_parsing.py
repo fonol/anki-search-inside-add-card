@@ -22,7 +22,8 @@ import aqt.webview
 import aqt.editor
 import aqt.stats
 from anki.notes import Note
-from aqt.utils import tooltip, showInfo, isMac
+from aqt.utils import tooltip, showInfo
+from anki.utils import isMac, isLin
 import os
 import time
 import urllib.parse
@@ -150,7 +151,14 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if not folder.endswith("/"):
             folder += "/"
         if os.path.isdir(folder):
-            QDesktopServices.openUrl(QUrl("file:///" + folder))
+            try:
+                if isLin:
+                        import subprocess
+                        subprocess.check_call(['xdg-open', '--', path])
+                else:
+                    QDesktopServices.openUrl(QUrl("file:///" + folder))
+            except:
+                tooltip("Failed to open folder.")
 
     elif cmd.startswith("siac-pin"):
         # pin note symbol clicked
