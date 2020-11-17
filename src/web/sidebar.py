@@ -42,7 +42,7 @@ class Sidebar:
                     html = "<ul class='deck-sub-list'>"
                 for key, value in tmap.items():
                     full = prefix + "::" + key if prefix else key
-                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); searchUserNoteTag(event, '%s');\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='siac-tl-plus' onclick='event.stopPropagation(); pycmd(\"siac-create-note-tag-prefill %s\") '><i class='fa fa-plus mr-5 ml-5'></i></span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), full, iterateMap(value, full, False))
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); searchUserNoteTag(event, '%s');\"><div class='list-item-inner'><b class='exp' data-t='%s'>%s</b> %s <span class='siac-tl-plus' onclick='event.stopPropagation(); pycmd(\"siac-create-note-tag-prefill %s\") '><i class='fa fa-plus mr-5 ml-5'></i></span></div>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), full, iterateMap(value, full, False))
                 html += "</ul>"
                 return html
 
@@ -142,7 +142,7 @@ class Sidebar:
                     html = "<ul class='deck-sub-list'>"
                 for key, value in tmap.items():
                     full = prefix + "::" + key if prefix else key
-                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s');\"><div class='list-item-inner'><b class='exp'>%s</b> %s</div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s');\"><div class='list-item-inner'><b class='exp' data-t='%s'>%s</b> %s</div>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
                 html += "</ul>"
                 return html
 
@@ -154,22 +154,62 @@ class Sidebar:
 
     def display(self):
         html = self._html()
-        self._editor.web.eval("""
-        if (!document.getElementById('siac-notes-sidebar')) {
-            document.getElementById('resultsWrapper').insertAdjacentHTML("afterbegin", `%s`); 
-            $('#siac-notes-sidebar .exp').click(function(e) {
-                e.stopPropagation();
-                let icn = $(this);
-                if (icn.text()) {
-                    if (icn.text() === '[+]')
-                        icn.text('[-]');
-                    else
-                        icn.text('[+]');
-                }
-                $(this).parent().parent().children('ul').toggle();
-            });
+        self._editor.web.eval("""(() => {
+        if (document.getElementById('siac-notes-sidebar')) {
+            $('#siac-notes-sidebar').remove();
         }
-        """ % html)
+        document.getElementById('resultsWrapper').insertAdjacentHTML("afterbegin", `%s`); 
+        if (typeof(window._siacSidebar) === 'undefined') {
+            window._siacSidebar = {
+                addonTagsExpanded : [],
+                ankiTagsExpanded : [],
+                tab: '',
+            };
+        }
+        window._siacSidebar.tab = %s;
+        
+        $('#siac-notes-sidebar .exp').click(function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            let icn = $(this);
+            if (icn.text()) {
+                if (icn.text() === '[+]') {
+                    icn.text('[-]');
+                    if (_siacSidebar.tab === 1 || _siacSidebar.tab === 3) {
+                        let exp_list = window._siacSidebar.tab === 1 ? _siacSidebar.addonTagsExpanded : _siacSidebar.ankiTagsExpanded;
+                        if (exp_list.indexOf(this.dataset.t) === -1) {
+                            exp_list.push(this.dataset.t);
+                        }
+                    }
+                } else {
+                    icn.text('[+]');
+                    if (_siacSidebar.tab === 1 || _siacSidebar.tab === 3) {
+                        let exp_list = window._siacSidebar.tab === 1 ? _siacSidebar.addonTagsExpanded : _siacSidebar.ankiTagsExpanded;
+                        if (exp_list.indexOf(this.dataset.t) !== -1) {
+                            exp_list.splice(exp_list.indexOf(this.dataset.t), 1);
+                        }
+                    }
+                }
+            }
+            $(this).parent().parent().children('ul').toggle();
+        });
+        let exp = [];
+        let scrollTop = 0;
+        if (window._siacSidebar.tab === 1) {
+            exp = window._siacSidebar.addonTagsExpanded;
+            scrollTop = window._siacSidebar.addonTagsScrollTop;
+        } else if (window._siacSidebar.tab === 3) {
+            exp = window._siacSidebar.ankiTagsExpanded;
+            scrollTop = window._siacSidebar.ankiTagsScrollTop;
+        }
+        for (var t of exp) {
+            $('#siac-notes-sidebar .exp[data-t="'+t+'"]').trigger('click');
+        }
+        if (scrollTop && scrollTop > 0) {
+            $('.tag_scroll').first().get(0).scrollTop = scrollTop;
+        }
+        })();
+        """ % (html, self.tab))
 
     def hide(self):
         self._editor.web.eval("$('#siac-notes-sidebar').remove(); $('#resultsWrapper').css('padding-left', 0);")
@@ -179,24 +219,8 @@ class Sidebar:
             self.refresh()
 
     def refresh(self):
-        html = self._html()
-        self._editor.web.eval("""
-            if (document.getElementById('siac-notes-sidebar')) {
-                $('#siac-notes-sidebar').remove();
-                document.getElementById('resultsWrapper').insertAdjacentHTML("afterbegin", `%s`); 
-                $('#siac-notes-sidebar .exp').click(function(e) {
-                e.stopPropagation();
-                let icn = $(this);
-                if (icn.text()) {
-                    if (icn.text() === '[+]')
-                        icn.text('[-]');
-                    else
-                        icn.text('[+]');
-                }
-                $(this).parent().parent().children('ul').toggle();
-                });
-            }
-        """ % html)
+        self.display()
+        
     
 
     def show_tab(self, tab: int):

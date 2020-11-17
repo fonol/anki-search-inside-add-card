@@ -17,6 +17,6 @@
     <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestInterval")'>Lowest Interval </div>
 </div>
 <div class='mb-5 mt-5 mr-5 bold ta_center'>Anki Tags</div>
-<div class='mb-5 mr-5 oflow_y_auto' style='flex: 1 1 auto; padding-right: 5px;'>
+<div class='mb-5 mr-5 oflow_y_auto tag_scroll' style='flex: 1 1 auto; padding-right: 5px;' onscroll='_siacSidebar.ankiTagsScrollTop = this.scrollTop;'>
     {tags}
 </div>
