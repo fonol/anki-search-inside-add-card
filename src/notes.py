@@ -30,12 +30,12 @@ import time
 try:
     from .state import get_index
     from .models import SiacNote, IndexNote, NoteRelations
-    from .config import get_config_value_or_default
+    from .config import get_config_value_or_default, get_config_value, update_config
     from .debug_logging import get_notes_info, persist_notes_db_checked
 except:
     from state import get_index
     from models import SiacNote, IndexNote, NoteRelations
-    from config import get_config_value_or_default
+    from config import get_config_value_or_default, get_config_value, update_config
     from debug_logging import get_notes_info, persist_notes_db_checked
 import utility.misc
 import utility.tags
@@ -88,6 +88,7 @@ def create_db_file_if_not_exists() -> bool:
                 position INTEGER,
                 extract_start INTEGER,
                 extract_end INTEGER,
+                delay INTEGER,
                 author TEXT,
                 priority FLOAT,
                 last_priority FLOAT
@@ -122,6 +123,12 @@ def create_db_file_if_not_exists() -> bool:
                 to_delete = sorted(backups)[:-limit]
                 for f in to_delete:
                     os.remove(f)
+
+
+    dir_addon_data = get_config_value("addon.data_folder")
+    if dir_addon_data is None or len(dir_addon_data.strip()) == 0:
+        path = utility.misc.get_application_data_path()
+        update_config("addon.data_folder", path)
     
     # disable for now
     # info_from_data_json = get_notes_info()
@@ -186,6 +193,10 @@ def create_db_file_if_not_exists() -> bool:
     # For lack of some kind of versioning, simply attempt to alter the tables, 
     # and ignore any sql errors thrown if the modifications did already exist.
     #
+    try:
+        conn.execute(""" ALTER TABLE notes ADD COLUMN delay INTEGER; """)
+    except: 
+        pass
     try:
         conn.execute(""" ALTER TABLE notes ADD COLUMN author TEXT; """)
         conn.execute(""" ALTER TABLE notes ADD COLUMN priority FLOAT; """)
