@@ -2,6 +2,7 @@ import typing
 from typing import List, Optional, Tuple, Any
 from aqt.editor import Editor
 from anki.utils import isMac, isLin
+from aqt import mw
 
 from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority_as_str, get_notes_scheduled_for_today
 from ..config import get_config_value_or_default as conf_or_def
@@ -131,8 +132,23 @@ class Sidebar:
             """
 
         elif self.tab == self.SPECIAL_SEARCHES_TAB:
+            anki_tags   = mw.col.tags.all()
+            tmap        = utility.tags.to_tag_hierarchy(anki_tags)
 
-            tab_html = filled_template("sidebar_anki_tab", {})
+            def iterateMap(tmap, prefix, start=False):
+                if start:
+                    html = "<ul class='deck-sub-list outer'>"
+                else:
+                    html = "<ul class='deck-sub-list'>"
+                for key, value in tmap.items():
+                    full = prefix + "::" + key if prefix else key
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s');\"><div class='list-item-inner'><b class='exp'>%s</b> %s</div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+                html += "</ul>"
+                return html
+
+            tag_html            = iterateMap(tmap, "", True)
+
+            tab_html = filled_template("sidebar_anki_tab", { "tags" : tag_html})
 
         return filled_template("sidebar", dict(tab_html = tab_html, tab_displayed_name = tab_displayed_name))
 
