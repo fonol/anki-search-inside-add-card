@@ -382,6 +382,16 @@ window.noteSidebarExpandAll = function() {
             if (icn.text() === '[+]') {
                 icn.text('[-]');
                 icn.parent().parent().children('ul').toggle();
+                let t = elem.dataset.t;
+                if (_siacSidebar.tab === 1) {
+                    if (_siacSidebar.addonTagsExpanded.indexOf(t) === -1) {
+                        _siacSidebar.addonTagsExpanded.push(t);
+                    }
+                } else if (_siacSidebar.tab === 2) {
+                    if (_siacSidebar.ankiTagsExpanded.indexOf(t) === -1) {
+                        _siacSidebar.ankiTagsExpanded.push(t);
+                    }
+                }
             }
         }
     });
@@ -393,6 +403,16 @@ window.noteSidebarCollapseAll = function() {
             if (icn.text() === '[-]') {
                 icn.text('[+]');
                 icn.parent().parent().children('ul').toggle();
+                let t = elem.dataset.t;
+                if (_siacSidebar.tab === 1) {
+                    if (_siacSidebar.addonTagsExpanded.indexOf(t) !== -1) {
+                        _siacSidebar.addonTagsExpanded.splice(_siacSidebar.addonTagsExpanded.indexOf(t), 1);
+                    }
+                } else if (_siacSidebar.tab === 2) {
+                    if (_siacSidebar.ankiTagsExpanded.indexOf(t) !== -1) {
+                        _siacSidebar.ankiTagsExpanded.splice(_siacSidebar.ankiTagsExpanded.indexOf(t), 1);
+                    }
+                }
             }
         }
     });
