@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from aqt.qt import *
 import aqt
+import functools
 import typing
-from ..notes import dynamic_sched_to_str, find_notes_with_similar_prio, get_avg_priority, get_note
+from typing import Optional
+from enum import Enum, unique
+from ..notes import dynamic_sched_to_str, find_notes_with_similar_prio, get_avg_priority, get_note, find_notes, find_unqueued_notes, find_suggested_unqueued_notes
 from .calendar_dialog import CalendarDialog 
 from ..config import get_config_value_or_default, update_config
 from ..models import SiacNote
@@ -54,7 +57,10 @@ class QtPrioritySlider(QWidget):
             self.slider.setValue(prio_default)
         else:
             self.slider.setValue(0)
-        self.slider.setMinimum(0)
+        if self.nid is None:
+            self.slider.setMinimum(1)
+        else:
+            self.slider.setMinimum(0)
         self.slider.setMaximum(100)
         self.slider.setSingleStep(1)
         vbox.addWidget(self.slider)
@@ -71,7 +77,7 @@ class QtPrioritySlider(QWidget):
         hvalue.addWidget(avg_lbl)
         vbox.addLayout(hvalue)
         
-        if not self.show_spec_sched:
+        if not self.show_spec_sched and self.nid:
             self.similar = QLabel("")
             vbox.addWidget(self.similar)
         vbox.addStretch()
@@ -139,19 +145,20 @@ class QtPrioritySlider(QWidget):
                 self.scheduler.priority_set_to_non_zero()
             else:
                 val = self.slider.value()
-                similar = find_notes_with_similar_prio(self.nid, val)
-                if similar and len(similar) > 0:
-                    if self.note:
-                        similar.append((val, self.nid, self.note_title))
-                    txt = ""
-                    for (p, nid, title) in sorted(similar, key=lambda x: x[0], reverse=True):
-                        title   = utility.text.trim_if_longer_than(title, 50)
-                        if nid == self.nid:
-                            title = f"<font color='#2496dc'><b>{title}</b></font>"
-                        txt     = f"{txt}<b>{int(p)}</b>:  {title}<br>"
-                    self.similar.setText(f"Similar Priority: <br><br>" + txt)
-                else:
-                    self.similar.setText(f"Similar Priority: <br><br>No results." )
+                if self.nid is not None:
+                    similar = find_notes_with_similar_prio(self.nid, val)
+                    if similar and len(similar) > 0:
+                        if self.note:
+                            similar.append((val, self.nid, self.note_title))
+                        txt = ""
+                        for (p, nid, title) in sorted(similar, key=lambda x: x[0], reverse=True):
+                            title   = utility.text.trim_if_longer_than(title, 50)
+                            if nid == self.nid:
+                                title = f"<font color='#2496dc'><b>{title}</b></font>"
+                            txt     = f"{txt}<b>{int(p)}</b>:  {title}<br>"
+                        self.similar.setText(f"Similar Priority: <br><br>" + txt)
+                    else:
+                        self.similar.setText(f"Similar Priority: <br><br>No results." )
 
             
 class QtScheduleComponent(QWidget):
@@ -371,6 +378,7 @@ class ScheduleEditTab(QWidget):
         self.vbox.addLayout(hbox4)
         
         self.vbox.setContentsMargins(0,0,0,0)
+        self.vbox.addStretch(1)
         self.setLayout(self.vbox)
 
         self.sched_radio_clicked()
@@ -548,6 +556,14 @@ class ClickableQLabel(QLabel):
     def mousePressEvent(self, evt):
         self.clicked.emit()
 
+class ClickableQWidget(QWidget):
+    clicked = pyqtSignal()
+
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+            
+    def mousePressEvent(self, evt):
+        self.clicked.emit()
 
 # WIP
 class DueCalendar(QCalendarWidget):
@@ -560,3 +576,146 @@ class DueCalendar(QCalendarWidget):
     
     painter.drawText(rect.bottomLeft(), "test")
 
+
+
+
+@unique
+class NoteSelectorMode(Enum):
+    UNQUEUED    = 1
+    QUEUED      = 2
+    ALL         = 3
+
+
+class NoteSelector(QWidget):
+
+    def __init__(self, parent, mode : NoteSelectorMode, nid: Optional[int] = None):
+        QWidget.__init__(self, parent)
+
+        self.mode           = mode
+        self.selected_ids   = []
+        self.selected_notes = []
+        self.nid            = nid
+
+        self.setup_ui()
+        self.refresh_search_results()
+
+    def setup_ui(self):
+        
+        self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setSpacing(3)
+
+        lbl_sel = QLabel("Selection")
+        lbl_sel.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(lbl_sel)
+        self.selected_list = QTableWidget()
+        self.selected_list.setColumnCount(3)
+        self.selected_list.setHorizontalHeaderLabels(["", "Title", "Type"])
+        self.selected_list.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.selected_list.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.selected_list.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.selected_list.setSelectionMode(QAbstractItemView.NoSelection)
+        self.selected_list.setFocusPolicy(Qt.NoFocus)
+        self.selected_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.selected_list.setMaximumHeight(100)
+        self.layout.addWidget(self.selected_list)
+
+        self.layout.addSpacing(10)
+
+        self.input  = QLineEdit()
+        self.input.textChanged.connect(self.refresh_search_results)
+        self.input.setPlaceholderText("Type to search")
+        self.layout.addWidget(self.input)
+        self.lbl_sr = QLabel("Search Results")
+        self.lbl_sr.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.lbl_sr)
+        self.list = QTableWidget()
+        self.list.setColumnCount(3)
+        self.list.setHorizontalHeaderLabels(["", "Title", "Type"])
+        self.list.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.list.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.list.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.list.setSelectionMode(QAbstractItemView.NoSelection)
+        self.list.setFocusPolicy(Qt.NoFocus)
+        self.list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        self.layout.addWidget(self.list)
+
+        self.setLayout(self.layout)
+
+    def refresh(self):
+        self.refresh_selection()
+        self.refresh_search_results()
+    
+    def refresh_selection(self):
+
+        self.selected_list.clear()
+        self._fill_list(self.selected_list, self.selected_notes)
+
+
+    def refresh_search_results(self):
+        notes = []
+        query = self.input.text()
+        if len(query.strip()) > 0:
+            self.lbl_sr.setText("Search Results")
+            if self.mode == NoteSelectorMode.UNQUEUED:       
+                notes = find_unqueued_notes(query)
+            elif self.mode == NoteSelectorMode.ALL:
+                notes = find_notes(query)
+        else:
+            if self.nid:
+                self.lbl_sr.setText("Suggested")
+                if self.mode == NoteSelectorMode.UNQUEUED:       
+                    notes = find_suggested_unqueued_notes(self.nid)
+
+            
+
+        notes = [n for n in notes if n.id != self.nid and n.id not in self.selected_ids][:50]
+        self._current = notes
+        self._fill_list(self.list, notes)
+        
+    def _fill_list(self, list, notes):
+
+
+        list.clear()
+        list.setRowCount(len(notes))
+
+        list.setHorizontalHeaderLabels(["", "Title", "Type"])
+
+        for ix, n in enumerate(notes):
+
+            cb = QCheckBox()
+            if n.id in self.selected_ids:
+                cb.setChecked(True)
+            cb.stateChanged.connect(functools.partial(self.cb_clicked, ix, n.id))
+            cw = ClickableQWidget()
+            cw.clicked.connect(functools.partial(self.cb_outer_clicked, cb))
+            lcb = QHBoxLayout()
+            cw.setLayout(lcb)
+            lcb.addWidget(cb)
+            lcb.setAlignment(Qt.AlignCenter)
+            lcb.setContentsMargins(0,0,0,0)
+
+            title = QTableWidgetItem(n.get_title())
+            title.setData(Qt.UserRole, QVariant(n.id))
+
+            ntype = QTableWidgetItem(n.get_note_type())
+
+            list.setCellWidget(ix, 0, cw)
+            list.setItem(ix, 1, title)
+            list.setItem(ix, 2, ntype)
+        
+        list.resizeRowsToContents()
+
+    def cb_clicked(self, ix, nid, state):
+        if state == Qt.Checked:
+            self.selected_ids.append(nid)
+            self.selected_notes.append([n for n in self._current if n.id == nid][0])
+        else:
+            del self.selected_ids[self.selected_ids.index(nid)]
+            self.selected_notes = [n for n in self.selected_notes if n.id != nid]
+
+        self.refresh()
+
+    def cb_outer_clicked(self, cb):
+        cb.setChecked(not cb.checkState() == Qt.Checked)
