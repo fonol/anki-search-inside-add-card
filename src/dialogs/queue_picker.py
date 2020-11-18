@@ -23,8 +23,9 @@ import os
 import copy
 import functools
 from .editor import NoteEditor
-from .components import QtPrioritySlider
+from .components import QtPrioritySlider, ClickableQWidget
 from .priority_dialog import PriorityDialog
+from .tag_assign_dialog import TagAssignDialog
 from ..notes import *
 from ..notes import _get_priority_list
 from ..internals import perf_time
@@ -123,6 +124,7 @@ class PDFsTab(QWidget):
         r_lbl.setAlignment(Qt.AlignCenter)
         self.vbox_right.addWidget(r_lbl)
         self.search_bar_right = QLineEdit()
+        self.search_bar_right.setPlaceholderText("Type to search")
         self.search_bar_right.textChanged.connect(self.search_enter)
         self.vbox_right.addWidget(self.search_bar_right)
         self.t_view_right = NoteList(self)
@@ -160,6 +162,7 @@ class VideosTab(QWidget):
         r_lbl.setAlignment(Qt.AlignCenter)
         self.vbox_right.addWidget(r_lbl)
         self.search_bar_right = QLineEdit()
+        self.search_bar_right.setPlaceholderText("Type to search")
         self.search_bar_right.textChanged.connect(self.search_enter)
         self.vbox_right.addWidget(self.search_bar_right)
         self.t_view_right = NoteList(self)
@@ -196,6 +199,7 @@ class TextNotesTab(QWidget):
         self.vbox_right.addWidget(r_lbl)
 
         self.search_bar_right   = QLineEdit()
+        self.search_bar_right.setPlaceholderText("Type to search")
         self.search_bar_right.textChanged.connect(self.search_enter)
         self.vbox_right.addWidget(self.search_bar_right)
 
@@ -495,7 +499,7 @@ class TagsTab(QWidget):
             self.tag_tree.addTopLevelItem(ti)
         self.tag_tree.setExpandsOnDoubleClick(True)
         self.tag_tree.expandAll()
-        if self.tag_tree.topLevelItemCount() > 0:
+        if self.tag_displayed is None and self.tag_tree.topLevelItemCount() > 0:
             self.load_tags_unused_notes(self.tag_tree.topLevelItem(0).data(1,1))
 
     def _add_to_tree(self, map, prefix):
@@ -778,20 +782,31 @@ class QueueWidget(QWidget):
         self.t_view_left.cellDoubleClicked.connect(self.cell_clicked)
 
         self.t_view_left.setMinimumWidth(470)
-        self.t_view_left.itemClicked.connect(self.item_clicked)
         self.vbox_left.addWidget(self.t_view_left)
 
         # buttons under queue table
-        self.unqueue_btn = QPushButton(" Remove Selected")
+
+        uncheck_icn = "icons/unchecked" + ("_night.png" if state.night_mode else ".png")
+        check_icn   = "icons/checked" + ("_night.png" if state.night_mode else ".png")
+
+        self.check_all_btn = QPushButton("")
+        self.check_all_btn.setIcon(QIcon(utility.misc.get_web_folder_path()+ check_icn))
+        self.check_all_btn.clicked.connect(self.check_all_clicked)
+
+        self.uncheck_all_btn = QPushButton("")
+        self.uncheck_all_btn.setIcon(QIcon(utility.misc.get_web_folder_path()+ uncheck_icn))
+        self.uncheck_all_btn.clicked.connect(self.uncheck_all_clicked)
+
+        self.unqueue_btn = QPushButton(" Remove Sel.")
         self.unqueue_btn.setDisabled(True)
         self.unqueue_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
         self.unqueue_btn.clicked.connect(self.rem_selected_clicked)
 
-        self.unqueue_all_btn = QPushButton(" Empty ... ")
+        self.unqueue_all_btn = QPushButton(" Empty... ")
         self.unqueue_all_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
         self.unqueue_all_btn.clicked.connect(self.empty_clicked)
 
-        self.shuffle_queue_btn = QPushButton(" Shuffle ... ")
+        self.shuffle_queue_btn = QPushButton(" Shuffle... ")
         self.shuffle_queue_btn.clicked.connect(self.shuffle_clicked)
 
         self.spread_prios_btn = QPushButton(" Spread Priorities... ")
@@ -800,12 +815,18 @@ class QueueWidget(QWidget):
         self.random_prios_btn = QPushButton(" Randomize Priorities... ")
         self.random_prios_btn.clicked.connect(self.random_prios_clicked)
 
+        self.tags_btn = QPushButton(" Tag... ")
+        self.tags_btn.clicked.connect(self.tag_assign_clicked)
+
         btn_hbox_l = QHBoxLayout()
+        btn_hbox_l.addWidget(self.check_all_btn)
+        btn_hbox_l.addWidget(self.uncheck_all_btn)
         btn_hbox_l.addWidget(self.unqueue_btn)
         btn_hbox_l.addWidget(self.unqueue_all_btn)
         btn_hbox_l.addWidget(self.shuffle_queue_btn)
         btn_hbox_l.addWidget(self.spread_prios_btn)
         btn_hbox_l.addWidget(self.random_prios_btn)
+        btn_hbox_l.addWidget(self.tags_btn)
         btn_hbox_l.addStretch()
 
         self.vbox_left.addLayout(btn_hbox_l)
@@ -878,7 +899,7 @@ class QueueWidget(QWidget):
 
     def tabs_changed(self, ix):
         if ix == 0:
-            self.tags_tab.fill_tree(get_all_tags())
+            self.tags_tab.refresh()
         elif ix == 1:
             self.pdfs_tab.refresh()
         elif ix == 2:
@@ -920,9 +941,17 @@ class QueueWidget(QWidget):
             sched_lbl.setStyleSheet("padding-left: 4px; padding-right: 4px;")
             sched_lbl.setAlignment(Qt.AlignCenter)
 
-            cb          = QTableWidgetItem()
-            cb.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            cb.setCheckState(Qt.Unchecked)
+
+            cb = QCheckBox()
+            cb.stateChanged.connect(functools.partial(self.cb_clicked, ix))
+            cw = ClickableQWidget()
+            cw.clicked.connect(functools.partial(self.cb_outer_clicked, ix))
+            lcb = QHBoxLayout()
+            cw.setLayout(lcb)
+            lcb.addWidget(cb)
+            lcb.setAlignment(Qt.AlignCenter)
+            lcb.setContentsMargins(0,0,0,0)
+
 
             read_btn    = QToolButton()
             read_btn.setIcon(open_icon)
@@ -942,7 +971,8 @@ class QueueWidget(QWidget):
                 prio_lbl.setStyleSheet(f"font-size: 14px; text-align: center;")
             prio_lbl.setAlignment(Qt.AlignCenter)
 
-            t_view.setItem(ix, 0, cb)
+            # t_view.setItem(ix, 0, cb)
+            t_view.setCellWidget(ix, 0, cw)
             t_view.setItem(ix, 1, title_i)
             t_view.setCellWidget(ix, 2, sched_lbl)
             t_view.setCellWidget(ix, 3, prio_lbl)
@@ -959,7 +989,8 @@ class QueueWidget(QWidget):
             self.title_hbox.insertWidget(max(0,self.title_hbox.count() - 2), QLabel(f"Queue, empty"))
         else:
             self.unqueue_all_btn.setDisabled(False)
-            self.title_hbox.insertWidget(max(0,self.title_hbox.count() - 2), QLabel(f"Queue, {len(db_res)} items"))
+            s = "s" if len(db_res) > 1 else ""
+            self.title_hbox.insertWidget(max(0,self.title_hbox.count() - 2), QLabel(f"Queue, {len(db_res)} item{s}"))
 
         avg_prio        = round(sum(prios.values()) / len(prios), 1) if len(prios) > 0 else 0
         avg_prio_lbl    = QLabel()
@@ -975,16 +1006,31 @@ class QueueWidget(QWidget):
 
         self.unqueue_btn.setText(f"Remove Selected")
         self.unqueue_btn.setDisabled(True)
+        self.tags_btn.setDisabled(True)
 
+        t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        t_view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        t_view.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        t_view.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        t_view.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         t_view.resizeRowsToContents()
-
+        # t_view.resizeColumnsToContents()
 
     def selected(self):
         r = []
         for ix in range(self.t_view_left.rowCount()):
-            if self.t_view_left.item(ix, 0).checkState() == Qt.Checked:
+            if self.t_view_left.cellWidget(ix, 0).layout().itemAt(0).widget().checkState() == Qt.Checked:
                 r.append(self.t_view_left.item(ix, 1).data(Qt.UserRole))
         return r
+
+    def check_all_clicked(self):
+        for ix in range(self.t_view_left.rowCount()):
+            self.t_view_left.cellWidget(ix, 0).layout().itemAt(0).widget().setChecked(True)
+
+    def uncheck_all_clicked(self):
+        for ix in range(self.t_view_left.rowCount()):
+            self.t_view_left.cellWidget(ix, 0).layout().itemAt(0).widget().setChecked(False)
 
     def rem_btn_clicked(self, id):
 
@@ -1045,6 +1091,19 @@ class QueueWidget(QWidget):
             self.refresh_queue_list()
             self.tabs.currentWidget().refresh()
 
+    def tag_assign_clicked(self):
+        selected    = [int(nid) for nid in self.selected()]
+        dialog      = TagAssignDialog(self, selected)
+        if dialog.exec_():
+            chosen = dialog.tags
+            if chosen is not None and len(chosen.strip()) > 0:
+                tags = [t for t in chosen.split(" ") if len(t.strip()) > 0]
+                if len(tags) > 0:
+                    add_tags(selected, tags)
+                    tooltip(f"Added tag(s) to {len(selected)} note(s).")
+                    self.tabs.currentWidget().refresh()
+
+
     def read_btn_clicked(self, id):
         self.set_chosen(id, "")
         self.parent.accept()
@@ -1055,15 +1114,21 @@ class QueueWidget(QWidget):
             self.display_note_modal(nid)
 
 
-    def item_clicked(self, item):
-        if item.column() == 0:
-            sel_len = len(self.selected())
-            if sel_len == 0:
-                self.unqueue_btn.setText(f" Remove Selected")
-                self.unqueue_btn.setDisabled(True)
-            else:
-                self.unqueue_btn.setDisabled(False)
-                self.unqueue_btn.setText(f" Remove Selected ({sel_len})")
+    def cb_clicked(self, row, state):
+        sel_len = len(self.selected())
+        if sel_len == 0:
+            self.unqueue_btn.setText(f" Remove Sel.")
+            self.unqueue_btn.setDisabled(True)
+            self.tags_btn.setDisabled(True)
+        else:
+            self.unqueue_btn.setDisabled(False)
+            self.tags_btn.setDisabled(False)
+            self.unqueue_btn.setText(f" Remove Sel. ({sel_len})")
+        
+    def cb_outer_clicked(self, row):
+        widget = self.t_view_left.cellWidget(row, 0).layout().itemAt(0).widget()
+        widget.setChecked(not widget.checkState() == Qt.Checked)
+
 
     def display_note_modal(self, id):
         """ Open the edit modal for the given ID. """
