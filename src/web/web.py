@@ -495,13 +495,13 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added timer to the main UI",
-        "Quick Open (CTRL+O by default) works now with all notes, not only PDF",
-        "Extracted Pages are now indicated (in blue) in the original PDF",
-        "Added Shuffle, Spread and Randomize buttons in the queue manager",
-        "Order untagged in sidebar by last created",
-        "Fix: PDF tooltip flowing out of visible area sometimes",
-
+        "Add tag tree in sidebar (Anki Notes tab)",
+        "Remember expanded tags & scroll position in sidebar's tag trees",
+        "Add unselect all / select all buttons in queue manager",
+        "Add 'Tags' button in queue manager",
+        "Add tab to enqueue next note (e.g. next lecture slides) in Done dialog",
+        "Fix avg. priority label in priority dialog",
+        "Fix tag tree not always refreshing in queue manager",
 
     ]
 
