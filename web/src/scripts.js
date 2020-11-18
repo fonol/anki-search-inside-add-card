@@ -344,7 +344,7 @@ window.onWindowResize = function(fitPdfToPage = true) {
     if (!$('#switchBtn').is(":visible")) {
         $('#leftSide').css("display", "flex");
         $('#outerWr').css('display', 'flex').removeClass('onesided');
-        byId('switchBtn').innerHTML = "&#10149; Search";
+        byId('switchBtn').innerHTML = "<i class='fa fa-graduation-cap'></i>";
     }
     if (fitPdfToPage && typeof pdf.instance !== "undefined" && pdf.instance) {
         if(this.resizeTimeout) clearTimeout(this.resizeTimeout);
@@ -786,19 +786,19 @@ window.toggleAddon = function() {
 window.showSearchPaneOnLeftSide = function() {
     if ($('#outerWr').hasClass("onesided")) {
         $('#leftSide').show();
-        byId('switchBtn').innerHTML = "&#10149; Search";
+        byId('switchBtn').innerHTML = "<i class='fa fa-graduation-cap'></i>";
         $('#outerWr').css('display', 'flex').removeClass('onesided');
     } else {
         $('#leftSide').hide();
         $('#siac-right-side').removeClass("addon-hidden");
-        byId('switchBtn').innerHTML = "&#10149; Back";
+        byId('switchBtn').innerHTML = "<i class='fa fa-graduation-cap'></i> ";
         $('#outerWr').css('display', 'block').addClass('onesided');
         onWindowResize();
     }
 }
 window.updateSwitchBtn = function(count) {
     if (!$('#outerWr').hasClass("onesided"))
-        byId('switchBtn').innerHTML = `&#10149; Search (${count})`;
+        byId('switchBtn').innerHTML = `<i class='fa fa-graduation-cap'></i> (${count})`;
 }
 window.removeNote = function(nid) {
     $(byId("cW-" + nid).parentElement.parentElement).remove();
