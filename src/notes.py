@@ -602,7 +602,7 @@ def get_priorities(nids: List[int]) -> Dict[int, int]:
 
 def get_avg_priority() -> float:
     conn    = _get_connection()
-    res     = conn.execute(f"select avg(priority) from notes").fetchone()
+    res     = conn.execute(f"select avg(priority) from notes where priority is not NULL and priority > 0").fetchone()
     conn.close()
     if res is None or len(res) == 0:
         return 0
@@ -994,9 +994,11 @@ def add_tags(ids: List[int], tags: List[str]):
     for nid, tstr in notes:
         spl = tstr.split(" ")
         for t in tags:
+            t = t.strip()
             if not t in spl:
                 spl.append(t)
-        updated.append((" ".join(spl), nid))
+        spl = [s.strip() for s in spl]
+        updated.append((" %s " % (" ".join(spl)), nid))
     conn.executemany("update notes set tags = ? where id= ?", updated)
     conn.commit()
     conn.close()
@@ -1012,8 +1014,7 @@ def insert_highlights(highlights: List[Tuple[Any, ...]]):
     dt = _date_now_str()
     highlights = [h + (dt,) for h in highlights]
     conn = _get_connection()
-
-    res = conn.executemany("insert into highlights(nid, page, grouping, type, text, x0, y0, x1, y1, created) values (?,?,?,?,?,?,?,?,?,?)", highlights)
+    conn.executemany("insert into highlights(nid, page, grouping, type, text, x0, y0, x1, y1, created) values (?,?,?,?,?,?,?,?,?,?)", highlights)
     conn.commit()
     conn.close()
 
@@ -1101,6 +1102,39 @@ def find_notes(text: str) -> List[SiacNote]:
     res = conn.execute(f"select * from notes where ({q}) order by id desc").fetchall()
     conn.close()
     return _to_notes(res)
+
+def find_unqueued_notes(text: str) -> List[SiacNote]:
+    q = ""
+    for token in text.lower().split():
+        if len(token) > 0:
+            token = token.replace("'", "")
+            q = f"{q} or lower(title) like '%{token}%'"
+    q = q[4:] if len(q) > 0 else "" 
+    if len(q) == 0:
+        return
+    conn = _get_connection()
+    res = conn.execute(f"select * from notes where (position is NULL or position = 0) and ({q}) order by id desc").fetchall()
+    conn.close()
+    return _to_notes(res)
+
+def find_suggested_unqueued_notes(nid: int) -> List[SiacNote]:
+
+    note        = get_note(nid)
+    dt          = utility.date.dt_from_stamp(note.created)
+    found       = []
+    found_ids   = set()
+    conn        = _get_connection()
+    for delta in [5, 10, 60, 1440]:
+        lower_bd    = (dt - timedelta(minutes=delta)).strftime("%Y-%m-%d %H:%M:%S")
+        upper_bd    = (dt + timedelta(minutes=delta)).strftime("%Y-%m-%d %H:%M:%S")
+        res         = conn.execute(f"select * from notes where (position is NULL or position = 0) and id != {nid} and created >= '{lower_bd}' and created <= '{upper_bd}' order by id desc limit 20").fetchall()
+        found += [r for r in res if r[0] not in found_ids]
+        found_ids = set([f[0] for f in found])
+        if len(found) > 5:
+            break
+    conn.close()
+    return _to_notes(found)
+
 
 def find_pdf_notes_by_title(text: str) -> List[SiacNote]:
     q = ""
