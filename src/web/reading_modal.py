@@ -386,7 +386,14 @@ class ReadingModal:
                         update_reminder(self.note_id, "")
 
             remove_delay(self.note_id)
+
+
             update_priority_list(self.note_id, new_priority)
+
+            if done_dialog.enqueue_next_ids and len(done_dialog.enqueue_next_ids) > 0:
+                for nid in done_dialog.enqueue_next_ids:
+                    update_priority_list(nid, done_dialog.enqueue_next_prio)
+
             self.read_head_of_queue()
         else:
             self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")

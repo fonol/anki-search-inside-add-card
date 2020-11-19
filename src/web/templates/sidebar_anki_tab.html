@@ -1,22 +1,22 @@
-<div class='mr-10 oflow_y_auto' style='flex: 1 1 auto; margin-top: 15px; overflow-x: hidden;'>
+<div class='mr-10 oflow_y_auto' style='flex: 1 0 auto; margin-top: 15px; overflow-x: hidden;'>
     <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastAdded")'>Last Added</div>
     <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("firstAdded")'>First Added</div>
-    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastModified")'>Last Modified</div>
-    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastReviewed")'>Last Reviewed</div>
-    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastLapses")'>Last Lapses</div>
-    <br><br>
-
-    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("highestPerf")'>Best Performance</div>
-    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestPerf")'>Worst Performance</div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastModified")'>Last Modified </div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastReviewed")'>Last Reviewed </div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastLapses")'>Last Lapses</div> 
+    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("highestPerf")'>Best Performance </div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestPerf")'>Worst Performance </div>
     <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestRet")'>Worst Pass Rate</div>
     <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("highestRet")'>Best Pass Rate</div>
-    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("longestTime")'>Time Taken (desc.)</div>
-    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("shortestTime")'>Time Taken (asc.)</div>
-    <br><br>
-
+    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("longestTime")'>Time Taken (desc.) </div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("shortestTime")'>Time Taken (asc.) </div>
     <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("longestText")'>Longest HTML</div>
-    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("randomUntagged")'>Random Untagged</div>
-    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastUntagged")'>Newest Untagged</div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("randomUntagged")'>Random Untagged </div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lastUntagged")'>Newest Untagged </div>
     <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("highestInterval")'>Highest Interval</div>
-    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestInterval")'>Lowest Interval</div>
+    <div class='siac-notes-sidebar-item blue-hover' onclick='predefSearchFromSidebar("lowestInterval")'>Lowest Interval </div>
+</div>
+<div class='mb-5 mt-5 mr-5 bold ta_center'>Anki Tags</div>
+<div class='mb-5 mr-5 oflow_y_auto tag_scroll' style='flex: 1 1 auto; padding-right: 7px;' onscroll='_siacSidebar.ankiTagsScrollTop = this.scrollTop;'>
+    {tags}
 </div>

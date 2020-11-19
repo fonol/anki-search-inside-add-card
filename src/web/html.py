@@ -178,7 +178,7 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
                 $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
                 $('#dupes').insertAfter('#fields');
                 
-                document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'>&#10149; Search</button>";
+                document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'><i class='fa fa-graduation-cap'></i></button>";
                 let toInsert = `%s`;
                 %s  
                 $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
@@ -588,7 +588,6 @@ def get_unsuspend_modal(nid: int) -> HTML:
     """ Returns the html content for the modal that is opened when clicking on a SUSPENDED label. """
 
     cards           = mw.col.db.all(f"select id, ivl, queue, ord from cards where nid = {nid}")
-    note            = mw.col.getNote(int(nid))
     cards_html      = ""
     unsuspend_all   = ""
 
@@ -600,9 +599,10 @@ def get_unsuspend_modal(nid: int) -> HTML:
             if t["ord"] == c[3]:
                 temp_name = utility.text.trim_if_longer_than(t["name"], 60)
                 break
-        susp = "<span class='siac-susp bold' style='border-radius: 3px; padding: 2px 3px 2px 3px;'>SUSPENDED</span>" if c[2] == -1 else ""
-        btn = f"<div class='siac-btn siac-btn-small bold' onclick='pycmd(\"siac-unsuspend {nid} {c[0]}\");'>Unsuspend</div>" if c[2] == -1 else ""
-        ivl = f"{c[1]} days" if c[1] >= 0 else f"{c[1]} seconds"
+
+        susp        = "<span class='siac-susp bold' style='border-radius: 3px; padding: 2px 3px 2px 3px;'>SUSPENDED</span>" if c[2] == -1 else ""
+        btn         = f"<div class='siac-btn siac-btn-small bold' onclick='pycmd(\"siac-unsuspend {nid} {c[0]}\");'>Unsuspend</div>" if c[2] == -1 else ""
+        ivl         = f"{c[1]} days" if c[1] >= 0 else f"{c[1]} seconds"
         cards_html += f"""
             <tr>
                 <td><b>{temp_name}</b> ({c[0]})</td>
@@ -615,7 +615,7 @@ def get_unsuspend_modal(nid: int) -> HTML:
             <div style='min-height: 250px;' class='flex-col oflow_hidden'>
                 <div style='flex: 1 1 auto;'>
                     <center style='margin: 10px 0 20px 0;'>
-                        <span style='font-size: 18px;'><b>{len(cards)}</b> Card(s) for Note <b>{nid}</b></span>
+                        <span style='font-size: 16px;'><b>{len(cards)}</b> Card(s) for Note <b>{nid}</b></span>
                         <table style='min-width: 500px; margin-top: 20px;'>
                             {cards_html}
                         </table>
