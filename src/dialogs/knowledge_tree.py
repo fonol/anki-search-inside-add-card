@@ -29,7 +29,9 @@ class KnowledgeTree(QWidget):
 
         vbox.addWidget(self.tree)
         self.setLayout(vbox)
-        self.setMinimumHeight(300)
+        #self.setSizePolicy(Qt.)
+        #TODO: clever size policy for opening with y = fullscreen
+        self.setMinimumHeight(700)
 
     def search_executed(self):
         text = self.le_search.text()

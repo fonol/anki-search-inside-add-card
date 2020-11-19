@@ -95,6 +95,7 @@ class TagTree(QTreeWidget):
             }}
         """
 
+        # add cool hover effect with user-defined tag colour when used in note editor
         if not self.knowledge_tree:
             stylesheet += f"""
                 QTreeWidget::item:hover,QTreeWidget::item:hover:selected,QTreeWidget::item:selected {{
@@ -142,14 +143,14 @@ class TagTree(QTreeWidget):
 
     def add_siacnotes_and_anki_cards(self, ti, prefix, t):
         if self.knowledge_tree:
-            self.add_all_siac_with_tags(ti)
+            self._add_siac_with_tag(ti)
 
             ac = QTreeWidgetItem()
             ac.setData(DataCol.Name, 1, prefix + t)
-            if self.add_all_cards_with_tags(ac):
+            if self._add_anki_with_tag(ac):
                 ti.addChild(ac)
 
-    def add_all_siac_with_tags(self, ti):
+    def _add_siac_with_tag(self, ti):
         tag_name = ti.data(DataCol.Name, 1)
 
         notes = find_by_tag(tag_name, only_explicit_tag = True)
@@ -175,7 +176,7 @@ class TagTree(QTreeWidget):
 
             ti.addChild(child)
 
-    def add_all_cards_with_tags(self, ti):
+    def _add_anki_with_tag(self, ti):
         tag_name = ti.data(DataCol.Name,1)
         ids = mw.col.find_notes(f"""tag:{tag_name} -"tag:{tag_name}::*" """)
         i = 0
