@@ -1425,6 +1425,10 @@ def spread_priorities():
 
     conn    = _get_connection()
     vals    = conn.execute("select id, priority from notes where priority is not NULL and priority > 0").fetchall()
+    if len(vals) == 0:
+        conn.close()
+        return
+
     max_p   = max([t[1] for t in vals])
     min_p   = min([t[1] for t in vals])
     if max_p == min_p:
