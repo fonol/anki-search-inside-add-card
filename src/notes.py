@@ -19,6 +19,7 @@ import glob
 import shutil
 import sqlite3
 import typing
+import re
 from typing import Optional, Tuple, List, Dict, Set, Any
 from enum import Enum, unique
 from datetime import datetime, time, date, timedelta
@@ -1126,7 +1127,8 @@ def find_by_text(text: str):
     index.search(text, [])
 
 def find_notes(text: str) -> List[SiacNote]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         if len(token) > 0:
             token = token.replace("'", "")
@@ -1140,7 +1142,8 @@ def find_notes(text: str) -> List[SiacNote]:
     return _to_notes(res)
 
 def find_unqueued_notes(text: str) -> List[SiacNote]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         if len(token) > 0:
             token = token.replace("'", "")
@@ -1169,11 +1172,17 @@ def find_suggested_unqueued_notes(nid: int) -> List[SiacNote]:
         if len(found) > 5:
             break
     conn.close()
-    return _to_notes(found)
+    res =  _to_notes(found)
+    if len(found) <= 5 and note.title and len(note.title) > 0:
+        title_rel = find_unqueued_notes(note.title)
+        if title_rel:
+            res += [n for n in title_rel if not n.id in found_ids and n.id != nid][:10]
+    return res
 
 
 def find_pdf_notes_by_title(text: str) -> List[SiacNote]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         if len(token) > 0:
             token = token.replace("'", "")
@@ -1188,7 +1197,8 @@ def find_pdf_notes_by_title(text: str) -> List[SiacNote]:
     return _to_notes(res)
 
 def find_unqueued_pdf_notes(text: str) -> Optional[List[SiacNote]]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         token = token.replace("'", "")
         if len(token) > 0:
@@ -1203,7 +1213,8 @@ def find_unqueued_pdf_notes(text: str) -> Optional[List[SiacNote]]:
     return _to_notes(res)
 
 def find_unqueued_text_notes(text: str) -> Optional[List[SiacNote]]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         token = token.replace("'", "")
         if len(token) > 0:
@@ -1218,7 +1229,8 @@ def find_unqueued_text_notes(text: str) -> Optional[List[SiacNote]]:
     return _to_notes(res)
 
 def find_unqueued_video_notes(text: str) -> Optional[List[SiacNote]]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         token = token.replace("'", "")
         if len(token) > 0:
