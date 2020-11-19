@@ -362,15 +362,6 @@ def fillTagSelect(editor = None, expanded = False):
     tags            = set(tags)
     tmap            = utility.tags.to_tag_hierarchy(tags)
 
-    most_active     = get_most_active_tags(5)
-    most_active_map = dict()
-
-    for t in most_active:
-        if t in tmap:
-            most_active_map[t] = tmap[t]
-        else:
-            most_active_map[t] = {}
-
     def iterateMap(tmap, prefix, start=False):
         if start:
             html = "<ul class='deck-sub-list outer'>"
@@ -382,18 +373,13 @@ def fillTagSelect(editor = None, expanded = False):
         html += "</ul>"
         return html
 
-    most_active_html    = iterateMap(most_active_map, "", True)
     html                = iterateMap(tmap, "", True)
 
     # the dropdown should only be expanded on user click, not on initial render
     expanded_js         = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
-    quick_disp          = "block" if len(most_active_map) > 0 else "none"
 
     cmd                 = """
     document.getElementById('deck-sel-info-lbl').style.display = 'none';
-    document.getElementById('deckSelQuickWrapper').style.display = '%s';
-    document.getElementById('siac-deck-sel-q-sep').style.display = '%s';
-    document.getElementById('deckSelQuick').innerHTML = `%s`;
     document.getElementById('deckSel').innerHTML = `%s`;
     $('#deckSelWrapper .exp').click(function(e) {
 		e.stopPropagation();
@@ -408,7 +394,7 @@ def fillTagSelect(editor = None, expanded = False):
     });
     $("#siac-deck-sel-btn-wrapper").hide();
     %s
-    """ % (quick_disp, quick_disp, most_active_html, html, expanded_js)
+    """ % (html, expanded_js)
     if editor is not None:
         editor.web.eval(cmd)
     else:
@@ -457,8 +443,6 @@ def fillDeckSelect(editor: Optional[Editor] = None, expanded= False, update = Tr
 
     cmd         = """
     document.getElementById('deck-sel-info-lbl').style.display = 'block';
-    document.getElementById('deckSelQuickWrapper').style.display = 'none';
-    document.getElementById('siac-deck-sel-q-sep').style.display = 'none';
     document.getElementById('deckSel').innerHTML = `%s`;
     $('#deckSelWrapper .exp').click(function(e) {
 		e.stopPropagation();
@@ -511,13 +495,13 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Added timer to the main UI",
-        "Quick Open (CTRL+O by default) works now with all notes, not only PDF",
-        "Extracted Pages are now indicated (in blue) in the original PDF",
-        "Added Shuffle, Spread and Randomize buttons in the queue manager",
-        "Order untagged in sidebar by last created",
-        "Fix: PDF tooltip flowing out of visible area sometimes",
-
+        "Add tag tree in sidebar (Anki Notes tab)",
+        "Remember expanded tags & scroll position in sidebar's tag trees",
+        "Add unselect all / select all buttons in queue manager",
+        "Add 'Tags' button in queue manager",
+        "Add tab to enqueue next note (e.g. next lecture slides) in Done dialog",
+        "Fix avg. priority label in priority dialog",
+        "Fix tag tree not always refreshing in queue manager",
 
     ]
 

@@ -52,7 +52,10 @@ def dt_to_stamp(dt : datetime) -> str:
     return dt.strftime('%Y-%m-%d-%H-%M-%S')
 
 def dt_from_stamp(stamp: str) -> datetime:
-    return datetime.strptime(stamp, '%Y-%m-%d-%H-%M-%S')
+    try:
+        return datetime.strptime(stamp, '%Y-%m-%d-%H-%M-%S')
+    except:
+        return datetime.strptime(stamp, '%Y-%m-%d %H:%M:%S')
 
 def dt_from_date_only_stamp(stamp: str) -> datetime:
     return datetime.strptime(stamp, '%Y-%m-%d')

@@ -19,7 +19,7 @@ from aqt.qt import *
 from aqt.utils import tooltip
 import typing
 import os
-from .components import QtPrioritySlider, QtScheduleComponent
+from .components import QtPrioritySlider, QtScheduleComponent, NoteSelectorMode, NoteSelector
 from ..notes import get_note, get_priority
 from ..config import get_config_value_or_default
 
@@ -27,10 +27,13 @@ class DoneDialog(QDialog):
 
     def __init__(self, parent, note_id):
         QDialog.__init__(self, parent)
-        self.note_id = note_id
-        self.note = get_note(note_id)
-        self.priority = get_priority(note_id)
-        self.add_mode = False
+
+        self.note_id            = note_id
+        self.note               = get_note(note_id)
+        self.priority           = get_priority(note_id)
+        self.add_mode           = False
+        self.enqueue_next_ids   = []
+        self.enqueue_next_prio  = -1
         self.setup_ui()
 
     def setup_ui(self):
@@ -43,13 +46,16 @@ class DoneDialog(QDialog):
             self.add_mode = True
 
         self.setWindowTitle(f"{title} ({shortcut})")
-        self.layout = QVBoxLayout()
-        self.tabs = QTabWidget()
-        self.done_tab = DoneTab(self)
+
+        self.layout         = QVBoxLayout()
+        self.tabs           = QTabWidget()
+        self.done_tab       = DoneTab(self)
         self.tabs.addTab(self.done_tab, "Priority")
-        self.schedule_tab = ScheduleTab(self)
+        self.schedule_tab   = ScheduleTab(self)
         if not self.add_mode:
             self.tabs.addTab(self.schedule_tab, "Schedule")
+            self.enqueue_next_tab = EnqueueNextTab(self)
+            self.tabs.addTab(self.enqueue_next_tab, "Enqueue Next")
         self.layout.addWidget(self.tabs)
 
 
@@ -71,6 +77,9 @@ class DoneDialog(QDialog):
         self.priority = self.done_tab.slider.value()
         self.schedule = self.schedule_tab.scheduler._get_schedule()
         self.schedule_has_changed = self.schedule_tab.scheduler.schedule_has_changed()
+        if not self.add_mode:
+            self.enqueue_next_ids   = self.enqueue_next_tab.note_selector.selected_ids
+            self.enqueue_next_prio  = self.enqueue_next_tab.slider.value()
         self.accept()
 
 class DoneTab(QWidget):
@@ -86,6 +95,21 @@ class DoneTab(QWidget):
         self.slider = QtPrioritySlider(self.parent.priority, self.parent.note_id, False, None)
         self.layout.addWidget(self.slider)
 
+class EnqueueNextTab(QWidget):
+
+    def __init__(self, parent):
+        self.parent = parent
+        QWidget.__init__(self)
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self.note_selector = NoteSelector(self, NoteSelectorMode.UNQUEUED, nid=self.parent.note_id)
+        self.layout.addWidget(self.note_selector)
+        self.slider = QtPrioritySlider(self.parent.priority, None, False, None)
+        self.slider.slider.setMinimum(1)
+        self.layout.addWidget(self.slider)
 
 
 class ScheduleTab(QWidget):
@@ -96,6 +120,7 @@ class ScheduleTab(QWidget):
 
     def setup_ui(self):
         self.layout = QVBoxLayout()
+        self.layout.addSpacing(15)
         self.scheduler = QtScheduleComponent(self.parent.note.reminder)
         self.layout.addWidget(self.scheduler)
         self.setLayout(self.layout)

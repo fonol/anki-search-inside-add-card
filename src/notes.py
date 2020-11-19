@@ -19,6 +19,7 @@ import glob
 import shutil
 import sqlite3
 import typing
+import re
 from typing import Optional, Tuple, List, Dict, Set, Any
 from enum import Enum, unique
 from datetime import datetime, time, date, timedelta
@@ -30,12 +31,12 @@ import time
 try:
     from .state import get_index
     from .models import SiacNote, IndexNote, NoteRelations
-    from .config import get_config_value_or_default
+    from .config import get_config_value_or_default, get_config_value, update_config
     from .debug_logging import get_notes_info, persist_notes_db_checked
 except:
     from state import get_index
     from models import SiacNote, IndexNote, NoteRelations
-    from config import get_config_value_or_default
+    from config import get_config_value_or_default, get_config_value, update_config
     from debug_logging import get_notes_info, persist_notes_db_checked
 import utility.misc
 import utility.tags
@@ -72,7 +73,7 @@ def create_db_file_if_not_exists() -> bool:
     if not os.path.isfile(file_path):
         conn = sqlite3.connect(file_path)
 
-        creation_sql = """
+        notes_sql = """
             create table if not exists notes
             (
                 id INTEGER PRIMARY KEY,
@@ -88,13 +89,14 @@ def create_db_file_if_not_exists() -> bool:
                 position INTEGER,
                 extract_start INTEGER,
                 extract_end INTEGER,
+                delay INTEGER,
                 author TEXT,
                 priority FLOAT,
                 last_priority FLOAT
 
             )
         """
-        conn.execute(creation_sql)
+        conn.execute(notes_sql)
     else:
         existed = True
         try: 
@@ -122,6 +124,12 @@ def create_db_file_if_not_exists() -> bool:
                 to_delete = sorted(backups)[:-limit]
                 for f in to_delete:
                     os.remove(f)
+
+
+    dir_addon_data = get_config_value("addon.data_folder")
+    if dir_addon_data is None or len(dir_addon_data.strip()) == 0:
+        path = utility.misc.get_application_data_path()
+        update_config("addon.data_folder", path)
     
     # disable for now
     # info_from_data_json = get_notes_info()
@@ -187,6 +195,10 @@ def create_db_file_if_not_exists() -> bool:
     # and ignore any sql errors thrown if the modifications did already exist.
     #
     try:
+        conn.execute(""" ALTER TABLE notes ADD COLUMN delay INTEGER; """)
+    except: 
+        pass
+    try:
         conn.execute(""" ALTER TABLE notes ADD COLUMN author TEXT; """)
         conn.execute(""" ALTER TABLE notes ADD COLUMN priority FLOAT; """)
         conn.execute(""" ALTER TABLE notes ADD COLUMN last_priority FLOAT; """)
@@ -207,6 +219,41 @@ def create_db_file_if_not_exists() -> bool:
 
     except:
         pass
+
+    # 19.11.2020: temporary fix for 'delay' column having been inserted at wrong place 
+    columns = conn.execute("PRAGMA table_info(notes)").fetchall()
+    # 14th column should be delay, if not, recreate 'notes' table with correct order
+    if columns[13][1] != "delay":
+        tmp_table = """create table if not exists notes_tmp
+            (
+                id INTEGER PRIMARY KEY,
+                title TEXT,
+                text TEXT,
+                source TEXT,
+                tags TEXT,
+                nid INTEGER,
+                created TEXT,
+                modified TEXT,
+                reminder TEXT,
+                lastscheduled TEXT,
+                position INTEGER,
+                extract_start INTEGER,
+                extract_end INTEGER,
+                delay INTEGER,
+                author TEXT,
+                priority FLOAT,
+                last_priority FLOAT
+            )"""
+        
+        conn.execute(tmp_table)
+        conn.execute("""insert into notes_tmp (id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority)
+            select id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority from notes;
+        """)
+        conn.execute("drop table notes")
+        conn.execute("alter table notes_tmp rename to notes")
+        conn.commit()
+
+
     try:
         conn.execute("""
             Create table if not exists notes_pdf_page (
@@ -223,6 +270,7 @@ def create_db_file_if_not_exists() -> bool:
         pass
     finally:
         conn.close()
+    
 
     # store a timestamp in /user_files/data.json to check next time, so we don't have to do this on every startup
     # persist_notes_db_checked()
@@ -591,7 +639,7 @@ def get_priorities(nids: List[int]) -> Dict[int, int]:
 
 def get_avg_priority() -> float:
     conn    = _get_connection()
-    res     = conn.execute(f"select avg(priority) from notes").fetchone()
+    res     = conn.execute(f"select avg(priority) from notes where priority is not NULL and priority > 0").fetchone()
     conn.close()
     if res is None or len(res) == 0:
         return 0
@@ -983,9 +1031,11 @@ def add_tags(ids: List[int], tags: List[str]):
     for nid, tstr in notes:
         spl = tstr.split(" ")
         for t in tags:
+            t = t.strip()
             if not t in spl:
                 spl.append(t)
-        updated.append((" ".join(spl), nid))
+        spl = [s.strip() for s in spl]
+        updated.append((" %s " % (" ".join(spl)), nid))
     conn.executemany("update notes set tags = ? where id= ?", updated)
     conn.commit()
     conn.close()
@@ -1001,8 +1051,7 @@ def insert_highlights(highlights: List[Tuple[Any, ...]]):
     dt = _date_now_str()
     highlights = [h + (dt,) for h in highlights]
     conn = _get_connection()
-
-    res = conn.executemany("insert into highlights(nid, page, grouping, type, text, x0, y0, x1, y1, created) values (?,?,?,?,?,?,?,?,?,?)", highlights)
+    conn.executemany("insert into highlights(nid, page, grouping, type, text, x0, y0, x1, y1, created) values (?,?,?,?,?,?,?,?,?,?)", highlights)
     conn.commit()
     conn.close()
 
@@ -1078,7 +1127,8 @@ def find_by_text(text: str):
     index.search(text, [])
 
 def find_notes(text: str) -> List[SiacNote]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         if len(token) > 0:
             token = token.replace("'", "")
@@ -1091,8 +1141,48 @@ def find_notes(text: str) -> List[SiacNote]:
     conn.close()
     return _to_notes(res)
 
+def find_unqueued_notes(text: str) -> List[SiacNote]:
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
+    for token in text.lower().split():
+        if len(token) > 0:
+            token = token.replace("'", "")
+            q = f"{q} or lower(title) like '%{token}%'"
+    q = q[4:] if len(q) > 0 else "" 
+    if len(q) == 0:
+        return
+    conn = _get_connection()
+    res = conn.execute(f"select * from notes where (position is NULL or position = 0) and ({q}) order by id desc").fetchall()
+    conn.close()
+    return _to_notes(res)
+
+def find_suggested_unqueued_notes(nid: int) -> List[SiacNote]:
+
+    note        = get_note(nid)
+    dt          = utility.date.dt_from_stamp(note.created)
+    found       = []
+    found_ids   = set()
+    conn        = _get_connection()
+    for delta in [5, 10, 60, 1440]:
+        lower_bd    = (dt - timedelta(minutes=delta)).strftime("%Y-%m-%d %H:%M:%S")
+        upper_bd    = (dt + timedelta(minutes=delta)).strftime("%Y-%m-%d %H:%M:%S")
+        res         = conn.execute(f"select * from notes where (position is NULL or position = 0) and id != {nid} and created >= '{lower_bd}' and created <= '{upper_bd}' order by id desc limit 20").fetchall()
+        found += [r for r in res if r[0] not in found_ids]
+        found_ids = set([f[0] for f in found])
+        if len(found) > 5:
+            break
+    conn.close()
+    res =  _to_notes(found)
+    if len(found) <= 5 and note.title and len(note.title) > 0:
+        title_rel = find_unqueued_notes(note.title)
+        if title_rel:
+            res += [n for n in title_rel if not n.id in found_ids and n.id != nid][:10]
+    return res
+
+
 def find_pdf_notes_by_title(text: str) -> List[SiacNote]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         if len(token) > 0:
             token = token.replace("'", "")
@@ -1107,7 +1197,8 @@ def find_pdf_notes_by_title(text: str) -> List[SiacNote]:
     return _to_notes(res)
 
 def find_unqueued_pdf_notes(text: str) -> Optional[List[SiacNote]]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         token = token.replace("'", "")
         if len(token) > 0:
@@ -1122,7 +1213,8 @@ def find_unqueued_pdf_notes(text: str) -> Optional[List[SiacNote]]:
     return _to_notes(res)
 
 def find_unqueued_text_notes(text: str) -> Optional[List[SiacNote]]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         token = token.replace("'", "")
         if len(token) > 0:
@@ -1137,7 +1229,8 @@ def find_unqueued_text_notes(text: str) -> Optional[List[SiacNote]]:
     return _to_notes(res)
 
 def find_unqueued_video_notes(text: str) -> Optional[List[SiacNote]]:
-    q = ""
+    q       = ""
+    text    = re.sub(r"[!\"§$%&/()=?`:;,.<>}{_-]", "", text)
     for token in text.lower().split():
         token = token.replace("'", "")
         if len(token) > 0:
@@ -1332,6 +1425,10 @@ def spread_priorities():
 
     conn    = _get_connection()
     vals    = conn.execute("select id, priority from notes where priority is not NULL and priority > 0").fetchall()
+    if len(vals) == 0:
+        conn.close()
+        return
+
     max_p   = max([t[1] for t in vals])
     min_p   = min([t[1] for t in vals])
     if max_p == min_p:

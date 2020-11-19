@@ -233,15 +233,13 @@ body.nightMode .tagLbl:hover {
     flex-direction: column;
     text-align: left;
 }
-#deckSel,#deckSelQuick {
+#deckSel {
     width: 100%;
     font-size: 0;
 }
 /* body.nightMode # */
-#deckSelQuickWrapper {
-    display: none;
-}
-#deckSel tr>td,#deckSelQuick tr>td {
+
+#deckSel tr>td {
    text-align: left;
    width: 90%;
 }
