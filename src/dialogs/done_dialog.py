@@ -108,6 +108,7 @@ class EnqueueNextTab(QWidget):
         self.note_selector = NoteSelector(self, NoteSelectorMode.UNQUEUED, nid=self.parent.note_id)
         self.layout.addWidget(self.note_selector)
         self.slider = QtPrioritySlider(self.parent.priority, None, False, None)
+        self.slider.slider.setMinimum(1)
         self.layout.addWidget(self.slider)
 
 
