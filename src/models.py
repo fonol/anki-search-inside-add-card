@@ -214,7 +214,7 @@ class SiacNote(Printable):
             if len(body.strip()) > 0:
                 body += "<br/><hr class='siac-note-hr'>"
             body = f"""{body}<p class='flex-row' style='margin: 0;'>
-                        <img src='http://img.youtube.com/vi/{utility.text.get_yt_video_id(src)}/0.jpg' style='height: 100px; margin-right: 40px;'/>
+                        <img src='http://img.youtube.com/vi/{utility.text.get_yt_video_id(src)}/0.jpg' style='height: 70px; margin-right: 40px;'/>
                         <span class='flex-col' style='justify-content: center;'>
                             <span class='siac-caps' style='font-size: 13px;'>Saved At
                             <br>
