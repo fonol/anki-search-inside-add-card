@@ -57,10 +57,7 @@ class QtPrioritySlider(QWidget):
             self.slider.setValue(prio_default)
         else:
             self.slider.setValue(0)
-        if self.nid is None:
-            self.slider.setMinimum(1)
-        else:
-            self.slider.setMinimum(0)
+        self.slider.setMinimum(0)
         self.slider.setMaximum(100)
         self.slider.setSingleStep(1)
         vbox.addWidget(self.slider)
