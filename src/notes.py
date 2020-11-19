@@ -72,7 +72,7 @@ def create_db_file_if_not_exists() -> bool:
     if not os.path.isfile(file_path):
         conn = sqlite3.connect(file_path)
 
-        creation_sql = """
+        notes_sql = """
             create table if not exists notes
             (
                 id INTEGER PRIMARY KEY,
@@ -95,7 +95,7 @@ def create_db_file_if_not_exists() -> bool:
 
             )
         """
-        conn.execute(creation_sql)
+        conn.execute(notes_sql)
     else:
         existed = True
         try: 
@@ -218,6 +218,41 @@ def create_db_file_if_not_exists() -> bool:
 
     except:
         pass
+
+    # 19.11.2020: temporary fix for 'delay' column having been inserted at wrong place 
+    columns = conn.execute("PRAGMA table_info(notes)").fetchall()
+    # 14th column should be delay, if not, recreate 'notes' table with correct order
+    if columns[13][1] != "delay":
+        tmp_table = """create table if not exists notes_tmp
+            (
+                id INTEGER PRIMARY KEY,
+                title TEXT,
+                text TEXT,
+                source TEXT,
+                tags TEXT,
+                nid INTEGER,
+                created TEXT,
+                modified TEXT,
+                reminder TEXT,
+                lastscheduled TEXT,
+                position INTEGER,
+                extract_start INTEGER,
+                extract_end INTEGER,
+                delay INTEGER,
+                author TEXT,
+                priority FLOAT,
+                last_priority FLOAT
+            )"""
+        
+        conn.execute(tmp_table)
+        conn.execute("""insert into notes_tmp (id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority)
+            select id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority from notes;
+        """)
+        conn.execute("drop table notes")
+        conn.execute("alter table notes_tmp rename to notes")
+        conn.commit()
+
+
     try:
         conn.execute("""
             Create table if not exists notes_pdf_page (
@@ -234,6 +269,7 @@ def create_db_file_if_not_exists() -> bool:
         pass
     finally:
         conn.close()
+    
 
     # store a timestamp in /user_files/data.json to check next time, so we don't have to do this on every startup
     # persist_notes_db_checked()
