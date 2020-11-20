@@ -220,7 +220,7 @@ class Output:
 
                 elif res.is_yt():
                     icon = "film"
-            elif res.note_type == "index" and res.did > 0:
+            elif res.note_type == "index" and res.did and res.did > 0:
                 check_for_suspended.append(res.id)
 
             build_user_note_total   += time.time() - build_user_note_start
