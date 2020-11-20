@@ -195,18 +195,21 @@ def create_db_file_if_not_exists() -> bool:
     # and ignore any sql errors thrown if the modifications did already exist.
     #
     try:
-        conn.execute(""" ALTER TABLE notes ADD COLUMN delay INTEGER; """)
+        conn.execute(""" ALTER TABLE notes ADD COLUMN extract_start INTEGER; """)
+        conn.execute(""" ALTER TABLE notes ADD COLUMN extract_end INTEGER;""")
+        conn.commit()
     except: 
         pass
+    try:
+        conn.execute(""" ALTER TABLE notes ADD COLUMN delay INTEGER; """)
+        conn.commit()
+    except: 
+        pass
+    
     try:
         conn.execute(""" ALTER TABLE notes ADD COLUMN author TEXT; """)
         conn.execute(""" ALTER TABLE notes ADD COLUMN priority FLOAT; """)
         conn.execute(""" ALTER TABLE notes ADD COLUMN last_priority FLOAT; """)
-
-        # conn.execute(""" ALTER TABLE notes ADD COLUMN last_done TEXT; """)
-        # conn.execute(""" ALTER TABLE notes ADD COLUMN in_queue BOOLEAN; """)
-        # conn.execute(""" ALTER TABLE notes ADD COLUMN extract_start INTEGER; """)
-        # conn.execute(""" ALTER TABLE notes ADD COLUMN extract_end INTEGER;""")
         conn.commit()
 
         # 13-11-2020
