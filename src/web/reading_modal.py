@@ -285,12 +285,13 @@ class ReadingModal:
                             queueRenderPage(pdf.page, true, true, true);
                         }
                         updatePdfProgressBar();
-                        if (bothBarsAreHidden()) {
+                        if (topBarIsHidden()) {
                             readerNotification("%s");
                         }
                         if (pdf.pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
                         fileReader = null;
-                        setTimeout(checkTOC, 500);
+                        pdf.TOC = null;
+                        setTimeout(checkTOC, 300);
                 }).catch(function(err) { setTimeout(function() { console.log(err); }); });
             };
             loadFn();
@@ -671,7 +672,7 @@ class ReadingModal:
                 pdfLoading = false;
                 noteLoading = false;
                 pdf.instance = null;
-                if (bothBarsAreHidden()) {{
+                if (topBarIsHidden()) {{
                     readerNotification("{title}");
                 }}
                 displayedNoteId = {self.note_id};
@@ -1184,7 +1185,7 @@ class ReadingModal:
             html = html.replace("`", "\\`")
             html = f"""
                 <div class='fg_lightgrey' style='flex: 0 1 auto;'>
-                    <center><b>PAGE {page}</b></center>
+                    <center><b>PAGE {page} / {pages_total}</b></center>
                     <center class='mt-5' style='font-size: 10px;'>{around_s}</center>
                     <hr style='border-top: 4px solid grey;'>
                 </div>
@@ -1199,7 +1200,7 @@ class ReadingModal:
         else:
             html = f"""
                 <div class='fg_lightgrey' style='flex: 0 1 auto;'>
-                    <center><b>PAGE {page}</b></center>
+                    <center><b>PAGE {page} / {pages_total}</b></center>
                     <center class='mt-5' style='font-size: 10px;'>{around_s}</center>
                     <hr style='border-top: 4px solid grey;'>
                 </div>
