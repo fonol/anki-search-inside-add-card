@@ -98,7 +98,8 @@ window.checkTOC = function () {
         let dest = outline[0].dest;
         if (Array.isArray(dest)) {
             pdf_i.getPageIndex(dest[0]).catch((e) => { console.log(e); return Promise.reject(); }).then(function (id) {
-                if (id) {
+                console.log(id);
+                if (id != null) {
                     byId("siac-toc-btn").style.display = "block";
                 }
             });
@@ -108,7 +109,7 @@ window.checkTOC = function () {
                 const ref = d[0];
                 return ref;
             }).then(pdf_i.getPageIndex.bind(pdf_i)).then(function (id) {
-                if (id) {
+                if (id != null) {
                     byId("siac-toc-btn").style.display = "block";
                 }
             })
@@ -116,8 +117,8 @@ window.checkTOC = function () {
     })
 };
 
+
 /** Extract the TOC if possible. 
- *  TODO: needs some improvement (only works a fraction of the time)
 */
 window.loadTOC = function () {
 
@@ -125,6 +126,9 @@ window.loadTOC = function () {
         return;
     }
     let pdf_i = pdf.instance;
+    if (pdf.TOC && pdf.TOC.length > 0) {
+        return;
+    }
     window.pdf.TOC = [];
     pdf_i.getOutline().then(function (outline) {
         if (outline) {
@@ -134,14 +138,13 @@ window.loadTOC = function () {
                 const title = outline[i].title;
                 if (Array.isArray(dest)) {
                     promises.push(
-                        pdf_i.getPageIndex(dest).catch((e) => { console.log(e); return Promise.resolve(); }).then(function (id) {
-                            if (id) {
+                        pdf_i.getPageIndex(dest[0]).catch((e) => { console.log(e); return Promise.resolve(); }).then(function (id) {
+                            if (id != null) {
                                 window.pdf.TOC.push({ title: title, page: parseInt(id) + 1 });
                                 return Promise.resolve();
                             }
                         }));
                 } else {
-
                     promises.push(
                         pdf_i.getDestination(dest).then(function (d) {
                             if (!d) { return null; }
@@ -153,16 +156,60 @@ window.loadTOC = function () {
                         })
                     );
                 }
+                if (outline[i].items && outline[i].items.length > 0) {
+                    let items = outline[i].items;
+                    for (let j = 0; j < items.length; j++) {
+                        let dest = items[j].dest;
+                        let title = items[j].title;
+                        if (Array.isArray(dest)) {
+                            promises.push(
+                                pdf_i.getPageIndex(dest[0]).catch((e) => { console.log(e); return Promise.resolve(); }).then(function (id) {
+                                    if (id != null) {
+                                        if (!window.pdf.TOC[i].children) {
+                                            window.pdf.TOC[i].children = [];
+                                        }
+                                        window.pdf.TOC[i].children.push({ title: title, page: parseInt(id) + 1 });
+                                        return Promise.resolve();
+                                    }
+                                }));
+                        } else {
+                            promises.push(
+                                pdf_i.getDestination(dest).then(function (d) {
+                                    if (!d) { return null; }
+                                    const ref = d[0];
+                                    return ref;
+                                }).then(pdf_i.getPageIndex.bind(pdf_i)).then(function (id) {
+                                    if (!window.pdf.TOC[i].children) {
+                                        window.pdf.TOC[i].children = [];
+                                    }
+                                    window.pdf.TOC[i].children.push({ title: title, page: parseInt(id) + 1 });
+                                    return Promise.resolve();
+                                })
+                            );
+                        }
+                     
+                    } 
+                }
             }
             return Promise.all(promises);
         }
     }).then(function () {
-        let html = "";
+        let html = "<ul>";
         if (pdf.TOC && pdf.TOC.length) {
             for (var i = 0; i < pdf.TOC.length; i++) {
-                html += `<div class='siac-toc-item blue-hover' onclick='pdfGotoPg(${pdf.TOC[i].page})'>${pdf.TOC[i].page}: ${pdf.TOC[i].title}</div>`;
+                html += `<li class='siac-toc-item blue-hover' onclick='pdfGotoPg(${pdf.TOC[i].page})'><div><div>${pdf.TOC[i].page}:</div><div class='siac_toc_title'>${pdf.TOC[i].title || '&lt;Untitled&gt;'}</div></div>`;
+                if (pdf.TOC[i].children && pdf.TOC[i].children.length > 0) {
+                    html += `<ul>`;
+                    for (var j = 0; j < pdf.TOC[i].children.length; j++) {
+                        let c = pdf.TOC[i].children[j];
+                        html += `<li class='siac-toc-item blue-hover' onclick='pdfGotoPg(${c.page})'><div><div>${c.page}:</div><div class='siac_toc_title'>${c.title || '&lt;Untitled&gt;'}</div></div></li>`;
+                    }
+                    html += "</ul>"
+                }
+                html += "</li>"
             }
-            html = `<div style='text-align: center; margin-bottom: 5px;'><b style='font-size: 15px;'>Table of Contents</b></div><div style='overflow: auto; color: lightgrey;'>${html}</div>`;
+            html = `<div style='text-align: center; margin-bottom: 10px; padding-bottom: 7px; border-bottom: 2px dotted grey;'><b style='font-size: 14px;' class='fg_lightgrey'>Table of Contents</b></div>
+                    <div style='overflow: auto; color: lightgrey; padding-right: 4px;'>${html}</div>`;
         }
         byId("siac-toc").innerHTML = html;
 
@@ -178,6 +225,7 @@ window.tocBtnClicked = function () {
         byId('siac-toc').style.display = "flex";
         loadTOC();
     }
+    pdfFitToPage();
 }
 
 window.pdfFitToPage = function () {
@@ -999,6 +1047,9 @@ window.bothBarsAreHidden = function () {
     return byId('siac-reading-modal-top-bar').classList.contains('top-hidden') &&
         byId('siac-reading-modal-bottom-bar').classList.contains('bottom-hidden');
 
+}
+window.topBarIsHidden = function() {
+    return byId('siac-reading-modal-top-bar').classList.contains('top-hidden');
 }
 
 window.toggleReadingModalFullscreen = function () {
