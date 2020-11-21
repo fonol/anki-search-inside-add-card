@@ -49,7 +49,7 @@ class TimerElapsedDialog(QDialog):
         hbox.addStretch()
         hbox.addWidget(c_lbl)
         hbox.addStretch()
-        self.layout().addSpacing(10)
+        self.layout().addSpacing(15)
         self.layout().addLayout(hbox)
         self.layout().addSpacing(16)
 
@@ -65,13 +65,16 @@ class TimerElapsedDialog(QDialog):
         cards               = "cards" if added_today_count != 1 else "card"
 
         read_lbl  = QLabel(f"Read <b>{read_today_count}</b> {pages} today")
+        read_lbl.setAlignment(Qt.AlignCenter)
         added_lbl = QLabel(f"Added <b>{added_today_count}</b> {cards} today")
+        added_lbl.setAlignment(Qt.AlignCenter)
 
         self.layout().addWidget(read_lbl)
         self.layout().addWidget(added_lbl)
 
 
-        hbox_restart = QHBoxLayout()
+        gbox            = QGroupBox("Start a new timer")
+        hbox_restart    = QHBoxLayout()
         for m in [5, 10, 15, 25, 30]:
             
             btn = QToolButton()
@@ -79,8 +82,9 @@ class TimerElapsedDialog(QDialog):
             btn.clicked.connect(functools.partial(self.set_restart, m))
             hbox_restart.addWidget(btn)
 
+        gbox.setLayout(hbox_restart)
         self.layout().addSpacing(20)
-        self.layout().addLayout(hbox_restart)
+        self.layout().addWidget(gbox)
 
         accept = QPushButton("Ok")
         accept.clicked.connect(self.accept)
@@ -90,6 +94,7 @@ class TimerElapsedDialog(QDialog):
         hbox.addStretch()
         self.layout().addSpacing(25)
         self.layout().addLayout(hbox)
+        self.layout().addSpacing(5)
         self.layout().setContentsMargins(50,10,50, 10)
 
         self.setObjectName("elapsed")
