@@ -12,7 +12,7 @@
     {extract}
     <div style='display: inline-block; vertical-align: top;' id='siac-pdf-overlay-top-lbl-wrap'></div>
 </div>
-<div id='siac-iframe-btn' style='top: 50px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
+<div id='siac-iframe-btn' style='top: 45px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
     <div class='fg_lightgrey ml-5 ta_right' style='margin-top: 4px; width: calc(100% - 35px); font-size: 13px;'>Note: Not all sites allow embedding!</div>
     <div class='w-100 mt-10 oflow_y_auto' style='padding: 0 15px 10px 15px; max-height: 500px; box-sizing: border-box;'>
         <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) { pdfUrlSearch(this.value); this.value = ''; }"></input> 
@@ -20,12 +20,11 @@
     {search_sources}
     </div>
 </div>
-<div id="siac-toc-btn" style='position: absolute; top: 97px; left: 0; display: none;' onclick='tocBtnClicked()' class='siac-btn siac-btn-dark siac-toc-btn'>
+<div id="siac-toc-btn" style='position: absolute; top: 85px; left: 0; display: none;' onclick='tocBtnClicked()' class='siac-btn siac-btn-dark siac-toc-btn'>
     <i class='fa fa-list-ol'></i>
 </div>
 <div class='ta_center' style='position: absolute; left: 0; bottom: 150px;'>
-    <div style='border-color: grey;' data-id="0" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn bright-hover ta_center fg_lightgrey'>T</div>
-    <br>
+    <div style='border-color: grey;' data-id="0" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn bright-hover ta_center fg_lightgrey mb-10'>T</div>
     <div style='background: #e65100;' data-id="1" data-color="#e65100" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
     <div style='background: #558b2f;' data-id="2" data-color="#558b2f" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
     <div style='background: #2196f3;' data-id="3" data-color="#2196f3" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
@@ -50,6 +49,7 @@
 <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='pycmd("siac-user-note-done")'><i class='fa fa-check'></i></div>
 <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark fg_lightgrey' onclick='pycmd("siac-close-iframe")'><b>&times; &nbsp;CLOSE</b></div>
 <div id='siac-pdf-top' data-pdfpath="{pdf_path}" data-pdftitle="{pdf_title}" data-pdfid="{nid}" oncopy='onPDFCopy(event)' onwheel='pdfMouseWheel(event);' style='overflow-y: hidden;'>
+    <div id='siac-toc'></div>
     <div id='siac-pdf-wrapper'>
         <div id='siac-pdf-overflow'>
             <div id='siac-pdf-loader-wrapper'>
@@ -66,7 +66,6 @@
             <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
         </div>
         <div id='siac-pdf-br-notify'> </div>
-        <div id='siac-toc'></div>
     </div>
     <div id='siac-page-sidebar'>
         <div class='flex-col h-100' style='justify-content: center;'>
