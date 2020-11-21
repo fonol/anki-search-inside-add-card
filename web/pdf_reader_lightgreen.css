@@ -73,24 +73,38 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 .siac-toc-btn {
     border: 2px outset #2496dc !important;
     color: lightgrey;
+    padding: 3px 5px;
 }
 #siac-toc {
     display: none;
-    position: absolute;
-    left: 25px;
-    top: 20px;
-    bottom: 10px;
+    margin: 20px 15px 0 10px;
     width: 280px;
+    flex: 0 0 280px;
     border: 3px outset #90EE90;
     padding: 10px;
     background-color: var(--c-reading-modal-background);
-    z-index: 10;
     text-align: left;
     flex-direction: column;
+}
+#siac-toc ul {
+    padding-left: 0px;
+}
+#siac-toc ul ul li .siac_toc_title {
+    padding-left: 20px;
+}
+#siac-toc li div:first-child {
+    display: flex;
+    width: 100%;
+}
+#siac-toc li div div:first-child {
+    flex: 0 1 40px;
+    min-width: 40px;
+    color: grey;
 }
 .siac-toc-item {
     color: lightgrey;
     font-weight: bold;
+    list-style-type: none;
 }
 .siac-btn-small-dropdown-inverted {
     display: none;
