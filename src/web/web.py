@@ -255,15 +255,13 @@ def print_starting_info(editor: Optional[Editor]):
 
     if index is not None:
 
-
-        html += "Initalized in <b>%s</b> s." % index.initializationTime
         if not index.creation_info["index_was_rebuilt"]:
-            html += " (No changes detected, index was <b>not</b> rebuilt)"
+            html += "Initalized in <b>%s</b> s (no changes detected)." % index.initializationTime
+        else:
+            html += "Initalized in <b>%s</b> s." % index.initializationTime
+
         html += "<br/>Index contains <b>%s</b> notes." % index.get_number_of_notes()
         html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
-        html += "<br/>Tag Info on hover is <b>%s</b>.%s" % ("shown" if config["showTagInfoOnHover"] else "not shown", (" Delay: [<b>%s</b> ms]" % config["tagHoverDelayInMiliSec"]) if config["showTagInfoOnHover"] else "")
-        html += "<br/>Image max height is <b>%s</b> px." % config["imageMaxHeight"]
-        html += "<br/>Retention is <b>%s</b> in the results." % ("shown" if config["showRetentionScores"] else "not shown")
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
         html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
 
