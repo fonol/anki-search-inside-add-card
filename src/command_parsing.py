@@ -48,9 +48,9 @@ from .hooks import run_hooks
 from .output import Output
 from .dialogs.editor import open_editor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
-from .dialogs.url_import import UrlImporter
+from .dialogs.importing.url_import import UrlImporter
 from .dialogs.pdf_extract import PDFExtractDialog
-from .dialogs.zotero_import import ZoteroImporter
+from .dialogs.importing.zotero_import import ZoteroImporter
 from .dialogs.schedule_dialog import ScheduleDialog
 from .dialogs.timer_elapsed import TimerElapsedDialog
 from .tag_find import findBySameTag, display_tag_info
