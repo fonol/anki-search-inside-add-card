@@ -273,7 +273,7 @@ class Output:
             # use either the template for addon's notes or the normal
             if res.note_type == "user":
 
-                newNote = noteTemplateUserNote.format(
+                newNote = NOTE_TMPL_SIAC.format(
                     grid_class  = gridclass, 
                     counter     = counter + 1, 
                     nid         = nid, 
@@ -289,7 +289,7 @@ class Output:
                     ret         = retInfo)
 
             else:
-                newNote = noteTemplate.format(
+                newNote = NOTE_TMPL.format(
                     grid_class  = gridclass, 
                     counter     = counter + 1, 
                     nid         = nid, 
@@ -619,7 +619,7 @@ class Output:
             text        = utility.text.try_hide_image_occlusion(text)
             #try to put fields that consist of a single image in their own line
             text        = utility.text.newline_before_images(text)
-            template    = noteTemplateSimple if res.note_type == "index" else noteTemplateUserNoteSimple
+            template    = NOTE_TMPL_SIMPLE if res.note_type == "index" else NOTE_TMPL_SIAC_SIMPLE
             newNote     = template.format(
                 counter=counter+1, 
                 nid=res.id, 
