@@ -1182,8 +1182,14 @@ window.togglePageSidebar = function (persist = true) {
             byId('siac-page-sidebar').style.display = 'flex';
         }
         $('#siac-reading-modal-center').addClass('siac-page-sidebar');
-        if (persist)
-            pycmd(`siac-linked-to-page ${pdf.page} ${pdf.instance.numPages}`);
+        if (persist) {
+            if (pdf.instance) {
+                pycmd(`siac-linked-to-page ${pdf.page} ${pdf.instance.numPages}`);
+            } else {
+                pycmd(`siac-linked-to-page -1 -1`);
+            }
+    
+        }
     } else {
         if (byId('siac-page-sidebar')) {
             $('#siac-page-sidebar').hide();
@@ -1191,13 +1197,17 @@ window.togglePageSidebar = function (persist = true) {
         $('#siac-reading-modal-center').removeClass('siac-page-sidebar');
     }
     if (persist) {
-        pdfFitToPage();
+        if (pdf.instance) {
+            pdfFitToPage();
+        }
         pycmd('siac-config-bool pdf.page_sidebar_shown ' + pageSidebarDisplayed);
     }
 }
 window.updatePageSidebarIfShown = function () {
     if (pdf.instance && pageSidebarDisplayed) {
         pycmd(`siac-linked-to-page ${pdf.page} ${pdf.instance.numPages}`);
+    } else {
+        pycmd(`siac-linked-to-page -1 -1`);
     }
 }
 
