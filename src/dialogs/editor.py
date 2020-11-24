@@ -34,7 +34,7 @@ from ..state import get_index
 from ..markdown import markdown
 from ..config import get_config_value_or_default, update_config
 from ..web_import import import_webpage
-from .url_import import UrlImporter
+from .importing.url_import import UrlImporter
 from .components import QtPrioritySlider, MDTextEdit
 from .url_input_dialog import URLInputDialog
 from ..markdown.extensions.fenced_code import FencedCodeExtension
