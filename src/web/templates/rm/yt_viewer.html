@@ -1,0 +1,44 @@
+<div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='pycmd("siac-user-note-done")'><i
+        class='fa fa-check'></i></div>
+<div class='w-100 h-100 flex-col' style='position: relative;'>
+    <div class='w-100 h-100 flex-row' style='margin: 20px 0 0 5px;'>
+        <div class='h-100 flex-row' style='flex: 1 1 auto; position: relative;'>
+            <div id='siac-yt-player' class='h-100' style='flex: 1 1 auto; box-sizing: border-box;'></div>
+            <div id='siac-pdf-br-notify'></div>
+        </div>
+        <div id='siac-page-sidebar'>
+            <div class='flex-col h-100' style='justify-content: center;'>
+                <div>
+                    <div class='signal' style='margin-left: auto; margin-right: auto;'></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="siac-reading-modal-button-bar-wrapper">
+        <div class='user_sel_none' style='position: absolute; left: 0; z-index: 1;'>
+            <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleBottomBar();'>&#x2195;</div>
+            <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn'
+                onclick='pycmd("siac-create-note-add-only {note_id}")'><b>&#9998; Note</b></div>
+            <div class='siac-btn siac-btn-dark ml-5' onclick='ytSavePosition();'><b>&nbsp;<i class="fa fa-floppy-o"></i>
+                    &nbsp;Save Position&nbsp;</b></div>
+            <div class='siac-btn siac-btn-dark ml-5' onclick='ytScreenCapture();'><b>&nbsp;<i class="fa fa-camera"></i>
+                    &nbsp;Capture&nbsp;</b></div>
+        </div>
+        <div class='siac-btn siac-btn-dark' onclick='togglePageSidebar()' style='float: right;'><i
+                class="fa fa-bars"></i></div>
+    </div>
+</div>
+<script>
+    pdfLoading = false;
+    noteLoading = false;
+    pdf.instance = null;
+    pdf.notification.queue = [];
+    if (topBarIsHidden()) {
+        readerNotification("{title}");
+    }
+    displayedNoteId = {note_id};
+    initYtPlayer('{video}', {time});
+    if (pageSidebarDisplayed) {
+        pycmd('siac-linked-to-page -1 -1');
+    }
+</script>

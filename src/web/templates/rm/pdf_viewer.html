@@ -136,6 +136,7 @@
 </div>
 <script>
     greyoutBottom();
+    pdf.notification.queue = [];
     $('#siac-pdf-color-mode-btn > span').first().text(pdfColorMode);
     $('#siac-pdf-top').addClass("siac-pdf-" + pdfColorMode.toLowerCase());
     if (pdfTooltipEnabled) {
