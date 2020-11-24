@@ -344,7 +344,6 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
         return;
     }
     byId("siac-pdf-tooltip").style.display = "none";
-    byId("siac-pdf-page-lbl").innerHTML = `${pdf.page} / ${pdf.instance.numPages}`;
     pdfLoading = true;
     if (isInitial) {
         pdfLoaderText('Initializing Reader...');
@@ -389,6 +388,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     setupAnnotations(page, viewport, canvas, $('.annotationLayer'));
                 }
 
+                byId("siac-pdf-page-lbl").innerHTML = `${pdf.page} / ${pdf.instance.numPages}`;
                 pdf.pageRendering = false;
                 if (pdf.pageNumPending !== null) {
                     rerenderPDFPage(pdf.pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
