@@ -24,9 +24,9 @@ import random
 from aqt.utils import showInfo
 
 
-from ..notes import *
-from ..config import get_config_value, update_config
-from .components import QtPrioritySlider
+from ...notes import *
+from ...config import get_config_value, update_config
+from ..components import QtPrioritySlider
 import utility.text
 import utility.misc
 
