@@ -189,6 +189,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     flex: 0 0 auto;
     display: none;
     flex-direction: column;
+    text-align: center;
 }
 #siac-page-btns {
     user-select:none; 
@@ -328,7 +329,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     flex: 1 1 auto;
     margin-top: 20px;
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; */
     overflow: hidden;
 }
 #siac-text-top {
@@ -980,7 +981,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     font-weight: bold;
     color: lightgrey;
 }
-#siac-text-top-wr > div {
+#siac-text-top-wr > div:first-child {
     flex: 1 1 auto;
 }
 
