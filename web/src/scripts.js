@@ -683,11 +683,8 @@ window.toggleTooltip = function(elem) {
 }
 window.toggleFreeze = function(elem) {
     siacState.isFrozen = !siacState.isFrozen;
-    if ($(elem).hasClass('frozen')) {
-        $(elem).removeClass('frozen');
-    } else {
-        $(elem).addClass('frozen');
-    }
+    $(elem).toggleClass('frozen');
+    pycmd("siac-freeze " + siacState.isFrozen);
 }
 window.hideTop = function() {
     $('#topContainer').hide();

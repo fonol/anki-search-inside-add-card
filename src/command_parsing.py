@@ -164,6 +164,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         # pin note symbol clicked
         set_pinned(cmd[9:])
 
+    elif cmd.startswith("siac-freeze "):
+        index.ui.frozen = cmd.split()[1].lower() == "true"
+
     elif cmd == "siac-zoom-out":
         # zoom out webview
         z   = get_config_value_or_default("searchpane.zoom", 1.0)
@@ -1988,8 +1991,9 @@ def update_config(key, value):
 @requires_index_loaded
 def after_index_rebuilt():
 
-    search_index    = get_index()
-    editor          = search_index.ui._editor
+    search_index            = get_index()
+    editor                  = search_index.ui._editor
+    search_index.ui.frozen  = False
 
     editor.web.eval("""
         $('.freeze-icon').removeClass('frozen');

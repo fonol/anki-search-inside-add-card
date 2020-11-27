@@ -79,6 +79,7 @@ class Output:
         self.lastResults            = None
         self.hideSidebar            = False
         self.uiVisible              = True
+        self.frozen                 = False
         self.show_clozes            = not get_config_value_or_default("results.hide_cloze_brackets", False)
 
         # saved to display the same time taken when clicking on a page other than 1
