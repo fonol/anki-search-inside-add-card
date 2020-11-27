@@ -1168,7 +1168,7 @@ class ReadingModal:
         if page != -1:
             header = f"{page} / {pages_total}"
         else:
-            header = f"ANKI NOTES ({len(linked)})"
+            header = f"Anki Notes ({len(linked)})"
         if len(linked) > 0:
             html = search_results(linked, [])
             html = html.replace("`", "\\`")
