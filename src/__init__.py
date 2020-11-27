@@ -411,9 +411,12 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
 
     # might still be true if Create Note dialog was closed by closing its parent window, so reset it
     state.note_editor_shown = False
-    state.editor_is_ready = False
+    state.editor_is_ready   = False
 
-
+    index                   = get_index()
+    if index:
+        index.ui.frozen     = False
+    
     if state.night_mode is None:
         def cb(night_mode: bool):
             state.night_mode = night_mode
@@ -544,6 +547,8 @@ def tag_edit_keypress(self, evt, _old):
     if modifiers == Qt.ControlModifier or modifiers == Qt.AltModifier or modifiers == Qt.MetaModifier:
         return
     index = get_index()
+    if index.ui.frozen:
+        return
 
     if index is not None and len(self.text().strip()) > 0:
         text = self.text()
