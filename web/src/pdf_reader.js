@@ -925,8 +925,8 @@ window.jumpToNextMark = function () {
     queueRenderPage(pdf.page, true, false, false);
 }
 window.bringPDFIntoView = function () {
-    if ($('#siac-right-side').hasClass("addon-hidden") || $('#switchBtn').is(":visible")) {
-        toggleAddon();
+    if (document.body.classList.contains("siac-wm-fields")) {
+        pycmd('siac-window-mode Addon');
     }
 }
 window.beforeNoteQuickOpen = function () {
@@ -1060,13 +1060,8 @@ window.toggleReadingModalFullscreen = function () {
             pdfFitToPage();
         }
         hideBothBars();
-        pycmd("siac-notification Press toggle shortcut (default Ctrl+F) to switch.");
-
     } else {
         $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
-        if ($('#switchBtn').is(":visible")) {
-            $('#outerWr').addClass("onesided");
-        }
         onWindowResize();
         if (pdf.instance) {
             pdfFitToPage();
