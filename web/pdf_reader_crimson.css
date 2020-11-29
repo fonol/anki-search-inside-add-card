@@ -756,15 +756,6 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
    filter: brightness(140%);
 }
 
-.siac-queue-sched-hor-sep {
-    display: inline-block;
-    height: 50px;
-    width: 20px;
-    margin: 0 10px 0 10px;
-    border-top: 2px solid lightgrey;
-    border-style: dotted;
-    border-width: 2px 0 0 0;
-}
 .siac-link-btn {
     cursor: pointer;
     background-color: inherit !important;
