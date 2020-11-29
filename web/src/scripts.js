@@ -1,6 +1,8 @@
 // anki-search-inside-add-card
 // Copyright (C) 2019 - 2020 Tom Z.
 
+const { Highlighting } = require("./pdf_highlighting");
+
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -15,11 +17,11 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 window.siacState = {
-    selectedDecks : ["-1"],
-    timeout : null,
-    isFrozen : false,
-    searchOnSelection : true,
-    searchOnTyping : true,
+    selectedDecks: ["-1"],
+    timeout: null,
+    isFrozen: false,
+    searchOnSelection: true,
+    searchOnTyping: true,
     keepPositionAtRendering: false
 };
 
@@ -32,11 +34,11 @@ window.tagHoverTimeout = 750;
 window.searchMaskTimer = null;
 window.$fields = null;
 
-window.byId = function(id) {
+window.byId = function (id) {
     return document.getElementById(id);
 };
 
-window.sendContent = function(event) {
+window.sendContent = function (event) {
     if ((event && event.repeat) || pdf.instance != null || siacState.isFrozen) {
         return;
     }
@@ -45,37 +47,37 @@ window.sendContent = function(event) {
     }
     let html = "";
     showLoading("Typing");
-    $fields.each(function(index, elem) {
+    $fields.each(function (index, elem) {
         html += elem.innerHTML + "\u001f";
     });
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 };
-window.searchCurrentField = function() {
-    if (displayedNoteId || siacState.isFrozen) {return;}
+window.searchCurrentField = function () {
+    if (displayedNoteId || siacState.isFrozen) { return; }
     let f = $('.field:focus').first();
-    if (!f.length) {return;}
+    if (!f.length) { return; }
     let t = f.text();
-    if (!t || t.trim().length === 0) {return;}
+    if (!t || t.trim().length === 0) { return; }
     showLoading("Typing");
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + t);
 
 };
-window.sendSearchFieldContent = function() {
+window.sendSearchFieldContent = function () {
     showLoading("Searchbar");
     html = byId('siac-browser-search-inp').value + "\u001f";
     pycmd('siac-r-srch-db ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
-window.searchFor = function(text) {
+window.searchFor = function (text) {
     showLoading("Note Search");
     text += "\u001f";
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
 }
-window.searchForUserNote = function(event, elem) {
+window.searchForUserNote = function (event, elem) {
     if (!elem || elem.value.length === 0 || !elem.value.trim()) {
-       return;
+        return;
     }
     if (event.keyCode == 13) {
-        if (elem.id !== "siac-sidebar-inp"){
+        if (elem.id !== "siac-sidebar-inp") {
             elem.parentElement.parentElement.style.display = 'none';
         }
         pycmd('siac-r-user-note-search-inp ' + elem.value);
@@ -83,12 +85,12 @@ window.searchForUserNote = function(event, elem) {
         elem.parentElement.style.display = 'none';
     } else {
         clearTimeout(searchMaskTimer);
-        searchMaskTimer = setTimeout(function() {
+        searchMaskTimer = setTimeout(function () {
             pycmd('siac-r-user-note-search-inp ' + elem.value);
         }, 800);
     }
 }
-window.updateSelectedDecks = function(elem) {
+window.updateSelectedDecks = function (elem) {
     siacState.selectedDecks = [];
     let str = "";
     if (elem)
@@ -101,15 +103,15 @@ window.updateSelectedDecks = function(elem) {
     });
     pycmd("deckSelection" + str);
 }
-window.selectAllDecks = function() {
+window.selectAllDecks = function () {
     $('.deck-list-item').addClass('selected');
     updateSelectedDecks();
 }
-window.unselectAllDecks = function() {
+window.unselectAllDecks = function () {
     $('.deck-list-item').removeClass('selected');
     updateSelectedDecks();
 }
-window.selectDeckWithId = function(did) {
+window.selectDeckWithId = function (did) {
     $('.deck-list-item').removeClass('selected');
     $(".deck-list-item").each(function () {
         if ($(this).data('id') == did) {
@@ -118,17 +120,17 @@ window.selectDeckWithId = function(did) {
     });
     updateSelectedDecks();
 }
-window.selectDeckAndSubdecksWithId = function(did) {
+window.selectDeckAndSubdecksWithId = function (did) {
     $('.deck-list-item').removeClass('selected');
     $(`.deck-list-item[data-id=${did}]`).addClass("selected");
     $(`.deck-list-item[data-id=${did}] .deck-list-item`).addClass("selected");
     updateSelectedDecks();
 }
-window.fixRetMarkWidth = function(elem) {
+window.fixRetMarkWidth = function (elem) {
     if (elem && elem.parentElement.getElementsByClassName("retMark").length > 0 && elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth.length == 0)
         elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth = elem.offsetWidth + "px";
 }
-window.expandRankingLbl = function(elem) {
+window.expandRankingLbl = function (elem) {
     fixRetMarkWidth(elem);
     if (elem.getElementsByClassName("rankingLblAddInfo")[0].offsetParent === null) {
         elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "inline";
@@ -144,28 +146,28 @@ window.expandRankingLbl = function(elem) {
         }
     }
 }
-window.expandCard = function(id, icn) {
+window.expandCard = function (id, icn) {
     pycmd("siac-note-stats " + id);
 }
-window.pinMouseLeave = function(elem) {
+window.pinMouseLeave = function (elem) {
     $(elem).css('opacity', '0');
 }
-window.pinMouseEnter = function(elem) {
+window.pinMouseEnter = function (elem) {
     $(elem).css('opacity', '1');
 }
-window.cardMouseEnter = function(elem, nid, mode = "full") {
+window.cardMouseEnter = function (elem, nid, mode = "full") {
     if (mode == "full") {
         $(`#btnBar-${nid}`).css('opacity', '1');
     } else {
         $(`#btnBarSmp-${nid}`).css('opacity', '1');
     }
 }
-window.showLoading = function(source) {
+window.showLoading = function (source) {
     loadingTimer = setTimeout(function () {
         byId('searchInfo').innerHTML = `<table><tr><td>Status</td><td><b>Searching</b></td></tr><tr><td>Source</td><td><i>${source}</i></td></tr></table>`;
     }, 1000);
 }
-window.totalOffset = function(elem) {
+window.totalOffset = function (elem) {
     var top = 0, left = 0;
     do {
         top += elem.offsetTop || 0;
@@ -178,7 +180,7 @@ window.totalOffset = function(elem) {
         left: left
     };
 }
-window.cardMouseLeave = function(elem, nid, mode = "full") {
+window.cardMouseLeave = function (elem, nid, mode = "full") {
     setTimeout(function () {
         if (mode == "full") {
             if (!$('#btnBar-' + nid).is(':hover')) {
@@ -191,16 +193,16 @@ window.cardMouseLeave = function(elem, nid, mode = "full") {
         }
     }, 100);
 }
-window.tagMouseEnter = function(elem) {
+window.tagMouseEnter = function (elem) {
     if (!showTagInfoOnHover || !elem || !elem.parentElement || displayedNoteId)
         return;
     tagHoverCB = setTimeout(function () {
-            if (elem && elem.parentElement && elem.parentElement.querySelector(':hover') === elem && !byId('siac-tag-info-box-' + $(elem).data('stamp'))) {
-                pycmd("siac-tag-info " + $(elem).data("stamp") + " " + $(elem).data("name"));
-            }
+        if (elem && elem.parentElement && elem.parentElement.querySelector(':hover') === elem && !byId('siac-tag-info-box-' + $(elem).data('stamp'))) {
+            pycmd("siac-tag-info " + $(elem).data("stamp") + " " + $(elem).data("name"));
+        }
     }, tagHoverTimeout);
 }
-window.showTagInfo = function(elem) {
+window.showTagInfo = function (elem) {
     let stamp = $(elem).data("stamp");
     $(elem).css("z-index", "9999");
     if (elem) {
@@ -209,17 +211,17 @@ window.showTagInfo = function(elem) {
     let offset = totalOffset(elem);
     offset.top += 17;
     let existing = document.getElementsByClassName("siac-tag-info-box");
-        if (elem.parentElement.id && elem.parentElement.id ===  "tagContainer") {
-            offset.top -= byId("tagContainer").scrollTop;
-        } else if (existing.length > 1) {
-            if (elem.parentElement.parentElement.parentElement.className.indexOf("siac-tag-info-box-left") >= 0) {
-                offset.top -= elem.parentElement.parentElement.parentElement.scrollTop;
-            }
-        } else if (byId('cal-info').offsetParent !== null) {
-            offset.top -= byId("cal-info-notes").scrollTop;
-        } else {
-            offset.top -= byId("searchResults").scrollTop;
+    if (elem.parentElement.id && elem.parentElement.id === "tagContainer") {
+        offset.top -= byId("tagContainer").scrollTop;
+    } else if (existing.length > 1) {
+        if (elem.parentElement.parentElement.parentElement.className.indexOf("siac-tag-info-box-left") >= 0) {
+            offset.top -= elem.parentElement.parentElement.parentElement.scrollTop;
         }
+    } else if (byId('cal-info').offsetParent !== null) {
+        offset.top -= byId("cal-info-notes").scrollTop;
+    } else {
+        offset.top -= byId("searchResults").scrollTop;
+    }
     let id = 'siac-tag-info-box-' + stamp;
 
     if (offset.left > window.outerWidth - offset.left) {
@@ -227,7 +229,7 @@ window.showTagInfo = function(elem) {
         offset.left += $(elem).outerWidth() + 2;
     }
     let highestZ = 0;
-    for (var i = 0; i < existing.length; i++)  {
+    for (var i = 0; i < existing.length; i++) {
         if (Number($(existing[i]).css("z-index")) > highestZ)
             highestZ = Number($(existing[i]).css("z-index"));
     }
@@ -246,7 +248,7 @@ window.showTagInfo = function(elem) {
     }
 }
 
-window.tagMouseLeave = function(elem) {
+window.tagMouseLeave = function (elem) {
     let stamp = $(elem).data('stamp');
     if ($('#siac-tag-info-box-' + stamp + ":hover").length || $(`.tagLbl[data-stamp='${stamp}']:hover`).length) {
         return;
@@ -260,12 +262,12 @@ window.tagMouseLeave = function(elem) {
         $("#greyout").hide();
         return;
     }
-    if (hovered.length){
+    if (hovered.length) {
         let hovered_z = Number(hovered.css("z-index"));
         if (elem.id && hovered_z > elems_z)
             return;
 
-        for(var i = 0; i < existing.length; i++) {
+        for (var i = 0; i < existing.length; i++) {
             if (Number($(existing[i]).css("z-index")) > hovered_z) {
                 $(existing[i]).remove();
                 i--;
@@ -273,14 +275,14 @@ window.tagMouseLeave = function(elem) {
         }
     }
     $(`.tagLbl[data-stamp='${stamp}']`).first().css("z-index", "4");
-    if (byId("siac-tag-info-box-"+ stamp))
+    if (byId("siac-tag-info-box-" + stamp))
         $('#siac-tag-info-box-' + stamp).remove();
     if (!existing || existing.length < 1) {
-         $("#greyout").hide();
+        $("#greyout").hide();
     }
 
 }
-window.tagInfoBoxClicked = function(elem) {
+window.tagInfoBoxClicked = function (elem) {
     let elems_z_index = Number($(elem).css("z-index"));
     let otherBoxes = document.getElementsByClassName("siac-tag-info-box");
     for (var i = 0; i < otherBoxes.length; i++) {
@@ -290,15 +292,15 @@ window.tagInfoBoxClicked = function(elem) {
         }
     }
 }
-window.appendToField = function(fldIx, html) {
-    if ($(`.field:eq(${fldIx})`).text().length) { 
+window.appendToField = function (fldIx, html) {
+    if ($(`.field:eq(${fldIx})`).text().length) {
         $(`.field:eq(${fldIx})`).append('<br/>' + html);
     } else {
         $(`.field:eq(${fldIx})`).html(html);
     }
     pycmd(`blur:${fldIx}:${currentNoteId}:${$(`.field:eq(${fldIx})`).html()}`);
 }
-window.getSelectionText = function() {
+window.getSelectionText = function () {
     if (!siacState.searchOnSelection || siacState.isFrozen)
         return;
     var text = "";
@@ -313,14 +315,14 @@ window.getSelectionText = function() {
     }
 }
 
-window.searchUserNoteTag = function(e, tag) {
+window.searchUserNoteTag = function (e, tag) {
     if (e.ctrlKey || e.metaKey) {
         pycmd('siac-create-note-tag-prefill ' + tag);
     } else {
         pycmd('siac-r-user-note-search-tag ' + tag);
     }
 }
-window.switchLeftRight = function() {
+window.switchLeftRight = function () {
     let flds = byId("leftSide");
     let addon = byId("siac-right-side");
     if (flds.parentNode.children[0].id === "leftSide") {
@@ -335,36 +337,31 @@ window.switchLeftRight = function() {
     }
 }
 
-window.onWindowResize = function(fitPdfToPage = true) {
-   
+window.onWindowResize = function (fitPdfToPage = true) {
+
     let offsetTop = byId("topbutsOuter").offsetHeight + 3;
     byId("outerWr").style.marginTop = offsetTop + "px";
     byId("outerWr").style.height = `calc(100vh - ${offsetTop}px)`;
 
-    if (!$('#switchBtn').is(":visible")) {
-        $('#leftSide').css("display", "flex");
-        $('#outerWr').css('display', 'flex').removeClass('onesided');
-        byId('switchBtn').innerHTML = "<i class='fa fa-graduation-cap'></i>";
-    }
     if (fitPdfToPage && typeof pdf.instance !== "undefined" && pdf.instance) {
-        if(this.resizeTimeout) clearTimeout(this.resizeTimeout);
-            this.resizeTimeout = setTimeout(function() {
-                if (pdf.instance) {
-                    pdfFitToPage();
-                }
-            }, 300);
+        if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+        this.resizeTimeout = setTimeout(function () {
+            if (pdf.instance) {
+                pdfFitToPage();
+            }
+        }, 300);
     }
 }
-window.setHighlighting = function(elem) {
+window.setHighlighting = function (elem) {
     let highlight = $(elem).is(":checked") ? "on" : "off";
     pycmd("siac-toggle-highlight " + highlight);
 }
-window.setTagSearch = function(elem) {
+window.setTagSearch = function (elem) {
     let tagSearch = $(elem).is(":checked") ? "on" : "off";
     pycmd("tagSearch " + tagSearch);
 }
 
-window.tagClick = function(elem) {
+window.tagClick = function (elem) {
     if ($(elem).data('tags') && $(elem).data('tags') == $(elem).data('name')) {
         $('#a-modal').show();
         pycmd('siac-render-tags ' + $(elem).data('tags'));
@@ -375,8 +372,8 @@ window.tagClick = function(elem) {
     $("#greyout").hide();
     pycmd('siac-tag-clicked ' + name);
 }
-window.noteSidebarExpandAll = function() {
-    $('#siac-notes-sidebar .exp').each(function(ix, elem) {
+window.noteSidebarExpandAll = function () {
+    $('#siac-notes-sidebar .exp').each(function (ix, elem) {
         let icn = $(elem);
         if (icn.text().length) {
             if (icn.text() === '[+]') {
@@ -396,8 +393,8 @@ window.noteSidebarExpandAll = function() {
         }
     });
 }
-window.noteSidebarCollapseAll = function() {
-    $('#siac-notes-sidebar .exp').each(function(ix, elem) {
+window.noteSidebarCollapseAll = function () {
+    $('#siac-notes-sidebar .exp').each(function (ix, elem) {
         let icn = $(elem);
         if (icn.text().length) {
             if (icn.text() === '[-]') {
@@ -417,46 +414,46 @@ window.noteSidebarCollapseAll = function() {
         }
     });
 }
-window.deleteNote = function(id) {
+window.deleteNote = function (id) {
     byId('siac-del-modal').innerHTML = '<center style="margin: 20px 0 20px 0;">Deleting...</center>';
-    setTimeout(function() {
+    setTimeout(function () {
         pycmd("siac-delete-user-note " + id);
     }, 80);
 }
 
-window.synInputKeyup = function(event, elem) {
+window.synInputKeyup = function (event, elem) {
     if (event.keyCode == 13 && elem.value)
         pycmd("siac-save-synonyms " + elem.value);
 }
 
-window.synonymSetKeydown = function(event, elem, index) {
+window.synonymSetKeydown = function (event, elem, index) {
     if (event.keyCode == 13 && elem.innerHTML.length) {
         pycmd("siac-edit-synonyms " + index + " " + elem.innerHTML);
         event.preventDefault();
         $(elem).blur();
     }
 }
-window.searchSynset = function(elem) {
+window.searchSynset = function (elem) {
     let set = elem.parentElement.parentElement.children[0].children[0].innerHTML;
     if (set) {
         pycmd("siac-r-synset-search " + set);
     }
 }
-window.updateFieldToExclude = function(checkbox, mid, fldOrd) {
+window.updateFieldToExclude = function (checkbox, mid, fldOrd) {
     if ($(checkbox).is(':checked')) {
         pycmd("siac-update-field-to-exclude " + mid + " " + fldOrd + " false");
     } else {
         pycmd("siac-update-field-to-exclude " + mid + " " + fldOrd + " true");
     }
 }
-window.updateFieldToHideInResult = function(checkbox, mid, fldOrd) {
+window.updateFieldToHideInResult = function (checkbox, mid, fldOrd) {
     if ($(checkbox).is(':checked')) {
         pycmd("siac-update-field-to-hide-in-results " + mid + " " + fldOrd + " false");
     } else {
         pycmd("siac-update-field-to-hide-in-results " + mid + " " + fldOrd + " true");
     }
 }
-window.setSearchOnTyping = function(active, trigger=true) {
+window.setSearchOnTyping = function (active, trigger = true) {
     siacState.searchOnTyping = active;
     if (!active)
         $('.field').off('keydown.siac', fieldKeypress);
@@ -468,13 +465,13 @@ window.setSearchOnTyping = function(active, trigger=true) {
     }
     sendSearchOnTyping();
 }
-window.sendSearchOnTyping = function() {
+window.sendSearchOnTyping = function () {
     pycmd("siac-config-bool searchOnTyping " + siacState.searchOnTyping);
 }
-window.sendSearchOnSelection = function() {
+window.sendSearchOnSelection = function () {
     pycmd("siac-config-bool searchOnSelection " + siacState.searchOnSelection);
 }
-window.fieldKeypress = function(event) {
+window.fieldKeypress = function (event) {
     if (event.keyCode != 13 && event.keyCode != 9 && event.keyCode != 91 && !(event.keyCode >= 37 && event.keyCode <= 40) && !event.ctrlKey && !event.altKey) {
         if (siacState.timeout) {
             clearTimeout(siacState.timeout);
@@ -486,11 +483,11 @@ window.fieldKeypress = function(event) {
     }
     return true;
 }
-window.searchMaskKeypress = function(event) {
+window.searchMaskKeypress = function (event) {
     if (event.keyCode === 13)
         sendSearchFieldContent();
 }
-window.pinCard = function(elem, nid) {
+window.pinCard = function (elem, nid) {
     $('#cW-' + nid).css('padding', '3px 4px 5px 5px');
     $('#cW-' + nid).css('font-size', '9px');
     let info = byId('cW-' + nid).getElementsByClassName("rankingLblAddInfo")[0];
@@ -501,20 +498,20 @@ window.pinCard = function(elem, nid) {
     $('#' + nid).parents().first().addClass('pinned');
     updatePinned();
 }
-window.searchCard = function(elem) {
+window.searchCard = function (elem) {
     let html = $(elem).parent().next().html();
     showLoading("Note Search");
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
-window.searchCardFromFloated = function(id) {
+window.searchCardFromFloated = function (id) {
     let html = byId(id).innerHTML;
     showLoading("Note Search");
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
-window.edit = function(nid) {
+window.edit = function (nid) {
     pycmd('siac-edit-note ' + nid);
 }
-window.updatePinned = function() {
+window.updatePinned = function () {
     let pincmd = 'siac-pin';
     $('.pinned').each(function (index) {
         pincmd += " " + $(this).children().first().children().first().attr('id').substring(3);
@@ -524,7 +521,7 @@ window.updatePinned = function() {
     });
     pycmd(pincmd);
 }
-window.clearSearchResults = function() {
+window.clearSearchResults = function () {
     let notes_old = document.querySelectorAll("#searchResults .cardWrapper:not(.pinned)");
     for (var i = 0; i < notes_old.length; i++) {
         notes_old[i].remove();
@@ -532,13 +529,13 @@ window.clearSearchResults = function() {
     try {
         byId("siac-start-info").remove();
         byId("greyout").style.display = "none";
-    } catch(e) {}
+    } catch (e) { }
 
     $('.siac-tag-info-box,#siac-results-loader-wrapper').remove();
     $('.tagLbl').css("z-index", "999");
 }
 
-window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1, total = 50, cacheSize = -1, stamp = -1, printTiming = false, isRerender= false) {
+window.setSearchResults = function (html, infoStr, infoMap, page = 1, pageMax = 1, total = 50, cacheSize = -1, stamp = -1, printTiming = false, isRerender = false) {
     let rStart = new Date().getTime();
     clearSearchResults();
     var sr = byId("searchResults");
@@ -560,7 +557,7 @@ window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1
     } else {
         byId('searchInfo').innerHTML = infoStr;
     }
-  
+
     if (infoMap)
         lastHadResults = true;
     else
@@ -621,29 +618,29 @@ window.setSearchResults = function(html, infoStr, infoMap, page = 1, pageMax = 1
         displayPagination(page, pageMax, total, html.length > 0, cacheSize);
     }
 }
-window.displayPagination = function(page, pageMax, total, resultsFound, cacheSize) {
+window.displayPagination = function (page, pageMax, total, resultsFound, cacheSize) {
     if (cacheSize !== -1) {
         let c_html = "";
         if (cacheSize > 1) {
             c_html += `<div onclick='pycmd("siac-rerender ${cacheSize - 2}")' style='display: inline; cursor: pointer;'>Last Results: &nbsp;</div>`;
             for (var i = 0; i < cacheSize - 1; i++) {
-                c_html += `<span onclick='pycmd("siac-rerender ${cacheSize - i - 2}")'>${i+1}</span>`;
+                c_html += `<span onclick='pycmd("siac-rerender ${cacheSize - i - 2}")'>${i + 1}</span>`;
             }
         }
         byId("siac-cache-displ").innerHTML = c_html;
     }
 
     let html = "";
-    if (pageMax === 0 || !resultsFound) { 
+    if (pageMax === 0 || !resultsFound) {
         byId("siac-pagination-status").innerHTML = "";
         byId("siac-pagination-wrapper").innerHTML = "";
-        return; 
+        return;
     }
     if (page === 1 && pageMax == 1) {
         html = "";
     } else {
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page 1")'>&#171;</div>`;
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.max(page - 1, 1)}")'>&#8249;</div>`;
+        html += `<div class='siac-pg-icn' onclick='pycmd("siac-page 1")'>&#171;</div>`;
+        html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.max(page - 1, 1)}")'>&#8249;</div>`;
         let a = 0, b = 0;
         if (page + 5 > pageMax) {
             a = page + 5 - pageMax;
@@ -654,19 +651,19 @@ window.displayPagination = function(page, pageMax, total, resultsFound, cacheSiz
         for (var i = Math.max(page - 5 - a, 1); i <= page + 5 + b; i++) {
             if (i == page) {
                 html += `<div class='siac-pg-icn siac-pg-icn-active' onclick='pycmd("siac-page ${i}")'>${i}</div>`;
-            } else if (i <= pageMax){
-                    html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${i}")'>${i}</div>`;
+            } else if (i <= pageMax) {
+                html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${i}")'>${i}</div>`;
             }
         }
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.min(page + 1, pageMax)}")'>&#8250;</div>`;
-            html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${pageMax}")'>&#187;</div>`;
+        html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${Math.min(page + 1, pageMax)}")'>&#8250;</div>`;
+        html += `<div class='siac-pg-icn' onclick='pycmd("siac-page ${pageMax}")'>&#187;</div>`;
 
     }
     byId("siac-pagination-status").innerHTML = `Showing ${50 * (page - 1) + 1} - ${Math.min(total, 50 * page)} of ${total}`;
     byId("siac-pagination-wrapper").innerHTML = html;
 }
 
-window.sendClickedInformation = function(x, y) {
+window.sendClickedInformation = function (x, y) {
     let el = document.elementFromPoint(x, y);
     if (el.tagName == "IMG") {
         return "img " + el.src;
@@ -678,21 +675,21 @@ window.sendClickedInformation = function(x, y) {
         return "note " + el.id + " " + el.innerHTML;
     }
 }
-window.toggleTooltip = function(elem) {
+window.toggleTooltip = function (elem) {
     $(elem).children().first().toggle();
 }
-window.toggleFreeze = function(elem) {
+window.toggleFreeze = function (elem) {
     siacState.isFrozen = !siacState.isFrozen;
     $(elem).toggleClass('frozen');
     pycmd("siac-freeze " + siacState.isFrozen);
 }
-window.hideTop = function() {
+window.hideTop = function () {
     $('#topContainer').hide();
     $('#toggleTop').children().first().html('&#10097;');
     pycmd("toggleTop off");
 }
 
-window.toggleTop = function(elem) {
+window.toggleTop = function (elem) {
     $('#topContainer').toggle();
     if ($('#topContainer').is(":hidden")) {
         $(elem).children().first().html('&#10097;');
@@ -702,7 +699,7 @@ window.toggleTop = function(elem) {
         pycmd("toggleTop on");
     }
 }
-window.toggleGrid = function(elem) {
+window.toggleGrid = function (elem) {
 
     if ($(elem).is(':checked')) {
         pycmd("toggleGrid on");
@@ -712,19 +709,19 @@ window.toggleGrid = function(elem) {
         gridView = false;
     }
 }
-window.activateGridView = function() {
+window.activateGridView = function () {
     gridView = true;
-    window.setTimeout(function() {
+    window.setTimeout(function () {
         $('#gridCb').prop("checked", true);
     }, 400);
 }
 /** Predefined searches, activated from the notes sidebar. */
-window.predefSearchFromSidebar = function(type) {
+window.predefSearchFromSidebar = function (type) {
     let decks = siacState.selectedDecks.toString();
     // show a loader for the longer-taking searches
     if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(type) !== -1) {
         showSearchLoader("<i class='fa fa-spinner bold mb-10' style='font-size: 24px;' /><br>Computing ...");
-        setTimeout(function() {
+        setTimeout(function () {
             pycmd('siac-predef-search ' + type + ' 200 ' + decks);
         }, 250);
     } else {
@@ -733,75 +730,95 @@ window.predefSearchFromSidebar = function(type) {
 
 }
 /** Predefined searches, activated from the bottom row. */
-window.predefSearch = function() {
-    let e       = byId("predefSearchSelect");
-    let search  = e.options[e.selectedIndex].value;
-    let c       = byId("predefSearchNumberSel");
-    let count   = c.options[c.selectedIndex].value;
-    let decks   = siacState.selectedDecks.toString();
+window.predefSearch = function () {
+    let e = byId("predefSearchSelect");
+    let search = e.options[e.selectedIndex].value;
+    let c = byId("predefSearchNumberSel");
+    let count = c.options[c.selectedIndex].value;
+    let decks = siacState.selectedDecks.toString();
     // show a loader for the longer-taking searches
     if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(search) !== -1) {
         showSearchLoader("<i class='fa fa-spinner bold mb-10' style='font-size: 24px;' /><br>Computing ...");
-        setTimeout(function() {
+        setTimeout(function () {
             pycmd("siac-predef-search " + search + " " + count + " " + decks);
         }, 250);
     } else {
         pycmd("siac-predef-search " + search + " " + count + " " + decks);
     }
 }
-window.sort = function() {
+window.sort = function () {
     let e = byId("sortSelect");
     let sort = e.options[e.selectedIndex].value;
     pycmd("siac-p-sort " + sort);
 
 }
-window.toggleAddon = function() {
-    try {
-        if (byId('siac-reading-modal').style.display !== "none" && pdfFullscreen) {
-            if ($(document.body).hasClass("siac-fullscreen-show-fields")) {
-                $(document.body).removeClass("siac-fullscreen-show-fields").addClass("siac-fullscreen-show-right");
-            } else {
-                $(document.body).addClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
-            }
+window.toggleAddon = function () {
+
+    // if (document.body.offsetHeight < 500 || document.body.offsetWidth < 1000) {
+    //     if (document.body.classList.contains('siac-wm-both')) {
+    //         document.body.classList.remove('siac-wm-both');
+    //         document.body.classList.add('siac-wm-addon');
+    //     } else if (document.body.classList.contains('siac-wm-addon')) {
+    //         document.body.classList.remove('siac-wm-addon');
+    //         document.body.classList.add('siac-wm-both');
+    //     } else if (document.body.classList.contains('siac-wm-fields')) {
+    //         document.body.classList.remove('siac-wm-fields');
+    //         document.body.classList.add('siac-wm-both');
+    //     }
+    // } else {
+
+    //     if (document.body.classList.contains('siac-wm-both')) {
+    //         document.body.classList.remove('siac-wm-both');
+    //         document.body.classList.add('siac-wm-fields');
+    //     } else if (document.body.classList.contains('siac-wm-addon')) {
+    //         document.body.classList.remove('siac-wm-addon');
+    //         document.body.classList.add('siac-wm-fields');
+    //     } else if (document.body.classList.contains('siac-wm-fields')) {
+    //         document.body.classList.remove('siac-wm-fields');
+    //         document.body.classList.add('siac-wm-both');
+    //     }
+    // }
+    // let mode = "Both";
+    // if (document.body.classList.contains('siac-wm-addon')) { mode = "Addon"; }
+    // else if (document.body.classList.contains('siac-wm-fields')) { mode = "Fields"; }
+    // pycmd("siac-window-mode " + mode);
+}
+
+window.setWindowMode = function (mode) {
+    document.body.classList.remove('siac-wm-fields');
+    document.body.classList.remove('siac-wm-addon');
+    document.body.classList.remove('siac-wm-both');
+    document.body.classList.remove('siac-wm-autohide');
+
+    document.body.classList.add('siac-wm-' + mode.toLowerCase());
+}
+window.fieldsMouseEnter = function(event) {
+    if (document.body.classList.contains('siac-wm-autohide') && !event.target.classList.contains('visible')) {
+        event.target.classList.add('visible');
+        if (displayedNoteId && pdf.instance) {
+            setTimeout(() => { Highlighting.displayHighlights(); }, 50);
         }
-        else {
-            if ($('#outerWr').hasClass("onesided")) {
-                showSearchPaneOnLeftSide();
-                $('#siac-right-side').toggleClass("addon-hidden");
-            } else if ($('#switchBtn').is(":visible")) {
-                showSearchPaneOnLeftSide();
-            } else {
-                $('#siac-right-side').toggleClass("addon-hidden");
-            }
-            pycmd("toggleAll " + ($('#siac-right-side').hasClass("addon-hidden") ? "off" : "on"));
-        }
-        onWindowResize(false);
-    } catch (e) {
-        pycmd("siac-notification Failed to toggle: " + e.message);
     }
 }
-window.showSearchPaneOnLeftSide = function() {
-    if ($('#outerWr').hasClass("onesided")) {
-        $('#leftSide').show();
-        byId('switchBtn').innerHTML = "<i class='fa fa-graduation-cap'></i>";
-        $('#outerWr').css('display', 'flex').removeClass('onesided');
-    } else {
-        $('#leftSide').hide();
-        $('#siac-right-side').removeClass("addon-hidden");
-        byId('switchBtn').innerHTML = "<i class='fa fa-graduation-cap'></i> ";
-        $('#outerWr').css('display', 'block').addClass('onesided');
-        onWindowResize();
+window.addonMouseMove = function(event) {
+    if (!document.body.classList.contains('siac-wm-autohide')) {
+        return;
     }
+    clearTimeout(window._siac_move_timer);
+    window._siac_move_timer = setTimeout(function() {
+        if ($('#siac-right-side').is(':hover')) {
+            byId('leftSide').classList.remove('visible');
+            if (displayedNoteId && pdf.instance) {
+                setTimeout(() => { Highlighting.displayHighlights(); }, 50);
+            }
+        }
+    }, 400);
 }
-window.updateSwitchBtn = function(count) {
-    if (!$('#outerWr').hasClass("onesided"))
-        byId('switchBtn').innerHTML = `<i class='fa fa-graduation-cap'></i> (${count})`;
-}
-window.removeNote = function(nid) {
+window.removeNote = function (nid) {
     $(byId("cW-" + nid).parentElement.parentElement).remove();
     updatePinned();
 }
-window.getOffset = function(el) {
+window.getOffset = function (el) {
     var _x = 0;
     var _y = 0;
     while (el && el.id !== "siac-right-side" && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
@@ -811,7 +828,7 @@ window.getOffset = function(el) {
     }
     return { top: _y, left: _x };
 }
-window.calBlockMouseEnter = function(event, elem) {
+window.calBlockMouseEnter = function (event, elem) {
     calTimer = setTimeout(function () {
         if ($('#cal-row').is(":hover") && event.ctrlKey) {
             displayCalInfo(elem);
@@ -819,12 +836,12 @@ window.calBlockMouseEnter = function(event, elem) {
         }
     }, 100);
 }
-window.displayCalInfo = function(elem) {
+window.displayCalInfo = function (elem) {
 
     let offset = getOffset(elem.children[0]);
 
     let offsetLeft = offset.left - 153;
-    let offsetRight = byId("siac-second-col-wrapper").clientWidth  - offset.left - 153;
+    let offsetRight = byId("siac-second-col-wrapper").clientWidth - offset.left - 153;
     if (offsetLeft < 0) {
         offsetLeft -= (offset.left - 153);
         document.documentElement.style.setProperty('--tleft', (offset.left) + 'px')
@@ -840,14 +857,14 @@ window.displayCalInfo = function(elem) {
     pycmd("siac-cal-info " + $(elem.children[0]).data("index"));
 }
 
-window.calMouseLeave = function() {
+window.calMouseLeave = function () {
     calTimer = setTimeout(function () {
         if (!$('#cal-row').is(":hover") && !$('#cal-info').is(":hover"))
             byId('cal-info').style.display = "none";
         calTimer = null;
     }, 300);
 }
-window.fieldsBtnClicked = function() {
+window.fieldsBtnClicked = function () {
     if (siacState.isFrozen) {
         pycmd("siac-notification Results are frozen.");
         return;
@@ -858,24 +875,24 @@ window.fieldsBtnClicked = function() {
     }
     let html = "";
     showLoading("Typing");
-    $fields.each(function(index, elem) {
+    $fields.each(function (index, elem) {
         html += elem.innerHTML + "\u001f";
     });
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 
-window.showModalSubpage = function(html) {
+window.showModalSubpage = function (html) {
     $('#modalText').hide();
     $('#modal-subpage-inner').html(html);
     byId('modal-subpage').style.display = "flex";
 }
-window.hideModalSubpage = function() {
+window.hideModalSubpage = function () {
     $('#modal-subpage-inner').html('');
     $('#modal-subpage').hide();
     $('#modalText').show();
 }
 
-window.showPDFLoader = function() {
+window.showPDFLoader = function () {
     let margin = pageSidebarDisplayed ? 230 : 0;
     byId('siac-reading-modal-center').innerHTML += `
     <div id='siac-pdf-loader-wrapper'>
@@ -887,7 +904,7 @@ window.showPDFLoader = function() {
         </div>
     </div>`;
 }
-window.showSearchLoader = function(text) {
+window.showSearchLoader = function (text) {
     if (byId('siac-results-loader-wrapper')) {
         return;
     }
@@ -902,24 +919,24 @@ window.showSearchLoader = function(text) {
     </div>`);
 }
 
-window.toggleSearchbarMode = function(elem) {
-	if (elem.innerHTML === "Mode: Browser") {
-	    elem.innerHTML = "Mode: Add-on";
-	    pycmd("siac-searchbar-mode Add-on");
-	} else {
-	    elem.innerHTML = "Mode: Browser";
-	    pycmd("siac-searchbar-mode Browser");
-	}
+window.toggleSearchbarMode = function (elem) {
+    if (elem.innerHTML === "Mode: Browser") {
+        elem.innerHTML = "Mode: Add-on";
+        pycmd("siac-searchbar-mode Add-on");
+    } else {
+        elem.innerHTML = "Mode: Browser";
+        pycmd("siac-searchbar-mode Browser");
+    }
 }
 
-window.globalKeydown = function(e) {
+window.globalKeydown = function (e) {
     // F11 : hide bars
     if (displayedNoteId && e.keyCode === 122) {
         toggleBothBars();
-    }  
+    }
 }
 
-window.toggleNoteSidebar = function(){
+window.toggleNoteSidebar = function () {
     if (byId("siac-notes-sidebar")) {
         pycmd("siac-hide-note-sidebar");
     } else {
@@ -927,12 +944,12 @@ window.toggleNoteSidebar = function(){
     }
 }
 
-window.focusSearchShortcut = function() {
+window.focusSearchShortcut = function () {
     if (displayedNoteId === null && byId("siac-browser-search-inp")) {
         byId("siac-browser-search-inp").focus();
     }
 }
-window.triggerSearchShortcut = function() {
+window.triggerSearchShortcut = function () {
     if (!displayedNoteId) {
         sendContent();
     }
@@ -940,8 +957,8 @@ window.triggerSearchShortcut = function() {
 
 
 /** ############# Floating notes */
-window.addFloatingNote = function(nid) {
-    let onedit = $('#' + nid.toString()).hasClass('siac-user-note') ? `pycmd("siac-edit-user-note ${nid}")`  : `edit(${nid})`;
+window.addFloatingNote = function (nid) {
+    let onedit = $('#' + nid.toString()).hasClass('siac-user-note') ? `pycmd("siac-edit-user-note ${nid}")` : `edit(${nid})`;
     let content = byId(nid).innerHTML;
     content = content.replace(/<\/?mark>/g, "");
     $('#cW-' + nid).parent().parent().remove();
@@ -962,7 +979,7 @@ window.addFloatingNote = function(nid) {
     dragElement(byId("nF-" + nid), `nFH-${nid}`);
     updatePinned();
 }
-window.dragElement = function(elmnt, headerId, inModal=false) {
+window.dragElement = function (elmnt, headerId, inModal = false) {
     var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0, lMYSum = 0, lMXSum = 0;
     if (byId(headerId)) {
         byId(headerId).onmousedown = dragMouseDown;
@@ -999,10 +1016,10 @@ window.dragElement = function(elmnt, headerId, inModal=false) {
  * Heatmap
  */
 
-window.drawHeatmap = function(id, data) {
+window.drawHeatmap = function (id, data) {
     // script might not be loaded yet
     if (typeof CalHeatMap === "undefined" || typeof d3 === "undefined") {
-        setTimeout(() => { drawHeatmap(id, data); }, 200); 
+        setTimeout(() => { drawHeatmap(id, data); }, 200);
         return;
     }
     var cal = new CalHeatMap();
@@ -1011,13 +1028,13 @@ window.drawHeatmap = function(id, data) {
         // max: "#3b6427",
         // min: "#8cecff",
         // max: "#008eab",
-        min: "lightskyblue",     
+        min: "lightskyblue",
         max: "steelblue",
         empty: "#e1e1e1"
     };
     if (document.body.classList.contains("nightMode")) {
         legendColors = {
-            min: "#fed976",     
+            min: "#fed976",
             max: "#800026",
             empty: "black"
         }
@@ -1045,15 +1062,15 @@ window.drawHeatmap = function(id, data) {
         // cellSize = 9;
     } else if (srw < 900) {
         // cellSize = 10;
-    } 
-	cal.init({
+    }
+    cal.init({
         data,
         legendColors,
         itemName: ["page", "pages"],
         itemSelector: id,
         considerMissingDataAsZero: true,
         dataType: "json",
-        start: new Date(new Date().getFullYear(), 0), 
+        start: new Date(new Date().getFullYear(), 0),
         maxDate: new Date(),
         range: 12,
         rowLimit: 7,
@@ -1068,18 +1085,18 @@ window.drawHeatmap = function(id, data) {
         el.style.zoom = srw / (el.getBBox().width + 120);
     }
 
- }
+}
 
- /**
-  * Pie chart in Read stats.
-  * 
-  */
- window.drawTopics = function(id, topics) {
+/**
+ * Pie chart in Read stats.
+ * 
+ */
+window.drawTopics = function (id, topics) {
     if (typeof $ === "undefined" || typeof $.plot === "undefined") {
-        setTimeout(() => { drawTopics(id, topics); }, 200); 
+        setTimeout(() => { drawTopics(id, topics); }, 200);
         return;
     }
-    $.plot('#' + id, topics.map(t => { return { label: t[0], data: t[1]}; }), {
+    $.plot('#' + id, topics.map(t => { return { label: t[0], data: t[1] }; }), {
         series: {
             pie: {
                 show: true,
@@ -1101,4 +1118,4 @@ window.drawHeatmap = function(id, data) {
         },
     });
 
- }
+}
