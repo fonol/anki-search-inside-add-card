@@ -338,7 +338,6 @@ class Output:
             cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes), len(self.previous_calls), stamp, timing, rerender)
         else:
             cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (html, page, pageMax, len(notes), len(self.previous_calls), stamp, timing, rerender)
-        cmd = f"{cmd}updateSwitchBtn({len(notes)});" 
 
         self._js(cmd, editor)
 
