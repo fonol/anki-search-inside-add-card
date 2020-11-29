@@ -175,10 +175,9 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
     return """
         (() => { 
             if (document.getElementById('outerWr') == null) {
-                $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
+                $(`#fields`).wrap(`<div class='siac-col' id='leftSide' onmouseenter='fieldsMouseEnter(event)' style='flex-grow: 1; width: %s%%;'></div>`);
                 $('#dupes').insertAfter('#fields');
                 
-                document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'><i class='fa fa-graduation-cap'></i></button>";
                 let toInsert = `%s`;
                 %s  
                 $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
