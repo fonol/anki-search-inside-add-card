@@ -263,7 +263,7 @@ def print_starting_info(editor: Optional[Editor]):
         html += "<br/>Index contains <b>%s</b> notes." % index.get_number_of_notes()
         html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
-        html += "<br/>Shortcut is <b>%s</b>." % (config["toggleShortcut"])
+        html += "<br/>Shortcuts for layout are <b>%s</b> (toggle left), <b>%s</b> (toggle right), <b>%s</b> (show both)." % (config["shortcuts.window_mode.show_left"], config["shortcuts.window_mode.show_right"], config["shortcuts.window_mode.show_both"])
 
         changes = changelog()
         if changes:
@@ -493,13 +493,12 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Add tag tree in sidebar (Anki Notes tab)",
-        "Remember expanded tags & scroll position in sidebar's tag trees",
-        "Add unselect all / select all buttons in queue manager",
-        "Add 'Tags' button in queue manager",
-        "Add tab to enqueue next note (e.g. next lecture slides) in Done dialog",
-        "Fix avg. priority label in priority dialog",
-        "Fix tag tree not always refreshing in queue manager",
+        "Add linked notes sidebar for text and youtube notes",
+        "Add table of contents for PDFs",
+        "Add a button for the layout, bottom left",
+        "Add Auto-hide mode",
+        "Fix: single quote in PDF file name causing error on opening",
+        "Fix: search on tag entry ignoring freeze",
 
     ]
 
