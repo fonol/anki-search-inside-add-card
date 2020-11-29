@@ -167,6 +167,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-freeze "):
         index.ui.frozen = cmd.split()[1].lower() == "true"
 
+    elif cmd.startswith("siac-window-mode "):
+        state.set_window_mode(cmd.split()[1], self)
+
     elif cmd == "siac-zoom-out":
         # zoom out webview
         z   = get_config_value_or_default("searchpane.zoom", 1.0)
