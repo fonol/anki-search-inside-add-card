@@ -16,12 +16,15 @@
     body.siac-wm-autohide::after, body.siac-wm-both::after {
         content: "Window too small to show both panes";
         position: absolute;
-        bottom: 25px;
+        bottom: 10px;
         border: 2px outset var(--c-modal-border);
-        padding: 10px;
+        padding: 8px;
         border-radius: 4px;
-        right: 40px;
+        right: 10px;
         background: var(--c-modal-background);
+    }
+    body.siac-wm-autohide #leftSide::after {
+        display: none !important;
     }
 }
 
