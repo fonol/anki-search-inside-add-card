@@ -369,6 +369,10 @@ def recalculate_priority_queue(is_addon_start: bool = False):
                 ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
                 last_prio_creation  = ds
 
+        #TODO: temporary fix for bug
+        if last_prio_creation is None or last_prio_creation == '':
+            last_prio_creation = now.strftime('%Y-%m-%d-%H-%M-%S')
+
         # assert(current_position >= 0)
         days_delta = max(0, (datetime.now() - _dt_from_date_str(last_prio_creation)).total_seconds() / 86400.0)
 
@@ -463,6 +467,10 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
                 now                 += timedelta(seconds=1)
                 ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
                 last_prio_creation  = ds
+
+        #TODO: temporary fix for bug
+        if last_prio_creation is None or last_prio_creation == '':
+            last_prio_creation = now.strftime('%Y-%m-%d-%H-%M-%S')
 
         if nid == nid_to_update:
             nid_was_included    = True
