@@ -23,9 +23,13 @@ import typing
 import os
 from functools import partial
 from ..notes import *
-from ..web.reading_modal import ReadingModal
 from ..notes import _get_priority_list
+from ..dialogs.editor import NoteEditor
+from ..web.reading_modal import ReadingModal
 from ..internals import perf_time
+from ..state import get_index
+
+import state
 
 from .components import ClickableQLabel
 
@@ -68,7 +72,26 @@ class QuickOpenNote(QDialog):
         self.vbox.addWidget(lbl)
 
 
-        self.sug_list = QListWidget()
+        self.sug_list = QTableWidget()
+        self.sug_list.setColumnCount(4)
+        self.sug_list.setHorizontalHeaderLabels(["Title", "Type", "Prio", ""])
+        self.sug_list.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.sug_list.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.sug_list.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.sug_list.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.sug_list.setSelectionMode(QAbstractItemView.NoSelection)
+        self.sug_list.setFocusPolicy(Qt.NoFocus)
+        self.sug_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.sug_list.verticalHeader().setVisible(False)
+        self.sug_list.setMinimumWidth(400)
+        self.sug_list.setMinimumHeight(350)
+        self.sug_list.setStyleSheet("""
+            QTableWidget::item:hover {
+                background-color: #2496dc;
+                color: white;
+            } 
+        """)
+
         self.sug_list.itemClicked.connect(self.on_suggestion_clicked)
         self.fill_result_list(self.suggestions)       
 
@@ -87,6 +110,7 @@ class QuickOpenNote(QDialog):
         lbl_3.clicked.connect(self.open_last)
         self.vbox.addWidget(lbl_3)
 
+        self.vbox.addSpacing(5)
         self.accept_btn = QPushButton("Cancel")
         self.accept_btn.clicked.connect(self.accept)
         self.vbox.addWidget(self.accept_btn)
@@ -137,16 +161,48 @@ class QuickOpenNote(QDialog):
         if notes is None:
             self.displayed = []
             return
+        self.sug_list.setRowCount(len(notes))
+        self.sug_list.setHorizontalHeaderLabels(["Title", "Type", "Prio", ""])
         for ix, note in enumerate(notes):
+
+
             if ix < 9:
-                item = QListWidgetItem(f"[{ix+1}] {note.get_title()}")
+                title = QTableWidgetItem(f"{ix+1}.  {note.get_title()}")
             else:
-                item = QListWidgetItem(f"{note.get_title()}")
-            item.setData(Qt.UserRole, QVariant(note.id))
-            self.sug_list.addItem(item)
+                title = QTableWidgetItem(note.get_title())
+            title.setData(Qt.UserRole, QVariant(note.id))
+
+            ntype = QTableWidgetItem(note.get_note_type())
+            if note.priority is None or note.priority == 0:
+                prio  = QLabel("-")
+            else:
+                prio  = QLabel(str(int(note.priority)))
+                prio.setStyleSheet(f"background-color: {utility.misc.prio_color(note.priority)}; color: white; font-size: 14px; text-align: center;")
+            prio.setAlignment(Qt.AlignCenter)
+
+            edit_btn = QToolButton()
+            edit_btn.setText(u"\u270E")
+            edit_btn.setToolTip("Edit")
+            edit_btn.clicked.connect(partial(self.edit_btn_clicked, note.id))
+
+
+            self.sug_list.setItem(ix, 0, title)
+            self.sug_list.setItem(ix, 1, ntype)
+            self.sug_list.setCellWidget(ix, 2, prio)
+            self.sug_list.setCellWidget(ix, 3, edit_btn)
+
+        self.sug_list.resizeRowsToContents()
+
+    def edit_btn_clicked(self, nid):
+        if get_index().ui.reading_modal.note_id == nid:
+            tooltip("Cannot edit that note: It is currently opened in the reader.")
+            return
+        if not state.note_editor_shown:
+            NoteEditor(self.parent, nid, add_only=True, read_note_id=None)
+            self.accept()
 
     def on_suggestion_clicked(self, item):
-        self.chosen_id = item.data(Qt.UserRole)
+        self.chosen_id = self.displayed[item.row()].id
         self.accept()
     
    
@@ -154,6 +210,6 @@ class QuickOpenNote(QDialog):
         if text is None or len(text.strip()) == 0:
             self.fill_result_list(self.suggestions)
         else:
-            notes = find_notes(text)
+            notes = find_notes(text)[:30]
             self.fill_result_list(notes)
 

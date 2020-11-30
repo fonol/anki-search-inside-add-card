@@ -285,12 +285,13 @@ class ReadingModal:
                             queueRenderPage(pdf.page, true, true, true);
                         }
                         updatePdfProgressBar();
-                        if (bothBarsAreHidden()) {
+                        if (topBarIsHidden()) {
                             readerNotification("%s");
                         }
                         if (pdf.pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
                         fileReader = null;
-                        setTimeout(checkTOC, 500);
+                        pdf.TOC = null;
+                        setTimeout(checkTOC, 300);
                 }).catch(function(err) { setTimeout(function() { console.log(err); }); });
             };
             loadFn();
@@ -550,7 +551,7 @@ class ReadingModal:
             source          = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
             priority        = note.priority
             img_folder      = utility.misc.img_src_base_path()
-            page_sidebar    = str(note.is_pdf() and conf_or_def("pdf.page_sidebar_shown", True)).lower()
+            page_sidebar    = str(conf_or_def("pdf.page_sidebar_shown", True)).lower()
 
             rev_overlay     = ""
             # check for last linked pages
@@ -611,7 +612,7 @@ class ReadingModal:
             overflow=overflow, top_hidden=top_hidden,
             notification=notification, page_sidebar=page_sidebar, rev_overlay = rev_overlay, bottom_bar=bottom_bar)
 
-            html = filled_template("reading_modal", params)
+            html = filled_template("rm/reading_modal", params)
 
             return html
         return ""
@@ -636,7 +637,7 @@ class ReadingModal:
         title                   = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
         params                  = dict(text = text, nid = nid, search_sources=search_sources, title=title)
 
-        html                    = filled_template("text_viewer", params)
+        html                    = filled_template("rm/text_viewer", params)
         return html
 
     def yt_html(self) -> HTML:
@@ -653,32 +654,13 @@ class ReadingModal:
                 if match.group(2) is not None and len(match.group(2)) > 0:
                     time = int(match.group(2))
 
-        return f"""
-            <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='pycmd("siac-user-note-done")'><i class='fa fa-check'></i></div>
-            <div class='w-100 h-100 flex-col' style='position: relative;'>
-                <div id='siac-yt-player' class='w-100' style='flex: 1 1 auto; box-sizing: border-box; margin: 10px -15px 0 0;'></div>
-                <div class="siac-reading-modal-button-bar-wrapper">
-                    <div class='user_sel_none' style='position: absolute; left: 0; z-index: 1;'>
-                        <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleBottomBar();'>&#x2195;</div>
-                        <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {self.note_id}")'><b>&#9998; Note</b></div>
-                        <div class='siac-btn siac-btn-dark ml-5' onclick='ytSavePosition();'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save Position&nbsp;</b></div>
-                        <div class='siac-btn siac-btn-dark ml-5' onclick='ytScreenCapture();'><b>&nbsp;<i class="fa fa-camera"></i> &nbsp;Capture&nbsp;</b></div>
-                    </div>
-                </div>
-                <div id='siac-pdf-br-notify'></div>
-            </div>
-            <script>
-                pdfLoading = false;
-                noteLoading = false;
-                pdf.instance = null;
-                if (bothBarsAreHidden()) {{
-                    readerNotification("{title}");
-                }}
-                displayedNoteId = {self.note_id};
-                initYtPlayer('{video}', {time});
-            </script>
-
-        """
+        params = dict(
+            note_id = self.note_id,
+            title   = title,
+            video   = video,
+            time    = time
+        )
+        return filled_template("rm/yt_viewer", params)
 
 
     def get_feed_html(self, nid, source) -> HTML:
@@ -792,7 +774,7 @@ class ReadingModal:
         params              = dict(note_id = note_id, queue_btn_text = queue_btn_text, queue_info = queue_info,
         queue_readings_list = queue_readings_list, has_schedule=has_schedule, hide_page_map = hide_page_map, bar_hidden = bar_hidden)
 
-        html                = filled_template("reading_modal_bottom", params)
+        html                = filled_template("rm/reading_modal_bottom", params)
 
         return html
 
@@ -887,7 +869,7 @@ class ReadingModal:
         params = dict(nid = nid, pdf_title = title, pdf_path = source, search_sources=search_sources, marks_img_src=marks_img_src,
         marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src, extract=extract)
 
-        html   = filled_template("pdf_viewer", params)
+        html   = filled_template("rm/pdf_viewer", params)
         return html
 
     def get_note_info_html(self) -> HTML:
@@ -1019,7 +1001,7 @@ class ReadingModal:
     def show_theme_dialog(self) -> JS:
         """ Display a modal to change the main color of the reader. """
 
-        modal = filled_template("theme", {}).replace('`', '\\`')
+        modal = filled_template("rm/theme", {}).replace('`', '\\`')
 
         return """modalShown=true;
             $('#siac-timer-popup').hide();
@@ -1149,8 +1131,12 @@ class ReadingModal:
     def page_sidebar_info(self, page: int, pages_total: int):
         """ Fill the page sidebar with Anki notes made on that page / other pdf info. """
 
-        linked              = get_linked_anki_notes_for_pdf_page(self.note_id, page)
-        around              = get_linked_anki_notes_around_pdf_page(self.note_id, page)
+        if page == -1:
+            linked              = get_linked_anki_notes(self.note_id)
+            around              = []
+        else:
+            linked              = get_linked_anki_notes_for_pdf_page(self.note_id, page)
+            around              = get_linked_anki_notes_around_pdf_page(self.note_id, page)
         read_today          = get_read_today_count()
         added_today_count   = utility.misc.count_cards_added_today()
 
@@ -1179,12 +1165,16 @@ class ReadingModal:
                 else:
                     around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdf.instance.numPages)' class='siac-pa-sq'>{c}</span>"
 
+        if page != -1:
+            header = f"{page} / {pages_total}"
+        else:
+            header = f"Anki Notes ({len(linked)})"
         if len(linked) > 0:
             html = search_results(linked, [])
             html = html.replace("`", "\\`")
             html = f"""
                 <div class='fg_lightgrey' style='flex: 0 1 auto;'>
-                    <center><b>PAGE {page}</b></center>
+                    <center><b>{header}</b></center>
                     <center class='mt-5' style='font-size: 10px;'>{around_s}</center>
                     <hr style='border-top: 4px solid grey;'>
                 </div>
@@ -1199,7 +1189,7 @@ class ReadingModal:
         else:
             html = f"""
                 <div class='fg_lightgrey' style='flex: 0 1 auto;'>
-                    <center><b>PAGE {page}</b></center>
+                    <center><b>{header}</b></center>
                     <center class='mt-5' style='font-size: 10px;'>{around_s}</center>
                     <hr style='border-top: 4px solid grey;'>
                 </div>

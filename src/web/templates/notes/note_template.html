@@ -1,0 +1,19 @@
+<div class='cardWrapper {grid_class}' id='nWr-{counter}'>
+    <div class='topLeftWr'>
+        <div id='cW-{nid}' class='rankingLbl' onclick="expandRankingLbl(this)">{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
+        {ret}
+    </div>
+    <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+        <div class='editLbl' onclick='edit({nid})'><i class="fa fa-pencil"></i></div>
+        {previewer}
+        <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
+        <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
+        {float_btn}
+        {nid_btn}
+        {cid_btn}
+        <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
+    </div>
+    <div class='siac-inner-card' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
+    <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
+    <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;&nbsp;<i class="fa fa-info"></i>&nbsp;&nbsp;</div>
+</div>

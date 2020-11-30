@@ -56,7 +56,7 @@ class Sidebar:
             else:
                 sched_today_menu_item = ""
 
-            tab_html = filled_template("sidebar_addon_tab", dict(sched_today_menu_item = sched_today_menu_item, tag_len = tag_len, tag_html = tag_html))
+            tab_html = filled_template("sidebar_main/sidebar_addon_tab", dict(sched_today_menu_item = sched_today_menu_item, tag_len = tag_len, tag_html = tag_html))
 
         elif self.tab == self.PDF_IMPORT_TAB:
 
@@ -148,9 +148,9 @@ class Sidebar:
 
             tag_html            = iterateMap(tmap, "", True)
 
-            tab_html = filled_template("sidebar_anki_tab", { "tags" : tag_html})
+            tab_html = filled_template("sidebar_main/sidebar_anki_tab", { "tags" : tag_html})
 
-        return filled_template("sidebar", dict(tab_html = tab_html, tab_displayed_name = tab_displayed_name))
+        return filled_template("sidebar_main/sidebar", dict(tab_html = tab_html, tab_displayed_name = tab_displayed_name))
 
     def display(self):
         html = self._html()

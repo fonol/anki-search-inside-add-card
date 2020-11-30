@@ -122,6 +122,10 @@
 "shortcuts.search_for_current_field": "Alt+J",
 "shortcuts.trigger_current_filter": "Alt+F",
 
+"shortcuts.window_mode.show_right": "CTRL+Shift+Right",
+"shortcuts.window_mode.show_left": "CTRL+Shift+Left",
+"shortcuts.window_mode.show_both": "CTRL+Shift+Down",
+
 "shortcuts.menubar.import.youtube": "",
 "shortcuts.menubar.import.create_new": "Alt+N",
 "shortcuts.menubar.import.zotero_csv": "",
@@ -138,5 +142,7 @@
 "mix_reviews_and_reading.interrupt_every_nth_card" : 50,
 "mix_reviews_and_reading.show_dialog" : true,
 "mix_reviews_and_reading.fuzz" : 0.5,
-"mix_reviews_and_reading.mode" : "every_n"
+"mix_reviews_and_reading.mode" : "every_n",
+
+"window_mode": "Both"
 }

@@ -24,11 +24,11 @@ import random
 
 import csv
 
-from ..notes import *
-from ..config import get_config_value_or_default
+from ...notes import *
+from ...config import get_config_value_or_default
 import utility.text
 import utility.misc
-from .components import QtPrioritySlider
+from ..components import QtPrioritySlider
 
 class ZoteroImporter(QDialog):
     """ Create pdf notes from a Zotero exported CSV file. """

@@ -369,7 +369,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
                 ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
                 last_prio_creation  = ds
 
-        #TODO: temporary fix for bug
+        # this shouldn't happen, but just to make sure
         if last_prio_creation is None or last_prio_creation == '':
             last_prio_creation = now.strftime('%Y-%m-%d-%H-%M-%S')
 
@@ -468,7 +468,7 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
                 ds                  = now.strftime('%Y-%m-%d-%H-%M-%S')
                 last_prio_creation  = ds
 
-        #TODO: temporary fix for bug
+        # this shouldn't happen, but just to make sure
         if last_prio_creation is None or last_prio_creation == '':
             last_prio_creation = now.strftime('%Y-%m-%d-%H-%M-%S')
 
@@ -696,8 +696,9 @@ def update_reminder(nid: int, rem: str):
 
 def get_extracts(nid: int, source: str) -> List[Tuple[int, int]]:
 
-    c   = _get_connection()
-    res = c.execute(f"select extract_start, extract_end from notes where source = '{source}' and id != {nid} and extract_start >= 1").fetchall()
+    source  = source.replace("'", "''")
+    c       = _get_connection()
+    res     = c.execute(f"select extract_start, extract_end from notes where source = '{source}' and id != {nid} and extract_start >= 1").fetchall()
     c.close()
     if res is None:
         return []
@@ -728,6 +729,8 @@ def get_last_done_notes() -> List[SiacNote]:
 
 
 def link_note_and_page(siac_nid: int, anki_nid: int, page: int):
+    if page is None:
+        page = -1
     conn = _get_connection()
     conn.execute(f"insert into notes_pdf_page (nid, siac_nid, page, type, data, created) values ({anki_nid}, {siac_nid}, {page}, 1, '', '{_date_now_str()}')")
     conn.commit()
@@ -806,8 +809,8 @@ def get_pdf_id_for_source(source: str) -> int:
     """
     Takes a source and returns the id of the first note with the given source, if existing, else -1
     """
-    conn = _get_connection()
-    res = conn.execute(f"select id from notes where source = ?", (source,)).fetchone()
+    conn    = _get_connection()
+    res     = conn.execute(f"select id from notes where source = ?", (source,)).fetchone()
     conn.close()
     return -1 if res is None or len(res) == 0 else res[0]
 
@@ -1742,6 +1745,24 @@ def pdf_topic_distribution_recently_read(delta_days: int) -> List[Tuple[str, flo
 #endregion stats
 
 #region page-note linking
+
+def get_linked_anki_notes(siac_nid: int) -> List[IndexNote]:
+    conn = _get_connection()
+    nids = conn.execute(f"select nid from notes_pdf_page where siac_nid = {siac_nid} order by created desc").fetchall()
+    if not nids or len(nids) == 0:
+        return []
+    nids_str = ",".join([str(nid[0]) for nid in nids])
+    res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id in (%s)" % nids_str)
+    if len(res) != len(nids):
+        anki_nids = [r[0] for r in res]
+        siac_nids = [r[0] for r in nids]
+        for snid in siac_nids:
+            if snid not in anki_nids:
+                conn.execute(f"delete from notes_pdf_page where nid = {snid}")
+        conn.commit()
+    conn.close()
+    return _anki_to_index_note(res)
+
 
 def get_linked_anki_notes_for_pdf_page(siac_nid: int, page: int) -> List[IndexNote]:
     """ Query to retrieve the Anki notes that were created while on a given pdf page. """

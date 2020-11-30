@@ -175,10 +175,9 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
     return """
         (() => { 
             if (document.getElementById('outerWr') == null) {
-                $(`#fields`).wrap(`<div class='siac-col' id='leftSide' style='flex-grow: 1; width: %s%%;'></div>`);
+                $(`#fields`).wrap(`<div class='siac-col' id='leftSide' onmouseenter='fieldsMouseEnter(event)' style='flex-grow: 1; width: %s%%;'></div>`);
                 $('#dupes').insertAfter('#fields');
                 
-                document.getElementById('topbutsleft').innerHTML += "<button id='switchBtn' onclick='showSearchPaneOnLeftSide()'><i class='fa fa-graduation-cap'></i></button>";
                 let toInsert = `%s`;
                 %s  
                 $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
@@ -408,7 +407,7 @@ def search_results(db_list: List[IndexNote], query_set: List[str]) -> HTML:
         text        = utility.text.try_hide_image_occlusion(text)
         #try to put fields that consist of a single image in their own line
         text        = utility.text.newline_before_images(text)
-        template    = noteTemplateSimple if res.note_type == "index" else noteTemplateUserNoteSimple
+        template    = NOTE_TMPL_SIMPLE if res.note_type == "index" else NOTE_TMPL_SIAC_SIMPLE
         newNote     = template.format(
             counter=counter+1,
             nid=res.id,

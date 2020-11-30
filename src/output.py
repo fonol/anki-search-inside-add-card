@@ -79,6 +79,7 @@ class Output:
         self.lastResults            = None
         self.hideSidebar            = False
         self.uiVisible              = True
+        self.frozen                 = False
         self.show_clozes            = not get_config_value_or_default("results.hide_cloze_brackets", False)
 
         # saved to display the same time taken when clicking on a page other than 1
@@ -273,7 +274,7 @@ class Output:
             # use either the template for addon's notes or the normal
             if res.note_type == "user":
 
-                newNote = noteTemplateUserNote.format(
+                newNote = NOTE_TMPL_SIAC.format(
                     grid_class  = gridclass, 
                     counter     = counter + 1, 
                     nid         = nid, 
@@ -289,7 +290,7 @@ class Output:
                     ret         = retInfo)
 
             else:
-                newNote = noteTemplate.format(
+                newNote = NOTE_TMPL.format(
                     grid_class  = gridclass, 
                     counter     = counter + 1, 
                     nid         = nid, 
@@ -337,7 +338,6 @@ class Output:
             cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes), len(self.previous_calls), stamp, timing, rerender)
         else:
             cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (html, page, pageMax, len(notes), len(self.previous_calls), stamp, timing, rerender)
-        cmd = f"{cmd}updateSwitchBtn({len(notes)});" 
 
         self._js(cmd, editor)
 
@@ -619,7 +619,7 @@ class Output:
             text        = utility.text.try_hide_image_occlusion(text)
             #try to put fields that consist of a single image in their own line
             text        = utility.text.newline_before_images(text)
-            template    = noteTemplateSimple if res.note_type == "index" else noteTemplateUserNoteSimple
+            template    = NOTE_TMPL_SIMPLE if res.note_type == "index" else NOTE_TMPL_SIAC_SIMPLE
             newNote     = template.format(
                 counter=counter+1, 
                 nid=res.id, 
