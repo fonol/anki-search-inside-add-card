@@ -8,6 +8,7 @@
 @import "/css/keyframes.css";
 @import "/css/sidebar.css";
 @import "/css/tomato.css";
+@import "/css/layout.css";
 
 :root {
     --tleft : 50%;
@@ -16,15 +17,13 @@
 #leftSide {
     position: relative;
     flex-direction: column; 
+    display: flex;
 }
 #outerWr #fields {
     overflow-y: auto;
     height: calc(100% - 10px) !important;
     padding-right: 8px;
     margin-top: 10px !important;
-}
-#siac-start-info {
-    padding-left: 20px;
 }
 #siac-second-col-wrapper {
     display: flex;
@@ -44,6 +43,11 @@
     overflow: hidden;
     display: flex;
 }
+#siac-start-info {
+    padding-left: 20px;
+}
+
+
 .signal {
     border: 5px solid #2496dc;
     border-radius: 30px;
@@ -247,8 +251,19 @@ body.nightMode .tagLbl:hover {
     overflow-x: hidden;
     overflow-y: auto;
 }
-#switchBtn {
-    display: none !important;
+
+.siac-switch-btn-dropdown {
+    display: none;
+    position: absolute;
+    left: 0;
+    margin-top: 3px;
+    margin-left: -2px;
+    width: 150px;
+    background: var(--c-button-background);
+    border: 2px outset var(--c-button-border);
+    color: var(--c-button-color);
+    z-index: 120000;
+    padding: 5px;
 }
 .flexContainer {
   display: flex;
@@ -453,6 +468,7 @@ width: 48%; display: inline-block; text-align: center;
     box-sizing: border-box;
     font-size: 12px !important;
     overflow-y: hidden;
+
 }
 .siac-tags-exp-icon {
     cursor: pointer;
@@ -784,18 +800,6 @@ span.tag-symbol {
     text-align: center;
     margin-bottom: 4px;
 }
-#outerWr.onesided {
-    display: flex !important;
-}
-#outerWr.onesided .siac-queue-sched-hor-sep {
-    width: 10px;
-}
-#outerWr.onesided #siac-reading-modal {
-    padding-right: 20px;
-}
-#outerWr.onesided .reading-modal-close-icn {
-    right: 27px;
-}
 #siac-pdf-tooltip {
     max-width: var(--pdf-tooltip-max-width);
 }
@@ -882,97 +886,4 @@ body.nightMode .siac-prog-sq {
 }
 #siac-reading-modal .editor-toolbar:before {
     margin-bottom: 0px !important;
-}
-
-@media (max-width: 1000px) , (max-height: 500px) {
-    #siac-right-side {
-        display: none;
-    }
-    #outerWr.onesided > #siac-right-side {
-        display: block;
-        width: 100% !important;
-        margin-left: 0px !important;
-        border-left: 0px solid white !important;
-        padding-left: 0px !important;
-    }
-    #switchBtn {
-        display: inline-block !important;
-    }
-}
-
-@media (max-width: 800px) {
-    .icns-add, #siac-switch-lr-btn {
-        display: none !important;
-    }
-}
-@media (max-width: 1200px) {
-    .siac-queue-sched-hor-sep {
-        width: 10px;
-    }
-}
-@media (min-width: 650px) {
-    #outerWr.onesided #searchMaskCol {
-        display: flex;
-    }
-}
-
-body.siac-fullscreen-show-fields #leftSide {
-     display: flex !important; 
-}
-body.siac-fullscreen-show-fields #siac-right-side {
-    display: none !important; 
-}
-body.siac-fullscreen-show-fields #outerWr.onesided #leftSide {
-    width: 100% !important;
-}
-body.siac-fullscreen-show-right #leftSide {
-    display: none !important; 
-}
-body.siac-fullscreen-show-right #siac-right-side {
-    display: flex !important; 
-    border-left: 0px !important;
-    border-right: 0px !important;
-    height: calc(100vh - 5px) !important;
-}
-body.siac-fullscreen-show-fields #switchBtn {
-    display: none !important;
-}
-body.siac-fullscreen-show-right #topbuts {
-    display: none; 
-}
-body.siac-fullscreen-show-right #outerWr {
-    margin-top: 3px !important;
-    height: calc(100vh - 3px) !important;
-}
-body.siac-left-right-switched #siac-right-side {
-    border-left: 0px solid white !important;
-    padding-left: 0px;
-    padding-right: 10px;
-}
-body.siac-left-right-switched #fields {
-    padding-right: 0px;
-    padding-left: 8px
-}
-body.siac-reading-modal-displayed #leftSide {
-    display: flex;
-    flex-direction: column;
-}
-body.siac-reading-modal-displayed #fields {
-    flex: 1 1 auto;
-    height: auto !important;
-}
-body.siac-reading-modal-displayed #siac-reading-modal-tabs-left {
-    flex: 0 0 auto;
-}
-@media (max-width: 600px) {
-    #sortCol {
-        display: none;
-    }
-    #siac-notes-sidebar, #searchInfo {
-        display: none;
-    }
-    .modal-content {
-        width: 80% !important;
-    }
-
 }

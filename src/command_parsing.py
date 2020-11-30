@@ -48,9 +48,9 @@ from .hooks import run_hooks
 from .output import Output
 from .dialogs.editor import open_editor, NoteEditor
 from .dialogs.queue_picker import QueuePicker
-from .dialogs.url_import import UrlImporter
+from .dialogs.importing.url_import import UrlImporter
 from .dialogs.pdf_extract import PDFExtractDialog
-from .dialogs.zotero_import import ZoteroImporter
+from .dialogs.importing.zotero_import import ZoteroImporter
 from .dialogs.schedule_dialog import ScheduleDialog
 from .dialogs.timer_elapsed import TimerElapsedDialog
 from .tag_find import findBySameTag, display_tag_info
@@ -163,6 +163,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-pin"):
         # pin note symbol clicked
         set_pinned(cmd[9:])
+
+    elif cmd.startswith("siac-freeze "):
+        index.ui.frozen = cmd.split()[1].lower() == "true"
+
+    elif cmd.startswith("siac-window-mode "):
+        state.set_window_mode(cmd.split()[1], self)
 
     elif cmd == "siac-zoom-out":
         # zoom out webview
@@ -1988,8 +1994,9 @@ def update_config(key, value):
 @requires_index_loaded
 def after_index_rebuilt():
 
-    search_index    = get_index()
-    editor          = search_index.ui._editor
+    search_index            = get_index()
+    editor                  = search_index.ui._editor
+    search_index.ui.frozen  = False
 
     editor.web.eval("""
         $('.freeze-icon').removeClass('frozen');

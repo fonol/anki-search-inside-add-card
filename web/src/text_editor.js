@@ -46,4 +46,39 @@ window.editorMDInit = function () {
         tagSize: 4,
         toolbar: ["bold", "italic", "heading", "code", "quote", "unordered-list", "ordered-list", "horizontal-rule", "link"]
     });
+    // textEditor.codemirror.on("cursorActivity", function(doc){
+    //     textEditorKeyup();
+    // });
+}
+
+/**
+ *  WIP
+ *  executed after keyup in the text editor pane
+ */
+window.textEditorKeyup = function () {
+    if (pdfTooltipEnabled && windowHasSelection()) {
+        let s = window.getSelection();
+        let r = s.getRangeAt(0);
+        let text = s.toString();
+        if (text.trim().length === 0 || text.length > 500) { return; }
+        let nodesInSel = nodesInSelection(r);
+        let sentences = getSentencesAroundSelection(r, nodesInSel, text);
+        if (nodesInSel.length > 1) {
+            text = joinTextLayerNodeTexts(nodesInSel, text);
+        }
+        let rect = r.getBoundingClientRect();
+        let prect = byId("siac-reading-modal").getBoundingClientRect();
+        byId('siac-pdf-tooltip-results-area').innerHTML = '<center>Searching...</center>';
+        byId('siac-pdf-tooltip-searchbar').value = "";
+        let left = rect.left - prect.left;
+        if (prect.width - left < 250) {
+            left -= 200;
+        }
+        let top = rect.top - prect.top + rect.height;
+        if (top < 0) { return; }
+        $('#siac-pdf-tooltip').css({ 'top': top + "px", 'left': left + "px" }).show();
+        pycmd("siac-pdf-selection " + text);
+        $('#siac-pdf-tooltip').data({"sentences":  sentences, "selection": text, "top": top});
+    } 
+    
 }

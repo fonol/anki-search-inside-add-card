@@ -81,6 +81,8 @@ def init_addon():
     #todo: Find out if there is a better moment to start index creation
     state.db_file_existed = create_db_file_if_not_exists()
 
+    state.window_mode = state.WindowMode[config["window_mode"]]
+
     gui_hooks.profile_did_open.append(build_index)
     gui_hooks.profile_did_open.append(insert_scripts)
     gui_hooks.profile_did_open.append(lambda : recalculate_priority_queue(True))
@@ -101,6 +103,8 @@ def init_addon():
     gui_hooks.editor_did_init_shortcuts.append(register_shortcuts)
     # reset state after the add/edit dialog is opened
     gui_hooks.editor_did_init_shortcuts.append(reset_state)
+
+    gui_hooks.editor_did_load_note.append(setup_switch_btn)
 
     # activate nighmode if Anki's nightmode is active
     gui_hooks.editor_did_init_shortcuts.append(activate_nightmode)
@@ -208,6 +212,8 @@ def on_load_note(editor: Editor):
             var delayWhileTyping    = {typing_delay};
             var pdfColorMode        = "{pdf_color_mode}";
 
+            setWindowMode('{state.window_mode.name}');
+
             if ('{pdf_highlights_render}') {{
                 document.body.classList.add("{pdf_highlights_render}");
             }}
@@ -238,13 +244,6 @@ def on_load_note(editor: Editor):
         set_edit(editor)
 
 
-
-
-def on_add_cards_init(add_cards: AddCards):
-
-    if get_index() is not None and add_cards.editor is not None:
-        get_index().ui.set_editor(add_cards.editor)
-
 def save_pdf_page(note: Note):
 
     ix = get_index()
@@ -253,10 +252,9 @@ def save_pdf_page(note: Note):
 
     nid = ix.ui.reading_modal.note_id
     def cb(page: int):
-        if page is not None and page >= 0:
-            link_note_and_page(nid, note.id, page)
-            # update sidebar if shown
-            ix.ui.js("updatePageSidebarIfShown()")
+        link_note_and_page(nid, note.id, page)
+        # update sidebar if shown
+        ix.ui.js("updatePageSidebarIfShown()")
 
     ix.ui.reading_modal.page_displayed(cb)
 
@@ -406,15 +404,52 @@ def setup_hooks():
     add_hook("reading-modal-closed", lambda: get_index().ui.sidebar.refresh_tab(1))
     add_hook("reading-modal-closed", lambda: try_repeat_last_search())
 
+def setup_switch_btn(editor: Editor):
+    """ Add a button to switch the layout to the bottom of the AddCards dialog. """
+
+    win = aqt.dialogs._dialogs["AddCards"][1]
+    if win is None:
+        return
+    if not isinstance(win, AddCards):
+        return
+        
+    box     = win.form.buttonBox
+
+    # check if button has been already added
+    if hasattr(box, "switch_btn") and box.switch_btn is not None:
+        return
+
+    button  = QPushButton(state.window_mode.name)
+    menu    = QMenu(button)
+    a1      = menu.addAction("Show Both")
+    a1.triggered.connect(functools.partial(state.set_window_mode, "Both", editor))
+
+    a2      = menu.addAction("Show Both, Auto-hide Fields")
+    a2.triggered.connect(functools.partial(state.set_window_mode, "Autohide", editor))
+
+    a3      = menu.addAction("Show Only Fields")
+    a3.triggered.connect(functools.partial(state.set_window_mode, "Fields", editor))
+
+    a4      = menu.addAction("Show Only Add-on")
+    a4.triggered.connect(functools.partial(state.set_window_mode, "Addon", editor))
+
+    button.setMenu(menu)
+    box.layout().insertWidget(0, button)
+    box.switch_btn = button
+    win.update()
+
 
 def reset_state(shortcuts: List[Tuple], editor: Editor):
     """ After the Add Card / Edit Current dialog is opened, some state variables need to be reset. """
 
     # might still be true if Create Note dialog was closed by closing its parent window, so reset it
     state.note_editor_shown = False
-    state.editor_is_ready = False
+    state.editor_is_ready   = False
 
-
+    index                   = get_index()
+    if index:
+        index.ui.frozen     = False
+    
     if state.night_mode is None:
         def cb(night_mode: bool):
             state.night_mode = night_mode
@@ -494,6 +529,10 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     _try_register(config["shortcuts.trigger_current_filter"], lambda: editor.web.eval("sort()"))
     _try_register(config["shortcuts.search_for_current_field"], lambda: editor.web.eval("searchCurrentField()"))
 
+    _try_register(config["shortcuts.window_mode.show_right"], lambda: state.switch_window_mode("right", editor))
+    _try_register(config["shortcuts.window_mode.show_left"], lambda: state.switch_window_mode("left", editor))
+    _try_register(config["shortcuts.window_mode.show_both"], lambda: state.switch_window_mode("both", editor))
+
 def show_note_modal():
     """ Displays the Create/Update dialog if not already shown. """
     if not state.note_editor_shown:
@@ -545,6 +584,8 @@ def tag_edit_keypress(self, evt, _old):
     if modifiers == Qt.ControlModifier or modifiers == Qt.AltModifier or modifiers == Qt.MetaModifier:
         return
     index = get_index()
+    if index.ui.frozen:
+        return
 
     if index is not None and len(self.text().strip()) > 0:
         text = self.text()

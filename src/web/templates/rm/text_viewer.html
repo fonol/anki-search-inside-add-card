@@ -9,8 +9,16 @@
 <div class='siac-btn siac-btn-dark' id='siac-quick-sched-btn' onclick='pycmd("siac-user-note-done")'><i class='fa fa-check'></i></div>
 <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark fg_lightgrey' onclick='pycmd("siac-close-iframe")'><b>&times; &nbsp;CLOSE</b></div>
 <div id='siac-text-top-wr' style='height: calc(100% - 42px);'>
-    <div id='siac-text-top' class='ml-5'>
+    <div id='siac-text-top' style='position: relative;' class='ml-5'>
         <textarea class='w-100 h-100' spellcheck='false'>{text}</textarea>
+        <div id='siac-pdf-br-notify'></div>
+    </div>
+    <div id='siac-page-sidebar'>
+        <div class='flex-col h-100' style='justify-content: center;'>
+            <div> 
+                <div class='signal' style='margin-left: auto; margin-right: auto;'></div>
+            </div>
+        </div>
     </div>
 </div>
 <iframe id='siac-iframe' sandbox='allow-scripts' style='height: calc(100% - 47px);'></iframe>
@@ -22,12 +30,12 @@
         <div class='siac-btn siac-btn-dark ml-5' onclick='saveTextNote({nid}, remove=false)'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save&nbsp;</b></div>
         <span id='siac-text-note-status' class='fg_grey' style='margin-left: 30px;'></span>
     </div>
-</div>
-<div id='siac-pdf-br-notify'>
+    <div class='siac-btn siac-btn-dark' onclick='togglePageSidebar()' style='float: right;'><i class="fa fa-bars"></i></div>
 </div>
 <script>
     pdfLoading = false;
-    if (bothBarsAreHidden()) {
+    pdf.notification.queue = [];
+    if (topBarIsHidden()) {
         readerNotification("{title}");
     }
     pdf.displayedMarks = null;   
@@ -35,4 +43,7 @@
     displayedNoteId = {nid};
     editorMDInit();
     noteLoading = false;
+    if (pageSidebarDisplayed) {
+        pycmd('siac-linked-to-page -1 -1');
+    }
 </script>
