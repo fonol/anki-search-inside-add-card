@@ -267,7 +267,6 @@ def insert_scripts():
     """
 
     addon_id    = utility.misc.get_addon_id()
-    pdf_theme   = conf_or_def("pdf.theme", "pdf_reader.css")
     port        = mw.mediaServer.getPort()
 
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf|woff2?)$")
@@ -343,9 +342,8 @@ def insert_scripts():
 
         script = document.createElement('link');
         script.type = 'text/css';
-        script.id ='siac-pdf-css';
         script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/{pdf_theme}';
+        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf_reader.css';
         document.body.appendChild(script);
 
         script = document.createElement('script');
