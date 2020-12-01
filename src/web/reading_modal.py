@@ -219,6 +219,7 @@ class ReadingModal:
         # pages read are ordered by date, so take last
         last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
 
+
         if self.note.extract_start is not None:
             if len(pages_read) > 0:
                 read_in_extract = [p for p in pages_read if p >= self.note.extract_start and p <= self.note.extract_end]
@@ -231,7 +232,7 @@ class ReadingModal:
         port            = mw.mediaServer.getPort()
 
         init_code = """
-
+            (() => {
             pdfLoading = true;
             var bstr = atob(b64);
             pdf.pagesRead = [%s];
@@ -297,6 +298,7 @@ class ReadingModal:
             loadFn();
             b64 = "";
             bstr = null; file = null;
+            })();
         """ % (pages_read_js, marks_js, extract_js, port, addon_id, note_id, last_page_read, title, note_id)
 
         #send large files in multiple packets
