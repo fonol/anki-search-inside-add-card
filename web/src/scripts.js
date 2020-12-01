@@ -791,6 +791,20 @@ window.setWindowMode = function (mode) {
     document.body.classList.remove('siac-wm-autohide');
 
     document.body.classList.add('siac-wm-' + mode.toLowerCase());
+    if (mode === 'Autohide') {
+        let addEL = function() {
+            if (!byId('siac-right-side')) {
+                setTimeout(addEL, 100);
+                return;
+            }
+            byId('siac-right-side').addEventListener("mousemove", addonMouseMove, true);
+        };
+        addEL();
+    } else {
+        if (byId('siac-right-side')) {
+            byId('siac-right-side').removeEventListener("mousemove", addonMouseMove, true);
+        }
+    }
 }
 window.fieldsMouseEnter = function(event) {
     if (document.body.classList.contains('siac-wm-autohide') && !event.target.classList.contains('visible')) {
@@ -801,12 +815,10 @@ window.fieldsMouseEnter = function(event) {
     }
 }
 window.addonMouseMove = function(event) {
-    if (!document.body.classList.contains('siac-wm-autohide')) {
-        return;
-    }
+   
     clearTimeout(window._siac_move_timer);
     window._siac_move_timer = setTimeout(function() {
-        if ($('#siac-right-side').is(':hover')) {
+        if ($('#siac-right-side').is(':hover') && byId('leftSide').classList.contains('visible')) {
             byId('leftSide').classList.remove('visible');
             if (displayedNoteId && pdf.instance) {
                 setTimeout(() => { Highlighting.displayHighlights(); }, 50);
