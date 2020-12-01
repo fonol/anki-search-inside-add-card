@@ -126,6 +126,7 @@ def styles() -> str:
     if re.match("url\(.+\)", rm_texture):
         rm_texture      = rm_texture.replace("url('", "url('" + url)
     rm_bg_size          = str(get_config_value_or_default("styles.readingModalBackgroundSize", "80"))
+    rm_theme            = str(get_config_value_or_default("styles.readingModalThemeColor", "darkorange"))
 
     css                 = css.replace("$imgMaxHeight$", imgMaxHeight)
     css                 = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
@@ -148,6 +149,7 @@ def styles() -> str:
     css                 = css.replace("$styles.readingModalFilter$", rm_filter)
     css                 = css.replace("$styles.readingModalTexture$", rm_texture)
     css                 = css.replace("$styles.readingModalBackgroundSize$", rm_bg_size)
+    css                 = css.replace("$styles.readingModalThemeColor$", rm_theme)
 
     return css
 

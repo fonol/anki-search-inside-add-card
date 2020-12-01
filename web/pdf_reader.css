@@ -1,8 +1,8 @@
 body.siac-reading-modal-displayed #siac-right-side {
-    border-left: 0px solid darkorange;
+    border-left: 0px solid var(--c-reading-modal-theme-color);
 }
 body.nightMode.siac-reading-modal-displayed #siac-right-side {
-    border-left: 2px solid darkorange;
+    border-left: 2px solid var(--c-reading-modal-theme-color);
 }
 #siac-reading-modal {
     display: none;
@@ -27,7 +27,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     background-color: var(--c-reading-modal-background);
 }
 #siac-reading-modal a:not(.siac-disabled) {
-    color: darkorange !important;
+    color: var(--c-reading-modal-theme-color) !important;
 }
 #siac-reading-modal a.greyedout, #siac-reading-modal a.active {
     color: lightgray !important;
@@ -36,14 +36,14 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     text-decoration: underline;
 }
 .siac-pdf-main-color {
-    color: darkorange;
+    color: var(--c-reading-modal-theme-color);
 }
 .siac-rm-main-color-hover:hover {
-    color: darkorange;
+    color: var(--c-reading-modal-theme-color);
     cursor: pointer;
 }
 .siac-modal-small.dark, #siac-reading-modal .siac-modal-small, .siac-pdf-contextmenu {
-    border: 3px outset darkorange;
+    border: 3px outset var(--c-reading-modal-theme-color);
     background: var(--c-reading-modal-background);
     color: white;
 }
@@ -61,7 +61,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 #siac-cloze-btn {
     margin-bottom: 7px;
     text-align: center;
-    color:darkorange;
+    color:var(--c-reading-modal-theme-color);
     cursor:pointer;
     font-weight: bold;
     user-select: none;
@@ -80,7 +80,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     margin: 20px 15px 0 10px;
     width: 280px;
     flex: 0 0 280px;
-    border: 3px outset darkorange;
+    border: 3px outset var(--c-reading-modal-theme-color);
     padding: 10px;
     background-color: var(--c-reading-modal-background);
     text-align: left;
@@ -116,7 +116,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     height: 185px; 
     top: -164px;
     left: -181px;
-    border: 2px outset darkorange; 
+    border: 2px outset var(--c-reading-modal-theme-color); 
     z-index: 5;
     transition: all 0.3s;
 }
@@ -124,7 +124,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     margin: 3px 0 2px 0;
     text-align: left;
     width: 100%;
-    color: darkorange;
+    color: var(--c-reading-modal-theme-color);
     text-align: center;
     height: 16px;
     font-size: 13px !important;
@@ -133,7 +133,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     filter: brightness(1.4);
 }
 #siac-tt-web-btn {
-    color:darkorange;
+    color:var(--c-reading-modal-theme-color);
     cursor:pointer;
     position: absolute;
     top: 5px;
@@ -154,7 +154,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     z-index: 4; 
     bottom: 20px; 
     right: 30px; 
-    border: 3px outset darkorange; 
+    border: 3px outset var(--c-reading-modal-theme-color); 
     border-radius: 3px; 
     color: lightgrey; 
     background: var(--c-reading-modal-background); 
@@ -183,7 +183,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 }
 #siac-page-sidebar {
     width: 230px;
-    border: 3px outset darkorange;
+    border: 3px outset var(--c-reading-modal-theme-color);
     padding: 10px;
     margin-left: 10px;
     flex: 0 0 auto;
@@ -273,7 +273,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     user-select: none;
 }
 .siac-pdf-mark-lbl > b:hover {
-    color: darkorange;
+    color: var(--c-reading-modal-theme-color);
     cursor: pointer;
 }
 #siac-pdf-overlay-top {
@@ -453,11 +453,11 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     max-width: 400px;
 }
 #siac-iframe-btn label:hover {
-    color: darkorange;
+    color: var(--c-reading-modal-theme-color);
     cursor: pointer;
 }
 .siac-url-ch {
-   color: orange; 
+   color: var(--c-reading-modal-theme-color); 
    margin-bottom: 4px;
    white-space: nowrap;
 }
@@ -472,7 +472,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 	color: white;
     padding: 9px;
 	border-radius: 5px;
-    border: 4px outset darkorange;
+    border: 4px outset var(--c-reading-modal-theme-color);
     transition: all 0.5s;
 }
 
@@ -508,8 +508,8 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     left: 7px;
     cursor: pointer;
     display: inline-block;
-    color: darkorange;
-    border: 3px solid darkorange;
+    color: var(--c-reading-modal-theme-color);
+    border: 3px solid var(--c-reading-modal-theme-color);
     border-radius: 2px;
     width: 9px;
     height: 9px;
@@ -550,7 +550,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     width: 100%; 
     flex: 0 0 auto; 
     position: relative; 
-    border-top: 2px solid darkorange; 
+    border-top: 2px solid var(--c-reading-modal-theme-color); 
     margin-top: 5px; 
     padding: 2px 0 0 5px; 
     overflow: hidden; 
@@ -638,7 +638,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 .siac-page-mark-link {
     display: inline-block;
     cursor: pointer;
-    color: darkorange;
+    color: var(--c-reading-modal-theme-color);
     font-weight: bold;
 }
 .siac-page-mark-link:hover {
@@ -648,7 +648,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     display: inline-block;
     font-size: 15px;
     line-height: 18px;;
-    color: darkorange;
+    color: var(--c-reading-modal-theme-color);
     cursor: pointer;
     user-select: none;
 }
@@ -701,14 +701,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     transform: scale(1.4);
     filter: brightness(140%);
 }
-#siac-queue-sched-wrapper {
-    padding: 5px 0 0 0;
-    max-width: 0px;
-    overflow: hidden;
-    display: inline-block;
-    transition: max-width 0.6s;
-    transform: translateZ(0);
-}
+
 .siac-queue-sched-btn, .siac-queue-sched-btn-hor {
     display: inline-block;
     font-size: 13px;
@@ -750,7 +743,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 }
 .siac-queue-sched-btn.active, .siac-queue-sched-btn-hor.active {
     color: white;
-    border-color: darkorange;
+    border-color: var(--c-reading-modal-theme-color);
 }
 .siac-queue-sched-btn.active:hover, .siac-queue-sched-btn-hor.active:hover {
    filter: brightness(140%);
@@ -773,7 +766,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     opacity: 0.3;
 }
 .siac-sched-icn line, .siac-sched-icn ellipse {
-    stroke: darkorange !important;
+    stroke: var(--c-reading-modal-theme-color) !important;
 }
 .siac-sched-icn.grey line, .siac-sched-icn.grey ellipse {
     stroke: lightgrey !important;
@@ -798,7 +791,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     display: none;
     width: 300px;
     height: 106px;
-    border: 3px outset darkorange;
+    border: 3px outset var(--c-reading-modal-theme-color);
 }
 #siac-queue-infobox:after {
     content: " ";
@@ -808,7 +801,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     margin-top: -11px;
     border-width: 11px;
     border-style: solid;
-    border-color: transparent darkorange transparent transparent;
+    border-color: transparent var(--c-reading-modal-theme-color) transparent transparent;
     transition: all ease 0.2s;
 }
 .siac-pa-sq {
@@ -890,7 +883,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     user-select: none;
 }
 .siac-timer-btn.active {
-    color: darkorange;
+    color: var(--c-reading-modal-theme-color);
     font-weight: bold;
 }
 .siac-timer-play-btn {
@@ -922,7 +915,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     transform: translate(-50%, -50%);
     padding: 15px;
     width: 300px;
-    border: 4px outset darkorange;
+    border: 4px outset var(--c-reading-modal-theme-color);
     border-radius: 5px;
     display: none;
 }
@@ -957,7 +950,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     padding: 15px; 
     position: relative; 
     text-align: center;
-    border: 3px outset darkorange;
+    border: 3px outset var(--c-reading-modal-theme-color);
     background: var(--c-reading-modal-background);
     color: white;
 }
@@ -999,7 +992,7 @@ body.nightMode .siac-note-title-only:hover {
     padding: 10px 15px 5px 0;
     border-top: 2px solid;
     margin-top: 10px;
-    border-top: 2px solid darkorange;
+    border-top: 2px solid var(--c-reading-modal-theme-color);
 }
 #siac-reading-modal-tabs-left .siac-btn {
     color: #b2b2a0;
@@ -1011,16 +1004,16 @@ body.nightMode .siac-note-title-only:hover {
     border-color: #2496dc !important;
 }
 .siac-pdf-main-color-border-bottom {
-    border-bottom: 2px solid darkorange;
+    border-bottom: 2px solid var(--c-reading-modal-theme-color);
 }
 .siac-pdf-main-color-border-top {
-    border-top: 2px solid darkorange;
+    border-top: 2px solid var(--c-reading-modal-theme-color);
 }
 .siac-pdf-main-color-border-left {
-    border-left: 2px solid darkorange;
+    border-left: 2px solid var(--c-reading-modal-theme-color);
 }
 .siac-pdf-main-color-border {
-    border: 3px outset darkorange;
+    border: 3px outset var(--c-reading-modal-theme-color);
     border-radius: 3px;
 }
 #siac-left-tab-browse,#siac-left-tab-pdfs {
@@ -1109,7 +1102,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     flex: 0 0 77px; 
     display: flex; 
     flex-wrap: nowrap; 
-    border-bottom: 2px solid darkorange; 
+    border-bottom: 2px solid var(--c-reading-modal-theme-color); 
     margin-bottom: 5px; 
     white-space: nowrap;
     position: relative;
@@ -1134,7 +1127,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     z-index: 12;
 }
 .siac-bb-btn {
-    border: 2px outset darkorange;
+    border: 2px outset var(--c-reading-modal-theme-color);
     border-radius: 4px;
     margin: 4px 3px 3px 3px;
     text-align: center;
@@ -1177,16 +1170,16 @@ label input:checked ~ span {
     font-weight: bold;
 }
 body.siac-left-right-switched #siac-right-side {
-    border-right: 2px solid darkorange;
+    border-right: 2px solid var(--c-reading-modal-theme-color);
 }
 body.siac-reading-modal-displayed.siac-left-right-switched #siac-right-side {
     border-right: none;
 }
 body.nightMode.siac-reading-modal-displayed.siac-left-right-switched #siac-right-side {
-    border-right: 2px solid darkorange;
+    border-right: 2px solid var(--c-reading-modal-theme-color);
 }
 #siac-right-side {
-    border-left: 2px solid darkorange;
+    border-left: 2px solid var(--c-reading-modal-theme-color);
 }
 
 .annotationLayer {
