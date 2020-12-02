@@ -149,17 +149,20 @@ window.expandRankingLbl = function (elem) {
 window.expandCard = function (id, icn) {
     pycmd("siac-note-stats " + id);
 }
-window.pinMouseLeave = function (elem) {
-    $(elem).css('opacity', '0');
+window.pinMouseLeave = function (elem, event) {
+    if (event.toElement && event.toElement.classList.contains('siac-inner-card')) {
+        return;
+    }
+    elem.style.opacity = '0';
 }
 window.pinMouseEnter = function (elem) {
-    $(elem).css('opacity', '1');
+    elem.style.opacity = '1';
 }
 window.cardMouseEnter = function (elem, nid, mode = "full") {
     if (mode == "full") {
-        $(`#btnBar-${nid}`).css('opacity', '1');
+        byId('btnBar-' + nid).style.opacity = 1;
     } else {
-        $(`#btnBarSmp-${nid}`).css('opacity', '1');
+        byId('btnBarSmp-' + nid).style.opacity = 1;
     }
 }
 window.showLoading = function (source) {
@@ -183,15 +186,15 @@ window.totalOffset = function (elem) {
 window.cardMouseLeave = function (elem, nid, mode = "full") {
     setTimeout(function () {
         if (mode == "full") {
-            if (!$('#btnBar-' + nid).is(':hover')) {
+            if (!$('#btnBar-' + nid).is(':hover') && !$(elem).is(':hover')) {
                 $('#btnBar-' + nid).css('opacity', '0');
             }
         } else {
-            if (!$('#btnBarSmp-' + nid).is(':hover')) {
+            if (!$('#btnBarSmp-' + nid).is(':hover') && !$(elem).is(':hover')) {
                 $('#btnBarSmp-' + nid).css('opacity', '0');
             }
         }
-    }, 100);
+    }, 50);
 }
 window.tagMouseEnter = function (elem) {
     if (!showTagInfoOnHover || !elem || !elem.parentElement || displayedNoteId)
