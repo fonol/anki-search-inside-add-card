@@ -3,7 +3,7 @@
         <div id='cW-{nid}' class='rankingLbl' onclick="expandRankingLbl(this)">{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
         {ret}
     </div>
-    <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+    <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this, event)' onmouseenter='pinMouseEnter(this)'>
         <div class='editLbl' onclick='edit({nid})'><i class="fa fa-pencil"></i></div>
         {previewer}
         <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
