@@ -314,11 +314,6 @@ def insert_scripts():
         setTimeout(function() {{
             script = document.createElement('script');
             script.type = 'text/javascript';
-            script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/plot.resize.js';
-            document.body.appendChild(script);
-
-            script = document.createElement('script');
-            script.type = 'text/javascript';
             script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/cal-heatmap.min.js';
             document.body.appendChild(script);
         }}, 200);
