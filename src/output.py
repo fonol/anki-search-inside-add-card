@@ -158,9 +158,11 @@ class Output:
             self.lastResults        = notes
             self.last_query_set     = query_set
 
-    
 
-        searchResults               = notes[(page- 1) * 50: page * 50]
+        meta_notes_cnt              = 0
+        while meta_notes_cnt < len(notes) and notes[meta_notes_cnt].note_type == "user" and notes[meta_notes_cnt].is_meta_note():
+            meta_notes_cnt          += 1
+        searchResults               = notes[(page- 1) * 50 + min(page - 1, 1) * meta_notes_cnt: page * 50 + meta_notes_cnt]
         nids                        = [r.id for r in searchResults]
 
         if self.showRetentionScores:
@@ -183,6 +185,7 @@ class Output:
 
         check_for_suspended         = []
 
+        meta_card_counter           = 0
         for counter, res in enumerate(searchResults):
             nid     = res.id
             counter += (page - 1)* 50
@@ -274,10 +277,13 @@ class Output:
             # use either the template for addon's notes or the normal
             if res.note_type == "user":
 
-                template    = NOTE_TMPL_META if res.is_meta_note() else NOTE_TMPL_SIAC
+                template    = NOTE_TMPL_SIAC
+                if res.is_meta_note():
+                    template            = NOTE_TMPL_META
+                    meta_card_counter   += 1
                 newNote     = template.format(
                     grid_class  = gridclass, 
-                    counter     = counter + 1, 
+                    counter     = counter + 1 - meta_card_counter, 
                     nid         = nid, 
                     creation    = "&nbsp;&#128336; " + timeDiffString, 
                     edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(nid)]),
@@ -293,7 +299,7 @@ class Output:
             else:
                 newNote = NOTE_TMPL.format(
                     grid_class  = gridclass, 
-                    counter     = counter + 1, 
+                    counter     = counter + 1 - meta_card_counter, 
                     nid         = nid, 
                     creation    = "&nbsp;&#128336; " + timeDiffString, 
                     edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(nid)]),
