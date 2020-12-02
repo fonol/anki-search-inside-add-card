@@ -307,3 +307,14 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     border-left: 2px solid var(--c-note-border-night);
     border-radius: 4px;
 }
+.siac-meta-note {
+    padding-top: 0;
+}
+.siac-meta-btn {
+    height: 30px; 
+    width: 30px; 
+    font-size: 20px !important; 
+    text-align: center; 
+    display: inline-block; 
+    vertical-align: top;
+}
