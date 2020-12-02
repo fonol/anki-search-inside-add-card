@@ -1,0 +1,7 @@
+<div class='cardWrapper siac-user-note siac-meta-note {pdf_class} {grid_class}' id='siac-note-wr-{nid}'>
+    <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+        <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
+    </div>
+    <div class='siac-inner-card siac-user-note' onmouseup='{mouseup}' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
+    <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
+</div>

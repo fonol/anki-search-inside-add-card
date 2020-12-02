@@ -274,7 +274,8 @@ class Output:
             # use either the template for addon's notes or the normal
             if res.note_type == "user":
 
-                newNote = NOTE_TMPL_SIAC.format(
+                template    = NOTE_TMPL_META if res.is_meta_note() else NOTE_TMPL_SIAC
+                newNote     = template.format(
                     grid_class  = gridclass, 
                     counter     = counter + 1, 
                     nid         = nid, 
