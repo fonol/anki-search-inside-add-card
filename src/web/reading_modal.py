@@ -400,7 +400,10 @@ class ReadingModal:
             # the next enqueued note with at least one overlapping tag 
             if done_dialog.tag_filter is not None and len(done_dialog.tag_filter.strip()) > 0:
                 nid = find_next_enqueued_with_tag(done_dialog.tag_filter.split(" "))
-                self.display(nid)
+                if nid is not None and nid > 0:
+                    self.display(nid)
+                else:
+                    self.read_head_of_queue()
             else:
                 self.read_head_of_queue()
         else:
