@@ -547,7 +547,6 @@ window.setSearchResults = function (html, infoStr, infoMap, page = 1, pageMax = 
     } else if (siacState.keepPositionAtRendering) {
         siacState.keepPositionAtRendering = false;
     }
-    let c = 1;
     clearTimeout(loadingTimer);
     if (infoMap && lastHadResults && byId("info-Took")) {
         byId("info-Took").innerHTML = infoMap["Took"];
@@ -564,59 +563,25 @@ window.setSearchResults = function (html, infoStr, infoMap, page = 1, pageMax = 
         lastHadResults = false;
     if (!$searchInfo.hasClass('hidden'))
         $searchInfo.get(0).style.display = "flex";
-    if (renderImmediately) {
-        if (gridView)
-            $('#searchResults .cardWrapper').css("display", "inline-block");
-        else
-            $('#searchResults .cardWrapper').show();
-        sr.style.overflowY = 'auto';
-        sr.style.paddingRight = '10px';
-        byId("greyout").style.display = "none";
-        displayPagination(page, pageMax, total, html.length > 0, cacheSize);
+   
+    if (gridView)
+        $('#searchResults .cardWrapper').css("display", "inline-block");
+    else
+        $('#searchResults .cardWrapper').show();
+    sr.style.overflowY = 'auto';
+    sr.style.paddingRight = '10px';
+    byId("greyout").style.display = "none";
+    displayPagination(page, pageMax, total, html.length > 0, cacheSize);
 
-        if (stamp > -1 && byId("info-took")) {
-            if (printTiming) {
-                let took = new Date().getTime() - stamp;
-                byId("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'><i class='fa fa-info-circle'></i></b>`;
-            } else {
-                byId("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
-            }
+    if (stamp > -1 && byId("info-took")) {
+        if (printTiming) {
+            let took = new Date().getTime() - stamp;
+            byId("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'><i class='fa fa-info-circle'></i></b>`;
+        } else {
+            byId("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
         }
     }
-    else {
-        time = gridView ? 100 : 130;
-        count = gridView ? 16 : 10;
-        if (stamp > -1 && byId("info-took")) {
-            if (printTiming) {
-                let took = new Date().getTime() - stamp;
-                byId("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'><i class='fa fa-info-circle'></i></b>`;
-            } else {
-                byId("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
-            }
-        }
-        function renderLoop() {
-            if (gridView)
-                $("#nWr-" + (c + (50 * (page - 1)))).fadeIn().css("display", "inline-block");
-            else
-                $("#nWr-" + (c + (50 * (page - 1)))).fadeIn();
-            setTimeout(function () {
-                c++;
-                if (c < count) {
-                    renderLoop();
-                } else {
-                    if (gridView)
-                        $('#searchResults .cardWrapper').css("display", "inline-block");
-                    else
-                        $('#searchResults .cardWrapper').show();
-                    sr.style.overflowY = 'auto';
-                    sr.style.paddingRight = '10px';
-                    byId("greyout").style.display = "none";
-                }
-            }, time);
-        }
-        renderLoop();
-        displayPagination(page, pageMax, total, html.length > 0, cacheSize);
-    }
+    
 }
 window.displayPagination = function (page, pageMax, total, resultsFound, cacheSize) {
     if (cacheSize !== -1) {
@@ -827,7 +792,7 @@ window.addonMouseMove = function(event) {
     }, 400);
 }
 window.removeNote = function (nid) {
-    $(byId("cW-" + nid).parentElement.parentElement).remove();
+    $("#siac-note-wr-" + nid).remove();
     updatePinned();
 }
 window.getOffset = function (el) {
