@@ -495,13 +495,9 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Add linked notes sidebar for text and youtube notes",
-        "Add table of contents for PDFs",
-        "Add a button for the layout, bottom left",
-        "Add Auto-hide mode",
-        "Fix: single quote in PDF file name causing error on opening",
-        "Fix: search on tag entry ignoring freeze",
-
+        "Add tag filter to the Done dialog",
+        "Add meta card to Add-on tag results (when clicked in sidebar)",
+        "Fix: Problems with window mode button and Edit Current dialog",
     ]
 
 def known_issues() -> List[str]:
