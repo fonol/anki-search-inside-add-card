@@ -722,34 +722,34 @@ window.sort = function () {
 }
 window.toggleAddon = function () {
 
-    // if (document.body.offsetHeight < 500 || document.body.offsetWidth < 1000) {
-    //     if (document.body.classList.contains('siac-wm-both')) {
-    //         document.body.classList.remove('siac-wm-both');
-    //         document.body.classList.add('siac-wm-addon');
-    //     } else if (document.body.classList.contains('siac-wm-addon')) {
-    //         document.body.classList.remove('siac-wm-addon');
-    //         document.body.classList.add('siac-wm-both');
-    //     } else if (document.body.classList.contains('siac-wm-fields')) {
-    //         document.body.classList.remove('siac-wm-fields');
-    //         document.body.classList.add('siac-wm-both');
-    //     }
-    // } else {
+    if (document.body.offsetHeight < 500 || document.body.offsetWidth < 1000) {
+        if (document.body.classList.contains('siac-wm-both')) {
+            document.body.classList.remove('siac-wm-both');
+            document.body.classList.add('siac-wm-addon');
+        } else if (document.body.classList.contains('siac-wm-addon')) {
+            document.body.classList.remove('siac-wm-addon');
+            document.body.classList.add('siac-wm-both');
+        } else if (document.body.classList.contains('siac-wm-fields')) {
+            document.body.classList.remove('siac-wm-fields');
+            document.body.classList.add('siac-wm-both');
+        }
+    } else {
 
-    //     if (document.body.classList.contains('siac-wm-both')) {
-    //         document.body.classList.remove('siac-wm-both');
-    //         document.body.classList.add('siac-wm-fields');
-    //     } else if (document.body.classList.contains('siac-wm-addon')) {
-    //         document.body.classList.remove('siac-wm-addon');
-    //         document.body.classList.add('siac-wm-fields');
-    //     } else if (document.body.classList.contains('siac-wm-fields')) {
-    //         document.body.classList.remove('siac-wm-fields');
-    //         document.body.classList.add('siac-wm-both');
-    //     }
-    // }
-    // let mode = "Both";
-    // if (document.body.classList.contains('siac-wm-addon')) { mode = "Addon"; }
-    // else if (document.body.classList.contains('siac-wm-fields')) { mode = "Fields"; }
-    // pycmd("siac-window-mode " + mode);
+        if (document.body.classList.contains('siac-wm-both')) {
+            document.body.classList.remove('siac-wm-both');
+            document.body.classList.add('siac-wm-fields');
+        } else if (document.body.classList.contains('siac-wm-addon')) {
+            document.body.classList.remove('siac-wm-addon');
+            document.body.classList.add('siac-wm-fields');
+        } else if (document.body.classList.contains('siac-wm-fields')) {
+            document.body.classList.remove('siac-wm-fields');
+            document.body.classList.add('siac-wm-both');
+        }
+    }
+    let mode = "Both";
+    if (document.body.classList.contains('siac-wm-addon')) { mode = "Addon"; }
+    else if (document.body.classList.contains('siac-wm-fields')) { mode = "Fields"; }
+    pycmd("siac-window-mode " + mode);
 }
 
 window.setWindowMode = function (mode) {
