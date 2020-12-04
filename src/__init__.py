@@ -400,10 +400,16 @@ def setup_hooks():
 def setup_switch_btn(editor: Editor):
     """ Add a button to switch the layout to the bottom of the AddCards dialog. """
 
-    win = aqt.dialogs._dialogs["AddCards"][1]
+    if hasattr(editor, "parentWindow") and isinstance(editor.parentWindow, AddCards):
+        win = aqt.dialogs._dialogs["AddCards"][1]
+    elif hasattr(editor, "parentWindow") and isinstance(editor.parentWindow, EditCurrent):
+        if not conf_or_def("useInEdit", False):
+            return
+        win = aqt.dialogs._dialogs["EditCurrent"][1]
+    else:
+        win = aqt.dialogs._dialogs["AddCards"][1]
+
     if win is None:
-        return
-    if not isinstance(win, AddCards):
         return
         
     box     = win.form.buttonBox
