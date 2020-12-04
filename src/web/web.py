@@ -497,6 +497,7 @@ def changelog() -> List[str]:
     return [
         "Add tag filter to the Done dialog",
         "Add meta card to Add-on tag results (when clicked in sidebar)",
+        "Re-enable toggle shortcut",
         "Fix: Problems with window mode button and Edit Current dialog",
     ]
 
