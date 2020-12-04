@@ -20,7 +20,8 @@
     vertical-align: top;
 }
 body:not(.nightMode) .siac-tomato-main .siac-btn-small {
-    border-color: grey;
+    border-color: #afafaf;
+    border-width: 2px;
 }
 body.nightMode .siac-tomato-main  {
     color: grey;
@@ -36,6 +37,10 @@ body.nightMode .siac-tomato-main .siac-btn-small  {
     padding-top: 2px;
     padding-bottom: 2px;
     vertical-align: top;
+    color: #353535;
+}
+body.nightMode .siac-tomato-main .siac-timer-play-btn {
+    color: grey;
 }
 .siac-tomato-main .siac-timer-btn:hover, .siac-tomato-main .siac-timer-play-btn:hover {
     transform: none;
@@ -54,7 +59,7 @@ body.nightMode .siac-tomato-main .siac-timer-btn.active:hover {
     min-width: 45px;
     text-align: center;
     font-size: 14px;
-    color: grey;
+    color: #353535;
     vertical-align: top;
     line-height: 18px;
 }
