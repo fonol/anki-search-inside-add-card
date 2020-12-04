@@ -778,7 +778,10 @@ window.fieldsMouseEnter = function(event) {
     if (document.body.classList.contains('siac-wm-autohide') && !event.target.classList.contains('visible')) {
         event.target.classList.add('visible');
         if (displayedNoteId && pdf.instance) {
-            setTimeout(() => { Highlighting.displayHighlights(); }, 50);
+            setTimeout(() => { 
+                Highlighting.displayHighlights(); 
+                byId('text-layer').style.left = activeCanvas().offsetLeft + "px";
+            }, 50);
         }
     }
 }
@@ -789,7 +792,10 @@ window.addonMouseMove = function(event) {
         if ($('#siac-right-side').is(':hover') && byId('leftSide').classList.contains('visible')) {
             byId('leftSide').classList.remove('visible');
             if (displayedNoteId && pdf.instance) {
-                setTimeout(() => { Highlighting.displayHighlights(); }, 50);
+                setTimeout(() => { 
+                    Highlighting.displayHighlights(); 
+                    byId('text-layer').style.left = activeCanvas().offsetLeft + "px";
+                }, 50);
             }
         }
     }, 400);
