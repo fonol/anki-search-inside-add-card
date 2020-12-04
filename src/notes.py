@@ -850,6 +850,15 @@ def get_pdf_id_for_source(source: str) -> int:
     conn.close()
     return -1 if res is None or len(res) == 0 else res[0]
 
+def get_unqueued_notes_for_tag(tag: str) -> List[SiacNote]:
+    if len(tag.strip()) == 0:
+        return []
+    query   = _tag_query(tag.split(" "))
+    conn    = _get_connection()
+    res     = conn.execute("select * from notes %s and position is null order by id desc" %(query)).fetchall()
+    conn.close()
+    return _to_notes(res)
+
 
 def get_read_pages(nid: int) -> List[int]:
     """ Get read pages for the given note as list. """
