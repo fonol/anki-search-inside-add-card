@@ -38,4 +38,5 @@ NOTE_TMPL               : HTML  = filled_template("notes/note_template", dict(pr
 NOTE_TMPL_SIMPLE        : HTML  = filled_template("notes/note_template_simple", {})
 NOTE_TMPL_SIAC_SIMPLE   : HTML  = filled_template("notes/note_template_siac_simple", {})
 NOTE_TMPL_SIAC          : HTML  = filled_template("notes/note_template_siac", dict(float_btn = FLOAT_BTN, nid_btn = NID_BTN))
+NOTE_TMPL_META          : HTML  = filled_template("notes/note_template_meta", {})
 

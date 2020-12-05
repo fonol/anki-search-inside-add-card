@@ -149,17 +149,20 @@ window.expandRankingLbl = function (elem) {
 window.expandCard = function (id, icn) {
     pycmd("siac-note-stats " + id);
 }
-window.pinMouseLeave = function (elem) {
-    $(elem).css('opacity', '0');
+window.pinMouseLeave = function (elem, event) {
+    if (event.toElement && event.toElement.classList.contains('siac-inner-card')) {
+        return;
+    }
+    elem.style.opacity = '0';
 }
 window.pinMouseEnter = function (elem) {
-    $(elem).css('opacity', '1');
+    elem.style.opacity = '1';
 }
 window.cardMouseEnter = function (elem, nid, mode = "full") {
     if (mode == "full") {
-        $(`#btnBar-${nid}`).css('opacity', '1');
+        byId('btnBar-' + nid).style.opacity = 1;
     } else {
-        $(`#btnBarSmp-${nid}`).css('opacity', '1');
+        byId('btnBarSmp-' + nid).style.opacity = 1;
     }
 }
 window.showLoading = function (source) {
@@ -183,15 +186,15 @@ window.totalOffset = function (elem) {
 window.cardMouseLeave = function (elem, nid, mode = "full") {
     setTimeout(function () {
         if (mode == "full") {
-            if (!$('#btnBar-' + nid).is(':hover')) {
+            if (!$('#btnBar-' + nid).is(':hover') && !$(elem).is(':hover')) {
                 $('#btnBar-' + nid).css('opacity', '0');
             }
         } else {
-            if (!$('#btnBarSmp-' + nid).is(':hover')) {
+            if (!$('#btnBarSmp-' + nid).is(':hover') && !$(elem).is(':hover')) {
                 $('#btnBarSmp-' + nid).css('opacity', '0');
             }
         }
-    }, 100);
+    }, 50);
 }
 window.tagMouseEnter = function (elem) {
     if (!showTagInfoOnHover || !elem || !elem.parentElement || displayedNoteId)
@@ -547,7 +550,6 @@ window.setSearchResults = function (html, infoStr, infoMap, page = 1, pageMax = 
     } else if (siacState.keepPositionAtRendering) {
         siacState.keepPositionAtRendering = false;
     }
-    let c = 1;
     clearTimeout(loadingTimer);
     if (infoMap && lastHadResults && byId("info-Took")) {
         byId("info-Took").innerHTML = infoMap["Took"];
@@ -564,59 +566,25 @@ window.setSearchResults = function (html, infoStr, infoMap, page = 1, pageMax = 
         lastHadResults = false;
     if (!$searchInfo.hasClass('hidden'))
         $searchInfo.get(0).style.display = "flex";
-    if (renderImmediately) {
-        if (gridView)
-            $('#searchResults .cardWrapper').css("display", "inline-block");
-        else
-            $('#searchResults .cardWrapper').show();
-        sr.style.overflowY = 'auto';
-        sr.style.paddingRight = '10px';
-        byId("greyout").style.display = "none";
-        displayPagination(page, pageMax, total, html.length > 0, cacheSize);
+   
+    if (gridView)
+        $('#searchResults .cardWrapper').css("display", "inline-block");
+    else
+        $('#searchResults .cardWrapper').show();
+    sr.style.overflowY = 'auto';
+    sr.style.paddingRight = '10px';
+    byId("greyout").style.display = "none";
+    displayPagination(page, pageMax, total, html.length > 0, cacheSize);
 
-        if (stamp > -1 && byId("info-took")) {
-            if (printTiming) {
-                let took = new Date().getTime() - stamp;
-                byId("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'><i class='fa fa-info-circle'></i></b>`;
-            } else {
-                byId("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
-            }
+    if (stamp > -1 && byId("info-took")) {
+        if (printTiming) {
+            let took = new Date().getTime() - stamp;
+            byId("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'><i class='fa fa-info-circle'></i></b>`;
+        } else {
+            byId("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
         }
     }
-    else {
-        time = gridView ? 100 : 130;
-        count = gridView ? 16 : 10;
-        if (stamp > -1 && byId("info-took")) {
-            if (printTiming) {
-                let took = new Date().getTime() - stamp;
-                byId("info-Took").innerHTML = `<b>${took}</b> ms &nbsp;<b style='cursor: pointer' onclick='pycmd("siac-last-timing ${new Date().getTime() - rStart}")'><i class='fa fa-info-circle'></i></b>`;
-            } else {
-                byId("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
-            }
-        }
-        function renderLoop() {
-            if (gridView)
-                $("#nWr-" + (c + (50 * (page - 1)))).fadeIn().css("display", "inline-block");
-            else
-                $("#nWr-" + (c + (50 * (page - 1)))).fadeIn();
-            setTimeout(function () {
-                c++;
-                if (c < count) {
-                    renderLoop();
-                } else {
-                    if (gridView)
-                        $('#searchResults .cardWrapper').css("display", "inline-block");
-                    else
-                        $('#searchResults .cardWrapper').show();
-                    sr.style.overflowY = 'auto';
-                    sr.style.paddingRight = '10px';
-                    byId("greyout").style.display = "none";
-                }
-            }, time);
-        }
-        renderLoop();
-        displayPagination(page, pageMax, total, html.length > 0, cacheSize);
-    }
+    
 }
 window.displayPagination = function (page, pageMax, total, resultsFound, cacheSize) {
     if (cacheSize !== -1) {
@@ -754,34 +722,34 @@ window.sort = function () {
 }
 window.toggleAddon = function () {
 
-    // if (document.body.offsetHeight < 500 || document.body.offsetWidth < 1000) {
-    //     if (document.body.classList.contains('siac-wm-both')) {
-    //         document.body.classList.remove('siac-wm-both');
-    //         document.body.classList.add('siac-wm-addon');
-    //     } else if (document.body.classList.contains('siac-wm-addon')) {
-    //         document.body.classList.remove('siac-wm-addon');
-    //         document.body.classList.add('siac-wm-both');
-    //     } else if (document.body.classList.contains('siac-wm-fields')) {
-    //         document.body.classList.remove('siac-wm-fields');
-    //         document.body.classList.add('siac-wm-both');
-    //     }
-    // } else {
+    if (document.body.offsetHeight < 500 || document.body.offsetWidth < 1000) {
+        if (document.body.classList.contains('siac-wm-both')) {
+            document.body.classList.remove('siac-wm-both');
+            document.body.classList.add('siac-wm-addon');
+        } else if (document.body.classList.contains('siac-wm-addon')) {
+            document.body.classList.remove('siac-wm-addon');
+            document.body.classList.add('siac-wm-both');
+        } else if (document.body.classList.contains('siac-wm-fields')) {
+            document.body.classList.remove('siac-wm-fields');
+            document.body.classList.add('siac-wm-both');
+        }
+    } else {
 
-    //     if (document.body.classList.contains('siac-wm-both')) {
-    //         document.body.classList.remove('siac-wm-both');
-    //         document.body.classList.add('siac-wm-fields');
-    //     } else if (document.body.classList.contains('siac-wm-addon')) {
-    //         document.body.classList.remove('siac-wm-addon');
-    //         document.body.classList.add('siac-wm-fields');
-    //     } else if (document.body.classList.contains('siac-wm-fields')) {
-    //         document.body.classList.remove('siac-wm-fields');
-    //         document.body.classList.add('siac-wm-both');
-    //     }
-    // }
-    // let mode = "Both";
-    // if (document.body.classList.contains('siac-wm-addon')) { mode = "Addon"; }
-    // else if (document.body.classList.contains('siac-wm-fields')) { mode = "Fields"; }
-    // pycmd("siac-window-mode " + mode);
+        if (document.body.classList.contains('siac-wm-both')) {
+            document.body.classList.remove('siac-wm-both');
+            document.body.classList.add('siac-wm-fields');
+        } else if (document.body.classList.contains('siac-wm-addon')) {
+            document.body.classList.remove('siac-wm-addon');
+            document.body.classList.add('siac-wm-fields');
+        } else if (document.body.classList.contains('siac-wm-fields')) {
+            document.body.classList.remove('siac-wm-fields');
+            document.body.classList.add('siac-wm-both');
+        }
+    }
+    let mode = "Both";
+    if (document.body.classList.contains('siac-wm-addon')) { mode = "Addon"; }
+    else if (document.body.classList.contains('siac-wm-fields')) { mode = "Fields"; }
+    pycmd("siac-window-mode " + mode);
 }
 
 window.setWindowMode = function (mode) {
@@ -791,31 +759,49 @@ window.setWindowMode = function (mode) {
     document.body.classList.remove('siac-wm-autohide');
 
     document.body.classList.add('siac-wm-' + mode.toLowerCase());
+    if (mode === 'Autohide') {
+        let addEL = function() {
+            if (!byId('siac-right-side')) {
+                setTimeout(addEL, 100);
+                return;
+            }
+            byId('siac-right-side').addEventListener("mousemove", addonMouseMove, true);
+        };
+        addEL();
+    } else {
+        if (byId('siac-right-side')) {
+            byId('siac-right-side').removeEventListener("mousemove", addonMouseMove, true);
+        }
+    }
 }
 window.fieldsMouseEnter = function(event) {
     if (document.body.classList.contains('siac-wm-autohide') && !event.target.classList.contains('visible')) {
         event.target.classList.add('visible');
         if (displayedNoteId && pdf.instance) {
-            setTimeout(() => { Highlighting.displayHighlights(); }, 50);
+            setTimeout(() => { 
+                Highlighting.displayHighlights(); 
+                byId('text-layer').style.left = activeCanvas().offsetLeft + "px";
+            }, 50);
         }
     }
 }
 window.addonMouseMove = function(event) {
-    if (!document.body.classList.contains('siac-wm-autohide')) {
-        return;
-    }
+   
     clearTimeout(window._siac_move_timer);
     window._siac_move_timer = setTimeout(function() {
-        if ($('#siac-right-side').is(':hover')) {
+        if ($('#siac-right-side').is(':hover') && byId('leftSide').classList.contains('visible')) {
             byId('leftSide').classList.remove('visible');
             if (displayedNoteId && pdf.instance) {
-                setTimeout(() => { Highlighting.displayHighlights(); }, 50);
+                setTimeout(() => { 
+                    Highlighting.displayHighlights(); 
+                    byId('text-layer').style.left = activeCanvas().offsetLeft + "px";
+                }, 50);
             }
         }
     }, 400);
 }
 window.removeNote = function (nid) {
-    $(byId("cW-" + nid).parentElement.parentElement).remove();
+    $("#siac-note-wr-" + nid).remove();
     updatePinned();
 }
 window.getOffset = function (el) {

@@ -1108,9 +1108,8 @@ window.modalTabsLeftClicked = function (tab, elem) {
 }
 
 window.setPdfTheme = function (theme) {
-    let style_tag = byId("siac-pdf-css");
-    style_tag.href = style_tag.href.substring(0, style_tag.href.lastIndexOf("/") + 1) + theme;
-    pycmd("siac-eval update_config('pdf.theme', '" + theme + "')");
+    document.documentElement.style.setProperty('--c-reading-modal-theme-color', theme);
+    pycmd("siac-eval update_config('styles.readingModalThemeColor', '" + theme + "')");
 }
 window.schedChange = function (slider) {
     byId('siac-sched-prio-val').innerHTML = prioVerbose(slider.value);

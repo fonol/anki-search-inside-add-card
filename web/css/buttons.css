@@ -51,7 +51,9 @@ body.nightMode .modal-content input {
     font-size: 12px !important;
     outline: none;
 }
-
+.siac-btn-small:hover, .siac-btn-smaller:hover {
+    border-color: #2496dc !important;
+}
 .siac-btn-smaller {
     display: inline;
     padding: 1px 4px 1px 4px;
@@ -84,6 +86,7 @@ body.nightMode .modal-content input {
 .siac-btn-small:hover .siac-btn-small-dropdown.hover, .siac-btn-small.expanded .siac-btn-small-dropdown.click {
     border: 2px outset var(--c-button-border);
     max-height: 355px;
+    border-color: #2496dc;
 }
 
 .siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {

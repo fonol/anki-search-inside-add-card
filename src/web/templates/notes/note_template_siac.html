@@ -1,8 +1,8 @@
-<div class='cardWrapper siac-user-note {pdf_class} {grid_class}' id='nWr-{counter}'>
+<div class='cardWrapper siac-user-note {pdf_class} {grid_class}' id='siac-note-wr-{nid}'>
     <div class='topLeftWr'>
         <div id='cW-{nid}' class='rankingLbl' onclick='pycmd("siac-copy-to-cb {nid}")'>{counter} &nbsp;SIAC<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
     </div>
-    <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+    <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this, event)' onmouseenter='pinMouseEnter(this)'>
         <div class='deleteLbl' onclick='pycmd("siac-delete-user-note-modal {nid}"); '><i class='fa fa-trash'></i></div>
         <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'><i class="fa fa-pencil"></i></div>
         <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>

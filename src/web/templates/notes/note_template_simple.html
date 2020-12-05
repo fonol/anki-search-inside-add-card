@@ -3,7 +3,7 @@
         <div class='rankingLbl'>{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
         {ret}
     </div>
-    <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this)' onmouseenter='pinMouseEnter(this)'>
+    <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this, event)' onmouseenter='pinMouseEnter(this)'>
         <div class='editLbl' onclick='edit({nid})'><i class="fa fa-pencil"></i></div>
     </div>
     <div class='siac-inner-card' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>

@@ -18,12 +18,16 @@
 from aqt.qt import *
 from aqt.utils import tooltip
 import typing
+from typing import Optional
+import functools
 import os
 from .components import QtPrioritySlider, QtScheduleComponent, NoteSelectorMode, NoteSelector
-from ..notes import get_note, get_priority
+from ..notes import get_note, get_priority, len_enqueued_with_tag
 from ..config import get_config_value_or_default
 
 class DoneDialog(QDialog):
+
+    last_tag_filter : Optional[str] = None
 
     def __init__(self, parent, note_id):
         QDialog.__init__(self, parent)
@@ -34,6 +38,7 @@ class DoneDialog(QDialog):
         self.add_mode           = False
         self.enqueue_next_ids   = []
         self.enqueue_next_prio  = -1
+        self.tag_filter         = ""
         self.setup_ui()
 
     def setup_ui(self):
@@ -61,6 +66,10 @@ class DoneDialog(QDialog):
 
         self.accept_btn = QPushButton(title)
         self.accept_btn.clicked.connect(self.on_accept)
+
+        self.accept_btn.setShortcut(QKeySequence("Ctrl+Return"))
+        self.accept_btn.setToolTip("Ctrl+Return")
+
         self.reject_btn = QPushButton("Cancel")
         self.reject_btn.clicked.connect(self.reject)
 
@@ -71,15 +80,19 @@ class DoneDialog(QDialog):
 
         self.layout.addLayout(self.hbox)
         self.setLayout(self.layout)
+        self.accept_btn.setFocus(True)
         self.setMinimumWidth(300)
             
     def on_accept(self):
-        self.priority = self.done_tab.slider.value()
-        self.schedule = self.schedule_tab.scheduler._get_schedule()
-        self.schedule_has_changed = self.schedule_tab.scheduler.schedule_has_changed()
+        self.priority               = self.done_tab.slider.value()
+        self.tag_filter             = self.done_tab.tag_filter_inp.text()
+        self.schedule               = self.schedule_tab.scheduler._get_schedule()
+        self.schedule_has_changed   = self.schedule_tab.scheduler.schedule_has_changed()
         if not self.add_mode:
             self.enqueue_next_ids   = self.enqueue_next_tab.note_selector.selected_ids
             self.enqueue_next_prio  = self.enqueue_next_tab.slider.value()
+
+        DoneDialog.last_tag_filter  = self.tag_filter
         self.accept()
 
 class DoneTab(QWidget):
@@ -95,6 +108,83 @@ class DoneTab(QWidget):
         self.slider = QtPrioritySlider(self.parent.priority, self.parent.note_id, False, None)
         self.layout.addWidget(self.slider)
 
+        #
+        # Tag filter
+        #
+        box                 = QGroupBox("Filter: Tags")
+        tag_filter_hb       = QHBoxLayout()
+        self.tag_filter_inp = QLineEdit()
+        self.tag_filter_cb  = QPushButton("Tags...")
+        menu                = QMenu(self.tag_filter_cb)
+
+        tag_filter_hb.addWidget(self.tag_filter_inp)
+        tag_filter_hb.setSpacing(0)
+        tags                = self.parent.note.tags
+        used                = []
+        
+        self.tag_filter_inp.textChanged.connect(self.on_tag_filter_change)
+
+        if tags is not None:
+            for t in tags.split(" "):
+                if len(t.strip()) == 0:
+                    continue
+                t   = t.strip()
+                subtags = t.split("::")
+                for n in range(1, max(2, len(subtags))):
+                    l = [subtags[0:i+n] for i in range(len(subtags)-n+1)]
+                    for sl in l:
+                        joined = "::".join(sl) 
+                        if not joined in used:
+                            used.append(joined)
+
+            for t in used:
+                a = menu.addAction(t)
+                a.triggered.connect(functools.partial(self.add_tag_to_filter, t))
+            
+        self.tag_filter_cb.setMenu(menu)
+
+        clear_btn = QToolButton()
+        clear_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
+        clear_btn.clicked.connect(self.clear_tag_filter)
+        tag_filter_hb.addSpacing(2)
+        tag_filter_hb.addWidget(clear_btn)
+        tag_filter_hb.addSpacing(8)
+
+        tag_filter_hb.addWidget(self.tag_filter_cb)
+        tag_filter_vb = QVBoxLayout()
+        tag_filter_vb.addLayout(tag_filter_hb)
+        self.tag_filter_lbl = QLabel("If set, next opened note must have at least one matching tag.")
+        tag_filter_vb.addSpacing(5)
+        tag_filter_vb.addWidget(self.tag_filter_lbl)
+        box.setLayout(tag_filter_vb)
+        self.layout.addStretch()
+        self.layout.addWidget(box)
+
+        if DoneDialog.last_tag_filter is not None and len(DoneDialog.last_tag_filter.strip()) > 0:
+            self.tag_filter_inp.setText(DoneDialog.last_tag_filter)
+
+    def on_tag_filter_change(self):
+        value = self.tag_filter_inp.text()
+        if value and len(value.strip()) > 0:
+            c = len_enqueued_with_tag([t.strip() for t in value.split(" ") if len(t.strip()) > 0])
+            self.tag_filter_lbl.setText(f"<b>{c}</b> queued note(s) with at least one matching tag.")
+        else:
+            self.tag_filter_lbl.setText(f"If set, next opened note must have at least one matching tag.")
+
+    def clear_tag_filter(self):
+        self.tag_filter_inp.setText("")
+
+    def add_tag_to_filter(self, tag):
+        current = self.tag_filter_inp.text()
+        if not current:
+            self.tag_filter_inp.setText(tag + " ")
+        else:
+            tags = [t.strip() for t in current.split(" ") if len(t.strip()) > 0]
+            if not tag in tags:
+                self.tag_filter_inp.setText(current.strip() + " " + tag)
+            
+
+
 class EnqueueNextTab(QWidget):
 
     def __init__(self, parent):
@@ -103,11 +193,11 @@ class EnqueueNextTab(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        self.layout = QVBoxLayout()
+        self.layout         = QVBoxLayout()
         self.setLayout(self.layout)
-        self.note_selector = NoteSelector(self, NoteSelectorMode.UNQUEUED, nid=self.parent.note_id)
+        self.note_selector  = NoteSelector(self, NoteSelectorMode.UNQUEUED, nid=self.parent.note_id)
         self.layout.addWidget(self.note_selector)
-        self.slider = QtPrioritySlider(self.parent.priority, None, False, None)
+        self.slider         = QtPrioritySlider(self.parent.priority, None, False, None)
         self.slider.slider.setMinimum(1)
         self.layout.addWidget(self.slider)
 
