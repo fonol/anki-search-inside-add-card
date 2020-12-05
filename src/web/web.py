@@ -126,6 +126,7 @@ def styles() -> str:
     if re.match("url\(.+\)", rm_texture):
         rm_texture      = rm_texture.replace("url('", "url('" + url)
     rm_bg_size          = str(get_config_value_or_default("styles.readingModalBackgroundSize", "80"))
+    rm_theme            = str(get_config_value_or_default("styles.readingModalThemeColor", "darkorange"))
 
     css                 = css.replace("$imgMaxHeight$", imgMaxHeight)
     css                 = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
@@ -148,6 +149,7 @@ def styles() -> str:
     css                 = css.replace("$styles.readingModalFilter$", rm_filter)
     css                 = css.replace("$styles.readingModalTexture$", rm_texture)
     css                 = css.replace("$styles.readingModalBackgroundSize$", rm_bg_size)
+    css                 = css.replace("$styles.readingModalThemeColor$", rm_theme)
 
     return css
 
@@ -493,13 +495,10 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Add linked notes sidebar for text and youtube notes",
-        "Add table of contents for PDFs",
-        "Add a button for the layout, bottom left",
-        "Add Auto-hide mode",
-        "Fix: single quote in PDF file name causing error on opening",
-        "Fix: search on tag entry ignoring freeze",
-
+        "Add tag filter to the Done dialog",
+        "Add meta card to Add-on tag results (when clicked in sidebar)",
+        "Re-enable toggle shortcut",
+        "Fix: Problems with window mode button and Edit Current dialog",
     ]
 
 def known_issues() -> List[str]:

@@ -1,0 +1,21 @@
+<div class='mt-10' style='user-select: none;'>
+    <div class='flex-row'>
+        <div class='siac-btn siac-btn-small siac-meta-btn mr-5 flex-col'
+            style='font-size: 15px !important; cursor: default; display: flex; justify-content: center; min-width: 30px;'
+            title='Avg. priority of queued notes with this tag'>
+            <b style='vertical-align: middle'>{avg_prio}</b>
+        </div>
+        <div class='siac-btn siac-btn-small siac-meta-btn mr-5'
+            style='font-size: 20px !important'
+            title='Read next in queue with this tag'
+            onclick='pycmd("siac-read-next-with-tag {tag}")'>
+            <i class='fa fa-inbox' style='vertical-align: middle;'></i>
+        </div>
+        <div class='siac-btn siac-btn-small siac-meta-btn mr-5'
+            style='font-size: 20px !important'
+            title='Read random with this tag'
+            onclick='pycmd("siac-read-random-with-tag {tag}")'>
+            <i class='fa fa-random' style='vertical-align: middle;'></i>
+        </div>
+    </div>
+</div>

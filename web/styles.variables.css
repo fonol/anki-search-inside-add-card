@@ -10,6 +10,7 @@
 --c-reading-modal-filter: $styles.readingModalFilter$;
 --c-reading-modal-texture: $styles.readingModalTexture$;
 --c-reading-modal-background-size: $styles.readingModalBackgroundSize$px;
+--c-reading-modal-theme-color: $styles.readingModalThemeColor$;
 
 --c-suspended-foreground: $styles.suspendedForegroundColor$;
 --c-suspended-background: $styles.suspendedBackgroundColor$;

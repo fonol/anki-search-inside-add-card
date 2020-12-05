@@ -21,6 +21,7 @@ import typing
 from enum import Enum, unique
 from typing import List, Tuple, Any, Optional, Dict
 from aqt.editor import Editor
+from aqt.editcurrent import EditCurrent
 
 import utility.misc
 
@@ -110,7 +111,17 @@ def set_window_mode(mode: str, editor):
     mw.addonManager.writeConfig(mod, config)
     editor.web.eval(f"setWindowMode('{mode}')")
 
-    win                     = aqt.dialogs._dialogs["AddCards"][1]
+    if hasattr(editor, "parentWindow") and isinstance(editor.parentWindow, aqt.addcards.AddCards):
+        win = aqt.dialogs._dialogs["AddCards"][1]
+    elif hasattr(editor, "parentWindow") and isinstance(editor.parentWindow, EditCurrent):
+        if not config["useInEdit"]:
+            return
+        win = aqt.dialogs._dialogs["EditCurrent"][1]
+    else:
+        win = aqt.dialogs._dialogs["AddCards"][1]
+
+    if win is None:
+        return
     box                     = win.form.buttonBox
     box.switch_btn.setText(mode)
 
@@ -146,7 +157,17 @@ def switch_window_mode(direction: str, editor):
     mw.addonManager.writeConfig(mod, config)
     editor.web.eval(f"setWindowMode('{window_mode.name}')")
 
-    win                     = aqt.dialogs._dialogs["AddCards"][1]
+    if hasattr(editor, "parentWindow") and isinstance(editor.parentWindow, aqt.addcards.AddCards):
+        win = aqt.dialogs._dialogs["AddCards"][1]
+    elif hasattr(editor, "parentWindow") and isinstance(editor.parentWindow, EditCurrent):
+        if not config["useInEdit"]:
+            return
+        win = aqt.dialogs._dialogs["EditCurrent"][1]
+    else:
+        win = aqt.dialogs._dialogs["AddCards"][1]
+
+    if win is None:
+        return
     box                     = win.form.buttonBox
     box.switch_btn.setText(window_mode.name)
 

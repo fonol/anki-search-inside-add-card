@@ -301,10 +301,11 @@ def create_note(title: str,
         source = source.strip()
     if (len(text) + len(title)) == 0:
         return
-    if tags is not None and len(tags.strip()) > 0:
-        tags = " %s " % tags.strip()
-    else: 
+    if tags is None:
         tags = ""
+    tags = tags.replace('"', "").replace("'", "")
+    if len(tags.strip()) > 0:
+        tags = " %s " % tags.strip()
 
     conn    = _get_connection()
     id      = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority)
@@ -594,6 +595,30 @@ def _calc_score(priority: int, days_delta: float) -> float:
     else:
         return PRIORITY_SCALE_FACTOR * days_delta + PRIORITY_MOD * prio_score
 
+def find_next_enqueued_with_tag(tags: List[str]) -> Optional[int]:
+    if tags is None or len(tags) == 0:
+        return get_head_of_queue()
+    q   = _tag_query(tags)
+    c   = _get_connection()
+    nid = c.execute(f"select id from notes {q} and position is not null order by position limit 1").fetchone()
+    c.close()
+    if not nid:
+        return None
+    return nid[0]
+    
+
+def len_enqueued_with_tag(tags: List[str]) -> int:
+    """ Returns the number of enqueued notes that have at least one of the given tags.  """
+    if tags is None or len(tags) == 0:
+        return 0
+    q = _tag_query(tags)
+    c = _get_connection()
+    count = c.execute(f"select count(*) from notes {q} and position is not null").fetchone()
+    c.close()
+    if not count:
+        return 0
+    return count[0]
+
 #endregion priority queue
 
 
@@ -657,6 +682,17 @@ def get_avg_priority() -> float:
     if res[0] is None:
         return 0
     return res[0]
+
+def get_avg_priority_for_tag(tag: str) -> float:
+    conn    = _get_connection()
+    res     = conn.execute(f"select avg(priority) from notes where priority is not NULL and priority > 0").fetchone()
+    conn.close()
+    if res is None or len(res) == 0:
+        return 0
+    if res[0] is None:
+        return 0
+    return res[0]
+
 
 
 def get_priority_as_str(nid: int) -> str:
@@ -817,17 +853,12 @@ def get_pdf_id_for_source(source: str) -> int:
 def get_unqueued_notes_for_tag(tag: str) -> List[SiacNote]:
     if len(tag.strip()) == 0:
         return []
-    query = ""
-    for t in tag.split(" "):
-        if len(t) > 0:
-            t = t.replace("'", "''")
-            if len(query) > 6:
-                query += " or "
-            query = f"{query}lower(tags) like '% {t} %' or lower(tags) like '% {t}::%' or lower(tags) like '%::{t} %' or lower(tags) like '{t} %' or lower(tags) like '%::{t}::%'"
-    conn = _get_connection()
-    res = conn.execute("select * from notes where (%s) and position is null order by id desc" %(query)).fetchall()
+    query   = _tag_query(tag.split(" "))
+    conn    = _get_connection()
+    res     = conn.execute("select * from notes %s and position is null order by id desc" %(query)).fetchall()
     conn.close()
     return _to_notes(res)
+
 
 def get_read_pages(nid: int) -> List[int]:
     """ Get read pages for the given note as list. """
@@ -989,10 +1020,14 @@ def update_note_text(id: int, text: str):
         index.update_user_note((id, note[0], text, note[1], note[2], -1, ""))
 
 def update_note_tags(id: int, tags: str):
+    if tags is None:
+        tags = ""
+    tags = tags.replace('"', "").replace("'", "")
     if not tags.endswith(" "):
         tags += " "
     if not tags.startswith(" "):
         tags = f" {tags}"
+    
     conn = _get_connection()
     sql = """ update notes set tags=?, modified=datetime('now', 'localtime') where id=? """
     conn.execute(sql, (tags, id))
@@ -1006,9 +1041,12 @@ def update_note_tags(id: int, tags: str):
 def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int, author: str):
 
     # text = utility.text.clean_user_note_text(text)
-    tags = " %s " % tags.strip()
-    mod = _date_now_str()
-    conn = _get_connection()
+    if tags is None:
+        tags = ""
+    tags    = " %s " % tags.strip()
+    tags    = tags.replace('"', "").replace("'", "")
+    mod     = _date_now_str()
+    conn    = _get_connection()
     # a prio of -1 means unchanged, so don't update
     if priority != -1:
         sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, last_priority=priority, priority=?, lastscheduled=coalesce(lastscheduled, ?) where id=?"
@@ -1114,27 +1152,30 @@ def get_all_tags() -> Set[str]:
                     tag_set.add(t)
     return tag_set
 
-def find_by_tag(tag_str, to_output_list=True):
+def find_by_tag(tag_str, to_output_list=True) -> List[SiacNote]:
     if len(tag_str.strip()) == 0:
         return []
-    index = get_index()
-    pinned = []
+    index   = get_index()
+    pinned  = []
     if index is not None:
         pinned = index.pinned
-    
-    query = "where "
-    for t in tag_str.split(" "):
-        if len(t) > 0:
-            t = t.replace("'", "''")
-            if len(query) > 6:
-                query += " or "
-            query = f"{query}lower(tags) like '% {t} %' or lower(tags) like '% {t}::%' or lower(tags) like '%::{t} %' or lower(tags) like '{t} %' or lower(tags) like '%::{t}::%'"
-    conn = _get_connection()
-    res = conn.execute("select * from notes %s order by id desc" %(query)).fetchall()
+    tags    = tag_str.split(" ") 
+    query   = _tag_query(tags)
+    conn    = _get_connection()
+    res     = conn.execute("select * from notes %s order by id desc" %(query)).fetchall()
     conn.close()
     if not to_output_list:
         return res
     return _to_notes(res, pinned)
+
+def get_random_with_tag(tag) -> Optional[int]:
+    query   = _tag_query([tag])
+    conn    = _get_connection()
+    res     = conn.execute("select id from notes %s order by random() limit 1" %(query)).fetchone()
+    conn.close()
+    if res is None:
+        return None
+    return res[0]
 
 def find_by_text(text: str):
     index = get_index()
@@ -1851,6 +1892,19 @@ def _backup_folder() -> str:
     file_path += f"siac_backups/"
     return file_path.strip()
     
+def _tag_query(tags: List[str]) -> str:
+
+    if not tags or len(tags) == 0:
+        return
+    query = "where ("
+    for t in tags:
+        if len(t) > 0:
+            t = t.replace("'", "''")
+            if len(query) > 7:
+                query += " or "
+            query = f"{query}lower(tags) like '% {t} %' or lower(tags) like '% {t}::%' or lower(tags) like '%::{t} %' or lower(tags) like '{t} %' or lower(tags) like '%::{t}::%'"
+    query += ")"
+    return query
 
 
 def _to_notes(db_list: List[Tuple[Any, ...]], pinned: List[int] = []) -> List[SiacNote]:

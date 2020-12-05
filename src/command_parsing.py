@@ -53,6 +53,7 @@ from .dialogs.pdf_extract import PDFExtractDialog
 from .dialogs.importing.zotero_import import ZoteroImporter
 from .dialogs.schedule_dialog import ScheduleDialog
 from .dialogs.timer_elapsed import TimerElapsedDialog
+from .dialogs.done_dialog import DoneDialog
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 from .models import SiacNote
@@ -615,9 +616,26 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-r-user-note-search-tag "):
         stamp = set_stamp()
-        if check_index():
-            notes = find_by_tag(" ".join(cmd.split()[1:]))
-            index.ui.print_search_results(notes, stamp)
+        tag         = " ".join(cmd.split()[1:])
+        notes       = find_by_tag(tag)
+        # add meta note
+        prios       = [n.priority for n in notes if n.priority is not None and n.priority > 0]
+        avg_prio    = round(sum(prios) / len(prios), 1) if len(prios) > 0 else "-"
+        notes.insert(0, SiacNote.mock(f"Tag: {tag}", filled_template("notes/tag_meta", dict(tag = tag, avg_prio = avg_prio)), "Meta"))
+        index.ui.print_search_results(notes, stamp)
+
+    elif cmd.startswith("siac-read-next-with-tag "):
+        nid                 = find_next_enqueued_with_tag(cmd.split(" ")[1:])
+        if nid and nid > 0  : 
+            DoneDialog.last_tag_filter = cmd.split()[1]
+            index.ui.reading_modal.display(nid)
+        else                : 
+            tooltip("No queued note found for the given tag.")              
+
+    elif cmd.startswith("siac-read-random-with-tag "):
+        nid                 = get_random_with_tag(cmd.split(" ")[1])
+        if nid and nid > 0  : index.ui.reading_modal.display(nid)
+        else                : tooltip("No note found for the given tag.")              
 
     elif cmd == "siac-user-note-queue-picker":
         # show the queue manager dialog

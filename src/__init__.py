@@ -267,7 +267,6 @@ def insert_scripts():
     """
 
     addon_id    = utility.misc.get_addon_id()
-    pdf_theme   = conf_or_def("pdf.theme", "pdf_reader.css")
     port        = mw.mediaServer.getPort()
 
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf|woff2?)$")
@@ -315,11 +314,6 @@ def insert_scripts():
         setTimeout(function() {{
             script = document.createElement('script');
             script.type = 'text/javascript';
-            script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/plot.resize.js';
-            document.body.appendChild(script);
-
-            script = document.createElement('script');
-            script.type = 'text/javascript';
             script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/cal-heatmap.min.js';
             document.body.appendChild(script);
         }}, 200);
@@ -343,9 +337,8 @@ def insert_scripts():
 
         script = document.createElement('link');
         script.type = 'text/css';
-        script.id ='siac-pdf-css';
         script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/{pdf_theme}';
+        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf_reader.css';
         document.body.appendChild(script);
 
         script = document.createElement('script');
@@ -407,10 +400,16 @@ def setup_hooks():
 def setup_switch_btn(editor: Editor):
     """ Add a button to switch the layout to the bottom of the AddCards dialog. """
 
-    win = aqt.dialogs._dialogs["AddCards"][1]
+    if hasattr(editor, "parentWindow") and isinstance(editor.parentWindow, AddCards):
+        win = aqt.dialogs._dialogs["AddCards"][1]
+    elif hasattr(editor, "parentWindow") and isinstance(editor.parentWindow, EditCurrent):
+        if not conf_or_def("useInEdit", False):
+            return
+        win = aqt.dialogs._dialogs["EditCurrent"][1]
+    else:
+        win = aqt.dialogs._dialogs["AddCards"][1]
+
     if win is None:
-        return
-    if not isinstance(win, AddCards):
         return
         
     box     = win.form.buttonBox

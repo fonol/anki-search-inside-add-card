@@ -219,6 +219,7 @@ class ReadingModal:
         # pages read are ordered by date, so take last
         last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
 
+
         if self.note.extract_start is not None:
             if len(pages_read) > 0:
                 read_in_extract = [p for p in pages_read if p >= self.note.extract_start and p <= self.note.extract_end]
@@ -231,7 +232,7 @@ class ReadingModal:
         port            = mw.mediaServer.getPort()
 
         init_code = """
-
+            (() => {
             pdfLoading = true;
             var bstr = atob(b64);
             pdf.pagesRead = [%s];
@@ -297,6 +298,7 @@ class ReadingModal:
             loadFn();
             b64 = "";
             bstr = null; file = null;
+            })();
         """ % (pages_read_js, marks_js, extract_js, port, addon_id, note_id, last_page_read, title, note_id)
 
         #send large files in multiple packets
@@ -387,15 +389,23 @@ class ReadingModal:
                         update_reminder(self.note_id, "")
 
             remove_delay(self.note_id)
-
-
             update_priority_list(self.note_id, new_priority)
 
+            # 1. check if any notes have been selected to enqueue, if yes, update priority list
             if done_dialog.enqueue_next_ids and len(done_dialog.enqueue_next_ids) > 0:
                 for nid in done_dialog.enqueue_next_ids:
                     update_priority_list(nid, done_dialog.enqueue_next_prio)
-
-            self.read_head_of_queue()
+            
+            # 2. check if a tag filter is set, if yes, the next opened note should not be the first in the queue, but rather
+            # the next enqueued note with at least one overlapping tag 
+            if done_dialog.tag_filter is not None and len(done_dialog.tag_filter.strip()) > 0:
+                nid = find_next_enqueued_with_tag(done_dialog.tag_filter.split(" "))
+                if nid is not None and nid > 0:
+                    self.display(nid)
+                else:
+                    self.read_head_of_queue()
+            else:
+                self.read_head_of_queue()
         else:
             self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
 
