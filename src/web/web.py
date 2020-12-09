@@ -507,6 +507,8 @@ def changelog() -> List[str]:
         "Add meta card to Add-on tag results (when clicked in sidebar)",
         "Re-enable toggle shortcut",
         "Fix: Problems with window mode button and Edit Current dialog",
+        "Fix: Error on 'Read first in queue' in menu when queue empty",
+        "Fix: Error on indexing if decks set in config"
     ]
 
 def known_issues() -> List[str]:
