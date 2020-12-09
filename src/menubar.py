@@ -2,7 +2,7 @@ from aqt import QMenu, mw
 from aqt.qt import QAction, QKeySequence, Qt, QIcon
 from .config import get_config_value
 from .api import show_queue_picker, show_quick_open_pdf, queue_has_items, try_open_first_in_queue
-from aqt.utils import showInfo
+from aqt.utils import showInfo, tooltip
 from .dialogs.editor import NoteEditor
 from .dialogs.importing.zotero_import import ZoteroImporter
 from .dialogs.importing.quick_youtube_import import QuickYoutubeImport
@@ -67,7 +67,7 @@ class Menu():
 
             text=f"""Title: {title}""" + "  \n" + f"""Channel: {channel}"""
 
-            noteeditor = NoteEditor(mw.app.activeWindow(), title_prefill = title, text_prefill = text, source_prefill = url)
+            note_editor = NoteEditor(mw.app.activeWindow(), title_prefill = title, text_prefill = text, source_prefill = url)
 
     def import_create_new(self):
         dialog = NoteEditor(mw.app.activeWindow())
