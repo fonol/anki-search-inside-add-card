@@ -70,7 +70,7 @@ class Menu():
 
             text=f"""Title: {title}""" + "  \n" + f"""Channel: {channel}"""
 
-            noteeditor = NoteEditor(mw.app.activeWindow(), title_prefill = title, text_prefill = text, source_prefill = url)
+            note_editor = NoteEditor(mw.app.activeWindow(), title_prefill = title, text_prefill = text, source_prefill = url)
 
     def import_create_new(self):
         dialog = NoteEditor(mw.app.activeWindow())

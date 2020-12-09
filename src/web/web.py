@@ -435,7 +435,15 @@ def fillDeckSelect(editor: Optional[Editor] = None, expanded= False, update = Tr
             html = "<ul class='deck-sub-list'>"
         for key, value in dmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( "selected" if str(deckMap[full]) in decks or decks == ["-1"] else "", deckMap[full],  "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+            if full in deckMap:
+                did = deckMap[full]
+            elif len(deckMap) == 1:
+                did = list(deckMap.values())[0]
+            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( 
+                "selected" if str(did) in decks or decks == ["-1"] else "", 
+                did,  "[+]" if value else "", 
+                utility.text.trim_if_longer_than(key, 35), 
+                iterateMap(value, full, False))
         html += "</ul>"
         return html
 
@@ -501,6 +509,8 @@ def changelog() -> List[str]:
         "Add meta card to Add-on tag results (when clicked in sidebar)",
         "Re-enable toggle shortcut",
         "Fix: Problems with window mode button and Edit Current dialog",
+        "Fix: Error on 'Read first in queue' in menu when queue empty",
+        "Fix: Error on indexing if decks set in config"
     ]
 
 def known_issues() -> List[str]:
