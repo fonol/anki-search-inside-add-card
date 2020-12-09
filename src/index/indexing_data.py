@@ -73,7 +73,7 @@ def index_data_size() -> int:
 
     # todo: find out why count(distinct notes.id) returns slightly different number
     if deckStr:
-        c_anki           = mw.col.db.scalar("select count(*) from (select distinct notes.id, did, mid from notes left join cards on notes.id = cards.nid where did in %s" %(deckStr))
+        c_anki           = mw.col.db.scalar("select count(*) from (select distinct notes.id, did, mid from notes left join cards on notes.id = cards.nid where did in %s)" %(deckStr))
     else:
         c_anki           = mw.col.db.scalar("select count(*) from (select distinct notes.id, did, mid from notes left join cards on notes.id = cards.nid)")
 
