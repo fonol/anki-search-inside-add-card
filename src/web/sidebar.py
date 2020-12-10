@@ -219,8 +219,9 @@ class Sidebar:
             self.refresh()
 
     def refresh(self):
+        if self._editor is None:
+            return
         self.display()
-        
     
 
     def show_tab(self, tab: int):
