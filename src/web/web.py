@@ -508,7 +508,8 @@ def changelog() -> List[str]:
         "Re-enable toggle shortcut",
         "Fix: Problems with window mode button and Edit Current dialog",
         "Fix: Error on 'Read first in queue' in menu when queue empty",
-        "Fix: Error on indexing if decks set in config"
+        "Fix: Error on indexing if decks set in config",
+        "Fix: Error on deleting note from Queue Manager if opened through menubar"
     ]
 
 def known_issues() -> List[str]:
