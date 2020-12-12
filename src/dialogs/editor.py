@@ -137,6 +137,8 @@ class NoteEditor(QDialog):
         self.prio_prefill   = prio_prefill
         self.dark_mode_used = state.night_mode
 
+        self.screen_h       = QApplication.desktop().screenGeometry().height()
+
         if self.note_id is not None:
             self.note = get_note(note_id)
             if not self.note:
@@ -354,6 +356,7 @@ class CreateTab(QWidget):
         self.tree               = QTreeWidget()
         self.original_bg        = None
         self.original_fg        = None
+
         web_path                = utility.misc.get_web_folder_path()
         icons_path              = web_path + "icons/"
         config                  = mw.addonManager.getConfig(__name__)
@@ -511,8 +514,15 @@ class CreateTab(QWidget):
         f = self.text.font()
         f.setPointSize(12)
         self.text.setFont(f)
-        self.text.setMinimumHeight(380)
-        self.text.setMinimumWidth(470)
+
+        
+        if self.parent.screen_h < 1400: 
+            self.text.setMinimumHeight(180)
+            self.text.setMinimumWidth(370)
+        else:
+            self.text.setMinimumHeight(380)
+            self.text.setMinimumWidth(470)
+
         self.text.setSizePolicy(
             QSizePolicy.Expanding,
             QSizePolicy.Expanding)
@@ -570,8 +580,14 @@ class CreateTab(QWidget):
         vbox.addWidget(self.text)
 
         self.preview = QWebEngineView()
-        self.preview.setMinimumHeight(380)
-        self.preview.setMinimumWidth(470)
+
+        if self.parent.screen_h < 1400: 
+            self.preview.setMinimumHeight(180)
+            self.preview.setMinimumWidth(370)
+        else:
+            self.preview.setMinimumHeight(380)
+            self.preview.setMinimumWidth(470)
+            
         self.preview.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.preview.setVisible(False)
         vbox.addWidget(self.preview)
