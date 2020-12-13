@@ -1079,10 +1079,23 @@ class SettingsTab(QWidget):
         self.layout.addSpacing(15)
         self.layout.addWidget(QLabel("Example queue calculation with current settings:"))
 
+
+        container = QWidget()
+        container.setLayout(QVBoxLayout())
+        container.layout().setContentsMargins(0,0,0,0)
+
         self.qu_examples = [QLineEdit() for ix in range(0, 13)]
         for le in self.qu_examples:
-            self.layout.addWidget(le)
+            container.layout().addWidget(le)
 
+        qs = QScrollArea()
+        qs.setStyleSheet(""" QScrollArea { background-color: transparent; } """)
+        qs.setFrameShape(QFrame.NoFrame)
+        qs.setWidgetResizable(True)
+        qs.setWidget(container)
+        qs.setMaximumHeight(300)
+
+        self.layout.addWidget(qs)
         self.layout.addStretch(1)
         self.setLayout(self.layout)
         self.update_queue_example()
