@@ -35,6 +35,7 @@ from ..markdown import markdown
 from ..config import get_config_value_or_default, update_config
 from ..web_import import import_webpage
 from .importing.url_import import UrlImporter
+from .external_file import ExternalFile
 from .components import QtPrioritySlider, MDTextEdit
 from .url_input_dialog import URLInputDialog
 from ..markdown.extensions.fenced_code import FencedCodeExtension
@@ -515,8 +516,8 @@ class CreateTab(QWidget):
         f.setPointSize(12)
         self.text.setFont(f)
 
-        
-        if self.parent.screen_h < 1400: 
+
+        if self.parent.screen_h < 1400:
             self.text.setMinimumHeight(180)
             self.text.setMinimumWidth(370)
         else:
@@ -581,13 +582,13 @@ class CreateTab(QWidget):
 
         self.preview = QWebEngineView()
 
-        if self.parent.screen_h < 1400: 
+        if self.parent.screen_h < 1400:
             self.preview.setMinimumHeight(180)
             self.preview.setMinimumWidth(370)
         else:
             self.preview.setMinimumHeight(380)
             self.preview.setMinimumWidth(470)
-            
+
         self.preview.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.preview.setVisible(False)
         vbox.addWidget(self.preview)
@@ -600,10 +601,14 @@ class CreateTab(QWidget):
         else:
             source_lbl          = QLabel("Source")
         source_hb           = QHBoxLayout()
-        source_hb.addWidget(self.source)
+        #source_hb.addWidget(self.source)
         if self.parent.source_prefill is not None:
             self.source.setText(self.parent.source_prefill.replace("\\", "/"))
 
+        file_btn            = QPushButton("External file")
+        file_btn.setFocusPolicy(Qt.NoFocus)
+        file_btn.clicked.connect(self.on_file_clicked)
+        source_hb.addWidget(file_btn)
         pdf_btn             = QPushButton("PDF")
         pdf_btn.setFocusPolicy(Qt.NoFocus)
         pdf_btn.clicked.connect(self.on_pdf_clicked)
@@ -619,6 +624,7 @@ class CreateTab(QWidget):
         #     pdf_from_url_btn.setDisabled(True)
 
         vbox.addWidget(source_lbl)
+        vbox.addWidget(self.source)
         vbox.addLayout(source_hb)
 
         if self.parent.text_prefill is not None:
@@ -835,6 +841,13 @@ class CreateTab(QWidget):
         self.text.setVisible(self.text.isHidden())
         self.preview.setVisible(self.preview.isHidden())
 
+    def on_file_clicked(self):
+        dialog = ExternalFile(self)
+
+        if dialog.exec_():
+            path = dialog.chosen_file
+            if path is not None and len(path.strip())> 0:
+                self.source.setText(path)
 
     def on_pdf_clicked(self):
         fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"PDF (*.pdf)")

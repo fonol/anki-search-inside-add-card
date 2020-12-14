@@ -31,10 +31,10 @@ from .markdown.extensions.def_list import DefListExtension
 DUE_NOTES_BOUNDARY = get_config_value_or_default("notes.queue.due_note_boundary", 7)
 
 class Printable():
-    
+
     def get_content(self) -> str:
         """
-        Should return the "body" of the note, e.g. the 'source' field in case of index notes and the 
+        Should return the "body" of the note, e.g. the 'source' field in case of index notes and the
         'text' field in case of SiacNote.
         """
         raise NotImplementedError()
@@ -68,7 +68,7 @@ class SiacNote(Printable):
         self.last_priority  : float         = props[16]
 
         self.mid            : int = -1
-    
+
     @staticmethod
     def from_index(index_props: Tuple[Any, ...]) -> 'SiacNote':
 
@@ -93,21 +93,26 @@ class SiacNote(Printable):
         return self._build_non_anki_note_html()
 
     def is_pdf(self) -> bool:
+        if self.is_file():
+            return False
         return self.source is not None and self.source.strip().lower().endswith(".pdf")
-    
+
+    def is_file(self) -> bool:
+        return self.source is not None and re.match("^([\S]+)://", self.source.strip().lower())
+
     def is_feed(self) -> bool:
         return self.source is not None and self.source.strip().lower().startswith("feed:")
 
     def is_yt(self) -> bool:
         return self.source is not None and re.match("(?:https?://)?www\.youtube\..+", self.source.strip().lower())
-        
+
     def get_note_type(self) -> str:
         if self.is_pdf():
             return "PDF"
         if self.is_yt():
             return "Video"
         return "Text"
-    
+
     def is_in_queue(self) -> bool:
         return self.position is not None and self.position >= 0
 
@@ -115,7 +120,7 @@ class SiacNote(Printable):
         if self.title is None or len(self.title.strip()) == 0:
             return "Untitled"
         return self.title
-    
+
     def get_containing_folder(self) -> Optional[str]:
         if not self.is_pdf():
             return None
@@ -127,7 +132,7 @@ class SiacNote(Printable):
             return False
         dt = datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
         return dt.date() == datetime.today().date()
-    
+
     def has_schedule(self) -> bool:
         if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
             return False
@@ -135,7 +140,7 @@ class SiacNote(Printable):
 
     def is_due_in_future(self) -> bool:
         return self.has_schedule() and utility.date.schedule_is_due_in_the_future(self.reminder)
-        
+
     def is_scheduled(self) -> bool:
         if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
             return False
@@ -148,7 +153,7 @@ class SiacNote(Printable):
             return False
         dt = datetime.strptime(self.reminder.split("|")[1], '%Y-%m-%d-%H-%M-%S')
         return dt.date() >= (datetime.today()  - timedelta(days=DUE_NOTES_BOUNDARY)).date() and dt.date() <= datetime.today().date()
-    
+
     def is_due_sometime(self) -> bool:
         return self.has_schedule()
 
@@ -156,7 +161,7 @@ class SiacNote(Printable):
         if self.reminder is None or len(self.reminder.strip()) == 0 or not "|" in self.reminder:
             return None
         return self.current_due_date().strftime('%Y-%m-%d')
-    
+
     def current_due_date(self) -> Optional[datetime]:
         if not self.is_due_sometime():
             return None
@@ -164,10 +169,10 @@ class SiacNote(Printable):
 
     def due_days_delta(self) -> int:
         return (datetime.now().date() - self.current_due_date().date()).days
-        
+
     def schedule_type(self) -> str:
         return self.reminder.split("|")[2][:2]
-    
+
     def schedule_value(self) -> str:
         return self.reminder.split("|")[2][3:]
 
@@ -187,7 +192,7 @@ class SiacNote(Printable):
         # old notes where saved with html tags
         # new ones are saved with markdown
         # so the markdown -> html conversion should only be called if the text is not already html
-        # markdown conversion should also not be called for meta notes 
+        # markdown conversion should also not be called for meta notes
         if not self.is_meta_note() and not utility.text.is_html(body):
             body    = markdown(body[:3000],extensions=[FencedCodeExtension(), DefListExtension()])
 
@@ -208,7 +213,7 @@ class SiacNote(Printable):
 
             body += "<br></ul></b></i></em></span></p></a></p><p class='ta_center' style='user-select: none;'><b>(Text was cut - too long to display)</b></p>"
 
-        # yt vids are prepended with thumbnail image    
+        # yt vids are prepended with thumbnail image
         if self.is_yt():
             time = utility.text.get_yt_time_verbose(self.source)
             if len(body.strip()) > 0:
@@ -221,10 +226,10 @@ class SiacNote(Printable):
                             <span style='font-size: 25px; line-height: 1em;'>{time}</span>
                             </span>
                         </span>
-                        </p>     
+                        </p>
                     """
-     
-        
+
+
         title   = "%s<b>%s</b>%s" % ("<i class='fa fa-file-pdf-o mr-5'></i>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5 siac-note-hr'>" if len(body.strip()) > 0 else "")
 
         # add the source, separated by a line
@@ -236,7 +241,7 @@ class SiacNote(Printable):
             src = f"<hr class='siac-note-hr'><i>Source: {src}</i>"
         else:
             src = ""
-      
+
         return title + body + src
 
 class IndexNote(Printable):
