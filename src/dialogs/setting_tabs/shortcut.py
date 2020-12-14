@@ -65,8 +65,8 @@ class ShortcutSettingsTab(QWidget):
             # PDF Shortcuts
             shortcut("pdf.shortcuts.page_left",               "Page Left",                id_pdf),
             shortcut("pdf.shortcuts.page_right",              "Page Right",               id_pdf),
-            shortcut("pdf.shortcuts.jump_to_last_page",       "Jump to last page",        id_pdf),
             shortcut("pdf.shortcuts.jump_to_first_page",      "Jump to first page",       id_pdf),
+            shortcut("pdf.shortcuts.jump_to_last_page",       "Jump to last page",        id_pdf),
             shortcut("pdf.shortcuts.toggle_read_page_right",  "Read + Next Page",         id_pdf),
             shortcut("pdf.shortcuts.scissor_tool",            "Scissor Tool",             id_pdf),
             shortcut("pdf.shortcuts.toggle_search_on_select", "Toggle Search on Select",  id_pdf),
