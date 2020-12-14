@@ -93,7 +93,9 @@ class SiacNote(Printable):
         return self._build_non_anki_note_html()
 
     def is_pdf(self) -> bool:
-        return self.source is not None and self.source.strip().lower().endswith(".pdf") and self.is_file() is False
+        if self.is_file():
+            return False
+        return self.source is not None and self.source.strip().lower().endswith(".pdf")
 
     def is_file(self) -> bool:
         return self.source is not None and re.match("^([\S]+)://", self.source.strip().lower())
