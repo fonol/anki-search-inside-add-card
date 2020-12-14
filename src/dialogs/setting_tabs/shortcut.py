@@ -215,6 +215,14 @@ class GrabKeyDialog(QDialog):
         # some special keys
         if evt.key() == Qt.Key_Return:
             self.extra = "Return"
+        elif evt.key() == Qt.Key_Left:
+            self.extra = "Left"
+        elif evt.key() == Qt.Key_Right:
+            self.extra = "Right"
+        elif evt.key() == Qt.Key_Up:
+            self.extra = "Up"
+        elif evt.key() == Qt.Key_Down:
+            self.extra = "Down"
 
         # normal keys
         elif evt.key() > 0 and evt.key() < 127:
