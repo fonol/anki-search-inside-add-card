@@ -91,5 +91,5 @@ class ExternalFile(QDialog):
         file_type = self.cb_type.currentText()
         source = self.input.text()
 
-        self.chosen_file = file_type + "://" + source
+        self.chosen_file = file_type + ":///" + source
         self.accept()

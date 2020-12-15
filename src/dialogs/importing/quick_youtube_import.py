@@ -6,6 +6,7 @@ import typing
 
 import utility.text
 
+
 class QuickYoutubeImport(QDialog):
     """Quickly prepare notes from YouTube videos"""
     def __init__(self, parent):
@@ -21,7 +22,7 @@ class QuickYoutubeImport(QDialog):
         self.setWindowTitle("Quick Youtube Import")
 
     def setup_ui(self):
-    
+
         vbox = QVBoxLayout()
 
         # Cancel and Okay Buttons
@@ -84,11 +85,9 @@ class QuickYoutubeImport(QDialog):
         # only adjust time if already loaded
         if yt_id == self.last_yt_id:
             pass
-
         # current yt_id's are 11 long
         elif len(yt_id) == 11:
-            oembed_url = f"""http://www.youtube.com/oembed?url=https://youtube.com/watch?v={yt_id}&format=json"""
-
+            oembed_url = f"""https://www.youtube.com/oembed?url=https://youtube.com/watch?v={yt_id}&format=json"""
             yt_videodata = requests.get(oembed_url)
 
             # failure, cant get reasonable json
@@ -98,7 +97,6 @@ class QuickYoutubeImport(QDialog):
 
             data = json.loads(yt_videodata.text)
 
-            # failure, cant get reasonable json
             if "title" not in data:
                 _reset_yt_properties()
                 return
@@ -112,7 +110,7 @@ class QuickYoutubeImport(QDialog):
             self.label_author.setText(self.youtube_channel)
 
             # TODO: will throw error if youtube video could be loaded, but not the image
-            image.loadFromData(requests.get(f"""http://img.youtube.com/vi/{yt_id}/mqdefault.jpg""").content)
+            image.loadFromData(requests.get(f"""https://img.youtube.com/vi/{yt_id}/mqdefault.jpg""").content)
             self.label_image.setPixmap(image)
 
         # everything else is not youtube
