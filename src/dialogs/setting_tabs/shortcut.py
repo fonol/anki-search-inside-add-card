@@ -18,10 +18,19 @@ class shortcut:
         if self.current_shortcut is None:
             self.current_shortcut = ""
 
-        self.edit_button = QPushButton("Edit")
-        self.shortcut_label = QLabel("<i>" + self.current_shortcut + "</i>")
+        self.edit_button = QPushButton()
+        self.edit_button.setStyleSheet("font: italic;")
+        self.update_shortcut(self.current_shortcut)
 
         self.manual_button = QPushButton("Manual")
+
+    def update_shortcut(self, new_shortcut):
+        self.current_shortcut = new_shortcut
+        text = new_shortcut
+
+        if text == "":
+            text = "..."
+        self.edit_button.setText(text)
 
 class ShortcutSettingsTab(QWidget):
     def __init__(self):
@@ -37,37 +46,41 @@ class ShortcutSettingsTab(QWidget):
         id_pdf     = 0
         id_menubar = 1
         id_general = 2
+        id_search  = 3
 
         # group shortcuts logically, this determines the order!
         list_order = ( # name of section, id
-            ("PDF",     id_pdf),
-            ("Menubar", id_menubar),
-            ("General", id_general),
+            ("General (SIAC notes)", id_general),
+            ("PDF Reader",           id_pdf),
+            ("Search",               id_search),
+            ("Menubar",              id_menubar)
         )
 
         # add items
         self.shortcut_list = (
+            # General shortcuts
+            shortcut("pdf.shortcuts.done",                    "Done!",                    id_general),
+            shortcut("pdf.shortcuts.later",                   "Postpone",                 id_general),
+
             # PDF Shortcuts
+            shortcut("pdf.shortcuts.page_left",               "Page Left",                id_pdf),
+            shortcut("pdf.shortcuts.page_right",              "Page Right",               id_pdf),
+            shortcut("pdf.shortcuts.jump_to_first_page",      "Jump to first page",       id_pdf),
+            shortcut("pdf.shortcuts.jump_to_last_page",       "Jump to last page",        id_pdf),
+            shortcut("pdf.shortcuts.toggle_read_page_right",  "Read + Next Page",         id_pdf),
+            shortcut("pdf.shortcuts.scissor_tool",            "Scissor Tool",             id_pdf),
             shortcut("pdf.shortcuts.toggle_search_on_select", "Toggle Search on Select",  id_pdf),
             shortcut("pdf.shortcuts.toggle_pdf_links",        "Toggle PDF Links",         id_pdf),
             shortcut("pdf.shortcuts.toggle_page_read",        "Toggle page read",         id_pdf),
-            shortcut("pdf.shortcuts.done",                    "Done!",                    id_pdf),
-            shortcut("pdf.shortcuts.later",                   "Postpone",                 id_pdf),
-            shortcut("pdf.shortcuts.jump_to_last_page",       "Jump to last page",        id_pdf),
-            shortcut("pdf.shortcuts.jump_to_first_page",      "Jump to first page",       id_pdf),
-            shortcut("pdf.shortcuts.toggle_read_page_right",  "Read + Next Page",         id_pdf),
-            shortcut("pdf.shortcuts.page_left",               "Page Left",                id_pdf),
-            shortcut("pdf.shortcuts.page_right",              "Page Right",               id_pdf),
-            shortcut("pdf.shortcuts.scissor_tool",            "Scissor Tool",             id_pdf),
             shortcut("pdf.shortcuts.init_area_highlight",     "Area Highlight",           id_pdf),
 
-            # General Shortcuts
-            shortcut("shortcuts.focus_search_bar",            "Focus Search Bar",         id_general),
-            shortcut("shortcuts.trigger_search",              "Trigger Search",           id_general),
-            shortcut("shortcuts.trigger_predef_search",       "Trigger predef. search",   id_general),
-            shortcut("shortcuts.search_for_current_field",    "Search for current field", id_general),
-            shortcut("shortcuts.trigger_current_filter",      "Trigger current filter",   id_general),
-            shortcut("toggleShortcut",                        "Toggle Add-on",            id_general),
+            # Search Shortcuts
+            shortcut("shortcuts.focus_search_bar",            "Focus Search Bar",         id_search),
+            shortcut("shortcuts.trigger_search",              "Trigger Search",           id_search),
+            shortcut("shortcuts.trigger_predef_search",       "Trigger predef. search",   id_search),
+            shortcut("shortcuts.search_for_current_field",    "Search for current field", id_search),
+            shortcut("shortcuts.trigger_current_filter",      "Trigger current filter",   id_search),
+            shortcut("toggleShortcut",                        "Toggle Add-on",            id_search),
 
             # Shortcuts for the items in the menubar
             shortcut("shortcuts.menubar.import.create_new",    "Create New",              id_menubar),
@@ -85,24 +98,27 @@ class ShortcutSettingsTab(QWidget):
             line += 1
             i = 0
 
+            if line != 0:
+                gridbox.addWidget(QLabel(" "), line, 0, 1, 6)
+                line +=1
+
             # add header, colspan over all columns
-            gridbox.addWidget(QLabel("""<b>""" + group_name + "</b></span>"), line, 0, 1, 8)
+            gridbox.addWidget(QLabel("<b>" + group_name + "</b>"), line, 0, 1, 6)
             line +=1
 
             # find shortcuts with the same group id
             for item in self.shortcut_list:
                 if item.sort_id is group_id:
-                    # set up two columns, each with 4 elements (description, label, edit button, remove button)
-                    column_shift = (i%2)*4
+                    # set up two columns, each with 3 elements (description, label, edit button, remove button)
+                    column_shift = (i%2)*3
 
                     # reached new line
                     if column_shift == 0:
                         line +=1
 
                     gridbox.addWidget(QLabel(item.description), line, 0 + column_shift)
-                    gridbox.addWidget(item.shortcut_label, line, 1 + column_shift)
-                    gridbox.addWidget(item.edit_button, line, 2 + column_shift)
-                    gridbox.addWidget(item.manual_button, line, 3 + column_shift)
+                    gridbox.addWidget(item.edit_button, line, 1 + column_shift)
+                    gridbox.addWidget(item.manual_button, line, 2 + column_shift)
 
                     item.edit_button.clicked.connect(GrabKeyDialog(self, item))
                     item.manual_button.clicked.connect(ManualShortcut(self, item))
@@ -153,8 +169,7 @@ class ManualShortcut(QDialog):
         # TODO: ugly, check for stupid user input
         new_shortcut = self.line_edit.text()
 
-        self.shortcut_item.current_shortcut = new_shortcut
-        self.shortcut_item.shortcut_label.setText("<i>" + new_shortcut + "</i>")
+        self.shortcut_item.update_shortcut(new_shortcut)
 
         self.close()
 
@@ -200,6 +215,14 @@ class GrabKeyDialog(QDialog):
         # some special keys
         if evt.key() == Qt.Key_Return:
             self.extra = "Return"
+        elif evt.key() == Qt.Key_Left:
+            self.extra = "Left"
+        elif evt.key() == Qt.Key_Right:
+            self.extra = "Right"
+        elif evt.key() == Qt.Key_Up:
+            self.extra = "Up"
+        elif evt.key() == Qt.Key_Down:
+            self.extra = "Down"
 
         # normal keys
         elif evt.key() > 0 and evt.key() < 127:
@@ -244,11 +267,5 @@ class GrabKeyDialog(QDialog):
 
         combo.append(self.extra)
 
-        self.change_shortcut("+".join(combo))
-
-
-    def change_shortcut(self, new_shortcut):
-        self.shortcut_item.current_shortcut = new_shortcut
-        self.shortcut_item.shortcut_label.setText("<i>" + new_shortcut + "</i>")
-
+        self.shortcut_item.update_shortcut("+".join(combo))
         self.close()
