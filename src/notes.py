@@ -49,8 +49,8 @@ db_path                 : Optional[str] = None
 # How many times more important is a priority 100 item than a priority 1 item?
 PRIORITY_SCALE_FACTOR   : int           = get_config_value_or_default("notes.queue.priorityScaleFactor", 5)
 
-# how should priority be weighted 
-PRIORITY_MOD            : float         = get_config_value_or_default("notes.queue.priorityMod", 1.0) 
+# how should priority be weighted
+PRIORITY_MOD            : float         = get_config_value_or_default("notes.queue.priorityMod", 1.0)
 
 # due notes from how many days ago shall be considered?
 DUE_NOTES_BOUNDARY      : int           = get_config_value_or_default("notes.queue.due_note_boundary", 7)
@@ -99,7 +99,7 @@ def create_db_file_if_not_exists() -> bool:
         conn.execute(notes_sql)
     else:
         existed = True
-        try: 
+        try:
             conn    = sqlite3.connect(file_path)
         except sqlite3.OperationalError:
             tmp = file_path.replace("siac-notes.db", "siac-notes.tmp.db")
@@ -130,12 +130,12 @@ def create_db_file_if_not_exists() -> bool:
     if dir_addon_data is None or len(dir_addon_data.strip()) == 0:
         path = utility.misc.get_application_data_path()
         update_config("addon.data_folder", path)
-    
+
     # disable for now
     # info_from_data_json = get_notes_info()
     # if info_from_data_json is not None and "db_last_checked" in info_from_data_json and len(info_from_data_json["db_last_checked"]) > 0:
     #     return
-   
+
     conn.execute("""
         create table if not exists read
         (
@@ -145,7 +145,7 @@ def create_db_file_if_not_exists() -> bool:
             created TEXT,
             FOREIGN KEY(nid) REFERENCES notes(id)
         );
-       
+
     """)
     conn.execute("""
         create table if not exists marks
@@ -156,7 +156,7 @@ def create_db_file_if_not_exists() -> bool:
             created TEXT,
             marktype INTEGER,
             FOREIGN KEY(nid) REFERENCES notes(id)
-        ); 
+        );
     """)
     conn.execute("""
         create table if not exists queue_prio_log
@@ -165,10 +165,10 @@ def create_db_file_if_not_exists() -> bool:
             prio INTEGER,
             type TEXT,
             created TEXT
-        ); 
+        );
     """)
     conn.execute("""
-        create table if not exists highlights 
+        create table if not exists highlights
         (
             nid INTEGER,
             page INTEGER,
@@ -181,7 +181,7 @@ def create_db_file_if_not_exists() -> bool:
             text TEXT,
             data TEXT,
             created TEXT
-        ); 
+        );
     """)
 
     conn.execute("CREATE INDEX if not exists read_nid ON read (nid);")
@@ -191,21 +191,21 @@ def create_db_file_if_not_exists() -> bool:
 
     #
     # Update code
-    # For lack of some kind of versioning, simply attempt to alter the tables, 
+    # For lack of some kind of versioning, simply attempt to alter the tables,
     # and ignore any sql errors thrown if the modifications did already exist.
     #
     try:
         conn.execute(""" ALTER TABLE notes ADD COLUMN extract_start INTEGER; """)
         conn.execute(""" ALTER TABLE notes ADD COLUMN extract_end INTEGER;""")
         conn.commit()
-    except: 
+    except:
         pass
     try:
         conn.execute(""" ALTER TABLE notes ADD COLUMN delay INTEGER; """)
         conn.commit()
-    except: 
+    except:
         pass
-    
+
     try:
         conn.execute(""" ALTER TABLE notes ADD COLUMN author TEXT; """)
         conn.execute(""" ALTER TABLE notes ADD COLUMN priority FLOAT; """)
@@ -213,17 +213,21 @@ def create_db_file_if_not_exists() -> bool:
         conn.commit()
 
         # 13-11-2020
-        # if we are here, that means 'priority' column didn't exist (no error thrown), 
+        # if we are here, that means 'priority' column didn't exist (no error thrown),
         # so migrate any existing prios to that column
         existing_prios = conn.execute("select distinct nid, prio, max(created) from queue_prio_log group by nid").fetchall()
         if len(existing_prios) > 0:
             conn.executemany("update notes set priority = ?, lastscheduled = ? where id = ?", [(t[1], t[2], t[0]) for t in existing_prios])
             conn.commit()
-
+    except:
+        pass
+    try:
+        conn.execute(""" ALTER TABLE notes ADD COLUMN url TEXT; """)
+        conn.commit()
     except:
         pass
 
-    # 19.11.2020: temporary fix for 'delay' column having been inserted at wrong place 
+    # 19.11.2020: temporary fix for 'delay' column having been inserted at wrong place
     columns = conn.execute("PRAGMA table_info(notes)").fetchall()
     # 14th column should be delay, if not, recreate 'notes' table with correct order
     if columns[13][1] != "delay":
@@ -247,7 +251,7 @@ def create_db_file_if_not_exists() -> bool:
                 priority FLOAT,
                 last_priority FLOAT
             )"""
-        
+
         conn.execute(tmp_table)
         conn.execute("""insert into notes_tmp (id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority)
             select id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority from notes;
@@ -266,14 +270,14 @@ def create_db_file_if_not_exists() -> bool:
                 type INTEGER,
                 data TEXT,
                 created TEXT
-            ) 
+            )
         """)
         conn.commit()
     except:
         pass
     finally:
         conn.close()
-    
+
 
     # store a timestamp in /user_files/data.json to check next time, so we don't have to do this on every startup
     # persist_notes_db_checked()
@@ -281,15 +285,16 @@ def create_db_file_if_not_exists() -> bool:
     return existed
 
 
-def create_note(title: str, 
-                text: str, 
-                source: str, 
-                tags: str, 
-                nid: int, 
-                reminder: str, 
-                priority: int, 
+def create_note(title: str,
+                text: str,
+                source: str,
+                tags: str,
+                nid: int,
+                reminder: str,
+                priority: int,
                 author: str,
-                extract_start: Optional[int] = None, 
+                url: Optional[str] = None,
+                extract_start: Optional[int] = None,
                 extract_end: Optional[int] = None
 
                 ) -> int:
@@ -308,8 +313,8 @@ def create_note(title: str,
         tags = " %s " % tags.strip()
 
     conn    = _get_connection()
-    id      = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority)
-                values (?,?,?,?,?,datetime('now', 'localtime'),"",?,?, NULL, ?, ?, NULL, ?, ?, NULL)""", (title, text, source, tags, nid, reminder, _date_now_str(), extract_start, extract_end, author, priority)).lastrowid
+    id      = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority, url)
+                values (?,?,?,?,?,datetime('now', 'localtime'),"",?,?, NULL, ?, ?, NULL, ?, ?, NULL, ?)""", (title, text, source, tags, nid, reminder, _date_now_str(), extract_start, extract_end, author, priority, url)).lastrowid
     conn.commit()
     conn.close()
     if (priority is not None and priority != 0) or (reminder is not None and reminder != ""):
@@ -328,7 +333,7 @@ def _get_priority_list_with_last_prios() -> List[Tuple[Any, ...]]:
     """ Returns (nid, last prio, last prio creation, current position, schedule) """
 
     stp     = utility.date.date_x_days_ago_stamp(DUE_NOTES_BOUNDARY)
-    sql     = f""" select id, priority, lastscheduled, position, reminder, delay from notes 
+    sql     = f""" select id, priority, lastscheduled, position, reminder, delay from notes
                         where priority > 0 or (substr(reminder, 21, 10) <= '{utility.date.date_only_stamp()}' and substr(reminder, 21, 10) >= '{stp}')
                         order by position asc"""
     conn    = _get_connection()
@@ -338,7 +343,7 @@ def _get_priority_list_with_last_prios() -> List[Tuple[Any, ...]]:
 
 def recalculate_priority_queue(is_addon_start: bool = False):
     """
-        Calculate the priority queue again, without writing anything to the 
+        Calculate the priority queue again, without writing anything to the
         priority log. Has to be done at least once on startup to incorporate the changed difference in days.
 
         Notes are marked in the DB for being in the priority queue by having a position set.
@@ -360,7 +365,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
     for nid, last_prio, last_prio_creation, _, reminder, delay in current:
 
         if last_prio is None:
-            # a note that has no priority and a reminder (special schedule) that is not due today or was due in 
+            # a note that has no priority and a reminder (special schedule) that is not due today or was due in
             # the last DUE_NOTES_BOUNDARY days won't appear in the queue
             if not _specific_schedule_is_due_today(reminder):
                 continue
@@ -373,15 +378,15 @@ def recalculate_priority_queue(is_addon_start: bool = False):
         # this shouldn't happen, but just to make sure
         if last_prio_creation is None or last_prio_creation == '':
             last_prio_creation = now.strftime('%Y-%m-%d-%H-%M-%S')
-            
+
         # assert(current_position >= 0)
         days_delta = max(0, (datetime.now() - _dt_from_date_str(last_prio_creation)).total_seconds() / 86400.0)
-        
+
         # assert(days_delta >= 0)
         # assert(days_delta < 10000)
         score = _calc_score(last_prio, days_delta)
         scores.append((nid, last_prio_creation, last_prio, score, reminder, delay))
-    
+
     sorted_by_scores    = sorted(scores, key=lambda x: x[3], reverse=True)
     final_list          = [s for s in sorted_by_scores if s[4] is None or len(s[4].strip()) == 0 or not _specific_schedule_is_due_today(s[4])]
 
@@ -390,7 +395,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
     if len(due_today) > 0:
         due_today   = sorted(due_today, key=lambda x : x[3], reverse=True)
         final_list  = due_today + final_list
-    
+
     #
     # account for delays
     #
@@ -407,7 +412,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
 
     # 2. apply delays (move items back in the list according to their delay)
     final_list = _apply_delays(final_list)
-    
+
     # 3. delays have to be decreased by 1 on each calculation, so they will eventually be 0
     for ix, x in enumerate(final_list):
         if ix < _delay(x[5]):
@@ -427,7 +432,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
     # 2. set positions (this basically marks a note as being in the queue)
     for ix, f in enumerate(final_list):
         c.execute(f"update notes set position = {ix} where id = {f[0]};")
-    # 3. persist decreased delays 
+    # 3. persist decreased delays
     for nid, new_delay in to_decrease_delay:
         if new_delay <= 0:
             c.execute(f"update notes set delay = NULL where id = {nid};")
@@ -439,7 +444,7 @@ def recalculate_priority_queue(is_addon_start: bool = False):
 
 def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
     """
-    Call this after a note has been added or updated. 
+    Call this after a note has been added or updated.
     Will read the current priority queue and update it.
     Will also insert the given priority in queue_prio_log.
     """
@@ -452,7 +457,7 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
     # will contain the ids in priority order, highest first
     final_list              = []
     index                   = -1
-    
+
     current                 = _get_priority_list_with_last_prios()
     scores                  = []
     nid_was_included        = False
@@ -472,7 +477,7 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
         # this shouldn't happen, but just to make sure
         if last_prio_creation is None or last_prio_creation == '':
             last_prio_creation = now.strftime('%Y-%m-%d-%H-%M-%S')
-        
+
         if nid == nid_to_update:
             nid_was_included    = True
             if schedule == 0 or schedule is None:
@@ -511,8 +516,8 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
         final_list  = due_today + final_list
 
     # account for delays
-    final_list = _apply_delays(final_list)     
-    
+    final_list = _apply_delays(final_list)
+
     for ix, s in enumerate(final_list):
         d = _delay(s[5])
         if d > 0 and ix <= d + 1:
@@ -523,7 +528,7 @@ def update_priority_list(nid_to_update: int, schedule: int) -> Tuple[int, int]:
     #     assert(s[3] >= 0)
     #     assert(s[1] is not None and len(s[1]) > 0)
     # assert(len(final_list) == len(set([f[0] for f in final_list])))
-        
+
     # assert((len(to_update_in_log) + len(to_remove_from_log)) > 0)
 
     # update log and positions
@@ -565,9 +570,9 @@ def remove_from_priority_list(nid_to_remove: int) -> Tuple[int, int]:
 
 def update_priority_without_timestamp(nid_to_update: int, new_prio: int):
     """
-    Updates the priority for the given note, without adding a new entry in 
+    Updates the priority for the given note, without adding a new entry in
     queue_prio_log, if there is already one.
-    This is useful to simply change the priority of a note in the queue without having it moved 
+    This is useful to simply change the priority of a note in the queue without having it moved
     at the end of the queue, which would happen if a new entry would be created (time delta would be 0 or very small).
     """
     conn    = _get_connection()
@@ -581,7 +586,7 @@ def _apply_delays(schedule_list: List[Tuple[Any]]):
     updated_list        = []
     for ix, s in enumerate(schedule_list):
         d = _delay(s[5])
-        if d > 0: 
+        if d > 0:
             d += 1
         updated_list.append(((ix + d, s[5].split("|")[0] if d > 0 else "9"), s))
     updated_list = sorted(updated_list, key=lambda x : x[0])
@@ -605,7 +610,7 @@ def find_next_enqueued_with_tag(tags: List[str]) -> Optional[int]:
     if not nid:
         return None
     return nid[0]
-    
+
 
 def len_enqueued_with_tag(tags: List[str]) -> int:
     """ Returns the number of enqueued notes that have at least one of the given tags.  """
@@ -728,7 +733,7 @@ def update_reminder(nid: int, rem: str):
     conn.execute(sql, (rem, nid))
     conn.commit()
     conn.close()
-        
+
 
 def get_extracts(nid: int, source: str) -> List[Tuple[int, int]]:
 
@@ -794,7 +799,7 @@ def mark_range_as_read(nid: int, start: int, end: int, pages_total: int):
     to_insert = []
     for p in range(start, end+1):
         if not p in res:
-            to_insert.append((nid, p, now, pages_total))  
+            to_insert.append((nid, p, now, pages_total))
     conn.executemany("insert into read (nid, page, created, pagestotal) values (?,?,?,?)", to_insert)
     conn.commit()
     conn.close()
@@ -817,7 +822,7 @@ def toggle_pdf_mark(nid: int, page: int, pages_total: int, mark_type: int) -> Li
     res = conn.execute("select * from marks where nid = %s" % nid).fetchall()
     conn.commit()
     conn.close()
-    return res 
+    return res
 
 def delete_pdf_mark(nid: int, page: int, mark_type: int):
     conn = _get_connection()
@@ -920,7 +925,7 @@ def get_notes_by_future_due_date() -> Dict[str, List[SiacNote]]:
             d[due] = []
         d[due].append(n)
     return d
-        
+
 def get_note_tree_data() -> Dict[str, List[Tuple[int, str]]]:
     """
         Fills a map with the data for the QTreeWidget in the Create dialog.
@@ -1027,7 +1032,7 @@ def update_note_tags(id: int, tags: str):
         tags += " "
     if not tags.startswith(" "):
         tags = f" {tags}"
-    
+
     conn = _get_connection()
     sql = """ update notes set tags=?, modified=datetime('now', 'localtime') where id=? """
     conn.execute(sql, (tags, id))
@@ -1038,7 +1043,7 @@ def update_note_tags(id: int, tags: str):
     if index is not None:
         index.update_user_note((id, note[0], note[3], note[1], tags, -1, ""))
 
-def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int, author: str):
+def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int, author: str, url: str):
 
     # text = utility.text.clean_user_note_text(text)
     if tags is None:
@@ -1049,11 +1054,11 @@ def update_note(id: int, title: str, text: str, source: str, tags: str, reminder
     conn    = _get_connection()
     # a prio of -1 means unchanged, so don't update
     if priority != -1:
-        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, last_priority=priority, priority=?, lastscheduled=coalesce(lastscheduled, ?) where id=?"
-        conn.execute(sql, (title, text, source, tags, reminder, author, priority, mod, id))
+        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, last_priority=priority, priority=?, lastscheduled=coalesce(lastscheduled, ?), url=? where id=?"
+        conn.execute(sql, (title, text, source, tags, reminder, author, priority, mod, url, id))
     else:
-        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=? where id=?"
-        conn.execute(sql, (title, text, source, tags, reminder, author, id))
+        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, url=? where id=?"
+        conn.execute(sql, (title, text, source, tags, reminder, author, url, id))
     conn.commit()
     conn.close()
     if priority != -1:
@@ -1076,7 +1081,7 @@ def get_read_stats(nid: int) -> Tuple[Any, ...]:
 def add_tags(ids: List[int], tags: List[str]):
     if tags is None or ids is None or len(ids) == 0:
         return
-    ids = ",".join([str(id) for id in ids]) 
+    ids = ",".join([str(id) for id in ids])
     conn = _get_connection()
     notes = conn.execute(f"select id, tags from notes where id in ({ids})").fetchall()
     updated = []
@@ -1159,7 +1164,7 @@ def find_by_tag(tag_str, to_output_list=True) -> List[SiacNote]:
     pinned  = []
     if index is not None:
         pinned = index.pinned
-    tags    = tag_str.split(" ") 
+    tags    = tag_str.split(" ")
     query   = _tag_query(tags)
     conn    = _get_connection()
     res     = conn.execute("select * from notes %s order by id desc" %(query)).fetchall()
@@ -1188,7 +1193,7 @@ def find_notes(text: str) -> List[SiacNote]:
         if len(token) > 0:
             token = token.replace("'", "")
             q = f"{q} or lower(title) like '%{token}%'"
-    q = q[4:] if len(q) > 0 else "" 
+    q = q[4:] if len(q) > 0 else ""
     if len(q) == 0:
         return
     conn = _get_connection()
@@ -1203,7 +1208,7 @@ def find_unqueued_notes(text: str) -> List[SiacNote]:
         if len(token) > 0:
             token = token.replace("'", "")
             q = f"{q} or lower(title) like '%{token}%'"
-    q = q[4:] if len(q) > 0 else "" 
+    q = q[4:] if len(q) > 0 else ""
     if len(q) == 0:
         return
     conn = _get_connection()
@@ -1243,7 +1248,7 @@ def find_pdf_notes_by_title(text: str) -> List[SiacNote]:
             token = token.replace("'", "")
             q = f"{q} or lower(title) like '%{token}%'"
 
-    q = q[4:] if len(q) > 0 else "" 
+    q = q[4:] if len(q) > 0 else ""
     if len(q) == 0:
         return
     conn = _get_connection()
@@ -1259,7 +1264,7 @@ def find_unqueued_pdf_notes(text: str) -> Optional[List[SiacNote]]:
         if len(token) > 0:
             q = f"{q} or lower(title) like '%{token}%'"
 
-    q = q[4:] if len(q) > 0 else "" 
+    q = q[4:] if len(q) > 0 else ""
     if len(q) == 0:
         return
     conn = _get_connection()
@@ -1275,7 +1280,7 @@ def find_unqueued_text_notes(text: str) -> Optional[List[SiacNote]]:
         if len(token) > 0:
             q = f"{q} or lower(title) like '%{token}%'"
 
-    q = q[4:] if len(q) > 0 else "" 
+    q = q[4:] if len(q) > 0 else ""
     if len(q) == 0:
         return
     conn = _get_connection()
@@ -1291,7 +1296,7 @@ def find_unqueued_video_notes(text: str) -> Optional[List[SiacNote]]:
         if len(token) > 0:
             q = f"{q} or lower(title) like '%{token}%'"
 
-    q = q[4:] if len(q) > 0 else "" 
+    q = q[4:] if len(q) > 0 else ""
     if len(q) == 0:
         return
     conn = _get_connection()
@@ -1301,7 +1306,7 @@ def find_unqueued_video_notes(text: str) -> Optional[List[SiacNote]]:
 
 def get_most_used_pdf_folders() -> List[str]:
     sql = """
-        select replace(source, replace(source, rtrim(source, replace(source, '/', '')), ''), '') from notes where lower(source) like '%.pdf' 
+        select replace(source, replace(source, rtrim(source, replace(source, '/', '')), ''), '') from notes where lower(source) like '%.pdf'
         group by replace(source, replace(source, rtrim(source, replace(source, '/', '')), ''), '') order by count(*) desc limit 50
     """
     conn = _get_connection()
@@ -1314,7 +1319,7 @@ def get_position(nid: int) -> Optional[int]:
     res = conn.execute("select position from notes where id = %s" % nid).fetchone()
     conn.close()
     if res is None or res[0] is None:
-        return None 
+        return None
     return res[0]
 
 def null_position(nid: int):
@@ -1329,7 +1334,7 @@ def delete_note(id: int):
     conn.executescript(f"""delete from read where nid ={id};
                             delete from marks where nid ={id};
                             delete from notes where id={id};
-                            delete from queue_prio_log where nid={id}; 
+                            delete from queue_prio_log where nid={id};
                             delete from highlights where nid={id};
                             """)
     conn.commit()
@@ -1371,7 +1376,7 @@ def get_invalid_pdfs() -> List[SiacNote]:
         if not utility.misc.file_exists(source.strip()):
             filtered.append(res[c])
         c += 1
-    return _to_notes(filtered) 
+    return _to_notes(filtered)
 
 def get_recently_used_tags() -> List[str]:
     """ Returns a [str] of max 20 tags, ordered by their usage desc. """
@@ -1461,8 +1466,8 @@ def empty_priority_list():
     conn.close()
 
 def shuffle_queue():
-    """ 
-    This will 'shuffle' the queue by setting the last done date (created column in queue_prio_log) to some random value. 
+    """
+    This will 'shuffle' the queue by setting the last done date (created column in queue_prio_log) to some random value.
     Priorities and schedules are unchanged.
     This will also recalculate the queue.
     """
@@ -1471,7 +1476,7 @@ def shuffle_queue():
     conn    = _get_connection()
     nids    = conn.execute("select id from notes where priority is not NULL and priority > 0").fetchall()
     inserts = [((now + timedelta(days= - random.randint(1, 365))).strftime('%Y-%m-%d-%H-%M-%S'), nid[0]) for nid in nids]
-    conn.executemany("update notes set lastscheduled = ? where id = ?", inserts) 
+    conn.executemany("update notes set lastscheduled = ? where id = ?", inserts)
     conn.commit()
     conn.close()
     recalculate_priority_queue()
@@ -1498,7 +1503,7 @@ def spread_priorities():
         new          = min(100, max(1, int(diff / perc)))
         spread.append((new, t[0]))
 
-    conn.executemany("update notes set last_priority = priority, priority = ? where id = ?", spread) 
+    conn.executemany("update notes set last_priority = priority, priority = ? where id = ?", spread)
     conn.commit()
     conn.close()
     recalculate_priority_queue()
@@ -1507,7 +1512,7 @@ def assign_random_priorities():
     conn    = _get_connection()
     vals    = conn.execute("select id from notes where priority is not NULL and priority > 0").fetchall()
     rand    = [(random.randint(1, 100), nid[0]) for nid in vals]
-    conn.executemany("update notes set last_priority = priority, priority = ? where id = ?", rand) 
+    conn.executemany("update notes set last_priority = priority, priority = ? where id = ?", rand)
     conn.commit()
     conn.close()
     recalculate_priority_queue()
@@ -1608,16 +1613,16 @@ def get_pdf_quick_open_suggestions() -> List[SiacNote]:
             res.append(nt[1])
             used.add(nt[1][0])
         if len(res) >= 8:
-            break 
+            break
     return _to_notes(res)
 
 def get_pdf_info(nids: List[int]) -> List[Tuple[int, int, int]]:
     """ Returns tuples of (nid, read pages, pages total) for all the given note IDs. """
 
     nids    = ",".join([str(n) for n in nids])
-    sql     = f"""select nid, pagestotal, 
+    sql     = f"""select nid, pagestotal,
                 case count(*)
-                    when 1 then 
+                    when 1 then
                         case page when -1 then 0 else 1 end
                     else count(*) - 1
                 end, max(created) from read where nid in ({nids}) and page >= -1 group by nid"""
@@ -1727,7 +1732,7 @@ def pdf_topic_distribution() -> List[Tuple[str, float]]:
                 else:
                     d[t] = 1
 
-    total_c     = sum(d.values()) 
+    total_c     = sum(d.values())
     res_list    = [(utility.text.trim_if_longer_than(k, 60), v * 100 / total_c) for k,v in d.items()]
     res_list    = sorted(res_list, key=lambda x: x[1])
     return res_list
@@ -1750,7 +1755,7 @@ def pdf_topic_distribution_recently_read(delta_days: int) -> List[Tuple[str, flo
                 else:
                     d[t] = 1
 
-    total_c     = sum(d.values()) 
+    total_c     = sum(d.values())
     res_list    = [(utility.text.trim_if_longer_than(k, 60), v * 100 / total_c) for k,v in d.items()]
     res_list    = sorted(res_list, key=lambda x: x[1])
     return res_list
@@ -1769,7 +1774,7 @@ def get_linked_anki_notes(siac_nid: int) -> List[IndexNote]:
     if len(res) != len(nids):
         anki_nids = [r[0] for r in res]
         siac_nids = [r[0] for r in nids]
-        for snid in siac_nids: 
+        for snid in siac_nids:
             if snid not in anki_nids:
                 conn.execute(f"delete from notes_pdf_page where nid = {snid}")
         conn.commit()
@@ -1789,7 +1794,7 @@ def get_linked_anki_notes_for_pdf_page(siac_nid: int, page: int) -> List[IndexNo
     if len(res) != len(nids):
         anki_nids = [r[0] for r in res]
         siac_nids = [r[0] for r in nids]
-        for snid in siac_nids: 
+        for snid in siac_nids:
             if snid not in anki_nids:
                 conn.execute(f"delete from notes_pdf_page where nid = {snid}")
         conn.commit()
@@ -1873,7 +1878,7 @@ def _get_db_path() -> str:
     db_path = file_path
     return file_path
 
-def _get_todays_backup_path() -> str: 
+def _get_todays_backup_path() -> str:
     """ Get the path to the timestamped backup db file. """
 
     file_path = mw.addonManager.getConfig(__name__)["addonNoteDBFolderPath"]
@@ -1891,7 +1896,7 @@ def _backup_folder() -> str:
         file_path = utility.misc.get_user_files_folder_path()
     file_path += f"siac_backups/"
     return file_path.strip()
-    
+
 def _tag_query(tags: List[str]) -> str:
 
     if not tags or len(tags) == 0:
@@ -1961,5 +1966,3 @@ def _convert_manual_prio_to_dynamic(prio: int) -> int:
     if prio == 6:
         return 3
     return 1
-
-    

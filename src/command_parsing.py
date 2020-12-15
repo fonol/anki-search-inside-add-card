@@ -415,7 +415,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 title = dialog._chosen_name
                 if title is None or len(title) == 0:
                     title = name
-                create_note(title, "", path, "", "", "", prio, "")
+                create_note(title, "", path, "", "", "", prio, "", url = dialog.chosen_url)
             else:
                 pass
 

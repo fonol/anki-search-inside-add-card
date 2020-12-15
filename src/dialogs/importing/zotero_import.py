@@ -107,7 +107,7 @@ class ZoteroImporter(QDialog):
 
         """ % btn_styles
         self.setStyleSheet(styles)
-        
+
     def accept_clicked(self):
         csv_path = self.file_path_disp.text()
         assert(csv_path is not None and len(csv_path.strip()) > 0)
@@ -129,7 +129,7 @@ class ZoteroImporter(QDialog):
     def get_name(self):
         if self._chosen_name is None or len(self._chosen_name) == 0:
             name = utility.text.strip_url(self.chosen_url)
-            name = utility.text.clean_file_name(name) 
+            name = utility.text.clean_file_name(name)
             return name
         name = utility.text.clean_file_name(self._chosen_name)
         return name
@@ -138,7 +138,7 @@ class ZoteroImporter(QDialog):
         total_count = 0
         with open(self.file_path_disp.text(), newline='', encoding="utf-8") as zotero_csv:
             csvreader = csv.DictReader(zotero_csv, delimiter=',')
-                
+
             for zot_entry in csvreader:
                 attachment_string = zot_entry["File Attachments"]
                 attachment_array = re.split(";", attachment_string)
@@ -149,7 +149,7 @@ class ZoteroImporter(QDialog):
             else:
                 self.status.setText(f"Found no PDF attachments in the CSV.")
                 self.status.setStyleSheet('color: red')
-                       
+
 
     def read_csv(self):
 
@@ -177,7 +177,7 @@ class ZoteroImporter(QDialog):
                 # lets loop through our attachments, and if we got a PDF be happy :)
                 for attachment in attachment_array:
                     #search for PDFs
-                    if re.match(".*?.pdf", attachment):                       
+                    if re.match(".*?.pdf", attachment):
 
                         id = get_pdf_id_for_source(attachment.strip())
                         if id >= 0:
@@ -232,14 +232,5 @@ class ZoteroImporter(QDialog):
                         note_text = append_to_string(note_text, entry_mantags, "<b>Manual Tags:</b><br>", "<br><br>")
                         note_text = append_to_string(note_text, entry_autotags, "<b>Auto Tags:</b><br>", "<br><br>")
 
-                        create_note(note_title, note_text, attachment, tags, None, schedule, prio, entry_authors)
+                        create_note(note_title, note_text, attachment, tags, None, schedule, prio, entry_authors, url = entry_url)
                         self.total_count += 1
-
-
-
-
-
-
-
-
-
