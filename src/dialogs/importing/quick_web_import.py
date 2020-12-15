@@ -22,6 +22,7 @@ from aqt.qt import *
 from aqt import mw
 import aqt
 from anki.utils import isMac
+from aqt.utils import showInfo
 
 from ...config import get_config_value, get_config_value_or_default
 from ...web_import import import_webpage
@@ -40,6 +41,7 @@ class QuickWebImport(QWidget):
         self.auto_focus_field   = True
 
         self.nightmode          = True
+        self.setWindowTitle("Quick Web Import")
 
         # note settings
         self.web_title = None
@@ -49,6 +51,31 @@ class QuickWebImport(QWidget):
 
         self.layout             = QVBoxLayout()
         self.toplayout          = QHBoxLayout()
+
+        self.menu = QWidget()
+        menu_vbox = QVBoxLayout()
+
+        # build bookmarks list
+        btree = QTreeWidget()
+        btree.itemClicked.connect(self.bookmark_clicked)
+        bookmarks = self.config["import.quickweb.bookmarks"]
+        #expand = config["expand_bookmark_folders_by_default"]
+        expand = True
+        for k, blist in bookmarks.items():
+            folder = QTreeWidgetItem(btree, [k])
+            folder.setExpanded(expand)
+            for b in blist:
+                b = re.sub("(https?://)?(www2?\\.)?", "", b)
+                if b.endswith("/"):
+                    b = b[:-1]
+                item = QTreeWidgetItem([b])
+                folder.addChild(item)
+        btree.setHeaderLabels(["Bookmarks"])
+        btree.setIconSize(QSize(0,0))
+        menu_vbox.addWidget(btree, 2)
+        self.menu.setLayout(menu_vbox)
+
+        self.menu.setVisible(False)
 
         self.setMinimumHeight(600)
         self.setMinimumWidth(900)
@@ -90,6 +117,9 @@ class QuickWebImport(QWidget):
             zoom_out.setMaximumWidth(zoom_out.fontMetrics().boundingRect(" - ").width() + 15)
             zoom_in.setMaximumWidth(zoom_in.fontMetrics().boundingRect(" + ").width() + 15)
 
+        menu = QPushButton("...")
+        menu.clicked.connect(self.toggle_menu)
+        self.toplayout.addWidget(menu)
 
         self.tabs = QuickImportBrowserTabs(self)
 
@@ -121,8 +151,13 @@ class QuickWebImport(QWidget):
         hb_bottom.addWidget(cancel)
         self.layout.addLayout(hb_bottom)
 
+        menu_width = self.config["import.quickweb.bookmarks_width_percent"]
         self.layout.setContentsMargins(0,4,4,4)
-        self.setLayout(self.layout)
+        parentbox = QHBoxLayout()
+        parentbox.addLayout(self.layout, 100 - menu_width)
+        parentbox.addWidget(self.menu, menu_width)
+
+        self.setLayout(parentbox)
 
         #seq = self.config["search_on_site_shortcut"]
         seq = "Alt+S"
@@ -137,6 +172,21 @@ class QuickWebImport(QWidget):
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
         r'(?::\d+)?'
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+    def bookmark_clicked(self, item):
+        if item.parent() is None:
+            showInfo(item.text(0))
+            return
+        self.load(item.text(0))
+
+    def toggle_menu(self):
+        """
+            Toggle bookmarks visibility.
+        """
+        if self.menu.isHidden():
+            self.menu.setVisible(True)
+        else:
+            self.menu.setVisible(False)
 
     def external(self):
         self.source = self.web_url
@@ -204,8 +254,7 @@ class QuickWebImport(QWidget):
                 qurl.setScheme("http")
                 self.tabs.load(qurl)
             else:
-                #url = self.config["address_bar_search_engine"].replace("{query}", urllib.parse.quote_plus(url))
-                url = "https://google.com/".replace("{query}", urllib.parse.quote_plus(url))
+                url = self.config["import.quickweb.search_engine"].replace("{query}", urllib.parse.quote_plus(url))
                 self.tabs.load(QUrl(url))
 
     def update_url(self, url, title):
@@ -243,8 +292,7 @@ class QuickImportBrowserTabs(QTabWidget):
         self.setTabsClosable(True)
         config = mw.addonManager.getConfig(__name__)
 
-        #self.start = QUrl(config["new_tab_default_page"])
-        self.start = QUrl("https://en.wikipedia.org")
+        self.start = QUrl(config["import.quickweb.default_page"])
         self.views = []
 
         self._add_tab()
