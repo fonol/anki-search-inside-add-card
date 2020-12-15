@@ -70,10 +70,10 @@ class AppearanceSettingsTab(QWidget):
 
         # add items
         self.color_list = (
-            ColorItem("styles.night.tagBackgroundColor"      , "Tag Background Color (Night Mode)", id_tags),
-            ColorItem("styles.night.tagForegroundColor"      , "Tag Foreground Color (Night Mode)", id_tags),
             ColorItem("styles.tagBackgroundColor"            , "Tag Background Color",              id_tags),
             ColorItem("styles.tagForegroundColor"            , "Tag Foreground Color",              id_tags),
+            ColorItem("styles.night.tagBackgroundColor"      , "Tag Background Color (Night Mode)", id_tags),
+            ColorItem("styles.night.tagForegroundColor"      , "Tag Foreground Color (Night Mode)", id_tags),
 
             ColorItem("styles.highlightForegroundColor"      , "Highlight Foreground Color", id_highlight),
             ColorItem("styles.highlightBackgroundColor"      , "Highlight Background Color", id_highlight),
