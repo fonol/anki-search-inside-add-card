@@ -16,6 +16,7 @@ import utility.misc
 class Menu():
 
     def __init__(self):
+        self.quick_web = None
 
         # state.night_mode is not yet set here
         nightmode = False
@@ -60,7 +61,11 @@ class Menu():
             tooltip(f"Created {dialog.total_count} notes.")
 
     def import_web(self):
-        dialog = QuickWebImport(mw.app.activeWindow())
+        if self.quick_web is None:
+            self.quick_web = QuickWebImport()
+
+        self.quick_web.show()
+        self.quick_web.raise_()
 
         #if dialog.exec_():
 

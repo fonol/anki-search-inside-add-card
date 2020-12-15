@@ -23,18 +23,29 @@ from aqt import mw
 import aqt
 from anki.utils import isMac
 
-from ...config import get_config_value
+from ...config import get_config_value, get_config_value_or_default
+from ...web_import import import_webpage
+from ..editor import NoteEditor
+
+import utility.misc
+import utility.text
 
 
 class QuickWebImport(QWidget):
-    def __init__(self, parent = aqt.mw):
+    def __init__(self):
 
-        QWidget.__init__(self, parent)
+        QWidget.__init__(self)
         self.config             = mw.addonManager.getConfig(__name__)
         #self.auto_focus_field   = self.config["auto_focus_first_field_after_toggle_fields"]
         self.auto_focus_field   = True
 
         self.nightmode          = True
+
+        # note settings
+        self.web_title = None
+        self.source = None
+        self.web_url = None
+        self.text = None
 
         self.layout             = QVBoxLayout()
         self.toplayout          = QHBoxLayout()
@@ -127,7 +138,54 @@ class QuickWebImport(QWidget):
         r'(?::\d+)?'
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
-        self.open()
+    def external(self):
+        self.source = self.web_url
+
+        self.open_note_window()
+
+    def markdown(self):
+        mdtext = QTextEdit()
+
+        mdtext.setHtml(import_webpage(self.web_url, inline_images=False))
+        mdtext.setPlainText(mdtext.toMarkdown())
+        self.text = mdtext.toPlainText()
+
+        self.open_note_window()
+
+    def pdf(self):
+        #TODO: tidy up functions to be not written 3x
+        name = self.web_title
+
+        if name is None or len(name) == 0:
+            name = utility.text.strip_url(self.web_url)
+            name = utility.text.clean_file_name(name)
+            return name
+        name = utility.text.clean_file_name(name)
+
+        path = get_config_value_or_default("pdfUrlImportSavePath", "")
+        if path is None or len(path) == 0:
+            tooltip("""You have to set a save path for imported URLs first.
+                <center>Config value: <i>pdfUrlImportSavePath</i></center>
+            """, period=4000)
+            return
+        path = utility.misc.get_pdf_save_full_path(path, name)
+        utility.misc.url_to_pdf(self.web_url, path)
+
+        self.source = path
+
+        self.open_note_window()
+
+
+    def open_note_window(self):
+        self.web_url = self.url.text()
+
+        dialog = NoteEditor(mw.app.activeWindow(),
+                            title_prefill = self.web_title,
+                            source_prefill = self.source,
+                            url_prefill = self.web_url,
+                            text_prefill = self.text)
+
+
 
     @pyqtSlot(str, QWebEnginePage.FindFlag)
     def on_searched(self, text, flag):
@@ -150,8 +208,11 @@ class QuickWebImport(QWidget):
                 url = "https://google.com/".replace("{query}", urllib.parse.quote_plus(url))
                 self.tabs.load(QUrl(url))
 
-    def update_url(self, url):
+    def update_url(self, url, title):
         self.url.setText(url)
+
+        self.web_title = title
+        self.web_url = url
 
     def page_refresh(self):
         self.tabs.page_refresh()
@@ -232,7 +293,7 @@ class QuickImportBrowserTabs(QTabWidget):
             self._add_tab()
             self.setCurrentIndex(ix)
         else:
-            self.parent.update_url(self.active_view().url().toDisplayString())
+            self.parent.update_url(self.active_view().url().toDisplayString(), self.active_view().title())
 
     def _tab_close(self, ix):
         if self.count() == 2:
@@ -252,13 +313,14 @@ class QuickImportBrowserTabs(QTabWidget):
         for ix in range(0, self.count()):
             if self.widget(ix).windowTitle() == id:
                 self.setTabText(ix, title)
+                self.parent.update_url(self.active_view().url().toDisplayString(), self.active_view().title())
 
     def _view_title_changed(self, title):
         self.setTabText(self.currentIndex(), title)
 
     def _view_url_changed(self, id, url):
         if self.active_view().windowTitle() == id:
-            self.parent.update_url(url.toDisplayString())
+            self.parent.update_url(url.toDisplayString(), self.active_view().title())
 
     def load(self, qurl):
         # self.setTabText(self.currentIndex(), "Loading...")
