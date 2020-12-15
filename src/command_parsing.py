@@ -626,16 +626,16 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-read-next-with-tag "):
         nid                 = find_next_enqueued_with_tag(cmd.split(" ")[1:])
-        if nid and nid > 0  : 
+        if nid and nid > 0  :
             DoneDialog.last_tag_filter = cmd.split()[1]
             index.ui.reading_modal.display(nid)
-        else                : 
-            tooltip("No queued note found for the given tag.")              
+        else                :
+            tooltip("No queued note found for the given tag.")
 
     elif cmd.startswith("siac-read-random-with-tag "):
         nid                 = get_random_with_tag(cmd.split(" ")[1])
         if nid and nid > 0  : index.ui.reading_modal.display(nid)
-        else                : tooltip("No note found for the given tag.")              
+        else                : tooltip("No note found for the given tag.")
 
     elif cmd == "siac-user-note-queue-picker":
         # show the queue manager dialog
@@ -1174,6 +1174,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                     mw.raise_()
             else:
                 tooltip("Failed to create filtered deck.")
+    elif cmd == "siac-reopen-file":
+        source = index.ui.reading_modal.note.source
+        tooltip("Opening external file:<br>" + source)
+        QDesktopServices.openUrl(QUrl(source))
 
 
     else:
