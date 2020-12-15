@@ -93,7 +93,7 @@ class ReadingModal:
         self._editor            = editor
         self.sidebar.set_editor(editor)
 
-        # ugly fix
+        #TODO: ugly fix
         gui_hooks.editor_did_load_note.remove(self.fill_sources)
         gui_hooks.editor_did_load_note.append(self.fill_sources)
 
@@ -331,11 +331,14 @@ class ReadingModal:
             fields_to_prefill   = get_config_value_or_default("pdf.onOpen.autoFillFieldsWithPDFName", [])
             title               = siacnote.get_title().replace("`", "&#96;")
 
+            if siacnote.url is not None:
+                title += '<br><a class="siac-source-link" href="' + siacnote.url + '">' + siacnote.url + '</a>'
+
             if len(fields_to_prefill) > 0:
                 for f in fields_to_prefill:
                     if f in list(note.keys()):
                         i = note._fieldOrd(f)
-                        self._editor.web.eval(f"$('.field').eq({i}).text(`{title}`);")
+                        self._editor.web.eval(f"$('.field').eq({i}).html(`{title}`);")
 
 
     def read_head_of_queue(self):

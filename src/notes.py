@@ -219,7 +219,11 @@ def create_db_file_if_not_exists() -> bool:
         if len(existing_prios) > 0:
             conn.executemany("update notes set priority = ?, lastscheduled = ? where id = ?", [(t[1], t[2], t[0]) for t in existing_prios])
             conn.commit()
-
+    except:
+        pass
+    try:
+        conn.execute(""" ALTER TABLE notes ADD COLUMN url TEXT; """)
+        conn.commit()
     except:
         pass
 
@@ -289,9 +293,9 @@ def create_note(title: str,
                 reminder: str,
                 priority: int,
                 author: str,
+                url: Optional[str] = None,
                 extract_start: Optional[int] = None,
                 extract_end: Optional[int] = None
-
                 ) -> int:
 
     #clean the text
@@ -308,8 +312,8 @@ def create_note(title: str,
         tags = " %s " % tags.strip()
 
     conn    = _get_connection()
-    id      = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority)
-                values (?,?,?,?,?,datetime('now', 'localtime'),"",?,?, NULL, ?, ?, NULL, ?, ?, NULL)""", (title, text, source, tags, nid, reminder, _date_now_str(), extract_start, extract_end, author, priority)).lastrowid
+    id      = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority, url)
+                values (?,?,?,?,?,datetime('now', 'localtime'),"",?,?, NULL, ?, ?, NULL, ?, ?, NULL, ?)""", (title, text, source, tags, nid, reminder, _date_now_str(), extract_start, extract_end, author, priority, url)).lastrowid
     conn.commit()
     conn.close()
     if (priority is not None and priority != 0) or (reminder is not None and reminder != ""):
@@ -1038,7 +1042,7 @@ def update_note_tags(id: int, tags: str):
     if index is not None:
         index.update_user_note((id, note[0], note[3], note[1], tags, -1, ""))
 
-def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int, author: str):
+def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int, author: str, url: str):
 
     # text = utility.text.clean_user_note_text(text)
     if tags is None:
@@ -1049,11 +1053,11 @@ def update_note(id: int, title: str, text: str, source: str, tags: str, reminder
     conn    = _get_connection()
     # a prio of -1 means unchanged, so don't update
     if priority != -1:
-        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, last_priority=priority, priority=?, lastscheduled=coalesce(lastscheduled, ?) where id=?"
-        conn.execute(sql, (title, text, source, tags, reminder, author, priority, mod, id))
+        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, last_priority=priority, priority=?, lastscheduled=coalesce(lastscheduled, ?), url=? where id=?"
+        conn.execute(sql, (title, text, source, tags, reminder, author, priority, mod, url, id))
     else:
-        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=? where id=?"
-        conn.execute(sql, (title, text, source, tags, reminder, author, id))
+        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, url=? where id=?"
+        conn.execute(sql, (title, text, source, tags, reminder, author, url, id))
     conn.commit()
     conn.close()
     if priority != -1:

@@ -132,10 +132,17 @@
 "shortcuts.menubar.import.youtube": "",
 "shortcuts.menubar.import.create_new": "Alt+N",
 "shortcuts.menubar.import.zotero_csv": "",
+"shortcuts.menubar.import.web": "",
 "shortcuts.menubar.queue_manager": "",
 "shortcuts.menubar.quick_open": "Ctrl+O",
+"shortcuts.menubar.read_first": "",
 "shortcuts.menubar.addon_settings": "",
 "shortcuts.menubar.knowledge_tree": "",
+
+"import.quickweb.bookmarks": { "search": ["https://www.duckduckgo.com", "http://www.google.com"], "learn": ["https://www.wikipedia.org/", "https://www.dict.cc/", "https://www.mdbg.net/chinese/dictionary", "https://docs.ankiweb.net/"], "stuff": ["https://www.youtube.com", "https://apps.ankiweb.net/"] },
+"import.quickweb.search_engine": "https://duckduckgo.com/?q={query}",
+"import.quickweb.default_page": "https://duckduckgo.com/",
+"import.quickweb.bookmarks_width_percent": 20,
 
 "searchbar.default_mode": "Add-on",
 "addon.data_folder": "",

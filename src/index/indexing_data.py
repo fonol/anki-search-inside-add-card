@@ -48,9 +48,9 @@ def get_notes_in_collection():
 
     index_notes = [(id, flds, t, did, str(mid), "") for (id, flds, t, did, mid) in oList]
 
-    for (id, title, text, source, tags, nid, created, modified, reminder, _, _, _, _, _, author, _, _) in other_notes:
+    for (id, title, text, source, tags, nid, created, modified, reminder, _, _, _, _, _, author, _, _, url) in other_notes:
 
-        text = title + "\u001f" + text + "\u001f" + source + "\u001f" + (author if author else "")
+        text = title + "\u001f" + text + "\u001f" + source + "\u001f" + (author if author else "") + "\u001f" + (url if url else "")
         index_notes.append((id, text, tags, -1, "-1", ""))
 
 

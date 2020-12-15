@@ -120,7 +120,10 @@ class NoteEditor(QDialog):
     last_tags = ""
     last_geom = None
 
-    def __init__(self, parent, note_id = None, add_only = False, read_note_id = None, tag_prefill = None, source_prefill = None, text_prefill = None, title_prefill = None, prio_prefill = None):
+    def __init__(self, parent, note_id = None, add_only = False,
+                 read_note_id = None, tag_prefill = None, source_prefill = None,
+                 text_prefill = None, title_prefill = None, prio_prefill = None,
+                 author_prefill = None, url_prefill = None):
 
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
 
@@ -144,6 +147,14 @@ class NoteEditor(QDialog):
             self.note = get_note(note_id)
             if not self.note:
                 return
+
+        # fill meta data
+        if self.note:
+            self.author = self.note.author
+            self.url    = self.note.url
+        else:
+            self.author = author_prefill
+            self.url    = url_prefill
 
 
         #self.mw.setupDialogGC(self)
@@ -268,6 +279,7 @@ class NoteEditor(QDialog):
         priority            = self.create_tab.slider.value()
         specific_schedule   = self.create_tab.slider.schedule()
         author              = self.metadata_tab.author.text()
+        url                 = self.metadata_tab.url.text()
 
         # if source is a pdf, title must be given
         if len(title.strip()) == 0 and source.lower().strip().endswith(".pdf"):
@@ -284,7 +296,7 @@ class NoteEditor(QDialog):
                 tags = default_tags
 
         NoteEditor.last_tags = tags
-        create_note(title, text, source, tags, None, specific_schedule, priority, author)
+        create_note(title, text, source, tags, None, specific_schedule, priority, author, url = url)
         return True
 
     def _reset(self):
@@ -317,6 +329,7 @@ class NoteEditor(QDialog):
         source                  = self.create_tab.source.text()
         # TODO
         author                  = self.metadata_tab.author.text()
+        url                     = self.metadata_tab.url.text()
         tags                    = self.create_tab.tag.text()
         priority                = self.create_tab.slider.value()
         if not self.create_tab.slider.has_changed_value():
@@ -325,7 +338,7 @@ class NoteEditor(QDialog):
         specific_schedule       = self.create_tab.slider.schedule()
 
         NoteEditor.last_tags    = tags
-        update_note(self.note_id, title, text, source, tags, specific_schedule, priority, author)
+        update_note(self.note_id, title, text, source, tags, specific_schedule, priority, author, url)
         run_hooks("user-note-edited", self.note_id)
 
         if self.create_tab.slider.has_changed_value():
@@ -1029,11 +1042,14 @@ class MetadataTab(QWidget):
         self.layout.addWidget(QLabel("Author(s)"))
         self.author = QLineEdit()
         self.layout.addWidget(self.author)
+        self.layout.addWidget(QLabel("Url"))
+        self.url = QLineEdit()
+        self.layout.addWidget(self.url)
         self.layout.addStretch()
         self.setLayout(self.layout)
 
-        if self.parent.note is not None:
-            self.author.setText(self.parent.note.author)
+        self.author.setText(self.parent.author)
+        self.url.setText(self.parent.url)
 
 class SettingsTab(QWidget):
 

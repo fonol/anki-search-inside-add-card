@@ -6,6 +6,7 @@ from aqt.utils import showInfo, tooltip
 from .dialogs.editor import NoteEditor
 from .dialogs.importing.zotero_import import ZoteroImporter
 from .dialogs.importing.quick_youtube_import import QuickYoutubeImport
+from .dialogs.importing.quick_web_import import QuickWebImport
 from .dialogs.settings import SettingsDialog
 from .dialogs.knowledge_tree import KnowledgeTree
 
@@ -16,7 +17,8 @@ import utility.misc
 class Menu():
 
     def __init__(self):
-        self.kt = None
+        self.kt        = None
+        self.quick_web = None
 
         # state.night_mode is not yet set here
         nightmode = False
@@ -35,8 +37,9 @@ class Menu():
         """)
 
         import_options=( #SHORTCUT_CONF_KEY, TITLE, CALLBACK
-            ("shortcuts.menubar.import.create_new", "New",           self.import_create_new),
-            ("shortcuts.menubar.import.youtube",    "YouTube",       self.import_youtube), # still dysfunctional
+            ("shortcuts.menubar.import.create_new", "Create New",           self.import_create_new),
+            ("shortcuts.menubar.import.web",        "Web",    self.import_web),
+            ("shortcuts.menubar.import.youtube",    "YouTube",       self.import_youtube),
             ("shortcuts.menubar.import.zotero_csv", "Zotero CSV",    self.import_zotero)
         )
 
@@ -44,11 +47,11 @@ class Menu():
 
 
         menu_options=( # CONF_KEY, TITLE, CALLBACK
-            ("shortcuts.menubar.quick_open",     "Quick Open...",       self.quick_open),
             ("shortcuts.menubar.read_first",     "Read first in Queue", self.read_first),
-            ("shortcuts.menubar.knowledge_tree", "Open Knowledge Tree", self.knowledge_tree),
+            ("shortcuts.menubar.quick_open",     "Quick Open...",       self.quick_open),
             ("shortcuts.menubar.queue_manager",  "Queue Manager",       self.queue_picker),
-            ("shortcuts.menubar.addon_settings", "Add-on Settings",     self.settings),
+            ("shortcuts.menubar.knowledge_tree", "Open Knowledge Tree", self.knowledge_tree),
+            ("shortcuts.menubar.addon_settings", "Add-on Settings",     self.settings)
         )
 
 
@@ -60,8 +63,18 @@ class Menu():
         if dialog.exec_():
             tooltip(f"Created {dialog.total_count} notes.")
 
+    def import_web(self):
+        if self.quick_web is None:
+            self.quick_web = QuickWebImport()
+
+        self.quick_web.show()
+        self.quick_web.raise_()
+
+        #if dialog.exec_():
+
     def import_youtube(self):
-        dialog = QuickYoutubeImport(mw.app.activeWindow())
+        active_win = mw.app.activeWindow()
+        dialog = QuickYoutubeImport(active_win)
 
         if dialog.exec_():
             title   = dialog.youtube_title
@@ -70,7 +83,7 @@ class Menu():
 
             text=f"""Title: {title}""" + "  \n" + f"""Channel: {channel}"""
 
-            note_editor = NoteEditor(mw.app.activeWindow(), title_prefill = title, text_prefill = text, source_prefill = url)
+            note_editor = NoteEditor(active_win, title_prefill = title, text_prefill = text, source_prefill = url, author_prefill = channel, url_prefill = url)
 
     def import_create_new(self):
         dialog = NoteEditor(mw.app.activeWindow())
