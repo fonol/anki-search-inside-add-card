@@ -45,10 +45,10 @@ class QuickWebImport(QWidget):
         self.setWindowTitle("Quick Web Import")
 
         # note settings
-        self.web_title = None
-        self.source = None
-        self.web_url = None
-        self.text = None
+        self.web_title          = None
+        self.source             = None
+        self.web_url            = None
+        self.text               = None
 
         self.layout             = QVBoxLayout()
         self.toplayout          = QHBoxLayout()
@@ -194,12 +194,11 @@ class QuickWebImport(QWidget):
         self.open_note_window()
 
     def markdown(self):
-        mdtext = QTextEdit()
-
+        mdtext      = QTextEdit()
+        self.source = ""
         mdtext.setHtml(import_webpage(self.web_url, inline_images=False))
         mdtext.setPlainText(mdtext.toMarkdown())
-        self.text = mdtext.toPlainText()
-
+        self.text   = mdtext.toPlainText()
         self.open_note_window()
 
     def pdf(self):
@@ -259,7 +258,6 @@ class QuickWebImport(QWidget):
 
     def update_url(self, url, title):
         self.url.setText(url)
-
         self.web_title = title
         self.web_url = url
 
