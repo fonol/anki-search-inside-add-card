@@ -214,7 +214,11 @@ class Output:
                 icon = "book"
                 if res.is_pdf():
                     pdfs.append(nid)
-                    extract             = f"<span class='siac-extract-mark'> | P. {res.extract_start} - {res.extract_end}&nbsp;</span>" if res.extract_start else ""
+                    extract             = ""
+                    if res.extract_start and res.extract_start == res.extract_end:
+                        extract         = f"<span class='siac-extract-mark'> | P. {res.extract_start}&nbsp;</span>"
+                    elif res.extract_start:
+                        extract         = f"<span class='siac-extract-mark'> | P. {res.extract_start} - {res.extract_end}&nbsp;</span>"
                     p_html              = "<div class='siac-prog-sq'></div>" * 10
                     progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div><div style='display: inline-block;'>{extract}</div>"
                     pdf_class           = "pdf" if not res.extract_start else "pdf extract"
