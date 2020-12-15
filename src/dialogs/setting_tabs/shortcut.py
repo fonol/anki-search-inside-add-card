@@ -86,7 +86,9 @@ class ShortcutSettingsTab(QWidget):
             shortcut("shortcuts.menubar.import.create_new",    "Create New",              id_menubar),
             shortcut("shortcuts.menubar.import.zotero_csv",    "Import Zotero CSV",       id_menubar),
             shortcut("shortcuts.menubar.import.youtube",       "Import YouTube Link",     id_menubar),
+            shortcut("shortcuts.menubar.import.web",           "Import Web",              id_menubar),
             shortcut("shortcuts.menubar.queue_manager",        "Open Queue Manager",      id_menubar),
+            shortcut("shortcuts.menubar.read_first",           "Read First in Queue",     id_menubar),
             shortcut("shortcuts.menubar.quick_open",           "Quick Open",              id_menubar),
             shortcut("shortcuts.menubar.addon_settings",       "Open Add-on Settings",    id_menubar)
         )
