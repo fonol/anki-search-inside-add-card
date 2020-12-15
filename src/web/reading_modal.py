@@ -31,6 +31,7 @@ import html as ihtml
 from aqt import mw, gui_hooks
 from aqt.editor import Editor
 from aqt.utils import showInfo, tooltip
+from aqt.qt import QDesktopServices, QUrl
 
 import utility.tags
 import utility.text
@@ -324,7 +325,7 @@ class ReadingModal:
 
         siacnote = self.note
 
-        if siacnote:
+        if siacnote is not None:
             note                = self._editor.note
 
             fields_to_prefill   = get_config_value_or_default("pdf.onOpen.autoFillFieldsWithPDFName", [])
@@ -395,9 +396,9 @@ class ReadingModal:
             if done_dialog.enqueue_next_ids and len(done_dialog.enqueue_next_ids) > 0:
                 for nid in done_dialog.enqueue_next_ids:
                     update_priority_list(nid, done_dialog.enqueue_next_prio)
-            
+
             # 2. check if a tag filter is set, if yes, the next opened note should not be the first in the queue, but rather
-            # the next enqueued note with at least one overlapping tag 
+            # the next enqueued note with at least one overlapping tag
             if done_dialog.tag_filter is not None and len(done_dialog.tag_filter.strip()) > 0:
                 nid = find_next_enqueued_with_tag(done_dialog.tag_filter.split(" "))
                 if nid is not None and nid > 0:
@@ -597,7 +598,11 @@ class ReadingModal:
             notification    = ""
             editable        = False
             #check note type
-            if note.is_pdf() and utility.misc.file_exists(source):
+            if note.is_file():
+                editable = len(text) < 100000
+                overflow = "hidden"
+                text = self.file_note_html(editable, priority, source)
+            elif note.is_pdf() and utility.misc.file_exists(source):
                 overflow        = "hidden"
                 text            = self.pdf_viewer_html(source, note.get_title(), priority)
 
@@ -626,6 +631,25 @@ class ReadingModal:
 
             return html
         return ""
+
+    def file_note_html(self, editable: bool, priority: int, source: str) -> HTML:
+        """
+            Returns a slightly altered editor for the text, with an indication towards the file
+        """
+        nid                     = self.note_id
+        text                    = self.note.text if not utility.text.is_html(self.note.text) else utility.text.html_to_text(self.note.text)
+        search_sources          = ""
+        config                  = mw.addonManager.getConfig(__name__)
+        urls                    = config["searchUrls"]
+
+        if urls is not None and len(urls) > 0:
+            search_sources = self.iframe_dialog(urls)
+
+        title                   = utility.text.trim_if_longer_than(self.note.get_title(), 50).replace('"', "")
+        params                  = dict(text = text, nid = nid, search_sources=search_sources, title=title, source = source)
+
+        html                    = filled_template("rm/file_viewer", params)
+        return html
 
 
     def text_note_html(self, editable: bool, priority: int) -> HTML:
@@ -747,7 +771,7 @@ class ReadingModal:
         text            = note.text
         note_id         = note.id
         queue           = _get_priority_list()
-        priority        = note.priority 
+        priority        = note.priority
         has_schedule    = "active" if note.is_due_sometime() else ""
 
         if note.is_in_queue():

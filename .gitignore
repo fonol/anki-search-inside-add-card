@@ -14,4 +14,4 @@ src/rs/siacrs/target/*
 src/rs/siacrs/siacrs_venv/*
 src/rs/siacrs/Cargo.lock
 rs_build.bat
-
+*/.DS_Store
