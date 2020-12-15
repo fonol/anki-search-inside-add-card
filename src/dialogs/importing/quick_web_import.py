@@ -13,6 +13,8 @@
 
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#TODO: tidy up, make config accessible from either settings or describe in config.md
 from aqt.qt import *
 import sip
 import time
@@ -22,7 +24,6 @@ from aqt.qt import *
 from aqt import mw
 import aqt
 from anki.utils import isMac
-from aqt.utils import showInfo
 
 from ...config import get_config_value, get_config_value_or_default
 from ...web_import import import_webpage
@@ -175,7 +176,6 @@ class QuickWebImport(QWidget):
 
     def bookmark_clicked(self, item):
         if item.parent() is None:
-            showInfo(item.text(0))
             return
         self.load(item.text(0))
 
@@ -203,7 +203,7 @@ class QuickWebImport(QWidget):
         self.open_note_window()
 
     def pdf(self):
-        #TODO: tidy up functions to be not written 3x
+        #TODO: tidy up functions to be not written 3x throughout add-on code
         name = self.web_title
 
         if name is None or len(name) == 0:
