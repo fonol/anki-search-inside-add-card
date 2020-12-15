@@ -98,6 +98,8 @@ class SiacNote(Printable):
         return self.source is not None and self.source.strip().lower().endswith(".pdf")
 
     def is_file(self) -> bool:
+        if self.is_yt():
+            return False
         return self.source is not None and re.match("^([\S]+)://", self.source.strip().lower())
 
     def is_feed(self) -> bool:
