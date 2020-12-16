@@ -101,7 +101,7 @@ class SiacNote(Printable):
     def is_file(self) -> bool:
         if self.is_yt():
             return False
-        return self.source is not None and re.match("^([\S]+)://", self.source.strip().lower())
+        return self.source is not None and re.match("^(?:\\S+):///", self.source.strip().lower())
 
     def is_feed(self) -> bool:
         return self.source is not None and self.source.strip().lower().startswith("feed:")
