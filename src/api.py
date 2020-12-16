@@ -20,8 +20,9 @@ from typing import Optional
 import aqt
 from aqt import mw
 from anki.utils import isMac
-from aqt.utils import tooltip, showInfo
+from aqt.utils import tooltip
 from aqt.browser import Browser
+from aqt.main import ResetReason
 
 import state
 from .notes import get_queue_count
@@ -62,6 +63,8 @@ def open_or_switch_to_editor(function):
     else:
         add_tmp_hook("editor-with-siac-initialised", lambda: function())
 
+    mw.requireReset(reason=ResetReason.AddCardsAddNote)
+
 def show_queue_picker():
     dialog = QueuePicker(mw.app.activeWindow())
 
@@ -88,15 +91,15 @@ def show_quick_open_pdf():
 
     if dialog.exec_():
         if dialog.chosen_id is not None and dialog.chosen_id > 0:
-            def _open_id():
-                ix      = get_index()
+            open_siac_with_id(dialog.chosen_id)
 
-                def cb(can_load):
-                    if can_load:
-                        ix.ui.reading_modal.display(dialog.chosen_id)
-                ix.ui.js_with_cb("beforeNoteQuickOpen();", cb)
+def open_siac_with_id(id):
+    def _open_id():
+        ix      = get_index()
 
-            open_or_switch_to_editor(_open_id)
+        ix.ui.reading_modal.display(id)
+
+    open_or_switch_to_editor(_open_id)
 
 
 def try_open_first_in_queue(message: Optional[str] = None):

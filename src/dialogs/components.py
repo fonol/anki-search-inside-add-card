@@ -20,7 +20,7 @@ import typing
 from typing import Optional
 from enum import Enum, unique
 from ..notes import dynamic_sched_to_str, find_notes_with_similar_prio, get_avg_priority, get_note, find_notes, find_unqueued_notes, find_suggested_unqueued_notes
-from .calendar_dialog import CalendarDialog 
+from .calendar_dialog import CalendarDialog
 from ..config import get_config_value_or_default, update_config
 from ..models import SiacNote
 from ..hooks import run_hooks
@@ -73,14 +73,18 @@ class QtPrioritySlider(QWidget):
         avg_lbl.setStyleSheet(f"padding-left: 4px; padding-right: 4px; color: white; background-color: {utility.misc.prio_color(self.avg_prio)};")
         hvalue.addWidget(avg_lbl)
         vbox.addLayout(hvalue)
-        
+
+
+        #TODO:somehow notes without a priority have a problem atm on done dialog
+        self.similar = QLabel("")
+        vbox.addWidget(self.similar)
         if not self.show_spec_sched and self.nid:
             self.similar = QLabel("")
             vbox.addWidget(self.similar)
         vbox.addStretch()
 
         if show_spec_sched:
-            self.scheduler = QtScheduleComponent(schedule) 
+            self.scheduler = QtScheduleComponent(schedule)
             vbox.addWidget(self.scheduler)
 
         box.setLayout(vbox)
@@ -89,7 +93,7 @@ class QtPrioritySlider(QWidget):
         vbox_outer.setContentsMargins(0,0,0,0)
         vbox_outer.addWidget(box)
         self.setLayout(vbox_outer)
-    
+
         self.update_lbl()
         self.slider.valueChanged.connect(self.update_lbl)
         self.slider.sliderReleased.connect(self.slider_released)
@@ -99,7 +103,7 @@ class QtPrioritySlider(QWidget):
 
     def value(self):
         return self.slider.value()
-    
+
     def has_changed_value(self):
         return self.value() != self.prio_default
 
@@ -113,14 +117,14 @@ class QtPrioritySlider(QWidget):
     def reset(self):
         self.slider.setValue(0)
         self.update_lbl()
-    
+
     def set_released_fn(self, fn):
         self.released_fn = fn
-    
+
     def slider_released(self):
         if self.released_fn:
             self.released_fn(self.slider.value())
-     
+
 
     def update_lbl(self):
         """
@@ -130,11 +134,11 @@ class QtPrioritySlider(QWidget):
             self.value_lbl.setText("No Priority")
             # If 0 priority, disable setting specific schedule
             if self.show_spec_sched:
-                self.scheduler.priority_set_to_zero() 
+                self.scheduler.priority_set_to_zero()
             else:
                 self.similar.setText(f"<br>Info: A note without a priority won't appear in <br>the queue, unless it has a schedule<br>which is due on that day.")
             self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #c62828; border-radius: 3px; }")
-            
+
         else:
             self.value_lbl.setText(dynamic_sched_to_str(self.slider.value()).replace("(", "(<b>").replace(")", "</b>)"))
             self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #2496dc; border-radius: 3px;}")
@@ -157,7 +161,7 @@ class QtPrioritySlider(QWidget):
                     else:
                         self.similar.setText(f"Similar Priority: <br><br>No results." )
 
-            
+
 class QtScheduleComponent(QWidget):
 
     def __init__(self, schedule):
@@ -168,19 +172,19 @@ class QtScheduleComponent(QWidget):
 
         self.has_schedule       = self.initial_schedule is not None and len(self.initial_schedule.strip()) > 0
         self.setup_ui()
-            
-        
+
+
     def setup_ui(self):
 
         self.edit_tab       = ScheduleEditTab(self)
-    
+
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0,0,0,0)
         self.layout().addWidget(self.edit_tab)
 
     def _get_schedule(self):
         return self.edit_tab._get_schedule()
-    
+
     def schedule_has_changed(self) -> bool:
         new = self._get_schedule()
         if (self.initial_schedule is None or self.initial_schedule == "") and (new is None or new == ""):
@@ -200,13 +204,13 @@ class QtScheduleComponent(QWidget):
             self.edit_tab.remove_sched_rb.setEnabled(True)
 
 
-        
+
 # Unused atm (10.10.20)
 class ScheduleSettingsTab(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.setLayout(QVBoxLayout())
-        
+
         header          = QLabel("General scheduling settings")
         header.setAlignment(Qt.AlignCenter)
         self.layout().addWidget(header)
@@ -217,7 +221,7 @@ class ScheduleSettingsTab(QWidget):
         self.layout().addWidget(line)
 
         self.layout().addStretch()
-        
+
         self.show_sched_cb = QCheckBox("Show schedule dialog after done with unsched. note")
         self.layout().addWidget(self.show_sched_cb)
         self.show_sched_cb.setChecked(get_config_value_or_default("notes.queue.scheduleDialogOnDoneUnscheduledNotes", False))
@@ -228,12 +232,12 @@ class ScheduleSettingsTab(QWidget):
         self.ivl_includes_today_cb.setChecked(get_config_value_or_default("notes.queue.intervalSchedulesStartToday", True))
         self.ivl_includes_today_cb.clicked.connect(self.ivl_includes_today_cb_checked)
 
-   
+
 
 
     def show_sched_cb_clicked(self):
         update_config("notes.queue.scheduleDialogOnDoneUnscheduledNotes", self.show_sched_cb.isChecked())
-    
+
     def ivl_includes_today_cb_checked(self):
         update_config("notes.queue.intervalSchedulesStartToday", self.ivl_includes_today_cb.isChecked())
         run_hooks("updated-schedule")
@@ -283,7 +287,7 @@ class ScheduleEditTab(QWidget):
         self.group.addButton(self.tpwd_rb, 2)
         self.group.addButton(self.tpd_rb, 3)
         self.group.addButton(self.tgd_rb, 4)
-        
+
         for rb in [self.no_sched_rb, self.td_rb, self.tpwd_rb, self.tpd_rb, self.tgd_rb]:
             rb.clicked.connect(self.sched_radio_clicked)
 
@@ -342,7 +346,7 @@ class ScheduleEditTab(QWidget):
         self.tpd_inp.setMinimum(1)
         self.tpd_inp.setDecimals(0)
         self.tpd_inp.setSuffix(" day(s)")
-    
+
         hbox3.addWidget(self.tpd_rb)
         hbox33 = QHBoxLayout()
         hbox33.addWidget(self.tpd_inp)
@@ -373,7 +377,7 @@ class ScheduleEditTab(QWidget):
         self.container4.setLayout(hbox44)
         hbox4.addWidget(self.container4)
         self.vbox.addLayout(hbox4)
-        
+
         self.vbox.setContentsMargins(0,0,0,0)
         self.vbox.addStretch(1)
         self.setLayout(self.vbox)
@@ -395,7 +399,7 @@ class ScheduleEditTab(QWidget):
             self.container2.setEnabled(False)
             self.container3.setEnabled(False)
             self.container4.setEnabled(False)
-        
+
         elif self.tpd_rb.isChecked():
             self.container1.setEnabled(False)
             self.container2.setEnabled(False)
@@ -498,7 +502,7 @@ class ScheduleEditTab(QWidget):
                 next_date = next[0]
             else:
                 next_date = int(wds[0:1])
-            n = (next_date - 1 - today) % 7 
+            n = (next_date - 1 - today) % 7
             due = (datetime.now() + timedelta(days=n)).strftime('%Y-%m-%d-%H-%M-%S')
             return f"{now}|{due}|wd:{wds}"
 
@@ -515,7 +519,7 @@ class ScheduleEditTab(QWidget):
                 orig_ivl        = float(orig_sval.split(";")[1])
                 if orig_fac == factor and int(orig_ivl) == start:
                     return self.parent.initial_schedule
-                
+
             due = (datetime.now() + timedelta(days=int(start))).strftime('%Y-%m-%d-%H-%M-%S')
             return f"{now}|{due}|gd:{factor};{start}"
 
@@ -540,12 +544,12 @@ class ClickableQLabel(QLabel):
     def __init__(self, parent=None, hover_effect=False):
         QLabel.__init__(self, parent)
         self.hover_effect = hover_effect
-            
-            
+
+
     def enterEvent(self, event):
         if self.hover_effect:
             self.setStyleSheet("color: #2496dc")
-    
+
     def leaveEvent(self, event):
         if self.hover_effect:
             self.setStyleSheet("color: none")
@@ -558,7 +562,7 @@ class ClickableQWidget(QWidget):
 
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
-            
+
     def mousePressEvent(self, evt):
         self.clicked.emit()
 
@@ -570,7 +574,7 @@ class DueCalendar(QCalendarWidget):
 
   def paintCell(self, painter, rect, date):
     QCalendarWidget.paintCell(self, painter, rect, date)
-    
+
     painter.drawText(rect.bottomLeft(), "test")
 
 
@@ -597,7 +601,7 @@ class NoteSelector(QWidget):
         self.refresh_search_results()
 
     def setup_ui(self):
-        
+
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0,0,0,0)
         self.layout.setSpacing(3)
@@ -643,7 +647,7 @@ class NoteSelector(QWidget):
     def refresh(self):
         self.refresh_selection()
         self.refresh_search_results()
-    
+
     def refresh_selection(self):
 
         self.selected_list.clear()
@@ -655,22 +659,22 @@ class NoteSelector(QWidget):
         query = self.input.text()
         if len(query.strip()) > 0:
             self.lbl_sr.setText("Search Results")
-            if self.mode == NoteSelectorMode.UNQUEUED:       
+            if self.mode == NoteSelectorMode.UNQUEUED:
                 notes = find_unqueued_notes(query)
             elif self.mode == NoteSelectorMode.ALL:
                 notes = find_notes(query)
         else:
             if self.nid:
                 self.lbl_sr.setText("Suggested")
-                if self.mode == NoteSelectorMode.UNQUEUED:       
+                if self.mode == NoteSelectorMode.UNQUEUED:
                     notes = find_suggested_unqueued_notes(self.nid)
 
-            
+
 
         notes = [n for n in notes if n.id != self.nid and n.id not in self.selected_ids][:50]
         self._current = notes
         self._fill_list(self.list, notes)
-        
+
     def _fill_list(self, list, notes):
 
 
@@ -701,7 +705,7 @@ class NoteSelector(QWidget):
             list.setCellWidget(ix, 0, cw)
             list.setItem(ix, 1, title)
             list.setItem(ix, 2, ntype)
-        
+
         list.resizeRowsToContents()
 
     def cb_clicked(self, ix, nid, state):

@@ -40,6 +40,7 @@ from .components import QtPrioritySlider, MDTextEdit
 from .url_input_dialog import URLInputDialog
 from ..markdown.extensions.fenced_code import FencedCodeExtension
 from ..markdown.extensions.def_list import DefListExtension
+from ..utility.tag_tree import TagTree
 
 import utility.text
 import utility.misc
@@ -308,8 +309,9 @@ class NoteEditor(QDialog):
         if self.create_tab.source.text().endswith(".pdf"):
             self.create_tab.source.setText("")
         self.create_tab.title.setFocus()
-        self.create_tab.tree.clear()
-        self.create_tab.build_tree(get_all_tags_as_hierarchy(include_anki_tags=self.create_tab.all_tags_cb.isChecked()))
+
+        self.create_tab.tree.include_anki_tags = self.create_tab.all_tags_cb.isChecked()
+        self.create_tab.tree.rebuild_tree()
 
 
     def on_update_clicked(self):
@@ -384,50 +386,9 @@ class CreateTab(QWidget):
             tag_fg                  = config["styles.tagForegroundColor"]
             hover_bg                = "palette(dark)"
 
-        self.tree.setColumnCount(1)
         include_anki_tags = get_config_value_or_default("notes.editor.include_anki_tags", False)
-        self.build_tree(get_all_tags_as_hierarchy(include_anki_tags=include_anki_tags))
+        self.tree = TagTree(include_anki_tags = include_anki_tags, only_tags = True, knowledge_tree = False)
         self.tree.itemClicked.connect(self.tree_item_clicked)
-        self.tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.tree.setMinimumHeight(150)
-        self.tree.setMinimumWidth(220)
-        self.tree.setSelectionMode(QAbstractItemView.NoSelection)
-        self.tree.setHeaderHidden(True)
-
-        vline_icn           = icons_path + ('vline-night' if state.night_mode else 'vline')
-        branch_more_icn     = icons_path + ('branch-more-night' if state.night_mode else 'branch-more')
-        branch_end_icn      = icons_path + ('branch-end-night' if state.night_mode else 'branch-end')
-        branch_closed_icn   = icons_path + ('branch-closed-night' if state.night_mode else 'branch-closed')
-        branch_open_icn     = icons_path + ('branch-open-night' if state.night_mode else 'branch-open')
-
-        self.tree.setStyleSheet(f"""
-        QTreeWidget::item:hover,QTreeWidget::item:hover:selected {{
-            border:none;
-            border-radius:5px;
-            font-weight: bold;
-            background-color: {tag_bg};
-            color: {tag_fg};
-        }}
-        QTreeWidget::branch:has-siblings:!adjoins-item {{
-            border-image: url({vline_icn}.png) 0;
-        }}
-        QTreeWidget::branch:has-siblings:adjoins-item {{
-            border-image: url({branch_more_icn}.png) 0;
-        }}
-        QTreeWidget::branch:!has-children:!has-siblings:adjoins-item {{
-            border-image: url({branch_end_icn}.png) 0;
-        }}
-        QTreeWidget::branch:has-children:!has-siblings:closed,
-        QTreeWidget::branch:closed:has-children:has-siblings {{
-                border-image: none;
-                image: url({branch_closed_icn}.png);
-        }}
-        QTreeWidget::branch:open:has-children:!has-siblings,
-        QTreeWidget::branch:open:has-children:has-siblings  {{
-                border-image: none;
-                image: url({branch_open_icn}.png);
-        }}
-        """)
 
         recently_used_tags      = get_recently_used_tags()
 
@@ -799,23 +760,18 @@ class CreateTab(QWidget):
         self.tag.setText(" ".join(existing))
 
     def tag_cb_changed(self, state):
-        self.tree.clear()
-        tmap = None
+        self.tree.include_anki_tags = (state == Qt.Checked)
 
-        if state == Qt.Checked:
-            tmap = get_all_tags_as_hierarchy(include_anki_tags = True)
-        else:
-            tmap = get_all_tags_as_hierarchy(include_anki_tags = False)
-        self.build_tree(tmap)
+        self.tree.rebuild_tree()
         update_config("notes.editor.include_anki_tags", state == Qt.Checked)
 
-    def build_tree(self, tmap):
-        for t, children in tmap.items():
-            ti = QTreeWidgetItem([t])
-            ti.setData(1, 1, QVariant(t))
-            ti.setIcon(0, self.tag_icon)
-            ti.addChildren(self._add_to_tree(children, t + "::"))
-            self.tree.addTopLevelItem(ti)
+#    def build_tree(self, tmap):
+#        for t, children in tmap.items():
+#            ti = QTreeWidgetItem([t])
+#            ti.setData(1, 1, QVariant(t))
+#            ti.setIcon(0, self.tag_icon)
+#            ti.addChildren(self._add_to_tree(children, t + "::"))
+#            self.tree.addTopLevelItem(ti)
 
     def toggle_left_pane(self):
         self.left_pane.setVisible(not self.left_pane.isVisible())

@@ -8,6 +8,7 @@ from .dialogs.importing.zotero_import import ZoteroImporter
 from .dialogs.importing.quick_youtube_import import QuickYoutubeImport
 from .dialogs.importing.quick_web_import import QuickWebImport
 from .dialogs.settings import SettingsDialog
+from .dialogs.knowledge_tree import KnowledgeTree
 
 
 import state
@@ -16,6 +17,7 @@ import utility.misc
 class Menu():
 
     def __init__(self):
+        self.kt        = None
         self.quick_web = None
 
         # state.night_mode is not yet set here
@@ -45,9 +47,10 @@ class Menu():
 
 
         menu_options=( # CONF_KEY, TITLE, CALLBACK
-            ("shortcuts.menubar.queue_manager",  "Queue Manager",       self.queue_picker),
             ("shortcuts.menubar.read_first",     "Read first in Queue", self.read_first),
             ("shortcuts.menubar.quick_open",     "Quick Open...",       self.quick_open),
+            ("shortcuts.menubar.queue_manager",  "Queue Manager",       self.queue_picker),
+            #("shortcuts.menubar.knowledge_tree", "Open Knowledge Tree", self.knowledge_tree),
             ("shortcuts.menubar.addon_settings", "Add-on Settings",     self.settings)
         )
 
@@ -90,6 +93,13 @@ class Menu():
 
     def queue_picker(self):
         show_queue_picker()
+
+    def knowledge_tree(self):
+        if self.kt is None:
+            self.kt = KnowledgeTree()
+
+        self.kt.show()
+        self.kt.raise_()
 
     def settings(self):
         dialog = SettingsDialog(mw.app.activeWindow())

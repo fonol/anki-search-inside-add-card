@@ -56,6 +56,10 @@ class PDFExtractDialog(QDialog):
         self.title_inp.setText(self.note.title)
         self.vbox.addWidget(self.title_inp)
 
+        self.tags_inp = QLineEdit()
+        self.tags_inp.setText(self.note.tags)
+        self.vbox.addWidget(self.tags_inp)
+
         self.start_inp = QSpinBox()
         self.start_inp.setMinimum(1)
         self.start_inp.setMaximum(max(1, self.pages_total - 1))
@@ -125,4 +129,4 @@ class PDFExtractDialog(QDialog):
     def create_extract(self):
 
         title = self.title_inp.text()
-        new_id = create_note(title, "", self.note.source, self.note.tags, self.note.nid, self.scheduler.schedule(), self.scheduler.value(), self.note.author, self.extract_start, self.extract_end, url = self.note.url)
+        new_id = create_note(title, "", self.note.source, self.note.tags, self.note.nid, self.scheduler.schedule(), self.scheduler.value(), self.note.author, url = self.note.url, extract_start = self.extract_start, extract_end = self.extract_end)

@@ -121,7 +121,7 @@ class FTSIndex:
             self.type = self._check_fts_version(config["logging"])
         if not index_up_to_date:
             persist_index_info(self)
-            
+
         state.index_data = None
 
 
@@ -202,7 +202,7 @@ class FTSIndex:
         if 'enable_fts5' in available_pragmas:
             return "SQLite FTS5"
         return "SQLite FTS4"
-       
+
 
 
     def _cleanText(self, corpus):
@@ -224,7 +224,7 @@ class FTSIndex:
         return filtered
 
 
-    def search(self, text, decks, only_user_notes = False, print_mode = "default"):
+    def search(self, text, decks, only_user_notes = False, print_mode = "default", knowledge_tree = None):
         """
         Search for the given text.
         Args:
@@ -235,7 +235,9 @@ class FTSIndex:
         worker.stamp    = utility.misc.get_milisec_stamp()
         self.ui.latest  = worker.stamp
 
-        if print_mode == "default":
+        if knowledge_tree:
+            worker.signals.result.connect(knowledge_tree.get_search_results_back)
+        elif print_mode == "default":
             worker.signals.result.connect(self.print_output)
         elif print_mode == "pdf":
             worker.signals.result.connect(self.print_pdf)
@@ -244,6 +246,7 @@ class FTSIndex:
 
         worker.signals.tooltip.connect(self.ui.show_tooltip)
         self.threadPool.start(worker)
+
 
 
     def searchProc(self, text, decks, only_user_notes, print_mode):
@@ -289,7 +292,7 @@ class FTSIndex:
         else:
             query = " OR ".join([s.strip().replace("OR", "or") for s in tokens if not utility.text.text_too_small(s) ])
         if len(query) == 0 or query == " OR ":
-         
+
             if self.logging:
                 log("Returning. Query was: " + query)
             return { "results" : [] }
@@ -329,7 +332,7 @@ class FTSIndex:
         # if self.type == "SQLite FTS5":
         for r in res:
             if not str(r[0]) in self.pinned and (allDecks or str(r[3]) in decks):
-                
+
                 if str(r[6]) == "-1":
                     rList.append(SiacNote.from_index(r))
                 else:
@@ -387,7 +390,7 @@ class FTSIndex:
     def searchDB(self, text, decks):
         """
         Used for searches in the search mask,
-        doesn't use the index, instead use the traditional anki search 
+        doesn't use the index, instead use the traditional anki search
         """
         stamp           = utility.misc.get_milisec_stamp()
         self.ui.latest  = stamp
@@ -420,12 +423,12 @@ class FTSIndex:
             return { "result" : rList[:self.limit], "stamp" : stamp }
         return { "result" : [], "stamp" : stamp }
 
- 
+
 
     def clean(self, text):
         return utility.text.clean(text)
 
-   
+
     def deleteNote(self, nid):
         conn = sqlite3.connect(self.dir + "search-data.db")
         conn.cursor().execute("DELETE FROM notes WHERE CAST(nid AS INTEGER) = %s;" % nid)

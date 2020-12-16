@@ -53,12 +53,12 @@ from .web.web import *
 from .web.html import right_side_html
 from .notes import *
 from .hooks import add_hook, run_hooks
+from .review_interrupt import review_interruptor
 from .dialogs.editor import EditDialog, NoteEditor
-from .dialogs.review_read_interrupt import ReviewReadInterruptDialog
 from .internals import requires_index_loaded
 from .config import get_config_value_or_default as conf_or_def, get_config_value
 from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search, search_by_tags
-from .api import try_open_first_in_queue, queue_has_items, show_quick_open_pdf
+#from .api import show_quick_open_pdf
 from .menubar import Menu
 
 
@@ -70,7 +70,7 @@ def init_addon():
 
     if config["dev_mode"]:
         state.dev_mode = True
-    
+
     if hasattr(mw.pm, "night_mode"):
         state.night_mode = mw.pm.night_mode()
 
@@ -91,6 +91,9 @@ def init_addon():
         TagEdit.keyPressEvent = wrap(TagEdit.keyPressEvent, tag_edit_keypress, "around")
 
     setup_tagedit_timer()
+
+    # append close function
+    gui_hooks.add_cards_did_init.append(add_cards_did_init)
 
     # add new notes to search index when adding
     gui_hooks.add_cards_did_add_note.append(add_note_to_index)
@@ -151,24 +154,13 @@ def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callab
                     return
     _old(web, evt)
 
+
 def on_reviewer_did_answer(reviewer, card, ease):
-
-    if get_config_value("mix_reviews_and_reading") == False:
+    # check if we want to do review interruption
+    if (get_config_value("mix_reviews_and_reading") == False) or state.rr_mix_disabled:
         return
-    if state.rr_mix_disabled:
-        return
-    if ease > 1:
-        # don't care for type of review
-        state.review_counter += 1
-        if state.review_counter >= get_config_value("mix_reviews_and_reading.interrupt_every_nth_card"):
-            state.review_counter = 0
-            if queue_has_items():
-                if get_config_value("mix_reviews_and_reading.show_dialog"):
-                    dialog = ReviewReadInterruptDialog(mw)
-                    if not dialog.exec_():
-                        return
 
-                try_open_first_in_queue("Reading time!")
+    review_interruptor()
 
 
 def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
@@ -242,6 +234,17 @@ def on_load_note(editor: Editor):
 
     if get_edit() is None and editor is not None:
         set_edit(editor)
+
+def add_cards_did_init(add_cards: AddCards):
+    add_cards.rejected.connect(close_editor)
+
+def close_editor():
+    state.editor_is_ready = False
+
+def on_add_cards_init(add_cards: AddCards):
+
+    if get_index() is not None and add_cards.editor is not None:
+        get_index().ui.set_editor(add_cards.editor)
 
 
 def save_pdf_page(note: Note):
@@ -373,7 +376,6 @@ def insert_scripts():
     """
 
 def set_editor_ready():
-    #showInfo("Editor e")
     state.editor_is_ready = True
 
 def setup_hooks():
@@ -411,7 +413,7 @@ def setup_switch_btn(editor: Editor):
 
     if win is None:
         return
-        
+
     box     = win.form.buttonBox
 
     # check if button has been already added
@@ -448,7 +450,7 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
     index                   = get_index()
     if index:
         index.ui.frozen     = False
-    
+
     if state.night_mode is None:
         def cb(night_mode: bool):
             state.night_mode = night_mode
@@ -518,7 +520,7 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     _try_register(config["pdf.shortcuts.page_left"], lambda: editor.web.eval("pdfPageLeft()"))
     _try_register(config["pdf.shortcuts.page_right"], lambda: editor.web.eval("pdfPageRight()"))
     _try_register(config["pdf.shortcuts.toggle_read_page_right"], lambda: editor.web.eval("pdfToggleReadAndPageRight()"))
-    
+
     # area highlight
     _try_register(config["pdf.shortcuts.init_area_highlight"], lambda: editor.web.eval("initAreaHighlightShortcutPressed()"))
 

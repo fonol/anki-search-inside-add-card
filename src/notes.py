@@ -296,7 +296,6 @@ def create_note(title: str,
                 url: Optional[str] = None,
                 extract_start: Optional[int] = None,
                 extract_end: Optional[int] = None
-
                 ) -> int:
 
     #clean the text
@@ -1157,7 +1156,8 @@ def get_all_tags() -> Set[str]:
                     tag_set.add(t)
     return tag_set
 
-def find_by_tag(tag_str, to_output_list=True) -> List[SiacNote]:
+#TODO: is explicit tag accounted for?
+def find_by_tag(tag_str, to_output_list=True, only_explicit_tag=False) -> List[SiacNote]:
     if len(tag_str.strip()) == 0:
         return []
     index   = get_index()
@@ -1526,6 +1526,31 @@ def get_all_tags_as_hierarchy(include_anki_tags: bool) -> Dict:
     else:
         tags = get_all_tags()
     return utility.tags.to_tag_hierarchy(tags)
+
+def get_tags_and_nids_from_search(notes):
+    tags = []
+    nids_anki = []
+    nids_siac = []
+
+    def _addToTags(tags, tagStr):
+        if tagStr == "":
+            return tags
+        for tag in tagStr.split(" "):
+            if tag == "":
+                continue
+            if tag in tags:
+                continue
+            tags.append(tag)
+        return tags
+
+    for note in notes:
+        if note.note_type != "user":
+            nids_anki.append(note.id)
+        else:
+            nids_siac.append(note.id)
+        tags = _addToTags(tags, note.tags)
+
+    return tags, nids_anki, nids_siac
 
 def get_all_text_notes() -> List[SiacNote]:
     conn = _get_connection()
