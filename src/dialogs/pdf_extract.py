@@ -129,4 +129,4 @@ class PDFExtractDialog(QDialog):
     def create_extract(self):
 
         title = self.title_inp.text()
-        new_id = create_note(title, "", self.note.source, self.note.tags, self.note.nid, self.scheduler.schedule(), self.scheduler.value(), self.note.author, self.extract_start, self.extract_end, url = self.note.url)
+        new_id = create_note(title, "", self.note.source, self.note.tags, self.note.nid, self.scheduler.schedule(), self.scheduler.value(), self.note.author, url = self.note.url, extract_start = self.extract_start, extract_end = self.extract_end)
