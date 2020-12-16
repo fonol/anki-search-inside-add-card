@@ -46,11 +46,12 @@ class ExternalFile(QDialog):
         self.cb_type = QComboBox()
 
         fields_to_prefill = get_config_value_or_default("notes.editor.external_file_applications", [])
+        
         self.cb_type.addItems(fields_to_prefill)
 
         vbox.addWidget(QLabel("""
             <i>Using file will open the selected file with the standard application for this file type.<br>
-            Some applications allow opening of external files with the [application]://file scheme.<br>
+            Some applications allow opening of external files with the [application]:///file scheme.<br>
             You can add your own applications from the add-on config .json.</i>
         """))
         vbox.addWidget(self.cb_type)
@@ -68,7 +69,7 @@ class ExternalFile(QDialog):
 
 
         # accept reject button
-        hbox_bot = QHBoxLayout()
+        hbox_bot        = QHBoxLayout()
         self.accept_btn = QPushButton("Add File")
         self.accept_btn.setShortcut("Ctrl+Return")
         self.accept_btn.clicked.connect(self.accept_clicked)
@@ -83,7 +84,7 @@ class ExternalFile(QDialog):
         self.setLayout(vbox)
 
     def on_open_file(self):
-        fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"All (*)")
+        fname = QFileDialog.getOpenFileName(self, 'Pick a File', '',"All (*)")
         if fname is not None:
             self.input.setText(fname[0])
 
