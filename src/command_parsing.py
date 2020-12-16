@@ -1174,10 +1174,17 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                     mw.raise_()
             else:
                 tooltip("Failed to create filtered deck.")
+
     elif cmd == "siac-reopen-file":
+        # opening a siac note in the reader which has a protocol in the source
+        # e.g. file:///abc.txt
         source = index.ui.reading_modal.note.source
         tooltip("Opening external file:<br>" + source)
-        QDesktopServices.openUrl(QUrl(source))
+        try:
+            QDesktopServices.openUrl(QUrl(source))
+        except:
+            tooltip("Failed to open external file:<br>" + source)
+
 
 
     else:
