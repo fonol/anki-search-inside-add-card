@@ -74,13 +74,16 @@ class QuickWebImport(QWidget):
         btree.setHeaderLabels(["Bookmarks"])
         btree.setIconSize(QSize(0,0))
         menu_vbox.addWidget(btree, 2)
+
+        menu_vbox.addWidget(QLabel("""
+            Search on site shortcut: ALT+s
+        """))
         self.menu.setLayout(menu_vbox)
 
         self.menu.setVisible(False)
 
         self.setMinimumHeight(600)
         self.setMinimumWidth(900)
-
 
         line                    = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -139,7 +142,7 @@ class QuickWebImport(QWidget):
         import_external    = QPushButton("Import as External")
         import_as_markdown = QPushButton("Import as Markdown")
         import_as_pdf      = QPushButton("Import as PDF")
-        cancel             = QPushButton("Cancel")
+        cancel             = QPushButton("Close")
 
         import_external.clicked.connect(self.external)
         import_as_markdown.clicked.connect(self.markdown)
@@ -149,6 +152,8 @@ class QuickWebImport(QWidget):
         hb_bottom.addWidget(import_external)
         hb_bottom.addWidget(import_as_markdown)
         hb_bottom.addWidget(import_as_pdf)
+        hb_bottom.addStretch()
+
         hb_bottom.addWidget(cancel)
         self.layout.addLayout(hb_bottom)
 
@@ -221,7 +226,6 @@ class QuickWebImport(QWidget):
         utility.misc.url_to_pdf(self.web_url, path)
 
         self.source = path
-
         self.open_note_window()
 
 
@@ -283,6 +287,7 @@ class QuickWebImport(QWidget):
             self.tabs.load(url)
 
 class QuickImportBrowserTabs(QTabWidget):
+
     def __init__(self, parent = None):
         self.parent = parent
         QTabWidget.__init__(self, parent)
