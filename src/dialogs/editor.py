@@ -311,7 +311,7 @@ class NoteEditor(QDialog):
         self.create_tab.title.setFocus()
 
         self.create_tab.tree.include_anki_tags = self.create_tab.all_tags_cb.isChecked()
-        self.create_tab.rebuild_tree()
+        self.create_tab.tree.rebuild_tree()
 
 
     def on_update_clicked(self):
