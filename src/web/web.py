@@ -33,6 +33,8 @@ import utility.text
 import utility.misc
 import state
 
+from aqt.qt import *
+
 
 from ..tag_find import get_most_active_tags
 from ..state import get_index, check_index, set_deck_map

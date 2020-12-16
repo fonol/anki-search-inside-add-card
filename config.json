@@ -137,6 +137,7 @@
 "shortcuts.menubar.quick_open": "Ctrl+O",
 "shortcuts.menubar.read_first": "",
 "shortcuts.menubar.addon_settings": "",
+"shortcuts.menubar.knowledge_tree": "",
 
 "import.quickweb.bookmarks": { "search": ["https://www.duckduckgo.com", "http://www.google.com"], "learn": ["https://www.wikipedia.org/", "https://www.dict.cc/", "https://www.mdbg.net/chinese/dictionary", "https://docs.ankiweb.net/"], "stuff": ["https://www.youtube.com", "https://apps.ankiweb.net/"] },
 "import.quickweb.search_engine": "https://duckduckgo.com/?q={query}",
@@ -146,9 +147,12 @@
 "searchbar.default_mode": "Add-on",
 "addon.data_folder": "",
 "dev_mode" : false,
+
 "mix_reviews_and_reading": false,
 "mix_reviews_and_reading.interrupt_every_nth_card" : 50,
 "mix_reviews_and_reading.show_dialog" : true,
+"mix_reviews_and_reading.fuzz" : 0.5,
+"mix_reviews_and_reading.mode" : "every_n",
 
 "window_mode": "Both"
 }
