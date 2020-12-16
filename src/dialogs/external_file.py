@@ -48,12 +48,15 @@ class ExternalFile(QDialog):
         fields_to_prefill = get_config_value_or_default("notes.editor.external_file_applications", [])
         
         self.cb_type.addItems(fields_to_prefill)
+        self.cb_type.addItem("Default Browser")
+        self.clabel = QLabel("")
 
         vbox.addWidget(QLabel("""
             <i>Using file will open the selected file with the standard application for this file type.<br>
             Some applications allow opening of external files with the [application]:///file scheme.<br>
             You can add your own applications from the add-on config .json.</i>
         """))
+        vbox.addWidget(self.clabel)
         vbox.addWidget(self.cb_type)
 
         # choose file
@@ -66,7 +69,6 @@ class ExternalFile(QDialog):
         hbox.addWidget(self.but_file)
 
         vbox.addLayout(hbox)
-
 
         # accept reject button
         hbox_bot        = QHBoxLayout()
@@ -83,14 +85,35 @@ class ExternalFile(QDialog):
         vbox.addLayout(hbox_bot)
         self.setLayout(vbox)
 
+        self.cb_type.currentTextChanged.connect(self.on_type_change)
+
     def on_open_file(self):
         fname = QFileDialog.getOpenFileName(self, 'Pick a File', '',"All (*)")
         if fname is not None:
             self.input.setText(fname[0])
 
+    def on_type_change(self, new_type):
+        """ After the dropdown value has changed. """
+        if new_type == "Default Browser":
+            self.clabel.setText("""This will try to open the chosen file with your system's default web browser.""")
+        elif new_type == "file":
+            self.clabel.setText("""This will try to open the chosen file with your system's default registered application for it.""")
+        elif new_type in ["safari", "chrome", "firefox"]:
+            self.clabel.setText("""Might not work on windows (use Default Browser here).""")
+        else:
+            self.clabel.setText("")
+
     def accept_clicked(self):
         file_type = self.cb_type.currentText()
+        if file_type == "Default Browser":
+            file_type = "https"
         source = self.input.text()
-
-        self.chosen_file = file_type + ":///" + source
+        # if the input is a link already, it should have three slashes 
+        # after the protocol to distinguish between source fields that contain just 
+        # a reference link (https://www....) and source fields with a link that should be 
+        # opened in a browser
+        if re.match("^https?://[^/].+", source):
+            self.chosen_file = re.sub("^(https?://)", r"\1/", source)
+        else:
+            self.chosen_file = file_type + ":///" + source
         self.accept()
