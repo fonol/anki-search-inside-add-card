@@ -16,8 +16,8 @@ class DataCol():
     NoteID    = 5
 
 class ItemType():
-    AnkiCard = 0
-    SiacNote = 1
+    AnkiCard  = 0
+    SiacNote  = 1
 
 class TagTree(QTreeWidget):
     def __init__(self, include_anki_tags = True, only_tags = False, knowledge_tree = False):
@@ -26,6 +26,8 @@ class TagTree(QTreeWidget):
         self.include_anki_tags = include_anki_tags
         self.only_tags         = only_tags
         self.knowledge_tree    = knowledge_tree
+
+        self.map                = get_all_tags_as_hierarchy(include_anki_tags=include_anki_tags)
 
         # only show selected notes
         self.nids_anki_whitelist = None
@@ -49,7 +51,7 @@ class TagTree(QTreeWidget):
             tag_bg                  = config["styles.tagBackgroundColor"]
             tag_fg                  = config["styles.tagForegroundColor"]
 
-        self.recursive_build_tree(get_all_tags_as_hierarchy(include_anki_tags=include_anki_tags))
+        self.recursive_build_tree(self.map)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumHeight(150)
         self.setMinimumWidth(220)
@@ -61,6 +63,8 @@ class TagTree(QTreeWidget):
             self.setHeaderHidden(False)
             self.setColumnWidth(0, 300)
             self.setColumnWidth(1,80)
+
+            self.itemExpanded.connect(self.item_expanded)
         else:
             self.setSelectionMode(QAbstractItemView.NoSelection)
             self.setColumnCount(1)
@@ -113,12 +117,14 @@ class TagTree(QTreeWidget):
         self.clear()
         self.nids_anki_whitelist = None
         self.nids_siac_whitelist = None
-
+        
         if notes == None:
-            self.recursive_build_tree(get_all_tags_as_hierarchy(include_anki_tags = self.include_anki_tags))
+            self.map = get_all_tags_as_hierarchy(include_anki_tags = self.include_anki_tags)
+            self.recursive_build_tree(self.map)
         else:
             tags, self.nids_anki_whitelist, self.nids_siac_whitelist = get_tags_and_nids_from_search(notes)
             tag_hierarchy = utility.tags.to_tag_hierarchy(tags)
+            self.map = tag_hierarchy
             self.recursive_build_tree(tag_hierarchy)
 
     def recursive_build_tree(self, map, prefix = "", toplevel = True):
@@ -129,10 +135,17 @@ class TagTree(QTreeWidget):
             ti.setIcon(0, self.tag_icon)
             prefix_c = prefix + t + "::"
 
-            for c,m in children.items():
-                ti.addChildren(self.recursive_build_tree({c: m}, prefix_c, toplevel = False))
-
-            self.add_siacnotes_and_anki_cards(ti, prefix, t)
+            # if we are on toplevel, we insert an empty placeholder
+            # the child items of a top level item are loaded on expansion
+            # better performance
+            if self.knowledge_tree and toplevel:
+                c = QTreeWidgetItem([""])
+                c.setHidden(True)
+                ti.addChildren([c])
+            else:
+                for c,m in children.items():
+                    ti.addChildren(self.recursive_build_tree({c: m}, prefix_c, toplevel = False))
+                self.add_siacnotes_and_anki_cards(ti, prefix, t)
 
             res.append(ti)
 
@@ -141,12 +154,29 @@ class TagTree(QTreeWidget):
 
         return res
 
+    def item_expanded(self, item):
+        """ Load the children of an expanded item on expansion,
+            only applies if the item is a toplevel (root) item,
+            only applies if knowledge tree.
+         """
+
+        if not self.knowledge_tree:
+            return
+        if item.childCount() == 1 and item.child(0).text(0) == "":
+            item.takeChild(0)
+            prefix = item.data(DataCol.Name, 1)
+            children = self.map[prefix]
+            for c,m in children.items():
+                item.addChildren(self.recursive_build_tree({c: m}, prefix + "::", toplevel = False))
+            self.add_siacnotes_and_anki_cards(item, "", prefix)
+
     def add_siacnotes_and_anki_cards(self, ti, prefix, t):
         if self.knowledge_tree:
             self._add_siac_with_tag(ti)
 
             ac = QTreeWidgetItem()
             ac.setData(DataCol.Name, 1, prefix + t)
+
             if self._add_anki_with_tag(ac):
                 ti.addChild(ac)
 
