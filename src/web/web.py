@@ -506,8 +506,9 @@ def changelog() -> List[str]:
 
     return [
         "Add file linking to the Create Note dialog (thanks to p4nix)",
+        "Add web import dialog in menu (thanks to p4nix)",
         "Make search work on non-lating languages",
-        "Add 'Jump to random unread page button'",
+        "Add 'Jump to random unread page' button",
         "Fix: 403 error in Quick Youtube import",
     ]
 
