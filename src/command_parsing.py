@@ -365,6 +365,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-jump-first-unread"):
         index.ui.reading_modal.jump_to_first_unread_page()
 
+    elif cmd == "siac-jump-random-unread":
+        index.ui.reading_modal.jump_to_random_unread_page()
+
     elif cmd.startswith("siac-mark-read-up-to "):
         mark_as_read_up_to(index.ui.reading_modal.note, int(cmd.split()[2]), int(cmd.split()[3]))
         index.ui.js("updatePageSidebarIfShown()")

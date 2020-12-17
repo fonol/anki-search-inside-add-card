@@ -1529,6 +1529,22 @@ class ReadingModal:
                 rerenderPDFPage(pdf.page, false, true);
             }
         """
+
+    @js
+    def jump_to_random_unread_page(self) -> JS:
+        return """
+            if (pdf.instance) {
+                const start = pdf.extract ? pdf.extract[0] : 1;
+                const options = [];
+                for (var i = start; i < start + numPagesExtract(); i++) {
+                    if (!pdf.pagesRead || pdf.pagesRead.indexOf(i) === -1) {
+                        options.push(i); 
+                    }
+                }
+                pdf.page = options[Math.floor(Math.random() * options.length)];
+                rerenderPDFPage(pdf.page, false, true);
+            }
+        """
     @js
     def jump_to_first_unread_page(self) -> JS:
         return """
