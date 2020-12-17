@@ -90,7 +90,7 @@ class ShortcutSettingsTab(QWidget):
             shortcut("shortcuts.menubar.queue_manager",        "Open Queue Manager",      id_menubar),
             shortcut("shortcuts.menubar.read_first",           "Read First in Queue",     id_menubar),
             shortcut("shortcuts.menubar.quick_open",           "Quick Open",              id_menubar),
-            #shortcut("shortcuts.menubar.knowledge_tree",       "Open Knowledge Tree",     id_menubar),
+            shortcut("shortcuts.menubar.knowledge_tree",       "Open Knowledge Tree",     id_menubar),
             shortcut("shortcuts.menubar.open_first",           "Read first in queue",     id_menubar),
             shortcut("shortcuts.menubar.addon_settings",       "Open Add-on Settings",    id_menubar)
         )
