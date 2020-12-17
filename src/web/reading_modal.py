@@ -1541,8 +1541,10 @@ class ReadingModal:
                         options.push(i); 
                     }
                 }
-                pdf.page = options[Math.floor(Math.random() * options.length)];
-                rerenderPDFPage(pdf.page, false, true);
+                if (options.length > 0) {
+                    pdf.page = options[Math.floor(Math.random() * options.length)];
+                    rerenderPDFPage(pdf.page, false, true);
+                }
             }
         """
     @js
