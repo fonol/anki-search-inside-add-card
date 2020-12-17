@@ -505,13 +505,10 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Add tag filter to the Done dialog",
-        "Add meta card to Add-on tag results (when clicked in sidebar)",
-        "Re-enable toggle shortcut",
-        "Fix: Problems with window mode button and Edit Current dialog",
-        "Fix: Error on 'Read first in queue' in menu when queue empty",
-        "Fix: Error on indexing if decks set in config",
-        "Fix: Error on deleting note from Queue Manager if opened through menubar"
+        "Add file linking to the Create Note dialog (thanks to p4nix)",
+        "Make search work on non-lating languages",
+        "Add 'Jump to random unread page button'",
+        "Fix: 403 error in Quick Youtube import",
     ]
 
 def known_issues() -> List[str]:
