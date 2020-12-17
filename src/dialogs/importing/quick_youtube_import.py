@@ -101,17 +101,20 @@ class QuickYoutubeImport(QDialog):
                 _reset_yt_properties()
                 return
 
-            thumbnail_url = data["thumbnail_url"]
-            self.youtube_title = data["title"]
-            self.youtube_channel = data["author_name"]
-            self.last_yt_id = yt_id
+            thumbnail_url           = data["thumbnail_url"]
+            self.youtube_title      = data["title"]
+            self.youtube_channel    = data["author_name"]
+            self.last_yt_id         = yt_id
 
             self.label_title.setText("<b>" + self.youtube_title + "</b>")
             self.label_author.setText(self.youtube_channel)
 
             # TODO: will throw error if youtube video could be loaded, but not the image
-            image.loadFromData(requests.get(f"""https://img.youtube.com/vi/{yt_id}/mqdefault.jpg""").content)
-            self.label_image.setPixmap(image)
+            try:
+                image.loadFromData(requests.get(f"""https://img.youtube.com/vi/{yt_id}/mqdefault.jpg""").content)
+                self.label_image.setPixmap(image)
+            except:
+                pass
 
         # everything else is not youtube
         else:
