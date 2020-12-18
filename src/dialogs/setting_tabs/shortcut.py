@@ -43,17 +43,19 @@ class ShortcutSettingsTab(QWidget):
         gridbox = QGridLayout()
 
         # group_ids
-        id_pdf     = 0
-        id_menubar = 1
-        id_general = 2
-        id_search  = 3
+        id_pdf      = 0
+        id_menubar  = 1
+        id_general  = 2
+        id_search   = 3
+        id_quickweb = 4
 
         # group shortcuts logically, this determines the order!
         list_order = ( # name of section, id
             ("General (SIAC notes)", id_general),
             ("PDF Reader",           id_pdf),
             ("Search",               id_search),
-            ("Menubar",              id_menubar)
+            ("Menubar",              id_menubar),
+            ("Quick Web Import",     id_quickweb)
         )
 
         # add items
@@ -92,7 +94,12 @@ class ShortcutSettingsTab(QWidget):
             shortcut("shortcuts.menubar.quick_open",           "Quick Open",              id_menubar),
             shortcut("shortcuts.menubar.knowledge_tree",       "Open Knowledge Tree",     id_menubar),
             shortcut("shortcuts.menubar.open_first",           "Read first in queue",     id_menubar),
-            shortcut("shortcuts.menubar.addon_settings",       "Open Add-on Settings",    id_menubar)
+            shortcut("shortcuts.menubar.addon_settings",       "Open Add-on Settings",    id_menubar),
+
+
+            # Quick Web Import
+            shortcut("shortcuts.quickweb.search_on_page",     "Search on Page",           id_quickweb),
+            shortcut("shortcuts.quickweb.toggle_bookmarks",   "Toggle Bookmarks",         id_quickweb)
         )
 
         line = -1

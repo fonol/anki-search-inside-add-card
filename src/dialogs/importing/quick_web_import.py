@@ -75,8 +75,9 @@ class QuickWebImport(QWidget):
         btree.setIconSize(QSize(0,0))
         menu_vbox.addWidget(btree, 2)
 
-        menu_vbox.addWidget(QLabel("""
-            Search on site shortcut: ALT+s
+        seq = get_config_value("shortcuts.quickweb.search_on_page")
+        menu_vbox.addWidget(QLabel(f"""
+            Search on site shortcut: {seq}
         """))
         self.menu.setLayout(menu_vbox)
 
@@ -122,6 +123,7 @@ class QuickWebImport(QWidget):
             zoom_in.setMaximumWidth(zoom_in.fontMetrics().boundingRect(" + ").width() + 15)
 
         menu = QPushButton("...")
+        menu.setShortcut(get_config_value("shortcuts.quickweb.toggle_bookmarks"))
         menu.clicked.connect(self.toggle_menu)
         self.toplayout.addWidget(menu)
 
@@ -148,6 +150,7 @@ class QuickWebImport(QWidget):
         import_as_markdown.clicked.connect(self.markdown)
         import_as_pdf.clicked.connect(self.pdf)
         cancel.clicked.connect(self.close)
+        cancel.setShortcut("Escape")
 
         hb_bottom.addWidget(import_external)
         hb_bottom.addWidget(import_as_markdown)
@@ -165,8 +168,7 @@ class QuickWebImport(QWidget):
 
         self.setLayout(parentbox)
 
-        #seq = self.config["search_on_site_shortcut"]
-        seq = "Alt+S"
+        seq = get_config_value("shortcuts.quickweb.search_on_page")
         self.sc = QShortcut(QKeySequence(seq), self)
         self.sc.activated.connect(self.search_toolbar.show)
         self.sc.setEnabled(True)
@@ -501,7 +503,7 @@ class SearchBar(QWidget):
 
         QShortcut(QKeySequence.FindNext, self, activated=next_btn.animateClick)
         QShortcut(QKeySequence.FindPrevious, self, activated=prev_btn.animateClick)
-        QShortcut(QKeySequence(Qt.Key_Escape), self.input, activated=self.close_sig)
+        #QShortcut(QKeySequence(get_config_value(shortcuts.quickweb.search_on_page)), self.input, activated=self.close_sig)
 
     def signal_not_found(self):
         self.input.setStyleSheet("color: red;")
