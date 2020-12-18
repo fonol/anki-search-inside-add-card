@@ -312,7 +312,8 @@ def url_to_pdf(url, output_path, cb_after_finish = None):
     def save_pdf(finished):
         printer = QPrinter()
         printer.setPageMargins(10, 10, 10, 10, QPrinter.Millimeter)
-        temp.page().printToPdf(output_path, printer.pageLayout())
+        pl = QPageLayout(QPageSize(QPageSize.A3), QPageLayout.Portrait, QMarginsF())
+        temp.page().printToPdf(output_path, pl)
 
     temp.loadFinished.connect(save_pdf)
 
