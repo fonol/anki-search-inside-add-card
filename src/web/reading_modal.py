@@ -88,6 +88,8 @@ class ReadingModal:
 
         self.sidebar            : ReadingModalSidebar   = ReadingModalSidebar()
 
+        self.pdfjs_v            : str                   = "2.6.347" if utility.misc.chromium_version()  > "76" else "2.4.456"
+
 
     def set_editor(self, editor):
         self._editor            = editor
@@ -259,12 +261,12 @@ class ReadingModal:
                     return;
                 }
                 if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/pdf.worker.min.js';
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/%s/pdf.worker.min.js';
                 }
                 var canvas = document.getElementById("siac-pdf-canvas");
                 window.pdf_canvas_0 = canvas;
                 window.pdf_canvas_1 = document.getElementById("siac-pdf-canvas_1");
-                var loadingTask = pdfjsLib.getDocument({data: bstr}, {nativeImageDecoderSupport: 'none'});
+                var loadingTask = pdfjsLib.getDocument({data: bstr, nativeImageDecoderSupport: 'none'});
                 loadingTask.promise.catch(function(error) {
                         $('#siac-pdf-loader-wrapper').remove();
                         $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
@@ -303,7 +305,7 @@ class ReadingModal:
             b64 = "";
             bstr = null; file = null;
             })();
-        """ % (pages_read_js, marks_js, extract_js, port, addon_id, note_id, last_page_read, title, note_id)
+        """ % (pages_read_js, marks_js, extract_js, port, addon_id, self.pdfjs_v, note_id, last_page_read, title, note_id)
 
         #send large files in multiple packets
         page        = self._editor.web.page()
