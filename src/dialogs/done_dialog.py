@@ -112,6 +112,8 @@ class DoneTab(QWidget):
         # Tag filter
         #
         box                 = QGroupBox("Filter: Tags")
+        box.setObjectName("tag_filter_gb")
+        box.setStyleSheet("QGroupBox#tag_filter_gb { }")
         tag_filter_hb       = QHBoxLayout()
         self.tag_filter_inp = QLineEdit()
         self.tag_filter_cb  = QPushButton("Tags...")
@@ -160,16 +162,25 @@ class DoneTab(QWidget):
         self.layout.addStretch()
         self.layout.addWidget(box)
 
+        self.tf_box = box
+
         if DoneDialog.last_tag_filter is not None and len(DoneDialog.last_tag_filter.strip()) > 0:
             self.tag_filter_inp.setText(DoneDialog.last_tag_filter)
+        else:
+            self.tag_filter_inp.setText("") # to trigger on_tag_filter_change
 
     def on_tag_filter_change(self):
         value = self.tag_filter_inp.text()
         if value and len(value.strip()) > 0:
             c = len_enqueued_with_tag([t.strip() for t in value.split(" ") if len(t.strip()) > 0])
             self.tag_filter_lbl.setText(f"<b>{c}</b> queued note(s) with at least one matching tag.")
+            if c > 0:
+                self.tf_box.setStyleSheet("QGroupBox#tag_filter_gb::title { color: white; background: #0496dc; border-radius: 3px; padding: 2px; }")
+            else:
+                self.tf_box.setStyleSheet("QGroupBox#tag_filter_gb::title { color: black; background: #f0506e; border-radius: 3px; padding: 2px; }")
         else:
             self.tag_filter_lbl.setText(f"If set, next opened note must have at least one matching tag.")
+            self.tf_box.setStyleSheet("QGroupBox#tag_filter_gb::title {  border-radius: 3px; padding: 2px; }")
 
     def clear_tag_filter(self):
         self.tag_filter_inp.setText("")

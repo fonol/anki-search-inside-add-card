@@ -258,14 +258,7 @@ class Output:
             highlight_start         = time.time()
             if query_set is not None:
                 if counter - (page -1) * 50 < highlight_boundary:
-                    if state.rust_lib:
-                        try: 
-                            text            = rs_mark_highlights(text, list(query_set))
-                        except: 
-                            text            = utility.text.mark_highlights(text, query_set)
-                            state.rust_lib  = False
-                    else:
-                        text            = utility.text.mark_highlights(text, query_set)
+                    text            = utility.text.mark_highlights(text, query_set)
                 else:
                     remaining_to_highlight[nid] = ""
             highlight_total += time.time() - highlight_start

@@ -215,8 +215,9 @@ class Sidebar:
         self._editor.web.eval("$('#siac-notes-sidebar').remove(); $('#resultsWrapper').css('padding-left', 0);")
 
     def refresh_tab(self, tab: int):
-        if self.tab == tab:
-            self.refresh()
+        if conf_or_def("notes.sidebar.visible", False):
+            if self.tab == tab:
+                self.refresh()
 
     def refresh(self):
         if self._editor is None:

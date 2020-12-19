@@ -88,6 +88,8 @@ class ReadingModal:
 
         self.sidebar            : ReadingModalSidebar   = ReadingModalSidebar()
 
+        self.pdfjs_v            : str                   = "2.6.347" if utility.misc.chromium_version()  > "76" else "2.4.456"
+
 
     def set_editor(self, editor):
         self._editor            = editor
@@ -129,6 +131,9 @@ class ReadingModal:
 
         if not note:
             return
+
+        # persist note as opened in db
+        mark_note_as_opened(note_id)
 
         index                   = get_index()
 
@@ -256,12 +261,12 @@ class ReadingModal:
                     return;
                 }
                 if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/pdf.worker.min.js';
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/%s/pdf.worker.min.js';
                 }
                 var canvas = document.getElementById("siac-pdf-canvas");
                 window.pdf_canvas_0 = canvas;
                 window.pdf_canvas_1 = document.getElementById("siac-pdf-canvas_1");
-                var loadingTask = pdfjsLib.getDocument({data: bstr}, {nativeImageDecoderSupport: 'none'});
+                var loadingTask = pdfjsLib.getDocument({data: bstr, nativeImageDecoderSupport: 'none'});
                 loadingTask.promise.catch(function(error) {
                         $('#siac-pdf-loader-wrapper').remove();
                         $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
@@ -300,7 +305,7 @@ class ReadingModal:
             b64 = "";
             bstr = null; file = null;
             })();
-        """ % (pages_read_js, marks_js, extract_js, port, addon_id, note_id, last_page_read, title, note_id)
+        """ % (pages_read_js, marks_js, extract_js, port, addon_id, self.pdfjs_v, note_id, last_page_read, title, note_id)
 
         #send large files in multiple packets
         page        = self._editor.web.page()
@@ -1527,6 +1532,24 @@ class ReadingModal:
             if (pdf.pagesRead && pdf.pagesRead.length) {
                 pdf.page = Math.max(...pdf.pagesRead);
                 rerenderPDFPage(pdf.page, false, true);
+            }
+        """
+
+    @js
+    def jump_to_random_unread_page(self) -> JS:
+        return """
+            if (pdf.instance) {
+                const start = pdf.extract ? pdf.extract[0] : 1;
+                const options = [];
+                for (var i = start; i < start + numPagesExtract(); i++) {
+                    if (!pdf.pagesRead || pdf.pagesRead.indexOf(i) === -1) {
+                        options.push(i); 
+                    }
+                }
+                if (options.length > 0) {
+                    pdf.page = options[Math.floor(Math.random() * options.length)];
+                    rerenderPDFPage(pdf.page, false, true);
+                }
             }
         """
     @js

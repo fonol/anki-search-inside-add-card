@@ -365,6 +365,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-jump-first-unread"):
         index.ui.reading_modal.jump_to_first_unread_page()
 
+    elif cmd == "siac-jump-random-unread":
+        index.ui.reading_modal.jump_to_random_unread_page()
+
     elif cmd.startswith("siac-mark-read-up-to "):
         mark_as_read_up_to(index.ui.reading_modal.note, int(cmd.split()[2]), int(cmd.split()[3]))
         index.ui.js("updatePageSidebarIfShown()")
@@ -608,6 +611,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             notes = get_newest(index.limit, index.pinned)
             index.ui.print_search_results(notes, stamp)
 
+    elif cmd == "siac-r-user-note-last-opened":
+        stamp = set_stamp()
+        if check_index():
+            notes = get_last_opened_notes()
+            index.ui.print_search_results(notes, stamp)
+
     elif cmd == "siac-r-user-note-random":
         stamp = set_stamp()
         if check_index():
@@ -615,7 +624,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             index.ui.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-r-user-note-search-tag "):
-        stamp = set_stamp()
+        stamp       = set_stamp()
         tag         = " ".join(cmd.split()[1:])
         notes       = find_by_tag(tag)
         # add meta note
@@ -623,6 +632,17 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         avg_prio    = round(sum(prios) / len(prios), 1) if len(prios) > 0 else "-"
         notes.insert(0, SiacNote.mock(f"Tag: {tag}", filled_template("notes/tag_meta", dict(tag = tag, avg_prio = avg_prio)), "Meta"))
         index.ui.print_search_results(notes, stamp)
+
+    elif cmd.startswith("siac-r-last-opened-with-tag "):
+        stamp       = set_stamp()
+        tag         = " ".join(cmd.split()[1:])
+        notes       = find_by_tag_ordered_by_opened_last(tag)
+        # add meta note
+        prios       = [n.priority for n in notes if n.priority is not None and n.priority > 0]
+        avg_prio    = round(sum(prios) / len(prios), 1) if len(prios) > 0 else "-"
+        notes.insert(0, SiacNote.mock(f"Last opened for tag: {tag}", filled_template("notes/tag_meta", dict(tag = tag, avg_prio = avg_prio)), "Meta"))
+        index.ui.print_search_results(notes, stamp)
+
 
     elif cmd.startswith("siac-read-next-with-tag "):
         nid                 = find_next_enqueued_with_tag(cmd.split(" ")[1:])
