@@ -98,7 +98,6 @@ window.checkTOC = function () {
         let dest = outline[0].dest;
         if (Array.isArray(dest)) {
             pdf_i.getPageIndex(dest[0]).catch((e) => { console.log(e); return Promise.reject(); }).then(function (id) {
-                console.log(id);
                 if (id != null) {
                     byId("siac-toc-btn").style.display = "block";
                 }

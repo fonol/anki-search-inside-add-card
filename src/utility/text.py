@@ -24,11 +24,13 @@ import typing
 from typing import Optional
 import aqt
 import os
+import string
 
-cleanWordReg    = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*(\S+?)[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]*$", re.I |re.U)    
-ignoreReg       = re.compile(u"^[^a-zA-Z0-9À-ÖØ-öø-ÿǒāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]+$", re.I | re.U)
-nonWordReg      = re.compile(u"[^a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.I | re.U) 
-wordToken       = re.compile(u"[a-zA-Z0-9À-ÖØ-öø-ÿāōūēīȳǒǎǐě\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.I | re.U)
+
+p_trans             = str.maketrans('', '', string.punctuation)
+sp_list             = [".",";",":","!","?","/","\\",",","#","@","$","&",")","(","'","\""]
+p_to_space_trans    = str.maketrans(dict.fromkeys(sp_list, " "))
+
 
 # used to merge multiple field separator signs into singles 
 SEP_RE          = re.compile(r'(?:\u001f){2,}|(?:\u001f[\s\r\n]+\u001f)')
@@ -74,16 +76,14 @@ def clean(text):
     # text        = text.replace("\t", " ")
     # text        = text.replace("\u001f", " ")
     text        = tagReg.sub(" ", text)
-    text        = nonWordReg.sub(" ", text)
+    text        = text.translate(p_to_space_trans)
     text        = spaceReg.sub(" ", text)
 
     for token in tokenize(text):
         #this will prevent indexing / searching for base64 data urls
         if len(token) > 200:
             continue
-        if ignoreReg.match(token) is not None:
-            continue
-        token = cleanWordReg.sub(r'\1', token.strip())
+        token = token.translate(p_trans)
         if (len(token) <= 1 and not asian_or_arabic_char.search(token)) or token.lower() in stopwords:
             continue
         filtered = f"{filtered}{token} "
@@ -495,10 +495,11 @@ def mark_highlights(text, querySet):
     currentWordNormalized   = ""
     textMarked              = ""
     lastIsMarked            = False
+
     # c = 0
     for char in text:
         # c += 1
-        if wordToken.match(char):
+        if char != " " and char.translate(p_trans) != "":
             currentWordNormalized = ''.join((currentWordNormalized, ascii_fold_char(char).lower()))
             # currentWordNormalized = ''.join((currentWordNormalized, char.lower()))
             if is_asian_char(char) and str(char) in querySet:

@@ -60,7 +60,9 @@ window.searchCurrentField = function () {
     if (!t || t.trim().length === 0) { return; }
     showLoading("Typing");
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + t);
-
+    if (document.body.classList.contains("siac-wm-fields")) {
+        pycmd("siac-window-mode Both");
+    }
 };
 window.sendSearchFieldContent = function () {
     showLoading("Searchbar");
