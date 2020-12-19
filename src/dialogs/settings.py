@@ -39,7 +39,6 @@ class SettingsDialog(QDialog):
         self.buttonBox.rejected.connect(self.reject)
 
         self.vbox.addWidget(self.tabs)
-        self.vbox.addWidget(QLabel("<i>Some settings may or may not need a restart! Work in progress!</i>"))
         self.vbox.addWidget(self.buttonBox)
 
         self.setLayout(self.vbox)

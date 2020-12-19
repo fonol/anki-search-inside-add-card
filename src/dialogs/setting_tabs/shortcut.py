@@ -138,6 +138,7 @@ class ShortcutSettingsTab(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(shortcut_tabs)
+        layout.addWidget(QLabel("<i>Changes of shortcuts need a restart of Anki to be applied!</i>"))
         self.setLayout(layout)
 
     def save_changes(self):
