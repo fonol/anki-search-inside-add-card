@@ -1160,10 +1160,7 @@ def get_all_tags() -> Set[str]:
 def find_by_tag(tag_str, to_output_list=True, only_explicit_tag=False) -> List[SiacNote]:
     if len(tag_str.strip()) == 0:
         return []
-    index   = get_index()
-    pinned  = []
-    if index is not None:
-        pinned = index.pinned
+    pinned  = [] if not get_index() else get_index().pinned
     tags    = tag_str.split(" ")
     query   = _tag_query(tags)
     conn    = _get_connection()
@@ -1172,6 +1169,19 @@ def find_by_tag(tag_str, to_output_list=True, only_explicit_tag=False) -> List[S
     if not to_output_list:
         return res
     return _to_notes(res, pinned)
+
+def find_by_tag_ordered_by_opened_last(tag_str: str):
+    if len(tag_str.strip()) == 0:
+        return []
+    pinned  = [] if not get_index() else get_index().pinned
+    tags    = tag_str.split(" ")
+    query   = _tag_query(tags)
+    conn    = _get_connection()
+    res     = conn.execute("select distinct n.* from notes_opened join (select * from notes %s) as n on notes_opened.nid = n.id order by notes_opened.created desc limit 100" %(query)).fetchall()
+    conn.close()
+    return _to_notes(res, pinned)
+    
+
 
 def get_random_with_tag(tag) -> Optional[int]:
     query   = _tag_query([tag])
