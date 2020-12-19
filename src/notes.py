@@ -92,7 +92,8 @@ def create_db_file_if_not_exists() -> bool:
                 delay INTEGER,
                 author TEXT,
                 priority FLOAT,
-                last_priority FLOAT
+                last_priority FLOAT,
+                url TEXT
 
             )
         """
