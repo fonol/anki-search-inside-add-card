@@ -44,7 +44,7 @@ window.editorMDInit = function () {
         placeholder: "",
         status: false,
         tagSize: 4,
-        toolbar: ["bold", "italic", "heading", "code", "quote", "unordered-list", "ordered-list", "horizontal-rule", "link"]
+        toolbar: ["bold", "italic", "heading", "|", "code", "quote", "unordered-list", "ordered-list", "horizontal-rule", "|", "image", "link", "|", "preview"]
     });
     // textEditor.codemirror.on("cursorActivity", function(doc){
     //     textEditorKeyup();
@@ -79,6 +79,6 @@ window.textEditorKeyup = function () {
         $('#siac-pdf-tooltip').css({ 'top': top + "px", 'left': left + "px" }).show();
         pycmd("siac-pdf-selection " + text);
         $('#siac-pdf-tooltip').data({"sentences":  sentences, "selection": text, "top": top});
-    } 
-    
+    }
+
 }

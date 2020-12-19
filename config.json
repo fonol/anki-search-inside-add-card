@@ -143,6 +143,8 @@
 "import.quickweb.search_engine": "https://duckduckgo.com/?q={query}",
 "import.quickweb.default_page": "https://duckduckgo.com/",
 "import.quickweb.bookmarks_width_percent": 20,
+"shortcuts.quickweb.search_on_page": "Alt+S",
+"shortcuts.quickweb.toggle_bookmarks": "",
 
 "searchbar.default_mode": "Add-on",
 "addon.data_folder": "",

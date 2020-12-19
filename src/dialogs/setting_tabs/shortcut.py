@@ -39,21 +39,20 @@ class ShortcutSettingsTab(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        # setup vbox
-        gridbox = QGridLayout()
-
         # group_ids
-        id_pdf     = 0
-        id_menubar = 1
-        id_general = 2
-        id_search  = 3
+        id_pdf      = 0
+        id_menubar  = 1
+        id_general  = 2
+        id_search   = 3
+        id_quickweb = 4
 
         # group shortcuts logically, this determines the order!
         list_order = ( # name of section, id
-            ("General (SIAC notes)", id_general),
+            ("General", id_general),
             ("PDF Reader",           id_pdf),
             ("Search",               id_search),
-            ("Menubar",              id_menubar)
+            ("Menubar",              id_menubar),
+            ("Quick Web Import",     id_quickweb)
         )
 
         # add items
@@ -92,23 +91,21 @@ class ShortcutSettingsTab(QWidget):
             shortcut("shortcuts.menubar.quick_open",           "Quick Open",              id_menubar),
             #shortcut("shortcuts.menubar.knowledge_tree",       "Open Knowledge Tree",     id_menubar),
             shortcut("shortcuts.menubar.open_first",           "Read first in queue",     id_menubar),
-            shortcut("shortcuts.menubar.addon_settings",       "Open Add-on Settings",    id_menubar)
+            shortcut("shortcuts.menubar.addon_settings",       "Open Add-on Settings",    id_menubar),
+
+
+            # Quick Web Import
+            shortcut("shortcuts.quickweb.search_on_page",     "Search on Page",           id_quickweb),
+            shortcut("shortcuts.quickweb.toggle_bookmarks",   "Toggle Bookmarks",         id_quickweb)
         )
 
-        line = -1
+        shortcut_tabs = QTabWidget()
 
         for group_name, group_id in list_order:
             # initialise counter
-            line += 1
+            line = 0
             i = 0
-
-            if line != 0:
-                gridbox.addWidget(QLabel(" "), line, 0, 1, 6)
-                line +=1
-
-            # add header, colspan over all columns
-            gridbox.addWidget(QLabel("<b>" + group_name + "</b>"), line, 0, 1, 6)
-            line +=1
+            gridbox = QGridLayout()
 
             # find shortcuts with the same group id
             for item in self.shortcut_list:
@@ -129,7 +126,20 @@ class ShortcutSettingsTab(QWidget):
 
                     i+=1
 
-        self.setLayout(gridbox)
+            gridbox.setColumnStretch(0, 2)
+            gridbox.setColumnStretch(3, 2)
+            gridbox.setColumnStretch(1, 1)
+            gridbox.setColumnStretch(4, 1)
+            gridbox.setAlignment(Qt.AlignTop)
+
+            tab = QWidget()
+            tab.setLayout(gridbox)
+            shortcut_tabs.addTab(tab, group_name)
+
+        layout = QVBoxLayout()
+        layout.addWidget(shortcut_tabs)
+        layout.addWidget(QLabel("<i>Changes of shortcuts need a restart of Anki to be applied!</i>"))
+        self.setLayout(layout)
 
     def save_changes(self):
         count_changes = 0

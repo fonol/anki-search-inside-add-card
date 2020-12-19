@@ -95,6 +95,10 @@ class AppearanceSettingsTab(QWidget):
             line += 1
             i = 0
 
+            if line != 0:
+                gridbox.addWidget(QLabel(" "), line, 0, 1, 6)
+                line +=1
+
             # add header, colspan over all columns
             gridbox.addWidget(QLabel("""<b>""" + group_name + "</b></span>"), line, 0, 1, -1)
             line +=1
@@ -115,6 +119,9 @@ class AppearanceSettingsTab(QWidget):
 
                     i+=1
             gridbox.setColumnStretch(0, 1)
+            gridbox.setColumnStretch(2, 1)
+            gridbox.setAlignment(Qt.AlignTop)
+
 
         self.setLayout(gridbox)
 
