@@ -93,7 +93,7 @@ def init_addon():
     setup_tagedit_timer()
 
     # append close function
-    gui_hooks.add_cards_did_init.append(add_cards_did_init)
+    # gui_hooks.add_cards_did_init.append(add_cards_did_init)
 
     # add new notes to search index when adding
     gui_hooks.add_cards_did_add_note.append(add_note_to_index)

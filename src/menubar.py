@@ -8,7 +8,7 @@ from .dialogs.importing.zotero_import import ZoteroImporter
 from .dialogs.importing.quick_youtube_import import QuickYoutubeImport
 from .dialogs.importing.quick_web_import import QuickWebImport
 from .dialogs.settings import SettingsDialog
-from .dialogs.knowledge_tree import KnowledgeTree
+#from .dialogs.knowledge_tree import KnowledgeTree
 
 
 import state
