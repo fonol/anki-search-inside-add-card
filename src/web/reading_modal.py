@@ -130,6 +130,9 @@ class ReadingModal:
         if not note:
             return
 
+        # persist note as opened in db
+        mark_note_as_opened(note_id)
+
         index                   = get_index()
 
         if ReadingModal.last_opened is None or (self.note_id is not None and int(note_id) != self.note_id):
