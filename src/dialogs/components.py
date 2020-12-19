@@ -618,7 +618,7 @@ class NoteSelector(QWidget):
         self.selected_list.setSelectionMode(QAbstractItemView.NoSelection)
         self.selected_list.setFocusPolicy(Qt.NoFocus)
         self.selected_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.selected_list.setMaximumHeight(100)
+        self.selected_list.setMaximumHeight(80)
         self.layout.addWidget(self.selected_list)
 
         self.layout.addSpacing(10)

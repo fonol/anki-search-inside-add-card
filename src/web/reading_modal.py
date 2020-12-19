@@ -88,7 +88,8 @@ class ReadingModal:
 
         self.sidebar            : ReadingModalSidebar   = ReadingModalSidebar()
 
-        self.pdfjs_v            : str                   = "2.6.347" if utility.misc.chromium_version()  > "76" else "2.4.456"
+        # self.pdfjs_v            : str                   = "2.6.347" if utility.misc.chromium_version()  > "76" else "2.4.456"
+        self.pdfjs_v            : str                   = "2.4.456"
 
 
     def set_editor(self, editor):
