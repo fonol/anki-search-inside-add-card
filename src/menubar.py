@@ -50,7 +50,7 @@ class Menu():
             ("shortcuts.menubar.read_first",     "Read first in Queue", self.read_first),
             ("shortcuts.menubar.quick_open",     "Quick Open...",       self.quick_open),
             ("shortcuts.menubar.queue_manager",  "Queue Manager",       self.queue_picker),
-            ("shortcuts.menubar.knowledge_tree", "Open Knowledge Tree", self.knowledge_tree),
+            #("shortcuts.menubar.knowledge_tree", "Open Knowledge Tree", self.knowledge_tree),
             ("shortcuts.menubar.addon_settings", "Add-on Settings",     self.settings)
         )
 
