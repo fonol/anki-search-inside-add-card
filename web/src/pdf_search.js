@@ -57,7 +57,8 @@ window.getContents = async function(s = 1, n = 10000) {
     for (var j = s; j <= pdf.instance.numPages && j <= s + n; j++) {
         var page = pdf.instance.getPage(j);
         countPromises.push(page.then(function (page) {
-            var n = page.pageIndex + 1;
+
+            var n = page.hasOwnProperty("pageIndex") ? page.pageIndex + 1 : page._pageIndex + 1;
             var txt = "";
             var textContent = page.getTextContent();
             return textContent.then(function (page) {
