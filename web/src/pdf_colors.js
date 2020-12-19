@@ -127,7 +127,7 @@ window.refreshCanvas = function () {
 //
 // Theme dialog
 //
-window.setTextureBg = function(bg, bg_size) {
+window.setTextureBg = function(bg, bg_size, type='svg') {
     pycmd("siac-update-config-str styles.readingModalBackgroundSize $1".replace('$1', bg_size));
-    pycmd("siac-styling styles.readingModalTexture url('$1.svg')".replace('$1', bg));
+    pycmd("siac-styling styles.readingModalTexture url('$1.$2')".replace('$1', bg).replace('$2', type));
 }
