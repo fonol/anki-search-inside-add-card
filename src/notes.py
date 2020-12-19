@@ -250,12 +250,13 @@ def create_db_file_if_not_exists() -> bool:
                 delay INTEGER,
                 author TEXT,
                 priority FLOAT,
-                last_priority FLOAT
+                last_priority FLOAT,
+                url TEXT
             )"""
 
         conn.execute(tmp_table)
-        conn.execute("""insert into notes_tmp (id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority)
-            select id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority from notes;
+        conn.execute("""insert into notes_tmp (id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority, url)
+            select id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority, url from notes;
         """)
         conn.execute("drop table notes")
         conn.execute("alter table notes_tmp rename to notes")
