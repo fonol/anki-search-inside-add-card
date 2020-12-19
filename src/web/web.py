@@ -507,9 +507,11 @@ def changelog() -> List[str]:
     return [
         "Add file linking to the Create Note dialog (thanks to p4nix)",
         "Add web import dialog in menu (thanks to p4nix)",
-        "Make search work on non-lating languages",
+        "Make search work on non-latin languages (needs index rebuild)",
         "Add 'Jump to random unread page' button",
+        "Add 'Last Opened' sidebar menu item, 'Order by last opened' to tag meta card",
         "Fix: 403 error in Quick Youtube import",
+        "Fix: Hidden sidebar reappearing after closing reader",
     ]
 
 def known_issues() -> List[str]:
