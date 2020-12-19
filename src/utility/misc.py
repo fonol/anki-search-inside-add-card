@@ -27,6 +27,7 @@ import typing
 import pathlib
 import shutil
 import importlib.util
+from typing import Optional
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import tooltip, showInfo
@@ -157,6 +158,15 @@ def dark_mode_is_used(config):
     if light_c == 0 and dark_c == 0:
         return False
     return True
+
+def chromium_version() -> Optional[str]: 
+    try:
+        user_agent      = QWebEngineProfile.defaultProfile().httpUserAgent()
+        for t in user_agent.split():
+            if t.startswith("Chrome/"):
+                return t.split("/")[1]
+    except:
+        return None
 
 
 
