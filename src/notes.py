@@ -64,17 +64,7 @@ class PDFMark(Enum):
     MORE_CARDS  = 4
     BOOKMARK    = 5
 
-
-def create_db_file_if_not_exists() -> bool:
-    """ Called on add-on startup. """
-
-    file_path   = _get_db_path()
-    existed     = False
-    if not os.path.isfile(file_path):
-        conn = sqlite3.connect(file_path)
-
-        notes_sql = """
-            create table if not exists notes
+DEF_NOTES_TABLE = """
             (
                 id INTEGER PRIMARY KEY,
                 title TEXT,
@@ -94,8 +84,20 @@ def create_db_file_if_not_exists() -> bool:
                 priority FLOAT,
                 last_priority FLOAT,
                 url TEXT
-
             )
+"""
+
+def create_db_file_if_not_exists() -> bool:
+    """ Called on add-on startup. """
+
+    file_path   = _get_db_path()
+    existed     = False
+    if not os.path.isfile(file_path):
+        conn = sqlite3.connect(file_path)
+
+        notes_sql = f"""
+            create table if not exists notes
+            {DEF_NOTES_TABLE}
         """
         conn.execute(notes_sql)
     else:
@@ -109,7 +111,9 @@ def create_db_file_if_not_exists() -> bool:
             os.rename(tmp, file_path)
             conn    = sqlite3.connect(file_path)
 
-        # check for backups
+        #
+        # backups
+        #
         backup_file = _get_todays_backup_path()
         if not os.path.isfile(backup_file):
             bu_folder = _backup_folder()
@@ -184,6 +188,13 @@ def create_db_file_if_not_exists() -> bool:
             created TEXT
         );
     """)
+    conn.execute("""
+        create table if not exists notes_opened
+        (
+            nid INTEGER,
+            created TEXT
+        );
+    """)
 
     conn.execute("CREATE INDEX if not exists read_nid ON read (nid);")
     conn.execute("CREATE INDEX if not exists mark_nid ON marks (nid);")
@@ -233,26 +244,8 @@ def create_db_file_if_not_exists() -> bool:
     # 14th column should be delay, if not, recreate 'notes' table with correct order
     if columns[13][1] != "delay":
         tmp_table = """create table if not exists notes_tmp
-            (
-                id INTEGER PRIMARY KEY,
-                title TEXT,
-                text TEXT,
-                source TEXT,
-                tags TEXT,
-                nid INTEGER,
-                created TEXT,
-                modified TEXT,
-                reminder TEXT,
-                lastscheduled TEXT,
-                position INTEGER,
-                extract_start INTEGER,
-                extract_end INTEGER,
-                delay INTEGER,
-                author TEXT,
-                priority FLOAT,
-                last_priority FLOAT,
-                url TEXT
-            )"""
+            {DEF_NOTES_TABLE}
+          """
 
         conn.execute(tmp_table)
         conn.execute("""insert into notes_tmp (id, title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority, url)
@@ -769,6 +762,11 @@ def get_last_done_notes() -> List[SiacNote]:
     conn.close()
     return _to_notes(res)
 
+def mark_note_as_opened(siac_nid: int):
+    c = _get_connection()
+    c.execute(f"insert into notes_opened (nid, created) values ({siac_nid}, '{_date_now_str()}')")
+    c.commit()
+    c.close()
 
 def link_note_and_page(siac_nid: int, anki_nid: int, page: int):
     if page is None:
@@ -1338,6 +1336,8 @@ def delete_note(id: int):
                             delete from notes where id={id};
                             delete from queue_prio_log where nid={id};
                             delete from highlights where nid={id};
+                            delete from notes_pdf_page where siac_nid={id};
+                            delete from notes_opened where nid={id};
                             """)
     conn.commit()
     conn.close()
@@ -1372,13 +1372,8 @@ def get_invalid_pdfs() -> List[SiacNote]:
     conn        = _get_connection()
     res         = conn.execute("select * from notes where lower(source) like '%.pdf'").fetchall()
     conn.close()
-    filtered    = list()
-    c           = 0
-    for (_, _, _, source, _, _, _, _, _, _, _, _, _, _,_,_,_) in res:
-        if not utility.misc.file_exists(source.strip()):
-            filtered.append(res[c])
-        c += 1
-    return _to_notes(filtered)
+    invalid     = [r for r in res if not utility.misc.file_exists(r[3].strip())]
+    return _to_notes(invalid)
 
 def get_recently_used_tags() -> List[str]:
     """ Returns a [str] of max 20 tags, ordered by their usage desc. """
@@ -1584,6 +1579,13 @@ def get_in_progress_pdf_notes() -> List[SiacNote]:
     conn.close()
     return _to_notes(res)
 
+def get_last_opened_notes() -> List[SiacNote]:
+    c = _get_connection()
+    res = c.execute("""
+        select distinct notes.* from notes_opened join notes on notes_opened.nid = notes.id order by notes_opened.created desc limit 100
+    """).fetchall()
+    c.close()
+    return _to_notes(res)
 
 def get_pdf_notes_last_added_first(limit : int = None) -> List[SiacNote]:
     if limit:
