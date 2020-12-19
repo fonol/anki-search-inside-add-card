@@ -273,7 +273,8 @@ def insert_scripts():
     port        = mw.mediaServer.getPort()
 
     chromium_v  = utility.misc.chromium_version()
-    pdfjs_v     = "2.6.347" if chromium_v  > "76" else "2.4.456"
+    # pdfjs_v     = "2.6.347" if chromium_v  > "76" else "2.4.456"
+    pdfjs_v     = "2.4.456"
 
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf|woff2?)$")
     aqt.editor._html += f"""
