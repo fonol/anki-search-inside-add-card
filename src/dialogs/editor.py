@@ -264,13 +264,14 @@ class NoteEditor(QDialog):
 
         # if this check is missing, text is sometimes saved as an empty paragraph
         if self.create_tab.text.document().isEmpty():
-            text = ""
+            text = ""   
         else:
             # text = self.create_tab.text.toHtml()
             if self.create_tab.text.text_was_pasted:
                 text = self.create_tab.text.toMarkdown()
             else:
                 text = self.create_tab.text.toPlainText()
+                # text = re.sub("(\r\n|\n|\r)^", "  \n", text, flags=re.M)
             # text = markdown(text)
 
 
@@ -326,6 +327,7 @@ class NoteEditor(QDialog):
                 text = self.create_tab.text.toMarkdown()
             else:
                 text = self.create_tab.text.toPlainText()
+                # text = re.sub("([^ ][^ ])(\r\n|\n|\r)^", r"\1  \n", text, flags=re.M)
         source                  = self.create_tab.source.text()
         # TODO
         author                  = self.metadata_tab.author.text()
@@ -386,36 +388,14 @@ class CreateTab(QWidget):
             tag_fg                  = config["styles.tagForegroundColor"]
             hover_bg                = "palette(dark)"
 
-        include_anki_tags = get_config_value_or_default("notes.editor.include_anki_tags", False)
-        self.tree = TagTree(include_anki_tags = include_anki_tags, only_tags = True, knowledge_tree = False)
+        include_anki_tags   = get_config_value_or_default("notes.editor.include_anki_tags", False)
+        tag_sort            = get_config_value_or_default("notes.editor.tag_sort", "a-z")
+
+        self.tree   = TagTree(include_anki_tags = include_anki_tags, only_tags = True, knowledge_tree = False, sort=tag_sort)
         self.tree.itemClicked.connect(self.tree_item_clicked)
 
-        recently_used_tags      = get_recently_used_tags()
-
-        self.recent_tbl         = QWidget()
-        self.recent_tbl.setObjectName("recentDisp")
-        self.recent_tbl.setStyleSheet("background-color: transparent;")
-        bs = f"""
-            QPushButton {{
-                background-color: {tag_bg};
-                color: {tag_fg};
-                padding: 2px 3px 2px 3px;
-                border-radius: 4px;
-            }}
-            QPushButton:hover {{
-                background-color: {hover_bg};
-            }}
-        """
-        lo = FlowLayout()
-        self.recent_tbl.setLayout(lo)
-        for ix, t in enumerate(recently_used_tags):
-            btn = QPushButton(t)
-            btn.setStyleSheet(bs)
-            btn.clicked.connect(functools.partial(self.add_tag, t))
-            lo.addWidget(btn)
-
-        queue_len = len(parent.priority_list)
-        schedule = None if self.parent.note is None else self.parent.note.reminder
+        queue_len   = len(parent.priority_list)
+        schedule    = None if self.parent.note is None else self.parent.note.reminder
         self.slider = QtPrioritySlider(self.parent.priority, self.parent.note_id, schedule=schedule)
 
         self.layout = QHBoxLayout()
@@ -441,59 +421,38 @@ class CreateTab(QWidget):
         hbox_tag_b = QHBoxLayout()
         hbox_tag_b.addWidget(self.all_tags_cb)
 
-        # exp_btn = QToolButton()
-        # exp_btn.setText("\u2bc6")
-        # col_btn = QToolButton()
-        # col_btn.setText("\u2bc5")
-        # button1.setIcon(button1.style().standardIcon(QStyle.SP_MediaSeekBackward))
+        self.tag_sort = QComboBox()
+        self.tag_sort.addItem("A-Z")
+        self.tag_sort.addItem("Recency")
+        self.tag_sort.currentTextChanged.connect(self.on_tag_sort_change)
+        self.tag_sort.setCurrentText(tag_sort)
+        hbox_tag_b.addStretch(10)
+        hbox_tag_b.addWidget(QLabel("Sort: "))
+        hbox_tag_b.addWidget(self.tag_sort)
+
+       
         hbox_tag_b.addStretch(1)
-        # hbox_tag_b.addWidget(col_btn)
-        # hbox_tag_b.addWidget(exp_btn)
         vbox_taglist.addLayout(hbox_tag_b)
 
-        vbox_recenttags = QVBoxLayout()
-        vbox_recenttags.setContentsMargins(0,0,0,0)
-        if len(recently_used_tags) > 0:
-            tag_lbl1 = QLabel()
-            tag_lbl1.setPixmap(tag_icn)
-
-            tag_hb1 = QHBoxLayout()
-            tag_hb1.setAlignment(Qt.AlignLeft)
-            tag_hb1.addWidget(tag_lbl1)
-            tag_hb1.addWidget(QLabel("Recent (Click to Add)"))
-            vbox_recenttags.addLayout(tag_hb1)
-            qs = QScrollArea()
-            qs.setStyleSheet(""" QScrollArea { background-color: transparent; } """)
-            qs.setFrameShape(QFrame.NoFrame)
-            qs.setWidgetResizable(True)
-            qs.setWidget(self.recent_tbl)
-            vbox_recenttags.addWidget(qs)
 
         vbox_priority = QVBoxLayout()
         vbox_priority.setContentsMargins(0,0,0,0)
         vbox_priority.addWidget(self.slider)
 
         widget_taglist = QWidget()
-        widget_recenttags = QWidget()
         widget_priority = QWidget()
         widget_priority.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
 
         widget_taglist.setLayout(vbox_taglist)
-        widget_recenttags.setLayout(vbox_recenttags)
         widget_priority.setLayout(vbox_priority)
 
-        left_splitter = QSplitter()
-        left_splitter.setOrientation(Qt.Vertical)
-        left_splitter.addWidget(widget_taglist)
-        left_splitter.addWidget(widget_recenttags)
-        left_splitter.addWidget(widget_priority)
-
         tmp_layout = QVBoxLayout()
-        tmp_layout.addWidget(left_splitter)
         tmp_layout.setContentsMargins(0,0,0,0)
 
         self.left_pane = QWidget()
         self.left_pane.setLayout(tmp_layout)
+        self.left_pane.layout().addWidget(widget_taglist, 1)
+        self.left_pane.layout().addWidget(widget_priority, 0)
         self.layout.addWidget(self.left_pane, 7)
 
         hbox = QHBoxLayout()
@@ -761,9 +720,14 @@ class CreateTab(QWidget):
 
     def tag_cb_changed(self, state):
         self.tree.include_anki_tags = (state == Qt.Checked)
-
         self.tree.rebuild_tree()
         update_config("notes.editor.include_anki_tags", state == Qt.Checked)
+
+    def on_tag_sort_change(self, new_sort: str):
+        self.tree.sort = new_sort.lower()
+        self.tree.rebuild_tree()
+        update_config("notes.editor.tag_sort", new_sort)
+
 
 #    def build_tree(self, tmap):
 #        for t, children in tmap.items():
