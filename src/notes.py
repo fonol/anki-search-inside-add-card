@@ -1142,19 +1142,34 @@ def update_text_comment_text(id: int, text: str):
 
 
 def get_all_tags() -> Set[str]:
-    """
-        Returns a set containing all tags (str) that appear in the user's notes.
-    """
-    conn = _get_connection()
-    all_tags = conn.execute("select tags from notes where tags is not null").fetchall()
+    """ Returns a set containing all tags that appear in the user's notes. """
+
+    conn        = _get_connection()
+    all_tags    = conn.execute("select tags from notes where tags is not null").fetchall()
     conn.close()
-    tag_set = set()
+    tag_set     = set()
     for tag_str in all_tags:
         for t in tag_str[0].split():
             if len(t) > 0:
                 if t not in tag_set:
                     tag_set.add(t)
     return tag_set
+
+def get_all_tags_with_recency() -> List[Tuple[str, str]]:
+    """ Returns a list containing all tags that appear in the user's notes, along with a timestamp which states their last use. """
+    conn        = _get_connection()
+    all_tags    = conn.execute("select tags, modified, created from notes where tags is not null and tags != ''").fetchall()
+    conn.close()
+    tag_set     = set()
+    tags        = list()
+    for (tag_str, modified, created) in all_tags:
+        for t in tag_str.split():
+            if len(t) > 0:
+                if t not in tag_set:
+                    tag_set.add(t)
+                    tags.append((t, max(modified, created)))
+    return tags
+
 
 #TODO: is explicit tag accounted for?
 def find_by_tag(tag_str, to_output_list=True, only_explicit_tag=False) -> List[SiacNote]:
@@ -1524,15 +1539,37 @@ def assign_random_priorities():
     conn.close()
     recalculate_priority_queue()
 
-def get_all_tags_as_hierarchy(include_anki_tags: bool) -> Dict:
-    tags = None
-    if include_anki_tags:
-        tags = mw.col.tags.all()
-        user_note_tags = get_all_tags()
-        tags.extend(user_note_tags)
+def get_all_tags_as_hierarchy(include_anki_tags: bool, sort: str ="a-z") -> Dict:
+    if sort == "recency":
+        tags : List[Tuple[str, str]]  = get_all_tags_with_recency()
+        if include_anki_tags:
+            anki_tags            = mw.col.db.all("select tags, max(id) from notes where tags != '' group by tags")
+            anki_tmap            = {}
+            for t in anki_tags:
+                stamp = time.strftime("%Y-%m-%d", time.localtime(int(t[1])/1000))
+                for ts in t[0].split():
+                    if len(ts.strip()) == 0:
+                        continue
+                    if ts in anki_tmap:
+                        if anki_tmap[ts] < stamp:
+                            anki_tmap[ts] = stamp
+                    else:
+                        anki_tmap[ts] = stamp
+
+            tags += list(anki_tmap.items())
+        else:
+            tags  = get_all_tags_with_recency()
+
+        return utility.tags.to_tag_hierarchy_by_recency(tags)
+
     else:
-        tags = get_all_tags()
-    return utility.tags.to_tag_hierarchy(tags)
+        if include_anki_tags:
+            tags            = mw.col.tags.all()
+            user_note_tags  = get_all_tags()
+            tags.extend(user_note_tags)
+        else:
+            tags = get_all_tags()
+        return utility.tags.to_tag_hierarchy(tags)
 
 def get_tags_and_nids_from_search(notes):
     tags = []
