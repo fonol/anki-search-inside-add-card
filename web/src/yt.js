@@ -38,7 +38,7 @@ window.initYtPlayer = function(videoId, start) {
 }
 
 window.ytCurrentTime = function() {
-    return Math.round(siacYt.player.getCurrentTime());
+    return Math.trunc(siacYt.player.getCurrentTime());
 };
 
 window.ytScreenCapture = function() {
