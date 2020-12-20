@@ -43,8 +43,8 @@ class QtPrioritySlider(QWidget):
         self.nid                = nid
         self.note               = None
         if nid and nid > 0:
-            self.note               = get_note(self.nid)
-            self.note_title         = self.note.get_title()
+            self.note           = get_note(self.nid)
+            self.note_title     = self.note.get_title()
         self.avg_prio           = round(get_avg_priority(), 1)
 
         box                     = QGroupBox("Priority and Scheduling" if self.show_spec_sched else "Priority")
@@ -64,20 +64,18 @@ class QtPrioritySlider(QWidget):
 
         self.value_lbl          = QLabel(str(prio_default))
         self.value_lbl.setAlignment(Qt.AlignCenter)
-        hvalue = QHBoxLayout()
+
+        hvalue                  = QHBoxLayout()
         hvalue.addSpacing(40)
         hvalue.addStretch()
         hvalue.addWidget(self.value_lbl)
         hvalue.addStretch()
-        avg_lbl = QLabel(f"Ø: {self.avg_prio}")
+
+        avg_lbl                 = QLabel(f"Ø: {self.avg_prio}")
         avg_lbl.setStyleSheet(f"padding-left: 4px; padding-right: 4px; color: white; background-color: {utility.misc.prio_color(self.avg_prio)};")
         hvalue.addWidget(avg_lbl)
         vbox.addLayout(hvalue)
 
-
-        #TODO:somehow notes without a priority have a problem atm on done dialog
-        self.similar = QLabel("")
-        vbox.addWidget(self.similar)
         if not self.show_spec_sched and self.nid:
             self.similar = QLabel("")
             vbox.addWidget(self.similar)
@@ -135,7 +133,7 @@ class QtPrioritySlider(QWidget):
             # If 0 priority, disable setting specific schedule
             if self.show_spec_sched:
                 self.scheduler.priority_set_to_zero()
-            else:
+            elif self.nid:
                 self.similar.setText(f"<br>Info: A note without a priority won't appear in <br>the queue, unless it has a schedule<br>which is due on that day.")
             self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #c62828; border-radius: 3px; }")
 
@@ -144,7 +142,7 @@ class QtPrioritySlider(QWidget):
             self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #2496dc; border-radius: 3px;}")
             if self.show_spec_sched:
                 self.scheduler.priority_set_to_non_zero()
-            else:
+            elif self.nid:
                 val = self.slider.value()
                 if self.nid is not None:
                     similar = find_notes_with_similar_prio(self.nid, val)
