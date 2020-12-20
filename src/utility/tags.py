@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import typing
+from typing import List, Tuple
 import utility.text
 
 
@@ -23,6 +25,16 @@ def to_tag_hierarchy(tags, sep="::"):
         tmap = _add_to_tag_list(tmap, t, sep)
     tmap = dict(sorted(tmap.items(), key=lambda item: item[0].lower()))
     return tmap
+
+def to_tag_hierarchy_by_recency(tags: List[Tuple[str, str]], sep: str ="::"):
+    """ Returns a tag tree like to_tag_hierarchy, but ordered by timestamps. """
+    tmap    = {}
+    tsorted = [t[0] for t in sorted(tags, key=lambda t: t[1], reverse=True)]
+    for t in tsorted:
+        tmap = _add_to_tag_list(tmap, t, sep)
+    # tmap = dict(sorted(tmap.items(), key=lambda item: item[0].lower()))
+    return tmap
+
 
 
 def iter_tag_map(tmap, prefix):
