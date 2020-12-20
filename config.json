@@ -92,6 +92,7 @@
 "notes.editor.shortcut": "Ctrl+Shift+n",
 "notes.editor.defaultTagsIfEmpty": "",
 "notes.editor.include_anki_tags": false,
+"notes.editor.tag_sort": "a-z",
 "notes.editor.external_file_applications": ["file", "obsidian", "safari", "firefox", "chrome"],
 
 "anki.editor.remember_location": true,
