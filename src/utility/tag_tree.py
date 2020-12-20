@@ -20,14 +20,16 @@ class ItemType():
     SiacNote  = 1
 
 class TagTree(QTreeWidget):
-    def __init__(self, include_anki_tags = True, only_tags = False, knowledge_tree = False):
+    def __init__(self, include_anki_tags = True, only_tags = False, knowledge_tree = False, sort="a-z"):
         super().__init__()
 
         self.include_anki_tags = include_anki_tags
         self.only_tags         = only_tags
         self.knowledge_tree    = knowledge_tree
+        self.sort              = sort
 
-        self.map                = get_all_tags_as_hierarchy(include_anki_tags=include_anki_tags)
+
+        self.map                = get_all_tags_as_hierarchy(include_anki_tags=include_anki_tags, sort=self.sort)
 
         # only show selected notes
         self.nids_anki_whitelist = None
@@ -119,7 +121,7 @@ class TagTree(QTreeWidget):
         self.nids_siac_whitelist = None
         
         if notes == None:
-            self.map = get_all_tags_as_hierarchy(include_anki_tags = self.include_anki_tags)
+            self.map = get_all_tags_as_hierarchy(include_anki_tags = self.include_anki_tags, sort=self.sort)
             self.recursive_build_tree(self.map)
         else:
             tags, self.nids_anki_whitelist, self.nids_siac_whitelist = get_tags_and_nids_from_search(notes)
