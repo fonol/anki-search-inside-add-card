@@ -76,6 +76,8 @@ class ReadingModal:
 
     last_cloze          : Optional[Tuple[int, str]] = None
 
+    current_note        : Optional[SiacNote]        = None
+
     _original_win_title : Optional[str]             = None
 
     def __init__(self):
@@ -103,6 +105,7 @@ class ReadingModal:
     def reset(self):
         self.note_id                = None
         self.note                   = None
+        ReadingModal.current_note   = None
         self.sidebar.tab_displayed  = None
         if ReadingModal._original_win_title is not None:
             win = mw.app.activeWindow()
@@ -141,8 +144,9 @@ class ReadingModal:
         if ReadingModal.last_opened is None or (self.note_id is not None and int(note_id) != self.note_id):
             ReadingModal.last_opened = self.note_id if ReadingModal.last_opened else note_id
 
-        self.note_id            = int(note_id)
-        self.note               = note
+        self.note_id              = int(note_id)
+        self.note                 = note
+        ReadingModal.current_note = note
 
         html                    = self.html()
 
@@ -1544,7 +1548,7 @@ class ReadingModal:
                 const options = [];
                 for (var i = start; i < start + numPagesExtract(); i++) {
                     if (!pdf.pagesRead || pdf.pagesRead.indexOf(i) === -1) {
-                        options.push(i); 
+                        options.push(i);
                     }
                 }
                 if (options.length > 0) {

@@ -41,6 +41,7 @@ from .url_input_dialog import URLInputDialog
 from ..markdown.extensions.fenced_code import FencedCodeExtension
 from ..markdown.extensions.def_list import DefListExtension
 from ..utility.tag_tree import TagTree
+from ..web.reading_modal import ReadingModal
 
 import utility.text
 import utility.misc
@@ -123,7 +124,7 @@ class NoteEditor(QDialog):
     def __init__(self, parent, note_id = None, add_only = False,
                  read_note_id = None, tag_prefill = None, source_prefill = None,
                  text_prefill = None, title_prefill = None, prio_prefill = None,
-                 author_prefill = None, url_prefill = None):
+                 author_prefill = None, url_prefill = None, prefill_with_opened_note = False):
 
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
 
@@ -140,6 +141,16 @@ class NoteEditor(QDialog):
         self.title_prefill  = title_prefill
         self.prio_prefill   = prio_prefill
         self.dark_mode_used = state.night_mode
+
+        open_note = ReadingModal.current_note
+        if prefill_with_opened_note and open_note is not None:
+            self.tag_prefill = open_note.tags
+            self.prio_prefill = open_note.priority
+
+            #showInfo(self.prio_prefill)
+            if self.prio_prefill == 0.0:
+                self.prio_prefill = get_last_priority(open_note.id)
+
 
         self.screen_h       = QApplication.desktop().screenGeometry().height()
 
@@ -175,7 +186,10 @@ class NoteEditor(QDialog):
             self.save = QPushButton("\u2714 Create ")
             self.setWindowTitle('New Note')
             self.save.clicked.connect(self.on_create_clicked)
+
             self.priority = 0
+            if self.prio_prefill:
+                self.priority = self.prio_prefill
 
             self.save_and_stay = QPushButton(" \u2714 Create && Keep Open ")
             self.save_and_stay.setFocusPolicy(Qt.NoFocus)
@@ -264,7 +278,7 @@ class NoteEditor(QDialog):
 
         # if this check is missing, text is sometimes saved as an empty paragraph
         if self.create_tab.text.document().isEmpty():
-            text = ""   
+            text = ""
         else:
             # text = self.create_tab.text.toHtml()
             if self.create_tab.text.text_was_pasted:
@@ -430,7 +444,7 @@ class CreateTab(QWidget):
         hbox_tag_b.addWidget(QLabel("Sort: "))
         hbox_tag_b.addWidget(self.tag_sort)
 
-       
+
         hbox_tag_b.addStretch(1)
         vbox_taglist.addLayout(hbox_tag_b)
 

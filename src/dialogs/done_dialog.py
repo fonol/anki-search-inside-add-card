@@ -22,7 +22,7 @@ from typing import Optional
 import functools
 import os
 from .components import QtPrioritySlider, QtScheduleComponent, NoteSelectorMode, NoteSelector
-from ..notes import get_note, get_priority, len_enqueued_with_tag
+from ..notes import get_note, get_priority, get_last_priority, len_enqueued_with_tag
 from ..config import get_config_value_or_default
 
 class DoneDialog(QDialog):
@@ -35,6 +35,12 @@ class DoneDialog(QDialog):
         self.note_id            = note_id
         self.note               = get_note(note_id)
         self.priority           = get_priority(note_id)
+
+        last_priority           = get_last_priority(note_id)
+
+        if self.priority is None:
+            self.priority = last_priority
+
         self.add_mode           = False
         self.enqueue_next_ids   = []
         self.enqueue_next_prio  = -1
@@ -46,7 +52,7 @@ class DoneDialog(QDialog):
         # title is either 'Done' or 'Add', depending on whether the note was enqueued before
         if (self.priority and self.priority > 0) or self.note.is_or_was_due():
             title = "Done"
-        else: 
+        else:
             title = "Add"
             self.add_mode = True
 
@@ -82,7 +88,7 @@ class DoneDialog(QDialog):
         self.setLayout(self.layout)
         self.accept_btn.setFocus(True)
         self.setMinimumWidth(300)
-            
+
     def on_accept(self):
         self.priority               = self.done_tab.slider.value()
         self.tag_filter             = self.done_tab.tag_filter_inp.text()
@@ -101,7 +107,7 @@ class DoneTab(QWidget):
         self.parent = parent
         QWidget.__init__(self)
         self.setup_ui()
-    
+
     def setup_ui(self):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -123,7 +129,7 @@ class DoneTab(QWidget):
         tag_filter_hb.setSpacing(0)
         tags                = self.parent.note.tags
         used                = []
-        
+
         self.tag_filter_inp.textChanged.connect(self.on_tag_filter_change)
 
         if tags is not None:
@@ -135,14 +141,14 @@ class DoneTab(QWidget):
                 for n in range(1, max(2, len(subtags))):
                     l = [subtags[0:i+n] for i in range(len(subtags)-n+1)]
                     for sl in l:
-                        joined = "::".join(sl) 
+                        joined = "::".join(sl)
                         if not joined in used:
                             used.append(joined)
 
             for t in used:
                 a = menu.addAction(t)
                 a.triggered.connect(functools.partial(self.add_tag_to_filter, t))
-            
+
         self.tag_filter_cb.setMenu(menu)
 
         clear_btn = QToolButton()
@@ -193,7 +199,7 @@ class DoneTab(QWidget):
             tags = [t.strip() for t in current.split(" ") if len(t.strip()) > 0]
             if not tag in tags:
                 self.tag_filter_inp.setText(current.strip() + " " + tag)
-            
+
 
 
 class EnqueueNextTab(QWidget):
