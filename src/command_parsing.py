@@ -630,6 +630,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         # add meta note
         prios       = [n.priority for n in notes if n.priority is not None and n.priority > 0]
         avg_prio    = round(sum(prios) / len(prios), 1) if len(prios) > 0 else "-"
+        avg_prio    = "100" if avg_prio == 100.0 else avg_prio
         notes.insert(0, SiacNote.mock(f"Tag: {tag}", filled_template("notes/tag_meta", dict(tag = tag, avg_prio = avg_prio)), "Meta"))
         index.ui.print_search_results(notes, stamp)
 
@@ -640,6 +641,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         # add meta note
         prios       = [n.priority for n in notes if n.priority is not None and n.priority > 0]
         avg_prio    = round(sum(prios) / len(prios), 1) if len(prios) > 0 else "-"
+        avg_prio    = "100" if avg_prio == 100.0 else avg_prio
         notes.insert(0, SiacNote.mock(f"Last opened for tag: {tag}", filled_template("notes/tag_meta", dict(tag = tag, avg_prio = avg_prio)), "Meta"))
         index.ui.print_search_results(notes, stamp)
 
