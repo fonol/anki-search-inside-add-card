@@ -437,16 +437,18 @@ def read_counts_by_date_card_body(counts: Dict[str, int]) -> HTML:
 
     html = f"""
         <div id='siac-read-time-ch' class='w-100' style='margin: 30px auto 10px auto;'></div>
-        <table style='margin-top: 15px;'>
-            <tr>
-                <td class='siac-caps'>Avg. read pages / day:</td>
-                <td><b style='margin-left: 20px;'>{avg_r}</b></td>
-            </tr>
-            <tr>
-                <td class='siac-caps'>Most read pages on a single day:</td>
-                <td><b style='margin-left: 20px;'>{v_max}</b></td>
-            </tr>
-        </table>
+        <div class='w-100 flex-row' style='margin-top: 15px;align-items: center; justify-content: center;'>
+            <table>
+                <tr>
+                    <td class='siac-caps'>Avg. read pages / day:</td>
+                    <td><b style='margin-left: 20px;'>{avg_r}</b></td>
+                </tr>
+                <tr>
+                    <td class='siac-caps'>Most read pages on a single day:</td>
+                    <td><b style='margin-left: 20px;'>{v_max}</b></td>
+                </tr>
+            </table>
+        </div>
     """
     return html
 
@@ -548,7 +550,6 @@ def get_tips_html() -> List[Tuple[str, HTML]]:
         <li>Drag and drop a PDF file on the add-on pane to open the Create Note modal with that file path.</li>
         <li>CTRL/Meta + Click on a tag in the notes sidebar opens the Create Note modal with that tag.</li>
         <li>Not all settings are in the "Settings" dialog, some can be set only through Anki's add-on config dialog.</li>
-        <li>On Anki 2.1.28+, the whole UI can be resized at once with CTRL+Mousewheel.</li>
         <li>If something happens to the add-on's DB file ('siac-notes.db'): Backups are created once each day (last 10 days), in the same folder as the 
         'siac-notes.db' file. Remove the corrupted 'siac-notes.db' file, replace it with a backup file and rename it to 'siac-notes.db'.
         </li>
