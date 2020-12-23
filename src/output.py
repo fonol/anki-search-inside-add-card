@@ -276,7 +276,7 @@ class Output:
                     counter     = counter + 1 - meta_card_counter, 
                     nid         = nid, 
                     creation    = "&nbsp;&#128336; " + timeDiffString, 
-                    edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(nid)]),
+                    edited      = "" if str(nid) not in self.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + self._build_edited_info(self.edited[str(nid)]),
                     mouseup     = "getSelectionText()",
                     text        = text, 
                     tags        = utility.tags.build_tag_string(res.tags, self.gridView),
@@ -292,7 +292,7 @@ class Output:
                     counter     = counter + 1 - meta_card_counter, 
                     nid         = nid, 
                     creation    = "&nbsp;&#128336; " + timeDiffString, 
-                    edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(nid)]),
+                    edited      = "" if str(nid) not in self.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + self._build_edited_info(self.edited[str(nid)]),
                     mouseup     = "getSelectionText()",
                     text        = text, 
                     tags        = utility.tags.build_tag_string(res.tags, self.gridView), 
@@ -627,7 +627,7 @@ class Output:
             newNote     = template.format(
                 counter=counter+1, 
                 nid=res.id, 
-                edited="" if str(res.id) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(res.id)]),
+                edited="" if str(res.id) not in self.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + self._build_edited_info(self.edited[str(res.id)]),
                 mouseup="getSelectionText()" if search_on_selection else "",
                 text=text, 
                 ret=retInfo,
@@ -873,7 +873,7 @@ class Output:
             document.getElementById('tags-%s').innerHTML = `%s`;
         """ % (nid, text, nid, tagStr))
 
-        self._editor.web.eval(f"""$('#siac-edited-dsp-{nid}').html(`&nbsp;&#128336; Edited just now`); """)
+        self._editor.web.eval(f"""$('#siac-edited-dsp-{nid}').html(`<i class='fa fa-pencil mr-5 ml-10'></i> Edited just now`); """)
         
     def show_tooltip(self, text):
         if mw.addonManager.getConfig(__name__)["hideSidebar"]:
