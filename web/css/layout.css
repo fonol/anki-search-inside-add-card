@@ -28,12 +28,6 @@
     }
 }
 
-@media (max-width: 800px) {
-    .icns-add, #siac-switch-lr-btn {
-        display: none !important;
-    }
-}
-
 body.siac-wm-addon #leftSide {
    display: none; 
 }

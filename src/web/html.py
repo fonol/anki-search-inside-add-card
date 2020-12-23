@@ -380,9 +380,8 @@ def search_results(db_list: List[IndexNote], query_set: List[str]) -> HTML:
     for counter, res in enumerate(db_list):
         ret = retsByNid[int(res.id)] if show_ret and int(res.id) in retsByNid else None
         if ret is not None:
-            retMark = "background: %s; color: black;" % (utility.misc._retToColor(ret))
-            retInfo = """<div class='retMark' style='%s'>%s</div>
-                            """ % (retMark, int(ret))
+            retMark = "border-color: %s;" % (utility.misc._retToColor(ret))
+            retInfo = """<div class='retMark' style='%s'>PR: %s</div> """ % (retMark, int(ret))
         else:
             retInfo = ""
 

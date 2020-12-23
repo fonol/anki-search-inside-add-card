@@ -36,6 +36,7 @@
     position: relative;
     overflow: auto;
     flex: 1;
+    margin-top: 5px;
 }
 #resultsWrapper {
     z-index: 100;
@@ -374,6 +375,9 @@ table.siac-read-stats-table tr:hover .siac-read-box {
 #icns-large div, #icns-small div {
     margin-top: 3px;
 }
+body.nightMode #icns-large {
+    border-color: #4e4e4e;
+}
 .rnd-icon,.flds-icon,.freeze-icon {
     display: inline-block;
     font-size: 13px !important;
@@ -383,7 +387,7 @@ table.siac-read-stats-table tr:hover .siac-read-box {
     white-space: nowrap;
     overflow: hidden;
 }
-.rnd-icon,.flds-icon {
+.rnd-icon,.flds-icon,.freeze-icon {
   margin-right: 7px;
 }
 .freeze-icon:hover, .rnd-icon:hover, .flds-icon:hover {
@@ -397,7 +401,7 @@ table.siac-read-stats-table tr:hover .siac-read-box {
     user-select: none;
 }
 .exp:hover {
-    color: #2496dc;
+    color: coral;
 }
 .siac-caps {
     font-variant: all-petite-caps;
@@ -406,9 +410,6 @@ table.siac-read-stats-table tr:hover .siac-read-box {
 }
 table.striped {
     border-collapse: collapse;
-}
-table.striped tr:nth-child(even) {
-    background-color: var(--c-striped-table-background) !important;
 }
 .exp:empty {
     display: none;
@@ -420,12 +421,10 @@ table.striped tr:nth-child(even) {
 #indexInfo:hover, #synonymsIcon:hover, #stylingIcon:hover, #siac-note-icn:hover, #siac-timetable-icn:hover, #siac-settings-icn:hover {
     color: #2496dc;
 }
-
-#siac-switch-deck-btn.expanded .siac-btn-small-dropdown{
-    border-top: 1px solid var(--c-button-border);
-}
 .siac-switch-deck-btn-inner {
-width: 48%; display: inline-block; text-align: center;
+    width: 48%; 
+    display: inline-block; 
+    text-align: center;
 }
 .siac-switch-deck-btn-inner.right {
   border-left:  1px solid  var(--c-button-border);
@@ -470,19 +469,7 @@ width: 48%; display: inline-block; text-align: center;
     overflow-y: hidden;
 
 }
-.siac-tags-exp-icon {
-    cursor: pointer;
-    float: right;
-    user-select: none;
-    border: 2px solid;
-    border-radius: 4px;
-    font-size: 9px;
-    opacity: 0.8;
-    color: grey; 
-}
-.siac-tags-exp-icon:hover {
-    transform: scale(1.25);
-}
+
 fieldset {
     padding: 0.7em;
 }
@@ -583,7 +570,6 @@ span.tag-symbol {
 .noteFloating {
     position: absolute;
     z-index: 8;
-    border: 3px outset var(--c-note-border);
     border-radius: 4px;
     text-align: center;
 }
@@ -593,24 +579,26 @@ span.tag-symbol {
     max-width: 280px;
     max-height: 220px;
     overflow-y: auto;
-    background: var(--c-note-background);
+    background: #fffef7;
     color: var(--c-note-foreground);
     font-size: 12;
     text-align: left;
 }
-
+body.nightMode .noteFloatingContent {
+    background:  rgb(53,53,53);
+    color: white;
+}
 .noteFloatingHeader {
-    height: 15px;
-    padding-top: 2px;
-    padding-bottom: 2px;
+    display: flex;
+    flex-direction: row-reverse;
+    padding: 5px 3px 5px 0;
+    align-items: center;
     cursor: move;
     z-index: 110;
-    background-color: var(--c-note-border);
+    background-color: #2e6286;
     color: #fff;
     user-select: none;
     font-size: 11px !important;
-    text-align: right;
-    line-height: 1em;
 }
 
 
@@ -826,8 +814,8 @@ hr.siac-modal-sep {
     vertical-align: bottom;
     display: inline-block;
     margin: 0 1px 0 1px;
-    height: 7px;
-    width: 6px;
+    height: 9px;
+    width: 7px;
     border-radius: 3px;
 }
 .siac-prog-sq-filled {
@@ -846,16 +834,11 @@ body.nightMode .siac-prog-sq {
      background: radial-gradient(#adadad, #818181);
 }
 .siac-prog-tmp {
-    margin-top: 6px;
+    margin-left: 10px;
+    white-space: nowrap;
 }
 .siac-prog-tmp span {
     vertical-align: baseline;
-}
-.cardLeftBot .fa {
-    vertical-align: baseline;
-}
-.siac-user-note .cardLeftBot {
-    padding: 2px;
 }
 .siac-blue-outset {
     border: 2px outset #2496dc; 
@@ -869,9 +852,6 @@ body.nightMode .siac-prog-sq {
     font-weight: bold; 
     text-decoration: none;
 }
-
-
-
 .CodeMirror-scroll {
     overflow-x: hidden !important;
 }

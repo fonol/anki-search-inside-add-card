@@ -28,154 +28,173 @@
             </div>
         </div>
         <div class="flexContainer" id="topContainer">
-            <div class='flexCol' style='margin-left: 0px; padding-bottom: 7px; padding-left: 0px;'>
-                <div id='siac-switch-deck-btn' class='siac-btn-small ta_center blue-hover'
-                    onmouseleave='$(this).removeClass("expanded")'
-                    style='display: inline-block; position: relative; min-width: 200px; width: calc(100% - 1px);box-sizing: border-box;'>
-                    <div class='siac-switch-deck-btn-inner' onclick="pycmd('siac-fill-deck-select')"><b>Decks</b></div>
-                    <div class='siac-switch-deck-btn-inner right' onclick="pycmd('siac-fill-tag-select')"><b>Tags</b>
-                    </div>
-                    <div class='siac-btn-small-dropdown click'>
-                        <div id='deckSelWrapper' class='ml-5 mr-5 mt-5 mb-5'>
-                            <div id='deck-sel-info-lbl' style='flex: 0 1 auto; margin: 5px 0 4px 5px;'><b class='mr-10' style='float: right; opacity: 0.7;'>[Only selected
-                                    decks are used when searching.]</b></div>
-                            <div id='siac-deck-sel-btn-wrapper' class='mb-5 ml-5'
-                                style='flex: 0 1 auto; margin-top: 3px; white-space: nowrap; font-size: 0;'>
-                                <div class='deck-list-button' onclick='selectAllDecks(); event.stopPropagation();'>All
+            <div class='flex-row' style='justify-content: space-between; align-items: flex-end; flex: 1;'>
+                <div>
+                    <div id='siac-switch-deck-btn' class='siac-btn-small siac-top-row-btn ta_center blue-hover'
+                        onmouseleave='$(this).removeClass("expanded")'
+                        style='display: inline-block; position: relative; width: 240px; box-sizing: border-box;'>
+                        <div class='siac-switch-deck-btn-inner' onclick="pycmd('siac-fill-deck-select')"><b>Decks</b>
+                        </div>
+                        <div class='siac-switch-deck-btn-inner right' onclick="pycmd('siac-fill-tag-select')">
+                            <b>Tags</b>
+                        </div>
+                        <div class='siac-btn-small-dropdown click' style='width: 380px;'>
+                            <div id='deckSelWrapper' class='ml-5 mr-5 mt-5 mb-5'>
+                                <div id='deck-sel-info-lbl' style='flex: 0 1 auto; margin: 5px 0 4px 5px;'><b
+                                        style='opacity: 0.7;'>[Only selected
+                                        decks are used when searching.]</b></div>
+                                <div id='siac-deck-sel-btn-wrapper' class='mb-5 ml-5'
+                                    style='flex: 0 1 auto; margin-top: 3px; white-space: nowrap; font-size: 0;'>
+                                    <div class='deck-list-button' onclick='selectAllDecks(); event.stopPropagation();'>
+                                        All
+                                    </div>
+                                    <div class='deck-list-button'
+                                        onclick='unselectAllDecks(); event.stopPropagation();'>
+                                        None</div>
+                                    <div class='deck-list-button'
+                                        onclick="pycmd('siac-decks-select-current'); event.stopPropagation();">Current
+                                    </div>
+                                    <div class='deck-list-button'
+                                        onclick="pycmd('siac-decks-select-current-and-subdecks'); event.stopPropagation();">
+                                        Current and Subdecks</div>
                                 </div>
-                                <div class='deck-list-button' onclick='unselectAllDecks(); event.stopPropagation();'>
-                                    None</div>
-                                <div class='deck-list-button'
-                                    onclick="pycmd('siac-decks-select-current'); event.stopPropagation();">Current</div>
-                                <div class='deck-list-button'
-                                    onclick="pycmd('siac-decks-select-current-and-subdecks'); event.stopPropagation();">
-                                    Current and Subdecks</div>
+                                <div class='oflow_y_auto mb-10 mr-10 mt-5' style='flex: 1 1 auto; padding-right: 10px;'>
+                                    <table id='deckSel'></table>
+                                </div>
                             </div>
-                            <div class='oflow_y_auto mb-10 mt-5' style='flex: 1 1 auto; padding-right: 10px;'>
-                                <table id='deckSel'></table>
-                            </div>
-                        </div>
 
+                        </div>
+                    </div>
+                    <div id='siac-timetable-icn' class='ml-10 siac-btn-small siac-top-row-btn' onclick='$(this).toggleClass("expanded")'
+                        onmouseleave='$(this).removeClass("expanded")'
+                        style='position: relative; display:inline-block;'
+                        onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'>
+                        <b>&nbsp;&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;&nbsp;</b>
+                        <div class='siac-btn-small-dropdown click'>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-r-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-r-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-user-note-search"); event.stopPropagation();'>&nbsp;Search ...
+                            </div>
+                            <hr>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-r-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>
+                                &nbsp;<b>Queue</b></div>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-user-note-queue-read-head"); event.stopPropagation();'>
+                                &nbsp;<b>Read
+                                    Next</b></div>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-user-note-queue-read-random"); event.stopPropagation();'>&nbsp;Read
+                                [Rnd]</div>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-url-dialog"); event.stopPropagation();'>&nbsp;Url to PDF</div>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-user-note-queue-picker"); event.stopPropagation();'>&nbsp;Queue
+                                Man.
+                            </div>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-zotero-import"); event.stopPropagation();'>&nbsp;Zotero Imp.</div>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='pycmd("siac-r-user-note-queue-random"); event.stopPropagation();'>&nbsp;List
+                                [Rnd]
+                            </div>
+                        </div>
+                    </div>
+                    <div id='siac-settings-icn' class='siac-btn-small siac-top-row-btn ml-10 ta_center'
+                        onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")'
+                        style='position: relative; display:inline-block; min-width: 140px;'><b>&nbsp; Settings & Info
+                            &nbsp;</b>
+                        <div class='siac-btn-small-dropdown click' onclick='event.stopPropagation();'>
+                            <table class='w-100'>
+                                <tr>
+                                    <td class='tbLb'><label class='blue-hover' for='selectionCb'>Search on
+                                            Selection</label>
+                                    </td>
+                                    <td><input type='checkbox' id='selectionCb' checked
+                                            onchange='siacState.searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();' />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class='tbLb'><label class='blue-hover' for='typingCb'>Search on Typing</label>
+                                    </td>
+                                    <td><input type='checkbox' id='typingCb' checked
+                                            onchange='setSearchOnTyping($(this).is(":checked"));' /></td>
+                                </tr>
+                                <tr>
+                                    <td class='tbLb'><label
+                                            for='highlightCb'><mark>&nbsp;Highlighting&nbsp;</mark></label>
+                                    </td>
+                                    <td><input id="highlightCb" type='checkbox' checked
+                                            onchange='setHighlighting(this)' />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class='tbLb'><label class='blue-hover' for='gridCb'>Grid</label></td>
+                                    <td><input type='checkbox' id='gridCb' onchange='toggleGrid(this)' /></td>
+                                </tr>
+                            </table>
+                            <span>Note Scale</span>
+                            <hr>
+                            <input type='range' min='0.5' max='1.5' step='0.1' value='{noteScale}'
+                                list='siac-scale-tickmarks' onfocusout='pycmd("siac-scale " + this.value)' />
+                            <datalist id="siac-scale-tickmarks">
+                                <option value="0.5" label="0.5"></option>
+                                <option value="0.6"></option>
+                                <option value="0.7"></option>
+                                <option value="0.8"></option>
+                                <option value="0.9"></option>
+                                <option value="1.0" label="1.0"></option>
+                                <option value="1.1"></option>
+                                <option value="1.2"></option>
+                                <option value="1.3"></option>
+                                <option value="1.4"></option>
+                                <option value="1.5" label="1.5"></option>
+                            </datalist>
+                            <br>
+                            <span>Fields - Add-on</span>
+                            <hr>
+                            <input id='siac-partition-slider' type='range' min='0' max='100' step='1'
+                                value='{leftSideWidthInPercent}'
+                                onchange='pycmd("siac-left-side-width " + this.value)' />
+                            <br>
+                            <span>Menus</span>
+                            <hr>
+                            <div class='siac-dropdown-item w-100' onclick='pycmd("siac-index-info");'>&nbsp;Info</div>
+                            <div class='siac-dropdown-item w-100' onclick='pycmd("siac-r-show-tips");'>&nbsp;Tips</div>
+                            <div class='siac-dropdown-item w-100' onclick='pycmd("siac-synonyms");'>&nbsp;Synonyms</div>
+                            <div class='siac-dropdown-item w-100' onclick='pycmd("siac-styling");'>&nbsp;Settings</div>
+                            <div class='siac-dropdown-item w-100'
+                                onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
+                        </div>
+                    </div>
+                </div>
+                <div class='siac-tomato-main'>
+                    <div class='siac-sidebar-bg'>
+                        <span class='siac-timer-btn 5 siac-btn-small' onclick='resetTimer(this)'>5</span>
+                        <span class='siac-timer-btn 10 siac-btn-small' onclick='resetTimer(this)'>10</span>
+                        <span class='siac-timer-btn 15 siac-btn-small' onclick='resetTimer(this)'>15</span>
+                        <span class='siac-timer-btn 25 siac-btn-small' onclick='resetTimer(this)'>25</span>
+                        <span class='siac-reading-modal-timer siac-reading-modal-timer-lbl bold'>30 : 00</span>
+                        <span class='siac-timer-btn 30 siac-btn-small default active'
+                            onclick='resetTimer(this)'>30</span>
+                        <span class='siac-timer-btn 45 siac-btn-small' onclick='resetTimer(this)'>45</span>
+                        <span class='siac-timer-btn 60 siac-btn-small' onclick='resetTimer(this)'>60</span>
+                    </div>
+                    <div class='siac-sidebar-bg'>
+                        <span class='siac-timer-play-btn siac-btn-small inactive' onclick='toggleTimer();'><i
+                                class='fa fa-play mr-5'></i></span>
                     </div>
                 </div>
             </div>
-            <div class='flexCol right'
-                style="position: relative; padding-bottom: 7px; padding-right: 0px; white-space: nowrap;">
-                <div id='siac-timetable-icn' class='siac-btn-small' onclick='$(this).toggleClass("expanded")'
-                    onmouseleave='$(this).removeClass("expanded")'
-                    style='position: relative; display:inline-block; margin-right: 6px;'
-                    onmouseenter='pycmd("siac-user-note-update-btns")' onclick='pycmd("siac-create-note");'>
-                    <b>&nbsp;&nbsp;&nbsp; &#9998; Notes &nbsp;&nbsp;&nbsp;</b>
-                    <div class='siac-btn-small-dropdown click'>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-create-note"); event.stopPropagation();'>&nbsp;<b>Create</b></div>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-r-user-note-newest"); event.stopPropagation();'>&nbsp;Newest</div>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-r-user-note-random"); event.stopPropagation();'>&nbsp;Random</div>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-user-note-search"); event.stopPropagation();'>&nbsp;Search ...</div>
-                        <hr>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-r-user-note-queue"); event.stopPropagation();' id='siac-queue-btn'>
-                            &nbsp;<b>Queue</b></div>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-user-note-queue-read-head"); event.stopPropagation();'>&nbsp;<b>Read
-                                Next</b></div>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-user-note-queue-read-random"); event.stopPropagation();'>&nbsp;Read
-                            [Rnd]</div>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-url-dialog"); event.stopPropagation();'>&nbsp;Url to PDF</div>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-user-note-queue-picker"); event.stopPropagation();'>&nbsp;Queue Man.
-                        </div>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-zotero-import"); event.stopPropagation();'>&nbsp;Zotero Imp.</div>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='pycmd("siac-r-user-note-queue-random"); event.stopPropagation();'>&nbsp;List [Rnd]
-                        </div>
-                    </div>
-                </div>
-                <div id='siac-settings-icn' class='siac-btn-small ta_center' onclick='$(this).toggleClass("expanded")'
-                    onmouseleave='$(this).removeClass("expanded")'
-                    style='position: relative; display:inline-block; min-width: 140px;'><b>&nbsp; Settings & Info
-                        &nbsp;</b>
-                    <div class='siac-btn-small-dropdown click' onclick='event.stopPropagation();'>
-                        <table class='w-100'>
-                            <tr>
-                                <td class='tbLb'><label class='blue-hover' for='selectionCb'>Search on Selection</label>
-                                </td>
-                                <td><input type='checkbox' id='selectionCb' checked
-                                        onchange='siacState.searchOnSelection = $(this).is(":checked"); sendSearchOnSelection();' />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class='tbLb'><label class='blue-hover' for='typingCb'>Search on Typing</label></td>
-                                <td><input type='checkbox' id='typingCb' checked
-                                        onchange='setSearchOnTyping($(this).is(":checked"));' /></td>
-                            </tr>
-                            <tr>
-                                <td class='tbLb'><label for='highlightCb'><mark>&nbsp;Highlighting&nbsp;</mark></label>
-                                </td>
-                                <td><input id="highlightCb" type='checkbox' checked onchange='setHighlighting(this)' />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class='tbLb'><label class='blue-hover' for='gridCb'>Grid</label></td>
-                                <td><input type='checkbox' id='gridCb' onchange='toggleGrid(this)' /></td>
-                            </tr>
-                        </table>
-                        <span>Note Scale</span>
-                        <hr>
-                        <input type='range' min='0.5' max='1.5' step='0.1' value='{noteScale}'
-                            list='siac-scale-tickmarks' onfocusout='pycmd("siac-scale " + this.value)' />
-                        <datalist id="siac-scale-tickmarks">
-                            <option value="0.5" label="0.5"></option>
-                            <option value="0.6"></option>
-                            <option value="0.7"></option>
-                            <option value="0.8"></option>
-                            <option value="0.9"></option>
-                            <option value="1.0" label="1.0"></option>
-                            <option value="1.1"></option>
-                            <option value="1.2"></option>
-                            <option value="1.3"></option>
-                            <option value="1.4"></option>
-                            <option value="1.5" label="1.5"></option>
-                        </datalist>
-                        <br>
-                        <span>Fields - Add-on</span>
-                        <hr>
-                        <input id='siac-partition-slider' type='range' min='0' max='100' step='1'
-                            value='{leftSideWidthInPercent}' onchange='pycmd("siac-left-side-width " + this.value)' />
-                        <br>
-                        <span>Menus</span>
-                        <hr>
-                        <div class='siac-dropdown-item w-100' onclick='pycmd("siac-index-info");'>&nbsp;Info</div>
-                        <div class='siac-dropdown-item w-100' onclick='pycmd("siac-r-show-tips");'>&nbsp;Tips</div>
-                        <div class='siac-dropdown-item w-100' onclick='pycmd("siac-synonyms");'>&nbsp;Synonyms</div>
-                        <div class='siac-dropdown-item w-100' onclick='pycmd("siac-styling");'>&nbsp;Settings</div>
-                        <div class='siac-dropdown-item w-100'
-                            onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
-                    </div>
-                </div>
-                <div id='siac-switch-lr-btn' class='siac-btn-small' onclick='switchLeftRight();' style='float: right;'>
-                    &#8596;</div>
-            </div>
+
         </div>
         <div id="icns-large">
 
-            <div class='siac-tomato-main'>
-                    <span class='siac-timer-btn 5 siac-btn-small' onclick='resetTimer(this)'>5</span>
-                    <span class='siac-timer-btn 10 siac-btn-small ' onclick='resetTimer(this)'>10</span>
-                    <span class='siac-timer-btn 15 siac-btn-small ' onclick='resetTimer(this)'>15</span>
-                    <span class='siac-timer-btn 25 siac-btn-small ' onclick='resetTimer(this)'>25</span>
-                    <span class='siac-reading-modal-timer siac-reading-modal-timer-lbl ml-10 mr-10 bold'>30 : 00</span>
-                    <span class='siac-timer-btn 30 siac-btn-small default active' onclick='resetTimer(this)'>30</span>
-                    <span class='siac-timer-btn 45 siac-btn-small' onclick='resetTimer(this)'>45</span>
-                    <span class='siac-timer-btn 60 siac-btn-small' onclick='resetTimer(this)'>60</span>
-                    <span class='siac-timer-play-btn siac-btn-small inactive' style='min-width: 58px;' onclick='toggleTimer();'><i class='fa fa-play mr-5'></i>Start</span>
-            </div>
             <div class='rnd-icon' title='Read First in Queue' onclick='pycmd("siac-user-note-queue-read-head")'><i
                     class="fa fa-inbox"></i></div>
             <div class='rnd-icon' title='PDF Notes' onclick='pycmd("siac-r-show-pdfs")'> <i
@@ -185,14 +204,12 @@
             <div class='rnd-icon' title='Video Notes' onclick='pycmd("siac-r-show-video-notes")'> <i
                     class="fa fa-file-video-o"></i></div>
             <div class='rnd-icon' title='Toggle Sidebar' onclick='toggleNoteSidebar();'><i class="fa fa-bars"></i></div>
-            <div class='rnd-icon' title='Search for fields content' onclick='fieldsBtnClicked()'> <span
-                    class='icns-add'>FIELDS </span><i class="fa fa-search"></i></div>
+            <div class='rnd-icon' title='Search for fields content' onclick='fieldsBtnClicked()'><i class="fa fa-search"></i></div>
             <div class='rnd-icon' title='Random Anki Notes'
                 onclick='pycmd("siac-r-random-notes " + siacState.selectedDecks.toString())'><i
                     class="fa fa-random"></i></div>
-            <div class='freeze-icon' title='Freeze results' onclick='toggleFreeze(this)'> <span class='icns-add'>FREEZE
-                </span>&#10052; </div>
-            <div id='toggleTop' onclick='toggleTop(this)'><span class='tag-symbol'>&#10096;</span></div>
+            <div class='freeze-icon' title='Freeze results' onclick='toggleFreeze(this)'><i class="fa fa-snowflake-o"></i></div>
+            <div class='rnd-icon' onclick='switchLeftRight();' title='Switch Layout'><i class="fa fa-arrows-h"></i></div>
         </div>
         <div id="resultsArea">
             <div id='loader' style='{showLoader}'>

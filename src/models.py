@@ -233,7 +233,7 @@ class SiacNote(Printable):
                     """
 
 
-        title   = "%s<b>%s</b>%s" % ("<i class='fa fa-file-pdf-o mr-5'></i>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5 siac-note-hr'>" if len(body.strip()) > 0 else "")
+        title   = "%s<b>%s</b>%s" % ("<i class='fa fa-file-pdf-o' style='margin-right: 7px;'></i>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5 siac-note-hr'>" if len(body.strip()) > 0 else "")
 
         # add the source, separated by a line
         if src is not None and len(src) > 0 and get_config_value_or_default("notes.showSource", True):

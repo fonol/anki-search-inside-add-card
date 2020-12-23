@@ -1,55 +1,50 @@
 
 /* Tomato timer on main screen */
 .siac-tomato-main {
-    display: inline-block;
     color: grey;
     vertical-align: top;
-    margin-right: 15px;
+    width: 230px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    background: #fffef7;
+    box-sizing: border-box;
+    overflow: hidden;
+    user-select: none;
+}
+body.nightMode .siac-tomato-main {
+    background:  rgb(53,53,53);
 }
 .siac-tomato-main .siac-btn-small {
     text-align: center;
-    line-height: 1em;
     font-weight: bold;
     margin-right: 0;
-    padding-bottom: 2px;
-    padding-top: 2px;
-    border-width: 1px;
-    border-radius: 3px;
-    font-size: 12px !important;
-    color: grey;
+    font-size: 13px !important;
     vertical-align: top;
+    padding: 0 2px;
+    border: none;
 }
-body:not(.nightMode) .siac-tomato-main .siac-btn-small {
-    border-color: #afafaf;
-    border-width: 2px;
-}
-body.nightMode .siac-tomato-main  {
-    color: grey;
-}
-body.nightMode .siac-tomato-main .siac-btn-small  {
+body.nightMode .siac-tomato-main .siac-timer-btn {
     color: grey;
 }
 .siac-tomato-main .siac-timer-btn.active {
     color: #2496dc !important;
 }
 .siac-tomato-main .siac-timer-play-btn {
-   font-size: 12px !important;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    vertical-align: top;
-    color: #353535;
+    display: inline;
+    font-size: 12px !important;
 }
-body.nightMode .siac-tomato-main .siac-timer-play-btn {
-    color: grey;
+.siac-tomato-main .siac-timer-play-btn b {
+    display: none;
+}
+.siac-tomato-main .siac-timer-play-btn i {
+    margin: 0 !important;
 }
 .siac-tomato-main .siac-timer-btn:hover, .siac-tomato-main .siac-timer-play-btn:hover {
     transform: none;
 }
 .siac-tomato-main .siac-timer-btn:hover, .siac-tomato-main .siac-timer-play-btn:hover {
     color: #2496dc;
-}
-body.nightMode .siac-tomato-main .siac-timer-btn:hover, body.nightMode .siac-tomato-main .siac-timer-play-btn:hover{
-    color: lightgrey;
 }
 body.nightMode .siac-tomato-main .siac-timer-btn.active:hover {
     color: #5bc1ff !important;
@@ -59,12 +54,29 @@ body.nightMode .siac-tomato-main .siac-timer-btn.active:hover {
     min-width: 45px;
     text-align: center;
     font-size: 14px;
-    color: #353535;
     vertical-align: top;
     line-height: 18px;
+    border-bottom: 2px solid;
+    margin: -2px 7px 0 7px;
 }
 body.nightMode .siac-tomato-main .siac-reading-modal-timer-lbl {
-    color: lightgrey;
+    color: white;
+}
+
+.siac-tomato-main > div {
+    padding: 4px 5px;
+    display: flex;
+    align-items: center;
+}
+.siac-tomato-main > div:last-child {
+    border-left: 1px solid lightgrey;
+    text-align: center;
+    flex: 1 0 auto;
+    display: flex;
+    justify-content: center;
+}
+body.nightMode .siac-tomato-main > div:last-child {
+    border-left: 1px solid #4e4e4e;
 }
 
 /* End tomato timer main screen */

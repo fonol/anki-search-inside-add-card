@@ -64,16 +64,18 @@ class Sidebar:
             exp = ""
             if len(folders_to_search) == 0:
                 folders = """
-                    <center style='margin-top: 100px;'>
-                        <strong>
-                            To browse local folders for pdfs, add some entries to the config option
-                            "pdf.import.folders_to_search", e.g. <br><br>
-                            "pdf.import.folders_to_search" : ["Some/Path/Documents/Uni", "Some/Path/Documents/Unsorted"] <br><br>
-                            
-                            The given folders (including their subfolders!) will be scanned for *.pdf files.
-                            Don't use too large folders here, because they are searched everytime the tab is opened so you might see a delay then. 
-                        </strong>
-                    </center>
+                    <div style='padding: 15px; box-sizing: border-box; word-break: break-word;' class='siac-sidebar-bg h-100'>
+                        <center>
+                            <strong>
+                                To browse local folders for pdfs, add some entries to the config option
+                                "pdf.import.folders_to_search", e.g. <br><br>
+                                "pdf.import.folders_to_search" : ["Some/Path/Documents/Uni", "Some/Path/Documents/Unsorted"] <br><br>
+                                
+                                The given folders (including their subfolders!) will be scanned for *.pdf files.
+                                Don't use too large folders here, because they are searched everytime the tab is opened so you might see a delay then. 
+                            </strong>
+                        </center>
+                    </div>
                 """
             else:
                 cleaned = []
@@ -83,11 +85,13 @@ class Sidebar:
                     cleaned.append(f.replace("\\", "/"))
                 if len(cleaned) == 0:
                     folders = """
-                    <center style='margin-top: 100px;'>
-                        <strong>
-                            Could not find any pdf files in the specified folders.
-                        </strong>
-                    </center>
+                    <div style='padding: 15px;' class='siac-sidebar-bg'>
+                        <center style='margin-top: 100px;'>
+                            <strong>
+                                Could not find any pdf files in the specified folders.
+                            </strong>
+                        </center>
+                    </div>
                     """
                 else:
                     files = []
@@ -116,7 +120,7 @@ class Sidebar:
                         {folders} 
                     </div>"""
                     exp = f"""
-                        <div class='mr-5 mb-5' style='flex: 0 1 auto; padding-right: 5px;'>
+                        <div class='' style='flex: 1 0 auto;'>
                             <div class='w-100' style='margin-top: 20px;'><b>PDFs in Folders</b>
                                 <b class='siac-tags-exp-icon' style='margin-right: 15px; padding: 0 2px 0 2px;' onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
                                 <b class='siac-tags-exp-icon mr-5' style='padding: 0 2px 0 2px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
@@ -126,7 +130,7 @@ class Sidebar:
 
             tab_html = f"""
                 {exp}
-                <div class='mr-5 mb-5' style='flex: 1 1 auto; padding-right: 5px; overflow-y: auto;'>
+                <div class='' style='flex: 1 0 auto; overflow-y: auto;'>
                     {folders}
                 </div>
             """
