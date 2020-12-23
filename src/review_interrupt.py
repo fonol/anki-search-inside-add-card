@@ -75,4 +75,6 @@ def execute_review_interruption():
         if not dialog.exec_():
             return
 
+    state.interrupted_review = True
+
     try_open_first_in_queue("Reading time!")

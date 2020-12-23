@@ -156,6 +156,7 @@
 "mix_reviews_and_reading.show_dialog" : true,
 "mix_reviews_and_reading.fuzz" : 0.5,
 "mix_reviews_and_reading.mode" : "every_n",
+"mix_reviews_and_reading.review_after_done" : false,
 
 "window_mode": "Both"
 }

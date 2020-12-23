@@ -388,6 +388,11 @@ class ReadingModal:
             new_priority        = done_dialog.priority
             new_schedule        = done_dialog.schedule
             sched_has_changed   = done_dialog.schedule_has_changed
+
+            if get_config_value("mix_reviews_and_reading.review_after_done") and state.interrupted_review:
+                mw.raise_()
+                state.interrupted_review = False
+
             if sched_has_changed:
                 update_reminder(self.note_id, new_schedule)
             else:

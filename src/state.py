@@ -46,6 +46,7 @@ deck_map            : Optional[Dict[str, int]]          = None
 edit                : Optional[Editor]                  = None
 night_mode          : Optional[bool]                    = None
 editor_is_ready     : bool                              = False
+interrupted_review  : bool                              = False
 
 # Determines whether the both, the fields and the add-on pane, or only one of them are visible
 window_mode         : WindowMode                        = WindowMode.Both
@@ -170,4 +171,3 @@ def switch_window_mode(direction: str, editor):
         return
     box                     = win.form.buttonBox
     box.switch_btn.setText(window_mode.name)
-
