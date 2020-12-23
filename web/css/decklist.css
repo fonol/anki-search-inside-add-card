@@ -22,9 +22,9 @@
 .deck-list-item > div {
     display: inline-block;
     overflow-x: hidden;
-     white-space:nowrap;
-     width: 100%;
-     padding: 1px 4px 1px 4px;
+    white-space:nowrap;
+    width: 100%;
+    padding: 2px 4px;
 }
 .deck-list-item:hover >.list-item-inner  {
     background: #2e6286;
