@@ -88,6 +88,9 @@ body.nightMode .siac-btn-small-dropdown {
     max-height: 355px;
     border-color: #2e6286;
 }
+body.nightMode #topContainer .siac-btn-small.expanded .siac-btn-small-dropdown.click {
+    border: 1px solid #2496dc;
+}
 .siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {
     display: block;
 }
