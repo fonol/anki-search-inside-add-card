@@ -33,7 +33,9 @@ try:
     from .models import SiacNote, IndexNote, NoteRelations
     from .config import get_config_value_or_default, get_config_value, update_config
     from .debug_logging import get_notes_info, persist_notes_db_checked
+    from .internals import perf_time
 except:
+    from internals import perf_time
     from state import get_index
     from models import SiacNote, IndexNote, NoteRelations
     from config import get_config_value_or_default, get_config_value, update_config
@@ -1692,8 +1694,8 @@ def get_pdf_quick_open_suggestions() -> List[SiacNote]:
             break
     return _to_notes(res)
 
-def get_pdf_info(nids: List[int]) -> List[Tuple[int, int, int]]:
-    """ Returns tuples of (nid, read pages, pages total) for all the given note IDs. """
+def get_pdf_info(nids: List[int]) -> List[Tuple[int, int, int, Optional[int], Optional[int]]]:
+    """ Returns tuples of (nid, read pages, pages total, extract_start, extract_end) for all the given note IDs. """
 
     nids    = ",".join([str(n) for n in nids])
     sql     = f"""select nid, pagestotal,
@@ -1704,8 +1706,10 @@ def get_pdf_info(nids: List[int]) -> List[Tuple[int, int, int]]:
                 end, max(created) from read where nid in ({nids}) and page >= -1 group by nid"""
     conn    = _get_connection()
     res     = conn.execute(sql).fetchall()
+    ex      = conn.execute(f"select id, extract_start, extract_end from notes where id in ({nids})").fetchall()
+
     conn.close()
-    ilist   = [(r[0], r[2], r[1]) for r in res]
+    ilist   = [(r[0], r[2], r[1], next(e for e in ex if e[0] == r[0])[1], next(e for e in ex if e[0] == r[0])[2]) for r in res]
     return ilist
 
 def get_related_notes(id: int) -> NoteRelations:
