@@ -8,7 +8,6 @@
   }
   #siac-reading-modal .siac-inner-card {
     color: var(--c-note-foreground-night);
-    background: var(--c-note-background-night);
   }
 
   .siac-note-outer.meta .siac-inner-card {
