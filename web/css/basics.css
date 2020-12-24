@@ -51,6 +51,12 @@
 .white-hover:hover {
     color: white !important;
 }
+.turquoise-hover:hover {
+    color: turquoise !important;
+}
+.red-hover:hover {
+    color: orangered !important;
+}
 .bright-hover:hover {
     filter: brightness(1.4);
 }

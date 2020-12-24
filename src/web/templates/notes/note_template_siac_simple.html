@@ -1,11 +1,23 @@
-<div class='cardWrapper' style="display: block;">
-    <div class='topLeftWr'>
-        <div class='rankingLbl'>{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
+<div class='siac-note-outer siac-user-note'>
+    <div class='w-100 flex-row siac-note-header'>
+        <span style='font-size: 12px;'>
+            <span id='siac-cnt-dsp-{nid}'>{counter}</span>
+        </span>
+        <div class='flex-row'>
+            <div onclick='pycmd("siac-edit-user-note {nid}")' class='ml-10 turquoise-hover cursor-pointer'><i class="fa fa-pencil"></i></div>
+        </div>
     </div>
-    <div class='btnBar' id='btnBarSmp-{nid}' onmouseLeave='pinMouseLeave(this, event)' onmouseenter='pinMouseEnter(this)'>
-        <div class='editLbl' onclick='pycmd("siac-edit-user-note {nid}")'><i class="fa fa-pencil"></i></div>
+    <div class='siac-inner-card' id='siac-inner-card-{nid}' style='padding: 15px;' onmouseup='{mouseup}'>
+        {text}
     </div>
-    <div class='siac-inner-card' onmouseup='{mouseup}'  onmouseenter='cardMouseEnter(this, {nid}, "simple")' onmouseleave='cardMouseLeave(this, {nid}, "simple")'>{text}</div>
-    <div style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
-    <div class='cardLeftBot' style='display: none' onclick=''></div>
+    <div class='siac-note-footer'>
+        <div>
+           
+        </div>    
+        <div class='siac-note-tags-container' id='tags-{nid}'>
+            {tags}
+        </div>
+    </div>
 </div>
+
+

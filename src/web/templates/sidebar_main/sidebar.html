@@ -1,20 +1,23 @@
 <div id='siac-notes-sidebar'>
     <div class='h-100 flex-col'>
-        <div style='flex: 0 1 auto;'>
-            <div class='siac-btn-small bold blue-hover' style='padding-left: 8px; padding-right: 8px; float: left;' onclick='pycmd("siac-create-note");'><i class='fa fa-pencil'></i></div>
-            <div class='siac-btn-small bold blue-hover ml-5' style='padding-left: 8px; padding-right: 8px; float: left;' onclick='pycmd("siac-user-note-queue-picker");'><i class='fa fa-inbox'></i></div>
-            <div class='siac-btn-small blue-hover' style='position: relative; float: right; min-width: 90px;' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")'>
-                <div id='siac-sidebar-selected' class=''>{tab_displayed_name}</div>
+        <div style='flex: 0 1 auto; align-items: center; justify-content: space-between; font-size: 17px;' class='siac-notes-sidebar-section-header flex-row'>
+            <div>
+                <div class='cursor-pointer bold turquoise-hover' style='padding-left: 8px; padding-right: 8px; float: left;' onclick='pycmd("siac-create-note");'><i class='fa fa-pencil'></i></div>
+                <div class='cursor-pointer bold turquoise-hover ml-5' style='padding-left: 8px; padding-right: 8px; float: left;' onclick='pycmd("siac-user-note-queue-picker");'><i class='fa fa-inbox'></i></div>
+            </div>
+            <div class='cursor-pointer turquoise-hover siac-btn-small' style='position: relative; margin-top: -2px; min-width: 98px; box-sizing: border-box;' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")'>
+                <div id='siac-sidebar-selected' class=''><i class="fa fa-sort-desc mr-5" style='vertical-align: top;'></i><span>{tab_displayed_name}</span></div>
                 <div class='siac-btn-small-dropdown click ta_center' style='z-index: 3;' onclick='event.stopPropagation();'>
-                    <div class='blue-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-notes-tab")'>
+                    <div class='turquoise-hover w-100' style='margin: 7px 0 2px 0;' onclick='pycmd("siac-sidebar-show-notes-tab")'>
                         <b>Add-on Notes</b>
                     </div>
-                    <div class='blue-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-special-tab")'>
+                    <div class='turquoise-hover w-100' style='margin: 2px 0 7px 0;' onclick='pycmd("siac-sidebar-show-special-tab")'>
                         <b>Anki Notes</b><br>
                     </div>
-                    <div class='blue-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-import-tab")'>
+                    <!-- TODO -->
+                    <!-- <div class='turquoise-hover w-100' style='margin: 2px 0 2px 0;' onclick='pycmd("siac-sidebar-show-import-tab")'>
                         <b>PDF Import</b><br>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>

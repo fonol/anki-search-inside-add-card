@@ -196,10 +196,8 @@ class Output:
             ret = retsByNid[int(nid)] if self.showRetentionScores and int(nid) in retsByNid else None
 
             if ret is not None:
-                retMark = "background: %s; color: black;" % (utility.misc._retToColor(ret))
-                if str(nid) in self.edited:
-                    retMark = ''.join((retMark, "max-width: 20px;"))
-                retInfo = """<div class='retMark' style='%s'>%s</div>""" % (retMark, int(ret))
+                retMark = "border-color: %s;" % (utility.misc._retToColor(ret))
+                retInfo = """<div class='retMark' style='%s'>Pass Rate: %s</div>""" % (retMark, int(ret))
             else:
                 retInfo = ""
 
@@ -214,14 +212,9 @@ class Output:
                 icon = "book"
                 if res.is_pdf():
                     pdfs.append(nid)
-                    extract             = ""
-                    if res.extract_start and res.extract_start == res.extract_end:
-                        extract         = f"<span class='siac-extract-mark'> | P. {res.extract_start}&nbsp;</span>"
-                    elif res.extract_start:
-                        extract         = f"<span class='siac-extract-mark'> | P. {res.extract_start} - {res.extract_end}&nbsp;</span>"
                     p_html              = "<div class='siac-prog-sq'></div>" * 10
-                    progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div><div style='display: inline-block;'>{extract}</div>"
-                    pdf_class           = "pdf" if not res.extract_start else "pdf extract"
+                    progress            = f"<div id='ptmp-{nid}' class='siac-prog-tmp'>{p_html} <span>&nbsp;0 / ?</span></div><div style='display: inline-block;' id='siac-ex-tmp-{nid}'></div>"
+                    pdf_class           = "pdf"
                 elif int(res.id) < 0:
                     # meta card
                     pdf_class           = "meta"
@@ -283,7 +276,7 @@ class Output:
                     counter     = counter + 1 - meta_card_counter, 
                     nid         = nid, 
                     creation    = "&nbsp;&#128336; " + timeDiffString, 
-                    edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(nid)]),
+                    edited      = "" if str(nid) not in self.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + self._build_edited_info(self.edited[str(nid)]),
                     mouseup     = "getSelectionText()",
                     text        = text, 
                     tags        = utility.tags.build_tag_string(res.tags, self.gridView),
@@ -299,7 +292,7 @@ class Output:
                     counter     = counter + 1 - meta_card_counter, 
                     nid         = nid, 
                     creation    = "&nbsp;&#128336; " + timeDiffString, 
-                    edited      = "" if str(nid) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(nid)]),
+                    edited      = "" if str(nid) not in self.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + self._build_edited_info(self.edited[str(nid)]),
                     mouseup     = "getSelectionText()",
                     text        = text, 
                     tags        = utility.tags.build_tag_string(res.tags, self.gridView), 
@@ -348,7 +341,7 @@ class Output:
         if len(remaining_to_highlight) > 0:
             cmd = ""
             for nid,text in remaining_to_highlight.items():
-                cmd = ''.join((cmd, "document.getElementById('%s').innerHTML = `%s`;" % (nid, utility.text.mark_highlights(text, query_set))))
+                cmd = ''.join((cmd, "document.getElementById('siac-inner-card-%s').innerHTML = `%s`;" % (nid, utility.text.mark_highlights(text, query_set))))
             self._js(cmd, editor)
         
         if len(check_for_suspended) > 0:
@@ -356,9 +349,7 @@ class Output:
             if len(susp) > 0:
                 cmd = ""
                 for nid in susp:
-                    cmd = f"{cmd}$('#cW-{nid}').after(`<span id='siac-susp-lbl-{nid}' onclick='pycmd(\"siac-unsuspend-modal {nid}\")' class='siac-susp-lbl'>&nbsp;SUSPENDED&nbsp;</span>`);"
-                    if str(nid) in self.edited:
-                        cmd = f"{cmd} $('#siac-susp-lbl-{nid}').css('left', '150px');"
+                    cmd = f"{cmd}$('#siac-susp-dsp-{nid}').html(`<span id='siac-susp-lbl-{nid}' onclick='pycmd(\"siac-unsuspend-modal {nid}\")' class='siac-susp-lbl'>&nbsp;SUSPENDED&nbsp;</span>`);"
                 self._js(cmd, editor)
 
         if len(pdfs) > 0:
@@ -367,6 +358,7 @@ class Output:
             if pdf_info_list is not None and len(pdf_info_list) > 0:
                 cmd = ""
                 for i in pdf_info_list:
+
                     perc        = int(i[1] * 10.0 / i[2])
                     prog_bar    = ""
 
@@ -376,6 +368,17 @@ class Output:
                         else:
                             prog_bar = ''.join((prog_bar, "<div class='siac-prog-sq'></div>"))
                     cmd = ''.join((cmd, "document.querySelector('#ptmp-%s').innerHTML = `%s &nbsp;<span>%s / %s</span>`;" % (i[0], prog_bar, i[1], i[2])))
+
+                    extract             = ""
+                    ext_start           = i[3]
+                    ext_end             = i[4]
+                    if ext_end and ext_start == ext_end:
+                        extract         = f"<span class='siac-extract-mark'> | P. {ext_start}&nbsp;</span>"
+                    elif ext_start:
+                        extract         = f"<span class='siac-extract-mark'> | P. {ext_start} - {ext_end}&nbsp;</span>"
+                    if extract != "":
+                        cmd = ''.join((cmd, "document.querySelector('#siac-ex-tmp-%s').innerHTML = `%s`;" % (i[0], extract)))
+
                 self._js(cmd, editor)
             
         return (highlight_total * 1000, build_user_note_total)
@@ -597,11 +600,8 @@ class Output:
             ret = retsByNid[int(res.id)] if self.showRetentionScores and int(res.id) in retsByNid else None
 
             if ret is not None:
-                retMark = "background: %s; color: black;" % (utility.misc._retToColor(ret))
-                if str(res.id) in self.edited:
-                    retMark += "max-width: 20px;"
-                retInfo = """<div class='retMark' style='%s'>%s</div>
-                                """ % (retMark, int(ret))
+                retMark = "border-color: %s;" % (utility.misc._retToColor(ret))
+                retInfo = """<div class='retMark' style='%s'>PR: %s</div> """ % (retMark, int(ret))
             else:
                 retInfo = ""
 
@@ -627,7 +627,7 @@ class Output:
             newNote     = template.format(
                 counter=counter+1, 
                 nid=res.id, 
-                edited="" if str(res.id) not in self.edited else "&nbsp;&#128336; " + self._build_edited_info(self.edited[str(res.id)]),
+                edited="" if str(res.id) not in self.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + self._build_edited_info(self.edited[str(res.id)]),
                 mouseup="getSelectionText()" if search_on_selection else "",
                 text=text, 
                 ret=retInfo,
@@ -869,17 +869,11 @@ class Output:
 
         #find rendered note and replace text and tags
         self._editor.web.eval("""
-            document.getElementById('%s').innerHTML = `%s`;
+            document.getElementById('siac-inner-card-%s').innerHTML = `%s`;
             document.getElementById('tags-%s').innerHTML = `%s`;
         """ % (nid, text, nid, tagStr))
 
-        self._editor.web.eval("$('#cW-%s').find('.rankingLblAddInfo').hide();" % nid)
-        self._editor.web.eval("fixRetMarkWidth(document.getElementById('cW-%s'));" % nid)
-        self._editor.web.eval(f"""$('#cW-{nid} .editedStamp').html(`&nbsp;&#128336; Edited just now`).show();
-            if ($('#siac-susp-lbl-{nid}').length) {{
-                $('#siac-susp-lbl-{nid}').css('left', '140px').show();
-            }} 
-        """)
+        self._editor.web.eval(f"""$('#siac-edited-dsp-{nid}').html(`<i class='fa fa-pencil mr-5 ml-10'></i> Edited just now`); """)
         
     def show_tooltip(self, text):
         if mw.addonManager.getConfig(__name__)["hideSidebar"]:

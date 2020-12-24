@@ -42,28 +42,26 @@ body.nightMode .modal-content input {
 .siac-btn-small {
     display: inline;
     padding: 1px 4px 2px 4px;
-    color: var(--c-button-color);
-    background: var(--c-button-background);
-    border: 2px outset var(--c-button-border);
-    border-radius: 5px;
+    border: 1px solid #2e6286;
+    color: #2e6286; 
+    border-radius: 2px;
     cursor: pointer;
     user-select: none;
     font-size: 12px !important;
     outline: none;
+    background: inherit;
 }
-.siac-btn-small:hover, .siac-btn-smaller:hover {
+body.nightMode .siac-btn-small {
+    color: white;
+}
+.siac-top-row-btn {
+    background: #fffef7;
+}
+body.nightMode .siac-top-row-btn {
+    background: #353535;
+}
+.siac-btn-small:hover {
     border-color: #2496dc !important;
-}
-.siac-btn-smaller {
-    display: inline;
-    padding: 1px 4px 1px 4px;
-    color: var(--c-button-color);
-    background: var(--c-button-background);
-    border: 1px solid  var(--c-button-border);
-    cursor: pointer;
-    user-select: none;
-    font-size: 10px !important;
-    outline: none;
 }
 .siac-btn-small-dropdown {
     overflow: hidden;
@@ -71,9 +69,9 @@ body.nightMode .modal-content input {
     max-height: 0px;
     position: absolute;
     color: var(--c-button-color); 
-    background-color: var(--c-button-background);
+    background-color: #fffef7;
     width: calc(100% - 8px);
-    margin-left: -6px;
+    margin-left: -5px;
     padding: 0px 4px 0px 4px;
     font-size: 12px !important;
     border: 0px solid white;
@@ -82,13 +80,17 @@ body.nightMode .modal-content input {
     z-index: 5;
     transition: max-height 0.3s;
 }
-
-.siac-btn-small:hover .siac-btn-small-dropdown.hover, .siac-btn-small.expanded .siac-btn-small-dropdown.click {
-    border: 2px outset var(--c-button-border);
-    max-height: 355px;
-    border-color: #2496dc;
+body.nightMode .siac-btn-small-dropdown {
+    background: #353535;
 }
-
+.siac-btn-small:hover .siac-btn-small-dropdown.hover, .siac-btn-small.expanded .siac-btn-small-dropdown.click {
+    border: 1px outset #2e6286;
+    max-height: 355px;
+    border-color: #2e6286;
+}
+body.nightMode #topContainer .siac-btn-small.expanded .siac-btn-small-dropdown.click {
+    border: 1px solid #2496dc;
+}
 .siac-btn-dark.expanded .siac-btn-small-dropdown-inverted.click {
     display: block;
 }

@@ -25,7 +25,7 @@
   }
 
   .modal-content {
-    background: var(--c-modal-background);
+    background: #fffef7;
     color: var(--c-modal-foreground);
     position: absolute;
     top: 50%;
@@ -39,6 +39,9 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+body.nightMode .modal-content {
+    background: #2f2f31;
 }
 #modalText {
     color: var(--c-modal-foreground);

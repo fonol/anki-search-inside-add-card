@@ -92,9 +92,6 @@ def init_addon():
 
     setup_tagedit_timer()
 
-    # append close function
-    # gui_hooks.add_cards_did_init.append(add_cards_did_init)
-
     # add new notes to search index when adding
     gui_hooks.add_cards_did_add_note.append(add_note_to_index)
     gui_hooks.add_cards_did_add_note.append(save_pdf_page)
@@ -235,17 +232,6 @@ def on_load_note(editor: Editor):
     if get_edit() is None and editor is not None:
         set_edit(editor)
 
-def add_cards_did_init(add_cards: AddCards):
-    add_cards.rejected.connect(close_editor)
-
-def close_editor():
-    state.editor_is_ready = False
-
-def on_add_cards_init(add_cards: AddCards):
-
-    if get_index() is not None and add_cards.editor is not None:
-        get_index().ui.set_editor(add_cards.editor)
-
 
 def save_pdf_page(note: Note):
 
@@ -272,6 +258,7 @@ def insert_scripts():
     addon_id    = utility.misc.get_addon_id()
     port        = mw.mediaServer.getPort()
 
+    # compatibility with newest pdf.js version needs more testing, until then, use old one
     chromium_v  = utility.misc.chromium_version()
     # pdfjs_v     = "2.6.347" if chromium_v  > "76" else "2.4.456"
     pdfjs_v     = "2.4.456"

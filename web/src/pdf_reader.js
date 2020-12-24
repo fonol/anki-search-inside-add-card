@@ -663,7 +663,7 @@ window._startTimer = function () {
         if (tomato.remainingSeconds <= 0) {
             clearInterval(tomato.readingTimer);
             tomato.remainingSeconds = tomato.lastStart * 60;
-            $('.siac-timer-play-btn').html("<i class='fa fa-play mr-5'></i>Start").addClass("inactive");
+            $('.siac-timer-play-btn').html("<i class='fa fa-play mr-5'></i><b>Start</b>").addClass("inactive");
             setTimerActive(tomato.lastStart);
             let rs = tomato.remainingSeconds;
             $('.siac-reading-modal-timer-lbl').text(Math.floor(rs / 60) + " : " + (rs % 60 < 10 ? "0" + rs % 60 : rs % 60));
@@ -675,13 +675,13 @@ window._startTimer = function () {
 window.toggleTimer = function () {
     if ($('.siac-timer-play-btn').first().hasClass('inactive')) {
         $('.siac-timer-play-btn').removeClass("inactive");
-        $('.siac-timer-play-btn').html("<i class='fa fa-pause mr-5'></i>Pause");
+        $('.siac-timer-play-btn').html("<i class='fa fa-pause mr-5'></i><b>Pause</b>");
         _startTimer();
     } else {
         clearInterval(tomato.readingTimer);
         tomato.readingTimer = null;
         $('.siac-timer-play-btn').addClass("inactive");
-        $('.siac-timer-play-btn').html("<i class='fa fa-play mr-5'></i>Start");
+        $('.siac-timer-play-btn').html("<i class='fa fa-play mr-5'></i><b>Start</b>");
     }
 }
 window.resetTimer = function (elem) {
@@ -694,7 +694,7 @@ window.resetTimer = function (elem) {
     tomato.lastStart = period;
     let rs = tomato.remainingSeconds;
     $('.siac-reading-modal-timer-lbl').text(Math.floor(rs / 60) + " : " + (rs % 60 < 10 ? "0" + rs % 60 : rs % 60));
-    $('.siac-timer-play-btn').addClass("inactive").html("<i class='fa fa-play mr-5'></i>Start");
+    $('.siac-timer-play-btn').addClass("inactive").html("<i class='fa fa-play mr-5'></i><b>Start</b>");
 }
 /**
  * Called from the timer elapsed popup dialog. 

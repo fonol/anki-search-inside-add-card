@@ -9,6 +9,7 @@
     position: relative;
     user-select: none;
     font-size: 12px !important;
+    font-weight: bold;
 }
 .deck-list-item .deck-list-item {
     width: 100%;
@@ -17,29 +18,18 @@
     text-overflow: ellipsis;
     position: relative;
     border-radius: 3px;
-    border: 1px solid #b1b1b1;
-    background: white;
-}
-body.nightMode .list-item-inner {
-    border: 1px solid #6b6b6b;
-    background: #383838;
 }
 .deck-list-item > div {
     display: inline-block;
     overflow-x: hidden;
-     white-space:nowrap;
-     width: 100%;
-     padding: 1px 4px 1px 4px;
+    white-space:nowrap;
+    width: 100%;
+    padding: 2px 4px;
 }
 .deck-list-item:hover >.list-item-inner  {
-    background: lightseagreen;
+    background: #2e6286;
     color: white;
-    border: 1px solid #004440;
 }
-body.nightMode .deck-list-item:hover >.list-item-inner {
-    border: 1px solid #95fcff;
-}
-
 .check {
     float: right;
     color: var(--c-deck-select-checkmark);
@@ -51,13 +41,10 @@ body.nightMode .deck-list-item:hover >.list-item-inner {
     right: 3px;
     z-index: 2;
     padding-left: 2px;
-    background: lightseagreen;
+    background: #2e6286;
     color: white;
     display: none;
 }
-/* .list-item-inner:hover .siac-tl-plus {
-    display: inline-block;
-} */
 .deck-list-item:hover > .list-item-inner > .siac-tl-plus {
     display: inline-block;
 }
@@ -70,10 +57,12 @@ body.nightMode .deck-list-item:hover >.list-item-inner {
 .deck-list-item.selected:hover > .list-item-inner:hover > .check {
     color: white;
 }
+#siac-deck-sel-btn-wrapper, #deck-sel-info-lbl {
+    text-align: center;
+}
 .deck-list-button {
-    border: 2px outset var(--c-button-border);
-    background: var(--c-button-background);
-    color: var(--c-button-color);
+    border: 1px solid #2e6286;
+    color: #2e6286;
     cursor: pointer;
     font-size: 12px !important;
     user-select: none;
@@ -81,11 +70,10 @@ body.nightMode .deck-list-item:hover >.list-item-inner {
     display: inline-block;
     padding: 1px 5px 1px 5px;
     margin-right: 10px;
-    border-radius: 5px;
+    border-radius: 2px;
 }
-
 .deck-list-button:hover {
-    color: #2496dc;
+    color: coral;
 }
 .deck-list-button:active,.deck-list-button:focus {
     outline: none;

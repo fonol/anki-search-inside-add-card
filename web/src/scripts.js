@@ -128,12 +128,8 @@ window.selectDeckAndSubdecksWithId = function (did) {
     $(`.deck-list-item[data-id=${did}] .deck-list-item`).addClass("selected");
     updateSelectedDecks();
 }
-window.fixRetMarkWidth = function (elem) {
-    if (elem && elem.parentElement.getElementsByClassName("retMark").length > 0 && elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth.length == 0)
-        elem.parentElement.getElementsByClassName("retMark")[0].style.maxWidth = elem.offsetWidth + "px";
-}
+
 window.expandRankingLbl = function (elem) {
-    fixRetMarkWidth(elem);
     if (elem.getElementsByClassName("rankingLblAddInfo")[0].offsetParent === null) {
         elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "inline";
         elem.getElementsByClassName("editedStamp")[0].style.display = "none";
@@ -150,22 +146,6 @@ window.expandRankingLbl = function (elem) {
 }
 window.expandCard = function (id, icn) {
     pycmd("siac-note-stats " + id);
-}
-window.pinMouseLeave = function (elem, event) {
-    if (event.toElement && event.toElement.classList.contains('siac-inner-card')) {
-        return;
-    }
-    elem.style.opacity = '0';
-}
-window.pinMouseEnter = function (elem) {
-    elem.style.opacity = '1';
-}
-window.cardMouseEnter = function (elem, nid, mode = "full") {
-    if (mode == "full") {
-        byId('btnBar-' + nid).style.opacity = 1;
-    } else {
-        byId('btnBarSmp-' + nid).style.opacity = 1;
-    }
 }
 window.showLoading = function (source) {
     loadingTimer = setTimeout(function () {
@@ -184,19 +164,6 @@ window.totalOffset = function (elem) {
         top: top,
         left: left
     };
-}
-window.cardMouseLeave = function (elem, nid, mode = "full") {
-    setTimeout(function () {
-        if (mode == "full") {
-            if (!$('#btnBar-' + nid).is(':hover') && !$(elem).is(':hover')) {
-                $('#btnBar-' + nid).css('opacity', '0');
-            }
-        } else {
-            if (!$('#btnBarSmp-' + nid).is(':hover') && !$(elem).is(':hover')) {
-                $('#btnBarSmp-' + nid).css('opacity', '0');
-            }
-        }
-    }, 50);
 }
 window.tagMouseEnter = function (elem) {
     if (!showTagInfoOnHover || !elem || !elem.parentElement || displayedNoteId)
@@ -492,21 +459,16 @@ window.searchMaskKeypress = function (event) {
     if (event.keyCode === 13)
         sendSearchFieldContent();
 }
-window.pinCard = function (elem, nid) {
-    $('#cW-' + nid).css('padding', '3px 4px 5px 5px');
-    $('#cW-' + nid).css('font-size', '9px');
-    let info = byId('cW-' + nid).getElementsByClassName("rankingLblAddInfo")[0];
-    let editedStamp = byId('cW-' + nid).getElementsByClassName("editedStamp")[0];
-    $('#cW-' + nid).html('<span>&#128204;</span>');
-    byId('cW-' + nid).appendChild(info);
-    byId('cW-' + nid).appendChild(editedStamp);
-    $('#' + nid).parents().first().addClass('pinned');
+window.pinCard = function (nid) {
+    byId('siac-cnt-dsp-' + nid).classList.toggle('hidden');
+    byId('siac-pin-dsp-' + nid).classList.toggle('hidden');
+    let pinned = byId('siac-note-wr-' + nid).classList.toggle("pinned");
     updatePinned();
 }
-window.searchCard = function (elem) {
-    let html = $(elem).parent().next().html();
+window.searchCard = function (nid) {
+    let text = byId('siac-inner-card-' + nid).innerText;
     showLoading("Note Search");
-    pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
+    pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + text);
 }
 window.searchCardFromFloated = function (id) {
     let html = byId(id).innerHTML;
@@ -519,7 +481,7 @@ window.edit = function (nid) {
 window.updatePinned = function () {
     let pincmd = 'siac-pin';
     $('.pinned').each(function (index) {
-        pincmd += " " + $(this).children().first().children().first().attr('id').substring(3);
+        pincmd += " " + this.dataset.nid;
     });
     $('.noteFloating').each(function (index) {
         pincmd += " " + $(this).attr('id').substring(3);
@@ -527,7 +489,7 @@ window.updatePinned = function () {
     pycmd(pincmd);
 }
 window.clearSearchResults = function () {
-    let notes_old = document.querySelectorAll("#searchResults .cardWrapper:not(.pinned)");
+    let notes_old = document.querySelectorAll("#searchResults .siac-note-outer:not(.pinned)");
     for (var i = 0; i < notes_old.length; i++) {
         notes_old[i].remove();
     }
@@ -947,9 +909,9 @@ window.triggerSearchShortcut = function () {
 /** ############# Floating notes */
 window.addFloatingNote = function (nid) {
     let onedit = $('#' + nid.toString()).hasClass('siac-user-note') ? `pycmd("siac-edit-user-note ${nid}")` : `edit(${nid})`;
-    let content = byId(nid).innerHTML;
+    let content = byId('siac-inner-card-'+nid).innerHTML;
     content = content.replace(/<\/?mark>/g, "");
-    $('#cW-' + nid).parent().parent().remove();
+    $('#siac-note-wr-' + nid).remove();
     let btnBar = `<div class='floatingBtnBar'>
         <div class="floatingBtnBarItem" onclick='${onedit}'>Edit</div>&nbsp;&#65372;
         <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>&nbsp;&#65372;

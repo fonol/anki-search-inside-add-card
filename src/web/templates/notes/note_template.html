@@ -1,19 +1,38 @@
-<div class='cardWrapper {grid_class}' id='siac-note-wr-{nid}'>
-    <div class='topLeftWr'>
-        <div id='cW-{nid}' class='rankingLbl' onclick="expandRankingLbl(this)">{counter}<div class='rankingLblAddInfo'>{creation}</div><div class='editedStamp'>{edited}</div></div>
-        {ret}
+<div class='siac-note-outer {grid_class}' data-nid="{nid}" id='siac-note-wr-{nid}'>
+    <div class='w-100 flex-row siac-note-header'>
+        <span style='font-size: 12px;'>
+            <span id='siac-cnt-dsp-{nid}'>{counter}</span>
+            <span id='siac-pin-dsp-{nid}' class='hidden' onclick='pinCard({nid})'><i class='fa fa-thumb-tack'></i></span>
+            <span id='siac-susp-dsp-{nid}'></span>
+            <span id='siac-edited-dsp-{nid}'>{edited}</span>
+        </span>
+        <div class='flex-row'>
+            <div onclick='edit({nid})' class='ml-10 turquoise-hover cursor-pointer'><i class="fa fa-pencil"></i></div>
+            {previewer}
+            <div onclick='searchCard({nid})' class='ml-10 turquoise-hover cursor-pointer'><i class="fa fa-search"></i></div>
+            <div id='pin-{nid}' onclick='pinCard({nid})'class='ml-10 turquoise-hover cursor-pointer'><i class="fa fa-thumb-tack"></i></div>
+            {float_btn}
+            {nid_btn}
+            {cid_btn}
+            <div id='rem-{nid}'  onclick='removeNote({nid})' class='ml-10 turquoise-hover cursor-pointer'><i class="fa fa-times"></i></div>
+        </div>
     </div>
-    <div id='btnBar-{nid}' class='btnBar' onmouseLeave='pinMouseLeave(this, event)' onmouseenter='pinMouseEnter(this)'>
-        <div class='editLbl' onclick='edit({nid})'><i class="fa fa-pencil"></i></div>
-        {previewer}
-        <div class='srchLbl' onclick='searchCard(this)'><div class='siac-search-icn'></div></div>
-        <div id='pin-{nid}' class='pinLbl unselected' onclick='pinCard(this, {nid})'><span>&#128204;</span></div>
-        {float_btn}
-        {nid_btn}
-        {cid_btn}
-        <div id='rem-{nid}' class='remLbl' onclick='removeNote({nid})'><span>&times;</span></div>
+    <div class='siac-inner-card' id='siac-inner-card-{nid}' style='padding: 15px;' onmouseup='getSelectionText()'>
+        {text}
     </div>
-    <div class='siac-inner-card' onmouseup='getSelectionText()' onmouseenter='cardMouseEnter(this, {nid})' onmouseleave='cardMouseLeave(this, {nid})' id='{nid}' data-nid='{nid}'>{text}</div>
-    <div id='tags-{nid}'  style='position: absolute; bottom: 0px; right: 0px;'>{tags}</div>
-    <div class='cardLeftBot' onclick='expandCard({nid}, this)'>&nbsp;&nbsp;<i class="fa fa-info"></i>&nbsp;&nbsp;</div>
+    <div class='siac-note-footer'>
+        <div class='flex-row' style='align-items: center;'>
+            <i class='fa fa-info turquoise-hover cursor-pointer ml-5' onclick='expandCard({nid}, this)' style='font-size: 17px;'></i>
+            {ret}
+        </div>    
+        <div class='siac-note-tags-container' id='tags-{nid}'>
+            {tags}
+        </div>
+    </div>
 </div>
+
+
+
+
+
+

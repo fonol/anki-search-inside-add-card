@@ -1,34 +1,83 @@
 #siac-notes-sidebar {
     flex: 0 230px;
     min-width: 230px;
-    border: 3px outset lightseagreen;
     border-radius: 5px;
-    padding: 10px;
 }
 .siac-notes-sidebar-item {
     font-weight: bold;
     user-select: none;
-    margin-bottom: 2px;
+    padding: 1px 5px 1px 5px;
     border: 1px solid transparent;
     transition: margin 0.15s ease;
 }
 .siac-notes-sidebar-item:hover {
-    /* border-left: 5px solid lightseagreen; */
     padding-left: 5px;
-    margin-left: 5px;
-    border: 1px solid grey;
-    border-radius: 3px;
-    /* transform: scale(1.05); */
-}
-body.nightMode .siac-notes-sidebar-item:hover {
-    border: 1px solid #6b6b6b;
-    background: #383838;
+    background: #2e6286;
+    color: white;
 }
 .siac-sidebar-inp {
     background: var(--c-input-background);
     color: var(--c-input-foreground);
+    flex: 1 1 auto; 
+    box-sizing: border-box; 
+    border-radius: 3px; 
+    padding-left: 4px; 
+    border: 1px solid #929292;
+    background: transparent;
+}
+body.nightMode .siac-sidebar-inp {
+    border: 1px solid grey;
+    background:  #2f2f31;
 }
 #siac-sidebar-selected {
     text-align: center;
     font-weight: bold;
+}
+#siac-sidebar-selected > span {
+    border-bottom: 2px solid white;
+}
+.siac-notes-sidebar-section {
+    background: #fffef7;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+body.nightMode .siac-notes-sidebar-section {
+    background:  rgb(53,53,53);
+}
+.siac-notes-sidebar-section-header {
+    background: #2e6286;
+    color: white;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 7px 10px 7px 10px;
+}
+
+.siac-tags-exp-icon {
+    cursor: pointer;
+    float: right;
+    user-select: none;
+    font-size: 13px;
+    color:white; 
+}
+.siac-tags-exp-icon:hover {
+    color: coral;
+}
+#siac-notes-sidebar .siac-btn-small {
+    color: white !important;
+
+}
+#siac-notes-sidebar .siac-btn-small-dropdown {
+    background: #2e6286 !important;
+    background-color: #2e6286 !important;
+    color: white !important;
+    border: none;
+    margin-left: -4px;
+    border-radius: 0 !important;
+}
+.siac-sidebar-bg {
+    background: #fffef7;
+}
+body.nightMode .siac-sidebar-bg {
+    background:  rgb(53,53,53);
 }

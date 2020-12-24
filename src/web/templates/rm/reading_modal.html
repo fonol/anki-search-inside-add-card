@@ -58,7 +58,7 @@
     pageSidebarDisplayed = {page_sidebar};
     bottomBarTabDisplayed = 'marks';
     if (tomato.readingTimer != null)  {
-        $('.siac-timer-play-btn').html('<i class="fa fa-pause mr-5"></i>Pause').removeClass('inactive');
+        $('.siac-timer-play-btn').html('<i class="fa fa-pause mr-5"></i><b>Pause</b>').removeClass('inactive');
         setTimerActive(tomato.lastStart);
     } else {
         let rs = tomato.remainingSeconds;
