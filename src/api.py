@@ -55,8 +55,9 @@ def open_or_switch_to_editor(function):
                     win.raise_()
                 else:
                     win.showMaximized()
-    except:
-        pass
+    except Exception as e:
+        print("Failed to open.")
+        print(e)
 
     if state.editor_is_ready:
         function()
