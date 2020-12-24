@@ -52,9 +52,9 @@ def open_or_switch_to_editor(function):
             win = aqt.dialogs._dialogs["AddCards"]
             if win:
                 if isMac:
-                    win.raise_()
+                    win[1].raise_()
                 else:
-                    win.showMaximized()
+                    win[1].showMaximized()
     except Exception as e:
         print("Failed to open.")
         print(e)
