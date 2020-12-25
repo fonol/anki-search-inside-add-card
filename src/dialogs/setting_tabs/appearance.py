@@ -7,34 +7,41 @@ from aqt.utils import showInfo
 from ...config import get_config_value_or_default, update_config
 
 class ColorItem:
-    def __init__(self, config_key, description, sort_id):
-        self.config_key = config_key
-        self.description = description
-        self.sort_id = sort_id
 
+    def __init__(self, config_key, description, sort_id, default_value=""):
+
+        self.config_key     = config_key
+        self.description    = description
+        self.sort_id        = sort_id
         self.previous_color = get_config_value_or_default(self.config_key, None)
-        self.current_color = self.previous_color
+        self.current_color  = self.previous_color
+        self.color_button   = QPushButton()
+        self.default_value  = default_value
 
-        self.color_button = QPushButton()
         self.color_button.clicked.connect(self.get_new_color)
-
         self.change_button_color()
 
 
     def get_new_color(self):
         """Set color via color selection dialog"""
+
         dialog = QColorDialog()
+        if self.default_value != "":
+            dialog.setCustomColor(0, QColor(self.default_value))
+        else:
+            dialog.setCustomColor(0, QColor(self.current_color))
         color = dialog.getColor()
 
         if color.isValid():
             color = color.name()
             self.current_color = color
-
+       
         self.change_button_color()
 
     def change_button_color(self):
         """Generate color preview pixmap and place it on button"""
-        pixmap = QPixmap(48, 18)
+
+        pixmap  = QPixmap(48, 18)
         qcolour = QColor(0, 0, 0)
         qcolour.setNamedColor(self.current_color)
 
@@ -55,21 +62,25 @@ class AppearanceSettingsTab(QWidget):
         gridbox = QGridLayout()
 
         # group_ids, arbitrary
-        id_tags     = 0
-        id_highlight = 1
-        id_suspended = 2
-        id_modal = 3
+        id_tags         = 0
+        id_highlight    = 1
+        id_suspended    = 2
+        id_modal        = 3
+        id_general      = 4
 
         # group colors logically, this determines the order!
         list_order = ( # name of section, id
-            ("Tag Colors",     id_tags),
-            ("Highlight Colors", id_highlight),
-            ("Suspended Label Colors", id_suspended),
-            ("Reading Modal Colors ", id_modal)
+            ("General Colors",          id_general),
+            ("Tag Colors",              id_tags),
+            ("Highlight Colors",        id_highlight),
+            ("Suspended Label Colors",  id_suspended),
+            ("Reading Modal Colors ",   id_modal)
         )
 
         # add items
         self.color_list = (
+            ColorItem("styles.primaryColor"                  , "Primary Color",              id_general, "#2e6286"),
+            ColorItem("styles.night.primaryColor"            , "Primary Color (Night Mode)", id_general, "#2e6286"),
             ColorItem("styles.tagBackgroundColor"            , "Tag Background Color",              id_tags),
             ColorItem("styles.tagForegroundColor"            , "Tag Foreground Color",              id_tags),
             ColorItem("styles.night.tagBackgroundColor"      , "Tag Background Color (Night Mode)", id_tags),
@@ -116,8 +127,8 @@ class AppearanceSettingsTab(QWidget):
                     gridbox.addWidget(QLabel(item.description), line, 0 + column_shift)
                     gridbox.addWidget(item.color_button, line, 1 + column_shift)
 
-
                     i+=1
+
             gridbox.setColumnStretch(0, 1)
             gridbox.setColumnStretch(2, 1)
             gridbox.setAlignment(Qt.AlignTop)
@@ -126,10 +137,10 @@ class AppearanceSettingsTab(QWidget):
         self.setLayout(gridbox)
 
     def setupUi(self):
-        grid = QGridLayout()
+        grid                    = QGridLayout()
 
-        self.colorcloze_btn = QPushButton()
-        self.colorextract_btn = QPushButton()
+        self.colorcloze_btn     = QPushButton()
+        self.colorextract_btn   = QPushButton()
 
         self.colorcloze_btn.clicked.connect(lambda _,
             t="color-cloze",   b=self.colorcloze_btn:   self.getNewColor(t, b))
