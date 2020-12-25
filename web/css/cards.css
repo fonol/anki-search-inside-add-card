@@ -166,18 +166,22 @@ body.nightMode .siac-note-outer, #siac-reading-modal .siac-note-outer {
 }
 .siac-note-footer {
     border-top: 1px solid #d4d4d4; 
-    padding: 9px 9px 9px 12px; 
+    padding: 9px 9px 0px 12px; 
     display: flex; 
     justify-content: space-between; 
     background: #fffef7;
     overflow: hidden;
     color: #2e6286;
+    flex-wrap: wrap;
 }
 
 body.nightMode .siac-note-footer, #siac-reading-modal .siac-note-footer {
     border-top-color:rgb(78, 78, 78);
     background: rgb(53,53,53);
     color: white;
+}
+.siac-note-footer > div {
+    margin-bottom: 9px;
 }
 /* Label containing 'SIAC' to distinguish add-on notes from anki notes */
 .siac-note-lbl {
