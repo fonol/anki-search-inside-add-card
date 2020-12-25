@@ -1212,39 +1212,37 @@ class ReadingModal:
             header = f"{page} / {pages_total}"
         else:
             header = f"Anki Notes ({len(linked)})"
+        if around_s != "":
+            around_s = f"<center class='siac-page-sidebar-around'>{around_s}</center>"
+            
+
+        stats_s = f"""<div class='fg_lightgrey ta_center' style='flex: 0 1 auto; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
+                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""},
+                    added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
+                </div>"""
         if len(linked) > 0:
             html = search_results(linked, [])
             html = html.replace("`", "\\`")
             html = f"""
-                <div class='fg_lightgrey' style='flex: 0 1 auto;'>
-                    <center><b>{header}</b></center>
-                    <center class='mt-5' style='font-size: 10px;'>{around_s}</center>
-                    <hr style='border-top: 4px solid grey;'>
+                <div class='fg_lightgrey siac-page-sidebar-header'>
+                    <center class='siac-note-header'><b>{header}</b></center>
+                    {around_s}
                 </div>
-                <div style='overflow-y: auto; flex: 1 1 auto; padding: 7px; text-align: left;'>
+                <div style='overflow-y: auto; flex: 1 1 auto; padding: 7px 4px 7px 0; text-align: left;'>
                     {html}
                 </div>
-                <div class='fg_lightgrey ta_center' style='flex: 0 1 auto; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""},
-                    added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
-                </div>
-            """
+                {stats_s}"""
         else:
             html = f"""
-                <div class='fg_lightgrey' style='flex: 0 1 auto;'>
-                    <center><b>{header}</b></center>
-                    <center class='mt-5' style='font-size: 10px;'>{around_s}</center>
-                    <hr style='border-top: 4px solid grey;'>
+                <div class='fg_lightgrey siac-page-sidebar-header'>
+                    <center class='siac-note-header'><b>{header}</b></center>
+                    {around_s}
                 </div>
                 <div class='fg_lightgrey flex-col' style='flex: 1 1 auto; justify-content: center;'>
                     <div class='mb-10' style='font-size: 25px;'><i class="fa fa-graduation-cap"></i></div>
                     <center class='bold' style='padding: 20px; font-variant-caps: small-caps; font-size: medium;'>No notes added while on this page.</center>
                 </div>
-                <div class='fg_lightgrey ta_center' style='flex: 0 1 auto; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""},
-                    added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
-                </div>
-            """
+                {stats_s}"""
 
         self._editor.web.eval(f"document.getElementById('siac-page-sidebar').innerHTML = `{html}`;")
 
