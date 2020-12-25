@@ -12,8 +12,11 @@
 }
 .siac-notes-sidebar-item:hover {
     padding-left: 5px;
-    background: #2e6286;
+    background: var(--c-primary-color);
     color: white;
+}
+body.nightMode .siac-notes-sidebar-item:hover {
+    background: var(--c-primary-color-night);
 }
 .siac-sidebar-inp {
     background: var(--c-input-background);
@@ -46,11 +49,14 @@ body.nightMode .siac-notes-sidebar-section {
     background:  rgb(53,53,53);
 }
 .siac-notes-sidebar-section-header {
-    background: #2e6286;
+    background: var(--c-primary-color);
     color: white;
     box-sizing: border-box;
     width: 100%;
     padding: 7px 10px 7px 10px;
+}
+body.nightMode .siac-notes-sidebar-section-header {
+    background: var(--c-primary-color-night);
 }
 
 .siac-tags-exp-icon {
@@ -68,12 +74,16 @@ body.nightMode .siac-notes-sidebar-section {
 
 }
 #siac-notes-sidebar .siac-btn-small-dropdown {
-    background: #2e6286 !important;
-    background-color: #2e6286 !important;
+    background: var(--c-primary-color) !important;
+    background-color: var(--c-primary-color) !important;
     color: white !important;
     border: none;
     margin-left: -4px;
     border-radius: 0 !important;
+}
+body.nightMode #siac-notes-sidebar .siac-btn-small-dropdown {
+    background: var(--c-primary-color-night) !important;
+    background-color: var(--c-primary-color-night) !important;
 }
 .siac-sidebar-bg {
     background: #fffef7;

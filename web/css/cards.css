@@ -137,7 +137,7 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     text-align: center; 
     display: inline-block; 
     vertical-align: top;
-    background: #f5f5f5;
+    background: #f0f0f0 !important;
 }
 body.nightMode .siac-meta-btn {
     background: #2f2f31;
@@ -161,8 +161,11 @@ body.nightMode .siac-note-outer, #siac-reading-modal .siac-note-outer {
     align-items: center; 
     justify-content: space-between; 
     padding: 5px 10px; 
-    background: #2e6286;
+    background: var(--c-primary-color);
     color: white;
+}
+body.nightMode .siac-note-header {
+    background: var(--c-primary-color-night);
 }
 .siac-note-footer {
     border-top: 1px solid #d4d4d4; 
@@ -171,7 +174,7 @@ body.nightMode .siac-note-outer, #siac-reading-modal .siac-note-outer {
     justify-content: space-between; 
     background: #fffef7;
     overflow: hidden;
-    color: #2e6286;
+    color: var(--c-primary-color);
     flex-wrap: wrap;
 }
 
@@ -194,6 +197,10 @@ body.nightMode .siac-note-footer, #siac-reading-modal .siac-note-footer {
 .siac-extract-mark {
     margin-left: 5px;
     white-space: nowrap;
+    color: #2e6286;
+}
+body.nightMode .siac-extract-mark {
+    color: white;
 }
 
 .siac-note-tags-container {

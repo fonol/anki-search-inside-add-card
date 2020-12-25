@@ -5,6 +5,8 @@
 --img-max-height: $imgMaxHeight$px;
 --zoom: $zoom$;
 
+--c-primary-color: $styles.primaryColor$;
+--c-primary-color-night: $styles.night.primaryColor$;
 --c-reading-modal-background: $styles.readingModalBackgroundColor$;
 --c-reading-modal-button-border-color: $styles.readingModalButtonBorderColor$;
 --c-reading-modal-filter: $styles.readingModalFilter$;

@@ -27,8 +27,11 @@
     padding: 2px 4px;
 }
 .deck-list-item:hover >.list-item-inner  {
-    background: #2e6286;
+    background: var(--c-primary-color);
     color: white;
+}
+body.nightMode .deck-list-item:hover > .list-item-inner {
+    background: var(--c-primary-color-night);
 }
 .check {
     float: right;
@@ -41,9 +44,12 @@
     right: 3px;
     z-index: 2;
     padding-left: 2px;
-    background: #2e6286;
+    background: var(--c-primary-color);
     color: white;
     display: none;
+}
+body.nightMode .siac-tl-plus {
+    background: var(--c-primary-color-night);
 }
 .deck-list-item:hover > .list-item-inner > .siac-tl-plus {
     display: inline-block;
@@ -61,8 +67,8 @@
     text-align: center;
 }
 .deck-list-button {
-    border: 1px solid #2e6286;
-    color: #2e6286;
+    border: 1px solid var(--c-primary-color);
+    color: var(--c-primary-color);
     cursor: pointer;
     font-size: 12px !important;
     user-select: none;
@@ -71,6 +77,10 @@
     padding: 1px 5px 1px 5px;
     margin-right: 10px;
     border-radius: 2px;
+}
+body.nightMode .deck-list-button {
+    color: var(--c-primary-color-night);
+    border-color: var(--c-primary-color-night);
 }
 .deck-list-button:hover {
     color: coral;
