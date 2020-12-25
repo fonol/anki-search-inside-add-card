@@ -166,7 +166,7 @@ body.nightMode .siac-note-outer, #siac-reading-modal .siac-note-outer {
 }
 .siac-note-footer {
     border-top: 1px solid #d4d4d4; 
-    padding: 9px 9px 0px 12px; 
+    padding: 9px 9px 0px 7px; 
     display: flex; 
     justify-content: space-between; 
     background: #fffef7;
@@ -182,6 +182,9 @@ body.nightMode .siac-note-footer, #siac-reading-modal .siac-note-footer {
 }
 .siac-note-footer > div {
     margin-bottom: 9px;
+}
+.siac-note-footer > div:first-child {
+    margin-left: 5px;
 }
 /* Label containing 'SIAC' to distinguish add-on notes from anki notes */
 .siac-note-lbl {
