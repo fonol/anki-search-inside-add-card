@@ -104,6 +104,8 @@ def styles() -> str:
     imgMaxHeight        = str(get_config_value_or_default("imageMaxHeight", 300))
     pdfTooltipMaxHeight = str(get_config_value_or_default("pdfTooltipMaxHeight", 300))
     pdfTooltipMaxWidth  = str(get_config_value_or_default("pdfTooltipMaxWidth", 250))
+    primary_color       = str(get_config_value_or_default("styles.primaryColor", "#2e6286"))
+    primary_color_night = str(get_config_value_or_default("styles.night.primaryColor", "#2e6286"))
     tagFG               = str(get_config_value_or_default("styles.tagForegroundColor", "black"))
     tagBG               = str(get_config_value_or_default("styles.tagBackgroundColor", "#f0506e"))
     tagNightFG          = str(get_config_value_or_default("styles.night.tagForegroundColor", "black"))
@@ -113,9 +115,6 @@ def styles() -> str:
     highlightBG         = str(get_config_value_or_default("styles.highlightBackgroundColor", "yellow"))
     highlightNightFG    = str(get_config_value_or_default("styles.night.highlightForegroundColor", "black"))
     highlightNightBG    = str(get_config_value_or_default("styles.night.highlightBackgroundColor", "SpringGreen"))
-
-    suspFG              = str(get_config_value_or_default("styles.suspendedForegroundColor", "black"))
-    suspBG              = str(get_config_value_or_default("styles.suspendedBackgroundColor", "coral"))
 
     modalBorder         = str(get_config_value_or_default("styles.modalBorderColor", "#2496dc"))
     modalBorderNight    = str(get_config_value_or_default("styles.night.modalBorderColor", "darkorange"))
@@ -134,8 +133,8 @@ def styles() -> str:
     css                 = css.replace("$pdfTooltipMaxHeight$", pdfTooltipMaxHeight)
     css                 = css.replace("$pdfTooltipMaxWidth$", pdfTooltipMaxWidth)
 
-    css                 = css.replace("$styles.suspendedForegroundColor$", suspFG)
-    css                 = css.replace("$styles.suspendedBackgroundColor$", suspBG)
+    css                 = css.replace("$styles.primaryColor$", primary_color)
+    css                 = css.replace("$styles.night.primaryColor$", primary_color_night)
     css                 = css.replace("$styles.tagForegroundColor$", tagFG)
     css                 = css.replace("$styles.tagBackgroundColor$", tagBG)
     css                 = css.replace("$styles.night.tagForegroundColor$", tagNightFG)

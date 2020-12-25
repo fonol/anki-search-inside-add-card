@@ -595,10 +595,13 @@ body.nightMode .noteFloatingContent {
     align-items: center;
     cursor: move;
     z-index: 110;
-    background-color: #2e6286;
+    background-color: var(--c-primary-color);
     color: #fff;
     user-select: none;
     font-size: 11px !important;
+}
+body.nightMode .noteFloatingHeader {
+    background-color: var(--c-primary-color-night);
 }
 
 
@@ -836,6 +839,10 @@ body.nightMode .siac-prog-sq {
 .siac-prog-tmp {
     margin-left: 10px;
     white-space: nowrap;
+    color: #2e6286;
+}
+body.nightMode .siac-prog-tmp {
+    color: white;
 }
 .siac-prog-tmp span {
     vertical-align: baseline;

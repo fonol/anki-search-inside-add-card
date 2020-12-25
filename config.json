@@ -101,6 +101,8 @@
 "results.showCIDButton": false,
 "results.hide_cloze_brackets": false,
 
+"styles.primaryColor": "#2e6286",
+"styles.night.primaryColor": "#2e6286",
 "styles.night.tagBackgroundColor": "Coral",
 "styles.night.tagForegroundColor": "Black",
 "styles.tagBackgroundColor": "#f0506e",
