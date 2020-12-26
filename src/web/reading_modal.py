@@ -574,34 +574,35 @@ class ReadingModal:
             page_sidebar    = str(conf_or_def("pdf.page_sidebar_shown", True)).lower()
 
             rev_overlay     = ""
-            # check for last linked pages
-            last_linked     = get_last_linked_notes(note_id, limit = 500)
-            if len(last_linked) > 0:
-                if hasattr(mw.col, "find_cards"):
-                    due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
-                else:
-                    due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
-                if due_today and len(due_today) > 0 and get_config_value("notes.show_linked_cards_are_due_overlay"):
-                    act         = "Reading"
-                    if note.is_pdf():
-                        ntype = "PDF"
-                    elif note.is_yt():
-                        ntype = "video"
-                        act   = "Watching"
+            if get_config_value("notes.show_linked_cards_are_due_overlay"):
+                # check for last linked pages
+                last_linked     = get_last_linked_notes(note_id, limit = 500)
+                if len(last_linked) > 0:
+                    if hasattr(mw.col, "find_cards"):
+                        due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
                     else:
-                        ntype = "note"
+                        due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
+                    if due_today and len(due_today) > 0:
+                        act         = "Reading"
+                        if note.is_pdf():
+                            ntype = "PDF"
+                        elif note.is_yt():
+                            ntype = "video"
+                            act   = "Watching"
+                        else:
+                            ntype = "note"
 
-                    rev_overlay = f"""
-                        <div class='siac-rev-overlay'>
-                            <div class='ta_center bold fg_lightgrey' style='font-size: 22px;'>
-                               <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
+                        rev_overlay = f"""
+                            <div class='siac-rev-overlay'>
+                                <div class='ta_center bold fg_lightgrey' style='font-size: 22px;'>
+                                <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
+                                </div>
+                                <div class='ta_center bold' style='opacity: 1; margin: 50px 0 30px 0;'>
+                                    <div class='siac-btn siac-btn-dark' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
+                                    <div class='siac-btn siac-btn-dark' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
+                                </div>
                             </div>
-                            <div class='ta_center bold' style='opacity: 1; margin: 50px 0 30px 0;'>
-                                <div class='siac-btn siac-btn-dark' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
-                                <div class='siac-btn siac-btn-dark' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
-                            </div>
-                        </div>
-                    """
+                        """
 
             overflow        = "auto"
             notification    = ""
