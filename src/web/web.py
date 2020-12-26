@@ -266,7 +266,7 @@ def print_starting_info(editor: Optional[Editor]):
         html += "<br/>Index contains <b>%s</b> notes." % index.get_number_of_notes()
         html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
-        html += "<br/>Layout Shortcuts: <b>%s</b> (toggle left), <b>%s</b> (toggle right), <b>%s</b> (show both)." % (config["shortcuts.window_mode.show_left"], config["shortcuts.window_mode.show_right"], config["shortcuts.window_mode.show_both"])
+        html += "<br/>Layout Shortcuts:<br> <b>%s</b> (toggle left), <b>%s</b> (toggle right), <b>%s</b> (show both)." % (config["shortcuts.window_mode.show_left"], config["shortcuts.window_mode.show_right"], config["shortcuts.window_mode.show_both"])
 
         changes = changelog()
         if changes:
@@ -504,13 +504,8 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Add file linking to the Create Note dialog (thanks to p4nix)",
-        "Add web import dialog in menu (thanks to p4nix)",
-        "Make search work on non-latin languages (needs index rebuild)",
-        "Add 'Jump to random unread page' button",
-        "Add 'Last Opened' sidebar menu item, 'Order by last opened' to tag meta card",
-        "Fix: 403 error in Quick Youtube import",
-        "Fix: Hidden sidebar reappearing after closing reader",
+        "Rework some UI parts",
+        "Fix: Review due linked cards not being sorted by creation date"
     ]
 
 def known_issues() -> List[str]:
