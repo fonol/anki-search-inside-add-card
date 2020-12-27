@@ -140,7 +140,7 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
     background: #f0f0f0 !important;
 }
 body.nightMode .siac-meta-btn {
-    background: #2f2f31;
+    background: #2f2f31 !important;
 }
 
 .siac-note-outer {

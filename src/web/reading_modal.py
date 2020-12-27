@@ -588,34 +588,35 @@ class ReadingModal:
             page_sidebar    = str(conf_or_def("pdf.page_sidebar_shown", True)).lower()
 
             rev_overlay     = ""
-            # check for last linked pages
-            last_linked     = get_last_linked_notes(note_id, limit = 500)
-            if len(last_linked) > 0:
-                if hasattr(mw.col, "find_cards"):
-                    due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
-                else:
-                    due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
-                if due_today and len(due_today) > 0 and get_config_value("notes.show_linked_cards_are_due_overlay"):
-                    act         = "Reading"
-                    if note.is_pdf():
-                        ntype = "PDF"
-                    elif note.is_yt():
-                        ntype = "video"
-                        act   = "Watching"
+            if get_config_value("notes.show_linked_cards_are_due_overlay"):
+                # check for last linked pages
+                last_linked     = get_last_linked_notes(note_id, limit = 500)
+                if len(last_linked) > 0:
+                    if hasattr(mw.col, "find_cards"):
+                        due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
                     else:
-                        ntype = "note"
+                        due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
+                    if due_today and len(due_today) > 0:
+                        act         = "Reading"
+                        if note.is_pdf():
+                            ntype = "PDF"
+                        elif note.is_yt():
+                            ntype = "video"
+                            act   = "Watching"
+                        else:
+                            ntype = "note"
 
-                    rev_overlay = f"""
-                        <div class='siac-rev-overlay'>
-                            <div class='ta_center bold fg_lightgrey' style='font-size: 22px;'>
-                               <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
+                        rev_overlay = f"""
+                            <div class='siac-rev-overlay'>
+                                <div class='ta_center bold fg_lightgrey' style='font-size: 22px;'>
+                                <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
+                                </div>
+                                <div class='ta_center bold' style='opacity: 1; margin: 50px 0 30px 0;'>
+                                    <div class='siac-btn siac-btn-dark' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
+                                    <div class='siac-btn siac-btn-dark' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
+                                </div>
                             </div>
-                            <div class='ta_center bold' style='opacity: 1; margin: 50px 0 30px 0;'>
-                                <div class='siac-btn siac-btn-dark' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
-                                <div class='siac-btn siac-btn-dark' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
-                            </div>
-                        </div>
-                    """
+                        """
 
             overflow        = "auto"
             notification    = ""
@@ -1226,39 +1227,37 @@ class ReadingModal:
             header = f"{page} / {pages_total}"
         else:
             header = f"Anki Notes ({len(linked)})"
+        if around_s != "":
+            around_s = f"<center class='siac-page-sidebar-around'>{around_s}</center>"
+            
+
+        stats_s = f"""<div class='fg_lightgrey ta_center' style='flex: 0 1 auto; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
+                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""},
+                    added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
+                </div>"""
         if len(linked) > 0:
             html = search_results(linked, [])
             html = html.replace("`", "\\`")
             html = f"""
-                <div class='fg_lightgrey' style='flex: 0 1 auto;'>
-                    <center><b>{header}</b></center>
-                    <center class='mt-5' style='font-size: 10px;'>{around_s}</center>
-                    <hr style='border-top: 4px solid grey;'>
+                <div class='fg_lightgrey siac-page-sidebar-header'>
+                    <center class='siac-note-header'><b>{header}</b></center>
+                    {around_s}
                 </div>
-                <div style='overflow-y: auto; flex: 1 1 auto; padding: 7px; text-align: left;'>
+                <div style='overflow-y: auto; flex: 1 1 auto; padding: 7px 4px 7px 0; text-align: left;'>
                     {html}
                 </div>
-                <div class='fg_lightgrey ta_center' style='flex: 0 1 auto; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""},
-                    added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
-                </div>
-            """
+                {stats_s}"""
         else:
             html = f"""
-                <div class='fg_lightgrey' style='flex: 0 1 auto;'>
-                    <center><b>{header}</b></center>
-                    <center class='mt-5' style='font-size: 10px;'>{around_s}</center>
-                    <hr style='border-top: 4px solid grey;'>
+                <div class='fg_lightgrey siac-page-sidebar-header'>
+                    <center class='siac-note-header'><b>{header}</b></center>
+                    {around_s}
                 </div>
                 <div class='fg_lightgrey flex-col' style='flex: 1 1 auto; justify-content: center;'>
                     <div class='mb-10' style='font-size: 25px;'><i class="fa fa-graduation-cap"></i></div>
                     <center class='bold' style='padding: 20px; font-variant-caps: small-caps; font-size: medium;'>No notes added while on this page.</center>
                 </div>
-                <div class='fg_lightgrey ta_center' style='flex: 0 1 auto; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
-                    <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""},
-                    added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
-                </div>
-            """
+                {stats_s}"""
 
         self._editor.web.eval(f"document.getElementById('siac-page-sidebar').innerHTML = `{html}`;")
 

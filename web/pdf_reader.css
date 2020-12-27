@@ -183,13 +183,21 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 }
 #siac-page-sidebar {
     width: 230px;
-    border: 3px outset var(--c-reading-modal-theme-color);
-    padding: 10px;
     margin-left: 10px;
     flex: 0 0 auto;
     display: none;
     flex-direction: column;
     text-align: center;
+}
+.siac-page-sidebar-header {
+    flex: 0 1 auto; 
+    padding-right: 4px;
+    margin-bottom: 10px;
+}
+.siac-page-sidebar-around {
+    font-size: 10px;
+    padding: 10px 0px;
+    background: #353535;
 }
 #siac-page-btns {
     user-select:none; 

@@ -68,7 +68,7 @@ body.nightMode .siac-tl-plus {
 }
 .deck-list-button {
     border: 1px solid var(--c-primary-color);
-    color: var(--c-primary-color);
+    color: black;
     cursor: pointer;
     font-size: 12px !important;
     user-select: none;
@@ -79,11 +79,11 @@ body.nightMode .siac-tl-plus {
     border-radius: 2px;
 }
 body.nightMode .deck-list-button {
-    color: var(--c-primary-color-night);
+    color: lightgrey;
     border-color: var(--c-primary-color-night);
 }
 .deck-list-button:hover {
-    color: coral;
+    color: coral !important;
 }
 .deck-list-button:active,.deck-list-button:focus {
     outline: none;
