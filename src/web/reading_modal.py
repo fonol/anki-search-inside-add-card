@@ -331,7 +331,8 @@ class ReadingModal:
 
 
     def fill_sources(self, editor):
-        """ Check if any of the fields in pdf.onOpen.autoFillFieldsWithPDFName are present, if yes, fill them with the note's title. """
+        """ Check if any of the fields in pdf.onOpen.autoFillFieldsWithPDFName"""
+        """" are present, if yes, fill them with the note's title. """
 
         siacnote = self.note
 
@@ -389,10 +390,6 @@ class ReadingModal:
             new_schedule        = done_dialog.schedule
             sched_has_changed   = done_dialog.schedule_has_changed
 
-            if get_config_value("mix_reviews_and_reading.review_after_done") and state.interrupted_review:
-                mw.raise_()
-                state.interrupted_review = False
-
             if sched_has_changed:
                 update_reminder(self.note_id, new_schedule)
             else:
@@ -425,6 +422,14 @@ class ReadingModal:
                     self.read_head_of_queue()
             else:
                 self.read_head_of_queue()
+
+            if get_config_value("mix_reviews_and_reading.review_after_done") and state.interrupted_review:
+                win = mw.app.activeWindow()
+                if isinstance(win, aqt.addcards.AddCards):
+                    win.close()
+
+                mw.raise_()
+                state.interrupted_review = False
         else:
             self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
 
