@@ -40,6 +40,7 @@ from anki.utils import isMac, isLin
 def file_exists(full_path: str) -> bool:
     if full_path is None or len(full_path) < 2:
         return False
+    full_path = re.sub("^.+:///", "", full_path)
     return os.path.isfile(full_path)
 
 def create_folder_if_not_exists(path: str):
