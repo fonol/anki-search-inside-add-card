@@ -1649,7 +1649,7 @@ class ReadingModalSidebar():
                         <strong class='blue-hover fg_grey ml-10' onclick='pycmd("siac-pdf-sidebar-last-addon")'>Add-on</strong>
                         <strong class='blue-hover fg_grey ml-10' onclick='pycmd("siac-pdf-sidebar-last-anki")'>Anki</strong>
                     </div>
-                    <div id='siac-left-tab-browse-results' class='oflow_y_auto mt-10 mb-5' style='flex: 1 1 auto; padding: 0 5px 0 0;'>
+                    <div id='siac-left-tab-browse-results' class='oflow_y_auto mt-10 mb-5' style='flex: 1 1 auto; padding: 0 7px 0 7px;'>
                     </div>
                     <div style='flex: 0 auto; padding: 5px 0 5px 0;'>
                         <input type='text' class='w-100' style='box-sizing: border-box;' onkeyup='pdfLeftTabAnkiSearchKeyup(this.value, event);'/>
