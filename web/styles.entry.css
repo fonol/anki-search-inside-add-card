@@ -43,6 +43,7 @@
     height: 100%;
     overflow: hidden;
     display: flex;
+    padding-left: 7px;
 }
 #siac-start-info {
     padding-left: 20px;
@@ -142,6 +143,7 @@
     position: relative;
     flex-wrap: nowrap;
     height: 30px;
+    padding-left: 7px;
 }
 #siac-right-side mark, #siac-left-tab-browse mark {
     background-color: var(--c-highlight-background);
@@ -370,7 +372,7 @@ table.siac-read-stats-table tr:hover .siac-read-box {
     user-select: none;
     height: 23px;
     border-top: 1px solid grey; 
-    margin: 10px 0 3px 0;
+    margin: 10px 0 3px 7px;
 }
 #icns-large div, #icns-small div {
     margin-top: 3px;
@@ -460,14 +462,13 @@ table.striped {
     color: #2496dc;
 }
 #siac-right-side {
-    padding: 0px 20px 4px 20px;
+    padding: 0px 20px 4px 13px;
     margin-left: 8px;
     position: relative;
     font-family: 'Open Sans', sans-serif;
     box-sizing: border-box;
     font-size: 12px !important;
     overflow-y: hidden;
-
 }
 
 fieldset {

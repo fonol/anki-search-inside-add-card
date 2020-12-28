@@ -142,16 +142,17 @@ body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre 
 body.nightMode .siac-meta-btn {
     background: #2f2f31 !important;
 }
-
 .siac-note-outer {
     background: #fffef7;
     border: none; 
     display: flex; 
     flex-direction: column; 
     margin-bottom: 20px;
+    box-shadow: 0 0 7px 1px #dcdcdc;
 }
 body.nightMode .siac-note-outer, #siac-reading-modal .siac-note-outer {
     background: rgb(53,53,53);
+    box-shadow: 0 0 7px 1px #202020;
 }
 /* Header of note card */
 .siac-note-header {
@@ -177,7 +178,6 @@ body.nightMode .siac-note-header {
     color: var(--c-primary-color);
     flex-wrap: wrap;
 }
-
 body.nightMode .siac-note-footer, #siac-reading-modal .siac-note-footer {
     border-top-color:rgb(78, 78, 78);
     background: rgb(53,53,53);
@@ -202,7 +202,6 @@ body.nightMode .siac-note-footer, #siac-reading-modal .siac-note-footer {
 body.nightMode .siac-extract-mark {
     color: white;
 }
-
 .siac-note-tags-container {
     margin-top: -7px;
 }
