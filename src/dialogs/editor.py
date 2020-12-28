@@ -35,6 +35,7 @@ from ..markdown import markdown
 from ..config import get_config_value_or_default, update_config
 from ..web_import import import_webpage
 from .importing.url_import import UrlImporter
+from .tag_chooser import TagChooserDialog
 from .external_file import ExternalFile
 from .components import QtPrioritySlider, MDTextEdit
 from .url_input_dialog import URLInputDialog
@@ -392,7 +393,8 @@ class CreateTab(QWidget):
         config                  = mw.addonManager.getConfig(__name__)
 
         self.tag_icon           = QIcon(icons_path + "icon-tag-24.png")
-
+        tag_icn = QPixmap(utility.misc.get_web_folder_path() + "icons/icon-tag-24.png").scaled(14,14)
+        
         if self.parent.dark_mode_used:
             tag_bg                  = config["styles.night.tagBackgroundColor"]
             tag_fg                  = config["styles.night.tagForegroundColor"]
@@ -402,11 +404,7 @@ class CreateTab(QWidget):
             tag_fg                  = config["styles.tagForegroundColor"]
             hover_bg                = "palette(dark)"
 
-        include_anki_tags   = get_config_value_or_default("notes.editor.include_anki_tags", False)
-        tag_sort            = get_config_value_or_default("notes.editor.tag_sort", "a-z")
 
-        self.tree   = TagTree(include_anki_tags = include_anki_tags, only_tags = True, knowledge_tree = False, sort=tag_sort)
-        self.tree.itemClicked.connect(self.tree_item_clicked)
 
         queue_len   = len(parent.priority_list)
         schedule    = None if self.parent.note is None else self.parent.note.reminder
@@ -415,49 +413,16 @@ class CreateTab(QWidget):
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(10,10,10,10)
 
-        vbox_taglist = QVBoxLayout()
-        vbox_taglist.setContentsMargins(0,0,0,0)
-        tag_lbl = QLabel()
-        tag_icn = QPixmap(utility.misc.get_web_folder_path() + "icons/icon-tag-24.png").scaled(14,14)
-        tag_lbl.setPixmap(tag_icn)
 
-        tag_hb = QHBoxLayout()
-        tag_hb.setAlignment(Qt.AlignLeft)
-        tag_hb.addWidget(tag_lbl)
-        tag_hb.addWidget(QLabel("Tags (Click to Add)"))
-
-        vbox_taglist.addLayout(tag_hb)
-
-        vbox_taglist.addWidget(self.tree)
-        self.all_tags_cb = QCheckBox("Include Anki Tags")
-        self.all_tags_cb.setChecked(include_anki_tags)
-        self.all_tags_cb.stateChanged.connect(self.tag_cb_changed)
-        hbox_tag_b = QHBoxLayout()
-        hbox_tag_b.addWidget(self.all_tags_cb)
-
-        self.tag_sort = QComboBox()
-        self.tag_sort.addItem("A-Z")
-        self.tag_sort.addItem("Recency")
-        self.tag_sort.currentTextChanged.connect(self.on_tag_sort_change)
-        self.tag_sort.setCurrentText(tag_sort)
-        hbox_tag_b.addStretch(10)
-        hbox_tag_b.addWidget(QLabel("Sort: "))
-        hbox_tag_b.addWidget(self.tag_sort)
-
-
-        hbox_tag_b.addStretch(1)
-        vbox_taglist.addLayout(hbox_tag_b)
 
 
         vbox_priority = QVBoxLayout()
         vbox_priority.setContentsMargins(0,0,0,0)
         vbox_priority.addWidget(self.slider)
 
-        widget_taglist = QWidget()
         widget_priority = QWidget()
         widget_priority.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
 
-        widget_taglist.setLayout(vbox_taglist)
         widget_priority.setLayout(vbox_priority)
 
         tmp_layout = QVBoxLayout()
@@ -465,8 +430,8 @@ class CreateTab(QWidget):
 
         self.left_pane = QWidget()
         self.left_pane.setLayout(tmp_layout)
-        self.left_pane.layout().addWidget(widget_taglist, 1)
-        self.left_pane.layout().addWidget(widget_priority, 0)
+        #self.left_pane.layout().addWidget(widget_taglist, 1)
+        self.left_pane.layout().addWidget(widget_priority, 1)
         self.layout.addWidget(self.left_pane, 7)
 
         hbox = QHBoxLayout()
@@ -658,15 +623,23 @@ class CreateTab(QWidget):
         tag_hb2.addWidget(QLabel("Tags"))
 
         vbox.addLayout(tag_hb2)
+
+        tag_hbox = QHBoxLayout()
         self.tag = QLineEdit()
         tags = get_all_tags()
         if tags:
             completer = QCompleter(tags)
             completer.setCaseSensitivity(Qt.CaseInsensitive)
             self.tag.setCompleter(completer)
-        vbox.addWidget(self.tag)
+        tag_hbox.addWidget(self.tag)
         if self.parent.tag_prefill is not None:
             self.tag.setText(self.parent.tag_prefill)
+        self.tag_chooser = QPushButton("Choose")
+        self.tag_chooser.clicked.connect(self.on_tag_chooser_clicked)
+        tag_hbox.addWidget(self.tag_chooser)
+
+        vbox.addLayout(tag_hbox)
+
 
         vbox.setAlignment(Qt.AlignTop)
         vbox.addSpacing(10)
@@ -714,23 +687,6 @@ class CreateTab(QWidget):
             res.append(ti)
         return res
 
-    def tree_item_clicked(self, item, col):
-        tag = item.data(1, 1)
-        self.add_tag(tag)
-
-    def recent_item_clicked(self, item):
-        tag = item.data(Qt.UserRole)
-        self.add_tag(tag)
-
-    def add_tag(self, tag):
-        if tag is None or len(tag.strip()) == 0:
-            return
-        existing = self.tag.text().split()
-        if tag in existing:
-            return
-        existing.append(tag)
-        existing = sorted(existing)
-        self.tag.setText(" ".join(existing))
 
     def tag_cb_changed(self, state):
         self.tree.include_anki_tags = (state == Qt.Checked)
@@ -861,6 +817,14 @@ class CreateTab(QWidget):
                 self.source.setText(path)
             else:
                 tooltip("Invalid URL")
+
+    def on_tag_chooser_clicked(self):
+        dialog = TagChooserDialog(self.tag.text(), self)
+
+        if dialog.exec_():
+            tag = dialog.chosen_tag
+            if tag is not None and len(tag.strip()) > 0:
+                self.tag.setText(tag)
 
 
     def on_url_clicked(self):
