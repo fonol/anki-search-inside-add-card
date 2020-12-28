@@ -75,6 +75,9 @@
 "pdf.shortcuts.page_right": "CTRL+Right",
 "pdf.shortcuts.toggle_read_page_right": "CTRL+Shift+Space",
 "pdf.shortcuts.init_area_highlight": "CTRL+Shift+A",
+"pdf.shortcuts.page_snapshot": "",
+"pdf.shortcuts.extract_pages": "",
+
 "notes.queue.priorityScaleFactor": 5,
 "notes.queue.missedNotesHandling": "remove-schedule",
 "notes.queue.scheduleDialogOnDoneUnscheduledNotes": false,

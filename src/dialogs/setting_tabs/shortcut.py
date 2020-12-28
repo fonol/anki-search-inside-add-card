@@ -72,7 +72,9 @@ class ShortcutSettingsTab(QWidget):
             shortcut("pdf.shortcuts.toggle_pdf_links",        "Toggle PDF Links",         id_pdf),
             shortcut("pdf.shortcuts.toggle_page_read",        "Toggle page read",         id_pdf),
             shortcut("pdf.shortcuts.init_area_highlight",     "Area Highlight",           id_pdf),
-
+            shortcut("pdf.shortcuts.page_snapshot",           "Page Snapshot",            id_pdf),
+            shortcut("pdf.shortcuts.extract_pages",           "Extract Pages",            id_pdf),
+            
             # Search Shortcuts
             shortcut("shortcuts.focus_search_bar",            "Focus Search Bar",         id_search),
             shortcut("shortcuts.trigger_search",              "Trigger Search",           id_search),

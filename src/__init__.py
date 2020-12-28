@@ -503,6 +503,12 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     # 'Later' in reading modal
     _try_register(config["pdf.shortcuts.later"], lambda: editor.web.eval("laterShortcut()"))
 
+    # 'Page Snapshot'
+    _try_register(config['pdf.shortcuts.page_snapshot'], lambda: editor.web.eval("pageSnapshot()"))
+
+    # 'Extract'
+    _try_register(config['pdf.shortcuts.extract_pages'], lambda: editor.web.eval("extractPages()"))
+
     # Jump to first/last page in pdf reader
     _try_register(config["pdf.shortcuts.jump_to_last_page"], lambda: editor.web.eval("jumpLastPageShortcut()"))
     _try_register(config["pdf.shortcuts.jump_to_first_page"], lambda: editor.web.eval("jumpFirstPageShortcut()"))
