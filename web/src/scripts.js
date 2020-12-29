@@ -985,7 +985,7 @@ window.drawHeatmap = function (id, data) {
         legendColors = {
             min: "#fed976",
             max: "#800026",
-            empty: "black"
+            empty: "rgb(110,110,110)"
         }
     }
     let cellSize = 11;
