@@ -494,7 +494,6 @@ window.clearSearchResults = function () {
         notes_old[i].remove();
     }
     try {
-        byId("siac-start-info").remove();
         byId("greyout").style.display = "none";
     } catch (e) { }
 
