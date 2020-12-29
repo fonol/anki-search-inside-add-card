@@ -504,8 +504,9 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Rework some UI parts",
-        "Fix: Review due linked cards not being sorted by creation date"
+        "Add Create Note button to tag meta card",
+        "Fix: Find invalid paths in PDF meta card not working with file:/// sources",
+        "Fix: Read stats heatmap not fitting in card on smaller screen sizes",
     ]
 
 def known_issues() -> List[str]:
