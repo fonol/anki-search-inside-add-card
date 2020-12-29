@@ -37,7 +37,7 @@ from ..web_import import import_webpage
 from .importing.url_import import UrlImporter
 from .tag_chooser import TagChooserDialog
 from .external_file import ExternalFile
-from .components import QtPrioritySlider, MDTextEdit
+from .components import QtPrioritySlider, MDTextEdit, QtScheduleComponent
 from .url_input_dialog import URLInputDialog
 from ..markdown.extensions.fenced_code import FencedCodeExtension
 from ..markdown.extensions.def_list import DefListExtension
@@ -208,13 +208,16 @@ class NoteEditor(QDialog):
 
         self.tabs = QTabWidget()
 
-        self.create_tab = CreateTab(self)
+        self.create_tab     = CreateTab(self)
 
         #self.browse_tab = BrowseTab()
         self.tabs.addTab(self.create_tab, "Create" if self.note_id is None else "Edit")
 
         self.metadata_tab = MetadataTab(self)
         self.tabs.addTab(self.metadata_tab, "Metadata")
+
+        self.schedule_tab   = ScheduleTab(self)
+        self.tabs.addTab(self.schedule_tab, "Schedule")
 
         if not self.add_only:
             self.priority_tab = PriorityTab(priority_list, self)
@@ -293,7 +296,7 @@ class NoteEditor(QDialog):
         source              = self.create_tab.source.text()
         tags                = self.create_tab.tag.text()
         priority            = self.create_tab.slider.value()
-        specific_schedule   = self.create_tab.slider.schedule()
+        specific_schedule   = self.schedule_tab.scheduler.schedule()
         author              = self.metadata_tab.author.text()
         url                 = self.metadata_tab.url.text()
 
@@ -326,9 +329,6 @@ class NoteEditor(QDialog):
             self.create_tab.source.setText("")
         self.create_tab.title.setFocus()
 
-        self.create_tab.tree.include_anki_tags = self.create_tab.all_tags_cb.isChecked()
-        self.create_tab.tree.rebuild_tree()
-
 
     def on_update_clicked(self):
         title = self.create_tab.title.text()
@@ -352,7 +352,7 @@ class NoteEditor(QDialog):
         if not self.create_tab.slider.has_changed_value():
             # -1 = unchanged
             priority = -1
-        specific_schedule       = self.create_tab.slider.schedule()
+        specific_schedule       = self.schedule_tab.scheduler.schedule()
 
         NoteEditor.last_tags    = tags
         update_note(self.note_id, title, text, source, tags, specific_schedule, priority, author, url)
@@ -384,9 +384,6 @@ class CreateTab(QWidget):
 
         self.queue_schedule     = 0
         self.parent             = parent
-        self.tree               = QTreeWidget()
-        self.original_bg        = None
-        self.original_fg        = None
 
         web_path                = utility.misc.get_web_folder_path()
         icons_path              = web_path + "icons/"
@@ -404,44 +401,11 @@ class CreateTab(QWidget):
             tag_fg                  = config["styles.tagForegroundColor"]
             hover_bg                = "palette(dark)"
 
-
-
         queue_len   = len(parent.priority_list)
-        schedule    = None if self.parent.note is None else self.parent.note.reminder
-        self.slider = QtPrioritySlider(self.parent.priority, self.parent.note_id, schedule=schedule)
-
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(10,10,10,10)
 
-
-
-
-        vbox_priority = QVBoxLayout()
-        vbox_priority.setContentsMargins(0,0,0,0)
-        vbox_priority.addWidget(self.slider)
-
-        widget_priority = QWidget()
-        widget_priority.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
-
-        widget_priority.setLayout(vbox_priority)
-
-        tmp_layout = QVBoxLayout()
-        tmp_layout.setContentsMargins(0,0,0,0)
-
-        self.left_pane = QWidget()
-        self.left_pane.setLayout(tmp_layout)
-        #self.left_pane.layout().addWidget(widget_taglist, 1)
-        self.left_pane.layout().addWidget(widget_priority, 1)
-        self.layout.addWidget(self.left_pane, 7)
-
         hbox = QHBoxLayout()
-
-        self.toggle_btn = QToolButton()
-        self.toggle_btn.setText("<")
-        self.toggle_btn.setFocusPolicy(Qt.NoFocus)
-        self.toggle_btn.clicked.connect(self.toggle_left_pane)
-        hbox.addWidget(self.toggle_btn)
-
         hbox.addStretch(1)
         if parent.note_id is None:
             hbox.addWidget(parent.save_and_stay)
@@ -449,7 +413,6 @@ class CreateTab(QWidget):
         hbox.addWidget(parent.cancel)
 
         vbox = QVBoxLayout()
-        # vbox.addStretch(1)
 
         title_lbl = QLabel("Title")
         self.title = QLineEdit()
@@ -467,7 +430,6 @@ class CreateTab(QWidget):
         f.setPointSize(12)
         self.text.setFont(f)
 
-
         if self.parent.screen_h < 1400:
             self.text.setMinimumHeight(180)
             self.text.setMinimumWidth(370)
@@ -480,14 +442,12 @@ class CreateTab(QWidget):
             QSizePolicy.Expanding)
         self.text.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         self.text.setLineWidth(2)
-        # self.text.cursorPositionChanged.connect(self.on_text_cursor_change)
         if hasattr(self.text, "setTabStopDistance"):
             self.text.setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 4)
         t_h = QHBoxLayout()
         t_h.addWidget(text_lbl)
 
         self.tb = QToolBar("Format")
-        # self.tb.setStyleSheet("background-color: transparent; border: 0px;")
 
         self.tb.setHidden(False)
         self.tb.setOrientation(Qt.Horizontal)
@@ -581,16 +541,6 @@ class CreateTab(QWidget):
         if self.parent.text_prefill is not None:
             self.text.setPlainText(self.parent.text_prefill)
 
-        # btn_styles = """
-        # QPushButton#q_1 { padding-left: 20px; padding-right: 20px; }
-        # QPushButton#q_2 { padding-left: 17px; padding-right: 17px; }
-        # QPushButton#q_3 { padding-left: 13px; padding-right: 13px; }
-        # QPushButton#q_4 { padding-left: 8px; padding-right: 8px; }
-        # QPushButton#q_5 { padding-left: 2px; padding-right: 2px; }
-        # QPushButton#q_6 { padding-left: 0px; padding-right: 0px; }
-        # QPushButton:hover#q_1,QPushButton:hover#q_2,QPushButton:hover#q_3,QPushButton:hover#q_4,QPushButton:hover#q_5,QPushButton:hover#q_6 { background-color: lightblue; }
-        # """
-
         self.setObjectName("create_tab")
 
         styles = """
@@ -637,16 +587,19 @@ class CreateTab(QWidget):
         self.tag_chooser = QPushButton("Choose")
         self.tag_chooser.clicked.connect(self.on_tag_chooser_clicked)
         tag_hbox.addWidget(self.tag_chooser)
-
         vbox.addLayout(tag_hbox)
 
+
+        self.slider = QtPrioritySlider(self.parent.priority, self.parent.note_id, show_spec_sched=False, show_similar=False)
+        self.slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        vbox.addWidget(self.slider)
+        # vbox.addStretch()
 
         vbox.setAlignment(Qt.AlignTop)
         vbox.addSpacing(10)
         vbox.addLayout(hbox)
         vbox.setSpacing(5)
-        self.layout.addSpacing(5)
-        self.layout.addLayout(vbox, 73)
+        self.layout.addLayout(vbox)
         self.setLayout(self.layout)
 
         # if we are in update mode, fill fields
@@ -660,11 +613,6 @@ class CreateTab(QWidget):
                 self.text.setPlainText(parent.note.text)
             self.source.setText(parent.note.source)
 
-
-        # toggle left pane by default if enabled in settings
-        if get_config_value_or_default("notes.editor.autoHideLeftPaneOnOpen", False):
-            self.left_pane.setVisible(False)
-            self.toggle_btn.setText(">")
 
         # fill tags with last tags if enabled in settings
         if (parent.note is None
@@ -687,34 +635,6 @@ class CreateTab(QWidget):
             res.append(ti)
         return res
 
-
-    def tag_cb_changed(self, state):
-        self.tree.include_anki_tags = (state == Qt.Checked)
-        self.tree.rebuild_tree()
-        update_config("notes.editor.include_anki_tags", state == Qt.Checked)
-
-    def on_tag_sort_change(self, new_sort: str):
-        self.tree.sort = new_sort.lower()
-        self.tree.rebuild_tree()
-        update_config("notes.editor.tag_sort", new_sort)
-
-
-#    def build_tree(self, tmap):
-#        for t, children in tmap.items():
-#            ti = QTreeWidgetItem([t])
-#            ti.setData(1, 1, QVariant(t))
-#            ti.setIcon(0, self.tag_icon)
-#            ti.addChildren(self._add_to_tree(children, t + "::"))
-#            self.tree.addTopLevelItem(ti)
-
-    def toggle_left_pane(self):
-        self.left_pane.setVisible(not self.left_pane.isVisible())
-        if self.left_pane.isVisible():
-            self.toggle_btn.setText("<")
-        else:
-            self.toggle_btn.setText(">")
-
-    # def on_text_history_exp(self):
 
     def on_preview_clicked(self):
         if self.preview.isHidden():
@@ -854,6 +774,28 @@ class CreateTab(QWidget):
         col = cursor.columnNumber()
         self.line_status.setText("Ln: {}, Col: {}".format(line,col))
 
+class ScheduleTab(QWidget):
+
+    def __init__(self, parent):
+        QWidget.__init__(self)
+        self.parent = parent
+        self.setup_ui()
+    
+    def setup_ui(self):
+
+        self.setLayout(QHBoxLayout())
+        schedule    = None if self.parent.note is None else self.parent.note.reminder
+        self.scheduler = QtScheduleComponent(schedule)
+        vbox_priority = QVBoxLayout()
+        vbox_priority.addWidget(self.scheduler)
+
+        widget_priority = QWidget()
+        widget_priority.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
+
+        widget_priority.setLayout(vbox_priority)
+
+        self.layout().addWidget(widget_priority)
+        self.layout().addStretch()
 
 class PriorityTab(QWidget):
 
@@ -875,14 +817,7 @@ class PriorityTab(QWidget):
 
         self.t_view.resizeColumnsToContents()
         self.t_view.setSelectionBehavior(QAbstractItemView.SelectRows)
-        # self.t_view.setDragEnabled(True)
-        # self.t_view.setDropIndicatorShown(True)
-        # self.t_view.setAcceptDrops(True)
-        # self.t_view.viewport().setAcceptDrops(True)
-        # self.t_view.setDragDropOverwriteMode(False)
-
-        # self.t_view.setDragDropMode(QAbstractItemView.InternalMove)
-        # self.t_view.setDefaultDropAction(Qt.MoveAction)
+   
         if priority_list is not None and len(priority_list) > 0:
             self.t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
             self.t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -897,13 +832,6 @@ class PriorityTab(QWidget):
         lbl = QLabel("'Remove' will only remove the item from the queue, not delete it.")
         self.vbox.addWidget(lbl)
         self.vbox.addWidget(self.t_view)
-
-        # bottom_box = QHBoxLayout()
-        # # self.shuffle_btn = QPushButton("Shuffle")
-        # # # self.shuffle_btn.clicked.connect(self.on_shuffle_btn_clicked)
-        # # bottom_box.addWidget(self.shuffle_btn)
-        # # bottom_box.addStretch(1)
-        # self.vbox.addLayout(bottom_box)
 
         self.setLayout(self.vbox)
         if parent.dark_mode_used:
@@ -1013,10 +941,6 @@ class SettingsTab(QWidget):
         self.auto_fill_with_last_tag_cb.clicked.connect(self.auto_fill_with_last_tag_cb_clicked)
         self.layout.addWidget(self.auto_fill_with_last_tag_cb)
 
-        self.auto_hide_left_pane_cb = QCheckBox("Hide left side by default on open")
-        self.auto_hide_left_pane_cb.setChecked(get_config_value_or_default("notes.editor.autoHideLeftPaneOnOpen", False))
-        self.auto_hide_left_pane_cb.clicked.connect(self.auto_hide_left_pane_cb_clicked)
-        self.layout.addWidget(self.auto_hide_left_pane_cb)
 
         self.layout.addWidget(QLabel("Shortcut for this modal (default \"Ctrl+Shift+n\", requires Anki restart):"))
         self.shortcut_le = QLineEdit()
@@ -1070,9 +994,6 @@ class SettingsTab(QWidget):
         self.layout.addStretch(1)
         self.setLayout(self.layout)
         self.update_queue_example()
-
-    def auto_hide_left_pane_cb_clicked(self):
-        update_config("notes.editor.autoHideLeftPaneOnOpen", self.auto_hide_left_pane_cb.isChecked())
 
     def auto_fill_with_last_tag_cb_clicked(self):
         update_config("notes.editor.autoFillWithLastTagsOnOpen", self.auto_fill_with_last_tag_cb.isChecked())

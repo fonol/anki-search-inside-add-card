@@ -33,7 +33,7 @@ import utility.text
 class QtPrioritySlider(QWidget):
 
 
-    def __init__(self, prio_default, nid, show_spec_sched=True, schedule=None):
+    def __init__(self, prio_default, nid, show_spec_sched=True, schedule=None, show_similar=True):
         QWidget.__init__(self)
 
         self.prio_default       = prio_default
@@ -42,6 +42,7 @@ class QtPrioritySlider(QWidget):
         self.show_spec_sched    = show_spec_sched
         self.nid                = nid
         self.note               = None
+        self.show_similar       = show_similar
         if nid and nid > 0:
             self.note           = get_note(self.nid)
             self.note_title     = self.note.get_title()
@@ -64,6 +65,7 @@ class QtPrioritySlider(QWidget):
 
         self.value_lbl          = QLabel(str(prio_default))
         self.value_lbl.setAlignment(Qt.AlignCenter)
+        self.value_lbl.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
 
         hvalue                  = QHBoxLayout()
         hvalue.addSpacing(40)
@@ -73,13 +75,14 @@ class QtPrioritySlider(QWidget):
 
         avg_lbl                 = QLabel(f"Ø: {self.avg_prio}")
         avg_lbl.setStyleSheet(f"padding-left: 4px; padding-right: 4px; color: white; background-color: {utility.misc.prio_color(self.avg_prio)};")
+        avg_lbl.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         hvalue.addWidget(avg_lbl)
         vbox.addLayout(hvalue)
 
         if not self.show_spec_sched and self.nid:
             self.similar = QLabel("")
             vbox.addWidget(self.similar)
-        vbox.addStretch()
+        # vbox.addStretch()
 
         if show_spec_sched:
             self.scheduler = QtScheduleComponent(schedule)
@@ -91,6 +94,8 @@ class QtPrioritySlider(QWidget):
         vbox_outer.setContentsMargins(0,0,0,0)
         vbox_outer.addWidget(box)
         self.setLayout(vbox_outer)
+
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
 
         self.update_lbl()
         self.slider.valueChanged.connect(self.update_lbl)
@@ -106,11 +111,7 @@ class QtPrioritySlider(QWidget):
         return self.value() != self.prio_default
 
     def schedule(self):
-        new = self.scheduler._get_schedule()
-        # None means no specific schedule given
-        if new is None:
-            return self.scheduler.initial_schedule
-        return new
+        return self.scheduler.schedule() 
 
     def reset(self):
         self.slider.setValue(0)
@@ -133,7 +134,7 @@ class QtPrioritySlider(QWidget):
             # If 0 priority, disable setting specific schedule
             if self.show_spec_sched:
                 self.scheduler.priority_set_to_zero()
-            elif self.nid:
+            elif self.nid and self.show_similar:
                 self.similar.setText(f"<br>Info: A note without a priority won't appear in <br>the queue, unless it has a schedule<br>which is due on that day.")
             self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #c62828; border-radius: 3px; }")
 
@@ -142,7 +143,7 @@ class QtPrioritySlider(QWidget):
             self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #2496dc; border-radius: 3px;}")
             if self.show_spec_sched:
                 self.scheduler.priority_set_to_non_zero()
-            elif self.nid:
+            elif self.nid and self.show_similar:
                 val = self.slider.value()
                 if self.nid is not None:
                     similar = find_notes_with_similar_prio(self.nid, val)
@@ -179,6 +180,13 @@ class QtScheduleComponent(QWidget):
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0,0,0,0)
         self.layout().addWidget(self.edit_tab)
+
+    def schedule(self):
+        new = self._get_schedule()
+        # None means no specific schedule given
+        if new is None:
+            return self.initial_schedule
+        return new
 
     def _get_schedule(self):
         return self.edit_tab._get_schedule()
