@@ -272,16 +272,18 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-show-pdfs-unread":
-        if check_index():
-            stamp = set_stamp()
-            notes = get_all_unread_pdf_notes()
-            index.ui.print_search_results(notes, stamp)
+        stamp   = set_stamp()
+        notes   = get_all_unread_pdf_notes()
+        sp_body = get_pdf_list_first_card()
+        notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
+        index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-show-pdfs-in-progress":
-        if check_index():
-            stamp = set_stamp()
-            notes = get_in_progress_pdf_notes()
-            index.ui.print_search_results(notes, stamp)
+        stamp = set_stamp()
+        notes = get_in_progress_pdf_notes()
+        sp_body = get_pdf_list_first_card()
+        notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
+        index.ui.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-show-due-today":
         stamp = set_stamp()
