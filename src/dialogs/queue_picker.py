@@ -77,7 +77,7 @@ class QueuePicker(QDialog):
         self.setWindowTitle("Queue Manager")
         self.showMaximized()
         # self.setWindowState(Qt.WindowFullScreen)
-    
+
     def setup_ui(self):
         self.setLayout(QVBoxLayout())
         self.mode_sel = QComboBox()
@@ -90,7 +90,7 @@ class QueuePicker(QDialog):
 
         self.queue_widget = QueueWidget(self)
         self.sched_widget = ScheduleMWidget(self)
-        
+
         self.sched_widget.setVisible(False)
 
         self.layout().addWidget(self.queue_widget)
@@ -108,11 +108,11 @@ class QueuePicker(QDialog):
             self.sched_widget.setVisible(True)
             self.sched_widget.refresh()
 
-   
 
-    
+
+
 class PDFsTab(QWidget):
-    
+
     def __init__(self, parent):
         self.parent = parent
         QWidget.__init__(self)
@@ -120,7 +120,7 @@ class PDFsTab(QWidget):
 
     def setup_ui(self):
         self.vbox_right = QVBoxLayout()
-        r_lbl = QLabel("PDF notes, not in Queue") 
+        r_lbl = QLabel("PDF notes, not in Queue")
         r_lbl.setAlignment(Qt.AlignCenter)
         self.vbox_right.addWidget(r_lbl)
         self.search_bar_right = QLineEdit()
@@ -130,9 +130,9 @@ class PDFsTab(QWidget):
         self.t_view_right = NoteList(self)
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
-        
+
         self.setLayout(self.vbox_right)
-    
+
     def refresh(self):
         self.search_bar_right.clear()
         self.fill_list(get_pdf_notes_not_in_queue())
@@ -150,7 +150,7 @@ class PDFsTab(QWidget):
         self.fill_list(res)
 
 class VideosTab(QWidget):
-    
+
     def __init__(self, parent):
         self.parent = parent
         QWidget.__init__(self)
@@ -158,7 +158,7 @@ class VideosTab(QWidget):
 
     def setup_ui(self):
         self.vbox_right = QVBoxLayout()
-        r_lbl = QLabel("Video notes, not in Queue") 
+        r_lbl = QLabel("Video notes, not in Queue")
         r_lbl.setAlignment(Qt.AlignCenter)
         self.vbox_right.addWidget(r_lbl)
         self.search_bar_right = QLineEdit()
@@ -169,7 +169,7 @@ class VideosTab(QWidget):
         self.vbox_right.addWidget(self.t_view_right)
         self.vbox_right.setAlignment(Qt.AlignHCenter)
         self.setLayout(self.vbox_right)
-    
+
     def refresh(self):
         self.search_bar_right.clear()
         self.fill_list(get_video_notes_not_in_queue())
@@ -186,7 +186,7 @@ class VideosTab(QWidget):
         self.fill_list(res)
 
 class TextNotesTab(QWidget):
-    
+
     def __init__(self, parent):
         self.parent = parent
         QWidget.__init__(self)
@@ -194,7 +194,7 @@ class TextNotesTab(QWidget):
 
     def setup_ui(self):
         self.vbox_right         = QVBoxLayout()
-        r_lbl                   = QLabel("Text notes, not in Queue") 
+        r_lbl                   = QLabel("Text notes, not in Queue")
         r_lbl.setAlignment(Qt.AlignCenter)
         self.vbox_right.addWidget(r_lbl)
 
@@ -225,7 +225,7 @@ class TextNotesTab(QWidget):
         self.fill_list(res)
 
 class FoldersTab(QWidget):
-    
+
     def __init__(self, parent):
         self.parent = parent
         QWidget.__init__(self)
@@ -234,11 +234,11 @@ class FoldersTab(QWidget):
 
     def setup_ui(self):
         self.vbox_left = QVBoxLayout()
-        r_lbl = QLabel("Most Used Folders:") 
+        r_lbl = QLabel("Most Used Folders:")
         r_lbl.setAlignment(Qt.AlignCenter)
         self.vbox_left.addWidget(r_lbl)
         self.vbox_left.setAlignment(r_lbl, Qt.AlignTop)
- 
+
         self.folders_tree = QTreeWidget()
         self.folders_tree.setColumnCount(1)
         # self.folders_tree.setSizePolicy(QSizePolicy.M, QSizePolicy.Minimum)
@@ -287,12 +287,12 @@ class FoldersTab(QWidget):
         hbox = QHBoxLayout()
         hbox.addLayout(self.vbox_left)
         hbox.addLayout(self.vbox_right)
-        self.setLayout(hbox) 
+        self.setLayout(hbox)
         self.setStyleSheet("""
             QTreeWidget::item {
                 padding: 0;
                 margin: 0;
-            } 
+            }
         """)
 
     def tree_item_clicked(self, item):
@@ -362,7 +362,7 @@ class FoldersTab(QWidget):
             if self.path_displayed is not None:
                 tab = self
                 def after():
-                    tab.load_folders_unused_pdfs(tab.path_displayed) 
+                    tab.load_folders_unused_pdfs(tab.path_displayed)
                     tab.parent.refresh_queue_list()
                     tab.parent.pdfs_tab.refresh()
                 add_tmp_hook("user-note-created", after)
@@ -371,7 +371,7 @@ class FoldersTab(QWidget):
             tooltip("Close the opened Note dialog first!")
 
 class TagsTab(QWidget):
-    
+
     def __init__(self, parent):
         self.parent = parent
         QWidget.__init__(self)
@@ -381,19 +381,19 @@ class TagsTab(QWidget):
     def setup_ui(self):
 
         self.vbox_left                  = QVBoxLayout()
-        r_lbl                           = QLabel("Tags") 
+        r_lbl                           = QLabel("Tags")
         r_lbl.setAlignment(Qt.AlignCenter)
 
         self.vbox_left.addWidget(r_lbl)
         self.vbox_left.setAlignment(r_lbl, Qt.AlignTop)
- 
+
         if state.night_mode:
             self.tag_fg                 = get_config_value("styles.night.tagForegroundColor")
             self.tag_bg                 = get_config_value("styles.night.tagBackgroundColor")
         else:
             self.tag_fg                 = get_config_value("styles.tagForegroundColor")
             self.tag_bg                 = get_config_value("styles.tagBackgroundColor")
-        
+
 
         self.tag_tree                   = QTreeWidget()
         self.tag_tree.setColumnCount(1)
@@ -455,20 +455,19 @@ class TagsTab(QWidget):
         btn_hbox.addWidget(self.empty_and_enqueue_all_btn)
         btn_hbox.addStretch()
         self.vbox_right.addLayout(btn_hbox)
-     
+
         self.tag_tree.itemClicked.connect(self.tree_item_clicked)
         hbox                            = QHBoxLayout()
         hbox.addLayout(self.vbox_left)
         hbox.addLayout(self.vbox_right)
-        self.setLayout(hbox) 
+        self.setLayout(hbox)
         self.setStyleSheet("""
             QTreeWidget::item {
                 padding: 0;
                 margin: 0;
-            } 
+            }
         """)
        
-
     def tree_item_clicked(self, item):
         tag = item.data(1,1)
         self.load_tags_unused_notes(tag)
@@ -521,7 +520,7 @@ class TagsTab(QWidget):
             self.load_tags_unused_notes(self.tag_displayed)
 
     def enqueue(self, sched):
-        if sched == 0: 
+        if sched == 0:
             return
         sels = self.list.selectedItems()
         if sels is None or len(sels) == 0:
@@ -532,7 +531,7 @@ class TagsTab(QWidget):
         self.parent.refresh_queue_list()
         self.refresh()
         tooltip(f"Moved in Queue, with priority <b>{dynamic_sched_to_str(sched)}</b>")
-    
+
     def empty_queue_and_enqueue_all(self):
         if self.tag_displayed is None:
             return
@@ -540,7 +539,7 @@ class TagsTab(QWidget):
         if len(notes) == 0:
             return
         dialog = PriorityDialog(self, None)
-        
+
         if dialog.exec_():
             empty_priority_list()
             prio = dialog.value
@@ -553,12 +552,12 @@ class TagsTab(QWidget):
     def enqueue_all(self):
         if self.tag_displayed is None:
             return
-        
+
         notes = get_unqueued_notes_for_tag(self.tag_displayed)
         if len(notes) == 0:
             return
         dialog = PriorityDialog(self, None)
-        
+
         if dialog.exec_():
             prio = dialog.value
             for n in notes:
@@ -578,9 +577,9 @@ class ScheduleMWidget(QWidget):
         self.table_boundary = 14
         self.setup_ui()
 
-    
+
     def refresh(self):
-        self.notes = get_notes_by_future_due_date() 
+        self.notes = get_notes_by_future_due_date()
         self.prios = get_priorities([item.id for item in [item for sublist in self.notes.values() for item in sublist]])
         self.fill_table()
         self.frame_cb.setCurrentIndex([14,28,60,180].index(self.table_boundary))
@@ -592,9 +591,9 @@ class ScheduleMWidget(QWidget):
         self.table.setSelectionMode(QAbstractItemView.NoSelection)
         self.table.setRowCount(len(self.notes))
         self.table.setColumnCount(2)
-        self.table.horizontalHeader().setVisible(False) 
+        self.table.horizontalHeader().setVisible(False)
         self.table.verticalHeader().setVisible(False)
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents) 
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
         v_left = QVBoxLayout()
@@ -629,15 +628,15 @@ class ScheduleMWidget(QWidget):
 
         # self.layout().addStretch()
         self.fill_table()
-        
+
     def fill_table(self):
         self.table.clear()
         self.table.setRowCount(len(self.notes))
-        
+
         due_dates   = sorted(self.notes.keys())
         c_total     = 0
         ix          = -1
-        today_stmp  = datetime.today().strftime("%Y-%m-%d") 
+        today_stmp  = datetime.today().strftime("%Y-%m-%d")
 
         while ix < len(due_dates) - 1:
 
@@ -656,23 +655,23 @@ class ScheduleMWidget(QWidget):
             sub.setSelectionMode(QAbstractItemView.NoSelection)
             sub.setRowCount(len(self.notes[due_date]))
             sub.setColumnCount(3)
-            sub.horizontalHeader().setVisible(False) 
+            sub.horizontalHeader().setVisible(False)
             sub.verticalHeader().setVisible(False)
-            sub.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents) 
+            sub.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
             sub.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-            sub.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch) 
+            sub.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
 
             item = QTableWidgetItem(pretty)
             item.setTextAlignment(Qt.AlignTop)
             self.table.setItem(ix, 0, item)
-            if ix == 0 and today_stmp == due_date:            
+            if ix == 0 and today_stmp == due_date:
                 self.table.item(ix, 0).setForeground(Qt.blue if not state.night_mode else Qt.cyan)
                 self.table.item(ix, 0).setText("Today")
             elif (datetime.today().date() + timedelta(days=1)).strftime("%Y-%m-%d") == due_date:
                 self.table.item(ix, 0).setText(f"{pretty}\n(Tomorrow)")
             due     = ""
             types   = ""
-            c_total += len(self.notes[due_date]) 
+            c_total += len(self.notes[due_date])
             for ix_2, note in enumerate(self.notes[due_date]):
                 if note.schedule_type() != "td" :
                     next_rem = note.reminder
@@ -691,10 +690,10 @@ class ScheduleMWidget(QWidget):
                                 self.notes[due_stamp] = [copied]
                                 self.table.setRowCount(len(self.notes))
                                 due_dates = sorted(self.notes.keys())
-                        else: 
+                        else:
                             break
 
-                
+
                 if note.id in self.prios:
                     prio = self.prios[note.id]
                 else:
@@ -718,7 +717,7 @@ class ScheduleMWidget(QWidget):
             sub.setColumnWidth(2, 300)
             sub.resizeRowsToContents()
             sub.setMaximumHeight(sub.verticalHeader().length() + 5)
-          
+
             self.table.setCellWidget(ix, 1, sub)
             # self.table.item(ix, 0).setFlags(Qt.ItemIsEnabled)
         self.table.resizeRowsToContents()
@@ -743,13 +742,13 @@ class QueueWidget(QWidget):
         queue           = _get_priority_list()
 
         self.fill_list(self.t_view_left, queue)
-        self.tabs_changed(0) 
-    
+        self.tabs_changed(0)
+
     def setup_ui(self):
 
         self.vbox_left      = QVBoxLayout()
         self.title_hbox          = QHBoxLayout()
-        l_lbl               = QLabel("Queue") 
+        l_lbl               = QLabel("Queue")
         self.title_hbox.addWidget(l_lbl)
         self.title_hbox.addStretch()
         self.vbox_left.addLayout(self.title_hbox)
@@ -837,7 +836,7 @@ class QueueWidget(QWidget):
         self.hbox.addWidget(self.tabs)
 
         self.vbox.addLayout(self.hbox)
-        
+
         bottom_box = QHBoxLayout()
         bottom_box.addStretch(1)
         self.reject_btn = QPushButton("Close")
@@ -908,7 +907,7 @@ class QueueWidget(QWidget):
             self.videos_tab.refresh()
         elif ix == 4:
             self.folders_tab.fill_tree(get_most_used_pdf_folders())
-        
+
 
     def fill_list(self, t_view, db_res):
         """ Fill the queue list. """
@@ -978,12 +977,12 @@ class QueueWidget(QWidget):
             t_view.setCellWidget(ix, 3, prio_lbl)
             t_view.setCellWidget(ix, 4, read_btn)
             t_view.setCellWidget(ix, 5, rem_btn)
-        
-        # clear title layout 
-        for i in reversed(range(self.title_hbox.count())): 
+
+        # clear title layout
+        for i in reversed(range(self.title_hbox.count())):
             if self.title_hbox.itemAt(i).widget():
                 self.title_hbox.itemAt(i).widget().setParent(None)
-        
+
         if len(db_res) == 0:
             self.unqueue_all_btn.setDisabled(True)
             self.title_hbox.insertWidget(max(0,self.title_hbox.count() - 2), QLabel(f"Queue, empty"))
@@ -997,7 +996,7 @@ class QueueWidget(QWidget):
         avg_prio_lbl.setText(f"Avg. Prio: {avg_prio}")
         avg_prio_lbl.setStyleSheet(f"background-color: {utility.misc.prio_color(avg_prio)}; padding: 4px; color: white; text-align: center;")
         self.title_hbox.insertWidget(self.title_hbox.count() - 1, avg_prio_lbl)
-        
+
         if len(note_types) > 0:
             for k,v in note_types.items():
                 lbl = QLabel(f"{k}: {v}")
@@ -1052,9 +1051,9 @@ class QueueWidget(QWidget):
                 tooltip(f"Removed {len(selected)} notes from queue.")
             self.unqueue_btn.setText(f"Remove Selected")
             self.unqueue_btn.setDisabled(True)
-        else: 
+        else:
             tooltip("Select some items first")
-    
+
     def empty_clicked(self):
         reply = QMessageBox.question(self, 'Empty Queue', "This will remove all items from the queue.<br> Are you sure?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
@@ -1124,7 +1123,7 @@ class QueueWidget(QWidget):
             self.unqueue_btn.setDisabled(False)
             self.tags_btn.setDisabled(False)
             self.unqueue_btn.setText(f" Remove Sel. ({sel_len})")
-        
+
     def cb_outer_clicked(self, row):
         widget = self.t_view_left.cellWidget(row, 0).layout().itemAt(0).widget()
         widget.setChecked(not widget.checkState() == Qt.Checked)
@@ -1150,7 +1149,7 @@ class QueueWidget(QWidget):
     def refresh_queue_list(self):
         self.fill_list(self.t_view_left, _get_priority_list())
 
-    
+
 
 
 class NoteList(QTableWidget):
@@ -1169,7 +1168,7 @@ class NoteList(QTableWidget):
         self.setFocusPolicy(Qt.NoFocus)
         self.cellDoubleClicked.connect(self.cell_clicked)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    
+
 
     def fill(self, notes):
         self.clearContents()
@@ -1204,17 +1203,17 @@ class NoteList(QTableWidget):
             self.setCellWidget(ix, 1, open_btn)
             self.setCellWidget(ix, 2, del_btn)
             self.setCellWidget(ix, 3, add_btn)
-        
+
         self.resizeRowsToContents()
 
-    
+
     def open_btn_clicked(self, id):
         self.parent.parent.set_chosen(id, "")
         win = mw.app.activeWindow()
         win.accept()
 
     def del_btn_clicked(self, id):
-        
+
         reply = QMessageBox.question(self, 'Delete Note?', "This will irreversibly delete the chosen note. \nAre you sure?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
         if reply == QMessageBox.Yes:
             delete_note(id)
@@ -1237,10 +1236,3 @@ class NoteList(QTableWidget):
             self.parent.parent.refresh_queue_list()
             self.parent.refresh()
             tooltip(f"Moved in Queue, with priority <b>{dynamic_sched_to_str(prio)}</b>")
-
-
-
-    
-    
-
-    

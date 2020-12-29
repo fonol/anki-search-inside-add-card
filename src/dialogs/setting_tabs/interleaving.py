@@ -21,6 +21,8 @@ class InterleavingSettingsTab(QWidget):
         self.previous_mixingmode = get_config_value("mix_reviews_and_reading.mode")
         self.previous_fuzz = get_config_value("mix_reviews_and_reading.fuzz")
 
+        self.previous_review_after_done = get_config_value("mix_reviews_and_reading.review_after_done")
+
         self.previous_cards_are_due_overlay = get_config_value("notes.show_linked_cards_are_due_overlay")
 
     def enable_interruption_settings(self, boolean):
@@ -43,6 +45,10 @@ class InterleavingSettingsTab(QWidget):
         label_explanation = QLabel("<i>" + explanation + "</i>")
         label_explanation.setWordWrap(True)
         vbox.addWidget(label_explanation)
+
+        self.cb_review_after_done = QCheckBox("Return to reviewing after Done!")
+        self.cb_review_after_done.setChecked(self.previous_review_after_done)
+        vbox.addWidget(self.cb_review_after_done)
 
         self.cb_enable_interruptor = QCheckBox("Enable review interruption")
         self.cb_enable_interruptor.setChecked(self.previous_enable_interruptor)
@@ -121,6 +127,8 @@ class InterleavingSettingsTab(QWidget):
         return_string = ""
 
         # get current settings from checkboxes etc
+        review_after_done = self.cb_review_after_done.isChecked()
+
         enable_interruptor = self.cb_enable_interruptor.isChecked()
         interrupt_dialog = self.cb_show_interrupt_dialog.isChecked()
         if self.cb_session.currentIndex()== 0:
@@ -137,6 +145,13 @@ class InterleavingSettingsTab(QWidget):
             mixingmode = "due_random"
 
         # check for changes
+        if review_after_done != self.previous_review_after_done:
+            update_config("mix_reviews_and_reading.review_after_done", review_after_done)
+            if review_after_done:
+                return_string += "Review after done: enabled. "
+            else:
+                return_string += "Review after done: disabled. "
+
         if enable_interruptor != self.previous_enable_interruptor:
             update_config("mix_reviews_and_reading", enable_interruptor)
             if enable_interruptor:

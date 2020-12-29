@@ -48,8 +48,21 @@ window.pdfImgMouseUp = function (event) {
 }
 /** Save whole page to image */
 window.pageSnapshot = function() {
+    // Function can be called from Qt-controlled shortcut,
+    // so it might be that there is no PDF opened when called.
+    if (!pdf.instance) {
+        return;
+    }
     var pdfC = activeCanvas();
     cropSelection(pdfC, 0, 0, pdfC.offsetWidth, pdfC.offsetHeight, insertImage);
+}
+window.extractPages = function() {
+    // Function can be called from Qt-controlled shortcut,
+    // so it might be that there is no PDF opened when called.
+    if (!pdf.instance) {
+        return;
+    }
+    pycmd("siac-create-pdf-extract " + pdf.page + " " + pdf.instance.numPages); event.stopPropagation();
 }
 window.cropSelection = function(canvasSrc, offsetX, offsetY, width, height, callback) {
     if (width < 2 || height < 2) {
@@ -119,7 +132,7 @@ window.clearImgSelectionCanvas = function() {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 window.initAreaHighlight = function() {
-   
+
     // remove any possibly already existing temporary canvases
     let existing = document.getElementsByClassName('area_highlight_cv');
     while(existing[0]) {

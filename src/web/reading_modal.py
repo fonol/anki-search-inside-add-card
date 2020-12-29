@@ -76,6 +76,8 @@ class ReadingModal:
 
     last_cloze          : Optional[Tuple[int, str]] = None
 
+    current_note        : Optional[SiacNote]        = None
+
     _original_win_title : Optional[str]             = None
 
     def __init__(self):
@@ -103,6 +105,7 @@ class ReadingModal:
     def reset(self):
         self.note_id                = None
         self.note                   = None
+        ReadingModal.current_note   = None
         self.sidebar.tab_displayed  = None
         if ReadingModal._original_win_title is not None:
             win = mw.app.activeWindow()
@@ -141,8 +144,9 @@ class ReadingModal:
         if ReadingModal.last_opened is None or (self.note_id is not None and int(note_id) != self.note_id):
             ReadingModal.last_opened = self.note_id if ReadingModal.last_opened else note_id
 
-        self.note_id            = int(note_id)
-        self.note               = note
+        self.note_id              = int(note_id)
+        self.note                 = note
+        ReadingModal.current_note = note
 
         html                    = self.html()
 
@@ -327,7 +331,8 @@ class ReadingModal:
 
 
     def fill_sources(self, editor):
-        """ Check if any of the fields in pdf.onOpen.autoFillFieldsWithPDFName are present, if yes, fill them with the note's title. """
+        """ Check if any of the fields in pdf.onOpen.autoFillFieldsWithPDFName"""
+        """" are present, if yes, fill them with the note's title. """
 
         siacnote = self.note
 
@@ -384,6 +389,7 @@ class ReadingModal:
             new_priority        = done_dialog.priority
             new_schedule        = done_dialog.schedule
             sched_has_changed   = done_dialog.schedule_has_changed
+
             if sched_has_changed:
                 update_reminder(self.note_id, new_schedule)
             else:
@@ -416,6 +422,14 @@ class ReadingModal:
                     self.read_head_of_queue()
             else:
                 self.read_head_of_queue()
+
+            if get_config_value("mix_reviews_and_reading.review_after_done") and state.interrupted_review:
+                win = mw.app.activeWindow()
+                if isinstance(win, aqt.addcards.AddCards):
+                    win.close()
+
+                mw.raise_()
+                state.interrupted_review = False
         else:
             self._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
 
@@ -1543,7 +1557,7 @@ class ReadingModal:
                 const options = [];
                 for (var i = start; i < start + numPagesExtract(); i++) {
                     if (!pdf.pagesRead || pdf.pagesRead.indexOf(i) === -1) {
-                        options.push(i); 
+                        options.push(i);
                     }
                 }
                 if (options.length > 0) {

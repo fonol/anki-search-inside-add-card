@@ -65,10 +65,10 @@ class Output:
         self._editor                = None
         self.reading_modal          = ReadingModal()
         self.sidebar                = Sidebar()
-       
+
         # Todo: move to text utils
         self.EXCLUDE_KEYWORDS       = re.compile(r'(?:sound|mp3|c[0-9]+)')
-       
+
         #
         # State / Settings
         #
@@ -123,7 +123,7 @@ class Output:
                 return
 
         # if we were on e.g. on page 2 which contains exactly one note (nr. 51 of 51 search results), and deleted that note, the
-        # refresh call would still be to rerender page 2 with the updated search results, 
+        # refresh call would still be to rerender page 2 with the updated search results,
         # but page 2 would not exist anymore, so we have to check for that:
         if (page - 1) * 50 > len(notes):
             page = page - 1
@@ -132,7 +132,7 @@ class Output:
         is_rerender                 = False
 
         if not is_cached and len(notes) > 0:
-            
+
             # roughly check if current call equals the last one, to set is_rerender to True
             if len(self.previous_calls) > 0:
                 nids = [n.id for n in self.previous_calls[-1][0][:30]]
@@ -141,7 +141,7 @@ class Output:
 
             # cache all calls to be able to repeat them
             self.previous_calls.append([notes, None, editor, timing_info, page, query_set])
-            
+
             if len(self.previous_calls) > 11:
                 self.previous_calls.pop(0)
 
@@ -208,7 +208,7 @@ class Output:
             text                    = res.get_content()
             progress                = ""
             pdf_class               = ""
-            if res.note_type == "user": 
+            if res.note_type == "user":
                 icon = "book"
                 if res.is_pdf():
                     pdfs.append(nid)
@@ -221,6 +221,9 @@ class Output:
 
                 elif res.is_yt():
                     icon = "film"
+
+                elif res.is_file():
+                    icon = "external-link"
             elif res.note_type == "index" and res.did and res.did > 0:
                 check_for_suspended.append(res.id)
 
@@ -272,13 +275,13 @@ class Output:
                     template            = NOTE_TMPL_META
                     meta_card_counter   += 1
                 newNote     = template.format(
-                    grid_class  = gridclass, 
-                    counter     = counter + 1 - meta_card_counter, 
-                    nid         = nid, 
-                    creation    = "&nbsp;&#128336; " + timeDiffString, 
+                    grid_class  = gridclass,
+                    counter     = counter + 1 - meta_card_counter,
+                    nid         = nid,
+                    creation    = "&nbsp;&#128336; " + timeDiffString,
                     edited      = "" if str(nid) not in self.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + self._build_edited_info(self.edited[str(nid)]),
                     mouseup     = "getSelectionText()",
-                    text        = text, 
+                    text        = text,
                     tags        = utility.tags.build_tag_string(res.tags, self.gridView),
                     queue       = ": Q-%s&nbsp;" % (res.position + 1) if res.is_in_queue() else "",
                     progress    = progress,
@@ -288,16 +291,16 @@ class Output:
 
             else:
                 newNote = NOTE_TMPL.format(
-                    grid_class  = gridclass, 
-                    counter     = counter + 1 - meta_card_counter, 
-                    nid         = nid, 
-                    creation    = "&nbsp;&#128336; " + timeDiffString, 
+                    grid_class  = gridclass,
+                    counter     = counter + 1 - meta_card_counter,
+                    nid         = nid,
+                    creation    = "&nbsp;&#128336; " + timeDiffString,
                     edited      = "" if str(nid) not in self.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + self._build_edited_info(self.edited[str(nid)]),
                     mouseup     = "getSelectionText()",
-                    text        = text, 
-                    tags        = utility.tags.build_tag_string(res.tags, self.gridView), 
+                    text        = text,
+                    tags        = utility.tags.build_tag_string(res.tags, self.gridView),
                     ret         = retInfo)
-         
+
             html = f"{html}{newNote}"
             tags = self._addToTags(tags, res.tags)
             if counter - (page - 1) * 50 < 20:
@@ -324,7 +327,7 @@ class Output:
         else:
             took = "?"
         timing      = "true" if timing_info else "false"
-        rerender    = "true" if is_rerender else "false" 
+        rerender    = "true" if is_rerender else "false"
 
         if not self.hideSidebar:
             infoMap = {
@@ -343,7 +346,7 @@ class Output:
             for nid,text in remaining_to_highlight.items():
                 cmd = ''.join((cmd, "document.getElementById('siac-inner-card-%s').innerHTML = `%s`;" % (nid, utility.text.mark_highlights(text, query_set))))
             self._js(cmd, editor)
-        
+
         if len(check_for_suspended) > 0:
             susp = get_suspended(check_for_suspended)
             if len(susp) > 0:
@@ -380,9 +383,9 @@ class Output:
                         cmd = ''.join((cmd, "document.querySelector('#siac-ex-tmp-%s').innerHTML = `%s`;" % (i[0], extract)))
 
                 self._js(cmd, editor)
-            
+
         return (highlight_total * 1000, build_user_note_total)
-    
+
     def js(self, js: JS):
         """
             Use webview's eval function to execute the given js.
@@ -470,7 +473,7 @@ class Output:
         susp        = get_suspended([r.id for r in self.lastResults])
         filtered    = [r for r in self.lastResults if int(r.id) not in susp]
         self.print_search_results(filtered, stamp)
-   
+
     def remove_unsuspended(self):
         if self.lastResults is None: return
         stamp       = utility.misc.get_milisec_stamp()
@@ -548,7 +551,7 @@ class Output:
         infoMap["Keywords"] = mostCommonWords
 
         return (infoStr, infoMap)
-    
+
 
 
     def _most_common_words(self, text: str) -> HTML:
@@ -625,11 +628,11 @@ class Output:
             text        = utility.text.newline_before_images(text)
             template    = NOTE_TMPL_SIMPLE if res.note_type == "index" else NOTE_TMPL_SIAC_SIMPLE
             newNote     = template.format(
-                counter=counter+1, 
-                nid=res.id, 
+                counter=counter+1,
+                nid=res.id,
                 edited="" if str(res.id) not in self.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + self._build_edited_info(self.edited[str(res.id)]),
                 mouseup="getSelectionText()" if search_on_selection else "",
-                text=text, 
+                text=text,
                 ret=retInfo,
                 tags=utility.tags.build_tag_string(res.tags, tag_hover, maxLength = 25, maxCount = 2),
                 creation="&nbsp;&#128336; " + timeDiffString)
@@ -673,13 +676,13 @@ class Output:
     def show_in_large_modal(self, html: HTML):
         html = html.replace("`", "&#96;")
         js = """
-            $('#siac-reading-modal').html(`%s`); 
+            $('#siac-reading-modal').html(`%s`);
             document.getElementById('siac-reading-modal').style.display = 'flex';
             document.getElementById('resultsArea').style.display = 'none';
             document.getElementById('bottomContainer').style.display = 'none';
             document.getElementById('topContainer').style.display = 'none';
         """ % (html)
-        self.js(js) 
+        self.js(js)
 
     def empty_result(self, message: str):
         if self._editor is None or self._editor.web is None:
@@ -874,7 +877,7 @@ class Output:
         """ % (nid, text, nid, tagStr))
 
         self._editor.web.eval(f"""$('#siac-edited-dsp-{nid}').html(`<i class='fa fa-pencil mr-5 ml-10'></i> Edited just now`); """)
-        
+
     def show_tooltip(self, text):
         if mw.addonManager.getConfig(__name__)["hideSidebar"]:
             tooltip("Query was empty after cleaning.")
@@ -905,9 +908,9 @@ class Output:
             tt_height = get_config_value_or_default("pdfTooltipMaxHeight", 300)
             tt_width  = get_config_value_or_default("pdfTooltipMaxWidth", 300) + 100
             self._editor.web.eval("""
-                (() => { 
+                (() => {
                     document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`;
-                    document.getElementById('siac-pdf-tooltip-results-area').scrollTop = 0; 
+                    document.getElementById('siac-pdf-tooltip-results-area').scrollTop = 0;
                     document.getElementById('siac-pdf-tooltip-top').innerHTML = `%s`
                     document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
                     document.getElementById('siac-pdf-tooltip-searchbar').style.display = "inline-block";
@@ -940,10 +943,3 @@ class Output:
                 %s
 
             """ % (message, clz_btn_js))
-
-    
-
-
-   
-
-

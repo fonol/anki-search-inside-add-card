@@ -72,6 +72,8 @@ class ShortcutSettingsTab(QWidget):
             shortcut("pdf.shortcuts.toggle_pdf_links",        "Toggle PDF Links",         id_pdf),
             shortcut("pdf.shortcuts.toggle_page_read",        "Toggle page read",         id_pdf),
             shortcut("pdf.shortcuts.init_area_highlight",     "Area Highlight",           id_pdf),
+            shortcut("pdf.shortcuts.page_snapshot",           "Page Snapshot",            id_pdf),
+            shortcut("pdf.shortcuts.extract_pages",           "Extract Pages",            id_pdf),
 
             # Search Shortcuts
             shortcut("shortcuts.focus_search_bar",            "Focus Search Bar",         id_search),
@@ -89,7 +91,7 @@ class ShortcutSettingsTab(QWidget):
             shortcut("shortcuts.menubar.queue_manager",        "Open Queue Manager",      id_menubar),
             shortcut("shortcuts.menubar.read_first",           "Read First in Queue",     id_menubar),
             shortcut("shortcuts.menubar.quick_open",           "Quick Open",              id_menubar),
-            #shortcut("shortcuts.menubar.knowledge_tree",       "Open Knowledge Tree",     id_menubar),
+            # shortcut("shortcuts.menubar.knowledge_tree",       "Open Knowledge Tree",     id_menubar),
             # shortcut("shortcuts.menubar.open_first",           "Read first in queue",     id_menubar),
             shortcut("shortcuts.menubar.addon_settings",       "Open Add-on Settings",    id_menubar),
 
@@ -138,7 +140,7 @@ class ShortcutSettingsTab(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(shortcut_tabs)
-        layout.addWidget(QLabel("<i>Changes of shortcuts need a restart of Anki to be applied!</i>"))
+        layout.addWidget(QLabel("<i>Changes to shortcuts need a restart of Anki to be applied!</i>"))
         self.setLayout(layout)
 
     def save_changes(self):

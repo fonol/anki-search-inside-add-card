@@ -662,6 +662,14 @@ def get_priority(nid: int) -> Optional[int]:
     conn.close()
     return res[0]
 
+def get_last_priority(nid: int) -> Optional[int]:
+    conn = _get_connection()
+    res = conn.execute(f"select last_priority from notes where id = {nid}").fetchone()
+    if res is None or len(res) == 0:
+        return None
+    conn.close()
+    return res[0]
+
 def get_priorities(nids: List[int]) -> Dict[int, int]:
     d = dict()
     if nids is None or len(nids) == 0:
@@ -1197,7 +1205,7 @@ def find_by_tag_ordered_by_opened_last(tag_str: str):
     res     = conn.execute("select distinct n.* from notes_opened join (select * from notes %s) as n on notes_opened.nid = n.id order by notes_opened.created desc limit 100" %(query)).fetchall()
     conn.close()
     return _to_notes(res, pinned)
-    
+
 
 
 def get_random_with_tag(tag) -> Optional[int]:

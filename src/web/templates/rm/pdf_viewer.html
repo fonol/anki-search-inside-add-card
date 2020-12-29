@@ -7,7 +7,7 @@
             <div class='siac-mark-btn-inner siac-mark-btn-inner-3' onclick='pycmd("siac-pdf-mark 3 {nid} " + pdf.page + " " + pdf.instance.numPages)'>More Info</div>
             <div class='siac-mark-btn-inner siac-mark-btn-inner-4' onclick='pycmd("siac-pdf-mark 4 {nid} " + pdf.page + " " + pdf.instance.numPages)'>More Cards</div>
             <div class='siac-mark-btn-inner siac-mark-btn-inner-5' onclick='pycmd("siac-pdf-mark 5 {nid} " + pdf.page + " " + pdf.instance.numPages)'>Bookmark</div>
-        </div> 
+        </div>
     </div>
     {extract}
     <div style='display: inline-block; vertical-align: top;' id='siac-pdf-overlay-top-lbl-wrap'></div>
@@ -15,7 +15,7 @@
 <div id='siac-iframe-btn' style='top: 45px;' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
     <div class='fg_lightgrey ml-5 ta_right' style='margin-top: 4px; width: calc(100% - 35px); font-size: 13px;'>Note: Not all sites allow embedding!</div>
     <div class='w-100 mt-10 oflow_y_auto' style='padding: 0 15px 10px 15px; max-height: 500px; box-sizing: border-box;'>
-        <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) { pdfUrlSearch(this.value); this.value = ''; }"></input> 
+        <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) { pdfUrlSearch(this.value); this.value = ''; }"></input>
         <br/>
     {search_sources}
     </div>
@@ -30,7 +30,7 @@
     <div style='background: #2196f3;' data-id="3" data-color="#2196f3" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
     <div style='background: #ffee58;' data-id="4" data-color="#ffee58" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
     <div style='background: #ab47bc;' data-id="5" data-color="#ab47bc" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-color-btn'></div>
-    <br> 
+    <br>
     <div style='background: #e65100;' data-id="6" data-color="#e65100" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-ul-btn'></div>
     <div style='background: #558b2f;' data-id="7" data-color="#558b2f" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-ul-btn'></div>
     <div style='background: #2196f3;' data-id="8" data-color="#2196f3" onclick="Highlighting.onColorBtn(this)" class='siac-pdf-ul-btn'></div>
@@ -54,7 +54,7 @@
         <div id='siac-pdf-overflow'>
             <div id='siac-pdf-loader-wrapper'>
                 <div class='siac-pdf-loader'>
-                    <div> 
+                    <div>
                         <div class='signal' style='margin-left: auto; margin-right: auto;'></div><br/><br/>
                         <div id='siac-pdf-loader-text'>Loading PDF...</div>
                     </div>
@@ -69,7 +69,7 @@
     </div>
     <div id='siac-page-sidebar'>
         <div class='flex-col h-100' style='justify-content: center;'>
-            <div> 
+            <div>
                 <div class='signal' style='margin-left: auto; margin-right: auto;'></div>
             </div>
         </div>
@@ -110,13 +110,13 @@
                 </div>
             </div>
         </div>
-        
+
         <div id="siac-pdf-read-btn" class='siac-btn' style='margin-right: 7px; width: 75px;' onclick='togglePageRead({nid});'>\u2713<b>&nbsp; Read</b></div>
         <div style='position: relative; display: inline-block; width: 30px; margin-right: 7px;'>
             <div id='siac-pdf-more-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'>...
                 <div class='siac-btn-small-dropdown-inverted click'>
                     <div class='siac-dropdown-inverted-item' onclick='pageSnapshot()'><b>Page Snapshot</b></div>
-                    <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-create-pdf-extract " + pdf.page + " " + pdf.instance.numPages); event.stopPropagation();'><b>Extract ...</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='extractPages()'><b>Extract ...</b></div>
                     <hr>
                     <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-last-read {nid}"); event.stopPropagation();'><b>Last Read Page</b></div>
                     <div class='siac-dropdown-inverted-item' onclick='pycmd("siac-jump-first-unread {nid}"); event.stopPropagation();'><b>First Unread Page</b></div>

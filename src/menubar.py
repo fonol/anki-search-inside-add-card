@@ -86,7 +86,7 @@ class Menu():
             note_editor = NoteEditor(active_win, title_prefill = title, text_prefill = text, source_prefill = url, author_prefill = channel, url_prefill = url)
 
     def import_create_new(self):
-        dialog = NoteEditor(mw.app.activeWindow())
+        dialog = NoteEditor(mw.app.activeWindow(), prefill_with_opened_note = True)
 
     def quick_open(self):
         show_quick_open_pdf()
