@@ -367,15 +367,15 @@ class Output:
                             prog_bar = ''.join((prog_bar, "<div class='siac-prog-sq-filled'></div>"))
                         else:
                             prog_bar = ''.join((prog_bar, "<div class='siac-prog-sq'></div>"))
-                    cmd = ''.join((cmd, "document.querySelector('#ptmp-%s').innerHTML = `%s &nbsp;<span>%s / %s</span>`;" % (i[0], prog_bar, i[1], i[2])))
+                    cmd = ''.join((cmd, "document.querySelector('#ptmp-%s').innerHTML = `%s <span>%s / %s</span>`;" % (i[0], prog_bar, i[1], i[2])))
 
                     extract             = ""
                     ext_start           = i[3]
                     ext_end             = i[4]
                     if ext_end and ext_start == ext_end:
-                        extract         = f"<span class='siac-extract-mark'> | P. {ext_start}&nbsp;</span>"
+                        extract         = f"<span class='siac-extract-mark'> [{ext_start}]</span>"
                     elif ext_start:
-                        extract         = f"<span class='siac-extract-mark'> | P. {ext_start} - {ext_end}&nbsp;</span>"
+                        extract         = f"<span class='siac-extract-mark'> [{ext_start} - {ext_end}]</span>"
                     if extract != "":
                         cmd = ''.join((cmd, "document.querySelector('#siac-ex-tmp-%s').innerHTML = `%s`;" % (i[0], extract)))
 
