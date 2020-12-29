@@ -79,10 +79,9 @@ class QtPrioritySlider(QWidget):
         hvalue.addWidget(avg_lbl)
         vbox.addLayout(hvalue)
 
-        if not self.show_spec_sched and self.nid:
+        if not self.show_spec_sched and self.nid and self.show_similar:
             self.similar = QLabel("")
             vbox.addWidget(self.similar)
-        # vbox.addStretch()
 
         if show_spec_sched:
             self.scheduler = QtScheduleComponent(schedule)
