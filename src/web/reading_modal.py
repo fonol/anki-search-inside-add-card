@@ -1171,7 +1171,7 @@ class ReadingModal:
 
         modal = """ <div class="siac-modal-small dark ta_center">
                         <label class='siac-caps'>Search Text</label>
-                        <input class='siac-rm-bg w-100' style="border-radius: 3px; padding-left: 4px; box-sizing: border-box; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input>
+                        <input class='siac-rm-bg w-100' id="siac-tt-ws-inp" value="%s"></input>
                         <br/>
                         <div class='cursor-pointer oflow_y_auto' style="max-height: 200px; overflow-x: hidden; margin-top: 15px; text-align: left;">%s</div><br><br>
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
@@ -1663,7 +1663,7 @@ class ReadingModalSidebar():
                         <strong class='blue-hover fg_grey ml-10' onclick='pycmd("siac-pdf-sidebar-last-addon")'>Add-on</strong>
                         <strong class='blue-hover fg_grey ml-10' onclick='pycmd("siac-pdf-sidebar-last-anki")'>Anki</strong>
                     </div>
-                    <div id='siac-left-tab-browse-results' class='oflow_y_auto mt-10 mb-5' style='flex: 1 1 auto; padding: 0 5px 0 0;'>
+                    <div id='siac-left-tab-browse-results' class='oflow_y_auto mt-10 mb-5' style='flex: 1 1 auto; padding: 0 7px 0 7px;'>
                     </div>
                     <div style='flex: 0 auto; padding: 5px 0 5px 0;'>
                         <input type='text' class='w-100' style='box-sizing: border-box;' onkeyup='pdfLeftTabAnkiSearchKeyup(this.value, event);'/>

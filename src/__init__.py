@@ -222,7 +222,7 @@ def on_load_note(editor: Editor):
 
             fillDeckSelect(editor)
             if index is not None and index.lastSearch is None:
-                print_starting_info(editor)
+                print_starting_info()
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
