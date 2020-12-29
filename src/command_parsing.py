@@ -519,8 +519,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd.startswith("siac-create-note-add-only "):
         if not state.note_editor_shown:
-            nid = int(cmd.split()[1])
-            NoteEditor(self.parentWindow, add_only=True, read_note_id=nid)
+            nid         = int(cmd.split()[1])
+            tag_prefill = ""
+            if index.ui.reading_modal.note_id:
+                tag_prefill = get_note(index.ui.reading_modal.note_id).tags
+
+            NoteEditor(self.parentWindow, add_only=True, read_note_id=nid, tag_prefill=tag_prefill)
 
     elif cmd.startswith("siac-create-note-tag-prefill "):
         if not state.note_editor_shown:
