@@ -99,7 +99,7 @@ class ExternalFile(QDialog):
         elif new_type == "file":
             self.clabel.setText("""This will try to open the chosen file with your system's default registered application for it.""")
         elif new_type in ["safari", "chrome", "firefox"]:
-            self.clabel.setText("""Might not work on windows (use Default Browser here).""")
+            self.clabel.setText("""Might not work on Windows (use Default Browser here).""")
         else:
             self.clabel.setText("")
 
