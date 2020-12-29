@@ -818,35 +818,34 @@ hr.siac-modal-sep {
     vertical-align: bottom;
     display: inline-block;
     margin: 0 1px 0 1px;
-    height: 9px;
-    width: 7px;
+    height: 13px;
+    width: 11px;
     border-radius: 3px;
 }
 .siac-prog-sq-filled {
-    background-color: #67c3fc;
-    /* border: 3px solid #186a9c; */
-    border: 3px double #186a9c; 
-    background: radial-gradient(#89edff, #1773ac);
+    height: 15px;
+    width: 13px;
+    background-color: var(--c-primary-color);
 }
 .siac-prog-sq {
-     background-color: #b2b2b2;
-     border: 3px double #494949;
-     /* background: #d3dddc; */
-     /* border: 3px solid #777777; */
+    border: 1px solid #a7a7a7;
 }
 body.nightMode .siac-prog-sq {
-     background: radial-gradient(#adadad, #818181);
+    border: 1px solid #6d6d6d;
 }
 .siac-prog-tmp {
     margin-left: 10px;
     white-space: nowrap;
     color: #2e6286;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
 }
 body.nightMode .siac-prog-tmp {
     color: white;
 }
 .siac-prog-tmp span {
-    vertical-align: baseline;
+    margin-left: 6px;
 }
 .siac-blue-outset {
     border: 2px outset #2496dc; 

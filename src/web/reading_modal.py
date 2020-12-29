@@ -1157,7 +1157,7 @@ class ReadingModal:
 
         modal = """ <div class="siac-modal-small dark ta_center">
                         <label class='siac-caps'>Search Text</label>
-                        <input class='siac-rm-bg w-100' style="border-radius: 3px; padding-left: 4px; box-sizing: border-box; color: white; border-color: white;" id="siac-tt-ws-inp" value="%s"></input>
+                        <input class='siac-rm-bg w-100' id="siac-tt-ws-inp" value="%s"></input>
                         <br/>
                         <div class='cursor-pointer oflow_y_auto' style="max-height: 200px; overflow-x: hidden; margin-top: 15px; text-align: left;">%s</div><br><br>
                         <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>

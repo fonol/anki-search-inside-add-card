@@ -191,8 +191,9 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 }
 .siac-page-sidebar-header {
     flex: 0 1 auto; 
-    padding-right: 4px;
+    margin-right: 4px;
     margin-bottom: 10px;
+    box-shadow: 0 0 7px 1px #202020;
 }
 .siac-page-sidebar-around {
     font-size: 10px;
@@ -535,11 +536,18 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     border-radius: 4px;
     background-color: var(--c-reading-modal-background);
     color: white;
-    border-color: white;
+    border: 1px solid grey;
     padding-left: 4px;
 }
 #siac-pdf-tooltip-searchbar:focus {
     outline: none;
+}
+#siac-tt-ws-inp {
+    border-radius: 3px; 
+    padding-left: 4px; 
+    box-sizing: border-box; 
+    border: 1px solid grey;
+    color: white;
 }
 #siac-pdf-page-inp {
     background: var(--c-reading-modal-background);
