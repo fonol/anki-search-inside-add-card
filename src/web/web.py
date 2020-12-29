@@ -244,60 +244,24 @@ def show_search_result_area(editor=None, initializationTime=0):
         editor.web.eval(js)
 
 
-
-
-def print_starting_info(editor: Optional[Editor]):
+def print_starting_info():
     """ Displays the information that is visible after the first start of the add-on. """
-
-    if editor is None or editor.web is None:
-        return
 
     config  = mw.addonManager.getConfig(__name__)
     index   = get_index()
-    html    = "<h3>Search is <span style='color: green'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
 
-    if index is not None:
+    notes   = []
 
-        if not index.creation_info["index_was_rebuilt"]:
-            html += "Initalized in <b>%s</b> s (no changes detected)." % index.initializationTime
-        else:
-            html += "Initalized in <b>%s</b> s." % index.initializationTime
+    html    = "<h3>Search is <span style='color: #32d296'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
+    if not index.creation_info["index_was_rebuilt"]:
+        html += "Initalized in <b>%s</b> s (no changes detected)." % index.initializationTime
+    else:
+        html += "Initalized in <b>%s</b> s." % index.initializationTime
 
-        html += "<br/>Index contains <b>%s</b> notes." % index.get_number_of_notes()
-        html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
-        html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
-        html += "<br/>Layout Shortcuts:<br> <b>%s</b> (toggle left), <b>%s</b> (toggle right), <b>%s</b> (show both)." % (config["shortcuts.window_mode.show_left"], config["shortcuts.window_mode.show_right"], config["shortcuts.window_mode.show_both"])
-
-        changes = changelog()
-        if changes:
-            html += "<br/><br/><b>Changelog:</b><hr>"
-            for ix, c in enumerate(changes):
-                html += f"{ix + 1}. {c}<br>"
-
-        issues = known_issues()
-        if issues:
-            html += "<br/><b>Known Issues:</b><hr>"
-            for ix, i in enumerate(issues):
-                html += f"{ix + 1}. {i}<br>"
-
-        html += f"""
-            <br>
-            <div class='ta_center' style='width: fit-content;'>
-                <div class='flex-row' style='margin-bottom: 20px;'>
-                    <div class='ta_center'>
-                        <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BUGS & FEEDBACK</div>
-                        <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github repository'><img src='{utility.misc.img_src("github_light.png" if state.night_mode else "github_dark.png")}' style='height: 32px;'/></a>
-                    </div>
-                    <div class='ta_center' style='margin-left: 30px;'>
-                        <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BECOME A PATRON</div>
-                        <a href='https://www.patreon.com/tomtomtom' title='Patreon site'><img src='{utility.misc.img_src("patreon.png")}' style='height: 32px;'/></a>
-                    </div>
-                </div>
-                <span class='siac-caps' style='opacity: 0.8;'>
-                    Thanks to all supporters!
-                </span>
-            </div>
-            """
+    html += "<br/>Index contains <b>%s</b> notes." % index.get_number_of_notes()
+    html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
+    html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
+    html += "<br/>Layout Shortcuts:<br> <b>%s</b> (toggle left), <b>%s</b> (toggle right), <b>%s</b> (show both)." % (config["shortcuts.window_mode.show_left"], config["shortcuts.window_mode.show_right"], config["shortcuts.window_mode.show_both"])
 
     if not state.db_file_existed:
         html += "<br><br><b><i>siac-notes.db</i> was not existing, created a new one.</b>"
@@ -305,11 +269,41 @@ def print_starting_info(editor: Optional[Editor]):
     if index is None or index.ui is None:
         html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
 
+    notes.append(("Status", html))
 
-    editor.web.eval("""document.getElementById('searchResults').innerHTML = `
-            <div id='siac-start-info'>
-                %s
-            </div>`;""" % html)
+    html    = ""
+    changes = changelog()
+    if changes:
+        for ix, c in enumerate(changes):
+            html += f"{ix + 1}. {c}<br>"
+    notes.append(("Changelog", html))
+
+    html    = ""
+    issues  = known_issues()
+    if issues:
+        for ix, i in enumerate(issues):
+            html += f"{ix + 1}. {i}<br>"
+    notes.append(("Known Issues", html))
+
+    html = f"""
+        <div class='ta_center'>
+            <div class='flex-row mt-10' style='margin-bottom: 20px; justify-content: center;'>
+                <div class='ta_center'>
+                    <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BUGS & FEEDBACK</div>
+                    <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github repository'><img src='{utility.misc.img_src("github_light.png" if state.night_mode else "github_dark.png")}' style='height: 32px;'/></a>
+                </div>
+                <div class='ta_center' style='margin-left: 30px;'>
+                    <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BECOME A PATRON</div>
+                    <a href='https://www.patreon.com/tomtomtom' title='Patreon site'><img src='{utility.misc.img_src("patreon.png")}' style='height: 32px;'/></a>
+                </div>
+            </div>
+            <span class='siac-caps' style='opacity: 0.8;'>
+                Thanks to all supporters!
+            </span>
+        </div>
+        """
+    notes.append(("Bugs, Feedback, Support", html))
+    index.ui.print_in_meta_cards(notes)
 
 
 @requires_index_loaded
