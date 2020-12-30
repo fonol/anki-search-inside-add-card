@@ -1808,7 +1808,7 @@ def get_index_info():
             "None" if len(excluded_fields) == 0 else "<b>%s</b> field(s) among <b>%s</b> note type(s)" % (field_c, len(excluded_fields)),
             notes_db_path, notes_db_folder, notes_db_bu, notes_db_bu,
             data_folder, data_folder,
-            config["notes.editor.shortcut"],
+            config["shortcuts.menubar.import.create_new"],
             config["pdf.shortcuts.toggle_search_on_select"],
             config["pdf.shortcuts.toggle_pdf_links"],
             config["pdf.shortcuts.scissor_tool"],
@@ -2024,7 +2024,7 @@ def create_filtered_deck(cids: List[int]) -> bool:
                 did = mw.col.decks.new_filtered(REV_FILTERED_DECK_NAME)
             else:
                 did = mw.col.decks.newDyn(REV_FILTERED_DECK_NAME)
-        cids.sort() 
+        cids.sort()
         dyn = mw.col.decks.get(did)
         dyn["terms"][0] = [" or ".join([f"cid:{cid}" for cid in cids]), 9999, 0]
         dyn["resched"] = True

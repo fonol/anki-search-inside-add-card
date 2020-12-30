@@ -391,7 +391,7 @@ class CreateTab(QWidget):
 
         self.tag_icon           = QIcon(icons_path + "icon-tag-24.png")
         tag_icn = QPixmap(utility.misc.get_web_folder_path() + "icons/icon-tag-24.png").scaled(14,14)
-        
+
         if self.parent.dark_mode_used:
             tag_bg                  = config["styles.night.tagBackgroundColor"]
             tag_fg                  = config["styles.night.tagForegroundColor"]
@@ -780,7 +780,7 @@ class ScheduleTab(QWidget):
         QWidget.__init__(self)
         self.parent = parent
         self.setup_ui()
-    
+
     def setup_ui(self):
 
         self.setLayout(QHBoxLayout())
@@ -817,7 +817,7 @@ class PriorityTab(QWidget):
 
         self.t_view.resizeColumnsToContents()
         self.t_view.setSelectionBehavior(QAbstractItemView.SelectRows)
-   
+
         if priority_list is not None and len(priority_list) > 0:
             self.t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
             self.t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -942,11 +942,11 @@ class SettingsTab(QWidget):
         self.layout.addWidget(self.auto_fill_with_last_tag_cb)
 
 
-        self.layout.addWidget(QLabel("Shortcut for this modal (default \"Ctrl+Shift+n\", requires Anki restart):"))
-        self.shortcut_le = QLineEdit()
-        self.shortcut_le.setText(get_config_value_or_default("notes.editor.shortcut", "Ctrl+Shift+n"))
-        self.layout.addWidget(self.shortcut_le)
-        self.shortcut_le.editingFinished.connect(self.update_shortcut)
+        # self.layout.addWidget(QLabel("Shortcut for this modal (default \"Alt+N\", requires Anki restart):"))
+        # self.shortcut_le = QLineEdit()
+        # self.shortcut_le.setText(get_config_value("shortcuts.menubar.import.create_new", "Ctrl+Shift+n"))
+        # self.layout.addWidget(self.shortcut_le)
+        # self.shortcut_le.editingFinished.connect(self.update_shortcut)
 
         self.layout.addSpacing(15)
 
@@ -1007,11 +1007,11 @@ class SettingsTab(QWidget):
         update_config("notes.editor.defaultTagsIfEmpty", tags)
         self.update_queue_example
 
-    def update_shortcut(self):
-        text = self.shortcut_le.text()
-        if text is None or len(text.strip()) == 0:
-            return
-        update_config("notes.editor.shortcut", text)
+    #def update_shortcut(self):
+    #    text = self.shortcut_le.text()
+    #    if text is None or len(text.strip()) == 0:
+    #        return
+    #    update_config("shortcuts.menubar.import.create_new", text)
 
     def update_queue_example(self):
         """ Example queue calculation with the current parameters. """

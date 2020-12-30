@@ -91,7 +91,6 @@
 "pdf.page_sidebar_shown": true,
 
 "notes.editor.autoFillWithLastTagsOnOpen": false,
-"notes.editor.shortcut": "Ctrl+Shift+n",
 "notes.editor.defaultTagsIfEmpty": "",
 "notes.editor.include_anki_tags": false,
 "notes.editor.tag_sort": "a-z",

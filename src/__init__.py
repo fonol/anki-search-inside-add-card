@@ -483,7 +483,8 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     #_try_register("Ctrl+o", show_quick_open_pdf)
 
     # open Create/Update note modal
-    _try_register(config["notes.editor.shortcut"], show_note_modal)
+    #_try_register(config["notes.editor.shortcut"], show_note_modal)
+    # can be replaced by SIAC mainmenu hotkey
 
     # toggle search on select in pdf reader
     _try_register(config["pdf.shortcuts.toggle_search_on_select"], lambda: editor.web.eval("togglePDFSelect()"))
