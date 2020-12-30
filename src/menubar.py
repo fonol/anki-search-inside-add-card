@@ -7,6 +7,7 @@ from .dialogs.editor import NoteEditor
 from .dialogs.importing.zotero_import import ZoteroImporter
 from .dialogs.importing.quick_youtube_import import QuickYoutubeImport
 from .dialogs.importing.quick_web_import import QuickWebImport
+from .dialogs.importing.general_import import NoteImporterDialog
 from .dialogs.settings import SettingsDialog
 #from .dialogs.knowledge_tree import KnowledgeTree
 
@@ -19,13 +20,6 @@ class Menu():
     def __init__(self):
         self.kt        = None
         self.quick_web = None
-
-        # state.night_mode is not yet set here
-        nightmode = False
-        if hasattr(mw.pm, "night_mode"):
-            nightmode = mw.pm.night_mode()
-
-        # gc_icn = "graduation_cap_night.png" if nightmode else "graduation_cap.png"
 
         menu            = get_menu(mw, "&SIAC")
         submenu_import  = get_sub_menu(menu, "Import")
@@ -40,7 +34,9 @@ class Menu():
             ("shortcuts.menubar.import.create_new", "Create New",           self.import_create_new),
             ("shortcuts.menubar.import.web",        "Web",    self.import_web),
             ("shortcuts.menubar.import.youtube",    "YouTube",       self.import_youtube),
-            ("shortcuts.menubar.import.zotero_csv", "Zotero CSV",    self.import_zotero)
+            ("shortcuts.menubar.import.zotero_csv", "Zotero CSV",    self.import_zotero),
+            # WIP https://github.com/fonol/anki-search-inside-add-card/issues/191
+            # ("",                                    "General Import",self.import_general),
         )
 
         add_menu_actions(submenu_import, import_options)
@@ -70,6 +66,11 @@ class Menu():
         self.quick_web.show()
         self.quick_web.raise_()
 
+    def import_general(self):
+
+        d = NoteImporterDialog(mw.app.activeWindow())
+        d.show()
+        d.raise_()
         #if dialog.exec_():
 
     def import_youtube(self):
