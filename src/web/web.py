@@ -498,8 +498,12 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
+        "Make create note dialog leaner (thanks to p4nix)",
+        "Add external link icon for external files in the search pane (thanks to p4nix)",
         "Add Create Note button to tag meta card",
+        "Add shortcuts for Page Snapshot and Create Extract (thanks to p4nix)", 
         "Fix: Find invalid paths in PDF meta card not working with file:/// sources",
+        "Fix: Layout problem for new users in sidebar",
         "Fix: Read stats heatmap not fitting in card on smaller screen sizes",
     ]
 
