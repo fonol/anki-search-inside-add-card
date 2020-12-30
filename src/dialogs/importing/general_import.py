@@ -1,6 +1,4 @@
-import math
 from typing import Optional, List
-import os
 
 from aqt.qt import *
 from aqt.main import AnkiQt
@@ -10,7 +8,7 @@ from aqt.utils import showWarning
 # WIP:
 # todo:
 # needs file filters (.pdf, .md, ...)
-# needs (checkable?) listing of found files 
+# needs (checkable?) listing of found files
 # needs import settings (tags, priorities, how to fill out source field)
 #
 # https://github.com/fonol/anki-search-inside-add-card/issues/191
@@ -39,15 +37,11 @@ class NoteImporterDialog(QDialog):
     def add_notes(self):
         path = self.ui.dirPathLineEdit.text()
         if os.path.exists(path):
-            ignore_list     = self.create_ignore_list_from_selection(path)
-            list_of_files   = return_filepath_list(path, ignore_list, self.ui.ignoreDirsRecursivelyCheckbox.isChecked())
-
-            completed = 0
-            for file in list_of_files:  # here you can do what you want with the files
-                completed += math.floor(100/len(list_of_files))
-                self.ui.progressBar.setValue(completed)
-            self.ui.progressBar.setValue(100)
-
+            ignore_list        = self.create_ignore_list_from_selection(path)
+            generator_of_files = return_filepath_list(path, ignore_list, self.ui.ignoreDirsRecursivelyCheckbox.isChecked())
+            self.ui.filesFoundLw.clear()
+            for file in generator_of_files:  # here you can do what you want with the files
+                self.add_item_to_list_view(file, self.ui.filesFoundLw)
         else:
             showWarning(f"{path} is not a valid directory path.\nPlease try again")
 
@@ -66,24 +60,24 @@ class NoteImporterDialog(QDialog):
                 subdir_list = [d for d in subdir_list if not d.startswith(r".")]
 
             for d in subdir_list:
-                self.add_checkable_item_to_list_view(d)
+                self.add_checkable_item_to_dir_ignore_list_view(d)
         else:
-            self.add_item_to_list_view("Path entered above does not exist, please enter a real path")
+            self.add_item_to_list_view("Path entered above does not exist, please enter a real path", self.ui.dirIgnoreLw)
 
     # Gui functions
     ##########################################################################
 
-    def add_checkable_item_to_list_view(self, text: str) -> None:
+    def add_checkable_item_to_dir_ignore_list_view(self, text: str) -> None:
         self.ui.lwi = QListWidgetItem()
         self.ui.lwi.setText(text)
         self.ui.lwi.setFlags(self.ui.lwi.flags() | Qt.ItemIsUserCheckable)
         self.ui.lwi.setCheckState(Qt.Unchecked)
         self.ui.dirIgnoreLw.addItem(self.ui.lwi)
 
-    def add_item_to_list_view(self, text: str):
+    def add_item_to_list_view(self, text: str, list_widget: QListWidget):
         self.ui.lwi = QListWidgetItem()
         self.ui.lwi.setText(text)
-        self.ui.dirIgnoreLw.addItem(self.ui.lwi)
+        list_widget.addItem(self.ui.lwi)
 
     # Utility functions
     ##########################################################################
@@ -121,27 +115,25 @@ def return_filepath_list(path: str, list_of_dirs_to_ignore: Optional[list] = Non
             filepath = os.path.join(subdir, filename)
             # if it is not a recursive ignore, then check if the subdirectory is in the list of dirs to ignore
             if not ign_recursively and (subdir not in list_of_dirs_to_ignore):
-                list_of__file_paths.append(filepath)
+                yield filepath
 
             # checks if the subdirectory path starts with any of the values in list of directories to ignore
             # so all of the subdirectories are included in the check of dirs to ignore
-            elif ign_recursively and any(map(subdir.startswith, list_of_dirs_to_ignore)):
-                list_of__file_paths.append(filepath)
-
-    return list_of__file_paths
+            elif ign_recursively and not any(map(subdir.startswith, list_of_dirs_to_ignore)):
+                yield filepath
 
 
 def return_all_subdirs(path) -> list:
-    dir_list = []
     for subdir, dirs, files in os.walk(path):
         rel_path = os.path.relpath(subdir, start=path)
         if rel_path != '.': # stops it from adding the current directory as '.'
-            dir_list.append(rel_path)
-    return dir_list
+            yield rel_path
 
 
 def return_top_level_subdirs(path) -> list:
-    return [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+    for d in os.listdir(path):
+        if os.path.isdir(os.path.join(path, d)):
+            yield d
 
 
 
@@ -157,7 +149,7 @@ def return_top_level_subdirs(path) -> list:
 class Ui_OrganiserDialog(object):
     def setupUi(self, OrganiserDialog):
         OrganiserDialog.setObjectName("OrganiserDialog")
-        OrganiserDialog.resize(525, 388)
+        OrganiserDialog.resize(525, 536)
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -174,12 +166,9 @@ class Ui_OrganiserDialog(object):
         self.dirPathLineEdit.setObjectName("dirPathLineEdit")
         self.dirScanHL.setWidget(0, QFormLayout.FieldRole, self.dirPathLineEdit)
         self.verticalLayout.addLayout(self.dirScanHL)
-        self.dirIgnoreSettingsHL = QHBoxLayout()
-        self.dirIgnoreSettingsHL.setObjectName("dirIgnoreSettingsHL")
         self.dirIgnoreLabel = QLabel(OrganiserDialog)
         self.dirIgnoreLabel.setObjectName("dirIgnoreLabel")
-        self.dirIgnoreSettingsHL.addWidget(self.dirIgnoreLabel)
-        self.verticalLayout.addLayout(self.dirIgnoreSettingsHL)
+        self.verticalLayout.addWidget(self.dirIgnoreLabel)
         self.gridLayout = QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
         self.ignoreAllHiddenCheckbox = QCheckBox(OrganiserDialog)
@@ -211,11 +200,12 @@ class Ui_OrganiserDialog(object):
         spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.syncButtonHL.addItem(spacerItem1)
         self.verticalLayout.addLayout(self.syncButtonHL)
-        self.progressBar = QProgressBar(OrganiserDialog)
-        self.progressBar.setProperty("value", 0)
-        self.progressBar.setObjectName("progressBar")
-        self.verticalLayout.addWidget(self.progressBar)
-        self.scanPathLabel.setBuddy(self.dirPathLineEdit)
+        self.filesFoundLabel = QLabel(OrganiserDialog)
+        self.filesFoundLabel.setObjectName("dirIgnoreLabel")
+        self.verticalLayout.addWidget(self.filesFoundLabel)
+        self.filesFoundLw = QListWidget(OrganiserDialog)
+        self.filesFoundLw.setObjectName("filesFoundLw")
+        self.verticalLayout.addWidget(self.filesFoundLw)
 
         self.retranslateUi(OrganiserDialog)
         QMetaObject.connectSlotsByName(OrganiserDialog)
@@ -230,3 +220,4 @@ class Ui_OrganiserDialog(object):
         self.showTopSubdirsCheckbox.setText(_translate("OrganiserDialog", "Show only top level directories"))
         self.ignoreDirsRecursivelyCheckbox.setText(_translate("OrganiserDialog", "Ignore selected directories recursively"))
         self.syncButton.setText(_translate("OrganiserDialog", "Import File Notes"))
+        self.filesFoundLabel.setText(_translate("OrganiserDialog", "Files found:"))
