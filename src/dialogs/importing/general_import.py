@@ -52,14 +52,15 @@ class NoteImporterDialog(QDialog):
         # if the path input exists, update the list widget with all of the subdirectories
         # otherwise, tell th user that the path does not exist
         if os.path.exists(path):
-            if self.ui.showTopSubdirsCheckbox.isChecked():
-                subdir_list = [d for d in return_top_level_subdirs(path) if d]
-            else:
-                subdir_list = [d for d in return_all_subdirs(path) if d]
             # don't show any of the directories that start with '.'
             if self.ui.dontShowHiddenCheckbox.isChecked() or self.ui.ignoreAllHiddenCheckbox.isChecked():
-                subdir_list = [d for d in subdir_list if not d.startswith(r".")]
-
+                filter_hidden = True
+            else:
+                filter_hidden = False
+            if self.ui.showTopSubdirsCheckbox.isChecked():
+                subdir_list = return_top_level_subdirs(path, filter_hidden)
+            else:
+                subdir_list = return_all_subdirs(path, filter_hidden)
             for d in subdir_list:
                 self.add_checkable_item_to_dir_ignore_list_view(d)
         else:
@@ -123,16 +124,20 @@ def return_filepath_generator(path: str, list_of_dirs_to_ignore: Optional[list] 
                 yield filepath
 
 
-def return_all_subdirs(path):
+def return_all_subdirs(path,filter_hidden: bool):
     for subdir, dirs, files in os.walk(path):
         rel_path = os.path.relpath(subdir, start=path)
-        if rel_path != '.':  # stops it from adding the current directory as '.'
+        if rel_path != '.' and (not filter_hidden):  # stops it from adding the current directory as '.'
+            yield rel_path
+        elif not os.path.basename(rel_path).startswith('.') and not rel_path.startswith('.'):
             yield rel_path
 
 
-def return_top_level_subdirs(path):
+def return_top_level_subdirs(path, filter_hidden: bool):
     for d in os.listdir(path):
-        if os.path.isdir(os.path.join(path, d)):
+        if os.path.isdir(os.path.join(path, d)) and (not filter_hidden):
+            yield d
+        elif not d.startswith('.'):
             yield d
 
 
@@ -215,7 +220,7 @@ class Ui_OrganiserDialog(object):
         OrganiserDialog.setWindowTitle(_translate("OrganiserDialog", "External Files Anki Orgnaniser"))
         self.scanPathLabel.setText(_translate("OrganiserDialog", "Path of directory to scan"))
         self.dirIgnoreLabel.setText(_translate("OrganiserDialog", "Select subdirectories/files to ignore"))
-        self.ignoreAllHiddenCheckbox.setText(_translate("OrganiserDialog", "Ignore all directories starting with \'.\' in the scan"))
+        self.ignoreAllHiddenCheckbox.setText(_translate("OrganiserDialog", "Ignore all directories (and subdirectories) starting with \'.\' in the scan"))
         self.dontShowHiddenCheckbox.setText(_translate("OrganiserDialog", "Don\'t show directories starting with \'.\'"))
         self.showTopSubdirsCheckbox.setText(_translate("OrganiserDialog", "Show only top level directories"))
         self.ignoreDirsRecursivelyCheckbox.setText(_translate("OrganiserDialog", "Ignore selected directories recursively"))
