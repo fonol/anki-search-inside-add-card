@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Generator
 
 from aqt.qt import *
 from aqt.main import AnkiQt
@@ -10,9 +10,10 @@ from aqt.utils import showWarning
 # needs file filters (.pdf, .md, ...)
 # needs (checkable?) listing of found files
 # needs import settings (tags, priorities, how to fill out source field)
-#
+# needs way of excluding individual files
 # https://github.com/fonol/anki-search-inside-add-card/issues/191
 #
+
 
 class NoteImporterDialog(QDialog):
     def __init__(self, mw: AnkiQt):
@@ -38,7 +39,7 @@ class NoteImporterDialog(QDialog):
         path = self.ui.dirPathLineEdit.text()
         if os.path.exists(path):
             ignore_list        = self.create_ignore_list_from_selection(path)
-            generator_of_files = return_filepath_list(path, ignore_list, self.ui.ignoreDirsRecursivelyCheckbox.isChecked())
+            generator_of_files = return_filepath_generator(path, ignore_list, self.ui.ignoreDirsRecursivelyCheckbox.isChecked())
             self.ui.filesFoundLw.clear()
             for file in generator_of_files:  # here you can do what you want with the files
                 self.add_item_to_list_view(file, self.ui.filesFoundLw)
@@ -104,11 +105,10 @@ class NoteImporterDialog(QDialog):
         return ignore_list
 
 
-def return_filepath_list(path: str, list_of_dirs_to_ignore: Optional[list] = None, ign_recursively: bool = True) -> List[str]:
-    """Returns list of files in all dirs and subdirs of the dir path given"""
+def return_filepath_generator(path: str, list_of_dirs_to_ignore: Optional[list] = None, ign_recursively: bool = True):
+    """Returns generator of files in all dirs and subdirs of the dir path given"""
     if list_of_dirs_to_ignore is None:
         list_of_dirs_to_ignore = []
-    list_of__file_paths = []
 
     for subdir, dirs, files in os.walk(path):
         for filename in files:
@@ -123,14 +123,14 @@ def return_filepath_list(path: str, list_of_dirs_to_ignore: Optional[list] = Non
                 yield filepath
 
 
-def return_all_subdirs(path) -> list:
+def return_all_subdirs(path):
     for subdir, dirs, files in os.walk(path):
         rel_path = os.path.relpath(subdir, start=path)
-        if rel_path != '.': # stops it from adding the current directory as '.'
+        if rel_path != '.':  # stops it from adding the current directory as '.'
             yield rel_path
 
 
-def return_top_level_subdirs(path) -> list:
+def return_top_level_subdirs(path):
     for d in os.listdir(path):
         if os.path.isdir(os.path.join(path, d)):
             yield d
