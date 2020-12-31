@@ -185,7 +185,6 @@ def return_filepath_generator(path: str, list_of_dirs_to_ignore: Optional[list] 
 def return_all_subdirs(path, filter_hidden: bool, limit_searches_to: int = 0, levels: int = 0):
     count = 0
     if levels == 1:
-        count = 0
         for d in os.listdir(path):
             if limit_searches_to and count > limit_searches_to:
                 return
@@ -195,25 +194,26 @@ def return_all_subdirs(path, filter_hidden: bool, limit_searches_to: int = 0, le
             elif not d.startswith('.'):
                 count += 1
                 yield d
-    for subdir, dirs, files in os.walk(path):
-        if limit_searches_to and count > limit_searches_to:
-            return
-        rel_path = os.path.relpath(subdir, start=path)
-        # stops it from adding the current directory as '.'
-        if rel_path != '.' and (not filter_hidden):
-            if not levels:
-                count += 1
-                yield rel_path
-            elif len(rel_path.split(os.path.sep)) <= levels:
-                count += 1
-                yield rel_path
-        elif not os.path.basename(rel_path).startswith('.') and not rel_path.startswith('.'):
-            if not levels:
-                count += 1
-                yield rel_path
-            elif len(os.path.split(rel_path)) <= levels:
-                count += 1
-                yield rel_path
+    else:
+        for subdir, dirs, files in os.walk(path):
+            if limit_searches_to and count > limit_searches_to:
+                return
+            rel_path = os.path.relpath(subdir, start=path)
+            # stops it from adding the current directory as '.'
+            if rel_path != '.' and (not filter_hidden):
+                if not levels:
+                    count += 1
+                    yield rel_path
+                elif len(rel_path.split(os.path.sep)) <= levels:
+                    count += 1
+                    yield rel_path
+            elif not os.path.basename(rel_path).startswith('.') and not rel_path.startswith('.'):
+                if not levels:
+                    count += 1
+                    yield rel_path
+                elif len(os.path.split(rel_path)) <= levels:
+                    count += 1
+                    yield rel_path
 
 
 # Form implementation generated from reading ui file 'maindialog.ui'
