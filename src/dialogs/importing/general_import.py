@@ -32,7 +32,6 @@ class NoteImporterDialog(QDialog):
         # self.ui.dirPathLineEdit.textEdited.connect(self.refresh_dirs_to_ignore_list)
         self.ui.dirPathLineEdit.returnPressed.connect(self.refresh_dirs_to_ignore_list)
 
-        self.ui.showTopSubdirsCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
         self.ui.ignoreAllHiddenCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
         self.ui.dontShowHiddenCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
         self.ui.limitSearchesCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
@@ -89,10 +88,7 @@ class NoteImporterDialog(QDialog):
             else:
                 lim_levels_num = 0
 
-            if self.ui.showTopSubdirsCheckbox.isChecked():
-                subdir_list = return_top_level_subdirs(path, filter_hidden, lim_search_num)
-            else:
-                subdir_list = return_all_subdirs(path, filter_hidden, lim_search_num, lim_levels_num)
+            subdir_list = return_all_subdirs(path, filter_hidden, lim_search_num, lim_levels_num)
             for d in subdir_list:
                 self.add_checkable_item_to_dir_ignore_list_view(d)
         else:
@@ -188,6 +184,17 @@ def return_filepath_generator(path: str, list_of_dirs_to_ignore: Optional[list] 
 
 def return_all_subdirs(path, filter_hidden: bool, limit_searches_to: int = 0, levels: int = 0):
     count = 0
+    if levels == 1:
+        count = 0
+        for d in os.listdir(path):
+            if limit_searches_to and count > limit_searches_to:
+                return
+            if os.path.isdir(os.path.join(path, d)) and (not filter_hidden):
+                count += 1
+                yield d
+            elif not d.startswith('.'):
+                count += 1
+                yield d
     for subdir, dirs, files in os.walk(path):
         if limit_searches_to and count > limit_searches_to:
             return
@@ -207,19 +214,6 @@ def return_all_subdirs(path, filter_hidden: bool, limit_searches_to: int = 0, le
             elif len(os.path.split(rel_path)) <= levels:
                 count += 1
                 yield rel_path
-
-
-def return_top_level_subdirs(path, filter_hidden: bool, limit_searches_to: int = 0):
-    count = 0
-    for d in os.listdir(path):
-        if limit_searches_to and count > limit_searches_to:
-            return
-        if os.path.isdir(os.path.join(path, d)) and (not filter_hidden):
-            count += 1
-            yield d
-        elif not d.startswith('.'):
-            count += 1
-            yield d
 
 
 # Form implementation generated from reading ui file 'maindialog.ui'
@@ -257,19 +251,16 @@ class Ui_OrganiserDialog(object):
         self.gridLayout.setObjectName("gridLayout")
         self.ignoreAllHiddenCheckbox = QCheckBox(OrganiserDialog)
         self.ignoreAllHiddenCheckbox.setObjectName("ignoreAllHiddenCheckbox")
-        self.gridLayout.addWidget(self.ignoreAllHiddenCheckbox, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.ignoreAllHiddenCheckbox, 0, 0, 1, 1)
         self.dontShowHiddenCheckbox = QCheckBox(OrganiserDialog)
         self.dontShowHiddenCheckbox.setObjectName("dontShowHiddenCheckbox")
         self.gridLayout.addWidget(self.dontShowHiddenCheckbox, 0, 1, 1, 1)
-        self.showTopSubdirsCheckbox = QCheckBox(OrganiserDialog)
-        self.showTopSubdirsCheckbox.setObjectName("showTopSubdirsCheckbox")
-        self.gridLayout.addWidget(self.showTopSubdirsCheckbox, 0, 0, 1, 1)
         self.ignoreDirsRecursivelyCheckbox = QCheckBox(OrganiserDialog)
         self.ignoreDirsRecursivelyCheckbox.setEnabled(True)
         self.ignoreDirsRecursivelyCheckbox.setCheckable(True)
         self.ignoreDirsRecursivelyCheckbox.setChecked(True)
         self.ignoreDirsRecursivelyCheckbox.setObjectName("ignoreDirsRecursivelyCheckbox")
-        self.gridLayout.addWidget(self.ignoreDirsRecursivelyCheckbox, 1, 1, 1, 1)
+        self.gridLayout.addWidget(self.ignoreDirsRecursivelyCheckbox, 1, 0, 1, 1)
         self.limitSearchesCheckbox = QCheckBox(OrganiserDialog)
         self.limitSearchesCheckbox.setEnabled(True)
         self.limitSearchesCheckbox.setCheckable(True)
@@ -285,6 +276,7 @@ class Ui_OrganiserDialog(object):
         self.gridLayout.addWidget(self.limitSearchesCombobox, 2, 1, 1, 1)
         self.limLevelsCombobox = QComboBox(OrganiserDialog)
         self.limLevelsCombobox.setObjectName("limLevelsCombobox")
+        self.limLevelsCombobox.addItem("")
         self.limLevelsCombobox.addItem("")
         self.limLevelsCombobox.addItem("")
         self.limLevelsCombobox.addItem("")
@@ -323,16 +315,16 @@ class Ui_OrganiserDialog(object):
         self.dirIgnoreLabel.setText(_translate("OrganiserDialog", "Select subdirectories/files to ignore"))
         self.ignoreAllHiddenCheckbox.setText(_translate("OrganiserDialog", "Ignore all directories (and subdirectories) starting with \'.\' in the scan"))
         self.dontShowHiddenCheckbox.setText(_translate("OrganiserDialog", "Don\'t show directories starting with \'.\'"))
-        self.showTopSubdirsCheckbox.setText(_translate("OrganiserDialog", "Show only top level directories"))
         self.ignoreDirsRecursivelyCheckbox.setText(_translate("OrganiserDialog", "Ignore selected directories recursively"))
         self.limitSearchesCheckbox.setText(_translate("OrganiserDialog", "Limit searches to:"))
         self.limitSearchesCombobox.setItemText(0, _translate("OrganiserDialog", "50"))
         self.limitSearchesCombobox.setItemText(1, _translate("OrganiserDialog", "100"))
         self.limitSearchesCombobox.setItemText(2, _translate("OrganiserDialog", "150"))
         self.limitSearchesCombobox.setItemText(3, _translate("OrganiserDialog", "200"))
-        self.limLevelsCombobox.setItemText(0, _translate("OrganiserDialog", "2"))
-        self.limLevelsCombobox.setItemText(1, _translate("OrganiserDialog", "3"))
-        self.limLevelsCombobox.setItemText(2, _translate("OrganiserDialog", "4"))
+        self.limLevelsCombobox.setItemText(0, _translate("OrganiserDialog", "1"))
+        self.limLevelsCombobox.setItemText(1, _translate("OrganiserDialog", "2"))
+        self.limLevelsCombobox.setItemText(2, _translate("OrganiserDialog", "3"))
+        self.limLevelsCombobox.setItemText(3, _translate("OrganiserDialog", "4"))
         self.limLevelsCheckbox.setText(_translate("OrganiserDialog", "Limit the number of levels shown to:"))
         self.syncButton.setText(_translate("OrganiserDialog", "Import File Notes"))
         self.filesFoundLabel.setText(_translate("OrganiserDialog", "Files found:"))
