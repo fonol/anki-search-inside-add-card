@@ -469,6 +469,9 @@ table.striped {
 fieldset {
     padding: 0.7em;
 }
+body.nightMode fieldset {
+    border: 1px solid #5d5d5d;
+}
 select {
     height: 20px;
     vertical-align: top;
@@ -479,11 +482,15 @@ select {
 #siac-syn-inp {
     width: 100%;
     margin-top: 5px;
-    background: var(--c-modal-background);
-    color: var(--c-modal-foreground);
-    border-color: var(--c-modal-border);
-    border-radius: 5px;
+    background: transparent;
+    border-radius: 3px;
+    padding-left: 5px;
+    font-size: 16px;
+    border: 1px solid lightgrey;
     box-sizing: border-box; 
+}
+body.nightMode #siac-syn-inp {
+    border-color: #7d7d7d;
 }
 #synTable tr td:first-child {
     max-width: 150px;
@@ -537,7 +544,6 @@ select {
     right: 5px;
     top: 0px;
     cursor: pointer;
-    font-size: 16px;
     color:#2496dc;
     font-weight: bold;
 }
@@ -793,19 +799,7 @@ body.nightMode .noteFloatingHeader {
 #siac-pdf-tooltip-results-area {
     max-height: var(--pdf-tooltip-max-height);
 }
-.siac-modal-small {
-    z-index: 100;
-    background: var(--c-modal-background);
-    color: var(--c-modal-foreground);
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 15px;
-    width: 280px;
-    border: 2px solid var(--c-modal-border);
-    text-align: center;
-}
+
 hr.siac-modal-sep {
     border-color: var(--c-modal-border);
 }
