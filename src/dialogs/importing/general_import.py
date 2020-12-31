@@ -1,4 +1,4 @@
-from typing import Optional, List, Generator
+from typing import Optional
 
 from aqt.qt import *
 from aqt.main import AnkiQt
@@ -9,8 +9,9 @@ from aqt.utils import showWarning
 # todo:
 # needs file filters (.pdf, .md, ...)
 # needs (checkable?) listing of found files
-# needs import settings (tags, priorities, how to fill out source field)
+# needs import settings (tags, priorities, review settings, how to fill out source field)
 # needs way of excluding individual files
+# window manager?
 # https://github.com/fonol/anki-search-inside-add-card/issues/191
 #
 
@@ -23,6 +24,9 @@ class NoteImporterDialog(QDialog):
         self.ui = Ui_OrganiserDialog()
         self.ui.setupUi(self)
 
+        self.threadpool = QThreadPool()
+        self.thread_running = False
+
         self.ui.syncButton.clicked.connect(self.add_notes)
 
         # self.ui.dirPathLineEdit.textEdited.connect(self.refresh_dirs_to_ignore_list)
@@ -31,6 +35,10 @@ class NoteImporterDialog(QDialog):
         self.ui.showTopSubdirsCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
         self.ui.ignoreAllHiddenCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
         self.ui.dontShowHiddenCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
+        self.ui.limitSearchesCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
+        self.ui.limitSearchesCombobox.currentTextChanged.connect(self.refresh_dirs_to_ignore_list)
+        self.ui.limLevelsCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
+        self.ui.limLevelsCombobox.currentTextChanged.connect(self.refresh_dirs_to_ignore_list)
 
     # Slots
     ##########################################################################
@@ -46,7 +54,21 @@ class NoteImporterDialog(QDialog):
         else:
             showWarning(f"{path} is not a valid directory path.\nPlease try again")
 
-    def refresh_dirs_to_ignore_list(self) -> None:
+    def refresh_dirs_to_ignore_list(self):
+        if not self.thread_running:
+            self.thread_running = True
+            worker = Worker(self._refresh_dirs_to_ignore_list)
+            self.threadpool.start(worker)
+            worker.signals.finished.connect(self.thread_complete)
+
+    # Funcs to thread
+    ##########################################################################
+
+    def thread_complete(self):
+        self.thread_running = False
+        self.ui.filesFoundLabel.setText("Thread complete")
+
+    def _refresh_dirs_to_ignore_list(self) -> None:
         path = self.ui.dirPathLineEdit.text()
         self.ui.dirIgnoreLw.clear()
         # if the path input exists, update the list widget with all of the subdirectories
@@ -57,10 +79,21 @@ class NoteImporterDialog(QDialog):
                 filter_hidden = True
             else:
                 filter_hidden = False
-            if self.ui.showTopSubdirsCheckbox.isChecked():
-                subdir_list = return_top_level_subdirs(path, filter_hidden)
+
+            if self.ui.limitSearchesCheckbox.isChecked():
+                lim_search_num = int(self.ui.limitSearchesCombobox.currentText())
             else:
-                subdir_list = return_all_subdirs(path, filter_hidden)
+                lim_search_num = 0
+
+            if self.ui.limLevelsCheckbox.isChecked():
+                lim_levels_num = int(self.ui.limLevelsCombobox.currentText())
+            else:
+                lim_levels_num = 0
+
+            if self.ui.showTopSubdirsCheckbox.isChecked():
+                subdir_list = return_top_level_subdirs(path, filter_hidden, lim_search_num)
+            else:
+                subdir_list = return_all_subdirs(path, filter_hidden, lim_search_num, lim_levels_num)
             for d in subdir_list:
                 self.add_checkable_item_to_dir_ignore_list_view(d)
         else:
@@ -106,6 +139,36 @@ class NoteImporterDialog(QDialog):
         return ignore_list
 
 
+class Worker(QRunnable):
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+
+    @pyqtSlot()
+    def run(self):
+        try:
+            result = self.fn(
+                *self.args, **self.kwargs
+            )
+        except:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+        else:
+            self.signals.result.emit(result)  # Return the result of the processing
+        finally:
+            self.signals.finished.emit()
+
+
+class WorkerSignals(QObject):
+    finished = pyqtSignal()
+    error = pyqtSignal(tuple)
+    result = pyqtSignal(object)
+
+
 def return_filepath_generator(path: str, list_of_dirs_to_ignore: Optional[list] = None, ign_recursively: bool = True):
     """Returns generator of files in all dirs and subdirs of the dir path given"""
     if list_of_dirs_to_ignore is None:
@@ -124,22 +187,40 @@ def return_filepath_generator(path: str, list_of_dirs_to_ignore: Optional[list] 
                 yield filepath
 
 
-def return_all_subdirs(path,filter_hidden: bool):
+def return_all_subdirs(path, filter_hidden: bool, limit_searches_to: int = 0, levels: int = 0):
+    count = 0
     for subdir, dirs, files in os.walk(path):
+        if limit_searches_to and count > limit_searches_to:
+            return
         rel_path = os.path.relpath(subdir, start=path)
-        if rel_path != '.' and (not filter_hidden):  # stops it from adding the current directory as '.'
-            yield rel_path
+        # stops it from adding the current directory as '.'
+        if rel_path != '.' and (not filter_hidden):
+            if not levels:
+                count += 1
+                yield rel_path
+            elif len(rel_path.split(os.path.sep)) <= levels:
+                count += 1
+                yield rel_path
         elif not os.path.basename(rel_path).startswith('.') and not rel_path.startswith('.'):
-            yield rel_path
+            if not levels:
+                count += 1
+                yield rel_path
+            elif len(os.path.split(rel_path)) <= levels:
+                count += 1
+                yield rel_path
 
 
-def return_top_level_subdirs(path, filter_hidden: bool):
+def return_top_level_subdirs(path, filter_hidden: bool, limit_searches_to: int = 0):
+    count = 0
     for d in os.listdir(path):
+        if limit_searches_to and count > limit_searches_to:
+            return
         if os.path.isdir(os.path.join(path, d)) and (not filter_hidden):
+            count += 1
             yield d
         elif not d.startswith('.'):
+            count += 1
             yield d
-
 
 
 # Form implementation generated from reading ui file 'maindialog.ui'
@@ -148,7 +229,6 @@ def return_top_level_subdirs(path, filter_hidden: bool):
 #
 # WARNING: Any manual changes made to this file will be lost when pyuic5 is
 # run again.  Do not edit this file unless you know what you are doing.
-
 
 
 class Ui_OrganiserDialog(object):
@@ -191,6 +271,28 @@ class Ui_OrganiserDialog(object):
         self.ignoreDirsRecursivelyCheckbox.setChecked(True)
         self.ignoreDirsRecursivelyCheckbox.setObjectName("ignoreDirsRecursivelyCheckbox")
         self.gridLayout.addWidget(self.ignoreDirsRecursivelyCheckbox, 1, 1, 1, 1)
+        self.limitSearchesCheckbox = QCheckBox(OrganiserDialog)
+        self.limitSearchesCheckbox.setEnabled(True)
+        self.limitSearchesCheckbox.setCheckable(True)
+        self.limitSearchesCheckbox.setChecked(True)
+        self.limitSearchesCheckbox.setObjectName("limitSearchesCheckbox")
+        self.gridLayout.addWidget(self.limitSearchesCheckbox, 2, 0, 1, 1)
+        self.limitSearchesCombobox = QComboBox(OrganiserDialog)
+        self.limitSearchesCombobox.setObjectName("limitSearchesCombobox")
+        self.limitSearchesCombobox.addItem("")
+        self.limitSearchesCombobox.addItem("")
+        self.limitSearchesCombobox.addItem("")
+        self.limitSearchesCombobox.addItem("")
+        self.gridLayout.addWidget(self.limitSearchesCombobox, 2, 1, 1, 1)
+        self.limLevelsCombobox = QComboBox(OrganiserDialog)
+        self.limLevelsCombobox.setObjectName("limLevelsCombobox")
+        self.limLevelsCombobox.addItem("")
+        self.limLevelsCombobox.addItem("")
+        self.limLevelsCombobox.addItem("")
+        self.gridLayout.addWidget(self.limLevelsCombobox, 3, 1, 1, 1)
+        self.limLevelsCheckbox = QCheckBox(OrganiserDialog)
+        self.limLevelsCheckbox.setObjectName("limLevelsCheckbox")
+        self.gridLayout.addWidget(self.limLevelsCheckbox, 3, 0, 1, 1)
         self.verticalLayout.addLayout(self.gridLayout)
         self.dirIgnoreLw = QListWidget(OrganiserDialog)
         self.dirIgnoreLw.setObjectName("dirIgnoreLw")
@@ -224,5 +326,14 @@ class Ui_OrganiserDialog(object):
         self.dontShowHiddenCheckbox.setText(_translate("OrganiserDialog", "Don\'t show directories starting with \'.\'"))
         self.showTopSubdirsCheckbox.setText(_translate("OrganiserDialog", "Show only top level directories"))
         self.ignoreDirsRecursivelyCheckbox.setText(_translate("OrganiserDialog", "Ignore selected directories recursively"))
+        self.limitSearchesCheckbox.setText(_translate("OrganiserDialog", "Limit searches to:"))
+        self.limitSearchesCombobox.setItemText(0, _translate("OrganiserDialog", "50"))
+        self.limitSearchesCombobox.setItemText(1, _translate("OrganiserDialog", "100"))
+        self.limitSearchesCombobox.setItemText(2, _translate("OrganiserDialog", "150"))
+        self.limitSearchesCombobox.setItemText(3, _translate("OrganiserDialog", "200"))
+        self.limLevelsCombobox.setItemText(0, _translate("OrganiserDialog", "2"))
+        self.limLevelsCombobox.setItemText(1, _translate("OrganiserDialog", "3"))
+        self.limLevelsCombobox.setItemText(2, _translate("OrganiserDialog", "4"))
+        self.limLevelsCheckbox.setText(_translate("OrganiserDialog", "Limit the number of levels shown to:"))
         self.syncButton.setText(_translate("OrganiserDialog", "Import File Notes"))
         self.filesFoundLabel.setText(_translate("OrganiserDialog", "Files found:"))
