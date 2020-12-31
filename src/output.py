@@ -34,6 +34,7 @@ from .special_searches import get_suspended
 from .web.reading_modal import ReadingModal
 from .web.sidebar import Sidebar
 from .config import get_config_value_or_default
+from .web.templating import filled_template
 from .web.note_templates import *
 from .models import SiacNote, IndexNote
 from .internals import HTML, JS
@@ -669,11 +670,13 @@ class Output:
         self.print_search_results(notes, stamp)
 
 
-    def show_in_modal(self, text: HTML):
-        cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`;" % text
+    def show_in_modal(self, title: str, body: HTML):
+        modal = filled_template("modal", dict(title=title, body=body))
+        cmd = f"$('#siac-modal').remove(); $('#siac-right-side').append(`{modal}`);"
         self.js(cmd)
 
     def show_in_large_modal(self, html: HTML):
+        """ Atm used for the reader only. """
         html = html.replace("`", "&#96;")
         js = """
             $('#siac-reading-modal').html(`%s`);
@@ -699,8 +702,10 @@ class Output:
 
     def show_stats(self, text, reviewPlotData, ivlPlotData, timePlotData):
 
-        cmd = "$('#a-modal').show(); document.getElementById('modalText').innerHTML = `%s`; document.getElementById('modalText').scrollTop = 0; " % (text)
-        c = 0
+        self.show_in_modal("Note Info", text)
+
+        cmd = ""
+        c   = 0
         for k,v in reviewPlotData.items():
             if v is not None and len(v) > 0:
                 c += 1
@@ -717,7 +722,7 @@ class Output:
                     yaxis: { max: 5, min: 0, ticks: [[0, ''], [1, 'Failed'], [2, 'Hard'], [3, 'Good'], [4, 'Easy']],
                                 tickFormatter: function (v, axis) {
                                 if (v == 1) {
-                                    $(this).css("color", "red");
+                                    $(this).css("color", "#f0506e");
                                 }
                                 return v;
                                 }
@@ -771,7 +776,7 @@ class Output:
         self.js(cmd)
 
     def hide_modal(self):
-        self.js("$('#a-modal').hide();")
+        self.js("$('#siac-modal').remove();")
 
     def _addToTags(self, tags, tagStr):
         if tagStr == "":
@@ -785,7 +790,10 @@ class Output:
         return tags
 
     def print_tag_hierarchy(self, tags: List[str]):
-        cmd = """document.getElementById('modalText').innerHTML = `<div style='min-height: 200px'>%s</div>`;
+        html = self.build_tag_hierarchy(tags)
+        self.show_in_modal("Tags", html)
+
+        cmd = """
         $('.tag-list-item').click(function(e) {
             e.stopPropagation();
             let icn = $(this).find('.tag-btn').first();
@@ -798,8 +806,7 @@ class Output:
             }
             $(this).children('ul').toggle();
         });
-
-        """ % self.build_tag_hierarchy(tags)
+        """
         self.js(cmd)
 
     def build_tag_hierarchy(self, tags: List[str]) -> HTML:
@@ -817,7 +824,7 @@ class Output:
                     "[-]" if value else "" ,
                     utility.text.delete_chars(full, ["'", '"', "\n", "\r\n", "\t", "\\"]),
                     key,
-                    "+" if not config["tagClickShouldSearch"] else "<div class='siac-btn siac-btn-small'>Search</div>",
+                    "+" if not config["tagClickShouldSearch"] else "<div class='siac-modal-btn'>Search</div>",
                 iterateMap(value, full))
             html += "</ul>"
             return html
@@ -881,10 +888,6 @@ class Output:
     def show_tooltip(self, text):
         if mw.addonManager.getConfig(__name__)["hideSidebar"]:
             tooltip("Query was empty after cleaning.")
-
-    def show_in_modal_subpage(self, html):
-        self.js("showModalSubpage(`%s`);" % html)
-
 
     def print_pdf_search_results(self, results, stamp, query_set):
         clz_btn_js = """

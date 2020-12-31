@@ -279,7 +279,7 @@ def calculateStats(nid, gridView):
     model       = mw.col.models.get(note.mid)
 
     try:
-        infoTable["Created Date"] = time.strftime("%Y-%m-%d", time.localtime(int(nid)/1000)) + " &nbsp;&nbsp;<a class='keyword' href='#' style='float: right;' onclick='pycmd(\"siac-r-added-same-day %s\"); $(\"#a-modal\").hide(); return false;'>Added Same Day</a>" % nid
+        infoTable["Created Date"] = time.strftime("%Y-%m-%d", time.localtime(int(nid)/1000)) + " &nbsp;&nbsp;<a class='keyword' href='#' style='float: right;' onclick='pycmd(\"siac-r-added-same-day %s\"); $(\"#siac-modal\").hide(); return false;'>Added Same Day</a>" % nid
         infoTable["Last Modified"] = time.strftime("%Y-%m-%d", time.localtime(note.mod))
  
     except:

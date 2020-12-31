@@ -863,18 +863,18 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-synonyms":
         if check_index():
-            index.ui.show_in_modal(get_synonym_dialog())
+            index.ui.show_in_modal("Synonyms", get_synonym_dialog())
     elif cmd.startswith("siac-save-synonyms "):
         new_synonyms(cmd[19:])
-        index.ui.show_in_modal(get_synonym_dialog())
+        index.ui.show_in_modal("Synonyms", get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-edit-synonyms "):
         edit_synonym_set(cmd[19:])
-        index.ui.show_in_modal(get_synonym_dialog())
+        index.ui.show_in_modal("Synonyms", get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-delete-synonyms "):
         delete_synonym_set(int(cmd[21:].strip()))
-        index.ui.show_in_modal(get_synonym_dialog())
+        index.ui.show_in_modal("Synonyms", get_synonym_dialog())
         index.synonyms = loadSynonyms()
     elif cmd.startswith("siac-r-synset-search "):
         if check_index():
@@ -988,7 +988,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-index-info":
         if check_index():
-            index.ui.show_in_modal(get_index_info())
+            index.ui.show_in_modal("Info", get_index_info())
 
     elif cmd == "siac-r-show-tips":
         tips = get_tips_html()
@@ -1890,7 +1890,7 @@ def show_timing_modal(render_time = None):
 
     html += "</table>"
 
-    index.ui.show_in_modal(html)
+    index.ui.show_in_modal("Timing", html)
 
 @requires_index_loaded
 def update_styling(cmd):
