@@ -42,16 +42,9 @@ class NoteImporterDialog(QDialog):
     # Slots
     ##########################################################################
 
+    # todo
     def add_notes(self):
-        path = self.ui.dirPathLineEdit.text()
-        if os.path.exists(path):
-            ignore_list        = self.create_ignore_list_from_selection(path)
-            generator_of_files = return_filepath_generator(path, ignore_list, self.ui.ignoreDirsRecursivelyCheckbox.isChecked())
-            self.ui.filesFoundLw.clear()
-            for file in generator_of_files:  # here you can do what you want with the files
-                self.add_item_to_list_view(file, self.ui.filesFoundLw)
-        else:
-            showWarning(f"{path} is not a valid directory path.\nPlease try again")
+        pass
 
     def refresh_dirs_to_ignore_list(self):
         if not self.thread_running:
@@ -60,7 +53,7 @@ class NoteImporterDialog(QDialog):
             self.threadpool.start(worker)
             worker.signals.finished.connect(self.thread_complete)
 
-    # Funcs to thread
+    # Functions to thread
     ##########################################################################
 
     def thread_complete(self):
@@ -93,6 +86,17 @@ class NoteImporterDialog(QDialog):
                 self.add_checkable_item_to_dir_ignore_list_view(d)
         else:
             self.add_item_to_list_view("Path entered above does not exist, please enter a real path", self.ui.dirIgnoreLw)
+
+    def _add_notes(self):
+        path = self.ui.dirPathLineEdit.text()
+        if os.path.exists(path):
+            ignore_list        = self.create_ignore_list_from_selection(path)
+            generator_of_files = return_filepath_generator(path, ignore_list, self.ui.ignoreDirsRecursivelyCheckbox.isChecked())
+            self.ui.filesFoundLw.clear()
+            for file in generator_of_files:  # here you can do what you want with the files
+                self.add_item_to_list_view(file, self.ui.filesFoundLw)
+        else:
+            showWarning(f"{path} is not a valid directory path.\nPlease try again")
 
     # Gui functions
     ##########################################################################
