@@ -66,7 +66,6 @@ class NoteImporterDialog(QDialog):
 
     def thread_complete(self):
         self.thread_running = False
-        self.ui.filesFoundLabel.setText("Thread complete")
 
     def _refresh_dirs_to_ignore_list(self) -> None:
         path = self.ui.dirPathLineEdit.text()
