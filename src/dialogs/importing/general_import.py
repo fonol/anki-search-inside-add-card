@@ -46,7 +46,9 @@ class NoteImporterDialog(QDialog):
     def add_notes(self):
         pass
 
-    def refresh_dirs_to_ignore_list(self):
+    def refresh_dirs_to_ignore_list(self):#
+        # todo: maybe kill the thread and start a new one if it is running rather than wait for it to finish
+        # maybe associate the state 'is_running' with the worker in some way
         if not self.thread_running:
             self.thread_running = True
             worker = Worker(self._refresh_dirs_to_ignore_list)
