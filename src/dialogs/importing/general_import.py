@@ -29,6 +29,7 @@ class NoteImporterDialog(QDialog):
 
         self.ui.setupUi(self)
 
+        self.thread_pool = QThreadPool()
         self.thread_running = False
         self.thread         = None
 
@@ -50,12 +51,14 @@ class NoteImporterDialog(QDialog):
     def add_notes(self):
         pass
 
-    def refresh_dirs_to_ignore_list(self):#
+    def refresh_dirs_to_ignore_list(self):
 
         path = self.ui.dirPathLineEdit.text()
 
         if path is None or len(path.strip()) == 0:
             return
+
+        self.ui.dirIgnoreLw.clear()
 
         if not os.path.exists(path):
             self.add_item_to_list_view("Path entered above does not exist, please enter a real path", self.ui.dirIgnoreLw)
@@ -75,7 +78,6 @@ class NoteImporterDialog(QDialog):
         self.thread_running = True
         self.ui.scan_status_abort.setVisible(True)
 
-        self.ui.dirIgnoreLw.clear()
         # if the path input exists, update the list widget with all of the subdirectories
         # otherwise, tell th user that the path does not exist
             # don't show any of the directories that start with '.'
