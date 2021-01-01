@@ -1,8 +1,12 @@
+import time
+import threading
 from typing import Optional
 
 from aqt.qt import *
 from aqt.main import AnkiQt
 from aqt.utils import showWarning
+
+from ..components import ClickableQLabel
 
 #
 # WIP:
@@ -20,24 +24,24 @@ class NoteImporterDialog(QDialog):
     def __init__(self, mw: AnkiQt):
         # noinspection PyTypeChecker
         QDialog.__init__(self, parent=mw)
-        self.mw = mw
-        self.ui = Ui_OrganiserDialog()
+        self.mw             = mw
+        self.ui             = Ui_OrganiserDialog()
+
         self.ui.setupUi(self)
 
-        self.threadpool = QThreadPool()
         self.thread_running = False
+        self.thread         = None
 
         self.ui.syncButton.clicked.connect(self.add_notes)
 
-        # self.ui.dirPathLineEdit.textEdited.connect(self.refresh_dirs_to_ignore_list)
         self.ui.dirPathLineEdit.returnPressed.connect(self.refresh_dirs_to_ignore_list)
-
         self.ui.ignoreAllHiddenCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
         self.ui.dontShowHiddenCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
         self.ui.limitSearchesCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
         self.ui.limitSearchesCombobox.currentTextChanged.connect(self.refresh_dirs_to_ignore_list)
         self.ui.limLevelsCheckbox.stateChanged.connect(self.refresh_dirs_to_ignore_list)
         self.ui.limLevelsCombobox.currentTextChanged.connect(self.refresh_dirs_to_ignore_list)
+        self.ui.scan_status_abort.clicked.connect(self.abort_scan)
 
     # Slots
     ##########################################################################
@@ -47,47 +51,74 @@ class NoteImporterDialog(QDialog):
         pass
 
     def refresh_dirs_to_ignore_list(self):#
-        # todo: maybe kill the thread and start a new one if it is running rather than wait for it to finish
-        # maybe associate the state 'is_running' with the worker in some way
-        if not self.thread_running:
-            self.thread_running = True
-            worker = Worker(self._refresh_dirs_to_ignore_list)
-            self.threadpool.start(worker)
-            worker.signals.finished.connect(self.thread_complete)
+
+        path = self.ui.dirPathLineEdit.text()
+
+        if path is None or len(path.strip()) == 0:
+            return
+
+        if not os.path.exists(path):
+            self.add_item_to_list_view("Path entered above does not exist, please enter a real path", self.ui.dirIgnoreLw)
+            return
+
+        if self.thread_running:
+            if self.worker:
+                self.worker.finished.connect(self.refresh_dirs_to_ignore_list)
+                self.worker.stop()
+            return
+
+        if self.thread and self.thread.isRunning():
+            self.worker.stop()
+            self.thread.quit()
+            self.thread.wait()
+        
+        self.thread_running = True
+        self.ui.scan_status_abort.setVisible(True)
+
+        self.ui.dirIgnoreLw.clear()
+        # if the path input exists, update the list widget with all of the subdirectories
+        # otherwise, tell th user that the path does not exist
+            # don't show any of the directories that start with '.'
+        if self.ui.dontShowHiddenCheckbox.isChecked() or self.ui.ignoreAllHiddenCheckbox.isChecked():
+            filter_hidden = True
+        else:
+            filter_hidden = False
+
+        if self.ui.limitSearchesCheckbox.isChecked():
+            lim_search_num = int(self.ui.limitSearchesCombobox.currentText())
+        else:
+            lim_search_num = 0
+
+        if self.ui.limLevelsCheckbox.isChecked():
+            lim_levels_num = int(self.ui.limLevelsCombobox.currentText())
+        else:
+            lim_levels_num = 0
+
+        self.worker = ScanWorker(path, filter_hidden, lim_search_num, lim_levels_num)
+        self.thread = QThread()
+        self.worker.moveToThread(self.thread)
+        self.worker.start.emit()
+        self.worker.found_subdir.connect(self.add_checkable_item_to_dir_ignore_list_view)
+        self.worker.finished.connect(self.thread_complete)
+        self.thread.start()
+        self.ui.scan_status_lbl.setText("Scanning...")
+
+    def abort_scan(self):
+        if self.worker:
+            self.ui.scan_status_abort.setVisible(False)
+            self.worker.stop()
+
+
 
     # Functions to thread
     ##########################################################################
 
     def thread_complete(self):
+        self.ui.scan_status_lbl.setText("Finished Scan.")
+        self.ui.scan_status_abort.setVisible(False)
         self.thread_running = False
 
-    def _refresh_dirs_to_ignore_list(self) -> None:
-        path = self.ui.dirPathLineEdit.text()
-        self.ui.dirIgnoreLw.clear()
-        # if the path input exists, update the list widget with all of the subdirectories
-        # otherwise, tell th user that the path does not exist
-        if os.path.exists(path):
-            # don't show any of the directories that start with '.'
-            if self.ui.dontShowHiddenCheckbox.isChecked() or self.ui.ignoreAllHiddenCheckbox.isChecked():
-                filter_hidden = True
-            else:
-                filter_hidden = False
 
-            if self.ui.limitSearchesCheckbox.isChecked():
-                lim_search_num = int(self.ui.limitSearchesCombobox.currentText())
-            else:
-                lim_search_num = 0
-
-            if self.ui.limLevelsCheckbox.isChecked():
-                lim_levels_num = int(self.ui.limLevelsCombobox.currentText())
-            else:
-                lim_levels_num = 0
-
-            subdir_list = return_all_subdirs(path, filter_hidden, lim_search_num, lim_levels_num)
-            for d in subdir_list:
-                self.add_checkable_item_to_dir_ignore_list_view(d)
-        else:
-            self.add_item_to_list_view("Path entered above does not exist, please enter a real path", self.ui.dirIgnoreLw)
 
     def _add_notes(self):
         path = self.ui.dirPathLineEdit.text()
@@ -140,35 +171,75 @@ class NoteImporterDialog(QDialog):
         return ignore_list
 
 
-class Worker(QRunnable):
-    def __init__(self, fn, *args, **kwargs):
-        super(Worker, self).__init__()
-        self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
-        self.signals = WorkerSignals()
+
+class ScanWorker(QObject):
+    """ Perform subdir/file scan in a chosen folder. """
+
+    found_subdir = pyqtSignal(str)
+    finished     = pyqtSignal()
+    start        = pyqtSignal()
+
+    def __init__(self, path, filter_hidden, lim_search_num, lim_levels_num):
+        super(ScanWorker, self).__init__()
+
+        self.path           = path
+        self.filter_hidden  = filter_hidden
+        self.lim_search_num = lim_search_num
+        self.lim_levels_num = lim_levels_num
+
+        self.abort          = False
+        
+        self.start.connect(self.run)
 
     @pyqtSlot()
     def run(self):
-        try:
-            result = self.fn(
-                *self.args, **self.kwargs
-            )
-        except:
-            traceback.print_exc()
-            exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exc()))
+
+        subdir_list = self.return_all_subdirs()
+        for d in subdir_list:
+            self.found_subdir.emit(d)
+        self.finished.emit()
+
+    def return_all_subdirs(self):
+
+        levels              = self.lim_levels_num
+        limit_searches_to   = self.lim_search_num
+        filter_hidden       = self.filter_hidden
+        path                = self.path
+        count               = 0
+        
+        if levels == 1:
+            for d in os.listdir(path):
+                if limit_searches_to and count > limit_searches_to:
+                    return
+                if os.path.isdir(os.path.join(path, d)) and (not filter_hidden):
+                    count += 1
+                    yield d
+                elif not d.startswith('.'):
+                    count += 1
+                    yield d
         else:
-            self.signals.result.emit(result)  # Return the result of the processing
-        finally:
-            self.signals.finished.emit()
+            for subdir, dirs, files in os.walk(path):
+                if self.abort or (limit_searches_to and count > limit_searches_to):
+                    return
+                rel_path = os.path.relpath(subdir, start=path)
+                # stops it from adding the current directory as '.'
+                if rel_path != '.' and (not filter_hidden):
+                    if not levels:
+                        count += 1
+                        yield rel_path
+                    elif len(rel_path.split(os.path.sep)) <= levels:
+                        count += 1
+                        yield rel_path
+                elif not os.path.basename(rel_path).startswith('.') and not rel_path.startswith('.'):
+                    if not levels:
+                        count += 1
+                        yield rel_path
+                    elif len(os.path.split(rel_path)) <= levels:
+                        count += 1
+                        yield rel_path
 
-
-class WorkerSignals(QObject):
-    finished = pyqtSignal()
-    error = pyqtSignal(tuple)
-    result = pyqtSignal(object)
-
+    def stop(self):
+        self.abort = True
 
 def return_filepath_generator(path: str, list_of_dirs_to_ignore: Optional[list] = None, ign_recursively: bool = True):
     """Returns generator of files in all dirs and subdirs of the dir path given"""
@@ -188,38 +259,7 @@ def return_filepath_generator(path: str, list_of_dirs_to_ignore: Optional[list] 
                 yield filepath
 
 
-def return_all_subdirs(path, filter_hidden: bool, limit_searches_to: int = 0, levels: int = 0):
-    count = 0
-    if levels == 1:
-        for d in os.listdir(path):
-            if limit_searches_to and count > limit_searches_to:
-                return
-            if os.path.isdir(os.path.join(path, d)) and (not filter_hidden):
-                count += 1
-                yield d
-            elif not d.startswith('.'):
-                count += 1
-                yield d
-    else:
-        for subdir, dirs, files in os.walk(path):
-            if limit_searches_to and count > limit_searches_to:
-                return
-            rel_path = os.path.relpath(subdir, start=path)
-            # stops it from adding the current directory as '.'
-            if rel_path != '.' and (not filter_hidden):
-                if not levels:
-                    count += 1
-                    yield rel_path
-                elif len(rel_path.split(os.path.sep)) <= levels:
-                    count += 1
-                    yield rel_path
-            elif not os.path.basename(rel_path).startswith('.') and not rel_path.startswith('.'):
-                if not levels:
-                    count += 1
-                    yield rel_path
-                elif len(os.path.split(rel_path)) <= levels:
-                    count += 1
-                    yield rel_path
+
 
 
 # Form implementation generated from reading ui file 'maindialog.ui'
@@ -241,18 +281,26 @@ class Ui_OrganiserDialog(object):
         OrganiserDialog.setSizePolicy(sizePolicy)
         self.verticalLayout = QVBoxLayout(OrganiserDialog)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.dirScanHL = QFormLayout()
-        self.dirScanHL.setObjectName("dirScanHL")
+
+        # Path of directory to scan 
+        ##########################################################################
+        scan_path_gb = QGroupBox("1. Path of directory to scan")
+        scan_path_vb = QVBoxLayout()
         self.scanPathLabel = QLabel(OrganiserDialog)
         self.scanPathLabel.setObjectName("scanPathLabel")
-        self.dirScanHL.setWidget(0, QFormLayout.LabelRole, self.scanPathLabel)
         self.dirPathLineEdit = QLineEdit(OrganiserDialog)
         self.dirPathLineEdit.setObjectName("dirPathLineEdit")
-        self.dirScanHL.setWidget(0, QFormLayout.FieldRole, self.dirPathLineEdit)
-        self.verticalLayout.addLayout(self.dirScanHL)
+        scan_path_vb.addWidget(self.dirPathLineEdit)
+        scan_path_gb.setLayout(scan_path_vb)
+        self.verticalLayout.addWidget(scan_path_gb)
+
+        # Files/Folder exclusions
+        ##########################################################################
+        exclude_gb = QGroupBox("2. [Optional] Exclude Files and/or Folders")
+        exclude_vb = QVBoxLayout()
         self.dirIgnoreLabel = QLabel(OrganiserDialog)
         self.dirIgnoreLabel.setObjectName("dirIgnoreLabel")
-        self.verticalLayout.addWidget(self.dirIgnoreLabel)
+        exclude_vb.addWidget(self.dirIgnoreLabel)
         self.gridLayout = QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
         self.ignoreAllHiddenCheckbox = QCheckBox(OrganiserDialog)
@@ -293,20 +341,25 @@ class Ui_OrganiserDialog(object):
         self.limLevelsCheckbox.setChecked(True)
         self.limLevelsCheckbox.setObjectName("limLevelsCheckbox")
         self.gridLayout.addWidget(self.limLevelsCheckbox, 3, 0, 1, 1)
-        self.verticalLayout.addLayout(self.gridLayout)
+        exclude_vb.addLayout(self.gridLayout)
         self.dirIgnoreLw = QListWidget(OrganiserDialog)
         self.dirIgnoreLw.setObjectName("dirIgnoreLw")
-        self.verticalLayout.addWidget(self.dirIgnoreLw)
-        self.syncButtonHL = QHBoxLayout()
-        self.syncButtonHL.setObjectName("syncButtonHL")
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.syncButtonHL.addItem(spacerItem)
+        exclude_vb.addWidget(self.dirIgnoreLw)
+        exclude_gb.setLayout(exclude_vb)
+        self.verticalLayout.addWidget(exclude_gb)
+        self.scan_status_hb = QHBoxLayout()
+        self.scan_status_abort = QPushButton("Abort Scan")
+        self.scan_status_abort.setVisible(False)
+        self.scan_status_hb.addWidget(self.scan_status_abort)
+        self.scan_status_lbl = QLabel("")
+        self.scan_status_hb.addStretch()
+        self.scan_status_hb.addWidget(self.scan_status_lbl)
+        exclude_vb.addLayout(self.scan_status_hb)
+
+
         self.syncButton = QPushButton(OrganiserDialog)
         self.syncButton.setObjectName("syncButton")
-        self.syncButtonHL.addWidget(self.syncButton)
-        spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.syncButtonHL.addItem(spacerItem1)
-        self.verticalLayout.addLayout(self.syncButtonHL)
+        self.verticalLayout.addWidget(self.syncButton)
         self.filesFoundLabel = QLabel(OrganiserDialog)
         self.filesFoundLabel.setObjectName("dirIgnoreLabel")
         self.verticalLayout.addWidget(self.filesFoundLabel)
@@ -319,8 +372,7 @@ class Ui_OrganiserDialog(object):
 
     def retranslateUi(self, OrganiserDialog):
         _translate = QCoreApplication.translate
-        OrganiserDialog.setWindowTitle(_translate("OrganiserDialog", "External Files Anki Orgnaniser"))
-        self.scanPathLabel.setText(_translate("OrganiserDialog", "Path of directory to scan"))
+        OrganiserDialog.setWindowTitle(_translate("OrganiserDialog", "External Files Anki Organiser"))
         self.dirIgnoreLabel.setText(_translate("OrganiserDialog", "Select subdirectories/files to ignore"))
         self.ignoreAllHiddenCheckbox.setText(_translate("OrganiserDialog", "Ignore all directories (and subdirectories) starting with \'.\' in the scan"))
         self.dontShowHiddenCheckbox.setText(_translate("OrganiserDialog", "Don\'t show directories starting with \'.\'"))
