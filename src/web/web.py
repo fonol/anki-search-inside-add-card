@@ -310,9 +310,8 @@ def print_starting_info():
 def display_model_dialog():
     """ Called after clicking on "Set Fields" in the settings modal. """
 
-    if check_index():
-        html = get_model_dialog_html()
-        get_index().ui.show_in_modal_subpage(html)
+    html = get_model_dialog_html()
+    get_index().ui.show_in_modal("Set Fields", html)
 
 @js
 def show_settings_modal(editor) -> JS:
@@ -322,7 +321,7 @@ def show_settings_modal(editor) -> JS:
     html    = get_settings_modal_html(config)
     index   = get_index()
 
-    index.ui.show_in_modal(html)
+    index.ui.show_in_modal("Settings", html)
     return "$('.modal-close').on('click', function() {pycmd(`siac-write-config`); })"
 
 @js
@@ -332,8 +331,8 @@ def show_unsuspend_modal(nid) -> JS:
     html    = get_unsuspend_modal(nid)
     index   = get_index()
 
-    index.ui.show_in_modal(html)
-    return "siacState.keepPositionAtRendering = true; $('.modal-close').on('click', function() {pycmd(`siac-rerender`);$('.modal-close').off('click'); });"
+    index.ui.show_in_modal("Unsuspend Cards", html)
+    return "siacState.keepPositionAtRendering = true; $('.siac-modal-close').on('click', function() { pycmd(`siac-rerender`);$('.siac-modal-close').off('click'); });"
 
 
 @js

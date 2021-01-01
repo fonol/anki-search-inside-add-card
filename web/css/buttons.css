@@ -103,3 +103,27 @@ body.nightMode #topContainer .siac-btn-small.expanded .siac-btn-small-dropdown.c
     color: #2496dc;
     transform: scale(1.04);
 }
+
+.siac-modal-btn {
+    padding: 3px 9px;
+    border-radius: 3px;
+    text-align: center;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    background: linear-gradient(to top, #efefef, #f9f9f9);
+    color: #2b2b2b;
+    border: 1px solid #d0d0d0;
+}
+
+body.nightMode .siac-modal-btn {
+    color: #fff;
+    border: 1px solid #717171;
+    background: linear-gradient(0deg,#565656,#4e4e4e);
+}
+body.nightMode .siac-modal-btn:hover {
+    filter: brightness(1.1);
+}

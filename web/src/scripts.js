@@ -335,7 +335,7 @@ window.setTagSearch = function (elem) {
 
 window.tagClick = function (elem) {
     if ($(elem).data('tags') && $(elem).data('tags') == $(elem).data('name')) {
-        $('#a-modal').show();
+        $('#siac-modal').show();
         pycmd('siac-render-tags ' + $(elem).data('tags'));
         return;
     }
@@ -828,17 +828,6 @@ window.fieldsBtnClicked = function () {
         html += elem.innerHTML + "\u001f";
     });
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
-}
-
-window.showModalSubpage = function (html) {
-    $('#modalText').hide();
-    $('#modal-subpage-inner').html(html);
-    byId('modal-subpage').style.display = "flex";
-}
-window.hideModalSubpage = function () {
-    $('#modal-subpage-inner').html('');
-    $('#modal-subpage').hide();
-    $('#modalText').show();
 }
 
 window.showPDFLoader = function () {

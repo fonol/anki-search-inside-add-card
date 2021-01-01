@@ -101,7 +101,7 @@ def new_synonyms(syn_input: str):
 def delete_synonym_set(ix: int):
 
     existing    = loadSynonyms()
-    if ix >= 0 and index < len(existing):
+    if ix >= 0 and ix < len(existing):
         existing.pop(ix)
     save_synonyms(existing)
 
@@ -226,6 +226,9 @@ def get_model_dialog_html() -> HTML:
     config      = mw.addonManager.getConfig(__name__)
 
     html        = """
+    <div class='mt-10 mb-10'>
+        <div class='siac-modal-btn' onclick='pycmd("siac-styling")'>Back to Settings</div>
+    </div>
     <div style='flex: 0 0 auto;'>
         <p>Changes in <i>Show Field in Results</i> take effect immediately, changes in <i>Search in Field</i> need a rebuild of the index.</p>
     </div>
@@ -461,12 +464,17 @@ def get_note_delete_confirm_modal_html(nid: int) -> Optional[HTML]:
         return None
     title           = utility.text.trim_if_longer_than(note.get_title(), 100) 
     priority        = note.priority
+
     if priority is None or priority == 0:
         priority    = "-"
+        fg          = "black"
+        bg          = "transparent"
+
     else:
         priority    = int(priority)
-        prio_color  = utility.misc.prio_color(priority)
-        priority    = f"<span style='padding: 0 3px 0 3px; background: {prio_color}'>{priority}</span>"
+        fg          = "white"
+        bg          = utility.misc.prio_color(priority)
+        priority    = f"<span style='padding: 0 3px 0 3px; color: {fg} ;background: {bg}'>{priority}</span>"
 
     return filled_template("note_delete", dict(title = title, creation_date = note.created, priority = priority, nid = nid))
 
@@ -590,6 +598,10 @@ def get_unsuspend_modal(nid: int) -> HTML:
     cards_html      = ""
     unsuspend_all   = ""
 
+    note            = mw.col.getNote(int(nid))
+    print(note)
+    flds            = "<br>".join([utility.text.trim_if_longer_than(f, 100) for f in note.fields])
+
     for c in cards:
         templates = mw.col.getCard(c[0]).model()["tmpls"]
         if c[2] == -1:
@@ -599,65 +611,53 @@ def get_unsuspend_modal(nid: int) -> HTML:
                 temp_name = utility.text.trim_if_longer_than(t["name"], 60)
                 break
 
-        susp        = "<span class='siac-susp bold' style='border-radius: 3px; padding: 2px 3px 2px 3px;'>SUSPENDED</span>" if c[2] == -1 else ""
-        btn         = f"<div class='siac-btn siac-btn-small bold' onclick='pycmd(\"siac-unsuspend {nid} {c[0]}\");'>Unsuspend</div>" if c[2] == -1 else ""
+        susp        = "<span class='bold fg-red'>Suspended</span>" if c[2] == -1 else "<span class='bold fg-green'>Not suspended</span>"
+        btn         = f"<div class='siac-modal-btn' onclick='pycmd(\"siac-unsuspend {nid} {c[0]}\");'>Unsuspend</div>" if c[2] == -1 else ""
         ivl         = f"{c[1]} days" if c[1] >= 0 else f"{c[1]} seconds"
         cards_html += f"""
             <tr>
-                <td><b>{temp_name}</b> ({c[0]})</td>
-                <td>ivl: {ivl}</td>
-                <td>{susp}</td>
-                <td>{btn}</td>
+                <td class='p-10'><b>{temp_name}</b></td>
+                <td class='p-10'>{c[0]}</td>
+                <td class='p-10'>{ivl}</td>
+                <td class='p-10'>{susp}</td>
+                <td class='p-10'>{btn}</td>
             </tr>
         """
     return f"""
-            <div style='min-height: 250px;' class='flex-col oflow_hidden'>
+            <div class='flex-col oflow_hidden' style='flex: 1 0 auto; font-size: 15px;'>
                 <div style='flex: 1 1 auto;'>
                     <center style='margin: 10px 0 20px 0;'>
-                        <span style='font-size: 16px;'><b>{len(cards)}</b> Card(s) for Note <b>{nid}</b></span>
+                        <table style='margin-bottom: 50px;'>
+                            <tr>
+                                <td class='bold p-10'>Note ID</td>
+                                <td>{nid}</td>
+                            </tr>
+                            <tr>
+                                <td class='bold p-10'>Fields</td>
+                                <td>{flds}</td>
+                            </tr>
+                        <table>
                         <table style='min-width: 500px; margin-top: 20px;'>
-                            {cards_html}
+                            <thead>
+                                <tr>
+                                    <th>Card template name</th>
+                                    <th>CID</th>
+                                    <th>Interval</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {cards_html}
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td class='p-10'><div class='siac-modal-btn' onclick='pycmd(\"siac-unsuspend {nid} {unsuspend_all[:-1]}\")'>Unsuspend All</div> </td>
+                            </tbody>
                         </table>
-                    </center>
-                </div>
-                <div>
-                    <hr style='margin-top: 20px; margin-bottom: 20px;'>
-                    <center class='mb-5'>
-                        <div class='siac-btn siac-btn-small bold' onclick='pycmd(\"siac-unsuspend {nid} {unsuspend_all[:-1]}\")'>Unsuspend All</div> 
                     </center>
                 </div>
             </div>
             """
 
-
-def pdf_svg(w: int, h: int) -> HTML:
-    return """
-        <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
-        width="%spx" height="%spx" viewBox="0 0 225.000000 225.000000"
-        preserveAspectRatio="xMidYMid meet">
-        <g transform="translate(0.000000,225.000000) scale(0.100000,-0.100000)"
-        fill="currentColor" stroke="none">
-        <path d="M690 2099 c-29 -12 -67 -45 -83 -74 -8 -14 -14 -134 -17 -380 l-5
-        -360 -120 -5 c-107 -4 -125 -8 -166 -32 -59 -35 -96 -90 -110 -163 -14 -76 -7
-        -389 10 -430 15 -37 75 -101 116 -123 21 -12 65 -18 150 -22 l120 -5 5 -125
-        c3 -69 11 -136 17 -150 14 -32 51 -66 86 -79 19 -7 231 -11 639 -11 l610 0 40
-        22 c21 12 49 38 61 58 l22 35 0 695 c0 578 -2 699 -14 720 -29 50 -363 409
-        -396 424 -29 14 -92 16 -487 15 -276 0 -463 -4 -478 -10z m890 -268 c0 -226
-        -15 -210 205 -213 l170 -3 3 -664 c2 -607 1 -666 -14 -683 -16 -17 -48 -18
-        -619 -18 -548 0 -604 1 -616 17 -19 22 -26 208 -9 228 11 13 76 15 434 15
-        l422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120
-        133 l-51 24 -421 0 c-349 0 -424 2 -433 14 -18 22 -11 667 8 689 12 15 56 17
-        442 17 l429 0 0 -169z m-906 -765 c51 -21 76 -60 76 -118 0 -43 -5 -55 -33
-        -83 -19 -19 -46 -36 -60 -39 -15 -3 -38 -8 -52 -11 -23 -5 -25 -10 -25 -64 0
-        -53 -2 -59 -23 -65 -12 -3 -33 -3 -45 1 -22 5 -22 8 -22 192 0 103 3 191 7
-        194 12 13 143 7 177 -7z m400 -15 c96 -60 102 -247 11 -319 -55 -43 -198 -67
-        -246 -42 -18 10 -19 23 -19 188 0 129 3 182 13 191 9 9 39 12 107 9 79 -3 102
-        -8 134 -27z m366 14 c7 -8 10 -25 6 -39 -5 -22 -12 -25 -64 -28 l-57 -3 0 -35
-        0 -35 52 -3 c47 -3 54 -6 59 -27 11 -43 -1 -54 -58 -57 l-53 -3 -3 -72 c-3
-        -64 -5 -72 -25 -77 -13 -3 -33 -3 -45 1 -22 5 -22 8 -22 193 0 141 3 190 13
-        193 6 3 51 6 98 6 65 1 90 -3 99 -14z"/>
-        <path d="M928 994 c-5 -4 -8 -56 -8 -116 l0 -108 36 0 c26 0 43 8 66 30 28 29
-        30 35 26 91 -3 42 -10 66 -24 80 -21 21 -84 36 -96 23z"/>
-        </g>
-        </svg>
-    """ % (w, h)

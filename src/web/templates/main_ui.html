@@ -1,21 +1,6 @@
 <div class='siac-col' style='width: {rightSideWidth}%; flex-grow: 1;' id='siac-right-side'>
     <div id='siac-second-col-wrapper'>
         <div id="greyout"></div>
-        <div id="a-modal" class="modal">
-            <div class="modal-content">
-                <div id="modalText"></div>
-                <div id="modal-subpage">
-                    <div style='flex: 0 0 auto;'>
-                        <button class='modal-close siac-btn-small' onclick='hideModalSubpage()'>&#8592; Back</button>
-                    </div>
-                    <div id="modal-subpage-inner"></div>
-                </div>
-                <div class='ta_right' style='flex: 0 0 auto; padding-top:15px;'>
-                    <button class='modal-close siac-btn-small'
-                        onclick='$("#a-modal").hide(); hideModalSubpage();'>Close</button>
-                </div>
-            </div>
-        </div>
         <div id='siac-search-modal'>
             <div id='siac-search-modal-wrapper'>
                 <div id='siac-search-modal-header'></div>
@@ -164,12 +149,12 @@
                             <br>
                             <span>Menus</span>
                             <hr>
-                            <div class='siac-dropdown-item w-100' onclick='pycmd("siac-index-info");'>&nbsp;Info</div>
+                            <div class='siac-dropdown-item w-100' onclick='$("#siac-settings-icn").removeClass("expanded");pycmd("siac-index-info");'>&nbsp;Info</div>
                             <div class='siac-dropdown-item w-100' onclick='pycmd("siac-r-show-tips");'>&nbsp;Tips</div>
-                            <div class='siac-dropdown-item w-100' onclick='pycmd("siac-synonyms");'>&nbsp;Synonyms</div>
-                            <div class='siac-dropdown-item w-100' onclick='pycmd("siac-styling");'>&nbsp;Settings</div>
+                            <div class='siac-dropdown-item w-100' onclick='$("#siac-settings-icn").removeClass("expanded");pycmd("siac-synonyms");'>&nbsp;Synonyms</div>
+                            <div class='siac-dropdown-item w-100' onclick='$("#siac-settings-icn").removeClass("expanded");pycmd("siac-styling");'>&nbsp;Settings</div>
                             <div class='siac-dropdown-item w-100'
-                                onclick='$("#a-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
+                                onclick='$("#siac-modal").hide(); pycmd("siac_rebuild_index")'>&nbsp;Rebuild Index</div>
                         </div>
                     </div>
                 </div>
