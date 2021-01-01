@@ -1530,7 +1530,7 @@ def show_read_stats():
     res         = []
 
     # first card: Read pages heatmap
-    t_counts    = get_read_last_n_days_by_day(365)
+    t_counts    = get_read_last_n_days_by_day(utility.date.day_of_year())
     body        = read_counts_by_date_card_body(t_counts)
     t_counts    = utility.date.counts_to_timestamps(t_counts)
     res.append(SiacNote.mock(f"Pages read per day ({datetime.now().year})", body, "Meta"))
