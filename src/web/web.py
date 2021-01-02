@@ -501,6 +501,8 @@ def changelog() -> List[str]:
         "Add external link icon for external files in the search pane (thanks to p4nix)",
         "Add Create Note button to tag meta card",
         "Add shortcuts for Page Snapshot and Create Extract (thanks to p4nix)", 
+        "Convert some more dialogs to new theme",
+        "Fix: Read stats showing Avg. pages read/day for last 365 days instead of current year's",
         "Fix: Find invalid paths in PDF meta card not working with file:/// sources",
         "Fix: Layout problem for new users in sidebar",
         "Fix: Read stats heatmap not fitting in card on smaller screen sizes",
