@@ -1,6 +1,4 @@
-import time
-import threading
-from typing import Optional
+from typing import Optional, List
 
 from aqt.qt import *
 from aqt.main import AnkiQt
@@ -76,7 +74,6 @@ class NoteImporterDialog(QDialog):
             self.thread.wait()
         
         self.thread_running = True
-        self.ui.scan_status_abort.setVisible(True)
 
         # if the path input exists, update the list widget with all of the subdirectories
         # otherwise, tell th user that the path does not exist
@@ -100,14 +97,16 @@ class NoteImporterDialog(QDialog):
         self.thread = QThread()
         self.worker.moveToThread(self.thread)
         self.worker.start.emit()
-        self.worker.found_subdir.connect(self.add_checkable_item_to_dir_ignore_list_view)
+        self.worker.found_subdir.connect(self.bulk_add_to_dir_ignore)
         self.worker.finished.connect(self.thread_complete)
+        self.worker.aborted.connect(self.worker_aborted)
         self.thread.start()
         self.ui.scan_status_lbl.setText("Scanning...")
+        self.ui.scan_status_abort.setDisabled(False)
 
     def abort_scan(self):
         if self.worker:
-            self.ui.scan_status_abort.setVisible(False)
+            self.ui.scan_status_abort.setDisabled(True)
             self.worker.stop()
 
 
@@ -117,9 +116,13 @@ class NoteImporterDialog(QDialog):
 
     def thread_complete(self):
         self.ui.scan_status_lbl.setText("Finished Scan.")
-        self.ui.scan_status_abort.setVisible(False)
+        self.ui.scan_status_abort.setDisabled(True)
         self.thread_running = False
 
+    def worker_aborted(self):
+        self.ui.scan_status_lbl.setText("Aborted Scan.")
+        self.ui.scan_status_abort.setDisabled(True)
+        self.thread_running = False
 
 
     def _add_notes(self):
@@ -135,6 +138,14 @@ class NoteImporterDialog(QDialog):
 
     # Gui functions
     ##########################################################################
+
+    def bulk_add_to_dir_ignore(self, items: List[str]) -> None:
+        for i in items:
+            lwi = QListWidgetItem()
+            lwi.setText(i)
+            lwi.setFlags(lwi.flags() | Qt.ItemIsUserCheckable)
+            lwi.setCheckState(Qt.Unchecked)
+            self.ui.dirIgnoreLw.addItem(lwi)
 
     def add_checkable_item_to_dir_ignore_list_view(self, text: str) -> None:
         self.ui.lwi = QListWidgetItem()
@@ -177,9 +188,10 @@ class NoteImporterDialog(QDialog):
 class ScanWorker(QObject):
     """ Perform subdir/file scan in a chosen folder. """
 
-    found_subdir = pyqtSignal(str)
+    found_subdir = pyqtSignal(list)
     finished     = pyqtSignal()
     start        = pyqtSignal()
+    aborted      = pyqtSignal()
 
     def __init__(self, path, filter_hidden, lim_search_num, lim_levels_num):
         super(ScanWorker, self).__init__()
@@ -195,11 +207,23 @@ class ScanWorker(QObject):
 
     @pyqtSlot()
     def run(self):
-
+        self.abort  = False
         subdir_list = self.return_all_subdirs()
+        batch       = []
+        batch_size  = 50
         for d in subdir_list:
-            self.found_subdir.emit(d)
-        self.finished.emit()
+            batch.append(d)
+            if len(batch) >= batch_size:
+                self.found_subdir.emit(batch)
+                batch = []
+                
+        if len(batch) > 0:
+            self.found_subdir.emit(batch)
+
+        if self.abort:
+            self.aborted.emit()
+        else:
+            self.finished.emit()
 
     def return_all_subdirs(self):
 
@@ -211,7 +235,7 @@ class ScanWorker(QObject):
         
         if levels == 1:
             for d in os.listdir(path):
-                if limit_searches_to and count > limit_searches_to:
+                if self.abort or limit_searches_to and count > limit_searches_to:
                     return
                 if os.path.isdir(os.path.join(path, d)) and (not filter_hidden):
                     count += 1
@@ -351,7 +375,8 @@ class Ui_OrganiserDialog(object):
         self.verticalLayout.addWidget(exclude_gb)
         self.scan_status_hb = QHBoxLayout()
         self.scan_status_abort = QPushButton("Abort Scan")
-        self.scan_status_abort.setVisible(False)
+        self.scan_status_abort.setDisabled(True)
+        self.scan_status_abort.setFocusPolicy(Qt.NoFocus)
         self.scan_status_hb.addWidget(self.scan_status_abort)
         self.scan_status_lbl = QLabel("")
         self.scan_status_hb.addStretch()
