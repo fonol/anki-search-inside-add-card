@@ -412,6 +412,11 @@ class ReadingModal:
                 for nid in done_dialog.enqueue_next_ids:
                     update_priority_list(nid, done_dialog.enqueue_next_prio)
 
+            if get_config_value("mix_reviews_and_reading.review_after_done") and state.interrupted_review:
+                win = mw.app.activeWindow()
+                if isinstance(win, aqt.addcards.AddCards):
+                    win.close()
+
             # 2. check if a tag filter is set, if yes, the next opened note should not be the first in the queue, but rather
             # the next enqueued note with at least one overlapping tag
             if done_dialog.tag_filter is not None and len(done_dialog.tag_filter.strip()) > 0:
@@ -423,10 +428,6 @@ class ReadingModal:
             else:
                 self.read_head_of_queue()
 
-            if get_config_value("mix_reviews_and_reading.review_after_done") and state.interrupted_review:
-                win = mw.app.activeWindow()
-                if isinstance(win, aqt.addcards.AddCards):
-                    win.close()
 
                 mw.raise_()
                 state.interrupted_review = False
