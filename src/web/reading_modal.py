@@ -336,7 +336,7 @@ class ReadingModal:
 
         siacnote = self.note
 
-        if siacnote is not None:
+        if siacnote is not None and get_config_value_or_default("pdf.onOpen.autoFillSourceFieldsBool", True):
             note                = self._editor.note
 
             fields_to_prefill   = get_config_value_or_default("pdf.onOpen.autoFillFieldsWithPDFName", [])
@@ -1229,7 +1229,7 @@ class ReadingModal:
             header = f"Anki Notes ({len(linked)})"
         if around_s != "":
             around_s = f"<center class='siac-page-sidebar-around'>{around_s}</center>"
-            
+
 
         stats_s = f"""<div class='fg_lightgrey ta_center' style='flex: 0 1 auto; margin-top: 15px; padding-top: 5px; border-top: 4px double grey;'>
                     <i class="fa fa-bar-chart"></i>:&nbsp; Read <b>{read_today}</b> page{"s" if read_today != 1 else ""},

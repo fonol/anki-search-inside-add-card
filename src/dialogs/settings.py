@@ -5,6 +5,7 @@ from aqt.utils import tooltip
 from .setting_tabs.shortcut import ShortcutSettingsTab
 from .setting_tabs.appearance import AppearanceSettingsTab
 from .setting_tabs.interleaving import InterleavingSettingsTab
+from .setting_tabs.general import GeneralSettingsTab
 
 
 class SettingsDialog(QDialog):
@@ -20,17 +21,19 @@ class SettingsDialog(QDialog):
         self.exec_()
 
     def setup_ui(self):
-        self.vbox = QVBoxLayout()
+        self.vbox             = QVBoxLayout()
 
-        self.tabs           = QTabWidget()
+        self.tabs             = QTabWidget()
 
         # Define tabs
-        self.tab_appearance = AppearanceSettingsTab()
-        self.tab_shortcut = ShortcutSettingsTab()
+        self.tab_appearance   = AppearanceSettingsTab()
+        self.tab_shortcut     = ShortcutSettingsTab()
+        self.tab_general      = GeneralSettingsTab()
         self.tab_interleaving = InterleavingSettingsTab()
 
-        self.tabs.addTab(self.tab_appearance, "Appearance")
-        self.tabs.addTab(self.tab_shortcut   , "Shortcuts")
+        self.tabs.addTab(self.tab_appearance,   "Appearance")
+        self.tabs.addTab(self.tab_shortcut,     "Shortcuts")
+        self.tabs.addTab(self.tab_general,      "General")
         self.tabs.addTab(self.tab_interleaving, "Interleaving")
 
         # Cancel and Okay Buttons
@@ -46,6 +49,7 @@ class SettingsDialog(QDialog):
     def accept_clicked(self):
         tooltip_changes = self.tab_appearance.save_changes() + \
                           self.tab_shortcut.save_changes() + \
+                          self.tab_general.save_changes() + \
                           self.tab_interleaving.save_changes()
 
         if tooltip_changes:
