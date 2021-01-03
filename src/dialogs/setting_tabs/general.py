@@ -13,7 +13,6 @@ class GeneralSettingsTab(QWidget):
         self.setup_ui()
 
     def setup_values(self):
-        #self.previous_sourcefields =
         self.previous_autofilltags        = get_config_value("pdf.onOpen.autoFillTagsWithPDFsTags")
         self.previous_autofillsource      = self.list_to_string(get_config_value("pdf.onOpen.autoFillFieldsWithPDFName"))
         self.previous_autofillsource_bool = get_config_value("pdf.onOpen.autoFillSourceFieldsBool")
