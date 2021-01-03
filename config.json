@@ -60,8 +60,11 @@
 "searchpane.zoom" : 1.0,
 "switchLeftRight": false,
 "highlighting": true,
+
 "pdf.onOpen.autoFillTagsWithPDFsTags" : true,
-"pdf.onOpen.autoFillFieldsWithPDFName": [],
+"pdf.onOpen.autoFillFieldsWithPDFName": ["Source", "Sources"],
+"pdf.onOpen.autoFillSourceFieldsBool": true,
+
 "pdf.import.folders_to_search" : [],
 "pdf.shortcuts.toggle_search_on_select": "CTRL+S",
 "pdf.shortcuts.toggle_pdf_links": "CTRL+Shift+S",
@@ -91,7 +94,6 @@
 "pdf.page_sidebar_shown": true,
 
 "notes.editor.autoFillWithLastTagsOnOpen": false,
-"notes.editor.shortcut": "Ctrl+Shift+n",
 "notes.editor.defaultTagsIfEmpty": "",
 "notes.editor.include_anki_tags": false,
 "notes.editor.tag_sort": "a-z",
