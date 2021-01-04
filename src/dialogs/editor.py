@@ -543,14 +543,15 @@ class CreateTab(QWidget):
 
         self.setObjectName("create_tab")
 
+        border_c = "grey" if self.parent.dark_mode_used else "lightgrey"
         styles = """
-            QPushButton#q_1,QPushButton#q_2,QPushButton#q_3,QPushButton#q_4,QPushButton#q_5,QPushButton#q_6 { border-radius: 5px; }
+            QTextEdit { border-radius: 3px; border: 1px solid %s;  padding: 3px; }
+            QLineEdit { border-radius: 3px; border: 1px solid %s;  padding: 2px; }
 
-            QTextEdit { border-radius: 5px; border: 1px solid #717378;  padding: 3px; }
-            QLineEdit { border-radius: 5px; border: 1px solid #717378;  padding: 2px;}
-            #recentDisp { margin: 5px; }
+            QTextEdit:focus { border-color: #2496dc; }
+            QLineEdit:focus { border-color: #2496dc; }
 
-        """ #% btn_styles
+        """ % (border_c, border_c)
 
         if parent.dark_mode_used:
             styles += """
