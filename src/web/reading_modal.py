@@ -147,9 +147,7 @@ class ReadingModal:
         self.note_id              = int(note_id)
         self.note                 = note
         ReadingModal.current_note = note
-
-        html                    = self.html()
-
+        html                      = self.html()
 
         index.ui.show_in_large_modal(html)
 
@@ -1244,7 +1242,7 @@ class ReadingModal:
                     <center class='siac-note-header'><b>{header}</b></center>
                     {around_s}
                 </div>
-                <div style='overflow-y: auto; flex: 1 1 auto; padding: 7px 4px 7px 0; text-align: left;'>
+                <div style='overflow-y: auto; flex: 1 1 auto; padding: 7px 6px 7px 6px; text-align: left;'>
                     {html}
                 </div>
                 {stats_s}"""
