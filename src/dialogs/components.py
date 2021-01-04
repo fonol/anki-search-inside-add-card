@@ -135,7 +135,7 @@ class QtPrioritySlider(QWidget):
                 self.scheduler.priority_set_to_zero()
             elif self.nid and self.show_similar:
                 self.similar.setText(f"<br>Info: A note without a priority won't appear in <br>the queue, unless it has a schedule<br>which is due on that day.")
-            self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #c62828; border-radius: 3px; }")
+            self.slider.setStyleSheet("QSlider::handle:horizontal {background-color: #f0506e; border-radius: 3px; }")
 
         else:
             self.value_lbl.setText(dynamic_sched_to_str(self.slider.value()).replace("(", "(<b>").replace(")", "</b>)"))
