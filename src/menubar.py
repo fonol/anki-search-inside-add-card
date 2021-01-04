@@ -36,7 +36,8 @@ class Menu():
             ("shortcuts.menubar.import.youtube",    "YouTube",       self.import_youtube),
             ("shortcuts.menubar.import.zotero_csv", "Zotero CSV",    self.import_zotero),
             # WIP https://github.com/fonol/anki-search-inside-add-card/issues/191
-            ("",                                    "General Import",self.import_general)
+            # ("",                                    "General Import",self.import_general)
+
         )
 
         add_menu_actions(submenu_import, import_options)
