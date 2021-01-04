@@ -55,7 +55,7 @@ body.nightMode .siac-tl-plus {
     display: inline-block;
 }
 .siac-tl-plus:hover {
-    transform: scale(1.1);
+    color: coral;
 }
 .deck-list-item.selected > .list-item-inner > .check {
     display: inline;
