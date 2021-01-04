@@ -1,5 +1,5 @@
 <div id='siac-schedule-dialog' class="siac-modal-small dark ta_center">
-    <div> <i class='fa fa-trash mb-10' style='font-size: 34px; margin-bottom: 20px;'></i></div>
+    <div class='mt-10'> <i class='fa fa-trash mb-10' style='font-size: 34px; margin-bottom: 20px;'></i></div>
     <b>{title}</b>
 
     <div class='siac-pdf-main-color-border-top cursor-pointer' style='text-align: left; user-select: none;  margin: 10px 0 30px 0; padding: 15px;'>
@@ -13,7 +13,7 @@
         </label><br>
 
     </div>
-    <div class='ta_right'>
+    <div class='ta_right mr-10 mb-10'>
         <div class='siac-btn siac-btn-dark mr-10' onclick='$(this.parentNode.parentNode).remove(); modalShown = false; ungreyoutBottom(); $("#siac-rm-greyout").hide();'>Cancel</div>
         <div class='siac-btn siac-btn-dark' onclick='removeDialogOk({note_id})'><i class='fa fa-trash mr-5'></i>OK</div>
     </div>
