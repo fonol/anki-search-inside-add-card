@@ -42,15 +42,13 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     color: var(--c-reading-modal-theme-color);
     cursor: pointer;
 }
-.siac-modal-small.dark, #siac-reading-modal .siac-modal-small, .siac-pdf-contextmenu {
+.siac-modal-small.dark, #siac-reading-modal .siac-modal-small {
     border: 3px outset var(--c-reading-modal-theme-color);
     background: var(--c-reading-modal-background);
     color: white;
+    padding: 10px;
 }
-.siac-pdf-contextmenu {
-    border-radius: 3px;
-    padding: 5px;
-}
+
 #siac-pdf-canvas {
     display:inline-block;
 }
@@ -182,7 +180,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     animation: readingModalIn 0.3s;
 }
 #siac-page-sidebar {
-    width: 230px;
+    width: 260px;
     margin-left: 10px;
     flex: 0 0 auto;
     display: none;
@@ -205,6 +203,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     display: inline-block; 
     position:relative; 
     z-index: 2; 
+    margin-right: 20px;
     padding: 0 5px 0 5px;
 }
 #siac-pdf-wrapper {
@@ -1085,10 +1084,10 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     max-height: 36px !important;
 }
 #siac-reading-modal-center.siac-page-sidebar #siac-page-btns {
-    margin-right: 235px;
+    margin-right: 275px;
 }
 #siac-reading-modal-center.siac-page-sidebar #siac-pdf-overlay {
-    right: 230px;
+    right: 260px;
 }
 #siac-reading-modal-center.siac-page-sidebar #siac-page-sidebar {
     display: flex;
