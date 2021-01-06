@@ -5,6 +5,7 @@
     overflow-y: hidden;
     max-height: 950px;
     min-width: 95px;
+    word-break: break-word;
   }
   #siac-reading-modal .siac-inner-card {
     color: var(--c-note-foreground-night);
