@@ -278,6 +278,18 @@ def print_starting_info():
             html += f"{ix + 1}. {c}<br>"
     notes.append(("Changelog", html))
 
+    html    = """
+        This add-on has grown so large, that it is now infeasible for a single person to test all features on every update (and the large number of possible combinations of config settings makes this even more difficult).
+        So if you think you spotted an error, an inconsistency or even just some UI part that doesn't seem right, please report it.
+        <br><br>
+        <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github issue tracker'>Github issue tracker</a>
+        <br><br>
+        Thanks in advance.
+
+
+    """
+    notes.append(("Community Debugging", html))
+
     html    = ""
     issues  = known_issues()
     if issues:
