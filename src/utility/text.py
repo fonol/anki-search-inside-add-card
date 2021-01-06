@@ -132,6 +132,7 @@ def replace_accents_with_vowels(text):
 
 def tokenize(text):
 
+    text    = text.replace("|", " ")
     if not asian_char.search(text):
         return [t for t in text.split(" ") if len(t) > 0]
 
