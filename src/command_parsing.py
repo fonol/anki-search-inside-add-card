@@ -1993,6 +1993,7 @@ def update_styling(cmd):
 
     elif name in ["notes.showSource", "useInEdit", "results.showFloatButton", "results.showIDButton", "results.showCIDButton"]:
         config[name] = value == "true"
+    write_config()
 
 
 def empty_filtered_deck_by_name(name: str) -> bool:
