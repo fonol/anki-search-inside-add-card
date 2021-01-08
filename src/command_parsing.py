@@ -1338,7 +1338,7 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
             index.ui.print_search_results(search_res["result"], search_res["stamp"], editor)
 
     else:
-        if len(content[content.index('~ ') + 2:]) > 2000:
+        if len(content[content.index('~ ') + 2:]) > 3000:
             index.ui.empty_result("Query was <b>too long</b>")
             return
         content             = content[content.index('~ ') + 2:]
@@ -1377,7 +1377,7 @@ def default_search_with_decks(editor: aqt.editor.Editor, textRaw: Optional[str],
     if textRaw is None:
         return
     index = get_index()
-    if len(textRaw) > 2000:
+    if len(textRaw) > 3000:
         if editor is not None and editor.web is not None:
             index.ui.empty_result("Query was <b>too long</b>")
         return
@@ -1395,7 +1395,7 @@ def search_for_user_notes_only(editor: aqt.editor.Editor, text: str):
     if text is None:
         return
     index = get_index()
-    if len(text) > 2000:
+    if len(text) > 3000:
         index.ui.empty_result("Query was <b>too long</b>")
         return
     cleaned = index.clean(text)
