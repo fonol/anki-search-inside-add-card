@@ -535,6 +535,11 @@ class MDTextEdit(QTextEdit):
         super(QTextEdit, self).__init__(parent)
         self.text_was_pasted = False
 
+    def toMarkdown(self):
+        if 'toMarkdown' in QTextEdit.__dict__:
+            return super(MDTextEdit, self).toMarkdown()
+        else:
+            return self.toPlainText()
 
     def insertFromMimeData(self, source):
 
