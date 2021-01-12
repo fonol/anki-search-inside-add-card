@@ -195,7 +195,7 @@ class Ui_OrganiserDialog(object):
         _translate = QCoreApplication.translate
         OrganiserDialog.setWindowTitle(_translate("OrganiserDialog", "External Files Anki Organiser"))
         self.dirIgnoreLabel.setText(_translate("OrganiserDialog", "Select subdirectories/files to ignore"))
-        self.ignoreAllHiddenCheckbox.setText(_translate("OrganiserDialog", "Ignore all directories (and subdirectories) starting with \'.\' in the scan"))
+        self.ignoreAllHiddenCheckbox.setText(_translate("OrganiserDialog", "Ignore all directories starting with \'.\' in the scan"))
         self.ignoreDirsRecursivelyCheckbox.setText(_translate("OrganiserDialog", "Ignore selected directories recursively"))
         self.syncButton.setText(_translate("OrganiserDialog", "Import File Notes"))
         self.filesFoundLabel.setText(_translate("OrganiserDialog", "Files found:"))
