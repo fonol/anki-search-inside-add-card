@@ -53,8 +53,8 @@ class NoteImporterDialog(QDialog):
             fileNames = QFileDialog.selectedFiles(self.file_dialog)
             if fileNames:
                 for file in fileNames:
-                    self.add_item_to_list_view(file, self.ui.dirIgnoreLw)
-
+                    if file not in [str(self.ui.dirIgnoreLw.item(i).text()) for i in range(self.ui.dirIgnoreLw.count())]:
+                        self.add_item_to_list_view(file, self.ui.dirIgnoreLw)
 
     def add_notes(self):
         path = self.ui.dirPathLineEdit.text()
