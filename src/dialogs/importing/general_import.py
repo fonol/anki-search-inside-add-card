@@ -110,7 +110,8 @@ def return_filepath_generator(path: str, list_of_dirs_and_files_to_ignore: Optio
 
                 # checks if the subdirectory path starts with any of the values in list of directories to ignore
                 # so all of the subdirectories are included in the check of dirs to ignore
-                elif ign_recursively and not any(map(subdir.startswith, list_of_dirs_and_files_to_ignore)):
+                elif ign_recursively and not any(map(os.path.abspath(subdir).startswith,
+                                                     [os.path.abspath(i) for i in list_of_dirs_and_files_to_ignore])):
                     yield filepath
 
 
