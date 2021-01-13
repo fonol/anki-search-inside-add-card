@@ -209,7 +209,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 #siac-pdf-wrapper {
     overflow: hidden; 
     flex: 1 1 auto; 
-    height: 100%; 
+    max-height: 100%; 
     position: relative;
 }
 #siac-pdf-overflow {
