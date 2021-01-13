@@ -252,6 +252,8 @@ def print_starting_info():
 
     notes   = []
 
+    
+
     html    = "<h3>Search is <span style='color: #32d296'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
     if not index.creation_info["index_was_rebuilt"]:
         html += "Initalized in <b>%s</b> s (no changes detected)." % index.initializationTime
@@ -277,6 +279,14 @@ def print_starting_info():
         for ix, c in enumerate(changes):
             html += f"{ix + 1}. {c}<br>"
     notes.append(("Changelog", html))
+
+    chr_v   = utility.misc.chromium_version()
+    if chr_v is not None and chr_v < "73":
+        notes.append(("Notice", f"""It seems like your Anki version is using an older version of Chromium ({chr_v}).
+            It might happen that parts of the layout behave incorrectly.
+            If you experience UI issues, consider updating to a newer Anki version (or if you are on Windows, using the standard installer instead of the alternate installer, 
+            which uses an older toolkit version).
+        """))
 
     html    = """
         This add-on has grown so large, that it is now infeasible for a single person to test all features on every update (and the large number of possible combinations of config settings makes this even more difficult).
@@ -509,15 +519,10 @@ def changelog() -> List[str]:
     """ Returns recent add-on changes. """
 
     return [
-        "Make create note dialog leaner (thanks to p4nix)",
-        "Add external link icon for external files in the search pane (thanks to p4nix)",
-        "Add Create Note button to tag meta card",
-        "Add shortcuts for Page Snapshot and Create Extract (thanks to p4nix)", 
-        "Convert some more dialogs to new theme",
-        "Fix: Read stats showing Avg. pages read/day for last 365 days instead of current year's",
-        "Fix: Find invalid paths in PDF meta card not working with file:/// sources",
-        "Fix: Layout problem for new users in sidebar",
-        "Fix: Read stats heatmap not fitting in card on smaller screen sizes",
+        "Increase max size for text searches",
+        "Display notice on starting info when on older Chromium versions",
+        "(Possible) Fix: Layout problems on older Chromium versions",
+        "Fix: Possible error on index building on add-on startup",
     ]
 
 def known_issues() -> List[str]:
