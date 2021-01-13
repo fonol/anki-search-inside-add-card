@@ -85,9 +85,10 @@ def _build_index(force_rebuild = False):
     set_index(index)
     # set_corpus(None)
     editor                              = editor if editor is not None else get_edit()
-    setup_ui_after_index_built(editor, index)
-    fillDeckSelect(editor)
-    print_starting_info()
+    if editor:
+        setup_ui_after_index_built(editor, index)
+        fillDeckSelect(editor)
+        print_starting_info()
 
 
 
