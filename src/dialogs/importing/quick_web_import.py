@@ -24,6 +24,7 @@ from aqt.qt import *
 from aqt import mw
 import aqt
 from anki.utils import isMac
+from aqt.utils import tooltip
 
 from ...config import get_config_value, get_config_value_or_default
 from ...web_import import import_webpage
