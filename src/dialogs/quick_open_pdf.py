@@ -142,10 +142,12 @@ class QuickOpenNote(QDialog):
             self.accept()
 
     def open_last(self):
-        if ReadingModal.last_opened is None:
-            tooltip("No last opened note in this session!")
+
+        nid = get_last_opened_note_id()
+        if nid is None:
+            tooltip("No last opened note found in database!")
         else:
-            self.chosen_id = ReadingModal.last_opened
+            self.chosen_id = nid
             self.accept()
 
     def accept_nth(self, n):
