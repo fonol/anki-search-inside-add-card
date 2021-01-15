@@ -1644,6 +1644,15 @@ def get_last_opened_notes() -> List[SiacNote]:
     c.close()
     return _to_notes(res)
 
+def get_last_opened_note_id() -> int:
+    c = _get_connection()
+    res = c.execute(""" select nid from notes_opened order by created desc limit 1 """).fetchone()
+    c.close()
+    if res is None:
+        return None
+    return res[0]
+
+
 def get_pdf_notes_last_added_first(limit : int = None) -> List[SiacNote]:
     if limit:
         limit = f"limit {limit}"
