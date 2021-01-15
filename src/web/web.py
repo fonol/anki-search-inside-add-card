@@ -523,6 +523,7 @@ def changelog() -> List[str]:
         "Display notice on starting info when on older Chromium versions",
         "(Possible) Fix: Layout problems on older Chromium versions",
         "Fix: Possible error on index building on add-on startup",
+        "Fix: Missing import in Quick Web import dialog",
     ]
 
 def known_issues() -> List[str]:
