@@ -289,8 +289,8 @@ class Reader:
 
         cls.note_id              = int(note_id)
         cls.note                 = note
-        Reader.current_note = note
-        html                      = cls.html()
+        Reader.current_note      = note
+        html                     = cls.html()
 
         UI.show_in_large_modal(html)
 
@@ -643,8 +643,8 @@ class Reader:
 
                 cls.read_head_of_queue()
 
-    @js
     @classmethod
+    @js
     def show_width_picker(cls) -> JS:
         html = """
             <div class='w-100 siac-rm-main-color-hover' onclick='pycmd("siac-left-side-width 10")'><b>10 - 90</b></div>
@@ -672,8 +672,8 @@ class Reader:
         """ % html
         return "$('#siac-reading-modal-center').append(`%s`)" % modal
 
-    @js
     @classmethod
+    @js
     def display_read_range_input(cls, note_id: int, num_pages: int) -> JS:
         on_confirm= """ if (document.getElementById('siac-range-input-min').value && document.getElementById('siac-range-input-max').value) {
         pycmd('siac-user-note-mark-range %s ' + document.getElementById('siac-range-input-min').value
@@ -693,8 +693,8 @@ class Reader:
         return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
 
-    @js
     @classmethod
+    @js
     def reload_bottom_bar(cls) -> JS:
         """
             Called after queue picker dialog has been closed without opening a new note.
@@ -777,7 +777,7 @@ class Reader:
             notification    = ""
             editable        = False
             #check note type
-            if note.is_file():
+            if note.is_file() and not note.is_md():
                 editable = len(text) < 100000
                 overflow = "hidden"
                 text = cls.file_note_html(editable, priority, source)
@@ -1147,8 +1147,8 @@ class Reader:
 
         return search_sources
 
-    @js
     @classmethod
+    @js
     def show_remove_dialog(cls, nid: Optional[int] = None) -> JS:
         """ Shows a dialog to either remove the current note from the queue or to delete it altogether. """
 
@@ -1221,8 +1221,8 @@ class Reader:
                 onReadingModalClose();
             """)
 
-    @js
     @classmethod
+    @js
     def show_theme_dialog(cls) -> JS:
         """ Display a modal to change the main color of the reader. """
 
@@ -1234,8 +1234,8 @@ class Reader:
             $('#siac-reading-modal-center').append(`%s`);
             """ % modal
 
-    @js
     @classmethod
+    @js
     def show_img_field_picker_modal(cls, img_src: str) -> JS:
         """
             Called after an image has been selected from a PDF, should display all fields that are currently in the editor,
@@ -1262,8 +1262,8 @@ class Reader:
         modal = modal % (img_src, flds, io, img_src)
         return "$('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
-    @js
     @classmethod
+    @js
     def show_cloze_field_picker_modal(cls, cloze_text: str) -> JS:
         """
         Shows a modal that lists all fields of the current note.
@@ -1284,8 +1284,8 @@ class Reader:
 
         return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
-    @js
     @classmethod
+    @js
     def show_iframe_overlay(cls, url: Optional[str] = None) -> JS:
         js = """
             if (pdf.instance) {
@@ -1303,8 +1303,8 @@ class Reader:
             """ % url
         return js
 
-    @js
     @classmethod
+    @js
     def hide_iframe_overlay(cls) -> JS:
         js = """
             document.getElementById('siac-iframe').src = "";
@@ -1319,8 +1319,8 @@ class Reader:
         """
         return js
 
-    @js
     @classmethod
+    @js
     def show_web_search_tooltip(cls, inp: str) -> JS:
         """ Context: Text was selected in a pdf, magnifying glass was clicked in the tooltip. """
 
@@ -1436,8 +1436,8 @@ class Reader:
 
     #endregion page sidebar
 
-    @js
     @classmethod
+    @js
     def show_pdf_bottom_tab(cls, note_id: int, tab: str) -> JS:
         """ Context: Clicked on a tab (Marks / Related / Info) in the bottom bar. """
 
@@ -1604,8 +1604,8 @@ class Reader:
         else:
             return ""
 
-    @js
     @classmethod
+    @js
     def mark_range(cls, start: int, end: int, pages_total: int, current_page: int) -> JS:
         if start <= 0:
             start = 1
@@ -1629,8 +1629,8 @@ class Reader:
 
         return f"{js}updatePdfProgressBar();"
 
-    @js
     @classmethod
+    @js
     def display_cloze_modal(cls, editor: Editor, selection: str, extracted: List[str]) -> JS:
         """ Displays the modal to view and edit the generated cloze. """
 
@@ -1706,8 +1706,8 @@ class Reader:
                 %s
                 """ % (s_html, btn_html)
 
-    @js
     @classmethod
+    @js
     def notification(cls, html: HTML, on_ok: Optional[JS] = None) -> JS:
         if on_ok is None:
             on_ok = ""
@@ -1721,8 +1721,8 @@ class Reader:
                 $('#siac-rm-greyout').show();
                 $('#siac-reading-modal-center').append('%s');""" % modal.replace("\n", "").replace("'", "\\'")
 
-    @js
     @classmethod
+    @js
     def jump_to_last_read_page(cls) -> JS:
         return """
             if (pdf.pagesRead && pdf.pagesRead.length) {
@@ -1731,8 +1731,8 @@ class Reader:
             }
         """
 
-    @js
     @classmethod
+    @js
     def jump_to_random_unread_page(cls) -> JS:
         return """
             if (pdf.instance) {
@@ -1749,8 +1749,8 @@ class Reader:
                 }
             }
         """
-    @js
     @classmethod
+    @js
     def jump_to_first_unread_page(cls) -> JS:
         return """
             if (pdf.instance) {
