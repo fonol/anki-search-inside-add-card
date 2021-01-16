@@ -42,19 +42,20 @@ def get_notes_in_collection():
     else:
         oList           = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid")
 
-
-    #load addon notes
-    other_notes         = get_all_notes()
-
     index_notes = [(id, flds, t, did, str(mid), "") for (id, flds, t, did, mid) in oList]
 
-    for (id, title, text, source, tags, nid, created, modified, reminder, _, _, _, _, _, author, _, _, url) in other_notes:
-
-        text = title + "\u001f" + text + "\u001f" + source + "\u001f" + (author if author else "") + "\u001f" + (url if url else "")
-        index_notes.append((id, text, tags, -1, "-1", ""))
-
-
     return index_notes
+
+
+def get_addon_index_data():
+    #load addon notes
+    addon_notes         = get_all_notes()
+    return [
+        (id, title + "\u001f" + text[:3000] + "\u001f" + source + "\u001f" + (author if author else "") + "\u001f" + (url if url else ""), tags, -1, "-1", "") for 
+        (id, title, text, source, tags, _, _, _, _, _, _, _, _, _, author, _, _, url) in addon_notes
+    ]
+
+   
 
 
 def index_data_size() -> int:
