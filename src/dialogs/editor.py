@@ -517,23 +517,31 @@ class CreateTab(QWidget):
         if self.parent.source_prefill is not None:
             self.source.setText(self.parent.source_prefill.replace("\\", "/"))
 
-        file_btn            = QPushButton("External file")
-        file_btn.setFocusPolicy(Qt.NoFocus)
-        file_btn.clicked.connect(self.on_file_clicked)
-        source_hb.addWidget(file_btn)
-        pdf_btn             = QPushButton("PDF")
-        pdf_btn.setFocusPolicy(Qt.NoFocus)
-        pdf_btn.clicked.connect(self.on_pdf_clicked)
-        source_hb.addWidget(pdf_btn)
-        pdf_from_url_btn    = QPushButton("PDF from Webpage")
-        pdf_from_url_btn.clicked.connect(self.on_pdf_from_url_clicked)
-        pdf_from_url_btn.setFocusPolicy(Qt.NoFocus)
-        source_hb.addWidget(pdf_from_url_btn)
 
-        # if note is an extract, prevent source editing
-        # if self.parent.note is not None and self.parent.note.extract_end is not None:
-        #     pdf_btn.setDisabled(True)
-        #     pdf_from_url_btn.setDisabled(True)
+        source_btn = QPushButton("")
+        source_btn.setText("Source...  ")
+        source_btn.setFocusPolicy(Qt.NoFocus)
+        source_menu = QMenu(source_btn)
+        if self.parent.dark_mode_used:
+            source_menu.setStyleSheet("""
+                QMenu { background: #3a3a3a; color: lightgrey; font-size: 10px; }
+                QMenu:item:selected { background: steelblue; color: white; }
+            """)
+        else:
+            source_menu.setStyleSheet("""
+                QMenu { background: white; color: black; font-size: 10px;}
+                QMenu:item:selected { background: #2496dc; color: white; }
+            """)
+
+
+        source_menu.addAction("PDF").triggered.connect(self.on_pdf_clicked)
+        source_menu.addAction("Markdown File (.md)").triggered.connect(self.on_md_clicked)
+        source_menu.addAction("External File (.*)").triggered.connect(self.on_file_clicked)
+        source_menu.addAction("Webpage to PDF (URL)").triggered.connect(self.on_pdf_from_url_clicked)
+        source_btn.setMenu(source_menu)
+
+        source_hb.addStretch()
+        source_hb.addWidget(source_btn)
 
         vbox.addWidget(source_lbl)
         vbox.addWidget(self.source)
@@ -722,6 +730,22 @@ class CreateTab(QWidget):
         fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"PDF (*.pdf)")
         if fname is not None:
             self.source.setText(fname[0])
+        
+    def on_md_clicked(self):
+        fp = get_config_value_or_default("md.folder_path", "")
+        if fp is None or len(fp) == 0 or not os.path.exists(fp):
+            if fp is not None and len(fp) > 0:
+                tooltip("Invalid .md folder path set in config.")
+            self.source.setText("md:///")
+            self.source.setFocus()
+            return
+        fp = fp.replace("\\", "/")
+        if not fp.endswith("/"):
+            fp += "/"
+        if fp.startswith("/"):
+            fp = fp[1:]
+        self.source.setText("md:///"+ fp)
+        self.source.setFocus()
 
     def on_pdf_from_url_clicked(self):
         dialog = UrlImporter(self, show_schedule=False)
