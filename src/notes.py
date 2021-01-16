@@ -33,9 +33,7 @@ try:
     from .models import SiacNote, IndexNote, NoteRelations
     from .config import get_config_value_or_default, get_config_value, update_config
     from .debug_logging import get_notes_info, persist_notes_db_checked
-    from .internals import perf_time
 except:
-    from internals import perf_time
     from state import get_index
     from models import SiacNote, IndexNote, NoteRelations
     from config import get_config_value_or_default, get_config_value, update_config
@@ -44,6 +42,7 @@ import utility.misc
 import utility.tags
 import utility.text
 import utility.date
+import md
 
 # will be set after the db file is accessed for the first time
 db_path                 : Optional[str] = None
@@ -198,6 +197,7 @@ def create_db_file_if_not_exists() -> bool:
         );
     """)
 
+    conn.execute("CREATE INDEX if not exists notes_source ON notes (source);")
     conn.execute("CREATE INDEX if not exists read_nid ON read (nid);")
     conn.execute("CREATE INDEX if not exists mark_nid ON marks (nid);")
     conn.execute("CREATE INDEX if not exists prio_nid ON queue_prio_log (nid);")
@@ -321,6 +321,28 @@ def create_note(title: str,
 
     return id
 
+def create_or_update_md_notes(md_files: List[Tuple[str, str, str]]) -> int:
+    """ 
+    Takes a list of changed markdown files, inserts or updates the according add-on notes.
+    If a note already exists for a given .md file is determined by the 'Source' field, e.g. if there is 
+    a note with 'md:///path/to/file.md' or not.
+     """
+
+
+    def _title(fpath):
+        return fpath[fpath.rindex("/")+1:]
+
+    c           = _get_connection()
+    # determine which of the md files already have notes
+    existing    = c.execute("select source from notes where source in ('%s')" % ("','".join([t[0].replace("'", "''") for t in md_files]))).fetchall()
+    ex_sources  = [e[0] for e in existing]
+    to_insert   = [(_title(f[0]), f[1], f[0], f[2]) for f in md_files if not f[0] in ex_sources]
+    c.executemany(f"insert into notes (title, text, source, tags, created) values (?,?,?,?, datetime('now', 'localtime'))", to_insert)
+    to_update   = [(_title(f[0]), f[1], f[0]) for f in md_files if f[0] in existing]
+    c.executemany(f"update notes set title = ?, text = ? where source = ?", to_update)
+    c.commit()
+    c.close()
+    return len(existing)
 
 
 #region priority queue
@@ -1029,9 +1051,15 @@ def update_note_text(id: int, text: str):
     conn.commit()
     note = conn.execute(f"select title, source, tags from notes where id={id}").fetchone()
     conn.close()
+    source =  note[1]
     index = get_index()
     if index is not None:
-        index.update_user_note((id, note[0], text, note[1], note[2], -1, ""))
+        index.update_user_note((id, note[0], text, source, note[2], -1, ""))
+
+    # if note is linked to a markdown file, update the file
+    if source is not None and source.startswith("md:///") and source.endswith(".md"):
+        fpath = source[6:]
+        md.update_markdown_file(fpath, text)
 
 def update_note_tags(id: int, tags: str):
     if tags is None:
@@ -1075,6 +1103,12 @@ def update_note(id: int, title: str, text: str, source: str, tags: str, reminder
     index = get_index()
     if index is not None:
         index.update_user_note((id, title, text, source, tags, -1, ""))
+
+    # if note is linked to a markdown file, update the file
+    if source is not None and source.startswith("md:///") and source.endswith(".md"):
+        fpath = source[6:]
+        md.update_markdown_file(fpath, text)
+
 
 def get_read_stats(nid: int) -> Tuple[Any, ...]:
     conn = _get_connection()
