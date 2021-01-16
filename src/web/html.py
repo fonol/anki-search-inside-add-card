@@ -542,7 +542,6 @@ def get_unsuspend_modal(nid: int) -> HTML:
     unsuspend_all   = ""
 
     note            = mw.col.getNote(int(nid))
-    print(note)
     flds            = "<br>".join([utility.text.trim_if_longer_than(f, 100) for f in note.fields])
 
     for c in cards:
