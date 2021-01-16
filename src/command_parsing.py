@@ -1845,16 +1845,16 @@ def get_index_info():
             {", ".join(all_shortcuts)}
         """
 
-    changes = changelog()
+    changes = UI.changelog()
 
     if changes:
         html += "<br/><br/><b>Changelog:</b><hr>"
         for ix, c in enumerate(changes):
             html += f"<br>{ix + 1}. {c}"
 
-    issues = known_issues()
+    issues = UI.known_issues()
 
-    if issues:
+    if issues:  
         html += "<br/><br/><b>Known Issues:</b><hr>"
         for ix, i in enumerate(issues):
             html += f"<br>{ix + 1}. {i}"
