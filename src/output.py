@@ -219,6 +219,8 @@ class UI:
 
                 elif res.is_yt():
                     icon = "film"
+                elif res.is_md():
+                    icon = "book"
 
                 elif res.is_file():
                     icon = "external-link"
@@ -1060,7 +1062,7 @@ class UI:
         notes.append(("Status", html))
 
         html    = ""
-        changes = changelog()
+        changes = UI.changelog()
         if changes:
             for ix, c in enumerate(changes):
                 html += f"{ix + 1}. {c}<br>"
@@ -1087,7 +1089,7 @@ class UI:
         notes.append(("Community Debugging", html))
 
         html    = ""
-        issues  = known_issues()
+        issues  = UI.known_issues()
         if issues:
             for ix, i in enumerate(issues):
                 html += f"{ix + 1}. {i}<br>"
@@ -1274,24 +1276,25 @@ class UI:
 
 
 
+    @staticmethod
+    def changelog() -> List[str]:
+        """ Returns recent add-on changes. """
 
-def changelog() -> List[str]:
-    """ Returns recent add-on changes. """
+        return [
+            "Increase max size for text searches",
+            "Display notice on starting info when on older Chromium versions",
+            "(Possible) Fix: Layout problems on older Chromium versions",
+            "Fix: Possible error on index building on add-on startup",
+            "Fix: Missing import in Quick Web import dialog",
+        ]
 
-    return [
-        "Increase max size for text searches",
-        "Display notice on starting info when on older Chromium versions",
-        "(Possible) Fix: Layout problems on older Chromium versions",
-        "Fix: Possible error on index building on add-on startup",
-        "Fix: Missing import in Quick Web import dialog",
-    ]
+    @staticmethod
+    def known_issues() -> List[str]:
+        """ Returns currently known issues/bugs. """
 
-def known_issues() -> List[str]:
-    """ Returns currently known issues/bugs. """
-
-    return [
-        "Tag autocomplete in Create/Update note modal only works on first tag",
-        "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions",
-        "Highlights in PDFs not working on some platforms/Anki versions, workaround: set 'pdf.highlights.use_alt_render' to true in the config",
-        "PDFs are not scrollable on Anki installs with older Qt versions (i.e. OS X - alternate (!) build)"
-    ]
+        return [
+            "Tag autocomplete in Create/Update note modal only works on first tag",
+            "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions",
+            "Highlights in PDFs not working on some platforms/Anki versions, workaround: set 'pdf.highlights.use_alt_render' to true in the config",
+            "PDFs are not scrollable on Anki installs with older Qt versions (i.e. OS X - alternate (!) build)"
+        ]
