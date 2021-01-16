@@ -36,12 +36,13 @@ import state
 from aqt.qt import *
 
 
-from ..tag_find import get_most_active_tags
-from ..state import get_index, check_index, set_deck_map
+from ..state import get_index, check_index
 from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
 from .html import *
 from ..internals import js, requires_index_loaded, perf_time, JS, HTML
 from ..config import get_config_value_or_default
+from ..output import UI
+
 
 @js
 def toggleAddon() -> JS:
@@ -159,7 +160,7 @@ def reload_styles():
 
     css                 = styles()
     aqt.editor._html    = re.sub("<style id='siac-styles'>(?:\r\n|\n|.)+?</style>", f"<style id='siac-styles'>{css}</style>", aqt.editor._html)
-    editor              = get_index().ui._editor
+    editor              = UI._editor
 
     if editor is not None:
         if editor.web is not None:
@@ -196,144 +197,12 @@ def activate_nightmode(shortcuts: List[Tuple], editor: Editor):
 
 
 
-def setup_ui_after_index_built(editor: Optional[Editor], index, init_time=None):
-    #editor is None if index building finishes while add dialog is not open
-    if editor is None:
-        return
-    config = mw.addonManager.getConfig(__name__)
-    show_search_result_area(editor, init_time)
-    #restore previous settings
-    cmd = ""
-    if not index.highlighting:
-       cmd += "$('#highlightCb').prop('checked', false);"
-    if not get_config_value_or_default("searchOnTyping", True):
-        cmd += "$('#typingCb').prop('checked', false); setSearchOnTyping(false);"
-    if not get_config_value_or_default("searchOnSelection", True):
-        cmd += "$('#selectionCb').prop('checked', false); siacState.searchOnSelection = false;"
-    if not index.topToggled:
-        cmd += "hideTop();"
-    if index.ui is not None and not index.ui.uiVisible:
-        cmd += "$('#siac-right-side').addClass('addon-hidden');"
-    if config["gridView"]:
-        cmd += "activateGridView();"
-    editor.web.eval(cmd)
-    if index.ui is not None:
-        #plot.js is already loaded if a note was just added, so this is a lazy solution for now
-        index.ui.plotjsLoaded = False
-    if config["notes.sidebar.visible"]:
-        index.ui.set_editor(editor)
-        index.ui.sidebar.display()
-
-    editor.web.eval("""pycmd('siac-initialised-editor');""")
-
-
-def show_search_result_area(editor=None, initializationTime=0):
-    """ Toggle between the loader and search result area when the index has finished building. """
-
-    js = """
-        if (document.getElementById('searchResults')) {
-            document.getElementById('searchResults').style.display = 'block';
-        }
-        if (document.getElementById('loader')) {
-            document.getElementById('loader').style.display = 'none';
-        }"""
-
-    if check_index():
-        get_index().ui.js(js)
-    elif editor is not None and editor.web is not None:
-        editor.web.eval(js)
-
-
-def print_starting_info():
-    """ Displays the information that is visible after the first start of the add-on. """
-
-    config  = mw.addonManager.getConfig(__name__)
-    index   = get_index()
-
-    notes   = []
-
-    
-
-    html    = "<h3>Search is <span style='color: #32d296'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
-    if not index.creation_info["index_was_rebuilt"]:
-        html += "Initalized in <b>%s</b> s (no changes detected)." % index.initializationTime
-    else:
-        html += "Initalized in <b>%s</b> s." % index.initializationTime
-
-    html += "<br/>Index contains <b>%s</b> notes." % index.get_number_of_notes()
-    html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
-    html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
-    html += "<br/>Layout Shortcuts:<br> <b>%s</b> (toggle left), <b>%s</b> (toggle right), <b>%s</b> (show both)." % (config["shortcuts.window_mode.show_left"], config["shortcuts.window_mode.show_right"], config["shortcuts.window_mode.show_both"])
-
-    if not state.db_file_existed:
-        html += "<br><br><b><i>siac-notes.db</i> was not existing, created a new one.</b>"
-
-    if index is None or index.ui is None:
-        html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
-
-    notes.append(("Status", html))
-
-    html    = ""
-    changes = changelog()
-    if changes:
-        for ix, c in enumerate(changes):
-            html += f"{ix + 1}. {c}<br>"
-    notes.append(("Changelog", html))
-
-    chr_v   = utility.misc.chromium_version()
-    if chr_v is not None and chr_v < "73":
-        notes.append(("Notice", f"""It seems like your Anki version is using an older version of Chromium ({chr_v}).
-            It might happen that parts of the layout behave incorrectly.
-            If you experience UI issues, consider updating to a newer Anki version (or if you are on Windows, using the standard installer instead of the alternate installer, 
-            which uses an older toolkit version).
-        """))
-
-    html    = """
-        This add-on has grown so large, that it is now infeasible for a single person to test all features on every update (and the large number of possible combinations of config settings makes this even more difficult).
-        So if you think you spotted an error, an inconsistency or even just some UI part that doesn't seem right, please report it.
-        <br><br>
-        <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github issue tracker'>Github issue tracker</a>
-        <br><br>
-        Thanks in advance.
-
-
-    """
-    notes.append(("Community Debugging", html))
-
-    html    = ""
-    issues  = known_issues()
-    if issues:
-        for ix, i in enumerate(issues):
-            html += f"{ix + 1}. {i}<br>"
-    notes.append(("Known Issues", html))
-
-    html = f"""
-        <div class='ta_center'>
-            <div class='flex-row mt-10' style='margin-bottom: 20px; justify-content: center;'>
-                <div class='ta_center'>
-                    <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BUGS & FEEDBACK</div>
-                    <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github repository'><img src='{utility.misc.img_src("github_light.png" if state.night_mode else "github_dark.png")}' style='height: 32px;'/></a>
-                </div>
-                <div class='ta_center' style='margin-left: 30px;'>
-                    <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BECOME A PATRON</div>
-                    <a href='https://www.patreon.com/tomtomtom' title='Patreon site'><img src='{utility.misc.img_src("patreon.png")}' style='height: 32px;'/></a>
-                </div>
-            </div>
-            <span class='siac-caps' style='opacity: 0.8;'>
-                Thanks to all supporters!
-            </span>
-        </div>
-        """
-    notes.append(("Bugs, Feedback, Support", html))
-    index.ui.print_in_meta_cards(notes)
-
-
 @requires_index_loaded
 def display_model_dialog():
     """ Called after clicking on "Set Fields" in the settings modal. """
 
     html = get_model_dialog_html()
-    get_index().ui.show_in_modal("Set Fields", html)
+    UI.show_in_modal("Set Fields", html)
 
 @js
 def show_settings_modal(editor) -> JS:
@@ -343,7 +212,7 @@ def show_settings_modal(editor) -> JS:
     html    = get_settings_modal_html(config)
     index   = get_index()
 
-    index.ui.show_in_modal("Settings", html)
+    UI.show_in_modal("Settings", html)
     return "$('.modal-close').on('click', function() {pycmd(`siac-write-config`); })"
 
 @js
@@ -353,7 +222,7 @@ def show_unsuspend_modal(nid) -> JS:
     html    = get_unsuspend_modal(nid)
     index   = get_index()
 
-    index.ui.show_in_modal("Unsuspend Cards", html)
+    UI.show_in_modal("Unsuspend Cards", html)
     return "siacState.keepPositionAtRendering = true; $('.siac-modal-close').on('click', function() { pycmd(`siac-rerender`);$('.siac-modal-close').off('click'); });"
 
 
@@ -414,124 +283,10 @@ def fillTagSelect(editor = None, expanded = False):
     if editor is not None:
         editor.web.eval(cmd)
     else:
-        get_index().ui.js(cmd)
-
-def fillDeckSelect(editor: Optional[Editor] = None, expanded= False, update = True):
-    """ Fill the selection with user's decks """
-
-    deckMap     = dict()
-    config      = mw.addonManager.getConfig(__name__)
-    deckList    = config['decks']
-    index       = get_index()
-    if editor is None:
-        if index is not None and index.ui is not None and index.ui._editor is not None:
-            editor = index.ui._editor
-        else:
-            return
-
-    for d in list(mw.col.decks.decks.values()):
-       if d['name'] == 'Standard':
-          continue
-       if deckList is not None and len(deckList) > 0 and d['name'] not in deckList:
-           continue
-       deckMap[d['name']] = d['id']
-    set_deck_map(deckMap)
-    dmap        = {}
-    for name, id in deckMap.items():
-        dmap = addToDecklist(dmap, id, name)
-
-    dmap        = dict(sorted(dmap.items(), key=lambda item: item[0].lower()))
-    def iterateMap(dmap, prefix, start=False):
-        decks = index.selectedDecks if index is not None else []
-        if start:
-            html = "<ul class='deck-sub-list outer'>"
-        else:
-            html = "<ul class='deck-sub-list'>"
-        for key, value in dmap.items():
-            full = prefix + "::" + key if prefix else key
-            if full in deckMap:
-                did = deckMap[full]
-            elif len(deckMap) == 1:
-                did = list(deckMap.values())[0]
-            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( 
-                "selected" if str(did) in decks or decks == ["-1"] else "", 
-                did,  "[+]" if value else "", 
-                utility.text.trim_if_longer_than(key, 35), 
-                iterateMap(value, full, False))
-        html += "</ul>"
-        return html
-
-    html        = iterateMap(dmap, "", True)
-    expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
-    update_js   = "updateSelectedDecks();" if update else ""
-
-    cmd         = """
-    document.getElementById('deck-sel-info-lbl').style.display = 'block';
-    document.getElementById('deckSel').innerHTML = `%s`;
-    $('#deckSelWrapper .exp').click(function(e) {
-		e.stopPropagation();
-        let icn = $(this);
-        if (icn.text()) {
-            if (icn.text() === '[+]')
-                icn.text('[-]');
-            else
-                icn.text('[+]');
-        }
-        $(this).parent().parent().children('ul').toggle();
-    });
-    %s
-    $("#siac-deck-sel-btn-wrapper").show();
-    %s
-    """ % (html, expanded_js, update_js)
-    editor.web.eval(cmd)
-
-def addToDecklist(dmap, id, name):
-    names = [s for s in name.split("::") if s != ""]
-    for c, d in enumerate(names):
-        found = dmap
-        for i in range(c):
-            found = found.setdefault(names[i], {})
-        if not d in found:
-            found.update({d : {}})
-    return dmap
-
-def try_select_deck(deck: str) -> bool:
-    """ Try to select a deck with the given name. """
-
-    if not deck or len(deck.strip()) == 0:
-        return False
-
-    win = aqt.mw.app.activeWindow()
-    # dont trigger keypress in edit dialogs opened within the add dialog
-    if not isinstance(win, aqt.addcards.AddCards):
-        return False
-
-    try:
-        win.deckChooser.setDeckName(deck)
-        # win.deckChooser.onDeckChange()
-        return True
-    except:
-        return False
+        UI.js(cmd)
 
 
 
-def changelog() -> List[str]:
-    """ Returns recent add-on changes. """
 
-    return [
-        "Increase max size for text searches",
-        "Display notice on starting info when on older Chromium versions",
-        "(Possible) Fix: Layout problems on older Chromium versions",
-        "Fix: Possible error on index building on add-on startup",
-        "Fix: Missing import in Quick Web import dialog",
-    ]
 
-def known_issues() -> List[str]:
-    """ Returns currently known issues/bugs. """
 
-    return [
-        "Tag autocomplete in Create/Update note modal only works on first tag",
-        "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions",
-        "Highlights in PDFs not working on some platforms/Anki versions, workaround: set 'pdf.highlights.use_alt_render' to true in the config",
-        "PDFs are not scrollable on Anki installs with older Qt versions (i.e. OS X - alternate (!) build)"
-    ]

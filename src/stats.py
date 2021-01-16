@@ -19,17 +19,15 @@ from aqt import mw
 from aqt.qt import *
 import aqt
 
+
 try:
-    from .special_searches import *
-    from .special_searches import _to_day_ivl
     from .models import IndexNote
 except: 
-    from special_searches import *
-    from special_searches import _to_day_ivl
     from models import IndexNote
 
 import time
 import json
+import utility.misc
 
 """
 Various statistics functions.
@@ -340,7 +338,6 @@ def calculateStats(nid, gridView):
     reviewPlotData      = {}
     ivlPlotData         = {}
     timePlotData        = {}
-    similar_res_by_cid  = {}
 
     infoTable["Card ID(s)"]     = ", ".join([str(c[0]) + f" ({_cardTypeStr(c[6])}) <span class='keyword' onclick='pycmd(\"siac-copy-to-cb {c[0]}\")'>[Copy]</span>" for c in cards])
 
@@ -640,7 +637,7 @@ def _get_revlog_graph(cid):
     blocks = ""
     for _,_,_,ease,ivl,_,_,_,type in entries:
         ease = ease + 1 if type == 2 and ease > 1 else ease
-        sivl = int(_to_day_ivl(ivl)) if int(_to_day_ivl(ivl)) > 0 else "<1"
+        sivl = int(utility.misc.to_day_ivl(ivl)) if int(utility.misc.to_day_ivl(ivl)) > 0 else "<1"
         blocks += "<div class='revlog-block revlog-block-%s %s'>%s</div>" % (ease, "larger" if ivl > 1000 else "",  sivl)
     
     return html % blocks

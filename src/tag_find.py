@@ -18,6 +18,7 @@
 from aqt import *
 import utility.text
 from .stats import getAvgTrueRetention, getTrueRetentionOverTime, retention_stats_for_tag
+from .output import UI
 from .notes import find_by_tag, get_recently_used_tags_with_counts
 from .models import IndexNote
 import utility.misc
@@ -149,7 +150,7 @@ def display_tag_info(editor, stamp, tag, index):
 
     if not should_hide_left_side:
         sorted_db_list              = sorted(searchRes["result"], key=lambda x: x.id, reverse=True)
-        note_html                   = index.ui.get_result_html_simple(sorted_db_list[:100])
+        note_html                   = UI.get_result_html_simple(sorted_db_list[:100])
         enlarge_note_area_height    = "max-height: 320px" if total_length > 120 and tret is not None else ""
         tag_name                    = tag
 
@@ -200,46 +201,5 @@ def _extract_tags(db_list, tag_searched):
     return tagsfound
 
 
-def get_most_active_tags(max_count):
-    """
-    Find the tags that have been used recently, e.g. a note with the tag has been created / edited.
-    Looks into the 100 last edited/created notes.
-    Returns an ordered list of max max_count items.
-    """
-    res = mw.col.db.all("select tags from notes order by mod desc limit 100")
-    if res is None or len(res) == 0:
-        return []
-
-    counts  = dict()
-    tag     = ""
-    for r in res:
-        spl = r[0].split()
-        for t in spl:
-            # we only count the top tag
-            if "::" in t:
-                tag = t.split("::")[0]
-            else:
-                tag = t
-            if tag in counts:
-                counts[tag] += 1
-            else:
-                counts[tag] = 1
-
-    user_tags = get_recently_used_tags_with_counts() 
-
-    for t, c in user_tags.items():
-        if "::" in t:
-            tag = t.split("::")[0]
-        else:
-            tag = t
-        if tag in counts:
-            counts[tag] += c
-        else:
-            counts[tag] = c
-    ordered = [i[0] for i in list(sorted(counts.items(), key=lambda item: item[1], reverse = True))][:max_count]
-
-    return ordered
-
-            
             
                 

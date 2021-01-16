@@ -32,6 +32,8 @@ from ..internals import perf_time
 from ..hooks import run_hooks, add_tmp_hook
 from ..state import get_index
 from ..config import get_config_value
+from ..output import UI
+
 import utility.text
 import utility.misc
 import utility.tags
@@ -1132,7 +1134,7 @@ class QueueWidget(QWidget):
     def display_note_modal(self, id):
         """ Open the edit modal for the given ID. """
 
-        if get_index().ui.reading_modal.note_id == id:
+        if Reader.note_id == id:
             showInfo("Cannot edit that note: It is currently opened in the reader.")
             return
         if not state.note_editor_shown:

@@ -25,9 +25,11 @@ from functools import partial
 from ..notes import *
 from ..notes import _get_priority_list
 from ..dialogs.editor import NoteEditor
-from ..web.reading_modal import ReadingModal
+from ..web.reading_modal import Reader
 from ..internals import perf_time
 from ..state import get_index
+from ..output import UI
+
 
 import state
 
@@ -196,7 +198,7 @@ class QuickOpenNote(QDialog):
         self.sug_list.resizeRowsToContents()
 
     def edit_btn_clicked(self, nid):
-        if get_index().ui.reading_modal.note_id == nid:
+        if Reader.note_id == nid:
             tooltip("Cannot edit that note: It is currently opened in the reader.")
             return
         if not state.note_editor_shown:

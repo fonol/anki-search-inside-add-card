@@ -17,8 +17,9 @@
 import datetime
 import time
 from aqt import mw
-import utility.misc
 import random
+
+import utility.misc
 try:
     from .state import check_index
     from .models import SiacNote, IndexNote
@@ -81,11 +82,7 @@ def get_cal_info_context(day_of_year : int):
     return html
 
 
-def get_created_same_day(index, editor, nid):
-
-    stamp               = utility.misc.get_milisec_stamp()
-    index.ui.latest     = stamp
-    index.lastSearch    = (nid, None, "createdSameDay")
+def get_created_same_day(nid, pinned, limit):
 
     try:
         nidMinusOneDay  = nid - (24 * 60 * 60 * 1000)
@@ -101,33 +98,23 @@ def get_created_same_day(index, editor, nid):
             dayCreated = int(time.strftime("%d", time.localtime(int(r[0])/1000)))
             if dayCreated != dayOfNote:
                 continue
-            if not str(r[0]) in index.pinned:
+            if not str(r[0]) in pinned:
                 rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
                 c += 1
-                if c >= index.limit:
+                if c >= limit:
                     break
-        if check_index():
-            if len(rList) > 0:
-                index.ui.print_search_results(rList, stamp, editor)
-            else:
-                index.ui.empty_result("No results found.")
+        return rList
     except:
-        if check_index():
-            index.ui.empty_result("Error in calculation.")
+        return []
+        
 
-def getRandomNotes(index, decks):
-    if index is None:
-        return
-    stamp = utility.misc.get_milisec_stamp()
-    index.ui.latest = stamp
-    index.lastSearch = (None, decks, "random")
+def getRandomNotes(decks, limit):
 
     if not "-1" in decks:
         deckQ =  "(%s)" % ",".join(decks)
     else:
         deckQ = ""
 
-    limit = index.limit
     if deckQ:
         res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s and notes.id in (select id from notes order by random() limit %s)" % (deckQ, limit))
     else:
@@ -136,7 +123,7 @@ def getRandomNotes(index, decks):
     if len(res) > 0:
         random.shuffle(res)
 
-    return { "result" : res, "stamp" : stamp }
+    return res
 
 def get_last_added_anki_notes(limit):
     """ Get notes ordered by their nid descending, no decks or pinned notes excluded. """
@@ -279,7 +266,4 @@ def get_suspended(nids):
 def to_notes(db_list):
     return list(map(lambda r : IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")), db_list))
 
-def _to_day_ivl(ivl):
-    if ivl < 0:
-        return abs(ivl) / (24 * 60 * 60)
-    return ivl
+

@@ -27,10 +27,8 @@ from typing import List, Tuple, Dict, Optional
 
 from .note_templates import *
 from .templating import filled_template
-from ..stats import getRetentions
 from ..state import get_index, check_index
 from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str, get_read_today_count
-from ..feeds import read
 from ..internals import perf_time, HTML, JS
 from ..config import get_config_value_or_default as conf_or_def
 from ..models import IndexNote
@@ -366,61 +364,6 @@ def topic_card_body(topics: List[Tuple[str, float]]) -> HTML:
                 """
     return html
 
-def search_results(db_list: List[IndexNote], query_set: List[str]) -> HTML:
-    """ Prints a list of index notes. Used e.g. in the pdf viewer. """
-    html                        = ""
-    newNote                     = ""
-    nids                        = [r.id for r in db_list]
-    show_ret                    = conf_or_def("showRetentionScores", True)
-    fields_to_hide_in_results   = conf_or_def("fieldsToHideInResults", {})
-    hide_clozes                 = conf_or_def("results.hide_cloze_brackets", False)
-    remove_divs                 = conf_or_def("removeDivsFromOutput", False)
-    if show_ret:
-        retsByNid               = getRetentions(nids)
-    ret                         = 0
-    highlighting                = conf_or_def("highlighting", True)
-
-    for counter, res in enumerate(db_list):
-        ret = retsByNid[int(res.id)] if show_ret and int(res.id) in retsByNid else None
-        if ret is not None:
-            retMark = "border-color: %s;" % (utility.misc._retToColor(ret))
-            retInfo = """<div class='retMark' style='%s'>PR: %s</div> """ % (retMark, int(ret))
-        else:
-            retInfo = ""
-
-        text        = res.get_content()
-
-        # hide fields that should not be shown
-        if str(res.mid) in fields_to_hide_in_results:
-            text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in fields_to_hide_in_results[str(res.mid)]])
-
-        #remove <div> tags if set in config
-        if remove_divs and res.note_type != "user":
-            text = utility.text.remove_divs(text)
-
-        # remove cloze brackets if set in config
-        if hide_clozes and res.note_type != "user":
-            text = utility.text.hide_cloze_brackets(text)
-
-        if highlighting and query_set is not None:
-            text = utility.text.mark_highlights(text, query_set)
-
-        text        = utility.text.clean_field_separators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
-        text        = utility.text.try_hide_image_occlusion(text)
-        #try to put fields that consist of a single image in their own line
-        text        = utility.text.newline_before_images(text)
-        template    = NOTE_TMPL_SIMPLE if res.note_type == "index" else NOTE_TMPL_SIAC_SIMPLE
-        newNote     = template.format(
-            counter=counter+1,
-            nid=res.id,
-            edited="",
-            mouseup="",
-            text=text,
-            ret=retInfo,
-            tags=utility.tags.build_tag_string(res.tags, False, False, maxLength = 15, maxCount = 2),
-            creation="")
-        html += newNote
-    return html
 
 
 def read_counts_by_date_card_body(counts: Dict[str, int]) -> HTML:

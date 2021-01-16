@@ -232,7 +232,6 @@ class SiacNote(Printable):
                         </p>
                     """
 
-
         title   = "%s<b>%s</b>%s" % ("<i class='fa fa-file-pdf-o' style='margin-right: 7px;'></i>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5 siac-note-hr'>" if len(body.strip()) > 0 else "")
 
         # add the source, separated by a line

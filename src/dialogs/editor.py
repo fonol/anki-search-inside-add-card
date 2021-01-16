@@ -27,6 +27,7 @@ from aqt.utils import saveGeom, restoreGeom
 from anki.hooks import addHook, remHook
 from anki.lang import _
 from anki.utils import isMac
+from ..output import UI
 from ..notes import *
 from ..notes import _get_priority_list
 from ..hooks import run_hooks
@@ -42,7 +43,7 @@ from .url_input_dialog import URLInputDialog
 from ..markdown.extensions.fenced_code import FencedCodeExtension
 from ..markdown.extensions.def_list import DefListExtension
 from ..utility.tag_tree import TagTree
-from ..web.reading_modal import ReadingModal
+from ..web.reading_modal import Reader
 
 import utility.text
 import utility.misc
@@ -143,7 +144,7 @@ class NoteEditor(QDialog):
         self.prio_prefill   = prio_prefill
         self.dark_mode_used = state.night_mode
 
-        open_note = ReadingModal.current_note
+        open_note = Reader.current_note
         if prefill_with_opened_note and open_note is not None:
             self.tag_prefill = open_note.tags
             self.prio_prefill = open_note.priority
@@ -251,14 +252,14 @@ class NoteEditor(QDialog):
 
         # maybe more elegant solution to avoid renewing search please?
         ix = get_index()
-        if ix is not None and ix.ui is not None and ix.ui._editor is not None and ix.ui._editor.web is not None:
+        if UI._editor is not None and UI._editor.web is not None:
             run_hooks("user-note-created")
 
         self.reject()
 
         # if reading modal is open, we might have to update the bottom bar
         if self.read_note_id is not None:
-            get_index().ui.reading_modal.reload_bottom_bar()
+            Reader.reload_bottom_bar()
 
     def on_create_and_keep_open_clicked(self):
         success = self._create_note()
@@ -267,12 +268,12 @@ class NoteEditor(QDialog):
 
         # maybe more elegant solution to skip updating search/sidebar refresh?
         ix = get_index()
-        if ix is not None and ix.ui is not None and ix.ui._editor is not None and ix.ui._editor.web is not None:
+        if UI._editor is not None and UI._editor.web is not None:
             run_hooks("user-note-created")
 
 
         if self.read_note_id is not None:
-            get_index().ui.reading_modal.reload_bottom_bar()
+            Reader.reload_bottom_bar()
 
         self._reset()
 

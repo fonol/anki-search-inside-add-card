@@ -404,6 +404,10 @@ def load_rust_lib():
 def subdirs_fullpath(path):
     return [entry.path for entry in os.scandir(path) if entry.is_dir()]
 
+def to_day_ivl(ivl):
+    if ivl < 0:
+        return abs(ivl) / (24 * 60 * 60)
+    return ivl
 
 # region Color Utils
 

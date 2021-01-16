@@ -25,10 +25,10 @@ import collections
 from aqt import *
 from aqt.utils import showInfo, tooltip
 
-from ..output import *
 from ..debug_logging import log, persist_index_info, get_index_info
 from ..models import IndexNote, SiacNote
 from .indexing_data import get_notes_in_collection, index_data_size
+from ..output import UI
 import utility.misc
 import utility.text
 import state
@@ -46,7 +46,6 @@ class FTSIndex:
         self.creation_info      = {}
 
         self.threadPool         = QThreadPool()
-        self.ui                 = Output()
 
         config                  = mw.addonManager.getConfig(__name__)
 
@@ -78,7 +77,7 @@ class FTSIndex:
         except KeyError:
             self.fields_to_exclude                              = {}
 
-        self.ui.fields_to_exclude               = self.fields_to_exclude
+        UI.fields_to_exclude               = self.fields_to_exclude
 
         # check if we have to rebuild the index
         index_up_to_date = not force_rebuild and not self._should_rebuild()
@@ -233,7 +232,7 @@ class FTSIndex:
         """
         worker          = Worker(self.searchProc, text, decks, only_user_notes, print_mode)
         worker.stamp    = utility.misc.get_milisec_stamp()
-        self.ui.latest  = worker.stamp
+        UI.latest  = worker.stamp
 
         if knowledge_tree:
             worker.signals.result.connect(knowledge_tree.get_search_results_back)
@@ -244,7 +243,7 @@ class FTSIndex:
         elif print_mode == "pdf.left":
             worker.signals.result.connect(self.print_pdf_left)
 
-        worker.signals.tooltip.connect(self.ui.show_tooltip)
+        worker.signals.tooltip.connect(UI.show_tooltip)
         self.threadPool.start(worker)
 
 
@@ -266,7 +265,7 @@ class FTSIndex:
 
         if len(text) == 0:
             if print_mode == "default":
-                self.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", "").replace("`", "&#96;"))
+                UI.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", "").replace("`", "&#96;"))
                 if mw.addonManager.getConfig(__name__)["hideSidebar"]:
                     return "Found 0 notes. Query was empty after cleaning."
                 return None
@@ -359,7 +358,7 @@ class FTSIndex:
             #self.output.show_tooltip(result)
             pass
         elif result is not None:
-            self.ui.print_search_results(result["results"], stamp, timing_info = True, query_set=query_set)
+            UI.print_search_results(result["results"], stamp, timing_info = True, query_set=query_set)
 
 
     def print_pdf(self, result, stamp):
@@ -370,9 +369,9 @@ class FTSIndex:
         if self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
             query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
         if result is not None:
-            self.ui.print_pdf_search_results(result["results"], stamp, query_set)
+            UI.print_pdf_search_results(result["results"], stamp, query_set)
         else:
-            self.ui.print_pdf_search_results([], stamp, self.lastSearch[0])
+            UI.print_pdf_search_results([], stamp, self.lastSearch[0])
 
     def print_pdf_left(self, result, stamp):
         """
@@ -383,17 +382,17 @@ class FTSIndex:
         if self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
             query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
         if result is not None:
-            self.ui.reading_modal.sidebar.print(result["results"], stamp, query_set)
+            Reader.sidebar.print(result["results"], stamp, query_set)
         else:
-            self.ui.reading_modal.sidebar.print([], stamp, self.lastSearch[0])
+            Reader.sidebar.print([], stamp, self.lastSearch[0])
 
     def searchDB(self, text, decks):
         """
         Used for searches in the search mask,
         doesn't use the index, instead use the traditional anki search
         """
-        stamp           = utility.misc.get_milisec_stamp()
-        self.ui.latest  = stamp
+        stamp               = utility.misc.get_milisec_stamp()
+        UI.latest    = stamp
         # compatibility with older versions (<2.1.24?)
         try:
             if hasattr(mw.col, "find_notes"):

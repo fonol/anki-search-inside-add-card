@@ -60,6 +60,9 @@ from .config import get_config_value_or_default as conf_or_def, get_config_value
 from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search, search_by_tags
 #from .api import show_quick_open_pdf
 from .menubar import Menu
+from .web.reading_modal import Reader
+from .output import UI
+
 
 
 config = mw.addonManager.getConfig(__name__)
@@ -67,6 +70,8 @@ config = mw.addonManager.getConfig(__name__)
 def init_addon():
     """ Executed once on Anki startup. """
     global origEditorContextMenuEvt
+
+   
 
     if config["dev_mode"]:
         state.dev_mode = True
@@ -144,7 +149,7 @@ def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callab
             for url in mime.urls():
                 url = url.toLocalFile()
                 if re.match("^.+\.pdf$", url, re.IGNORECASE):
-                    editor = get_index().ui._editor
+                    editor = UI._editor
                     # editor.web.eval("dropTarget = document.getElementById('f0');")
                     # _old(web, evt)
                     expanded_on_bridge_cmd(None, f"siac-create-note-source-prefill {url}", editor)
@@ -171,10 +176,10 @@ def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
         # note should be rerendered
         rerenderNote(dialog.editor.note.id)
          # keep track of edited notes (to display a little remark in the results)
-        index.ui.edited[str(dialog.editor.note.id)] = t.time()
+        UI.edited[str(dialog.editor.note.id)] = t.time()
 
-        if index.ui.reading_modal.note_id is not None:
-            index.ui.js("updatePageSidebarIfShown()")
+        if Reader.note_id is not None:
+            UI.js("updatePageSidebarIfShown()")
 
 
 def on_load_note(editor: Editor):
@@ -212,17 +217,17 @@ def on_load_note(editor: Editor):
             if was_already_rendered:
                 return
 
-            if index is not None and index.ui is not None:
-                index.ui.set_editor(editor)
+            UI.set_editor(editor)
+            Reader.set_editor(editor)
 
             if index is not None:
-                setup_ui_after_index_built(editor, index)
+                UI.setup_ui_after_index_built(editor, index)
 
             # editor.web.eval("onWindowResize()")
 
-            fillDeckSelect(editor)
+            UI.fillDeckSelect(editor)
             if index is not None and index.lastSearch is None:
-                print_starting_info()
+                UI.print_starting_info()
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
@@ -236,16 +241,16 @@ def on_load_note(editor: Editor):
 def save_pdf_page(note: Note):
 
     ix = get_index()
-    if ix.ui.reading_modal.note_id is None:
+    if Reader.note_id is None:
         return
 
-    nid = ix.ui.reading_modal.note_id
+    nid = Reader.note_id
     def cb(page: int):
         link_note_and_page(nid, note.id, page)
         # update sidebar if shown
-        ix.ui.js("updatePageSidebarIfShown()")
+        UI.js("updatePageSidebarIfShown()")
 
-    ix.ui.reading_modal.page_displayed(cb)
+    Reader.page_displayed(cb)
 
 
 def insert_scripts():
@@ -373,21 +378,21 @@ def setup_hooks():
     """ Todo: move more add-on code to hooks. """
     add_hook("editor-with-siac-initialised", lambda: set_editor_ready())
 
-    add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("user-note-created", lambda: UI.sidebar.refresh_tab(1))
     add_hook("user-note-created", lambda: try_repeat_last_search())
 
-    add_hook("user-note-deleted", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("user-note-deleted", lambda: UI.sidebar.refresh_tab(1))
     add_hook("user-note-deleted", lambda: recalculate_priority_queue())
     add_hook("user-note-deleted", lambda: try_repeat_last_search())
 
-    add_hook("user-note-edited", lambda: get_index().ui.sidebar.refresh_tab(1))
-    add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+    add_hook("user-note-edited", lambda: UI.sidebar.refresh_tab(1))
+    add_hook("user-note-edited", lambda: Reader.reload_bottom_bar())
     add_hook("user-note-edited", lambda: try_repeat_last_search())
 
     add_hook("updated-schedule", lambda: recalculate_priority_queue())
-    add_hook("updated-schedule", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+    add_hook("updated-schedule", lambda: Reader.reload_bottom_bar())
 
-    add_hook("reading-modal-closed", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("reading-modal-closed", lambda: UI.sidebar.refresh_tab(1))
     add_hook("reading-modal-closed", lambda: try_repeat_last_search())
 
 def setup_switch_btn(editor: Editor):
@@ -440,7 +445,7 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
 
     index                   = get_index()
     if index:
-        index.ui.frozen     = False
+        UI.frozen     = False
 
     if state.night_mode is None:
         def cb(night_mode: bool):
@@ -536,8 +541,8 @@ def show_note_modal():
     """ Displays the Create/Update dialog if not already shown. """
     if not state.note_editor_shown:
         ix              = get_index()
-        read_note_id    = ix.ui.reading_modal.note_id
-        NoteEditor(ix.ui._editor.parentWindow, note_id=None, add_only=read_note_id is not None, read_note_id=read_note_id)
+        read_note_id    = Reader.note_id
+        NoteEditor(UI._editor.parentWindow, note_id=None, add_only=read_note_id is not None, read_note_id=read_note_id)
 
 
 def register_io_add_hook():
@@ -549,18 +554,18 @@ def register_io_add_hook():
     def snew(gen, omask_path, qmask, amask, img, note_id, nid=None):
         old(gen, omask_path, qmask, amask, img, note_id, nid)
         index = get_index()
-        if index and index.ui.reading_modal.note_id and index.ui.reading_modal.note.is_pdf() and not nid:
+        if index and Reader.note_id and Reader.note.is_pdf() and not nid:
             stamp = utility.misc.get_milisec_stamp() - 1000
             res = mw.col.db.list(f"select * from notes where id > {stamp}")
             if res and len(res) > 0:
-                nid = index.ui.reading_modal.note_id
+                nid = Reader.note_id
                 def cb(page: int):
                     if page is not None and page >= 0:
                         for anid in res:
                             link_note_and_page(nid, anid, page)
                         # update sidebar if shown
-                        index.ui.js("updatePageSidebarIfShown()")
-                index.ui.reading_modal.page_displayed(cb)
+                        UI.js("updatePageSidebarIfShown()")
+                Reader.page_displayed(cb)
 
     io.ngen.ImgOccNoteGenerator._saveMaskAndReturnNote = snew
 
@@ -583,7 +588,7 @@ def tag_edit_keypress(self, evt, _old):
     if modifiers == Qt.ControlModifier or modifiers == Qt.AltModifier or modifiers == Qt.MetaModifier:
         return
     index = get_index()
-    if index.ui.frozen:
+    if UI.frozen:
         return
 
     if index is not None and len(self.text().strip()) > 0:

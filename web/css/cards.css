@@ -144,11 +144,11 @@ body.nightMode .siac-meta-btn {
     background: #2f2f31 !important;
 }
 .siac-note-outer {
-    background: #fffef7;
     border: none; 
     display: flex; 
     flex-direction: column; 
     margin-bottom: 20px;
+    background: #fffef7;
     box-shadow: 0 0 7px 1px #dcdcdc;
 }
 body.nightMode .siac-note-outer, #siac-reading-modal .siac-note-outer {

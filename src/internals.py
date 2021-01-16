@@ -34,10 +34,10 @@ def perf_time(fn: Callable) -> Callable:
 def js(fn: Callable) -> Callable:
     """ Decorator to execute the returned javascript of a function. """
 
+    from .output import UI
     def _eval_js_dec(*args, **kwargs):
-        ix = get_index()
-        if ix is not None and ix.ui is not None and ix.ui._editor is not None and ix.ui._editor.web is not None:
-            ix.ui.js(fn(*args, **kwargs))
+        if UI._editor is not None and UI._editor.web is not None:
+            UI.js(fn(*args, **kwargs))
         else:
             w = mw.app.activeWindow()
             if w is not None and hasattr(w, "editor"):

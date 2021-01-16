@@ -1130,7 +1130,7 @@ window.prioVerbose = function (prio) {
 
 window.scheduleDialogQuickAction = function () {
     let cmd = $("input[name=sched]:checked").data("pycmd");
-    pycmd(`siac-eval index.ui.reading_modal.schedule_note(${cmd})`);
+    pycmd(`siac-eval Reader.schedule_note(${cmd})`);
 }
 window.removeDialogOk = function (nid) {
     if ($("input[name=del]:checked").data("pycmd") == "1") {

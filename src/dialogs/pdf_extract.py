@@ -24,6 +24,7 @@ import copy
 import json
 
 from ..state import get_index
+from ..output import UI
 from ..notes import create_note, get_priority, get_extracts
 from ..hooks import run_hooks
 from .components import QtPrioritySlider
@@ -118,9 +119,9 @@ class PDFExtractDialog(QDialog):
         # if we have a pdf displayed, send the updated extract info to the js,
         # and reload the page
         ix = get_index()
-        if ix.ui.reading_modal.note_id and ix.ui.reading_modal.note.is_pdf():
-            extracts = get_extracts(ix.ui.reading_modal.note_id, ix.ui.reading_modal.note.source)
-            ix.ui.js(f"pdf.extractExclude={json.dumps(extracts)}; refreshPDFPage();")
+        if Reader.note_id and Reader.note.is_pdf():
+            extracts = get_extracts(Reader.note_id, Reader.note.source)
+            UI.js(f"pdf.extractExclude={json.dumps(extracts)}; refreshPDFPage();")
 
         run_hooks("user-note-created")
         run_hooks("updated-schedule")
