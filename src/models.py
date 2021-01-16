@@ -108,6 +108,9 @@ class SiacNote(Printable):
 
     def is_yt(self) -> bool:
         return self.source is not None and re.match("(?:https?://)?www\.youtube\..+", self.source.strip().lower())
+    
+    def is_md(self) -> bool:
+        return self.source is not None and self.source.lower().startswith("md:///")
 
     def get_note_type(self) -> str:
         if self.is_pdf():
