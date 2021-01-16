@@ -338,7 +338,7 @@ def create_or_update_md_notes(md_files: List[Tuple[str, str, str]]) -> int:
     ex_sources  = [e[0] for e in existing]
     to_insert   = [(_title(f[0]), f[1], f[0], f[2]) for f in md_files if not f[0] in ex_sources]
     c.executemany(f"insert into notes (title, text, source, tags, created) values (?,?,?,?, datetime('now', 'localtime'))", to_insert)
-    to_update   = [(_title(f[0]), f[1], f[0]) for f in md_files if f[0] in existing]
+    to_update   = [(_title(f[0]), f[1], f[0]) for f in md_files if f[0] in ex_sources]
     c.executemany(f"update notes set title = ?, text = ? where source = ?", to_update)
     c.commit()
     c.close()
