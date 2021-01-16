@@ -31,3 +31,15 @@ def scan_folder_for_changed_files(folder: str, last_index_date_stamp: str) -> Li
 
     return md_files
 
+def update_markdown_file(fpath: str, content: str) -> bool:
+    print(fpath)
+    if os.path.exists(fpath):
+        try:
+            with open(fpath, "w", encoding="utf-8") as f:
+                f.write(content)
+            return True
+        except Exception as e:
+            print(e)
+            return False
+    return False
+            
