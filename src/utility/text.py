@@ -28,7 +28,7 @@ import string
 
 
 p_trans             = str.maketrans('', '', string.punctuation)
-sp_list             = [".",";",":","!","?","/","\\",",","#","@","$","&",")","(","'","\""]
+sp_list             = [".",";",":","!","?","/","\\",",","#","@","$","&",")","(","'","\"", "`", "|"]
 p_to_space_trans    = str.maketrans(dict.fromkeys(sp_list, " "))
 
 
@@ -70,11 +70,7 @@ def clean(text):
 
     filtered    = ""
 
-    text        = text.replace("`", "")
     text        = clean_spaces.sub(" ", text)
-    # text        = text.replace("\r\n", " ").replace("\n", " ")
-    # text        = text.replace("\t", " ")
-    # text        = text.replace("\u001f", " ")
     text        = tagReg.sub(" ", text)
     text        = text.translate(p_to_space_trans)
     text        = spaceReg.sub(" ", text)
@@ -86,11 +82,27 @@ def clean(text):
         token = token.translate(p_trans)
         if (len(token) <= 1 and not asian_or_arabic_char.search(token)) or token.lower() in stopwords:
             continue
+
         filtered = f"{filtered}{token} "
 
     if len(filtered) > 0:
         return filtered[:-1]
     return ""
+
+
+def clean_for_indexing(text):
+
+    text        = tagReg.sub(" ", text)
+    filtered    = ""
+    for token in tokenize(text):
+        if len(token) > 200:
+            continue
+        if token.lower() in stopwords:
+            continue
+        filtered = f"{filtered}{token} "
+
+    return filtered
+
 
 
 def trim_if_longer_than(text, n):
@@ -132,12 +144,12 @@ def replace_accents_with_vowels(text):
 
 def tokenize(text):
 
-    text    = text.replace("|", " ")
     if not asian_char.search(text):
-        return [t for t in text.split(" ") if len(t) > 0]
+        return [t for t in text.split(" ") if t != ""]
 
     result  = []
     spl     = text.split(" ")
+
     for token in spl:
         if token == "":
             continue
