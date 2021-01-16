@@ -164,5 +164,8 @@
 "mix_reviews_and_reading.mode" : "every_n",
 "mix_reviews_and_reading.review_after_done" : false,
 
+"md.folder_path": "",
+"md.last_index_stamp": "",
+
 "window_mode": "Both"
 }
