@@ -35,7 +35,7 @@ import state
 
 class FTSIndex:
 
-    def __init__(self, force_rebuild = False):
+    def __init__(self, anki_index_data, addon_index_data, force_rebuild = False):
 
         self.limit              = 20
         self.pinned             = []
@@ -77,21 +77,22 @@ class FTSIndex:
         except KeyError:
             self.fields_to_exclude                              = {}
 
-        UI.fields_to_exclude               = self.fields_to_exclude
+        UI.fields_to_exclude                    = self.fields_to_exclude
 
         # check if we have to rebuild the index
-        index_up_to_date = not force_rebuild and not self._should_rebuild()
+        index_data                              = anki_index_data + addon_index_data
+        index_up_to_date                        = not force_rebuild and not self._should_rebuild(index_data)
 
         self.creation_info["index_was_rebuilt"] = not index_up_to_date
 
         if not index_up_to_date:
-            corpus = state.index_data
+
             if self.porter:
                 sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs, tokenize=porter)"
             else:
                 sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs)"
 
-            cleaned     = self._cleanText(corpus)
+            cleaned     = self._cleanText(index_data)
             file_path   = self.dir + "search-data.db"
             try:
                 os.remove(file_path)
@@ -124,7 +125,7 @@ class FTSIndex:
         state.index_data = None
 
 
-    def _should_rebuild(self):
+    def _should_rebuild(self, index_data):
         """ Check if the index should be rebuilt. """
 
         config  = mw.addonManager.getConfig(__name__)
@@ -156,7 +157,7 @@ class FTSIndex:
         except:
             return True
 
-        index_size = state.index_data_size
+        index_size = len(index_data)
         if info["size"] != index_size:
             return True
 
@@ -204,23 +205,15 @@ class FTSIndex:
 
 
 
-    def _cleanText(self, corpus):
+    def _cleanText(self, index_data):
         """ Prepare notes for indexing (cut stopwords, remove fields, remove special characters). """
 
-        filtered    = list()
-        text        = ""
-
-        for row in corpus:
-            text = row[1]
-
-            #if the notes model id is in our filter dict, that means we want to exclude some field(s)
-            if row[4] in self.fields_to_exclude:
-                text = utility.text.remove_fields(text, self.fields_to_exclude[row[4]])
-
-            text = utility.text.clean(text)
-            filtered.append((row[0], text, row[2], row[3], row[1], row[4], row[5]))
-
-        return filtered
+        return [
+            (row[0], 
+            utility.text.clean_for_indexing(utility.text.remove_fields(row[1], self.fields_to_exclude[row[4]])) if row[4] in self.fields_to_exclude else utility.text.clean_for_indexing(row[1]), 
+            row[2], row[3], row[1], row[4], row[5])
+            for row in index_data
+        ]
 
 
     def search(self, text, decks, only_user_notes = False, print_mode = "default", knowledge_tree = None):
