@@ -241,7 +241,6 @@ def on_load_note(editor: Editor):
 
 def save_pdf_page(note: Note):
 
-    ix = get_index()
     if Reader.note_id is None:
         return
 
