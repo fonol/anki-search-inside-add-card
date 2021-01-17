@@ -101,7 +101,7 @@ class ReaderSidebar():
         if self.last_results is not None:
             to_print = self.last_results[(page- 1) * self.page_size: page * self.page_size]
             if self.tab_displayed == "browse":
-                self.browse_tab_last_results = (cls.last_results, self.last_stamp, self.last_query_set)
+                self.browse_tab_last_results = (self.last_results, self.last_stamp, self.last_query_set)
                 self._print_sidebar_search_results(to_print, self.last_stamp, self.last_query_set)
             elif self.tab_displayed == "pdfs":
                 self.pdfs_tab_last_results = self.last_results
@@ -141,7 +141,7 @@ class ReaderSidebar():
             `).insertBefore('#siac-reading-modal-tabs-left');
         """)
         if self.browse_tab_last_results is not None:
-            self.print(cls.browse_tab_last_results[0], self.browse_tab_last_results[1], self.browse_tab_last_results[2])
+            self.print(self.browse_tab_last_results[0], self.browse_tab_last_results[1], self.browse_tab_last_results[2])
         else:
             notes = get_last_added_anki_notes(get_config_value_or_default("pdfTooltipResultLimit", 50))
             self.print(notes, "", [])
@@ -168,7 +168,7 @@ class ReaderSidebar():
             `).insertBefore('#siac-reading-modal-tabs-left');
         """)
         if self.pdfs_tab_last_results is not None:
-            self.print(cls.pdfs_tab_last_results)
+            self.print(self.pdfs_tab_last_results)
         else:
             self._editor.web.eval("pycmd('siac-pdf-sidebar-pdfs-in-progress')")
 
@@ -179,7 +179,7 @@ class ReaderSidebar():
         """
         if results:
             limit   = get_config_value_or_default("pdfTooltipResultLimit", 50)
-            html    = UI.search_results(results[:limit], query_set)
+            html    = UI.get_result_html_simple(results[:limit], tag_hover=False, search_on_selection=False, query_set=query_set)
             self._editor.web.eval("""
                 document.getElementById('siac-left-tab-browse-results').innerHTML = `%s`;
                 document.getElementById('siac-left-tab-browse-results').scrollTop = 0;
@@ -1409,7 +1409,7 @@ class Reader:
                     added <b>{added_today_count}</b> card{"s" if added_today_count != 1 else ""}
                 </div>"""
         if len(linked) > 0:
-            html = UI.search_results(linked, [])
+            html = UI.get_result_html_simple(linked, tag_hover=False, search_on_selection=False, query_set=None)
             html = html.replace("`", "\\`")
             html = f"""
                 <div class='fg_lightgrey siac-page-sidebar-header'>
