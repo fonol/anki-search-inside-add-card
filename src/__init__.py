@@ -218,6 +218,7 @@ def on_load_note(editor: Editor):
                 return
 
             UI.set_editor(editor)
+            Reader.reset()
             Reader.set_editor(editor)
 
             if index is not None:
