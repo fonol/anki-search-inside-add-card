@@ -222,17 +222,17 @@ class Reader:
     current_note        : Optional[SiacNote]        = None
     _original_win_title : Optional[str]             = None
 
-    note_id            : Optional[int]         = None
-    note               : Optional[SiacNote]    = None
-    _editor            : Optional[Editor]      = None
+    note_id             : Optional[int]             = None
+    note                : Optional[SiacNote]        = None
+    _editor             : Optional[Editor]          = None
 
-    highlight_color    : str                   = "#e65100"
-    highlight_type     : int                   = 1
+    highlight_color     : str                       = "#e65100"
+    highlight_type      : int                       = 1
 
-    sidebar            : ReaderSidebar   = ReaderSidebar()
+    sidebar             : ReaderSidebar             = ReaderSidebar()
 
     # self.pdfjs_v            : str                   = "2.6.347" if utility.misc.chromium_version()  > "76" else "2.4.456"
-    pdfjs_v            : str                   = "2.4.456"
+    pdfjs_v             : str                       = "2.4.456"
 
 
      
@@ -247,14 +247,14 @@ class Reader:
 
     @classmethod
     def reset(cls):
-        cls.note_id                = None
-        cls.note                   = None
-        Reader.current_note   = None
-        cls.sidebar.tab_displayed  = None
-        if Reader._original_win_title is not None:
+        cls.note_id                 = None
+        cls.note                    = None
+        cls.current_note            = None
+        cls.sidebar.tab_displayed   = None
+        if cls._original_win_title is not None:
             win = mw.app.activeWindow()
             if isinstance(win, aqt.addcards.AddCards):
-                win.setWindowTitle(Reader._original_win_title)
+                win.setWindowTitle(cls._original_win_title)
 
 
     @classmethod
