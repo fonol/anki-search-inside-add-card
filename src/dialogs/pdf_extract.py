@@ -27,6 +27,7 @@ from ..state import get_index
 from ..output import UI
 from ..notes import create_note, get_priority, get_extracts
 from ..hooks import run_hooks
+from ..web.reading_modal import Reader
 from .components import QtPrioritySlider
 
 class PDFExtractDialog(QDialog):
@@ -118,7 +119,6 @@ class PDFExtractDialog(QDialog):
 
         # if we have a pdf displayed, send the updated extract info to the js,
         # and reload the page
-        ix = get_index()
         if Reader.note_id and Reader.note.is_pdf():
             extracts = get_extracts(Reader.note_id, Reader.note.source)
             UI.js(f"pdf.extractExclude={json.dumps(extracts)}; refreshPDFPage();")
