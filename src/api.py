@@ -28,6 +28,7 @@ import state
 from .notes import get_queue_count
 from .state import get_index
 from .output import UI
+from .web.reading_modal import Reader
 from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.quick_open_pdf import QuickOpenNote
 from .dialogs.queue_picker import QueuePicker
@@ -72,7 +73,6 @@ def show_queue_picker():
     dialog = QueuePicker(mw.app.activeWindow())
 
     def _open_id():
-        index = get_index()
         Reader.display(dialog.chosen_id())
 
     if dialog.exec_():
@@ -98,7 +98,6 @@ def show_quick_open_pdf():
 
 def open_siac_with_id(id):
     def _open_id():
-        ix      = get_index()
         Reader.display(id)
 
     open_or_switch_to_editor(_open_id)
