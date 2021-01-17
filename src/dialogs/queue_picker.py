@@ -26,6 +26,7 @@ from .editor import NoteEditor
 from .components import QtPrioritySlider, ClickableQWidget
 from .priority_dialog import PriorityDialog
 from .tag_assign_dialog import TagAssignDialog
+from ..web.reading_modal import Reader
 from ..notes import *
 from ..notes import _get_priority_list
 from ..internals import perf_time
