@@ -1100,10 +1100,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     #
 
     elif cmd.startswith("siac-toggle-highlight "):
-        if check_index():
-            index.highlighting = cmd.split()[1] == "on"
-            config["highlighting"] = cmd.split()[1] == "on"
-            mw.addonManager.writeConfig(__name__, config)
+        UI.highlighting         = cmd.split()[1] == "on"
+        index.highlighting      = cmd.split()[1] == "on"
+        config["highlighting"]  = cmd.split()[1] == "on"
+        mw.addonManager.writeConfig(__name__, config)
     elif cmd.startswith("deckSelection"):
         if not check_index():
             return (True, None)
