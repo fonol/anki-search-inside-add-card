@@ -1683,9 +1683,9 @@ class Reader:
             # if another Send to Field has been executed before, and the note type is the same, add another button
             # to directly send the cloze to that last used field.
             last_btn = ""
-            if Reader.last_cloze is not None and model_id == Reader.last_cloze[0]:
-                ix          = [f["name"] for f in cls._editor.note.model()["flds"]].index(Reader.last_cloze[1])
-                last_btn    = f"<div class='siac-btn siac-btn-dark mt-5' style='margin-right: 15px;' onclick=\"appendToField({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(Reader.last_cloze[1], 15)}'</div>"
+            if cls.last_cloze is not None and model_id == cls.last_cloze[0]:
+                ix          = [f["name"] for f in cls._editor.note.model()["flds"]].index(cls.last_cloze[1])
+                last_btn    = f"<div class='siac-btn siac-btn-dark mt-5' style='margin-right: 15px;' onclick=\"appendToField({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(cls.last_cloze[1], 15)}'</div>"
 
             btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
                                 <div style='margin-top: 8px;'>
