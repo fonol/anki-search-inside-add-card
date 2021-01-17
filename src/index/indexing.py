@@ -96,6 +96,7 @@ def _build_index(anki_index_data, md_files, force_rebuild = False):
     index.lastSearch                    = None
     index.lastResDict                   = None
     index.topToggled                    = True
+    UI.highlighting                     = config["highlighting"]
     index.highlighting                  = config["highlighting"]
     UI.edited                           = {}
     index.initializationTime            = initializationTime
