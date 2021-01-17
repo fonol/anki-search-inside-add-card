@@ -58,32 +58,36 @@ class UI:
     #
     # Components
     #
-    _editor                = None
-    sidebar                = Sidebar()
+    _editor                     = None
+    sidebar                     = Sidebar()
 
     # Todo: move to text utils
-    EXCLUDE_KEYWORDS       = re.compile(r'(?:sound|mp3|c[0-9]+)')
+    EXCLUDE_KEYWORDS            = re.compile(r'(?:sound|mp3|c[0-9]+)')
 
     #
     # State / Settings
     #
-    latest                 = -1
-    gridView               = False
-    plotjsLoaded           = False
-    showRetentionScores    = True
-    lastResults            = None
-    hideSidebar            = False
-    uiVisible              = True
-    frozen                 = False
-    show_clozes            = not get_config_value_or_default("results.hide_cloze_brackets", False)
+    latest                      = -1
+    gridView                    = False
+    plotjsLoaded                = False
+    showRetentionScores         = True
+    lastResults                 = None
+    hideSidebar                 = False
+    uiVisible                   = True
+    frozen                      = False
+    highlighting                = get_config_value_or_default("highlighting", True)
+    show_clozes                 = not get_config_value_or_default("results.hide_cloze_brackets", False)
+
+    fields_to_hide_in_results   = {}
+    remove_divs                 = False
 
     # saved to display the same time taken when clicking on a page other than 1
-    last_took              = None
-    last_had_timing_info   = False
+    last_took                   = None
+    last_had_timing_info        = False
     #determines the zoom factor of rendered notes
-    scale                  = 1.0
+    scale                       = 1.0
     #cache previous calls
-    previous_calls         = []
+    previous_calls              = []
 
 
     @classmethod
@@ -599,23 +603,15 @@ class UI:
         return html[:-2]
 
     @classmethod
-    def get_result_html_simple(cls, db_list, tag_hover = True, search_on_selection = True):
+    def get_result_html_simple(cls, db_list, tag_hover = True, search_on_selection = True, query_set = None) -> HTML:
 
         html            = ""
-        epochTime       = int(time.time() * 1000)
-        timeDiffString  = ""
-        newNote         = ""
-        ret             = 0
         nids            = [r.id for r in db_list]
 
         if cls.showRetentionScores:
             retsByNid   = getRetentions(nids)
 
         for counter, res in enumerate(db_list):
-            try:
-                timeDiffString = cls._get_time_diff_lbl(res[3], epochTime)
-            except:
-                timeDiffString = "Could not determine creation date"
             ret = retsByNid[int(res.id)] if cls.showRetentionScores and int(res.id) in retsByNid else None
 
             if ret is not None:
@@ -638,6 +634,9 @@ class UI:
             if cls.remove_divs and res.note_type != "user":
                 text = utility.text.remove_divs(text)
 
+            if cls.highlighting and query_set is not None:
+                text = utility.text.mark_highlights(text, query_set)
+
             text        = utility.text.clean_field_separators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
             text        = utility.text.try_hide_image_occlusion(text)
             #try to put fields that consist of a single image in their own line
@@ -650,8 +649,7 @@ class UI:
                 mouseup="getSelectionText()" if search_on_selection else "",
                 text=text,
                 ret=retInfo,
-                tags=utility.tags.build_tag_string(res.tags, tag_hover, maxLength = 25, maxCount = 2),
-                creation="&nbsp;&#128336; " + timeDiffString)
+                tags=utility.tags.build_tag_string(res.tags, tag_hover, maxLength = 25, maxCount = 2))
             html        += newNote
 
         return html
@@ -992,8 +990,7 @@ class UI:
         cls.show_search_result_area(editor, init_time)
         #restore previous settings
         cmd = ""
-        if not index.highlighting:
-            cmd += "$('#highlightCb').prop('checked', false);"
+        cmd += f"$('#highlightCb').prop('checked', {str(cls.highlighting).lower()});"
         if not get_config_value_or_default("searchOnTyping", True):
             cmd += "$('#typingCb').prop('checked', false); setSearchOnTyping(false);"
         if not get_config_value_or_default("searchOnSelection", True):
@@ -1196,64 +1193,6 @@ class UI:
                 found.update({d : {}})
         return dmap
 
-
-    @classmethod
-    def search_results(cls, db_list: List[IndexNote], query_set: List[str]) -> HTML:
-        """ Prints a list of index notes. Used e.g. in the pdf viewer. """
-
-        html                        = ""
-        newNote                     = ""
-        nids                        = [r.id for r in db_list]
-        show_ret                    = get_config_value_or_default("showRetentionScores", True)
-        fields_to_hide_in_results   = get_config_value_or_default("fieldsToHideInResults", {})
-        hide_clozes                 = get_config_value_or_default("results.hide_cloze_brackets", False)
-        remove_divs                 = get_config_value_or_default("removeDivsFromOutput", False)
-        if show_ret:
-            retsByNid               = getRetentions(nids)
-        ret                         = 0
-        highlighting                = get_config_value_or_default("highlighting", True)
-
-        for counter, res in enumerate(db_list):
-            ret = retsByNid[int(res.id)] if show_ret and int(res.id) in retsByNid else None
-            if ret is not None:
-                retMark = "border-color: %s;" % (utility.misc._retToColor(ret))
-                retInfo = """<div class='retMark' style='%s'>PR: %s</div> """ % (retMark, int(ret))
-            else:
-                retInfo = ""
-
-            text        = res.get_content()
-
-            # hide fields that should not be shown
-            if str(res.mid) in fields_to_hide_in_results:
-                text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in fields_to_hide_in_results[str(res.mid)]])
-
-            #remove <div> tags if set in config
-            if remove_divs and res.note_type != "user":
-                text = utility.text.remove_divs(text)
-
-            # remove cloze brackets if set in config
-            if hide_clozes and res.note_type != "user":
-                text = utility.text.hide_cloze_brackets(text)
-
-            if highlighting and query_set is not None:
-                text = utility.text.mark_highlights(text, query_set)
-
-            text        = utility.text.clean_field_separators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
-            text        = utility.text.try_hide_image_occlusion(text)
-            #try to put fields that consist of a single image in their own line
-            text        = utility.text.newline_before_images(text)
-            template    = NOTE_TMPL_SIMPLE if res.note_type == "index" else NOTE_TMPL_SIAC_SIMPLE
-            newNote     = template.format(
-                counter=counter+1,
-                nid=res.id,
-                edited="",
-                mouseup="",
-                text=text,
-                ret=retInfo,
-                tags=utility.tags.build_tag_string(res.tags, False, False, maxLength = 15, maxCount = 2),
-                creation="")
-            html += newNote
-        return html
 
     @classmethod
     def try_select_deck(cls, deck: str) -> bool:
