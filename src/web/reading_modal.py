@@ -434,10 +434,8 @@ class Reader:
                         document.getElementById('text-layer').style.display = 'inline-block';
                         if (pdf.pagesRead.length === pdfDoc.numPages) {
                             pdf.page = getLastReadPage() || 1;
-                            queueRenderPage(pdf.page, true, true, true);
-                        } else {
-                            queueRenderPage(pdf.page, true, true, true);
                         }
+                        queueRenderPage(pdf.page, true, true, true);
                         updatePdfProgressBar();
                         if (topBarIsHidden()) {
                             readerNotification("%s");
@@ -477,7 +475,8 @@ class Reader:
 
         siacnote = cls.note
 
-        if siacnote is not None and get_config_value_or_default("pdf.onOpen.autoFillSourceFieldsBool", True):
+        # todo: apparently _editor.note can be None here, find out why
+        if siacnote is not None and cls._editor.note is not None and get_config_value_or_default("pdf.onOpen.autoFillSourceFieldsBool", True):
             note                = cls._editor.note
 
             fields_to_prefill   = get_config_value_or_default("pdf.onOpen.autoFillFieldsWithPDFName", [])
