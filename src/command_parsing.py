@@ -1622,11 +1622,12 @@ def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: i
         model           = mw.col.models.byName(model_name)
         index           = get_index()
         if model is None:
-            tooltip("Could not resolve note model.", period=3000)
+            tooltip("""Could not resolve note model.<br>
+            If you don't have a note type called 'Cloze', try filling 'pdf.clozegen.notetype' in the config. """, period=8000)
             return
         deck_chooser    = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deck_chooser is None:
-            tooltip("Could not determine chosen deck.", period=3000)
+            tooltip("Could not determine chosen deck.", period=5000)
             return
         did = deck_chooser.selectedId()
         if check_index():
