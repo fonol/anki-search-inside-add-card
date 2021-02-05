@@ -18,16 +18,12 @@ import sqlite3
 import os
 import sys
 import struct
-import re
 import time
 import math
-import collections
 from aqt import *
-from aqt.utils import showInfo, tooltip
 
 from ..debug_logging import log, persist_index_info, get_index_info
 from ..models import IndexNote, SiacNote
-from .indexing_data import get_notes_in_collection, index_data_size
 from ..output import UI
 from ..web.reading_modal import Reader
 import utility.misc
