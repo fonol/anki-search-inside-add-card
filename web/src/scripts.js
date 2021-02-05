@@ -957,7 +957,7 @@ window.dragElement = function (elmnt, headerId, inModal = false) {
 window.drawHeatmap = function (id, data) {
     // script might not be loaded yet
     if (typeof CalHeatMap === "undefined" || typeof d3 === "undefined") {
-        setTimeout(() => { drawHeatmap(id, data); }, 200);
+        setTimeout(() => { drawHeatmap(id, data); }, 50);
         return;
     }
     var cal = new CalHeatMap();

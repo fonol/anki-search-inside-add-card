@@ -138,8 +138,8 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
     Returns the javascript call that inserts the html that is essentially the right side of the add card dialog.
     The right side html is only inserted if not already present, so it is safe to call this function on every note load.
     """
-    leftSideWidth       = conf_or_def("leftSideWidthInPercent", 40)
 
+    leftSideWidth                           = conf_or_def("leftSideWidthInPercent", 40)
     if not isinstance(leftSideWidth, int) or leftSideWidth <= 0 or leftSideWidth > 100:
         leftSideWidth = 50
 
@@ -181,7 +181,7 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
                 $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
                 let aFn = () => {
                     if (typeof(updatePinned) === "undefined") {
-                        setTimeout(aFn, 100);
+                        setTimeout(aFn, 50);
                         return;
                     }
                     updatePinned();
@@ -194,7 +194,7 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
             }
             let sFn = () => {
                 if (typeof(siacState) === 'undefined') {
-                    setTimeout(sFn, 100);
+                    setTimeout(sFn, 50);
                     return;
                 } 
                 if (siacState.searchOnTyping) {
@@ -204,8 +204,8 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
                 window.$fields = $('.field');
                 window.$searchInfo = $('#searchInfo');
                 window.addEventListener('resize', onWindowResize, true);
-                $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
-                $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
+                $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this); });
+                $('.cal-block-outer').on('click', function(event) { displayCalInfo(this); });
             };
             sFn();
             return there; 
@@ -272,7 +272,7 @@ def get_calendar_html() -> HTML:
     nid_now                 = int(time.time() * 1000)
     nid_minus_day_of_year   = int(date_year_begin.timestamp() * 1000)
 
-    res                     = mw.col.db.all("select distinct notes.id from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now))
+    res                     = mw.col.db.all("select distinct notes.id from notes where id > %s and id < %s order by id asc" %(nid_minus_day_of_year, nid_now))
 
     counts                  = []
     c                       = 1
@@ -310,7 +310,7 @@ def get_calendar_html() -> HTML:
         else:
             color = ""
 
-        html_content += "<div class='cal-block-outer'><div class='cal-block %s %s' data-index='%s'></div></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
+        html_content = f"{html_content}<div class='cal-block-outer'><div class='cal-block %s %s' data-index='%s'></div></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
         added += 1
 
     html = html % html_content
@@ -342,7 +342,7 @@ def read_counts_card_body(counts: Dict[int, int]) -> HTML:
                 row = f"{row}<span class='siac-read-box'></span>" 
             row = f"{row}<span class='keyword'>&nbsp; (+ {c-100})</span>"
 
-        html = f"{html}<tr><td style='min-width: 240px;'><a class='keyword' onclick='pycmd(\"siac-read-user-note {nid}\")'>{ix}. {title}</a></td><td style='padding-left: 5px; text-align: right;'><b style='vertical-align: middle;'>{c}</b></td><td style='padding-left: 5px;'>{row}</td></tr>"
+        html = f"{html}<tr><td style='min-width: 240px;'><a class='keyword' onclick='pycmd(\"siac-read-user-note {nid}\")'>{ix}. {title}</a></td><td style='padding-left: 5px; text-align: right;'><b style='vertical-align: middle; word-break: keep-all;'>{c}</b></td><td style='padding-left: 5px;'>{row}</td></tr>"
     html = f"<br><table class='siac-read-stats-table'>{html}</table>"
 
     html += """
