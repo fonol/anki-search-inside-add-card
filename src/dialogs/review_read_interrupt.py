@@ -21,7 +21,6 @@ import aqt
 import os
 
 from ..api import *
-from ..config import get_config_value
 from ..notes import get_read_today_count
 import state
 import utility.misc
