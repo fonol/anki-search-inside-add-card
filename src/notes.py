@@ -24,7 +24,6 @@ from typing import Optional, Tuple, List, Dict, Set, Any
 from enum import Enum, unique
 from datetime import datetime, time, date, timedelta
 from aqt import mw
-from aqt.utils import tooltip, showInfo
 import random
 import time
 
@@ -32,12 +31,10 @@ try:
     from .state import get_index
     from .models import SiacNote, IndexNote, NoteRelations
     from .config import get_config_value_or_default, get_config_value, update_config
-    from .debug_logging import get_notes_info, persist_notes_db_checked
 except:
     from state import get_index
     from models import SiacNote, IndexNote, NoteRelations
     from config import get_config_value_or_default, get_config_value, update_config
-    from debug_logging import get_notes_info, persist_notes_db_checked
 import utility.misc
 import utility.tags
 import utility.text
@@ -245,7 +242,7 @@ def create_db_file_if_not_exists() -> bool:
     columns = conn.execute("PRAGMA table_info(notes)").fetchall()
     # 14th column should be delay, if not, recreate 'notes' table with correct order
     if columns[13][1] != "delay":
-        tmp_table = """create table if not exists notes_tmp
+        tmp_table = f"""create table if not exists notes_tmp
             {DEF_NOTES_TABLE}
           """
 
@@ -371,7 +368,6 @@ def recalculate_priority_queue(is_addon_start: bool = False):
         2. All notes that have a reminder (special schedule) that is due today or was due in the last <DUE_NOTES_BOUNDARY> days (older due dates are ignored)
 
     """
-
     current             = _get_priority_list_with_last_prios()
     scores              = []
     to_decrease_delay   = []
@@ -1195,8 +1191,7 @@ def get_all_tags() -> Set[str]:
     for tag_str in all_tags:
         for t in tag_str[0].split():
             if len(t) > 0:
-                if t not in tag_set:
-                    tag_set.add(t)
+                tag_set.add(t)
     return tag_set
 
 def get_all_tags_with_recency() -> List[Tuple[str, str]]:
