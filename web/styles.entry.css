@@ -50,7 +50,6 @@
     border-radius: 30px;
     height: 30px;
     opacity: 0;
-     /* margin-left: 24px; */
     width: 30px; 
     display: inline-block;
 
@@ -66,7 +65,6 @@
     text-align: center;
     padding: 15px;
     z-index: 10000;
-    border: 3px outset var(--c-modal-border);
     background: var(--c-modal-background);
 }
 #loader .signal {
