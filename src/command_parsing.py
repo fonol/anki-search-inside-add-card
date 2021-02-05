@@ -1529,7 +1529,6 @@ def show_schedule_dialog(parent_window):
 def show_read_stats():
     """ Displays some cards with pages read graphs. """
 
-    index       = get_index()
     stamp       = set_stamp()
     res         = []
 
