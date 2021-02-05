@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from aqt import mw
-import aqt
 import time
 import os
 import typing
@@ -27,20 +26,16 @@ def get_notes_in_collection():
     """ Reads the collection and builds a list of tuples (note id, note fields as string, note tags, deck id, model id) """
 
     config              = mw.addonManager.getConfig(__name__)
-    deckList            = config['decks']
-    deckStr             = ""
-
-    for d in list(mw.col.decks.decks.values()):
-        if d['name'] in deckList:
-            deckStr += str(d['id']) + ","
+    deck_list           = config['decks']
+    deckStr             = ",".join([str(d["id"]) for d in mw.col.decks.decks.values() if d['name'] in deck_list])
 
     if len(deckStr) > 0:
         deckStr         = "(%s)" % (deckStr[:-1])
 
     if deckStr:
-        oList           = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s" %(deckStr))
+        oList           = mw.col.db.all("select notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s group by notes.id" %(deckStr))
     else:
-        oList           = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid")
+        oList           = mw.col.db.all("select notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid group by notes.id")
 
     index_notes = [(id, flds, t, did, str(mid), "") for (id, flds, t, did, mid) in oList]
 
@@ -62,21 +57,18 @@ def index_data_size() -> int:
     """ Returns the amount of notes that would go into the index. """
 
     config              = mw.addonManager.getConfig(__name__)
-    deckList            = config['decks']
+    deck_list           = config['decks']
     deckStr             = ""
-
-    for d in list(mw.col.decks.decks.values()):
-        if d['name'] in deckList:
-            deckStr += str(d['id']) + ","
+    deckStr             = ",".join([str(d["id"]) for d in mw.col.decks.decks.values() if d['name'] in deck_list])
 
     if len(deckStr) > 0:
         deckStr         = "(%s)" % (deckStr[:-1])
 
     # todo: find out why count(distinct notes.id) returns slightly different number
     if deckStr:
-        c_anki           = mw.col.db.scalar("select count(*) from (select distinct notes.id, did, mid from notes left join cards on notes.id = cards.nid where did in %s)" %(deckStr))
+        c_anki           = mw.col.db.scalar("select count(*) from (select notes.id, did, mid from notes left join cards on notes.id = cards.nid where did in %s group by notes.id)" %(deckStr))
     else:
-        c_anki           = mw.col.db.scalar("select count(*) from (select distinct notes.id, did, mid from notes left join cards on notes.id = cards.nid)")
+        c_anki           = mw.col.db.scalar("select count(*) from (select notes.id, did, mid from notes left join cards on notes.id = cards.nid group by notes.id)")
 
     if c_anki is None:
         c_anki = 0
