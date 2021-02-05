@@ -15,23 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import platform
 import os
 import json
 import re
-import time
 from datetime import datetime as dt
-import sys
 import typing
 from typing import List, Optional, Tuple, Any, Callable
 import aqt
-import uuid
-import base64
 import html as ihtml
 from aqt import mw, gui_hooks
 from aqt.editor import Editor
 from aqt.utils import showInfo, tooltip
-from aqt.qt import QDesktopServices, QUrl
 
 import utility.tags
 import utility.text
@@ -39,7 +33,7 @@ import utility.misc
 import utility.date
 import state
 
-from ..state import get_index, check_index
+from ..state import check_index
 from ..notes import *
 from ..notes import _get_priority_list
 from ..special_searches import get_last_added_anki_notes
@@ -53,8 +47,6 @@ from .note_templates import *
 from ..internals import js, HTML, JS
 from ..config import get_config_value_or_default, get_config_value
 from ..web_import import import_webpage
-from ..stats import getRetentions
-from ..markdown import markdown
 from ..output import UI
 
 
@@ -312,16 +304,23 @@ class Reader:
 
         # if source is a pdf file path, try to display it
         if note.is_pdf():
-            if utility.misc.file_exists(note.source):
+            # check if source file exists
+            if not utility.misc.file_exists(note.source):
+                message = "<i class='fa fa-exclamation-triangle mb-10' style='font-size: 20px;'></i><br>Could not load the given PDF.<br>Are you sure the path is correct?"
+                cls.notification(message)
+            
+            # check if source file can be read
+            elif not os.access(note.source, os.R_OK):
+                message = "<i class='fa fa-exclamation-triangle mb-10' style='font-size: 20px;'></i><br>Could not read the file."
+                print("[SIAC] Failed to open PDF file: " + note.source)
+                cls.notification(message)
+
+            else:
                 cls._display_pdf(note.source.strip(), note_id)
                 # try to select deck which was mostly used when adding notes while this pdf was open
                 deck_name = get_deck_mostly_linked_to_note(note_id)
                 if deck_name:
                     selected = UI.try_select_deck(deck_name)
-
-            else:
-                message = "<i class='fa fa-exclamation-triangle mb-10' style='font-size: 20px;'></i><br>Could not load the given PDF.<br>Are you sure the path is correct?"
-                cls.notification(message)
 
         # auto fill tag entry if pdf has tags and config option is set
         if note.tags is not None and len(note.tags.strip()) > 0 and get_config_value_or_default("pdf.onOpen.autoFillTagsWithPDFsTags", True):
