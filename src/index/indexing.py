@@ -31,7 +31,6 @@ from ..notes import get_all_notes, create_or_update_md_notes
 from ..output import UI
 from ..web.reading_modal import Reader
 import utility.misc
-import state
 
 from ..md import *
 
