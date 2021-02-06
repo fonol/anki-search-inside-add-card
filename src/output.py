@@ -1221,10 +1221,12 @@ class UI:
 
         return [
             "Performance improvements on startup",
+            "Divide 'Random' menu item in add-on note sidebar tab into different searches",
             "Fix: Error on startup when updating from older version of add-on",
             "Better error messages if a PDF cannot be opened",
             "Better message if no Cloze note type has been found in the reader cloze gen function",
             "Fix: Tab ('Fields', 'Browse', 'PDFs') not resetting correctly after closing reader",
+            "Fix: Last Opened Notes not returning correct results"
         ]
 
     @staticmethod
