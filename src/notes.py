@@ -1525,6 +1525,24 @@ def get_random(limit: int, pinned: List[int]) -> List[SiacNote]:
     conn.close()
     return _to_notes(res, pinned)
 
+def get_random_pdf_notes(limit: int, pinned: List[int]) -> List[SiacNote]:
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%%.pdf' order by random() limit %s" % limit).fetchall()
+    conn.close()
+    return _to_notes(res, pinned)
+
+def get_random_text_notes(limit: int, pinned: List[int]) -> List[SiacNote]:
+    conn = _get_connection()
+    res = conn.execute("select * from notes where not lower(source) like '%%.pdf' and not lower(source) like '%%youtube.com/watch%%' order by random() limit %s" % limit).fetchall()
+    conn.close()
+    return _to_notes(res, pinned)
+
+def get_random_video_notes(limit: int, pinned: List[int]) -> List[SiacNote]:
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%%youtube.com/watch%%' order by random() limit %s" % limit).fetchall()
+    conn.close()
+    return _to_notes(res, pinned)
+
 def get_queue_in_random_order() -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes where position is not null order by random()").fetchall()

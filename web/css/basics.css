@@ -41,6 +41,9 @@
 .pr-5 {
     padding-right: 5px !important;
 }
+.pl-5 {
+    padding-left: 5px !important;
+}
 .oflow_y_auto {
     overflow-y: auto;
 }

@@ -7,17 +7,25 @@
 .siac-notes-sidebar-item {
     font-weight: bold;
     user-select: none;
-    padding: 1px 5px 1px 5px;
-    border: 1px solid transparent;
+    margin: 1px 0 2px 5px;
     transition: margin 0.15s ease;
 }
-.siac-notes-sidebar-item:hover {
-    padding-left: 5px;
+details .siac-notes-sidebar-item {
+    margin-left: 13px;
+}
+.siac-notes-sidebar-item:hover, .siac-notes-sidebar-item summary:hover {
     background: var(--c-primary-color);
     color: white;
 }
-body.nightMode .siac-notes-sidebar-item:hover {
+
+body.nightMode .siac-notes-sidebar-item:hover, body.nightMode .siac-notes-sidebar-item summary:hover {
     background: var(--c-primary-color-night);
+}
+.siac-notes-sidebar-item:hover details {
+    background: #fffef7;
+}
+body.nightMode .siac-notes-sidebar-item:hover details {
+    background:rgb(53,53,53);
 }
 .siac-sidebar-inp {
     background: var(--c-input-background);

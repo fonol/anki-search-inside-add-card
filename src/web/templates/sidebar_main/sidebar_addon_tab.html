@@ -1,18 +1,30 @@
 <div class='siac-notes-sidebar-section siac-notes-sidebar-section-first' style='flex: 1 0 auto;'>
     <div class='flex-col' style='padding: 10px 10px 13px 10px; flex: 1 0 auto; justify-content: space-between;'>
         <div>
-            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-newest");'>Newest</div>
-            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-pdfs")'>PDFs</div>
-            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-pdfs-unread")'>PDFs - Unread</div>
-            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-pdfs-in-progress")'>PDFs - In Progress
+            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-newest");'>&nbsp;Newest</div>
+            <div class='siac-notes-sidebar-item'>
+                <details>
+                    <summary class="pl-5">PDFs</summary>
+                    <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-pdfs")'>&nbsp;Newest</div>
+                    <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-pdfs-unread")'>&nbsp;Unread</div>
+                    <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-pdfs-in-progress")'>&nbsp;In Progress</div>
+                </details>
             </div>
-            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-video-notes")'>Videos</div>
-            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-last-opened");'>Last Opened</div>
+            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-video-notes")'>&nbsp;Videos</div>
+            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-last-opened");'>&nbsp;Last Opened</div>
             <!--  <div class='siac-notes-sidebar-item blue-hover' onclick='pycmd("siac-r-show-last-done")'>Last Done</div>-->
-            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-stats")'>Read Stats</div>
+            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-stats")'>&nbsp;Read Stats</div>
             {sched_today_menu_item}
-            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-untagged")'>Untagged</div>
-            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-random");'>Random</div>
+            <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-untagged")'>&nbsp;Untagged</div>
+            <div class='siac-notes-sidebar-item'>
+                <details>
+                    <summary class="pl-5">Random</summary>
+                    <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-random");'>&nbsp;All</div>
+                    <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-random-pdf");'>&nbsp;PDFs</div>
+                    <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-random-text");'>&nbsp;Text</div>
+                    <div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-user-note-random-video");'>&nbsp;Video</div>
+                </details>
+            </div>
         </div>
         <div class='flex-row mt-10' style='align-items: center'>
             <input type='text' id='siac-sidebar-inp' class='siac-sidebar-inp'

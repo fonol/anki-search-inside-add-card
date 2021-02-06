@@ -873,3 +873,7 @@ body.nightMode .siac-prog-tmp {
 #siac-reading-modal .editor-toolbar:before {
     margin-bottom: 0px !important;
 }
+
+summary, summary:focus {
+    outline:none !important;
+  }

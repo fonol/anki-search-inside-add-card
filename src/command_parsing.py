@@ -35,7 +35,6 @@ from typing import List, Dict, Any, Optional, Tuple
 
 from .state import check_index, get_index, set_index
 from .index.indexing import build_index
-from .debug_logging import log
 from .web.web import *
 from .web.html import *
 from .config import get_config_value_or_default, get_config_value
@@ -43,7 +42,6 @@ from .web.reading_modal import Reader
 from .special_searches import *
 from .internals import requires_index_loaded, js, perf_time
 from .notes import *
-from .notes import _get_priority_list
 from .hooks import run_hooks
 from .output import UI
 from .dialogs.editor import open_editor, NoteEditor
@@ -156,7 +154,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             try:
                 if isLin:
                         import subprocess
-                        subprocess.check_call(['xdg-open', '--', path])
+                        subprocess.check_call(['xdg-open', '--', folder])
                 else:
                     QDesktopServices.openUrl(QUrl("file:///" + folder))
             except:
@@ -437,7 +435,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         show_schedule_dialog(self.parentWindow)
 
 
-
     elif cmd.startswith("siac-pdf-mark "):
         mark_type       = int(cmd.split()[1])
         nid             = int(cmd.split()[2])
@@ -629,9 +626,23 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-r-user-note-random":
         stamp = set_stamp()
-        if check_index():
-            notes = get_random(index.limit, index.pinned)
-            UI.print_search_results(notes, stamp)
+        notes = get_random(index.limit, index.pinned)
+        UI.print_search_results(notes, stamp)
+    
+    elif cmd == "siac-r-user-note-random-pdf":
+        stamp = set_stamp()
+        notes = get_random_pdf_notes(index.limit, index.pinned)
+        UI.print_search_results(notes, stamp)
+
+    elif cmd == "siac-r-user-note-random-text":
+        stamp = set_stamp()
+        notes = get_random_text_notes(index.limit, index.pinned)
+        UI.print_search_results(notes, stamp)
+
+    elif cmd == "siac-r-user-note-random-video":
+        stamp = set_stamp()
+        notes = get_random_video_notes(index.limit, index.pinned)
+        UI.print_search_results(notes, stamp)
 
     elif cmd.startswith("siac-r-user-note-search-tag "):
         stamp       = set_stamp()
@@ -1213,7 +1224,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         source = Reader.note.source
         tooltip("Opening external file:<br>" + source)
         try:
-            QDesktopServices.openUrl(QUrl(source))
+            QDesktopServices.openUrl(QUrl(source, QUrl.TolerantMode))
         except:
             tooltip("Failed to open external file:<br>" + source)
 
@@ -1231,7 +1242,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 def parse_sort_cmd(cmd):
     """ Helper function to parse the various sort commands (newest/remove tagged/...) """
 
-    index = get_index()
     if cmd == "newest":
         UI.sort_by_date("desc")
     elif cmd == "oldest":
@@ -1302,12 +1312,9 @@ def set_stamp() -> Optional[str]:
     Generate a milisec stamp and give it to the index.
     The result of a search is not printed if it has a non-matching stamp.
     """
-    if check_index():
-        index           = get_index()
-        stamp           = utility.misc.get_milisec_stamp()
-        UI.latest = stamp
-        return stamp
-    return None
+    stamp     = utility.misc.get_milisec_stamp()
+    UI.latest = stamp
+    return stamp
 
 def set_stats(nid: int, stats: Tuple[Any, ...]):
     """ Insert the statistics into the given card. """
@@ -1366,8 +1373,6 @@ def rerenderNote(nid: int):
     res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where notes.id = %s" % nid)
     if res is not None and len(res) > 0:
         res = res[0]
-        index = get_index()
-
         UI.update_single(res)
 
 @requires_index_loaded
@@ -1572,7 +1577,6 @@ def capture_web(t: int, r: int, b: int, l: int):
 
     w       = r - l
     h       = b - t
-    index   = get_index()
     web     = UI._editor.web
     image   = QImage(w, h, QImage.Format_ARGB32)
     region  = QRegion(l, t, w, h)
@@ -1896,10 +1900,8 @@ def show_timing_modal(render_time = None):
 
     UI.show_in_modal("Timing", html)
 
-@requires_index_loaded
 def update_styling(cmd):
 
-    index   = get_index()
     name    = cmd.split()[0]
     value   = " ".join(cmd.split()[1:])
 
