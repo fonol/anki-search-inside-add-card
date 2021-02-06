@@ -278,6 +278,7 @@ def create_db_file_if_not_exists() -> bool:
 
     return existed
 
+#region note CRUD
 
 def create_note(title: str,
                 text: str,
@@ -316,6 +317,11 @@ def create_note(title: str,
     if index is not None:
         index.add_user_note((id, title, text, source, tags, nid, ""))
 
+    # if note is linked to a markdown file, update or create the file
+    if source is not None and source.startswith("md:///") and source.endswith(".md"):
+        fpath = source[6:]
+        md.update_markdown_file(fpath, text)
+
     return id
 
 def create_or_update_md_notes(md_files: List[Tuple[str, str, str]]) -> int:
@@ -341,7 +347,105 @@ def create_or_update_md_notes(md_files: List[Tuple[str, str, str]]) -> int:
     c.close()
     return len(existing)
 
+def update_reminder(nid: int, rem: str):
+    if rem is None:
+        rem = ""
+    conn    = _get_connection()
+    sql     = "update notes set reminder=?, modified=datetime('now', 'localtime') where id=? "
+    conn.execute(sql, (rem, nid))
+    conn.commit()
+    conn.close()
 
+
+def update_note_text(id: int, text: str):
+    conn = _get_connection()
+    sql = """
+        update notes set text=?, modified=datetime('now', 'localtime') where id=?
+    """
+    text = utility.text.clean_user_note_text(text)
+    conn.execute(sql, (text, id))
+    conn.commit()
+    note = conn.execute(f"select title, source, tags from notes where id={id}").fetchone()
+    conn.close()
+    source =  note[1]
+    index = get_index()
+    if index is not None:
+        index.update_user_note((id, note[0], text, source, note[2], -1, ""))
+
+    # if note is linked to a markdown file, update the file
+    if source is not None and source.startswith("md:///") and source.endswith(".md"):
+        fpath = source[6:]
+        md.update_markdown_file(fpath, text)
+
+def update_note_tags(id: int, tags: str):
+    if tags is None:
+        tags = ""
+    tags = tags.replace('"', "").replace("'", "")
+    if not tags.endswith(" "):
+        tags += " "
+    if not tags.startswith(" "):
+        tags = f" {tags}"
+
+    conn = _get_connection()
+    sql = """ update notes set tags=?, modified=datetime('now', 'localtime') where id=? """
+    conn.execute(sql, (tags, id))
+    conn.commit()
+    note = conn.execute(f"select title, source, tags, text from notes where id={id}").fetchone()
+    conn.close()
+    index = get_index()
+    if index is not None:
+        index.update_user_note((id, note[0], note[3], note[1], tags, -1, ""))
+
+def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int, author: str, url: str):
+
+    # text = utility.text.clean_user_note_text(text)
+    if tags is None:
+        tags = ""
+    tags    = " %s " % tags.strip()
+    tags    = tags.replace('"', "").replace("'", "")
+    mod     = _date_now_str()
+    conn    = _get_connection()
+    # a prio of -1 means unchanged, so don't update
+    if priority != -1:
+        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, last_priority=priority, priority=?, lastscheduled=coalesce(lastscheduled, ?), url=? where id=?"
+        conn.execute(sql, (title, text, source, tags, reminder, author, priority, mod, url, id))
+    else:
+        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, url=? where id=?"
+        conn.execute(sql, (title, text, source, tags, reminder, author, url, id))
+    conn.commit()
+    conn.close()
+    if priority != -1:
+        recalculate_priority_queue()
+    index = get_index()
+    if index is not None:
+        index.update_user_note((id, title, text, source, tags, -1, ""))
+
+    # if note is linked to a markdown file, update the file
+    if source is not None and source.startswith("md:///") and source.endswith(".md"):
+        fpath = source[6:]
+        md.update_markdown_file(fpath, text)
+
+def null_position(nid: int):
+    conn = _get_connection()
+    conn.execute("update notes set position = null where id = %s" % nid)
+    conn.commit()
+    conn.close()
+
+def delete_note(id: int):
+    update_priority_list(id, 0)
+    conn = _get_connection()
+    conn.executescript(f""" delete from read where nid ={id};
+                            delete from marks where nid ={id};
+                            delete from notes where id={id};
+                            delete from queue_prio_log where nid={id};
+                            delete from highlights where nid={id};
+                            delete from notes_pdf_page where siac_nid={id};
+                            delete from notes_opened where nid={id};
+                            """)
+    conn.commit()
+    conn.close()
+
+#endregion note CRUD
 #region priority queue
 
 def _get_priority_list_with_last_prios() -> List[Tuple[Any, ...]]:
@@ -747,14 +851,7 @@ def dynamic_sched_to_str(sched: int) -> str:
         return f"Very low ({sched})"
     return "Not in Queue (0)"
 
-def update_reminder(nid: int, rem: str):
-    if rem is None:
-        rem = ""
-    conn    = _get_connection()
-    sql     = "update notes set reminder=?, modified=datetime('now', 'localtime') where id=? "
-    conn.execute(sql, (rem, nid))
-    conn.commit()
-    conn.close()
+
 
 
 def get_extracts(nid: int, source: str) -> List[Tuple[int, int]]:
@@ -1037,73 +1134,6 @@ def get_head_of_queue() -> int:
         return -1
     return res[0]
 
-def update_note_text(id: int, text: str):
-    conn = _get_connection()
-    sql = """
-        update notes set text=?, modified=datetime('now', 'localtime') where id=?
-    """
-    text = utility.text.clean_user_note_text(text)
-    conn.execute(sql, (text, id))
-    conn.commit()
-    note = conn.execute(f"select title, source, tags from notes where id={id}").fetchone()
-    conn.close()
-    source =  note[1]
-    index = get_index()
-    if index is not None:
-        index.update_user_note((id, note[0], text, source, note[2], -1, ""))
-
-    # if note is linked to a markdown file, update the file
-    if source is not None and source.startswith("md:///") and source.endswith(".md"):
-        fpath = source[6:]
-        md.update_markdown_file(fpath, text)
-
-def update_note_tags(id: int, tags: str):
-    if tags is None:
-        tags = ""
-    tags = tags.replace('"', "").replace("'", "")
-    if not tags.endswith(" "):
-        tags += " "
-    if not tags.startswith(" "):
-        tags = f" {tags}"
-
-    conn = _get_connection()
-    sql = """ update notes set tags=?, modified=datetime('now', 'localtime') where id=? """
-    conn.execute(sql, (tags, id))
-    conn.commit()
-    note = conn.execute(f"select title, source, tags, text from notes where id={id}").fetchone()
-    conn.close()
-    index = get_index()
-    if index is not None:
-        index.update_user_note((id, note[0], note[3], note[1], tags, -1, ""))
-
-def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int, author: str, url: str):
-
-    # text = utility.text.clean_user_note_text(text)
-    if tags is None:
-        tags = ""
-    tags    = " %s " % tags.strip()
-    tags    = tags.replace('"', "").replace("'", "")
-    mod     = _date_now_str()
-    conn    = _get_connection()
-    # a prio of -1 means unchanged, so don't update
-    if priority != -1:
-        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, last_priority=priority, priority=?, lastscheduled=coalesce(lastscheduled, ?), url=? where id=?"
-        conn.execute(sql, (title, text, source, tags, reminder, author, priority, mod, url, id))
-    else:
-        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, url=? where id=?"
-        conn.execute(sql, (title, text, source, tags, reminder, author, url, id))
-    conn.commit()
-    conn.close()
-    if priority != -1:
-        recalculate_priority_queue()
-    index = get_index()
-    if index is not None:
-        index.update_user_note((id, title, text, source, tags, -1, ""))
-
-    # if note is linked to a markdown file, update the file
-    if source is not None and source.startswith("md:///") and source.endswith(".md"):
-        fpath = source[6:]
-        md.update_markdown_file(fpath, text)
 
 
 def get_read_stats(nid: int) -> Tuple[Any, ...]:
@@ -1206,7 +1236,7 @@ def get_all_tags_with_recency() -> List[Tuple[str, str]]:
             if len(t) > 0:
                 if t not in tag_set:
                     tag_set.add(t)
-                    tags.append((t, max(modified, created)))
+                    tags.append((t, max(modified or "", created)))
     return tags
 
 
@@ -1386,25 +1416,7 @@ def get_position(nid: int) -> Optional[int]:
         return None
     return res[0]
 
-def null_position(nid: int):
-    conn = _get_connection()
-    conn.execute("update notes set position = null where id = %s" % nid)
-    conn.commit()
-    conn.close()
 
-def delete_note(id: int):
-    update_priority_list(id, 0)
-    conn = _get_connection()
-    conn.executescript(f"""delete from read where nid ={id};
-                            delete from marks where nid ={id};
-                            delete from notes where id={id};
-                            delete from queue_prio_log where nid={id};
-                            delete from highlights where nid={id};
-                            delete from notes_pdf_page where siac_nid={id};
-                            delete from notes_opened where nid={id};
-                            """)
-    conn.commit()
-    conn.close()
 
 def get_read_today_count() -> int:
     now     = datetime.today().strftime('%Y-%m-%d')
