@@ -52,7 +52,7 @@ window.ytScreenCapture = function() {
 window.ytSavePosition = function() {
     let time = ytCurrentTime();
     let secs = time%60;
-    if (secs === 0) { secs = "00"; }
+    if (secs < 10) { secs = "0" + secs; }
     pycmd("siac-yt-save-time " + time); 
     readerNotification(`Saved Position.<br>Video will resume at ${Math.trunc(time / 60.0)}:${secs}`);
 };
