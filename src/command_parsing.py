@@ -620,9 +620,8 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-r-user-note-last-opened":
         stamp = set_stamp()
-        if check_index():
-            notes = get_last_opened_notes()
-            UI.print_search_results(notes, stamp)
+        notes = get_last_opened_notes()
+        UI.print_search_results(notes, stamp)
 
     elif cmd == "siac-r-user-note-random":
         stamp = set_stamp()
