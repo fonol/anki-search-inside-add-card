@@ -1696,11 +1696,23 @@ def get_in_progress_pdf_notes() -> List[SiacNote]:
     return _to_notes(res)
 
 def get_last_opened_notes() -> List[SiacNote]:
-    c = _get_connection()
-    res = c.execute("""
-        select distinct notes.* from notes_opened join notes on notes_opened.nid = notes.id order by notes_opened.created desc limit 100
+    conn = _get_connection()
+    # there is a much simpler (&faster) query that works in 3.24 but for some reason not in Anki's Sqlite version
+    # select notes.* from notes_opened inner join notes on notes_opened.nid = notes.id  group by notes_opened.nid order by notes_opened.created desc limit 100        
+
+    res = conn.execute("""
+        select notes.* from notes join (
+        select *   
+        from notes_opened t
+        where exists (
+            select 1
+            from notes_opened ti  
+            where t.nid = ti.nid
+            group by ti.nid
+            having t.rowid = max(ti.rowid)
+        ) order by created desc limit 100) as h on notes.id = h.nid;
     """).fetchall()
-    c.close()
+    conn.close()
     return _to_notes(res)
 
 def get_last_opened_note_id() -> int:
