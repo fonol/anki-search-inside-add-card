@@ -646,35 +646,25 @@ window.activateGridView = function () {
         $('#gridCb').prop("checked", true);
     }, 400);
 }
-/** Predefined searches, activated from the notes sidebar. */
-window.predefSearchFromSidebar = function (type) {
-    let decks = siacState.selectedDecks.toString();
-    // show a loader for the longer-taking searches
-    if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(type) !== -1) {
-        showSearchLoader("<i class='fa fa-spinner bold mb-10' style='font-size: 24px;' /><br>Computing ...");
-        setTimeout(function () {
-            pycmd('siac-predef-search ' + type + ' 200 ' + decks);
-        }, 250);
-    } else {
-        pycmd('siac-predef-search ' + type + ' 200 ' + decks);
-    }
 
-}
 /** Predefined searches, activated from the bottom row. */
-window.predefSearch = function () {
-    let e = byId("predefSearchSelect");
-    let search = e.options[e.selectedIndex].value;
+window.predefSearch = function (type) {
+    // if type is not given, predef search has been invoked from the bottom row
+    if (!type || type === '') {
+        let e = byId("predefSearchSelect");
+        type = e.options[e.selectedIndex].value;
+    }
     let c = byId("predefSearchNumberSel");
     let count = c.options[c.selectedIndex].value;
     let decks = siacState.selectedDecks.toString();
     // show a loader for the longer-taking searches
-    if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(search) !== -1) {
-        showSearchLoader("<i class='fa fa-spinner bold mb-10' style='font-size: 24px;' /><br>Computing ...");
+    if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(type) !== -1) {
+        showSearchLoader("<i class='fa fa-spinner bold mb-10 fg-green' style='font-size: 24px;' /><br>Computing ...");
         setTimeout(function () {
-            pycmd("siac-predef-search " + search + " " + count + " " + decks);
+            pycmd("siac-predef-search " + type + " " + count + " " + decks);
         }, 250);
     } else {
-        pycmd("siac-predef-search " + search + " " + count + " " + decks);
+        pycmd("siac-predef-search " + type + " " + count + " " + decks);
     }
 }
 window.sort = function () {

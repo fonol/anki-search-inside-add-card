@@ -76,8 +76,6 @@ body.nightMode .siac-top-row-btn {
     padding: 0px 4px 0px 4px;
     font-size: 12px !important;
     border: 0px solid white;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
     z-index: 5;
     transition: max-height 0.3s;
 }
@@ -87,6 +85,8 @@ body.nightMode .siac-btn-small-dropdown {
 .siac-btn-small:hover .siac-btn-small-dropdown.hover, .siac-btn-small.expanded .siac-btn-small-dropdown.click {
     border: 1px solid var(--c-primary-color);
     max-height: 355px;
+    padding-bottom: 4px;
+    padding-top: 4px;
 }
 body.nightMode #topContainer .siac-btn-small.expanded .siac-btn-small-dropdown.click {
     border: 1px solid #2496dc;
@@ -100,8 +100,8 @@ body.nightMode #topContainer .siac-btn-small.expanded .siac-btn-small-dropdown.c
 }
 
 .siac-btn-small-dropdown .siac-dropdown-item:hover {
-    color: #2496dc;
-    transform: scale(1.04);
+    color: white;
+    background: var(--c-primary-color);
 }
 
 .siac-modal-btn {

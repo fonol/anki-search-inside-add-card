@@ -38,6 +38,9 @@
 .p-10 {
     padding: 10px !important;
 }
+.pr-5 {
+    padding-right: 5px !important;
+}
 .oflow_y_auto {
     overflow-y: auto;
 }
@@ -67,6 +70,9 @@
     color: #f0506e !important;
 }
 .fg-green {
+    color: #32d296 !important;
+}
+.fg-green-hover:hover {
     color: #32d296 !important;
 }
 .bright-hover:hover {

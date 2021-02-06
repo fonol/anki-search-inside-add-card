@@ -1,7 +1,7 @@
 <div id='siac-iframe-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")'><i class="fa fa-globe" aria-hidden="true"></i>
     <div class='fg_lightgrey ml-5 ta_right' style='margin-top: 4px; width: calc(100% - 35px); font-size: 13px;'>Note: Not all sites allow embedding!</div>
     <div class='w-100 oflow_y_auto' style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; box-sizing: border-box;'>
-        <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) { pdfUrlSearch(this.value); this.value = ''; }"></input>
+        <input  class='siac-input' placeholder="Search..."  onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) { pdfUrlSearch(this.value); this.value = ''; }"></input>
         <br/>
     {search_sources}
     </div>

@@ -64,9 +64,11 @@
     font-size: 20px;
     text-align: center;
     padding: 15px;
+    user-select: none;
     z-index: 10000;
     background: var(--c-modal-background);
 }
+
 #loader .signal {
     color: #2496dc;
 }
@@ -74,10 +76,8 @@
     width: 250px; 
     padding: 20px; 
     text-align: center;
-    border: 3px outset var(--c-modal-border);
     background: var(--c-modal-background);
     color: var(--c-modal-foregroundl);
-    border-radius: 5px;
 }
 #searchResults {
     display: none;
@@ -210,6 +210,18 @@ body.nightMode .tagLbl:hover {
     margin-left: 2px;
     padding-left: 3px;
     height: 25px;
+}
+.siac-input {
+    background: var(--c-input-background);
+    color: var(--c-input-foreground);
+    border-radius: 3px; 
+    padding-left: 4px; 
+    border: 1px solid #929292;
+    background: transparent;
+}
+body.nightMode .siac-input, #siac-reading-modal .siac-input {
+    border: 1px solid grey;
+    background:  #2f2f31;
 }
 #siac-search-inp-mode-lbl {
     cursor: pointer;

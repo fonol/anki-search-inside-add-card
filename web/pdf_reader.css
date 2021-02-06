@@ -524,6 +524,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 }
 #siac-pdf-tooltip-top {
     text-align: center;
+    margin-top: -2px;
 }
 #siac-tooltip-center:hover {
     filter: brightness(1.4);
