@@ -726,7 +726,7 @@ class Reader:
         note        = cls.note
         note_id     = cls.note_id
         text        = note.text
-        created_dt  = datetime.datetime.strptime(note.created, '%Y-%m-%d %H:%M:%S')
+        created_dt  = utility.date.dt_from_stamp(note.created)
         diff        = datetime.datetime.now() - created_dt
         time_str    = "Added %s ago." % utility.date.date_diff_to_string(diff)
 
