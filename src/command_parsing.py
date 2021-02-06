@@ -687,7 +687,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-user-note-search":
         if check_index():
-            UI.show_search_modal("searchForUserNote(event, this);", "Search For User Notes")
+            UI.show_search_modal("searchForUserNote(event, this);", "Search for SIAC notes")
 
     elif cmd.startswith("siac-r-user-note-search-inp "):
         if check_index():
