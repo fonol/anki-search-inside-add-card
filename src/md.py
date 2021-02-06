@@ -32,13 +32,13 @@ def scan_folder_for_changed_files(folder: str, last_index_date_stamp: str) -> Li
     return md_files
 
 def update_markdown_file(fpath: str, content: str) -> bool:
-    if os.path.exists(fpath):
-        try:
-            with open(fpath, "w", encoding="utf-8") as f:
-                f.write(content)
-            return True
-        except Exception as e:
-            print(e)
-            return False
-    return False
+    try:
+        with open(fpath, "w+", encoding="utf-8") as f:
+            f.write(content)
+        return True
+    except Exception as e:
+        print(f"[SIAC] Failed to create or update .md file for note: {fpath}")
+        print(e)
+        return False
+
             
