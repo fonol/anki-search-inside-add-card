@@ -501,12 +501,25 @@ window.clearSearchResults = function () {
     $('.tagLbl').css("z-index", "999");
 }
 
-window.setSearchResults = function (html, infoStr, infoMap, page = 1, pageMax = 1, total = 50, cacheSize = -1, stamp = -1, printTiming = false, isRerender = false) {
+window.setSearchResults = function (header, html, infoStr, infoMap, page = 1, pageMax = 1, total = 50, cacheSize = -1, stamp = -1, printTiming = false, isRerender = false) {
     let rStart = new Date().getTime();
     clearSearchResults();
     var sr = byId("searchResults");
     sr.style.overflowY = 'hidden';
     sr.style.paddingRight = '24px';
+    let header_html = "";
+    if (header && header.length > 0) {
+        for (var i = 0; i < header.length; i++) { 
+           header_html += `<div class='siac-note-outer mr-10 siac-results-header'>${header[i]}</div>`;
+           if (i < header.length - 1) {
+               header_html += "<div class='siac-note-outer mr-10 siac-results-header pl-10 pr-10'><i class='fa fa-chevron-right'></i></div>"
+           }
+        }
+        byId('siac-results-header-wrapper').innerHTML = header_html;
+        byId('siac-results-header-wrapper').style.display = 'block';
+    } else {
+        byId('siac-results-header-wrapper').style.display = 'none';
+    }
     sr.innerHTML += html;
     if (!isRerender && !siacState.keepPositionAtRendering && html.length > 0) {
         sr.scrollTop = 0;

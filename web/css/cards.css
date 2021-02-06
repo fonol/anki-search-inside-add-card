@@ -214,3 +214,19 @@ body.nightMode .siac-extract-mark {
 .siac-meta-note {
     padding: 15px;
 }
+.siac-results-header {
+    display: inline-block;
+    font-weight: bold;
+    color: var(--c-primary-color);
+}
+body.nightMode .siac-results-header {
+    color: #a2a2a2;
+}
+#siac-results-header-wrapper {
+    padding: 3px 10px 7px 10px;
+    margin-top: 6px;
+}
+#siac-results-header-wrapper .siac-note-outer {
+    margin-bottom: 0 !important;
+    padding: 5px 7px;
+}

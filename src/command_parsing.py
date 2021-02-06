@@ -195,7 +195,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         stamp               = set_stamp()
         decks               = [s for s in cmd[19:].split(" ") if s != ""]
         index.lastSearch    = (None, decks, "random")
-        UI.print_search_results(getRandomNotes(decks, index.limit), stamp)
+        UI.print_search_results(["Anki", "Random notes"],  getRandomNotes(decks, index.limit), stamp)
 
     elif cmd == "siac-fill-deck-select":
         UI.fillDeckSelect(self, expanded=True, update=False)
@@ -260,36 +260,36 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         # add special note at front
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["PDFs", "Newest"],  notes, stamp)
 
     elif cmd == "siac-r-show-text-notes":
         stamp = set_stamp()
         notes = get_all_text_notes()
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["Text notes", "Newest"],  notes, stamp)
 
     elif cmd == "siac-r-show-video-notes":
         stamp = set_stamp()
         notes = get_all_video_notes()
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["Video notes", "Newest"],  notes, stamp)
 
     elif cmd == "siac-r-show-pdfs-unread":
         stamp   = set_stamp()
         notes   = get_all_unread_pdf_notes()
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["PDFs", "Unread"],  notes, stamp)
 
     elif cmd == "siac-r-show-pdfs-in-progress":
         stamp = set_stamp()
         notes = get_in_progress_pdf_notes()
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["PDFs", "In progress"],  notes, stamp)
 
     elif cmd == "siac-r-show-due-today":
         stamp = set_stamp()
         notes = get_notes_scheduled_for_today()
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["Due today"],  notes, stamp)
 
     elif cmd == "siac-r-show-stats":
         # Read Stats clicked in sidebar
@@ -298,35 +298,36 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-r-show-last-done":
         stamp = set_stamp()
         notes = get_last_done_notes()
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["Last done"],  notes, stamp)
 
     elif cmd == "siac-r-pdf-last-read":
         stamp = set_stamp()
         notes = get_pdf_notes_last_read_first()
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote.mock("PDF Meta", sp_body, "Meta"))
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["PDFs", "Last read"],  notes, stamp)
 
     elif cmd == "siac-r-pdf-last-added":
         stamp = set_stamp()
         notes = get_pdf_notes_last_added_first()
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote.mock("PDF Meta", sp_body, "Meta"))
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["PDFs", "Newest"],  notes, stamp)
 
     elif cmd.startswith("siac-r-pdf-size "):
         stamp = set_stamp()
         notes = get_pdf_notes_ordered_by_size(cmd.split()[1])
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote.mock("PDF Meta", sp_body, "Meta"))
-        UI.print_search_results(notes, stamp)
+        title  = "Highest page count" if cmd.split()[1] == "desc" else "Lowest page count"
+        UI.print_search_results(["PDFs", title],  notes, stamp)
 
     elif cmd == "siac-r-pdf-find-invalid":
         stamp = set_stamp()
         notes = get_invalid_pdfs()
         sp_body = get_pdf_list_first_card()
         notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["PDFs", "Invalid paths"],  notes, stamp)
 
     elif cmd.startswith("siac-queue-info "):
         nid         = int(cmd.split()[1])
@@ -478,7 +479,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-r-added-same-day "):
         stamp               = set_stamp()
         index.lastSearch    = (None, None, "createdSameDay", index.limit)
-        UI.print_search_results(get_created_same_day(int(cmd.split()[1]), index.pinned, index.limit), stamp)
+        UI.print_search_results(["Anki", "Added same day"],  get_created_same_day(int(cmd.split()[1]), index.pinned, index.limit), stamp)
 
     elif cmd == "siac-last-timing":
         if index is not None and index.lastResDict is not None:
@@ -598,50 +599,50 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         stamp = set_stamp()
         notes = get_priority_list()
         if check_index():
-            UI.print_search_results(notes, stamp)
+            UI.print_search_results(["Queue"],  notes, stamp)
 
     elif cmd == "siac-r-user-note-queue-random":
         stamp = set_stamp()
         notes = get_queue_in_random_order()
         if check_index():
-            UI.print_search_results(notes, stamp)
+            UI.print_search_results(["Queue", "Random order"],  notes, stamp)
 
     elif cmd == "siac-r-user-note-untagged":
         stamp = set_stamp()
         notes = get_untagged_notes()
         if check_index():
-            UI.print_search_results(notes, stamp)
+            UI.print_search_results(["SIAC notes", "Untagged"],  notes, stamp)
 
     elif cmd == "siac-r-user-note-newest":
         stamp = set_stamp()
         if check_index():
             notes = get_newest(index.limit, index.pinned)
-            UI.print_search_results(notes, stamp)
+            UI.print_search_results(["SIAC notes", "Newest"],  notes, stamp)
 
     elif cmd == "siac-r-user-note-last-opened":
         stamp = set_stamp()
         notes = get_last_opened_notes()
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["SIAC notes", "Last opened"],  notes, stamp)
 
     elif cmd == "siac-r-user-note-random":
         stamp = set_stamp()
         notes = get_random(index.limit, index.pinned)
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["SIAC notes", "Random"],  notes, stamp)
     
     elif cmd == "siac-r-user-note-random-pdf":
         stamp = set_stamp()
         notes = get_random_pdf_notes(index.limit, index.pinned)
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["PDFs", "Random"],  notes, stamp)
 
     elif cmd == "siac-r-user-note-random-text":
         stamp = set_stamp()
         notes = get_random_text_notes(index.limit, index.pinned)
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["Text notes", "Random"],  notes, stamp)
 
     elif cmd == "siac-r-user-note-random-video":
         stamp = set_stamp()
         notes = get_random_video_notes(index.limit, index.pinned)
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["Video notes", "Random"],  notes, stamp)
 
     elif cmd.startswith("siac-r-user-note-search-tag "):
         stamp       = set_stamp()
@@ -652,7 +653,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         avg_prio    = round(sum(prios) / len(prios), 1) if len(prios) > 0 else "-"
         avg_prio    = "100" if avg_prio == 100.0 else avg_prio
         notes.insert(0, SiacNote.mock(f"Tag: {tag}", filled_template("notes/tag_meta", dict(tag = tag, avg_prio = avg_prio)), "Meta"))
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["SIAC notes", "Tag", tag],  notes, stamp)
 
     elif cmd.startswith("siac-r-last-opened-with-tag "):
         stamp       = set_stamp()
@@ -663,7 +664,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         avg_prio    = round(sum(prios) / len(prios), 1) if len(prios) > 0 else "-"
         avg_prio    = "100" if avg_prio == 100.0 else avg_prio
         notes.insert(0, SiacNote.mock(f"Last opened for tag: {tag}", filled_template("notes/tag_meta", dict(tag = tag, avg_prio = avg_prio)), "Meta"))
-        UI.print_search_results(notes, stamp)
+        UI.print_search_results(["SIAC notes", "Tag", tag, "Last opened"],  notes, stamp)
 
 
     elif cmd.startswith("siac-read-next-with-tag "):
@@ -1303,7 +1304,7 @@ def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
         res = getByTimeTaken(decks, limit, "desc")
     elif stype == "shortestTime":
         res = getByTimeTaken(decks, limit, "asc")
-    UI.print_search_results(res, stamp)
+    UI.print_search_results(["Anki", "Predef. search", stype],  res, stamp)
 
 
 def set_stamp() -> Optional[str]:
@@ -1345,7 +1346,7 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
         index.lastSearch    = (content, decks, "db")
         search_res          = index.searchDB(content, decks)
         if editor and editor.web:
-            UI.print_search_results(search_res["result"], search_res["stamp"], editor)
+            UI.print_search_results(["Anki", "Browser Search", content],  search_res["result"], search_res["stamp"], editor)
 
     else:
         if len(content[content.index('~ ') + 2:]) > 3000:
@@ -1365,7 +1366,7 @@ def search_by_tags(query: str):
     index.lastSearch    = (query, ["-1"], "tags")
     res                 = findBySameTag(query, index.limit, [], index.pinned)
 
-    UI.print_search_results(res["result"], stamp, UI._editor)
+    UI.print_search_results(["Anki", "Tag", query],  res["result"], stamp, UI._editor)
 
 
 def rerenderNote(nid: int):
@@ -1562,7 +1563,7 @@ def show_read_stats():
     counts      = get_read_last_n_days(30)
     body        = read_counts_card_body(counts)
     res.append(SiacNote.mock(f"Pages read last 30 days ({sum([c[0] for c in counts.values()])})", body, "Meta"))
-    UI.print_search_results(res, stamp)
+    UI.print_search_results(None,  res, stamp)
     # fill plots
     UI.js(f"""drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)});""")
     if len(topics) > 0:

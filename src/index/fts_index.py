@@ -348,7 +348,11 @@ class FTSIndex:
             #self.output.show_tooltip(result)
             pass
         elif result is not None:
-            UI.print_search_results(result["results"], stamp, timing_info = True, query_set=query_set)
+            q = utility.text.trim_if_longer_than(self.lastResDict["query"], 50) if "query" in self.lastResDict else ""
+            if q:
+                q = q.replace("\"", "")
+                q = f"\"{q}\""
+            UI.print_search_results(["Search", q],  result["results"], stamp, timing_info = True, query_set=query_set)
 
 
     def print_pdf(self, result, stamp):

@@ -17,15 +17,20 @@ details .siac-notes-sidebar-item {
     background: var(--c-primary-color);
     color: white;
 }
+details .siac-notes-sidebar-item:hover {
+    color: white;
+}
 
 body.nightMode .siac-notes-sidebar-item:hover, body.nightMode .siac-notes-sidebar-item summary:hover {
     background: var(--c-primary-color-night);
 }
 .siac-notes-sidebar-item:hover details {
     background: #fffef7;
+    color: black;
 }
 body.nightMode .siac-notes-sidebar-item:hover details {
     background:rgb(53,53,53);
+    color: white;
 }
 .siac-sidebar-inp {
     background: var(--c-input-background);

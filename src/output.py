@@ -105,16 +105,17 @@ class UI:
             Results are paginated, this will display the results for the given page.
         """
         if cls.lastResults is not None:
-            cls.print_search_results(cls.lastResults, None, editor, cls.last_had_timing_info, page, query_set = cls.last_query_set)
+            header = cls.previous_calls[-1][0]
+            cls.print_search_results(header, cls.lastResults, None, editor, cls.last_had_timing_info, page, query_set = cls.last_query_set)
 
     @classmethod
     def try_rerender_last(cls):
         if cls.previous_calls is not None and len(cls.previous_calls) > 0:
             c = cls.previous_calls[-1]
-            cls.print_search_results(c[0], None, c[2], c[3], c[4], c[5], is_cached=True)
+            cls.print_search_results(c[0], c[1], None, c[2], c[3], c[4], c[5], is_cached=True)
 
     @classmethod
-    def print_search_results(cls, notes, stamp, editor=None, timing_info=False, page=1, query_set=None, is_cached=False):
+    def print_search_results(cls, header, notes, stamp, editor=None, timing_info=False, page=1, query_set=None, is_cached=False):
         """
         This is the html that gets rendered in the search results div.
         This will always print the first page.
@@ -137,12 +138,12 @@ class UI:
 
             # roughly check if current call equals the last one, to set is_rerender to True
             if len(cls.previous_calls) > 0:
-                nids = [n.id for n in cls.previous_calls[-1][0][:30]]
-                if query_set == cls.previous_calls[-1][5] and page == cls.previous_calls[-1][4] and nids == [n.id for n in notes[:30]]:
+                nids = [n.id for n in cls.previous_calls[-1][1][:30]]
+                if query_set == cls.previous_calls[-1][6] and page == cls.previous_calls[-1][5] and nids == [n.id for n in notes[:30]]:
                     is_rerender = True
 
             # cache all calls to be able to repeat them
-            cls.previous_calls.append([notes, None, editor, timing_info, page, query_set])
+            cls.previous_calls.append([header, notes, None, editor, timing_info, page, query_set])
 
             if len(cls.previous_calls) > 11:
                 cls.previous_calls.pop(0)
@@ -334,15 +335,17 @@ class UI:
         timing      = "true" if timing_info else "false"
         rerender    = "true" if is_rerender else "false"
 
+        header      = [h.replace('`', "") for h in header] if header else []
+
         if not cls.hideSidebar:
             infoMap = {
                 "Took" :  "<b>%s</b> ms %s" % (took, "&nbsp;<b style='cursor: pointer' onclick='pycmd(`siac-last-timing`)'><i class='fa fa-info-circle'></i></b>" if timing_info else ""),
                 "Found" :  "<b>%s</b> notes" % (len(notes) if len(notes) > 0 else "<span style='color: red;'>0</span>")
             }
             info = cls.build_info_table(infoMap, tags, allText)
-            cmd = "setSearchResults(`%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes), len(cls.previous_calls), stamp, timing, rerender)
+            cmd = "setSearchResults(%s, `%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (json.dumps(header), html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes), len(cls.previous_calls), stamp, timing, rerender)
         else:
-            cmd = "setSearchResults(`%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (html, page, pageMax, len(notes), len(cls.previous_calls), stamp, timing, rerender)
+            cmd = "setSearchResults(%s, `%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (json.dumps(header), html, page, pageMax, len(notes), len(cls.previous_calls), stamp, timing, rerender)
 
         cls._js(cmd, editor)
 
@@ -427,7 +430,8 @@ class UI:
         sortedByDate = list(sorted(cls.lastResults, key=lambda x: int(x.id)))
         if mode == "desc":
             sortedByDate = list(reversed(sortedByDate))
-        cls.print_search_results(sortedByDate, stamp)
+        header = cls.previous_calls[-1][0]
+        cls.print_search_results(header, sortedByDate, stamp)
 
 
     @classmethod
@@ -441,7 +445,8 @@ class UI:
             if r.tags is None or len(r.tags.strip()) == 0:
                 continue
             filtered.append(r)
-        cls.print_search_results(filtered, stamp)
+        header = cls.previous_calls[-1][0]
+        cls.print_search_results(header,  filtered, stamp)
 
     @classmethod
     def remove_tagged(cls):
@@ -453,49 +458,54 @@ class UI:
         for r in cls.lastResults:
             if r.tags is None or len(r.tags.strip()) == 0:
                 filtered.append(r)
-        cls.print_search_results(filtered, stamp)
+        header = cls.previous_calls[-1][0]
+        cls.print_search_results(header,  filtered, stamp)
 
     @classmethod
     def remove_unreviewed(cls):
         if cls.lastResults is None:
             return
         stamp       = utility.misc.get_milisec_stamp()
-        cls.latest = stamp
+        cls.latest  = stamp
         nids        = [str(r.id) for r in cls.lastResults]
         nidStr      =  "(%s)" % ",".join(nids)
         unreviewed  = [r[0] for r in mw.col.db.all("select nid from cards where nid in %s and reps = 0" % nidStr)]
         filtered    = [r for r in cls.lastResults if int(r.id) not in unreviewed]
-        cls.print_search_results(filtered, stamp)
+        header      = cls.previous_calls[-1][0]
+        cls.print_search_results(header,  filtered, stamp)
 
     @classmethod
     def remove_reviewed(cls):
         if cls.lastResults is None:
             return
         stamp       = utility.misc.get_milisec_stamp()
-        cls.latest = stamp
+        cls.latest  = stamp
         nids        = [str(r.id) for r in cls.lastResults]
         nidStr      = "(%s)" % ",".join(nids)
         reviewed    = [r[0] for r in mw.col.db.all("select nid from cards where nid in %s and reps > 0" % nidStr)]
         filtered    = [r for r in cls.lastResults if int(r.id) not in reviewed]
-        cls.print_search_results(filtered, stamp)
+        header      = cls.previous_calls[-1][0]
+        cls.print_search_results(header,  filtered, stamp)
 
     @classmethod
     def remove_suspended(cls):
         if cls.lastResults is None: return
         stamp       = utility.misc.get_milisec_stamp()
-        cls.latest = stamp
+        cls.latest  = stamp
         susp        = get_suspended([r.id for r in cls.lastResults])
         filtered    = [r for r in cls.lastResults if int(r.id) not in susp]
-        cls.print_search_results(filtered, stamp)
+        header      = cls.previous_calls[-1][0]
+        cls.print_search_results(header,  filtered, stamp)
 
     @classmethod
     def remove_unsuspended(cls):
         if cls.lastResults is None: return
         stamp       = utility.misc.get_milisec_stamp()
-        cls.latest = stamp
+        cls.latest  = stamp
         susp        = get_suspended([r.id for r in cls.lastResults])
         filtered    = [r for r in cls.lastResults if int(r.id) in susp]
-        cls.print_search_results(filtered, stamp)
+        header      = cls.previous_calls[-1][0]
+        cls.print_search_results(header,  filtered, stamp)
 
     ### End Sorting & Filtering
 
@@ -682,7 +692,7 @@ class UI:
         notes = []
         for (title, body) in html_list:
             notes.append(SiacNote.mock(title, body, "Meta"))
-        cls.print_search_results(notes, stamp)
+        cls.print_search_results(None,  notes, stamp)
 
 
     @classmethod
@@ -708,7 +718,7 @@ class UI:
     def empty_result(cls, message: str):
         if cls._editor is None or cls._editor.web is None:
             return
-        cls._editor.web.eval("setSearchResults('', `%s`, null, 1, 1, 50, %s)" % (message, len(cls.previous_calls) + 1))
+        cls._editor.web.eval("setSearchResults(null, '', `%s`, null, 1, 1, 50, %s)" % (message, len(cls.previous_calls) + 1))
 
     @classmethod
     def show_search_modal(cls, on_enter_attr: JS, header: HTML):
