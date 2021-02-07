@@ -112,7 +112,7 @@ class UI:
     def try_rerender_last(cls):
         if cls.previous_calls is not None and len(cls.previous_calls) > 0:
             c = cls.previous_calls[-1]
-            cls.print_search_results(c[0], c[1], None, c[2], c[3], c[4], c[5], is_cached=True)
+            cls.print_search_results(*c, is_cached=True)
 
     @classmethod
     def print_search_results(cls, header, notes, stamp, editor=None, timing_info=False, page=1, query_set=None, is_cached=False):
@@ -1245,7 +1245,7 @@ class UI:
 
         return [
             "Tag autocomplete in Create/Update note modal only works on first tag",
+            "PDF text may be blurry if Zoom (next to 'Theme') is set to non-100% value",
             "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions",
             "Highlights in PDFs not working on some platforms/Anki versions, workaround: set 'pdf.highlights.use_alt_render' to true in the config",
-            "PDFs are not scrollable on Anki installs with older Qt versions (i.e. OS X - alternate (!) build)"
         ]
