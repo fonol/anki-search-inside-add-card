@@ -1,15 +1,26 @@
-<div class='oflow_y_auto siac-notes-sidebar-section siac-notes-sidebar-section-first' style='flex: 1 0 auto; padding: 15px; overflow-x: hidden;'>
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("lastAdded")'>&nbsp;Last Added</div>
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("firstAdded")'>&nbsp;First Added</div>
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("lastModified")'>&nbsp;Last Modified </div>
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("lastReviewed")'>&nbsp;Last Reviewed </div>
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("lastLapses")'>&nbsp;Last Lapses</div> 
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("highestPerf")'>&nbsp;Best Performance </div>
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("lowestPerf")'>&nbsp;Worst Performance </div>
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("lowestRet")'>&nbsp;Worst Pass Rate</div>
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("highestRet")'>&nbsp;Best Pass Rate</div>
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("longestTime")'>&nbsp;Time Taken (desc.) </div>
-    <div class='siac-notes-sidebar-item' onclick='predefSearch("shortestTime")'>&nbsp;Time Taken (asc.) </div>
+<div class='oflow_y_auto siac-notes-sidebar-section siac-notes-sidebar-section-first'
+    style='flex: 1 0 auto; padding: 15px; overflow-x: hidden;'>
+    <div class='siac-notes-sidebar-item'>
+        <details>
+            <summary class="pl-5">History</summary>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("lastAdded")'>&nbsp;Last Added</div>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("firstAdded")'>&nbsp;First Added</div>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("lastModified")'>&nbsp;Last Modified </div>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("lastReviewed")'>&nbsp;Last Reviewed </div>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("lastLapses")'>&nbsp;Last Lapses</div>
+        </details>
+    </div>
+    <div class='siac-notes-sidebar-item'>
+        <details>
+            <summary class="pl-5">Performance</summary>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("highestPerf")'>&nbsp;Best Performance </div>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("lowestPerf")'>&nbsp;Worst Performance </div>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("lowestRet")'>&nbsp;Worst Pass Rate</div>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("highestRet")'>&nbsp;Best Pass Rate</div>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("longestTime")'>&nbsp;Avg. Time Taken (desc.) </div>
+            <div class='siac-notes-sidebar-item' onclick='predefSearch("shortestTime")'>&nbsp;Avg. Time Taken (asc.) </div>
+        </details>
+    </div>
     <div class='siac-notes-sidebar-item' onclick='predefSearch("longestText")'>&nbsp;Longest HTML</div>
     <div class='siac-notes-sidebar-item' onclick='predefSearch("randomUntagged")'>&nbsp;Random Untagged </div>
     <div class='siac-notes-sidebar-item' onclick='predefSearch("lastUntagged")'>&nbsp;Newest Untagged </div>
@@ -18,7 +29,8 @@
 </div>
 <div class='siac-notes-sidebar-section' style='margin-top: 20px;'>
     <div class='siac-notes-sidebar-section-header bold'><i class='fa fa-tags mr-10'></i>[Anki] Tags</div>
-    <div class='mb-10 ml-10 mr-10 mt-10 oflow_y_auto tag_scroll' style='flex: 1 1 auto; padding-right: 7px;' onscroll='_siacSidebar.ankiTagsScrollTop = this.scrollTop;'>
+    <div class='mb-10 ml-10 mr-10 mt-10 oflow_y_auto tag_scroll' style='flex: 1 1 auto; padding-right: 7px;'
+        onscroll='_siacSidebar.ankiTagsScrollTop = this.scrollTop;'>
         {tags}
     </div>
-</div> 
+</div>

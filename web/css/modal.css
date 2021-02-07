@@ -24,7 +24,7 @@
   }
 
   .modal-content {
-    background: #fffef7;
+    background: var(--c-card-bg);
     color: var(--c-modal-foreground);
     position: absolute;
     top: 50%;
@@ -76,12 +76,12 @@ body.nightMode .modal-content {
 }
 .siac-modal-body {
     padding: 15px;
-    background: #fffef7;
+    background: var(--c-card-bg);
     flex: 1 1 auto;
     overflow-y: auto;
 }
 body.nightMode .siac-modal-body {
-    background: rgb(53,53,53);
+    background: var(--c-card-bg);
     color: white;
 }
 

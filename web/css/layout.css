@@ -20,12 +20,12 @@
         padding: 8px;
         border-radius: 4px;
         right: 10px;
-        background: #fffef7;
+        background: var(--c-card-bg);
         box-shadow: 0 0 7px 1px #dcdcdc;
         color: #202020;
     }
     body.nightMode.siac-wm-autohide::after, body.nightMode.siac-wm-both::after {
-        background: rgb(53,53,53);
+        background: var(--c-card-bg);
         box-shadow: 0 0 7px 1px #202020;
         color: #c1c1c1;
     }

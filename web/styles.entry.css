@@ -89,6 +89,9 @@
     position: relative;
     flex: 1 1 auto;
 }
+#cal-wrapper {
+    box-sizing: content-box;
+}
 
 .cal-heatmap-container {
     margin-left: auto;
@@ -146,6 +149,9 @@
 #siac-right-side select {
     background-color: var(--c-select-background);
     color: var(--c-select-foreground);
+}
+body.nightMode select {
+    border-color: grey;
 }
 .tagLbl {
     position: relative;
@@ -208,9 +214,10 @@ body.nightMode .tagLbl:hover {
     width: calc(100% - 22px);
     min-width: 50px;
     margin-left: 2px;
-    padding-left: 3px;
+    padding-left: 4px;
     height: 25px;
 }
+
 .siac-input {
     background: var(--c-input-background);
     color: var(--c-input-foreground);
@@ -591,13 +598,13 @@ span.tag-symbol {
     max-width: 280px;
     max-height: 220px;
     overflow-y: auto;
-    background: #fffef7;
+    background: var(--c-card-bg);
     color: var(--c-note-foreground);
     font-size: 12;
     text-align: left;
 }
 body.nightMode .noteFloatingContent {
-    background:  rgb(53,53,53);
+    background:  var(--c-card-bg);
     color: white;
 }
 .noteFloatingHeader {

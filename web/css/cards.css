@@ -148,11 +148,11 @@ body.nightMode .siac-meta-btn {
     display: flex; 
     flex-direction: column; 
     margin-bottom: 20px;
-    background: #fffef7;
+    background: var(--c-card-bg);
     box-shadow: 0 0 7px 1px #dcdcdc;
 }
 body.nightMode .siac-note-outer, #siac-reading-modal .siac-note-outer {
-    background: rgb(53,53,53);
+    background: var(--c-card-bg);
     box-shadow: 0 0 7px 1px #202020;
 }
 /* Header of note card */
@@ -174,14 +174,14 @@ body.nightMode .siac-note-header {
     padding: 9px 9px 0px 7px; 
     display: flex; 
     justify-content: space-between; 
-    background: #fffef7;
+    background: var(--c-card-bg);
     overflow: hidden;
     color: var(--c-primary-color);
     flex-wrap: wrap;
 }
 body.nightMode .siac-note-footer, #siac-reading-modal .siac-note-footer {
     border-top-color:rgb(78, 78, 78);
-    background: rgb(53,53,53);
+    background: var(--c-card-bg);
     color: white;
 }
 .siac-note-footer > div {

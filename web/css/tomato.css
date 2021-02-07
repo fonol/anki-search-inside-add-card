@@ -7,13 +7,13 @@
     display: flex;
     align-items: center;
     white-space: nowrap;
-    background: #fffef7;
+    background: var(--c-card-bg);
     box-sizing: border-box;
     overflow: hidden;
     user-select: none;
 }
 body.nightMode .siac-tomato-main {
-    background:  rgb(53,53,53);
+    background:  var(--c-card-bg);
 }
 .siac-tomato-main .siac-btn-small {
     text-align: center;

@@ -36,10 +36,13 @@
     </div>
 </div>
 <div class='siac-notes-sidebar-section' style='margin-top: 20px;'>
-    <div class='siac-notes-sidebar-section-header'><b><i class='fa fa-tags mr-10'></i>Tags ({tag_len})</b>
-        <b class='siac-tags-exp-icon' style='padding: 0 2px 0 2px;'
-            onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
-        <b class='siac-tags-exp-icon mr-5' style='padding: 0 2px 0 2px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
+    <div class='siac-notes-sidebar-section-header flex-row flex-between flex-center' style='min-height: 32px;'>
+        <b><i class='fa fa-tags mr-10'></i>Tags ({tag_len})</b>
+        <div>
+            <b class='siac-tags-exp-icon' style='padding: 0 2px 0 2px;'
+                onclick='noteSidebarCollapseAll();'>&#x25B2;</b>
+            <b class='siac-tags-exp-icon mr-5' style='padding: 0 2px 0 2px;' onclick='noteSidebarExpandAll();'>&#x25BC;</b>
+        </div>
     </div>
     <div class='mb-5 mr-10 ml-10 mt-10 oflow_y_auto tag_scroll' style='flex: 1 1 auto; padding-right: 7px;'
         onscroll='_siacSidebar.addonTagsScrollTop = this.scrollTop;'>

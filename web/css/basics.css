@@ -110,6 +110,12 @@
     display: flex; 
     flex-direction: row;
 }
+.flex-between {
+    justify-content: space-between;
+}
+.flex-center {
+    align-items: center;
+}
 .fg_lightgrey {
     color: lightgrey;
 }

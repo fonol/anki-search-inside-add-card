@@ -7,6 +7,10 @@
 
 --c-primary-color: $styles.primaryColor$;
 --c-primary-color-night: $styles.night.primaryColor$;
+--c-card-bg: #fffef7;
+--c-card-bg-night: rgb(53,53,53);
+
+
 --c-reading-modal-background: $styles.readingModalBackgroundColor$;
 --c-reading-modal-button-border-color: $styles.readingModalButtonBorderColor$;
 --c-reading-modal-filter: $styles.readingModalFilter$;
@@ -62,7 +66,7 @@
 --c-button-color-night: lightgrey;
 --c-input-background-night: #2f2f31;
 --c-input-foreground-night: lightgrey;
---c-input-border-night: lightgrey;
+--c-input-border-night: grey;
 --c-timeline-background-night: #2b2b30;
 --c-timeline-border-night: darkorange;
 --c-modal-foreground-night: beige;
