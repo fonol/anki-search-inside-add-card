@@ -969,6 +969,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     border: 3px outset var(--c-reading-modal-theme-color);
     background: var(--c-reading-modal-background);
     color: white;
+    z-index: 12;
 }
 #siac-pdf-loader-wrapper {
     display: flex; 
