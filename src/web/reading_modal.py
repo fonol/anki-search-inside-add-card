@@ -292,13 +292,13 @@ class Reader:
             //remove modal animation to prevent it from being triggered when switching left/right or CTRL+F-ing
             if (!document.getElementById('siac-reading-modal-tabs-left')) {
                 $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
-                document.getElementById('leftSide').innerHTML += `
+                $('#leftSide').append(`
                     <div id='siac-reading-modal-tabs-left'>
                         <div class='siac-btn siac-btn-dark active' onclick='modalTabsLeftClicked("flds", this);'>Fields</div>
                         <div class='siac-btn siac-btn-dark' onclick='modalTabsLeftClicked("browse", this);'>Browse</div>
                         <div class='siac-btn siac-btn-dark' onclick='modalTabsLeftClicked("pdfs", this);'>PDFs</div>
                     </div>
-                `;
+                `);
             }
         """)
 
@@ -407,7 +407,7 @@ class Reader:
                     return;
                 }
                 if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/%s/pdf.worker.min.js';
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/%s/pdf.worker.js';
                 }
                 var canvas = document.getElementById("siac-pdf-canvas");
                 window.pdf_canvas_0 = canvas;
@@ -488,7 +488,7 @@ class Reader:
                 for f in fields_to_prefill:
                     if f in list(note.keys()):
                         i = note._fieldOrd(f)
-                        cls._editor.web.eval(f"$('.field').eq({i}).html(`{title}`);")
+                        cls._editor.web.eval(f"SIAC.Fields.setFieldHtml({i}, `{title}`);")
 
 
     @classmethod
@@ -1255,8 +1255,8 @@ class Reader:
         flds    = ""
         for i, f in enumerate(cls._editor.note.model()['flds']):
             # trigger note update
-            fld_update_js = "pycmd(`blur:%s:${currentNoteId}:${$(`.field:eq(%s)`).html()}`);" % (i,i)
-            flds += """<span class="siac-field-picker-opt" onclick="$('.field').get(%s).innerHTML += `<img src='%s'/>`; $(this.parentNode.parentNode).remove(); %s"><i class='fa fa-plus-square-o mr-10'></i>%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
+            fld_update_js = f"SIAC.Fields.saveField({i});" 
+            flds += """<span class="siac-field-picker-opt" onclick="SIAC.Fields.appendToFieldHtml(%s, `<img src='%s'/>`); $(this.parentNode.parentNode).remove(); %s"><i class='fa fa-plus-square-o mr-10'></i>%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
         modal = modal % (img_src, flds, io, img_src)
         return "$('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
@@ -1277,7 +1277,7 @@ class Reader:
         flds        = ""
 
         for i, f in enumerate(cls._editor.note.model()['flds']):
-            flds += """<span class="siac-field-picker-opt" onclick="appendToField({0}, `{1}`); $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');"><i class='fa fa-plus-square-o mr-10'></i>{3}</span><br>""".format(i, cloze_text, f["name"], f["name"])
+            flds += """<span class="siac-field-picker-opt" onclick="SIAC.Fields.appendToFieldHtml({0}, `{1}`); $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');"><i class='fa fa-plus-square-o mr-10'></i>{3}</span><br>""".format(i, cloze_text, f["name"], f["name"])
         modal       = modal % (flds)
 
         return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
@@ -1683,7 +1683,7 @@ class Reader:
             last_btn = ""
             if cls.last_cloze is not None and model_id == cls.last_cloze[0]:
                 ix          = [f["name"] for f in cls._editor.note.model()["flds"]].index(cls.last_cloze[1])
-                last_btn    = f"<div class='siac-btn siac-btn-dark mt-5' style='margin-right: 15px;' onclick=\"appendToField({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(cls.last_cloze[1], 15)}'</div>"
+                last_btn    = f"<div class='siac-btn siac-btn-dark mt-5' style='margin-right: 15px;' onclick=\"SIAC.Fields.appendToFieldHtml({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(cls.last_cloze[1], 15)}'</div>"
 
             btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
                                 <div style='margin-top: 8px;'>

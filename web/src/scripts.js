@@ -32,31 +32,30 @@ window.gridView = false;
 window.tagHoverCB = null;
 window.tagHoverTimeout = 750;
 window.searchMaskTimer = null;
-window.$fields = null;
 
 window.byId = function (id) {
     return document.getElementById(id);
 };
 
+if (typeof(globalThis) === 'undefined') {
+    window.globalThis = window;
+}
+
 window.sendContent = function (event) {
     if ((event && event.repeat) || pdf.instance != null || siacState.isFrozen) {
         return;
     }
-    if (!$fields.text()) {
+    if (SIAC.Fields.empty()) {
         return;
     }
-    let html = "";
     showLoading("Typing");
-    $fields.each(function (index, elem) {
-        html += elem.innerHTML + "\u001f";
-    });
+    let html = SIAC.Fields.getAllFieldsText();
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 };
 window.searchCurrentField = function () {
     if (displayedNoteId || siacState.isFrozen) { return; }
-    let f = $('.field:focus').first();
-    if (!f.length) { return; }
-    let t = f.text();
+    let t = SIAC.Fields.getFocusedFieldText();
+
     if (!t || t.trim().length === 0) { return; }
     showLoading("Typing");
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + t);
@@ -105,6 +104,20 @@ window.updateSelectedDecks = function (elem) {
     });
     pycmd("deckSelection" + str);
 }
+window.getSelectionText = function () {
+    if (!siacState.searchOnSelection || siacState.isFrozen)
+        return;
+    var text = "";
+    if (window.getSelection) {
+        text = window.getSelection().toString();
+    } else if (document.selection && document.selection.type != "Control") {
+        text = document.selection.createRange().text;
+    }
+    if (text.trim().length > 0 && text != "&nbsp;") {
+        showLoading("Selection");
+        pycmd('siac-r-fld-selected ' + siacState.selectedDecks.toString() + ' ~ ' + text);
+    }
+};
 window.selectAllDecks = function () {
     $('.deck-list-item').addClass('selected');
     updateSelectedDecks();
@@ -129,21 +142,7 @@ window.selectDeckAndSubdecksWithId = function (did) {
     updateSelectedDecks();
 }
 
-window.expandRankingLbl = function (elem) {
-    if (elem.getElementsByClassName("rankingLblAddInfo")[0].offsetParent === null) {
-        elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "inline";
-        elem.getElementsByClassName("editedStamp")[0].style.display = "none";
-        if (elem.parentElement.getElementsByClassName("siac-susp-lbl").length !== 0) {
-            elem.parentElement.getElementsByClassName("siac-susp-lbl")[0].style.display = "none";
-        }
-    } else {
-        elem.getElementsByClassName("rankingLblAddInfo")[0].style.display = "none";
-        elem.getElementsByClassName("editedStamp")[0].style.display = "inline";
-        if (elem.parentElement.getElementsByClassName("siac-susp-lbl").length !== 0) {
-            elem.parentElement.getElementsByClassName("siac-susp-lbl")[0].style.display = "block";
-        }
-    }
-}
+
 window.expandCard = function (id, icn) {
     pycmd("siac-note-stats " + id);
 }
@@ -264,28 +263,7 @@ window.tagInfoBoxClicked = function (elem) {
         }
     }
 }
-window.appendToField = function (fldIx, html) {
-    if ($(`.field:eq(${fldIx})`).text().length) {
-        $(`.field:eq(${fldIx})`).append('<br/>' + html);
-    } else {
-        $(`.field:eq(${fldIx})`).html(html);
-    }
-    pycmd(`blur:${fldIx}:${currentNoteId}:${$(`.field:eq(${fldIx})`).html()}`);
-}
-window.getSelectionText = function () {
-    if (!siacState.searchOnSelection || siacState.isFrozen)
-        return;
-    var text = "";
-    if (window.getSelection) {
-        text = window.getSelection().toString();
-    } else if (document.selection && document.selection.type != "Control") {
-        text = document.selection.createRange().text;
-    }
-    if (text.trim().length > 0 && text != "&nbsp;") {
-        showLoading("Selection");
-        pycmd('siac-r-fld-selected ' + siacState.selectedDecks.toString() + ' ~ ' + text);
-    }
-}
+
 
 window.searchUserNoteTag = function (e, tag) {
     if (e.ctrlKey || e.metaKey) {
@@ -309,10 +287,19 @@ window.switchLeftRight = function () {
     }
 }
 
+/**
+ * Called on page resize to measure available space for the add-on.
+ * @param {*Boolean} fitPdfToPage 
+ */
 window.onWindowResize = function (fitPdfToPage = true) {
 
     let offsetTop = byId("topbutsOuter").offsetHeight + 3;
-    byId("outerWr").style.marginTop = offsetTop + "px";
+
+    // Anki 2.1.41+ uses sticky on the top row, so in that case, we don't have to set a margin-top
+    let pos_style = window.getComputedStyle(byId('topbutsOuter')).getPropertyValue('position');
+    if (pos_style === 'fixed') {
+        byId("outerWr").style.marginTop = offsetTop + "px";
+    }
     byId("outerWr").style.height = `calc(100vh - ${offsetTop}px)`;
 
     if (fitPdfToPage && typeof pdf.instance !== "undefined" && pdf.instance) {
@@ -428,9 +415,9 @@ window.updateFieldToHideInResult = function (checkbox, mid, fldOrd) {
 window.setSearchOnTyping = function (active, trigger = true) {
     siacState.searchOnTyping = active;
     if (!active)
-        $('.field').off('keydown.siac', fieldKeypress);
+        SIAC.Fields.disableSearchOnTypingEventListener();
     else {
-        $('.field').on('keydown.siac', fieldKeypress);
+        SIAC.Fields.enableSearchOnTypingEventListener();
         if (trigger) {
             sendContent();
         }
@@ -821,15 +808,12 @@ window.fieldsBtnClicked = function () {
         pycmd("siac-notification Results are frozen.");
         return;
     }
-    if (!$fields.text()) {
+    if (SIAC.Fields.empty()) {
         pycmd("siac-notification Fields are empty.");
         return;
     }
-    let html = "";
     showLoading("Typing");
-    $fields.each(function (index, elem) {
-        html += elem.innerHTML + "\u001f";
-    });
+    let html = SIAC.Fields.getAllFieldsText();
     pycmd('siac-r-fld ' + siacState.selectedDecks.toString() + ' ~ ' + html);
 }
 

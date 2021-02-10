@@ -198,10 +198,9 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
                     return;
                 } 
                 if (siacState.searchOnTyping) {
-                    $('.field').off('siac').on('keydown.siac', fieldKeypress);
+                    SIAC.Fields.enableSearchOnTypingEventListener();
                 } 
-                $('.field').attr('onmouseup', 'getSelectionText()');
-                window.$fields = $('.field');
+                SIAC.Fields.setSelectionMouseUpEventListener();
                 window.$searchInfo = $('#searchInfo');
                 window.addEventListener('resize', onWindowResize, true);
                 $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this); });

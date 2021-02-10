@@ -1092,7 +1092,7 @@ window.onReadingModalClose = function () {
     }
     byId("siac-reading-modal-center").innerHTML = "";
     onWindowResize();
-    window.$fields = $('.field');
+    SIAC.Fields.cacheFields();
     if (siacState.searchOnTyping) {
         setSearchOnTyping(true, false);
     }

@@ -302,7 +302,7 @@ def insert_scripts():
 
         script = document.createElement('script');
         script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/{pdfjs_v}/pdf.min.js';
+        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/{pdfjs_v}/pdf.js';
         document.body.appendChild(script);
 
         script = document.createElement('script');
