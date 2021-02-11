@@ -659,7 +659,7 @@ window.predefSearch = function (type) {
     let decks = siacState.selectedDecks.toString();
     // show a loader for the longer-taking searches
     if (["lowestPerf", "highestPerf", "highestRet", "lowestRet"].indexOf(type) !== -1) {
-        showSearchLoader("<i class='fa fa-spinner bold mb-10 fg-green' style='font-size: 24px;' /><br>Computing ...");
+        showSearchLoader("<i class='fa fa-spinner bold mb-10 fg-green' style='font-size: 24px;'></i><br>Computing ...");
         setTimeout(function () {
             pycmd("siac-predef-search " + type + " " + count + " " + decks);
         }, 250);
