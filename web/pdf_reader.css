@@ -1072,13 +1072,14 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
 .siac-text-hl {
     /* mix-blend-mode: normal !important; */
     z-index: 3;
-    border: 3px outset #2496dc;
+    border: none;
     font-family: 'Open Sans', sans-serif;
     white-space: pre-wrap;
     outline: none;
     color: white;
-    background: green !important;
-    mix-blend-mode: luminosity;
+    background: #424242 !important;
+    padding: 5px;
+/* mix-blend-mode: luminosity; */
     border-radius: 5px;
 }
 /* 17.10.2020: For some reason, the play button in the youtube player has a really large height, this is a fix. */
@@ -1144,16 +1145,17 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     z-index: 12;
 }
 .siac-bb-btn {
-    border: 2px outset var(--c-reading-modal-theme-color);
-    border-radius: 4px;
+    border: 1px outset var(--c-reading-modal-theme-color);
+    border-radius: 3px;
     margin: 4px 3px 3px 3px;
     text-align: center;
     font-size: 14px;
     line-height: 1em;
-    padding: 2px 5px 2px 5px;
+    padding: 3px 5px 3px 5px;
     font-variant: small-caps;
     font-weight: 600;
     cursor: pointer;
+    background: var(--c-card-bg-night);
     color: lightgrey;
     box-shadow: 2px 2px #151515;
 }
