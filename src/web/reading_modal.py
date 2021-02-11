@@ -1003,10 +1003,6 @@ class Reader:
 
         note_id             = cls.note_id
         note                = cls.note
-
-        if not note.is_pdf() and not note.is_feed():
-            should_save     = True
-
         config              = mw.addonManager.getConfig(__name__)
         hide                = config["pdf.queue.hide"]
         position            = str(note.position+1) if note.position is not None else "-"
@@ -1057,8 +1053,9 @@ class Reader:
             <div class='fg_lightgrey siac-queue-btn ml-5'>&#216;&nbsp;{avg_prio}</div>
             {hide_btn}
             {show_prio_btn}
-            <br>
-            {queue_head_readings}
+            <div class='siac-queue-head-readings-wrapper'>
+                {queue_head_readings}
+            </div>
         </div>
         """
 
