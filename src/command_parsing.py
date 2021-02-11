@@ -170,20 +170,21 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-window-mode "):
         state.set_window_mode(cmd.split()[1], self)
 
-    elif cmd == "siac-zoom-out":
-        # zoom out webview
-        z   = get_config_value_or_default("searchpane.zoom", 1.0)
-        new = round(max(0.3, z - 0.05), 2)
+    elif cmd.startswith("siac-zoom-"):
+        # zoom in/out webview
+        z       = get_config_value_or_default("searchpane.zoom", 1.0)
+        delta   = 0.05 if cmd == "siac-zoom-in" else -0.05
+        new     = round(min(max(0.3, z + delta), 2.0), 2)
         self.web.setZoomFactor(new)
-        tooltip(f"Set Zoom to <b>{str(int(new * 100))}%</b>")
-        update_config("searchpane.zoom", new)
-
-    elif cmd == "siac-zoom-in":
-        # zoom in webview
-        z   = get_config_value_or_default("searchpane.zoom", 1.0)
-        new = round(min(2.0, z + 0.05), 2)
-        self.web.setZoomFactor(new)
-        tooltip(f"Set Zoom to <b>{str(int(new * 100))}%</b>")
+        add     = ""
+        period  = 2000
+        if int(new * 100) != 100:
+            add     = "<br>Note: Currently, for zoom levels other than 100%,<br>rendered PDF text may be blurry sometimes."
+            period  = 5000
+        tooltip(f"""
+            Set Zoom to <b>{str(int(new * 100))}%</b>.
+            {add}
+        """, period=period)
         update_config("searchpane.zoom", new)
 
     elif cmd.startswith("siac-render-tags"):
