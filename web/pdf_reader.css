@@ -573,6 +573,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     user-select: none;
     transition: max-height 0.3s ease-in-out;
     max-height: 600px;
+    padding-bottom: 4px;
 }
 #siac-reading-modal-bottom-bar.bottom-hidden {
     max-height: 0;
@@ -624,7 +625,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 }
 .siac-queue-btn {
     display: inline-block;
-    border: 2px outset #9c9c9c;
+    border: 1px outset #9c9c9c;
     background: var(--c-reading-modal-background);
     padding: 1px 5px 1px 5px;
     font-size: 10px;
@@ -794,6 +795,9 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     transform: scale(1.02);
     filter: brightness(140%);
 }
+.siac-queue-head-readings-wrapper {
+    margin-top: 2px;
+}
 #siac-queue-infobox-wrapper {
     position: relative;
     display: inline-block;
@@ -806,19 +810,24 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     left: 0;
     display: none;
     width: 300px;
-    height: 106px;
-    border: 3px outset var(--c-reading-modal-theme-color);
+    height: 118px;
+
+    background: var(--c-card-bg-night);
+    box-shadow: 0 0 7px 1px #202020;
+    /* border: 3px outset var(--c-reading-modal-theme-color); */
 }
 #siac-queue-infobox:after {
     content: " ";
     position: absolute;
     right: 100%;
     top: var(--ttop);
-    margin-top: -11px;
-    border-width: 11px;
+    margin-top: -12px;
+    border-width: 12px;
     border-style: solid;
-    border-color: transparent var(--c-reading-modal-theme-color) transparent transparent;
+    /* border-color: transparent var(--c-reading-modal-theme-color) transparent transparent; */
+    border-color: transparent var(--c-card-bg-night)  transparent transparent;
     transition: all ease 0.2s;
+    filter: drop-shadow(-2px 1px 1px #202020 );
 }
 .siac-pa-sq {
     display: inline-block;

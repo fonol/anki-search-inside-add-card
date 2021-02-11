@@ -37,7 +37,7 @@ body.nightMode .modal-content input {
 }
 .siac-btn-dark:hover, .siac-btn-dark-smaller:hover {
     color: white;
-    border-color: white;
+    border-color: lightgrey;
 }
 .siac-btn-small {
     display: inline;
