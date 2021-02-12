@@ -244,7 +244,7 @@ class FTSIndex:
         orig                        = text
         text                        = self.clean(text)
         resDict["time-stopwords"]   = int((time.time() - start) * 1000)
-        self.lastSearch             = (text, decks, "default")
+        self.lastSearch             = (text, decks, "default", orig)
 
         if self.logging:
             log("\nFTS index - Received query: " + text)
@@ -359,13 +359,8 @@ class FTSIndex:
         """
             Results printed in the tooltip in the pdf modal.
         """
-        query_set = None
-        if self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
-            query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
-        if result is not None:
-            UI.print_pdf_search_results(result["results"], stamp, query_set)
-        else:
-            UI.print_pdf_search_results([], stamp, self.lastSearch[0])
+        res = result["results"] if result is not None else []
+        UI.print_pdf_search_results(res, self.lastSearch[0], self.lastSearch[3])
 
     def print_pdf_left(self, result, stamp):
         """

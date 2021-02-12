@@ -928,63 +928,41 @@ class UI:
             tooltip("Query was empty after cleaning.")
 
     @classmethod
-    def print_pdf_search_results(cls, results, stamp, query_set):
-        clz_btn_js = """
-                if ($('#siac-pdf-tooltip').data('sentences').length === 0) {
-                    $('#siac-cloze-btn,#siac-tt-web-btn').hide();
-                } else {
-                    $('#siac-cloze-btn').text(`Generate Clozes (${$('#siac-pdf-tooltip').data('sentences').length})`);
-                }
-        """
-        if results is not None and len(results) > 0:
-            limit   = get_config_value_or_default("pdfTooltipResultLimit", 50)
-            html    = cls.get_result_html_simple(results[:limit], False, False)
-            qhtml   = """
-                <div id='siac-tooltip-center' onclick='centerTooltip();'></div>
-                <div class='siac-search-icn-dark' id='siac-tt-web-btn' onclick='pycmd("siac-show-web-search-tooltip " + $("#siac-pdf-tooltip").data("selection"));'></div>
-                    <span id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</span>
-                <div style='width: calc(100%%- 18px); padding-left: 9px; padding-right: 9px; text-align: center; margin: 8px 0 8px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
-                    <i>%s</i>
-                </div>
-            """ % (" ".join(query_set))
-            tt_height = get_config_value_or_default("pdfTooltipMaxHeight", 300)
-            tt_width  = get_config_value_or_default("pdfTooltipMaxWidth", 300) + 100
-            cls._editor.web.eval("""
-                (() => {
-                    document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`;
-                    document.getElementById('siac-pdf-tooltip-results-area').scrollTop = 0;
-                    document.getElementById('siac-pdf-tooltip-top').innerHTML = `%s`
-                    document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
-                    document.getElementById('siac-pdf-tooltip-searchbar').style.display = "inline-block";
-                    let total_height = document.getElementById('siac-reading-modal').offsetHeight;
-                    let h_diff = total_height - $('#siac-pdf-tooltip').data('top');
-                    let needed = %s + 100;
-                    if (h_diff < needed && needed - h_diff < 300) {
-                        document.getElementById("siac-pdf-tooltip-results-area").style.maxHeight = (h_diff - 120) + "px";
-                        document.getElementById("siac-pdf-tooltip").style.maxWidth = "%spx";
-                    } else {
-                        document.getElementById("siac-pdf-tooltip-results-area").style.removeProperty('max-height');
-                        document.getElementById("siac-pdf-tooltip").style.removeProperty('max-width');
-                    }
-                    %s
-                })();
-            """ % (html, qhtml, tt_height, tt_width, clz_btn_js))
-        else:
-            if query_set is None or len(query_set)  == 0:
-                message = "Query was empty after cleaning."
-            else:
-                message = "<center>Nothing found for query: <br/><br/><i>%s</i></center>" % (utility.text.trim_if_longer_than(" ".join(query_set), 200))
-            cls._editor.web.eval("""
-                document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`
-                document.getElementById('siac-pdf-tooltip-top').innerHTML = `<div id='siac-tooltip-center' onclick='centerTooltip();'></div>
-                                                        <div class='siac-search-icn-dark' id='siac-tt-web-btn' onclick='pycmd("siac-show-web-search-tooltip " + $("#siac-pdf-tooltip").data("selection"));'></div>
-                                                            <span id='siac-cloze-btn' onclick='sendClozes();'>Generate Clozes</span>
-                                                            <br><br>`;
-                document.getElementById('siac-pdf-tooltip-bottom').innerHTML = ``;
-                document.getElementById('siac-pdf-tooltip-searchbar').style.display = "inline-block";
-                %s
+    def print_pdf_search_results(cls, results, query_cleaned, raw_query):
+        
+        limit       = get_config_value_or_default("pdfTooltipResultLimit", 50)
+        tt_height   = get_config_value_or_default("pdfTooltipMaxHeight", 300)
+        tt_width    = get_config_value_or_default("pdfTooltipMaxWidth", 300) + 100
 
-            """ % (message, clz_btn_js))
+        if results is not None and len(results) > 0:
+            sr_html     = cls.get_result_html_simple(results[:limit], False, False)
+            query       = query_cleaned
+        else:
+            if query_cleaned is None or len(query_cleaned) == 0:
+                query   = raw_query
+                sr_html = "<center class='mt-5 mb-5'>Query was empty after cleaning.</center>"
+            else:
+                query   = query_cleaned
+                sr_html = "<center class='mt-5 mb-5'>Nothing found for query.</center>"
+
+        html        = filled_template("rm/tooltip_search", dict(search_results = sr_html, query = query))
+
+        cls._editor.web.eval("""
+            (() => {
+                document.getElementById('siac-pdf-tooltip').innerHTML = `%s`;
+                document.getElementById('siac-pdf-tooltip-results-area').scrollTop = 0;
+                let total_height = document.getElementById('siac-reading-modal').offsetHeight;
+                let h_diff = total_height - $('#siac-pdf-tooltip').data('top');
+                let needed = %s + 100;
+                if (h_diff < needed && needed - h_diff < 300) {
+                    document.getElementById("siac-pdf-tooltip-results-area").style.maxHeight = (h_diff - 120) + "px";
+                    document.getElementById("siac-pdf-tooltip").style.maxWidth = "%spx";
+                } else {
+                    document.getElementById("siac-pdf-tooltip-results-area").style.removeProperty('max-height');
+                    document.getElementById("siac-pdf-tooltip").style.removeProperty('max-width');
+                }
+            })();
+        """ % (html, tt_height, tt_width))
 
         
 
@@ -1230,13 +1208,11 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
-            "Performance improvements on startup",
-            "Divide 'Random' menu item in add-on note sidebar tab into different searches",
-            "Fix: Error on startup when updating from older version of add-on",
-            "Better error messages if a PDF cannot be opened",
-            "Better message if no Cloze note type has been found in the reader cloze gen function",
-            "Fix: Tab ('Fields', 'Browse', 'PDFs') not resetting correctly after closing reader",
-            "Fix: Last Opened Notes not returning correct results"
+            "First adjustments to make add-on compatible with 2.1.41 (which makes internal changes to the editor)",
+            "Fix: Modal header height not set correctly on 2.1.22",
+            "Fix: Loader in PDF being colored when using PDF color mode like 'Rose'",
+            "Fix: Icon showing doubled in the loader shown on predefined searches like 'Best Performance'",
+            "Give message in the reader if zoom level is set to value other than 100% that text might be blurred",
         ]
 
     @staticmethod

@@ -49,7 +49,12 @@ window.pdf = {
     notification: {
         queue: [],
         current: ""
-    }
+    },
+
+    tooltip: {
+        lastEvent: null,
+    },
+
 };
 
 /** State variables */
@@ -941,13 +946,26 @@ window.beforeNoteQuickOpen = function () {
     return true;
 }
 
+/**
+ * Go back to the pdf tooltip start page (search results).
+ */
+window.pdfTooltipBack = function() {
+    if (pdf.tooltip) {
+        renderTooltip(pdf.tooltip.sentences, pdf.tooltip.selection, pdf.tooltip.top, pdf.tooltip.left);
+    }
+};
+
 window.centerTooltip = function () {
     let w = $('#siac-pdf-top').width();
     let h = $('#siac-pdf-top').height();
     let $tt = $('#siac-pdf-tooltip');
     byId("siac-pdf-tooltip-results-area").style.removeProperty('max-height');
     byId("siac-pdf-tooltip").style.removeProperty('max-width');
-    $tt.css({ 'top': h / 2 - ($tt.height() / 2), 'left': w / 2 - ($tt.width() / 2) });
+    let top = h / 2 - ($tt.height() / 2);
+    let left =  w / 2 - ($tt.width() / 2);
+    $tt.css({ 'top': top, 'left': left });
+    pdf.tooltip.top = top;
+    pdf.tooltip.left = left;
 }
 window.destroyPDF = function () {
     if (pdf.instance) {

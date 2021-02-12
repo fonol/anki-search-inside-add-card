@@ -6,9 +6,11 @@
     max-height: 950px;
     min-width: 95px;
     word-break: break-word;
+    background: var(--c-card-bg);
   }
-  #siac-reading-modal .siac-inner-card {
-    color: var(--c-note-foreground-night);
+body.nightMode .siac-inner-card,  #siac-reading-modal .siac-inner-card {
+    color: white;
+    background: var(--c-card-bg-night);
   }
 
   .siac-note-outer.meta .siac-inner-card {
@@ -152,7 +154,7 @@ body.nightMode .siac-meta-btn {
     box-shadow: 0 0 7px 1px #dcdcdc;
 }
 body.nightMode .siac-note-outer, #siac-reading-modal .siac-note-outer {
-    background: var(--c-card-bg);
+    background: var(--c-card-bg-night);
     box-shadow: 0 0 7px 1px #202020;
 }
 /* Header of note card */
@@ -181,7 +183,7 @@ body.nightMode .siac-note-header {
 }
 body.nightMode .siac-note-footer, #siac-reading-modal .siac-note-footer {
     border-top-color:rgb(78, 78, 78);
-    background: var(--c-card-bg);
+    background: var(--c-card-bg-night);
     color: white;
 }
 .siac-note-footer > div {

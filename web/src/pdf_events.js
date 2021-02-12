@@ -189,35 +189,7 @@ window.textlayerClicked = function (event, el) {
 window.pdfKeyup = function (e) {
     // selected text, no ctrl key -> show tooltip if enabled 
     if (!e.ctrlKey && !e.metaKey && pdfTooltipEnabled && windowHasSelection()) {
-        $('#text-layer .tl-highlight').remove();
-        let s = window.getSelection();
-        let r = s.getRangeAt(0);
-        let text = s.toString();
-        if (text.trim().length === 0 || text.length > 500) { return; }
-        // spans in textlayer have a max height to prevent selection jumping, but here we have to temporarily 
-        // disable it, to get the actual bounding client rect
-        $('#text-layer > span').css("height", "auto");
-        let nodesInSel = nodesInSelection(r);
-        let sentences = getSentencesAroundSelection(r, nodesInSel, text);
-        if (nodesInSel.length > 1) {
-            text = joinTextLayerNodeTexts(nodesInSel, text);
-        }
-        let rect = r.getBoundingClientRect();
-        let prect = byId("siac-reading-modal").getBoundingClientRect();
-        byId('siac-pdf-tooltip-results-area').innerHTML = '<center>Searching...</center>';
-        byId('siac-pdf-tooltip-searchbar').value = "";
-        let left = rect.left - prect.left;
-        if (prect.width - left < 250) {
-            left -= 200;
-        }
-        let top = rect.top - prect.top + rect.height;
-        if (top < 0) { return; }
-        $('#siac-pdf-tooltip').css({ 'top': top + "px", 'left': left + "px" }).show();
-        pycmd("siac-pdf-selection " + text);
-        $('#siac-pdf-tooltip').data({"sentences":  sentences, "selection": text, "top": top});
-        // $('#siac-pdf-tooltip').data("selection", text);
-        // limit height again to prevent selection jumping
-        $('#text-layer > span').css("height", "200px");
+        pdfTooltip(e);
     } else if ((e.ctrlKey || e.metaKey) && Highlighting.colorSelected.id > 0 && windowHasSelection()) {
         // selected text, ctrl key pressed -> highlight 
         Highlighting.highlight();
@@ -227,6 +199,46 @@ window.pdfKeyup = function (e) {
         Highlighting.insertText(e);
     } 
     
+}
+
+window.pdfTooltip = function(e) {
+    $('#text-layer .tl-highlight').remove();
+    let s = window.getSelection();
+    let r = s.getRangeAt(0);
+    let text = s.toString();
+    if (text.trim().length === 0 || text.length > 500) { return; }
+    // spans in textlayer have a max height to prevent selection jumping, but here we have to temporarily 
+    // disable it, to get the actual bounding client rect
+    $('#text-layer > span').css("height", "auto");
+    let nodesInSel = nodesInSelection(r);
+    let sentences = getSentencesAroundSelection(r, nodesInSel, text);
+    if (nodesInSel.length > 1) {
+        text = joinTextLayerNodeTexts(nodesInSel, text);
+    }
+    let rect = r.getBoundingClientRect();
+    let prect = byId("siac-reading-modal").getBoundingClientRect();
+    let left = rect.left - prect.left;
+    if (prect.width - left < 250) {
+        left -= 200;
+    }
+    let top = rect.top - prect.top + rect.height;
+    if (top < 0) { return; }
+    // save render to be able to go back
+    pdf.tooltip = {
+        sentences: sentences,
+        selection: text,
+        top: top,
+        left: left,
+    };
+    renderTooltip(sentences, text, top, left);
+    // limit height again to prevent selection jumping
+    $('#text-layer > span').css("height", "200px");
+}
+window.renderTooltip = function(sentences, selection, top, left) {
+    byId('siac-pdf-tooltip').innerHTML = '<center>Searching...</center>';
+    $('#siac-pdf-tooltip').css({ 'top': top + "px", 'left': left + "px", 'display': 'flex' });
+    pycmd("siac-pdf-selection " + selection);
+    $('#siac-pdf-tooltip').data({"sentences":  sentences, "selection": selection, "top": top});
 }
 
 window.pdfMouseWheel = function (event) {

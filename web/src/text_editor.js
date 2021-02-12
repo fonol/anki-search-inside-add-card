@@ -69,7 +69,6 @@ window.textEditorKeyup = function () {
         let rect = r.getBoundingClientRect();
         let prect = byId("siac-reading-modal").getBoundingClientRect();
         byId('siac-pdf-tooltip-results-area').innerHTML = '<center>Searching...</center>';
-        byId('siac-pdf-tooltip-searchbar').value = "";
         let left = rect.left - prect.left;
         if (prect.width - left < 250) {
             left -= 200;

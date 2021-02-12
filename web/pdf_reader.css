@@ -43,10 +43,15 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     cursor: pointer;
 }
 .siac-modal-small.dark, #siac-reading-modal .siac-modal-small {
-    border: 3px outset var(--c-reading-modal-theme-color);
     background: var(--c-reading-modal-background);
     color: white;
     padding: 10px;
+    border: none;
+    box-shadow: 0 0 7px 1px #202020;
+}
+#siac-range-input-min, #siac-range-input-max {
+    border: 1px solid grey;
+    font-size: 15px;
 }
 
 #siac-pdf-canvas {
@@ -57,7 +62,6 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 }
 
 #siac-cloze-btn {
-    margin-bottom: 7px;
     text-align: center;
     color:var(--c-reading-modal-theme-color);
     cursor:pointer;
@@ -478,10 +482,10 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 	z-index: 999;
     background-color: var(--c-reading-modal-background);
 	color: white;
-    padding: 9px;
 	border-radius: 5px;
-    border: 4px outset var(--c-reading-modal-theme-color);
+    flex-direction: column;;
     transition: all 0.5s;
+    box-shadow: 0 0 7px 1px #202020;
 }
 
 #siac-pdf-read-btn,#siac-pdf-more-btn {
@@ -503,12 +507,18 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 #siac-pdf-tooltip-results-area {
 	overflow-y: auto;
     overflow-x: hidden;
-    width: calc(100% - 18px);
+    width: 100%;
+    box-sizing: border-box;
+    flex: 1 0 auto;
 	padding-right: 8px;
-    padding-left: 3px;
+    padding-left: 9px;
+    margin-bottom: 10px;
 }
 #siac-pdf-tooltip-bottom {
     text-align: center;
+    border-top: 1px solid #484848;
+    box-sizing: border-box;
+    padding: 9px;
 }
 #siac-tooltip-center {
     position: absolute;
@@ -524,29 +534,37 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 }
 #siac-pdf-tooltip-top {
     text-align: center;
-    margin-top: -2px;
+    border-bottom: 1px solid #484848;
+    margin-bottom: 10px;
+    display: flex; 
+    justify-content: center;
+    padding: 5px 10px;
+    align-items: center;
+    flex-direction: column;
 }
 #siac-tooltip-center:hover {
     filter: brightness(1.4);
 }
 #siac-pdf-tooltip-searchbar {
-    width: calc(100% - 14px);
-    margin-top: 15px;
-    margin-bottom: 5px;
-    border-radius: 4px;
+    width: 100%;
+    border-radius: 3px;
+    box-sizing: border-box;
     background-color: var(--c-reading-modal-background);
     color: white;
-    border: 1px solid grey;
+    border: none;
+    font-size: 15px;
     padding-left: 4px;
 }
 #siac-pdf-tooltip-searchbar:focus {
     outline: none;
 }
 #siac-tt-ws-inp {
-    border-radius: 3px; 
     padding-left: 4px; 
+    font-size: 15px;
+    border: none;
+    border-radius: 3px;
+    outline: none;
     box-sizing: border-box; 
-    border: 1px solid grey;
     color: white;
 }
 #siac-pdf-page-inp {

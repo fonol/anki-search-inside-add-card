@@ -664,7 +664,7 @@ class Reader:
                 <div style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">%s</div>
                     <br><br>
                 <div class='w-100 ta_right'>
-                    <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode.parentNode).remove();">Close</div>
+                    <div class="siac-modal-btn" onclick="$(this.parentNode.parentNode).remove();">Close</div>
                 </div>
             </div>
         """ % html
@@ -684,9 +684,9 @@ class Reader:
                             Input a range of pages to mark as read (end incl.)<br><br>
                             <input id='siac-range-input-min' class='fg_lightgrey' style='width: 60px; background: #222; border-radius: 4px;' type='number' min='1' max='{num_pages}'/> &nbsp;-&nbsp; <input id='siac-range-input-max' style='width: 60px;background: #222; color: lightgrey; border-radius: 4px;' type='number' min='1' max='{num_pages}'/>
                             <br/> <br/>
-                            <div class="siac-btn siac-btn-dark" onclick="{on_confirm} $(this.parentNode).remove();">&nbsp; Ok &nbsp;</div>
+                            <div class="siac-modal-btn" onclick="{on_confirm} $(this.parentNode).remove();">&nbsp; Ok &nbsp;</div>
                             &nbsp;
-                            <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
+                            <div class="siac-modal-btn" onclick="$(this.parentNode).remove();">Cancel</div>
                         </div> """
         return "$('#siac-pdf-tooltip').hide();$('.siac-modal-small').remove(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
@@ -765,8 +765,8 @@ class Reader:
                                 <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
                                 </div>
                                 <div class='ta_center bold' style='opacity: 1; margin: 50px 0 30px 0;'>
-                                    <div class='siac-btn siac-btn-dark' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
-                                    <div class='siac-btn siac-btn-dark' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
+                                    <div class='siac-modal-btn' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
+                                    <div class='siac-modal-btn' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
                                 </div>
                             </div>
                         """
@@ -1240,14 +1240,14 @@ class Reader:
         # if Image Occlusion add-on is there and enabled, add a button to directly open the IO dialog
         io      = ""
         if hasattr(cls._editor, 'onImgOccButton') and mw.addonManager.isEnabled("1374772155"):
-            io  = f"<div class='siac-btn siac-btn-dark' style='margin-right: 9px;' onclick='pycmd(\"siac-cutout-io {img_src}\"); $(this.parentNode).remove();'><i class='fa fa-eraser'></i>&nbsp; Image Occlusion</div>"
+            io  = f"<div class='siac-modal-btn mr-10' onclick='pycmd(\"siac-cutout-io {img_src}\"); $(this.parentNode).remove();'><i class='fa fa-eraser'></i>&nbsp; Image Occlusion</div>"
         modal   = """<div class="siac-modal-small dark ta_center">
                         <img src="%s" style="height: 90px;"/><br>
                         <b>Append to field:</b><br><br>
                         <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding-left:4px; overflow-x: hidden;">%s</div>
                         <br><br>
                         %s
-                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div>
+                        <div class="siac-modal-btn" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div>
                     </div> """
         flds    = ""
         for i, f in enumerate(cls._editor.note.model()['flds']):
@@ -1269,7 +1269,7 @@ class Reader:
         modal       = """ <div class="siac-modal-small dark ta_center">
                         <b>Append to field:</b><br><br>
                         <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding-left:4px; overflow-x: hidden;">%s</div><br><br>
-                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
+                        <div class="siac-modal-btn" onclick="$(this.parentNode).remove();">Cancel</div>
                     </div> """
         flds        = ""
 
@@ -1332,23 +1332,15 @@ class Reader:
                 if "[QUERY]" in url:
                     name = os.path.dirname(url)
                     name = re.sub("^https?://(www2?.)?", "", name)
-                    search_sources += """<div class="siac-url-ch" onclick='pycmd("siac-url-srch $$$" + document.getElementById("siac-tt-ws-inp").value + "$$$%s"); $(this.parentNode.parentNode).remove();'>
+                    search_sources += """<div class="siac-url-ch cursor-pointer" onclick='pycmd("siac-url-srch $$$" + document.getElementById("siac-tt-ws-inp").value + "$$$%s"); $("#siac-pdf-tooltip").hide();'>
                                             <i class="fa fa-search"></i>&nbsp; %s
                                         </div>""" % (url, name)
 
-        modal = """ <div class="siac-modal-small dark ta_center">
-                        <label class='siac-caps'>Search Text</label>
-                        <input class='siac-rm-bg w-100' id="siac-tt-ws-inp" value="%s"></input>
-                        <br/>
-                        <div class='cursor-pointer oflow_y_auto' style="max-height: 200px; overflow-x: hidden; margin-top: 15px; text-align: left;">%s</div><br><br>
-                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove();">Cancel</div>
-                    </div> """  % (inp, search_sources)
-
-        js = """
-        $('#siac-iframe-btn').removeClass('expanded');
-        $('#siac-pdf-tooltip').hide();
-        $('#siac-reading-modal-center').append('%s');
-        """ % modal.replace("\n", "").replace("'", "\\'")
+        html            = filled_template("rm/tooltip_websearch", dict(search_sources = search_sources, input=inp))
+        js              = """
+            $('#siac-iframe-btn').removeClass('expanded');
+            $('#siac-pdf-tooltip').html(`%s`);
+        """ % html
         return js
 
     #region page sidebar
@@ -1629,7 +1621,7 @@ class Reader:
     def display_cloze_modal(cls, editor: Editor, selection: str, extracted: List[str]) -> JS:
         """ Displays the modal to view and edit the generated cloze. """
 
-        s_html      = "<table style='margin-top: 5px; font-size: 15px;'>"
+        s_html      = "<table style='font-size: 15px;' class='w-100'>"
         sentences   = [s for s in extracted if len(s) < 300 and len(s.strip()) > 0]
 
         if len(sentences) == 0:
@@ -1671,7 +1663,7 @@ class Reader:
                 # remove enumeration dots from the beginning of the sentence
                 sentence = re.sub("^[\u2022,\u2023,\u25E6,\u2043,\u2219]", "", sentence)
 
-                s_html += "<tr class='siac-cl-row'><td><div contenteditable class='siac-pdf-main-color'>%s</div></td></tr>" % (sentence.replace("`", "&#96;"))
+                s_html += "<tr class='siac-cl-row'><td><div contenteditable class='siac-pdf-main-color w-100'>%s</div></td></tr>" % (sentence.replace("`", "&#96;"))
             s_html += "</table>"
             model_id = cls._editor.note.model()['id']
 
@@ -1680,24 +1672,28 @@ class Reader:
             last_btn = ""
             if cls.last_cloze is not None and model_id == cls.last_cloze[0]:
                 ix          = [f["name"] for f in cls._editor.note.model()["flds"]].index(cls.last_cloze[1])
-                last_btn    = f"<div class='siac-btn siac-btn-dark mt-5' style='margin-right: 15px;' onclick=\"SIAC.Fields.appendToFieldHtml({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(cls.last_cloze[1], 15)}'</div>"
+                last_btn    = f"<div class='siac-modal-btn mr-10' onclick=\"SIAC.Fields.appendToFieldHtml({ix}, $('.siac-cl-row div').first().text());  $('#siac-pdf-tooltip').hide();\">'{utility.text.trim_if_longer_than(cls.last_cloze[1], 15)}'</div>"
 
             btn_html = """document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `
-                                <div style='margin-top: 8px;'>
-                                    %s
-                                    <div class='siac-btn siac-btn-dark' onclick='pycmd("siac-fld-cloze " +$(".siac-cl-row div").first().text());' style='margin-right: 15px; margin-top: 5px;'>Send to Field...</div>
-                                    <div class='siac-btn siac-btn-dark' onclick='generateClozes();' style='margin-top: 5px;'>&nbsp;<i class='fa fa-bolt'></i>&nbsp; Generate</div>
+                                <div class='w-100 flex-row flex-between'>
+                                    <div></div>
+                                    <div>
+                                        %s
+                                        <div class='siac-modal-btn mr-10' onclick='pycmd("siac-fld-cloze " +$(".siac-cl-row div").first().text());'>Send to Field...</div>
+                                        <div class='siac-modal-btn' onclick='generateClozes();'>&nbsp;<i class='fa fa-bolt'></i>&nbsp; Generate</div>
+                                    </div>
                                 </div>
                     `;""" % last_btn
 
         else:
-            s_html = "<br><center>Sorry, could not extract any sentences.</center>"
-            btn_html = ""
+            s_html      = "<center class='mt-5 mb-5'>Sorry, could not extract any sentences.</center>"
+            btn_html    = ""
 
         return """
                 document.getElementById('siac-pdf-tooltip-results-area').innerHTML = `%s`;
-                document.getElementById('siac-pdf-tooltip-top').innerHTML = `<span class='fg_lightgrey;'>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)</span>`;
-                document.getElementById('siac-pdf-tooltip-searchbar').style.display = "none";
+                document.getElementById('siac-pdf-tooltip-top').innerHTML = `<div><span class='cursor-pointer turquoise-hover mr-10' onclick='pdfTooltipBack()'><i class='fa fa-arrow-left'></i></span>
+                    <span class='fg_lightgrey;'>(Click inside to edit, <i>Ctrl+Shift+C</i> to add new Clozes)</span></div>`;
+                document.getElementById('siac-pdf-tooltip-bottom').innerHTML = `<div class='siac-modal-btn' onclick='pdfTooltipBack()'>Back</div>`;
                 %s
                 """ % (s_html, btn_html)
 
@@ -1709,7 +1705,7 @@ class Reader:
         modal = f""" <div class="siac-modal-small dark ta_center fg_lightgrey" contenteditable="false">
                         {html}
                         <br/> <br/>
-                        <div class="siac-btn siac-btn-dark" onclick="$(this.parentNode).remove(); $('#siac-rm-greyout').hide(); {on_ok}">&nbsp; Ok &nbsp;</div>
+                        <div class="siac-modal-btn" onclick="$(this.parentNode).remove(); $('#siac-rm-greyout').hide(); {on_ok}">&nbsp; Ok &nbsp;</div>
                     </div> """
         return """$('#siac-pdf-tooltip').hide();
                 $('.siac-modal-small').remove();
