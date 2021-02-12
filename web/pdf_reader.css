@@ -697,6 +697,8 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     text-align: center;
     vertical-align: middle;
     z-index: 14;
+    display: flex;
+    align-items: center;
 }
 #siac-reading-modal-top-btns.top-hidden #siac-reading-modal-tomato-alt {
     display: inline-block;
@@ -886,6 +888,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 #siac-reading-modal-tomato-alt .siac-btn {
     color: #a2a2a2 !important;
     border-color: #ababab !important;
+    border-width: 1px;
 }
 #siac-reading-modal-tomato-alt .siac-timer-btn.active {
     color: lightgrey !important;
