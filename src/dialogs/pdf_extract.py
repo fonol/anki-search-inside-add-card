@@ -18,12 +18,8 @@
 from aqt.qt import *
 from aqt.utils import tooltip
 import aqt
-import random
-import os
-import copy
 import json
 
-from ..state import get_index
 from ..output import UI
 from ..notes import create_note, get_priority, get_extracts
 from ..hooks import run_hooks
@@ -58,6 +54,7 @@ class PDFExtractDialog(QDialog):
         self.title_inp.setText(self.note.title)
         self.vbox.addWidget(self.title_inp)
 
+        self.vbox.addWidget(QLabel("Tags"))
         self.tags_inp = QLineEdit()
         self.tags_inp.setText(self.note.tags)
         self.vbox.addWidget(self.tags_inp)
