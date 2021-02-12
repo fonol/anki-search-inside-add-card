@@ -1209,6 +1209,7 @@ class UI:
 
         return [
             "First adjustments to make add-on compatible with 2.1.41 (which makes internal changes to the editor)",
+            "Some small style changes in the reader (mainly to the \"search on select\" tooltip)",
             "Fix: Modal header height not set correctly on 2.1.22",
             "Fix: Loader in PDF being colored when using PDF color mode like 'Rose'",
             "Fix: Icon showing doubled in the loader shown on predefined searches like 'Best Performance'",
