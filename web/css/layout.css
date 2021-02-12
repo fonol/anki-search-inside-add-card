@@ -76,7 +76,7 @@ body.nightMode.siac-wm-autohide #leftSide:not(.visible)::after {
     border-color:#545454;
 }
 
-body.siac-fullscreen-show-right #topbuts {
+body.siac-fullscreen-show-right #topbutsOuter {
     display: none; 
 }
 body.siac-fullscreen-show-right #outerWr {
