@@ -1097,7 +1097,6 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     user-select: none;
 }
 .siac-text-hl {
-    /* mix-blend-mode: normal !important; */
     z-index: 3;
     border: none;
     font-family: 'Open Sans', sans-serif;
@@ -1106,7 +1105,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     color: white;
     background: #424242 !important;
     padding: 5px;
-/* mix-blend-mode: luminosity; */
+    mix-blend-mode: normal !important;
     border-radius: 5px;
 }
 /* 17.10.2020: For some reason, the play button in the youtube player has a really large height, this is a fix. */
