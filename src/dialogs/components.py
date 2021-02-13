@@ -276,7 +276,9 @@ class ScheduleEditTab(QWidget):
             line                = QFrame()
             line.setFrameShape(QFrame.HLine)
             line.setFrameShadow(QFrame.Sunken)
+            self.vbox.addSpacing(5)
             self.vbox.addWidget(line)
+            self.vbox.addSpacing(5)
 
             self.no_sched_rb    = QRadioButton("Keep schedule")
         else:
