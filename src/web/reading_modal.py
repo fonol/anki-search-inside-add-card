@@ -127,7 +127,7 @@ class ReaderSidebar():
                     <div id='siac-left-tab-browse-results' class='oflow_y_auto mt-10 mb-5' style='flex: 1 1 auto; padding: 0 7px 0 7px;'>
                     </div>
                     <div style='flex: 0 auto; padding: 5px 0 5px 0;'>
-                        <input type='text' class='w-100' style='box-sizing: border-box;' onkeyup='pdfLeftTabAnkiSearchKeyup(this.value, event);'/>
+                        <input type='text' placeholder='Search' class='w-100' style='box-sizing: border-box;' onkeyup='pdfLeftTabAnkiSearchKeyup(this.value, event);'/>
                     </div>
                 </div>
             `).insertBefore('#siac-reading-modal-tabs-left');
@@ -154,7 +154,7 @@ class ReaderSidebar():
                     </div>
                     <div id='siac-left-tab-browse-results' class='oflow_y_auto mt-10 mb-5' style='flex: 1 1 auto; padding: 0 5px 0 0;'></div>
                     <div style='flex: 0 auto; padding: 5px 0 5px 0;'>
-                        <input type='text' style='width: 100%; box-sizing: border-box;' onkeyup='pdfLeftTabPdfSearchKeyup(this.value, event);'/>
+                        <input type='text' placeholder='Search' style='width: 100%; box-sizing: border-box;' onkeyup='pdfLeftTabPdfSearchKeyup(this.value, event);'/>
                     </div>
                 </div>
             `).insertBefore('#siac-reading-modal-tabs-left');
@@ -572,7 +572,8 @@ class Reader:
                 cls.read_head_of_queue()
 
 
-                mw.raise_()
+                if state.interrupted_review:
+                    mw.raise_()
                 state.interrupted_review = False
         else:
             cls._editor.web.eval("ungreyoutBottom();noteLoading=false;pdfLoading=false;modalShown=false;")
