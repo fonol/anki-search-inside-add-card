@@ -32,6 +32,10 @@
     body.siac-wm-autohide #leftSide::after {
         display: none !important;
     }
+    
+    #siac-reading-modal-tabs-left {
+        display: none;
+    }
 }
 
 body.siac-wm-addon #leftSide {

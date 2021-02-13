@@ -1075,10 +1075,15 @@ body.nightMode .siac-note-title-only:hover {
 #siac-left-tab-browse input,#siac-left-tab-pdfs input {
     border-radius: 4px;
     padding-left: 3px;
+    font-size: 14px;
+    outline: none;
+    border: 1px solid #929292;
+    background: transparent;
 }       
 body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs input {
     background: #333333;
     color: lightgrey;
+    border: 1px solid grey;
 }
 .siac-pdf-color-btn {
     height: 20px; 
