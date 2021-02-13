@@ -289,7 +289,6 @@ class Reader:
         # wrap fields in tabs
         UI.js("""
             $(document.body).addClass('siac-reading-modal-displayed');
-            //remove modal animation to prevent it from being triggered when switching left/right or CTRL+F-ing
             if (!document.getElementById('siac-reading-modal-tabs-left')) {
                 $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
                 $('#leftSide').append(`
