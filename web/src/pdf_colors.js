@@ -25,17 +25,15 @@ window.setPDFColorMode = function (mode) {
     pdfColorMode = mode;
     rerenderPDFPage(pdf.page, false);
     pycmd('siac-update-config-str pdf.color_mode ' + mode);
-    $('#siac-pdf-top').removeClass("siac-pdf-sand siac-pdf-night siac-pdf-peach siac-pdf-day siac-pdf-rose siac-pdf-moss siac-pdf-coral siac-pdf-x1 siac-pdf-x2 siac-pdf-mud").addClass("siac-pdf-" + pdfColorMode.toLowerCase());
+    $('#siac-pdf-top').removeClass("siac-pdf-sand siac-pdf-night siac-pdf-peach siac-pdf-day siac-pdf-rose siac-pdf-moss siac-pdf-coral siac-pdf-x1 siac-pdf-x2 siac-pdf-mud siac-pdf-spooky").addClass("siac-pdf-" + pdfColorMode.toLowerCase());
 }
 
 /** Change the canvas colors according to the current pdfColorMode. */
 window.invertCanvas = function (ctx) {
     if (pdfColorMode === "Night") {
-        applyFilter(ctx, "#121212", "overlay");
-        colorize(ctx, '#2496dc', 0.4);
-        // invert(ctx);
-        // applyFilter(ctx, "#121212", "lighten");
-        // overlay(ctx, "#f5f0bc");
+        // applyFilter(ctx, "#121212", "overlay");
+        // colorize(ctx, '#2496dc', 0.4);
+        colorize(ctx, 'blue', 0.3);
     } else if (pdfColorMode === 'X1') {
         invert(ctx);
         colorize(ctx, 'teal', 0.4);
@@ -56,6 +54,9 @@ window.invertCanvas = function (ctx) {
         darken(ctx, '#ffcba4');
     } else if (pdfColorMode === 'Moss') {
         colorize(ctx, 'green', 0.4);
+    } else if (pdfColorMode === 'Spooky') {
+        invert(ctx);
+        darken(ctx, '#e50045');
     }
     ctx.canvas.style.display = "inline-block";
 }
