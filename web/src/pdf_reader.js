@@ -416,7 +416,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     if (fetchHighlights) {
                         updatePdfDisplayedMarks(true);
                     }
-                    if (["Sand", "Peach", "Night", "X1", "X2", "Mud", "Coral", "Moss"].indexOf(pdfColorMode) !== -1) {
+                    if (["Sand", "Peach", "Night", "X1", "X2", "Mud", "Coral", "Moss", "Spooky"].contains(pdfColorMode)) {
                         invertCanvas(ctx);
                     }
                 }

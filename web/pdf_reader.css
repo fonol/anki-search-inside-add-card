@@ -680,12 +680,13 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     filter: brightness(1.4);
 }
 .siac-field-picker-opt {
-    display: inline-block;
     font-size: 15px;
     line-height: 18px;;
     color: var(--c-reading-modal-theme-color);
+    background-color: var(--c-reading-modal-background);
     cursor: pointer;
     user-select: none;
+    padding: 2px 2px;
 }
 .siac-field-picker-opt:hover {
     filter: brightness(1.4);

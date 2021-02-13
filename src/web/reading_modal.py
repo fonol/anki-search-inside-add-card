@@ -1244,7 +1244,7 @@ class Reader:
         modal   = """<div class="siac-modal-small dark ta_center">
                         <img src="%s" style="height: 90px;"/><br>
                         <b>Append to field:</b><br><br>
-                        <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding-left:4px; overflow-x: hidden;">%s</div>
+                        <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding: 0 4px; overflow-x: hidden;">%s</div>
                         <br><br>
                         %s
                         <div class="siac-modal-btn" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div>
@@ -1253,7 +1253,7 @@ class Reader:
         for i, f in enumerate(cls._editor.note.model()['flds']):
             # trigger note update
             fld_update_js = f"SIAC.Fields.saveField({i});" 
-            flds += """<span class="siac-field-picker-opt" onclick="SIAC.Fields.appendToFieldHtml(%s, `<img src='%s'/>`); $(this.parentNode.parentNode).remove(); %s"><i class='fa fa-plus-square-o mr-10'></i>%s</span><br>""" % (i, img_src, fld_update_js, f["name"])
+            flds += """<div class="siac-field-picker-opt" onclick="SIAC.Fields.appendToFieldHtml(%s, `<img src='%s'/>`); $(this.parentNode.parentNode).remove(); %s">%s</div>""" % (i, img_src, fld_update_js, f["name"])
         modal = modal % (img_src, flds, io, img_src)
         return "$('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
 
@@ -1268,13 +1268,13 @@ class Reader:
         cloze_text  = cloze_text.replace("`", "").replace("\n", "")
         modal       = """ <div class="siac-modal-small dark ta_center">
                         <b>Append to field:</b><br><br>
-                        <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding-left:4px; overflow-x: hidden;">%s</div><br><br>
+                        <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding: 0 4px; overflow-x: hidden;">%s</div><br><br>
                         <div class="siac-modal-btn" onclick="$(this.parentNode).remove();">Cancel</div>
                     </div> """
         flds        = ""
 
         for i, f in enumerate(cls._editor.note.model()['flds']):
-            flds += """<span class="siac-field-picker-opt" onclick="SIAC.Fields.appendToFieldHtml({0}, `{1}`); $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');"><i class='fa fa-plus-square-o mr-10'></i>{3}</span><br>""".format(i, cloze_text, f["name"], f["name"])
+            flds += """<div class="siac-field-picker-opt" onclick="SIAC.Fields.appendToFieldHtml({0}, `{1}`); $(this.parentNode.parentNode).remove(); pycmd('siac-last-cloze {2}');">{3}</div>""".format(i, cloze_text, f["name"], f["name"])
         modal       = modal % (flds)
 
         return "$('#siac-pdf-tooltip').hide(); $('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
