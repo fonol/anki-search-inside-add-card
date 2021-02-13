@@ -187,6 +187,9 @@ window.textlayerClicked = function (event, el) {
  *  executed after keyup in the pdf pane
  */
 window.pdfKeyup = function (e) {
+    if (!e) {
+        return;
+    }
     // selected text, no ctrl key -> show tooltip if enabled 
     if (!e.ctrlKey && !e.metaKey && pdfTooltipEnabled && windowHasSelection()) {
         pdfTooltip(e);
