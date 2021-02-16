@@ -53,7 +53,7 @@
 "pdf.clozegen.field.page": "",
 "searchUrls": ["https://en.wikipedia.org/w/index.php?search=[QUERY]&title=Special%3ASearch&go=Go&ns0=1", "https://dictionary.cambridge.org/dictionary/english/[QUERY]" ],
 "pdf.queue.hide": false,
-"pdf.highlights.use_alt_render": false,
+"pdf.highlights.use_alt_render": true,
 "notes.sidebar.visible": false,
 "notes.showSource": true,
 "notes.show_linked_cards_are_due_overlay": true,
