@@ -42,17 +42,17 @@ IO_REPLACE      = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>
 IMG_FLD         = re.compile('\\|</span> ?(<img[^>]+/?>)( ?<span class=\'fldSep\'>|$)')
 
 # hide cloze brackets
-CLOZE_REPLACE   = re.compile(r"{{c\d+::([^}]*?)(?:::[^}]+)?}}")
+CLOZE_REPLACE               = re.compile(r"{{c\d+::([^}]*?)(?:::[^}]+)?}}")
 
-tagReg          = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
-spaceReg        = re.compile('\s{2,}')
-normalChar      = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U) 
+tagReg                      = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
+spaceReg                    = re.compile('\s{2,}')
+normalChar                  = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U) 
 
-asian_or_arabic_char    = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.U)
-asian_char              = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.U)
+asian_or_arabic_char        = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.U)
+asian_char                  = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.U)
 
-clean_spaces    = re.compile(u"[\r\n\t\u001f]+", re.U)
-asian_char_or_whitespace  = re.compile(u"([\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D ])", re.U)
+clean_spaces                = re.compile(u"[\r\n\t\u001f]+", re.U)
+asian_char_or_whitespace    = re.compile(u"([\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D ])", re.U)
 
 
 def _get_config():
@@ -92,6 +92,7 @@ def clean(text):
 
 def clean_for_indexing(text):
 
+    text        = clean_spaces.sub(" ", text)
     text        = tagReg.sub(" ", text)
     filtered    = ""
     for token in tokenize(text):
@@ -554,3 +555,4 @@ def mark_highlights(text, querySet):
             textMarked = ''.join((textMarked, currentWord))
 
     return textMarked
+
