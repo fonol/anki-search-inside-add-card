@@ -205,6 +205,7 @@ def on_load_note(editor: Editor):
             tagHoverTimeout          = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
             var delayWhileTyping     = {typing_delay};
             SIAC.Colors.pdfColorMode = "{pdf_color_mode}";
+            SIAC.Fields.cacheFields();
 
             setWindowMode('{state.window_mode.name}');
 
