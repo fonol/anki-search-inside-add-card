@@ -935,7 +935,8 @@ class UI:
         tt_width    = get_config_value_or_default("pdfTooltipMaxWidth", 300) + 100
 
         if results is not None and len(results) > 0:
-            sr_html     = cls.get_result_html_simple(results[:limit], False, False)
+            qset        = set([t.lower().strip() for t in query_cleaned.split() if len(t.strip()) > 0]) if query_cleaned is not None else set()
+            sr_html     = cls.get_result_html_simple(results[:limit], False, False, qset)
             query       = query_cleaned
         else:
             if query_cleaned is None or len(query_cleaned) == 0:
@@ -982,7 +983,7 @@ class UI:
         if not get_config_value_or_default("searchOnTyping", True):
             cmd += "$('#typingCb').prop('checked', false); setSearchOnTyping(false);"
         if not get_config_value_or_default("searchOnSelection", True):
-            cmd += "$('#selectionCb').prop('checked', false); siacState.searchOnSelection = false;"
+            cmd += "$('#selectionCb').prop('checked', false); SIAC.State.searchOnSelection = false;"
         if not index.topToggled:
             cmd += "hideTop();"
         if index is not None and not UI.uiVisible:
