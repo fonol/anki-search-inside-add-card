@@ -629,7 +629,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         stamp = set_stamp()
         notes = get_random(index.limit, index.pinned)
         UI.print_search_results(["SIAC notes", "Random"],  notes, stamp)
-    
+
     elif cmd == "siac-r-user-note-random-pdf":
         stamp = set_stamp()
         notes = get_random_pdf_notes(index.limit, index.pinned)
@@ -1211,6 +1211,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
             success     = create_filtered_deck(due_today)
             if success:
+                mw.col.startTimebox()
                 mw.moveToState("review")
                 mw.activateWindow()
                 # workaround, as activateWindow doesn't seem to bring the main window on top on OSX
@@ -1859,7 +1860,7 @@ def get_index_info():
 
     issues = UI.known_issues()
 
-    if issues:  
+    if issues:
         html += "<br/><br/><b>Known Issues:</b><hr>"
         for ix, i in enumerate(issues):
             html += f"<br>{ix + 1}. {i}"
