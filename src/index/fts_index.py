@@ -308,8 +308,7 @@ class FTSIndex:
             res                     = conn.execute(dbStr).fetchall()
             resDict["time-query"]   = int((time.time() - start) * 1000)
         except Exception as e:
-            if self.logging:
-                log("Executing db query threw exception: " + str(e))
+            print("Executing match query threw exception: " + str(e))
             res                     = []
         finally:
             conn.close()
