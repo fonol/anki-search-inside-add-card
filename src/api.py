@@ -14,27 +14,21 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import time
 import typing
 from typing import Optional
 import aqt
 from aqt import mw
 from anki.utils import isMac
 from aqt.utils import tooltip
-from aqt.browser import Browser
-# from aqt.main import ResetReason
 
 import state
 from .notes import get_queue_count
 from .state import get_index
-from .output import UI
 from .web.reading_modal import Reader
-from .dialogs.editor import EditDialog, NoteEditor
 from .dialogs.quick_open_pdf import QuickOpenNote
 from .dialogs.queue_picker import QueuePicker
-from .hooks import add_tmp_hook, add_hook
+from .hooks import add_tmp_hook
 
-_timer = None
 
 def queue_has_items() -> bool:
     """ Check if the queue has at least one item in it. """

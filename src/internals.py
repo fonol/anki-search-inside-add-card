@@ -16,7 +16,7 @@
 
 import time
 from aqt import mw
-from .state import get_index, check_index
+from .state import check_index
 import typing
 from typing import Callable
 

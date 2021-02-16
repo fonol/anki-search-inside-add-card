@@ -16,7 +16,7 @@
 
 import os
 import typing
-from typing import List, Optional
+from typing import List
 from time import mktime
 
 import utility.date
