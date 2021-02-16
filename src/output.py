@@ -1114,13 +1114,22 @@ class UI:
                 editor = cls._editor
             else:
                 return
+            
+        if hasattr(mw.col.decks, "all_names_and_ids"):
+            for d in mw.col.decks.all_names_and_ids():
+                if d.name == 'Standard':
+                    continue
+                if deckList is not None and len(deckList) > 0 and d.name not in deckList:
+                    continue
+                deckMap[d.name] = d.id
+        else:
+            for d in list(mw.col.decks.decks.values()):
+                if d['name'] == 'Standard':
+                    continue
+                if deckList is not None and len(deckList) > 0 and d['name'] not in deckList:
+                    continue
+                deckMap[d['name']] = d['id']
 
-        for d in list(mw.col.decks.decks.values()):
-            if d['name'] == 'Standard':
-                continue
-            if deckList is not None and len(deckList) > 0 and d['name'] not in deckList:
-                continue
-            deckMap[d['name']] = d['id']
         set_deck_map(deckMap)
         dmap        = {}
         for name, id in deckMap.items():
