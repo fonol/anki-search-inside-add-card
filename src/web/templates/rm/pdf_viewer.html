@@ -97,17 +97,17 @@
         <div style='position: relative; display: inline-block; width: 70px; margin-right: 7px;'>
             <div id='siac-pdf-color-mode-btn' class='siac-btn siac-btn-dark' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")' style='width: calc(100% - 14px)'><span>Day</span>
                 <div class='siac-btn-small-dropdown-inverted click' style='height: 220px; top: -198px; left: -42px; width: 100px;'>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Day")'><b>Day</b></div>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Night")'><b>Night</b></div>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("X1")'><b>X1</b></div>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("X2")'><b>X2</b></div>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Mud")'><b>Mud</b></div>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Sand")'><b>Sand</b></div>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Peach")'> <b>Peach</b> </div>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Rose")'> <b>Rose</b> </div>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Moss")'> <b>Moss</b> </div>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Coral")'> <b>Coral</b> </div>
-                    <div class='siac-dropdown-inverted-item' onclick='setPDFColorMode("Spooky")'> <b>Spooky</b> </div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("Day"); rerenderPDFPage(pdf.page, false);'><b>Day</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("Night"); rerenderPDFPage(pdf.page, false);'><b>Night</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("X1"); rerenderPDFPage(pdf.page, false);'><b>X1</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("X2"); rerenderPDFPage(pdf.page, false);'><b>X2</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("Mud"); rerenderPDFPage(pdf.page, false);'><b>Mud</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("Sand"); rerenderPDFPage(pdf.page, false);'><b>Sand</b></div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("Peach"); rerenderPDFPage(pdf.page, false);'> <b>Peach</b> </div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("Rose"); rerenderPDFPage(pdf.page, false);'> <b>Rose</b> </div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("Moss"); rerenderPDFPage(pdf.page, false);'> <b>Moss</b> </div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("Coral"); rerenderPDFPage(pdf.page, false);'> <b>Coral</b> </div>
+                    <div class='siac-dropdown-inverted-item' onclick='SIAC.Colors.setPDFColorMode("Spooky"); rerenderPDFPage(pdf.page, false);'> <b>Spooky</b> </div>
                 </div>
             </div>
         </div>
@@ -139,8 +139,8 @@
 <script>
     greyoutBottom();
     pdf.notification.queue = [];
-    $('#siac-pdf-color-mode-btn > span').first().text(pdfColorMode);
-    $('#siac-pdf-top').addClass("siac-pdf-" + pdfColorMode.toLowerCase());
+    $('#siac-pdf-color-mode-btn > span').first().text(SIAC.Colors.pdfColorMode);
+    $('#siac-pdf-top').addClass("siac-pdf-" + SIAC.Colors.pdfColorMode.toLowerCase());
     if (pdfTooltipEnabled) {
         $('#siac-pdf-tooltip-toggle').addClass('active');
     } else {

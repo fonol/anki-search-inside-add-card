@@ -1,3 +1,4 @@
+import {  } from "./init.js";
 import {  } from "./scripts.js";
 import {  } from "./pdf_search.js";
 import {  } from "./pdf_image.js";

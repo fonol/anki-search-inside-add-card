@@ -223,7 +223,7 @@ def show_unsuspend_modal(nid) -> JS:
     index   = get_index()
 
     UI.show_in_modal("Unsuspend Cards", html)
-    return "siacState.keepPositionAtRendering = true; $('.siac-modal-close').on('click', function() { pycmd(`siac-rerender`);$('.siac-modal-close').off('click'); });"
+    return "SIAC.State.keepPositionAtRendering = true; $('.siac-modal-close').on('click', function() { pycmd(`siac-rerender`);$('.siac-modal-close').off('click'); });"
 
 
 @js

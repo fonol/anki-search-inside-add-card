@@ -198,7 +198,7 @@ window.loadTOC = function () {
             return Promise.all(promises);
         }
     }).then(function () {
-        let html = "<ul>";
+        let html = "<ul style='margin-top: 0;'>";
         if (pdf.TOC && pdf.TOC.length) {
             for (var i = 0; i < pdf.TOC.length; i++) {
                 html += `<li class='siac-toc-item blue-hover' onclick='pdfGotoPg(${pdf.TOC[i].page})'><div><div>${pdf.TOC[i].page}:</div><div class='siac_toc_title'>${pdf.TOC[i].title || '&lt;Untitled&gt;'}</div></div>`;
@@ -212,8 +212,8 @@ window.loadTOC = function () {
                 }
                 html += "</li>"
             }
-            html = `<div style='text-align: center; margin-bottom: 10px; padding-bottom: 7px; border-bottom: 2px dotted grey;'><b style='font-size: 14px;' class='fg_lightgrey'>Table of Contents</b></div>
-                    <div style='overflow: auto; color: lightgrey; padding-right: 4px;'>${html}</div>`;
+            html = `<div class='ta_center siac-note-header mb-10'><b style='font-size: 14px;'>Table of Contents</b></div>
+                    <div style='overflow: auto;' class='p-10 fg_lightgrey'>${html}</div>`;
         }
         byId("siac-toc").innerHTML = html;
 
@@ -416,8 +416,8 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     if (fetchHighlights) {
                         updatePdfDisplayedMarks(true);
                     }
-                    if (["Sand", "Peach", "Night", "X1", "X2", "Mud", "Coral", "Moss", "Spooky"].indexOf(pdfColorMode) !== -1) {
-                        invertCanvas(ctx);
+                    if (SIAC.Colors.shouldChangeColors()) {
+                        SIAC.Colors.invertCanvas(ctx);
                     }
                 }
                 return lPage.getTextContent({ normalizeWhitespace: false, disableCombineTextItems: false });
@@ -449,7 +449,6 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
 
                 if (isInitial) {
                     $('#siac-pdf-loader-wrapper').remove();
-                    // setTimeout(function () { refreshCanvas(); }, 3000);
                 }
                 pdf.displayedViewPort = viewport;
                 if (fetchHighlights) {
@@ -1111,7 +1110,7 @@ window.onReadingModalClose = function () {
     byId("siac-reading-modal-center").innerHTML = "";
     onWindowResize();
     SIAC.Fields.cacheFields();
-    if (siacState.searchOnTyping) {
+    if (SIAC.State.searchOnTyping) {
         setSearchOnTyping(true, false);
     }
     pycmd("siac-on-reading-modal-close");

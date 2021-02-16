@@ -201,10 +201,10 @@ def on_load_note(editor: Editor):
         pdf_highlights_render   = "siac-pdf-hl-alt-render" if conf_or_def("pdf.highlights.use_alt_render", False) else ""
 
         editor.web.eval(f"""
-            var showTagInfoOnHover  = {show_tag_info_on_hover};
-            tagHoverTimeout         = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
-            var delayWhileTyping    = {typing_delay};
-            var pdfColorMode        = "{pdf_color_mode}";
+            var showTagInfoOnHover   = {show_tag_info_on_hover};
+            tagHoverTimeout          = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
+            var delayWhileTyping     = {typing_delay};
+            SIAC.Colors.pdfColorMode = "{pdf_color_mode}";
 
             setWindowMode('{state.window_mode.name}');
 

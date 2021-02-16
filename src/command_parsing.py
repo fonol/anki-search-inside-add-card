@@ -196,7 +196,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         stamp               = set_stamp()
         decks               = [s for s in cmd[19:].split(" ") if s != ""]
         index.lastSearch    = (None, decks, "random")
-        UI.print_search_results(["Anki", "Random notes"],  getRandomNotes(decks, index.limit), stamp)
+        UI.print_search_results(["Anki", "Random notes"],  get_random_notes(decks, index.limit), stamp)
 
     elif cmd == "siac-fill-deck-select":
         UI.fillDeckSelect(self, expanded=True, update=False)
@@ -1282,7 +1282,7 @@ def parse_predef_search_cmd(cmd: str, editor: aqt.editor.Editor):
     elif stype == "firstAdded":
         res = get_notes_by_created_date(index, editor, decks, limit, "asc")
     elif stype == "lastModified":
-        res = get_last_modified_notes(index, editor, decks, limit)
+        res = get_last_modified_notes(index, decks, limit)
     elif stype == "lowestRet":
         res = findNotesWithLowestPerformance(decks, limit, index.pinned, retOnly = True)
     elif stype == "highestRet":
@@ -2066,10 +2066,10 @@ def after_index_rebuilt():
 
     editor.web.eval("""
         $('.freeze-icon').removeClass('frozen');
-        siacState.isFrozen = false;
+        SIAC.State.isFrozen = false;
         $('#selectionCb,#typingCb,#highlightCb').prop("checked", true);
-        siacState.searchOnSelection = true;
-        siacState.searchOnTyping = true;
+        SIAC.State.searchOnSelection = true;
+        SIAC.State.searchOnTyping = true;
         $('#toggleTop').click(function() { toggleTop(this); });
         $('#greyout').hide();
     """)

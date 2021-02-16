@@ -193,11 +193,11 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
             var there = true;
             }
             let sFn = () => {
-                if (typeof(siacState) === 'undefined') {
+                if (typeof(SIAC) === 'undefined' || typeof(SIAC.State) === 'undefined') {
                     setTimeout(sFn, 50);
                     return;
                 } 
-                if (siacState.searchOnTyping) {
+                if (SIAC.State.searchOnTyping) {
                     SIAC.Fields.enableSearchOnTypingEventListener();
                 } 
                 SIAC.Fields.setSelectionMouseUpEventListener();
