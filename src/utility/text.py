@@ -425,22 +425,31 @@ def try_find_sentence(text, selection):
     text        = re.sub("  +", " ", text).strip()
     last        = text.rindex(selection)
     pre         = text[:last]
+
+    reps        = {
+        "?," : "<QMCOMMA>",
+        "etc.)" : "<ETCCB>",
+    }
+
+    for k, v in reps.items():
+        pre = pre.replace(k, v)
     
     def _try_find_closing(text):
         found = False
-        for c in ["\\.\\B", "!", "\\?", "•", ":", "=", "#", "-", "§", "Ø", "\\*"]:
+        for c in ["\\.\\B", "!", "\\?", "•", ":", "=", "#", "§", "Ø", "\\*"]:
             try:
                 found = [(i.start()) for i in re.finditer(c,text)]
                 if len(found) > 0:
                     last_index = found[-1]
                     if last_index < len(text) - 1:
-                        text = text[last_index + 1]
+                        text = text[last_index + 1:]
                         found = True
                         break
-            except:
+            except Exception as e:
+                print(e)
                 continue
         if not found: 
-            if len(text) < 50:
+            if len(text) < 80:
                 return text
             return None
         return text
@@ -450,11 +459,19 @@ def try_find_sentence(text, selection):
     if pre is None:
         return None
     after       = text[last:]
+    
+    for k, v in reps.items():
+        after = after.replace(k, v)
+
+
     after       = _try_find_closing(after[::-1])
     if after is None: 
         return None
 
-    return pre + after[::-1] + "."
+    res = pre + after[::-1] + "."
+    for k, v in reps.items():
+        res = res.replace(k, v)
+    return res
 
 def set_yt_time(src: str, time: int) -> str:
     id = get_yt_video_id(src)
