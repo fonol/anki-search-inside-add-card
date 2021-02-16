@@ -429,6 +429,7 @@ def try_find_sentence(text, selection):
     reps        = {
         "?," : "<QMCOMMA>",
         "etc.)" : "<ETCCB>",
+        "e.g.": "<EG>",
     }
 
     for k, v in reps.items():
@@ -449,7 +450,7 @@ def try_find_sentence(text, selection):
                 print(e)
                 continue
         if not found: 
-            if len(text) < 80:
+            if len(text) < 400:
                 return text
             return None
         return text
@@ -462,7 +463,7 @@ def try_find_sentence(text, selection):
     
     for k, v in reps.items():
         after = after.replace(k, v)
-
+    print("After: " + after)
 
     after       = _try_find_closing(after[::-1])
     if after is None: 
@@ -470,7 +471,7 @@ def try_find_sentence(text, selection):
 
     res = pre + after[::-1] + "."
     for k, v in reps.items():
-        res = res.replace(k, v)
+        res = res.replace(v, k)
     return res
 
 def set_yt_time(src: str, time: int) -> str:

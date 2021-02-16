@@ -1628,7 +1628,7 @@ class Reader:
             for s in extracted:
                 if len(s) >= 300:
                     f = utility.text.try_find_sentence(s, selection)
-                    if f is not None and len(f) < 300:
+                    if f is not None and len(f) < 400:
                         sentences.append(f)
 
         # we use a list here, but atm, there is only one sentence

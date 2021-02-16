@@ -142,11 +142,23 @@ window.generateClozes = function () {
 
 window.extractPrev = function (text, extracted, selection) {
     text = text.substring(0, text.lastIndexOf(selection) + selection.length) + text.substring(text.lastIndexOf(selection) + selection.length).replace(/\./g, "$DOT$");
+    text = text.replace(/etc\./g, '$etc$');
+    text = text.replace(/e\.g\./g, '$eg$');
+    text = text.replace(/i\.e\./g, '$ie$');
+    text = text.replace(/cf\./g, '$cf$');
+    text = text.replace(/\.,/g, '$cc$');
+
     let matches = text.match(/.*[^.\d][.!?]"? (.+)/);
     if (!matches || matches[1].indexOf(selection) === -1) {
         return [false, extracted];
     }
     let ext = matches[1].replace(/\$DOT\$/g, ".");
+    ext = ext.replace(/\$etc\$/g, 'etc.');
+    ext = ext.replace(/\$eg\$/g, 'e.g.');
+    ext = ext.replace(/\$ie\$/g, 'i.e.');
+    ext = ext.replace(/\$cf\$/g, 'cf.');
+    ext = ext.replace(/\$cc\$/g, '.,');
+
     if (extracted.indexOf(ext) === -1) {
         extracted.push(ext);
     }
@@ -156,11 +168,22 @@ window.extractPrev = function (text, extracted, selection) {
 window.extractNext = function (text, extracted, selection) {
     text = text.substring(0, text.indexOf(selection)).replace(/\./g, "$DOT$") + text.substring(text.indexOf(selection));
 
+    text = text.replace(/etc\./g, '$etc$');
+    text = text.replace(/e\.g\./g, '$eg$');
+    text = text.replace(/i\.e\./g, '$ie$');
+    text = text.replace(/cf\./g, '$cf$');
+    text = text.replace(/\.,/g, '$cc$');
+
     let matches = text.match(/(.+?(\.\.\.(?!,| [a-z])|[^.]\.(?!(\.|[0-9]|[A-Z]{2,20}))|[!?]|[^0-9]\. [A-Z])).*/);
     if (!matches || matches[1].indexOf(selection) === -1) {
         return [false, extracted];
     }
     let ext = matches[1].replace(/\$DOT\$/g, ".");
+    ext = ext.replace(/\$etc\$/g, 'etc.');
+    ext = ext.replace(/\$eg\$/g, 'e.g.');
+    ext = ext.replace(/\$ie\$/g, 'i.e.');
+    ext = ext.replace(/\$cf\$/g, 'cf.');
+    ext = ext.replace(/\$cc\$/g, '.,');
     if (extracted.indexOf(ext) === -1) {
         extracted.push(ext);
     }
