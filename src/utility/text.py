@@ -463,7 +463,6 @@ def try_find_sentence(text, selection):
     
     for k, v in reps.items():
         after = after.replace(k, v)
-    print("After: " + after)
 
     after       = _try_find_closing(after[::-1])
     if after is None: 
