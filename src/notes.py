@@ -1971,7 +1971,7 @@ def get_linked_anki_notes_for_pdf_page(siac_nid: int, page: int) -> List[IndexNo
 
 def get_linked_anki_notes_around_pdf_page(siac_nid: int, page: int) -> List[Tuple[int, int]]:
     conn = _get_connection()
-    nps  = conn.execute(f"select page from notes_pdf_page where siac_nid = {siac_nid} and page >= {page-6} and page <= {page + 6}").fetchall()
+    nps  = conn.execute(f"select page from notes_pdf_page where siac_nid = {siac_nid} and page >= {page-6} and page <= {page + 6} group by nid").fetchall()
     conn.close()
     if not nps or len(nps) == 0:
         return []
