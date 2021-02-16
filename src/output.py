@@ -1219,6 +1219,7 @@ class UI:
 
         return [
             "Highlight search results in reader tooltip",
+            "Improvements to the sentence detection in reader tooltip ('Cloze' button)",
             "Fix: Bug that made the search not find words next to fields separators",
             "First adjustments to make add-on compatible with 2.1.41 (which makes internal changes to the editor)",
             "Some small style changes in the reader (mainly to the \"search on select\" tooltip)",
