@@ -146,6 +146,10 @@
     color: var(--c-highlight-foreground);
     border-radius: 4px;
 }
+#siac-reading-modal mark {
+    background-color: var(--c-highlight-background-night);
+    color: var(--c-highlight-foreground-night);
+}
 #siac-right-side select {
     background-color: var(--c-select-background);
     color: var(--c-select-foreground);

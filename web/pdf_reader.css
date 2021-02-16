@@ -79,14 +79,13 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 }
 #siac-toc {
     display: none;
-    margin: 20px 15px 0 10px;
+    margin: 0 15px 4px 10px;
     width: 280px;
     flex: 0 0 280px;
-    border: 3px outset var(--c-reading-modal-theme-color);
-    padding: 10px;
     background-color: var(--c-reading-modal-background);
     text-align: left;
     flex-direction: column;
+    box-shadow: 0 0 7px 1px #202020;
 }
 #siac-toc ul {
     padding-left: 0px;

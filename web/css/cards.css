@@ -8,9 +8,9 @@
     word-break: break-word;
     background: var(--c-card-bg);
   }
-body.nightMode .siac-inner-card,  #siac-reading-modal .siac-inner-card {
+body.nightMode .siac-inner-card, #siac-reading-modal .siac-inner-card {
     color: white;
-    background: var(--c-card-bg-night);
+    background: var(--c-card-bg-night) !important;
   }
 
   .siac-note-outer.meta .siac-inner-card {
@@ -41,7 +41,10 @@ body.nightMode .siac-inner-card,  #siac-reading-modal .siac-inner-card {
   margin: 1.5em 10px;
   padding: 0.5em 10px;
 }
-body.nightMode .siac-inner-card blockquote, body.nightMode .siac-inner-card pre {
+body.nightMode .siac-inner-card blockquote, 
+body.nightMode .siac-inner-card pre,
+#siac-reading-modal .siac-inner-card blockquote, 
+#siac-reading-modal .siac-inner-card pre {
   background: #474749;
   border-left: 10px solid #2496dc;
 }
@@ -154,7 +157,7 @@ body.nightMode .siac-meta-btn {
     box-shadow: 0 0 7px 1px #dcdcdc;
 }
 body.nightMode .siac-note-outer, #siac-reading-modal .siac-note-outer {
-    background: var(--c-card-bg-night);
+    background: var(--c-card-bg-night) !important;
     box-shadow: 0 0 7px 1px #202020;
 }
 /* Header of note card */
@@ -176,15 +179,15 @@ body.nightMode .siac-note-header {
     padding: 9px 9px 0px 7px; 
     display: flex; 
     justify-content: space-between; 
-    background: var(--c-card-bg);
+    background: var(--c-card-bg) !important;
     overflow: hidden;
-    color: var(--c-primary-color);
+    color: var(--c-primary-color) !important;
     flex-wrap: wrap;
 }
 body.nightMode .siac-note-footer, #siac-reading-modal .siac-note-footer {
     border-top-color:rgb(78, 78, 78);
-    background: var(--c-card-bg-night);
-    color: white;
+    background: var(--c-card-bg-night) !important;
+    color: white !important;
 }
 .siac-note-footer > div {
     margin-bottom: 9px;
