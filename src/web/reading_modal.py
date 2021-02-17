@@ -759,14 +759,19 @@ class Reader:
                         else:
                             ntype = "note"
 
+                        print(due_today)
+
                         rev_overlay = f"""
                             <div class='siac-rev-overlay'>
                                 <div class='ta_center bold fg_lightgrey' style='font-size: 22px;'>
-                                <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
+                                    <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
+                                </div>
+                                <div class='ta_center fg_grey bold mt-10' style='font-size: 18px'>
+                                    [{len(due_today)} due cards]
                                 </div>
                                 <div class='ta_center bold' style='opacity: 1; margin: 50px 0 30px 0;'>
                                     <div class='siac-modal-btn' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
-                                    <div class='siac-modal-btn' style='filter: brightness(.65);' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
+                                    <div class='siac-modal-btn' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
                                 </div>
                             </div>
                         """
