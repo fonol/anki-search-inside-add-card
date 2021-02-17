@@ -1715,6 +1715,26 @@ def get_last_opened_notes() -> List[SiacNote]:
     conn.close()
     return _to_notes(res)
 
+def get_last_opened_pdf_notes(limit: int = 200) -> List[SiacNote]:
+    conn = _get_connection()
+    # there is a much simpler (&faster) query that works in 3.24 but for some reason not in Anki's Sqlite version
+    # select notes.* from notes_opened inner join notes on notes_opened.nid = notes.id  group by notes_opened.nid order by notes_opened.created desc limit 100        
+
+    res = conn.execute(f"""
+        select notes.* from notes join (
+        select *   
+        from notes_opened t
+        where exists (
+            select 1
+            from notes_opened ti  
+            where t.nid = ti.nid
+            group by ti.nid
+            having t.rowid = max(ti.rowid)
+        ) order by created desc limit 100) as h on notes.id = h.nid where lower(notes.source) like '%.pdf' limit {limit};
+    """).fetchall()
+    conn.close()
+    return _to_notes(res)
+
 def get_last_opened_note_id() -> int:
     c = _get_connection()
     res = c.execute(""" select nid from notes_opened order by created desc limit 1 """).fetchone()
@@ -2108,7 +2128,10 @@ def _date_now_str() -> str:
     return datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
 def _dt_from_date_str(dtst) -> datetime:
-    return datetime.strptime(dtst, '%Y-%m-%d-%H-%M-%S')
+    try:
+        return datetime.strptime(dtst, '%Y-%m-%d-%H-%M-%S')
+    except:
+        return datetime.strptime(dtst, '%Y-%m-%d %H:%M:%S')
 
 def _table_exists(name) -> bool:
     conn = _get_connection()
