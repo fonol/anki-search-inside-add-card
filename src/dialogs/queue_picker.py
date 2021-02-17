@@ -16,7 +16,7 @@
 
 
 from aqt.qt import *
-from aqt.utils import tooltip
+from aqt.utils import tooltip, showInfo
 import aqt
 import random
 import os
@@ -40,10 +40,6 @@ import utility.misc
 import utility.tags
 import utility.date
 import state
-
-
-
-
 
 
 
