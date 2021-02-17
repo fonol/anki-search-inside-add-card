@@ -25,7 +25,7 @@ def get_notes_in_collection():
     deck_q = _deck_query() 
   
     if deck_q:
-        oList           = mw.col.db.all("select notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s group by notes.id" %(deckStr))
+        oList           = mw.col.db.all("select notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s group by notes.id" %(deck_q))
     else:
         oList           = mw.col.db.all("select notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid group by notes.id")
 
@@ -50,7 +50,7 @@ def index_data_size() -> int:
 
     # todo: find out why count(distinct notes.id) returns slightly different number
     if deck_q:
-        c_anki           = mw.col.db.scalar("select count(*) from (select notes.id, did, mid from notes left join cards on notes.id = cards.nid where did in %s group by notes.id)" %(deckStr))
+        c_anki           = mw.col.db.scalar("select count(*) from (select notes.id, did, mid from notes left join cards on notes.id = cards.nid where did in %s group by notes.id)" %(deck_q))
     else:
         c_anki           = mw.col.db.scalar("select count(*) from (select notes.id, did, mid from notes left join cards on notes.id = cards.nid group by notes.id)")
 
