@@ -155,9 +155,10 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     z-index: 4; 
     bottom: 20px; 
     right: 30px; 
-    border: 3px outset var(--c-reading-modal-theme-color); 
+    /* border: 3px outset var(--c-reading-modal-theme-color);  */
+    box-shadow: 0 0 7px 1px #202020;
     border-radius: 3px; 
-    color: lightgrey; 
+    color: white; 
     background: var(--c-reading-modal-background); 
     padding: 15px;
     text-align: left;
@@ -655,11 +656,11 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     color: grey !important;
 }
 .siac-related-notes-item {
-    color: grey;
+    color: lightgrey;
     cursor: pointer;
 }
 .siac-related-notes-item:hover {
-    color: lightgrey;
+    color: white;
 }
 #siac-marks-display::-webkit-scrollbar {
     display: none;
