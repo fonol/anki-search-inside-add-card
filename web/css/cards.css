@@ -6,6 +6,7 @@
     max-height: 950px;
     min-width: 95px;
     word-break: break-word;
+    box-sizing: border-box;;
     background: var(--c-card-bg);
   }
 body.nightMode .siac-inner-card, #siac-reading-modal .siac-inner-card {
@@ -153,6 +154,7 @@ body.nightMode .siac-meta-btn {
     display: flex; 
     flex-direction: column; 
     margin-bottom: 20px;
+    overflow: hidden;
     background: var(--c-card-bg);
     box-shadow: 0 0 7px 1px #dcdcdc;
 }
@@ -227,9 +229,18 @@ body.nightMode .siac-extract-mark {
 body.nightMode .siac-results-header {
     color: #a2a2a2;
 }
+.siac-results-header-between {
+    font-size: 7px;
+    color: #848484 !important;
+}
+body.nightMode .siac-results-header {
+    color: #0096dc !important;
+}
 #siac-results-header-wrapper {
     padding: 3px 10px 7px 10px;
     margin-top: 6px;
+    display: flex;
+    align-items: center;
 }
 #siac-results-header-wrapper .siac-note-outer {
     margin-bottom: 0 !important;

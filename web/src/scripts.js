@@ -499,11 +499,11 @@ window.setSearchResults = function (header, html, infoStr, infoMap, page = 1, pa
         for (var i = 0; i < header.length; i++) { 
            header_html += `<div class='siac-note-outer mr-10 siac-results-header'>${header[i]}</div>`;
            if (i < header.length - 1) {
-               header_html += "<div class='siac-note-outer mr-10 siac-results-header pl-10 pr-10'><i class='fa fa-chevron-right'></i></div>"
+               header_html += "<div class='siac-note-outer mr-10 siac-results-header siac-results-header-between pl-10 pr-10'><i class='fa fa-chevron-right'></i></div>"
            }
         }
         byId('siac-results-header-wrapper').innerHTML = header_html;
-        byId('siac-results-header-wrapper').style.display = 'block';
+        byId('siac-results-header-wrapper').style.display = 'flex';
     } else {
         byId('siac-results-header-wrapper').style.display = 'none';
     }
