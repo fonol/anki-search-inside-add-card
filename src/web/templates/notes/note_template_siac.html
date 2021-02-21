@@ -3,7 +3,7 @@
         <span style='font-size: 12px;'>
             <span id='siac-cnt-dsp-{nid}'>{counter}</span>
             <span id='siac-pin-dsp-{nid}' class='hidden' onclick='pinCard({nid})'><i class='fa fa-thumb-tack'></i></span>
-            <span class='siac-note-lbl'>{title}</span>
+            <span class='siac-note-lbl' onmouseup='getSelectionText()'>{title}</span>
         </span>
         <div class='flex-row'>
             <div onclick='pycmd("siac-delete-user-note-modal {nid}");' class='red-hover cursor-pointer'><i class='fa fa-trash'></i></div>
