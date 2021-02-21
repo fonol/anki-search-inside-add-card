@@ -3,7 +3,7 @@
         <span style='font-size: 12px;'>
             <span id='siac-cnt-dsp-{nid}'>{counter}</span>
             <span id='siac-pin-dsp-{nid}' class='hidden' onclick='pinCard({nid})'><i class='fa fa-thumb-tack'></i></span>
-            <span class='siac-note-lbl'>SIAC</span>
+            <span class='siac-note-lbl'>{title}</span>
         </span>
         <div class='flex-row'>
             <div onclick='pycmd("siac-delete-user-note-modal {nid}");' class='red-hover cursor-pointer'><i class='fa fa-trash'></i></div>
@@ -14,9 +14,7 @@
             <div id='rem-{nid}' onclick='removeNote({nid})' class='ml-10 turquoise-hover cursor-pointer'><i class="fa fa-times"></i></div>
         </div>
     </div>
-    <div class='siac-inner-card' id='siac-inner-card-{nid}' style='padding: 15px;' onmouseup='getSelectionText()'>
-        {text}
-    </div>
+    <div class='siac-inner-card' id='siac-inner-card-{nid}' style='padding: 15px;' onmouseup='getSelectionText()'>{text}</div>
     <div class='siac-note-footer'>
         <div class='flex-row' style='align-items: center;'>
             <i class='fa fa-{icon} turquoise-hover cursor-pointer' onclick='pycmd("siac-read-user-note {nid}")' style='font-size: 17px;'></i>

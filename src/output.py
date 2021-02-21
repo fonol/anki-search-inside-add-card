@@ -226,7 +226,6 @@ class UI:
                     icon = "film"
                 elif res.is_md():
                     icon = "book"
-
                 elif res.is_file():
                     icon = "external-link"
             elif res.note_type == "index" and res.did and res.did > 0:
@@ -279,11 +278,14 @@ class UI:
                 if res.is_meta_note():
                     template            = NOTE_TMPL_META
                     meta_card_counter   += 1
+                    text                = f"<b>{res.get_title()}</b><hr class='mb-5 siac-note-hr'>{text}"
+
                 newNote     = template.format(
                     grid_class  = gridclass,
                     counter     = counter + 1 - meta_card_counter,
                     nid         = nid,
                     text        = text,
+                    title       = res.get_title(),
                     tags        = utility.tags.build_tag_string(res.tags, cls.gridView),
                     progress    = progress,
                     icon        = icon,
@@ -648,14 +650,16 @@ class UI:
             #try to put fields that consist of a single image in their own line
             text        = utility.text.newline_before_images(text)
             template    = NOTE_TMPL_SIMPLE if res.note_type == "index" else NOTE_TMPL_SIAC_SIMPLE
+            title       = res.get_title() if res.note_type == "user" else ""
             newNote     = template.format(
-                counter=counter+1,
-                nid=res.id,
-                edited="" if str(res.id) not in cls.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + cls._build_edited_info(cls.edited[str(res.id)]),
-                mouseup="getSelectionText()" if search_on_selection else "",
-                text=text,
-                ret=retInfo,
-                tags=utility.tags.build_tag_string(res.tags, tag_hover, maxLength = 25, maxCount = 2))
+                counter = counter+1,
+                title   = title,
+                nid     = res.id,
+                edited  = "" if str(res.id) not in cls.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + cls._build_edited_info(cls.edited[str(res.id)]),
+                mouseup = "getSelectionText()" if search_on_selection else "",
+                text    = text,
+                ret     = retInfo,
+                tags    = utility.tags.build_tag_string(res.tags, tag_hover, maxLength = 25, maxCount = 2))
             html        += newNote
 
         return html

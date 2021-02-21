@@ -20,6 +20,15 @@ body.nightMode .siac-inner-card, #siac-reading-modal .siac-inner-card {
 .pdf .siac-inner-card{
     min-width: 200px;
 }
+.siac-inner-card:empty {
+    display: none !important;
+}
+.siac-inner-card > *:first-child {
+    margin-top: 0;
+}
+.siac-inner-card > *:last-child {
+    margin-bottom: 0;
+}
 .siac-inner-card img {
     max-height: var(--img-max-height) !important;
     max-width: 100%;
@@ -233,7 +242,7 @@ body.nightMode .siac-results-header {
     font-size: 7px;
     color: #848484 !important;
 }
-body.nightMode .siac-results-header {
+body.nightMode .siac-results-header-between {
     color: #0096dc !important;
 }
 #siac-results-header-wrapper {
