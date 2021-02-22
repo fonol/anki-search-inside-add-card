@@ -199,7 +199,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 }
 .siac-page-sidebar-around {
     font-size: 10px;
-    padding: 10px 0px;
+    padding: 8px 0px;
     background: #353535;
 }
 #siac-page-btns {
@@ -1049,6 +1049,7 @@ body.nightMode .siac-note-title-only:hover {
     color: #b2b2a0;
     border-color: #b2b2a0;
     margin-left: 4px;
+    border-width: 1px;
 }
 #siac-reading-modal-tabs-left .siac-btn.active {
     color: #61c3ff !important;

@@ -1393,7 +1393,7 @@ class Reader:
 
         linked_s = "s" if total_linked_count != 1 else ""
         if page != -1:
-            header = f"<div><b>{page} / {pages_total}</b></div><div style='font-size: 12px;'>Total: <b>{total_linked_count}</b> note{linked_s}</div>"
+            header = f"<div style='font-size: 13px;'>{page} / {pages_total}</div><div style='font-size: 12px;'>Total: <b>{total_linked_count}</b> note{linked_s}</div>"
         else:
             header = f"<div><b>Linked</b></div><div style='font-size: 12px;'>Total: <b>{total_linked_count}</b> note{linked_s}</div>"
         if around_s != "":
