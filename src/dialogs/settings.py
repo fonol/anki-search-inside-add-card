@@ -6,6 +6,7 @@ from .setting_tabs.shortcut import ShortcutSettingsTab
 from .setting_tabs.appearance import AppearanceSettingsTab
 from .setting_tabs.interleaving import InterleavingSettingsTab
 from .setting_tabs.general import GeneralSettingsTab
+from .setting_tabs.markdown import MarkdownSettingsTab
 
 
 class SettingsDialog(QDialog):
@@ -30,11 +31,13 @@ class SettingsDialog(QDialog):
         self.tab_shortcut     = ShortcutSettingsTab()
         self.tab_general      = GeneralSettingsTab()
         self.tab_interleaving = InterleavingSettingsTab()
+        self.tab_markdown     = MarkdownSettingsTab()
 
         self.tabs.addTab(self.tab_appearance,   "Appearance")
         self.tabs.addTab(self.tab_shortcut,     "Shortcuts")
         self.tabs.addTab(self.tab_general,      "General")
         self.tabs.addTab(self.tab_interleaving, "Interleaving")
+        self.tabs.addTab(self.tab_markdown,     "Markdown")
 
         # Cancel and Okay Buttons
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
@@ -50,7 +53,8 @@ class SettingsDialog(QDialog):
         tooltip_changes = self.tab_appearance.save_changes() + \
                           self.tab_shortcut.save_changes() + \
                           self.tab_general.save_changes() + \
-                          self.tab_interleaving.save_changes()
+                          self.tab_interleaving.save_changes() + \
+                          self.tab_markdown.save_changes()
 
         if tooltip_changes:
             tooltip_text = "<b>Settings changed</b><br>" + \
