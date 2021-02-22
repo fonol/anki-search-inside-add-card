@@ -1246,8 +1246,8 @@ class Reader:
         io      = ""
         if hasattr(cls._editor, 'onImgOccButton') and mw.addonManager.isEnabled("1374772155"):
             io  = f"<div class='siac-modal-btn mr-10' onclick='pycmd(\"siac-cutout-io {img_src}\"); $(this.parentNode).remove();'><i class='fa fa-eraser'></i>&nbsp; Image Occlusion</div>"
-        modal   = """<div class="siac-modal-small dark ta_center">
-                        <img src="%s" style="height: 90px;"/><br>
+        modal   = """<div class="siac-modal-small dark ta_center oflow_hidden">
+                        <img src="%s" style="max-height: 90px; max-width: 100%%;"/><br>
                         <b>Append to field:</b><br><br>
                         <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding: 0 4px; overflow-x: hidden;">%s</div>
                         <br><br>
@@ -1271,7 +1271,7 @@ class Reader:
         """
 
         cloze_text  = cloze_text.replace("`", "").replace("\n", "")
-        modal       = """ <div class="siac-modal-small dark ta_center">
+        modal       = """ <div class="siac-modal-small dark ta_center oflow_hidden">
                         <b>Append to field:</b><br><br>
                         <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding: 0 4px; overflow-x: hidden;">%s</div><br><br>
                         <div class="siac-modal-btn" onclick="$(this.parentNode).remove();">Cancel</div>
