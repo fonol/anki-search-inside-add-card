@@ -1,9 +1,6 @@
 from aqt.qt import *
-from aqt import mw
 
 from ...web.web import reload_styles
-
-from aqt.utils import showInfo
 from ...config import get_config_value_or_default, update_config
 
 class ColorItem:
@@ -64,16 +61,14 @@ class AppearanceSettingsTab(QWidget):
         # group_ids, arbitrary
         id_tags         = 0
         id_highlight    = 1
-        id_suspended    = 2
-        id_modal        = 3
-        id_general      = 4
+        id_modal        = 2
+        id_general      = 3
 
         # group colors logically, this determines the order!
         list_order = ( # name of section, id
             ("General Colors",          id_general),
             ("Tag Colors",              id_tags),
             ("Highlight Colors",        id_highlight),
-            ("Suspended Label Colors",  id_suspended),
             ("Reading Modal Colors ",   id_modal)
         )
 
@@ -90,9 +85,6 @@ class AppearanceSettingsTab(QWidget):
             ColorItem("styles.highlightBackgroundColor"      , "Highlight Background Color", id_highlight),
             ColorItem("styles.night.highlightForegroundColor", "Highlight Foreground Color (Night Mode)", id_highlight),
             ColorItem("styles.night.highlightBackgroundColor", "Highlight Background Color (Night Mode)", id_highlight),
-
-            ColorItem("styles.suspendedForegroundColor"      , "Suspended Foreground Color", id_suspended),
-            ColorItem("styles.suspendedBackgroundColor"      , "Suspended Background Color", id_suspended),
 
             ColorItem("styles.modalBorderColor"              , "Modal Border Color", id_modal),
             ColorItem("styles.night.modalBorderColor"        , "Modal Border Color (Night Mode)", id_modal),
