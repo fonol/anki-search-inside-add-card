@@ -1220,6 +1220,7 @@ class UI:
         return [
             "Show number of due cards in the 'review before read' overlay",
             "Show total number of linked notes in the PDF sidebar",
+            "Add Markdown tab to settings dialog",
             "Display add-on notes title in note top bar to save space",
             "Add 'Last Opened' subcategory to 'PDF' category in the sidebar",
             "Fix timebox error on Review before read (thanks to p4nix)",
