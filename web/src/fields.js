@@ -69,7 +69,7 @@ window.SIAC.Fields = {
     },
     appendToFieldHtml: function(ix, html) {
         if (ix < this._fields.length) {
-            if (!this._fields[ix].innerText || this._fields[ix].innerText.trim() === '') {
+            if (!this._fields[ix].innerHTML || this._fields[ix].innerHTML.trim() === '' || /^(?:<div><\/div>|<br\/?>)$/.test(this._fields[ix].innerHTML)) {
                 this._fields[ix].innerHTML = html;
                 if (this._fields[ix].innerHTML.startsWith('<br>')) {
                     this._fields[ix].innerHTML = this._fields[ix].innerHTML.substring(4);
