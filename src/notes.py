@@ -1969,6 +1969,13 @@ def get_linked_anki_notes(siac_nid: int) -> List[IndexNote]:
     conn.close()
     return _anki_to_index_note(res)
 
+def get_linked_anki_notes_count(siac_nid: int) -> int:
+    conn = _get_connection()
+    c = conn.execute(f"select count(*) from (select distinct nid from notes_pdf_page where siac_nid = {siac_nid})").fetchone()
+    conn.close()
+    if not c or len(c) == 0:
+        return 0
+    return c[0]
 
 def get_linked_anki_notes_for_pdf_page(siac_nid: int, page: int) -> List[IndexNote]:
     """ Query to retrieve the Anki notes that were created while on a given pdf page. """
