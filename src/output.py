@@ -1218,15 +1218,11 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
-            "Highlight search results in reader tooltip",
-            "Improvements to the sentence detection in reader tooltip ('Cloze' button)",
-            "Fix: Bug that made the search not find words next to fields separators",
-            "First adjustments to make add-on compatible with 2.1.41 (which makes internal changes to the editor)",
-            "Some small style changes in the reader (mainly to the \"search on select\" tooltip)",
-            "Fix: Modal header height not set correctly on 2.1.22",
-            "Fix: Loader in PDF being colored when using PDF color mode like 'Rose'",
-            "Fix: Icon showing doubled in the loader shown on predefined searches like 'Best Performance'",
-            "Give message in the reader if zoom level is set to value other than 100% that text might be blurred",
+            "Show number of due cards in the 'review before read' overlay",
+            "Show total number of linked notes in the PDF sidebar",
+            "Display add-on notes title in note top bar to save space",
+            "Add 'Last Opened' subcategory to 'PDF' category in the sidebar",
+            "Fix timebox error on Review before read (thanks to p4nix)",
         ]
 
     @staticmethod
