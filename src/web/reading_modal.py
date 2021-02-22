@@ -1357,9 +1357,12 @@ class Reader:
         if page == -1:
             linked              = get_linked_anki_notes(cls.note_id)
             around              = []
+            total_linked_count  = len(linked)
         else:
             linked              = get_linked_anki_notes_for_pdf_page(cls.note_id, page)
             around              = get_linked_anki_notes_around_pdf_page(cls.note_id, page)
+            total_linked_count  = get_linked_anki_notes_count(cls.note_id)
+
         read_today          = get_read_today_count()
         added_today_count   = utility.misc.count_cards_added_today()
 
@@ -1388,10 +1391,11 @@ class Reader:
                 else:
                     around_s += f"<span onclick='pycmd(\"siac-linked-to-page {p_ix} \" + pdf.instance.numPages)' class='siac-pa-sq'>{c}</span>"
 
+        linked_s = "s" if total_linked_count != 1 else ""
         if page != -1:
-            header = f"{page} / {pages_total}"
+            header = f"<div><b>{page} / {pages_total}</b></div><div style='font-size: 12px;'>Total: <b>{total_linked_count}</b> note{linked_s}</div>"
         else:
-            header = f"Anki Notes ({len(linked)})"
+            header = f"<div><b>Linked</b></div><div style='font-size: 12px;'>Total: <b>{total_linked_count}</b> note{linked_s}</div>"
         if around_s != "":
             around_s = f"<center class='siac-page-sidebar-around'>{around_s}</center>"
 
@@ -1405,7 +1409,7 @@ class Reader:
             html = html.replace("`", "\\`")
             html = f"""
                 <div class='fg_lightgrey siac-page-sidebar-header'>
-                    <center class='siac-note-header'><b>{header}</b></center>
+                    <div class='siac-note-header flex-row'>{header}</div>
                     {around_s}
                 </div>
                 <div style='overflow-y: auto; flex: 1 1 auto; padding: 7px 6px 7px 6px; text-align: left;'>
@@ -1415,7 +1419,7 @@ class Reader:
         else:
             html = f"""
                 <div class='fg_lightgrey siac-page-sidebar-header'>
-                    <center class='siac-note-header'><b>{header}</b></center>
+                    <div class='siac-note-header flex-row'>{header}</div>
                     {around_s}
                 </div>
                 <div class='fg_lightgrey flex-col' style='flex: 1 1 auto; justify-content: center;'>

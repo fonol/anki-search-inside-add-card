@@ -710,6 +710,9 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 #siac-reading-modal-top-btns .siac-btn {
     line-height: 13px;
 }
+#siac-reading-modal-top-btns > .siac-btn {
+    margin-right: 3px;
+}
 #siac-reading-modal-top-btns span {
     height: 11px; 
     width: 4px;
