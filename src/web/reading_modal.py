@@ -184,6 +184,7 @@ class ReaderSidebar():
 
             self._editor.web.eval("""
                 document.getElementById('siac-left-tab-browse-results').innerHTML = `%s`;
+                setTimeout(refreshMathJax, 10);
             """ % message)
 
     def _print_sidebar_results_title_only(self, results: List[SiacNote]):
@@ -1428,7 +1429,7 @@ class Reader:
                 </div>
                 {stats_s}"""
 
-        cls._editor.web.eval(f"document.getElementById('siac-page-sidebar').innerHTML = `{html}`;")
+        cls._editor.web.eval(f"document.getElementById('siac-page-sidebar').innerHTML = `{html}`; setTimeout(refreshMathJax, 10);")
 
     #endregion page sidebar
 

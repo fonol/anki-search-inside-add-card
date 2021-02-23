@@ -962,6 +962,7 @@ class UI:
                     document.getElementById("siac-pdf-tooltip-results-area").style.removeProperty('max-height');
                     document.getElementById("siac-pdf-tooltip").style.removeProperty('max-width');
                 }
+                setTimeout(refreshMathJax, 10);
             })();
         """ % (html, tt_height, tt_width))
 
