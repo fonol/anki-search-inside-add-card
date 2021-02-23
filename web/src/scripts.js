@@ -547,15 +547,7 @@ window.setSearchResults = function (header, html, infoStr, infoMap, page = 1, pa
             byId("info-Took").innerHTML = `<b>${new Date().getTime() - stamp}</b> ms`;
         }
     }
-    setTimeout(function() { 
-        if (typeof(MathJax) !== "undefined") { 
-            if (typeof(MathJax.typesetPromise) !== 'undefined') {
-                window._mathjaxActivePromise = window._mathjaxActivePromise.then(MathJax.typesetPromise); 
-            }
-        } else { 
-            console.log("[SIAC] Seems like MathJax is not loaded."); 
-        }
-    }, 50);
+    setTimeout(refreshMathJax, 50);
     
 }
 window.displayPagination = function (page, pageMax, total, resultsFound, cacheSize) {

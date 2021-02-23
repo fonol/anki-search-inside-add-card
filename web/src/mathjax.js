@@ -29,3 +29,13 @@ window.MathJax = {
 };
 //http://docs.mathjax.org/en/latest/web/typeset.html#typeset-async
 window._mathjaxActivePromise = Promise.resolve();
+
+window.refreshMathJax = function() {
+    if (typeof(MathJax) !== "undefined") { 
+        if (typeof(MathJax.typesetPromise) !== 'undefined') {
+            window._mathjaxActivePromise = window._mathjaxActivePromise.then(MathJax.typesetPromise); 
+        }
+    } else { 
+        console.log("[SIAC] Seems like MathJax is not loaded."); 
+    }
+};
