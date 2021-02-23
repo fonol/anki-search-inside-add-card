@@ -270,81 +270,54 @@ def insert_scripts():
     pdfjs_v     = "2.4.456"
 
     mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf|woff2?)$")
-    aqt.editor._html += f"""
-    <script>
 
-        var script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/dist/styles.min.css';
-        document.body.appendChild(script);
+    def css(path: str) -> str:
+        return f"""
+            (() => {{
+                let script = document.createElement('link');
+                script.type = 'text/css';
+                script.rel = 'stylesheet';
+                script.href = 'http://127.0.0.1:{port}/{path}';
+                document.body.appendChild(script);
+            }})();"""
 
-        script = document.createElement('script');
+    def js(path: str) -> str:
+        return f"""
+            (() => {{
+                let script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = 'http://127.0.0.1:{port}/{path}';
+                document.body.appendChild(script);
+            }})();"""
+    
+    js_css = ""
+    js_css += css(f"_addons/{addon_id}/web/dist/styles.min.css")
+    js_css += js(f"_addons/{addon_id}/web/dist/siac.min.js")
+    js_css += css(f"_addons/{addon_id}/web/fa/css/font-awesome.min.css")
+    js_css += js(f"_addons/{addon_id}/web/simple_mde/simplemde.min.js")
+    js_css += css(f"_addons/{addon_id}/web/simple_mde/simplemde.min.css")
+    js_css += js(f"_addons/{addon_id}/web/pdfjs/{pdfjs_v}/pdf.js")
+    js_css += js(f"_addons/{addon_id}/web/plot.js")
+    js_css += js(f"_addons/{addon_id}/web/d3.min.js")
+    js_css += css(f"_addons/{addon_id}/web/cal-heatmap.css")
+    js_css += css(f"_addons/{addon_id}/web/pdfjs/textlayer.css")
+    js_css += css(f"_addons/{addon_id}/web/pdf_reader.css")
+    js_css += js(f"_anki/js/vendor/mathjax/tex-chtml.js")
+
+    js_css = f"""<script>
+        {js_css}
+        (() => {{
+        var script = document.createElement('script');
         script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/dist/siac.min.js';
-        document.body.appendChild(script);
-
-        script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/fa/css/font-awesome.min.css';
-        document.body.appendChild(script);
-
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/simple_mde/simplemde.min.js';
-        document.body.appendChild(script);
-
-        script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/simple_mde/simplemde.min.css';
-        document.body.appendChild(script);
-
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/{pdfjs_v}/pdf.js';
-        document.body.appendChild(script);
-
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/plot.js';
+        script.src = 'https://www.youtube.com/iframe_api';
         document.body.appendChild(script);
 
         setTimeout(function() {{
-            script = document.createElement('script');
+            let script = document.createElement('script');
             script.type = 'text/javascript';
             script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/cal-heatmap.min.js';
             document.body.appendChild(script);
         }}, 200);
-
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/d3.min.js';
-        document.body.appendChild(script);
-
-        script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/cal-heatmap.css';
-        document.body.appendChild(script);
-
-        script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/textlayer.css';
-        document.body.appendChild(script);
-
-        script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf_reader.css';
-        document.body.appendChild(script);
-
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'https://www.youtube.com/iframe_api';
-        document.body.appendChild(script);
 
         var css = `@font-face {{
                         font-family: "Open Sans";
@@ -368,9 +341,11 @@ def insert_scripts():
         document.head.appendChild(font_style);
         font_style.type = 'text/css';
         font_style.appendChild(document.createTextNode(css));
+        }})();
+    </script>"""
 
-    </script>
-    """
+
+    aqt.editor._html += js_css
 
 def set_editor_ready():
     state.editor_is_ready = True
@@ -541,7 +516,6 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
 def show_note_modal():
     """ Displays the Create/Update dialog if not already shown. """
     if not state.note_editor_shown:
-        ix              = get_index()
         read_note_id    = Reader.note_id
         NoteEditor(UI._editor.parentWindow, note_id=None, add_only=read_note_id is not None, read_note_id=read_note_id)
 

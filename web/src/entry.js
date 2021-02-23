@@ -9,6 +9,7 @@ import {  } from "./pdf_colors.js";
 import {  } from "./text_editor.js";
 import {  } from "./yt.js";
 import {  } from "./fields.js";
+import {  } from "./mathjax.js";
 
 
 import "../styles.entry.css";
