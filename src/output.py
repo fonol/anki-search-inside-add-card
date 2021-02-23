@@ -1224,6 +1224,7 @@ class UI:
             "Display add-on notes title in note top bar to save space",
             "Add 'Last Opened' subcategory to 'PDF' category in the sidebar",
             "Fix timebox error on Review before read (thanks to p4nix)",
+            "Fix 'Send to field' on cut-out image replacing field content sometimes",
         ]
 
     @staticmethod
