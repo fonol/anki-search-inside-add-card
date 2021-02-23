@@ -429,10 +429,10 @@ def calculateStats(nid, gridView):
 
         infoTable                                                               = {}
         infoTable["<b>Reviews (Cards from this note)</b>"]                      = cnt
-        infoTable["&nbsp;&nbsp;&nbsp; <span style='color: red'>Failed</span>"]  = failed
-        infoTable["&nbsp;&nbsp;&nbsp; <span style='color: black'>Hard</span>"]  = hard
-        infoTable["&nbsp;&nbsp;&nbsp; <span style='color: green'>Good</span>"]  = good
-        infoTable["&nbsp;&nbsp;&nbsp; <span style='color: blue'>Easy</span>"]   = easy
+        infoTable["<span class='ml-5 bg-red rev-lbl'>Failed</span>"]  = failed
+        infoTable["<span class='ml-5 rev-lbl' style='background: black; color: white;'>Hard</span>"]  = hard
+        infoTable["<span class='ml-5 rev-lbl bg-green' style='color: black;'>Good</span>"]  = good
+        infoTable["<span class='ml-5 rev-lbl bg-blue'>Easy</span>"]   = easy
         tables["Stats"].append(infoTable)
 
         if cnt > 0:

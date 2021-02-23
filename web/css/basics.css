@@ -66,6 +66,9 @@
     cursor: pointer;
     color: #2496dc !important;
 }
+.fg-white {
+    color: white !important;
+}
 .white-hover:hover {
     color: white !important;
 }
@@ -78,11 +81,20 @@
 .fg-red {
     color: #f0506e !important;
 }
+.bg-red {
+    background-color: #f0506e !important;
+}
 .fg-green {
     color: #32d296 !important;
 }
+.bg-green {
+    background-color: #32d296 !important;
+}
 .fg-green-hover:hover {
     color: #32d296 !important;
+}
+.bg-blue {
+    background-color: #0096dc !important;
 }
 .bright-hover:hover {
     filter: brightness(1.4);

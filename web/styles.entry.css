@@ -641,32 +641,35 @@ body.nightMode .noteFloatingHeader {
 }
 
 .revlog-block {
-    height: 15px;
-    width: 15px;
+    height: 16px;
+    min-width: 12px;
     display: inline-block;
     text-align: center;
     vertical-align: middle;
     line-height: 15px;
-    font-size: 8px;
+    font-size: 10px;
     margin: 0 2px 0 2px;
-}
-.revlog-block.larger {
-    width: 20px;
+    padding: 0 2px;
 }
 .revlog-block-1 {
-    background: red;
+    background: #f0506e;
 }
 .revlog-block-2 {
     background: black;
     color: white;
 }
 .revlog-block-3 {
-    background: green;
-    color: white;
+    background:#32d296;
+    color: black;
 }
 .revlog-block-4 {
-    background: blue;
+    background: #0096dc;
     color: white;
+}
+.rev-lbl {
+    display: inline-block;
+    min-width: 35px;
+    text-align: center;
 }
 
 .siac-tag-info-box {
