@@ -28,7 +28,7 @@ import string
 
 
 p_trans             = str.maketrans('', '', string.punctuation)
-sp_list             = [".",";",":","!","?","/","\\",",","#","@","$","&",")","(","'","\"", "`", "|"]
+sp_list             = [".","-","_",";",":","!","?","/","\\",",","#","@","$","&",")","(","'","\"", "`", "|"]
 p_to_space_trans    = str.maketrans(dict.fromkeys(sp_list, " "))
 
 
