@@ -1219,6 +1219,7 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
+            "Added MathJax support, for Anki >= 2.1.38",
             "Show number of due cards in the 'review before read' overlay",
             "Show total number of linked notes in the PDF sidebar",
             "Add Markdown tab to settings dialog",
