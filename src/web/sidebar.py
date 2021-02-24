@@ -52,7 +52,7 @@ class Sidebar:
             # check if there are any notes scheduled for today
             scheduled_for_today = get_notes_scheduled_for_today()
             if scheduled_for_today is not None and len(scheduled_for_today) > 0:
-                sched_today_menu_item = f"""<div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-due-today")'>&nbsp;Due today ({len(scheduled_for_today)})</div>"""
+                sched_today_menu_item = f"""<div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-due-today")'>&nbsp; Due today ({len(scheduled_for_today)})</div>"""
             else:
                 sched_today_menu_item = ""
 
