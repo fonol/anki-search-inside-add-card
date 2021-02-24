@@ -448,12 +448,6 @@ class CreateTab(QWidget):
         t_h = QHBoxLayout()
         t_h.addWidget(text_lbl)
 
-        self.tb = QToolBar("Format")
-
-        self.tb.setHidden(False)
-        self.tb.setOrientation(Qt.Horizontal)
-        self.tb.setIconSize(QSize(12, 12))
-
         clean_btn = QPushButton()
         clean_btn.setText("Clean...  ")
         clean_btn.setFocusPolicy(Qt.NoFocus)
@@ -474,10 +468,9 @@ class CreateTab(QWidget):
         clean_menu.addAction("Remove HTML").triggered.connect(self.on_remove_html)
         # clean_menu.addAction("Remove all Headers (#)").triggered.connect(self.on_remove_headers_clicked)
         clean_btn.setMenu(clean_menu)
-        self.tb.addWidget(clean_btn)
 
         t_h.addStretch(1)
-        t_h.addWidget(self.tb)
+        t_h.addWidget(clean_btn)
 
         url_btn = QPushButton(u"Fetch from URL ... ")
         url_btn.setFocusPolicy(Qt.NoFocus)
