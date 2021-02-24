@@ -1213,18 +1213,18 @@ class UI:
             return False
 
 
-
     @staticmethod
     def changelog() -> List[str]:
         """ Returns recent add-on changes. """
 
         return [
             "Added MathJax support, for Anki >= 2.1.38",
+            "Added 'Last Opened' subcategory to 'PDF' category in the sidebar",
+            "Added 'Marks' subcategory to 'PDF' category in the sidebar",
             "Show number of due cards in the 'review before read' overlay",
             "Show total number of linked notes in the PDF sidebar",
             "Add Markdown tab to settings dialog",
             "Display add-on notes title in note top bar to save space",
-            "Add 'Last Opened' subcategory to 'PDF' category in the sidebar",
             "Fix timebox error on Review before read (thanks to p4nix)",
             "Fix 'Send to field' on cut-out image replacing field content sometimes",
         ]
