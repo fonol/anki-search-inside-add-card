@@ -412,7 +412,12 @@ class Reader:
                 var canvas = document.getElementById("siac-pdf-canvas");
                 window.pdf_canvas_0 = canvas;
                 window.pdf_canvas_1 = document.getElementById("siac-pdf-canvas_1");
-                var loadingTask = pdfjsLib.getDocument({data: bstr, nativeImageDecoderSupport: 'none'});
+                var loadingTask = pdfjsLib.getDocument({
+                    data: bstr, 
+                    nativeImageDecoderSupport: 'none', 
+                    cMapUrl: 'http://127.0.0.1:%s/_addons/%s/web/pdfjs/cmaps/',
+                    cMapPacked: true,
+                });
                 loadingTask.promise.catch(function(error) {
                         $('#siac-pdf-loader-wrapper').remove();
                         $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
@@ -449,7 +454,7 @@ class Reader:
             b64 = "";
             bstr = null; file = null;
             })();
-        """ % (pages_read_js, marks_js, extract_js, port, addon_id, cls.pdfjs_v, note_id, last_page_read, title, note_id)
+        """ % (pages_read_js, marks_js, extract_js, port, addon_id, cls.pdfjs_v, addon_id, cls.pdfjs_v, note_id, last_page_read, title, note_id)
 
         #send large files in multiple packets
         page        = cls._editor.web.page()
