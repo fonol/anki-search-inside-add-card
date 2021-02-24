@@ -1002,12 +1002,12 @@ window.drawHeatmap = function (id, data) {
  * Pie chart in Read stats.
  * 
  */
-window.drawTopics = function (id, topics) {
+window.drawTopics = function (topicsAll, topicsLastWeek) {
     if (typeof $ === "undefined" || typeof $.plot === "undefined") {
-        setTimeout(() => { drawTopics(id, topics); }, 200);
+        setTimeout(() => { drawTopics(topicsAll, topicsLastWeek); }, 200);
         return;
     }
-    $.plot('#' + id, topics.map(t => { return { label: t[0], data: t[1] }; }), {
+    let options = {
         series: {
             pie: {
                 show: true,
@@ -1021,12 +1021,18 @@ window.drawTopics = function (id, topics) {
                 stroke: {
                     color: document.body.classList.contains("nightMode") ? '#ffffff' : 'black',
                 }
-
             },
         },
         legend: {
             show: false
         },
-    });
+    };
+  
+    if (topicsAll && topicsAll.length > 0) {
+        $.plot('#siac-read-stats-topics-pc_1', topicsAll.map(t => { return { label: t[0], data: t[1] }; }), options);
+    }
+    if (topicsLastWeek && topicsLastWeek.length > 0) {
+        $.plot('#siac-read-stats-topics-pc_2', topicsLastWeek.map(t => { return { label: t[0], data: t[1] }; }), options);
+    }
 
 }
