@@ -20,7 +20,7 @@
 body:not(.nightMode) #leftSide .siac-btn-dark {
     color: var(--c-button-foreground);
     background: var(--c-button-background);
-    border: 2px outset var(--c-button-border);
+    border: 1px outset var(--c-button-border);
     font-weight: bold;
     color: #6e6e6e;
 }
