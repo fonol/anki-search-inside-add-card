@@ -350,12 +350,12 @@ def read_counts_card_body(counts: Dict[int, int]) -> HTML:
 
 def topic_card_body(topics: List[Tuple[str, float]]) -> HTML:
     html = """
-                <div class='flex-row w-100' style='margin-top: 20px;'>
-                    <div style='width: 50%; flex: 0 1 auto;'>
+                <div class='flex-row w-100' style='margin-top: 20px; flex-wrap: wrap;'>
+                    <div style='min-width: 400px; flex: 1 1 auto;'>
                         <div class='w-100 ta_center bold'>All PDFs</div>
                         <div id='siac-read-stats-topics-pc_1' class='w-100' style='height: 400px;'></div>
                     </div> 
-                    <div style='width: 50%; flex: 0 1 auto;'>
+                    <div style='min-width: 400px; flex: 1 1 auto;'>
                         <div class='w-100 ta_center bold'>Read last 7 days</div>
                         <div id='siac-read-stats-topics-pc_2' class='w-100' style='height: 400px;'></div>
                     </div> 
