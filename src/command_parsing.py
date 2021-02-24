@@ -1575,10 +1575,8 @@ def show_read_stats():
     UI.print_search_results(None,  res, stamp)
     # fill plots
     UI.js(f"""drawHeatmap("#siac-read-time-ch", {json.dumps(t_counts)});""")
-    if len(topics) > 0:
-        UI.js(f"drawTopics('siac-read-stats-topics-pc_1', {json.dumps(topics)});")
-    if len(rec_topics) > 0:
-        UI.js(f"drawTopics('siac-read-stats-topics-pc_2', {json.dumps(rec_topics)});")
+    if len(topics) > 0 or len(rec_topics) > 0:
+        UI.js(f"drawTopics({json.dumps(topics)}, {json.dumps(rec_topics)});")
 
 
 def capture_web(t: int, r: int, b: int, l: int):
