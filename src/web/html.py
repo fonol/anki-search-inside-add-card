@@ -23,18 +23,19 @@ import io
 import typing
 from aqt import mw
 from aqt.utils import showInfo
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Any
 
 from .note_templates import *
 from .templating import filled_template
 from ..state import get_index, check_index
-from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str, get_read_today_count
+from ..notes import  PDFMark, get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str, get_read_today_count
 from ..internals import perf_time, HTML, JS
 from ..config import get_config_value_or_default as conf_or_def
 from ..models import IndexNote
 import utility.misc
 import utility.tags
 import utility.text
+import utility.date
 
 
 """ Html.py - various HTML-building functions. 
@@ -348,6 +349,36 @@ def read_counts_card_body(counts: Dict[int, int]) -> HTML:
     """
     return html
 
+def marks_card_body(marks: List[Tuple[Any, ...]]) -> HTML:
+    """ Builds the HTML for the card which is displayed when clicking on PDF -> Marks """
+
+    if marks is None or len(marks) == 0:
+        return """<center class='pt-10 pb-10'>No marks have been set yet.</center>"""
+
+    html = ""
+    dnow = datetime.datetime.now()
+
+    for created, marktype, nid, page, pagestotal, pdf_title in marks:
+
+        marktype_str    = PDFMark.pretty(PDFMark(marktype))
+        cdate           = utility.date.dt_from_stamp(created)
+        diff            = utility.date.date_diff_to_string(dnow-cdate)
+        html            = f"""{html}
+            <tr style=''>
+                <td style='white-space: nowrap;'>{diff} ago</td>
+                <td style='white-space: nowrap;'>{marktype_str}</td>
+                <td><a class='keyword' onclick='pycmd("siac-read-user-note {nid} {page}")'>{pdf_title}</a></td>
+                <td style='white-space: nowrap;'>{page} / {pagestotal}</td>
+            </tr>
+        """
+    html = f"""
+        <table class='w-100'>
+            {html}
+        </table>
+    """
+
+    return html
+
 def topic_card_body(topics: List[Tuple[str, float]]) -> HTML:
     html = """
                 <div class='flex-row w-100' style='margin-top: 20px; flex-wrap: wrap;'>
@@ -362,8 +393,6 @@ def topic_card_body(topics: List[Tuple[str, float]]) -> HTML:
                 </div> 
                 """
     return html
-
-
 
 def read_counts_by_date_card_body(counts: Dict[str, int]) -> HTML:
     """ Html for the card that displays read pages / day (heatmap). """

@@ -62,6 +62,15 @@ class PDFMark(Enum):
     MORE_CARDS  = 4
     BOOKMARK    = 5
 
+    @classmethod
+    def pretty(cls, value) -> str:
+        if value == cls.REVISIT     : return "Revisit"
+        if value == cls.HARD        : return "Hard"
+        if value == cls.MORE_INFO   : return "More Info"
+        if value == cls.MORE_CARDS  : return "More Cards"
+        if value == cls.BOOKMARK    : return "Bookmark"
+
+
 DEF_NOTES_TABLE = """
             (
                 id INTEGER PRIMARY KEY,
@@ -959,6 +968,16 @@ def get_pdf_marks(nid: int) -> List[Tuple[Any, ...]]:
     res = conn.execute("select * from marks where nid = %s" % nid).fetchall()
     conn.close()
     return res
+
+def get_recently_created_marks(limit: int = 100) -> List[Tuple[Any, ...]]:
+    c   = _get_connection()
+    res = c.execute(f"select marks.created, marktype, marks.nid, page, pagestotal, notes.title from marks join notes on marks.nid = notes.id order by marks.created desc limit {limit}") .fetchall()
+    c.close()
+    if res is None:
+        return []
+    return list(res)
+
+
 
 def get_pdfs_by_sources(sources: List[str]) -> List[str]:
     """

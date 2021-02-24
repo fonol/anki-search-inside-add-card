@@ -294,6 +294,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         notes.insert(0, SiacNote.mock("PDF Meta", sp_body,"Meta"))
         UI.print_search_results(["PDFs", "Last opened"], notes, stamp)
 
+    elif cmd == "siac-r-show-pdfs-marks":
+        stamp   = set_stamp()
+        marks   = get_recently_created_marks(limit=100)
+        sp_body = marks_card_body(marks)
+        UI.print_search_results(["PDFs", "Marks"], [SiacNote.mock("Most recent marked pages", sp_body, "Meta")], stamp)
+
     elif cmd == "siac-r-show-due-today":
         stamp = set_stamp()
         notes = get_notes_scheduled_for_today()
@@ -601,7 +607,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-read-user-note "):
         id = int(cmd.split()[1])
         if id >= 0:
-            Reader.display(id)
+            pg  = None
+            if len(cmd.split()) > 2:
+                pg = int(cmd.split()[2])
+            Reader.display(id, page=pg)
 
     elif cmd == "siac-r-user-note-queue":
         stamp = set_stamp()
