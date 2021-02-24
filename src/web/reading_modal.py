@@ -264,7 +264,7 @@ class Reader:
 
 
     @classmethod
-    def display(cls, note_id: int):
+    def display(cls, note_id: int, page: Optional[int] = None):
 
         if not note_id or note_id <= 0:
             return
@@ -316,7 +316,7 @@ class Reader:
                 cls.notification(message)
 
             else:
-                cls._display_pdf(note.source.strip(), note_id)
+                cls._display_pdf(note.source.strip(), note_id, page=page)
                 # try to select deck which was mostly used when adding notes while this pdf was open
                 deck_name = get_deck_mostly_linked_to_note(note_id)
                 if deck_name:
@@ -340,7 +340,7 @@ class Reader:
 
 
     @classmethod
-    def _display_pdf(cls, full_path: str, note_id: int):
+    def _display_pdf(cls, full_path: str, note_id: int, page: Optional[int] = None):
 
         # use rust based lib for better performance if possible
         if state.rust_lib:
@@ -378,6 +378,10 @@ class Reader:
                 last_page_read = read_in_extract[-1] if len(read_in_extract) > 0 else cls.note.extract_start
             else:
                 last_page_read  = cls.note.extract_start
+        
+        open_at_page = "null"
+        if page is not None and page > 0:
+            open_at_page = page
 
         title           = utility.text.trim_if_longer_than(cls.note.get_title(), 50).replace('"', "")
         addon_id        = utility.misc.get_addon_id()
@@ -430,14 +434,14 @@ class Reader:
                 loadingTask.promise.then(function(pdfDoc) {
                         pdf.instance = pdfDoc;
                         displayedNoteId = %s;
-                        pdf.page = getLastReadPage() || %s;
+                        pdf.page = %s || getLastReadPage() || %s;
                         pdf.highDPIWasUsed = false;
                         if (!document.getElementById('siac-pdf-top')) {
                             return;
                         }
                         document.getElementById('text-layer').style.display = 'inline-block';
                         if (pdf.pagesRead.length === pdfDoc.numPages) {
-                            pdf.page = getLastReadPage() || 1;
+                            pdf.page = %s || getLastReadPage() || 1;
                         }
                         queueRenderPage(pdf.page, true, true, true);
                         updatePdfProgressBar();
@@ -454,7 +458,7 @@ class Reader:
             b64 = "";
             bstr = null; file = null;
             })();
-        """ % (pages_read_js, marks_js, extract_js, port, addon_id, cls.pdfjs_v, addon_id, cls.pdfjs_v, note_id, last_page_read, title, note_id)
+        """ % (pages_read_js, marks_js, extract_js, port, addon_id, cls.pdfjs_v, addon_id, cls.pdfjs_v, note_id, open_at_page, last_page_read, open_at_page, title, note_id)
 
         #send large files in multiple packets
         page        = cls._editor.web.page()
@@ -764,8 +768,6 @@ class Reader:
                             act   = "Watching"
                         else:
                             ntype = "note"
-
-                        print(due_today)
 
                         rev_overlay = f"""
                             <div class='siac-rev-overlay'>
