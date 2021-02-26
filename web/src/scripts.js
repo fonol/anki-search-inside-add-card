@@ -1019,7 +1019,7 @@ window.drawTopics = function (topicsAll, topicsLastWeek) {
                     label: 'Others (< 2%)'
                 },
                 stroke: {
-                    color: document.body.classList.contains("nightMode") ? '#ffffff' : 'black',
+                    color: document.body.classList.contains("nightMode") ? '#ffffff' : 'transparent',
                 }
             },
         },
