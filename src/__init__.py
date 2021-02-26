@@ -269,7 +269,7 @@ def insert_scripts():
     # pdfjs_v     = "2.6.347" if chromium_v  > "76" else "2.4.456"
     pdfjs_v     = "2.4.456"
 
-    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf|woff2?)$")
+    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf|woff2?|bcmap)$")
 
     def css(path: str) -> str:
         return f"""
