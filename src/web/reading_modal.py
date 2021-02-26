@@ -42,6 +42,7 @@ from .html import *
 from ..dialogs.done_dialog import DoneDialog
 from ..dialogs.priority_dialog import PriorityDialog
 from ..dialogs.postpone_dialog import PostponeDialog
+from ..dialogs.text_extract import TextExtractDialog
 from .templating import filled_template
 from .note_templates import *
 from ..internals import js, HTML, JS
@@ -458,7 +459,7 @@ class Reader:
             b64 = "";
             bstr = null; file = null;
             })();
-        """ % (pages_read_js, marks_js, extract_js, port, addon_id, cls.pdfjs_v, addon_id, cls.pdfjs_v, note_id, open_at_page, last_page_read, open_at_page, title, note_id)
+        """ % (pages_read_js, marks_js, extract_js, port, addon_id, cls.pdfjs_v, port, addon_id, note_id, open_at_page, last_page_read, open_at_page, title, note_id)
 
         #send large files in multiple packets
         page        = cls._editor.web.page()
@@ -639,7 +640,6 @@ class Reader:
                 remove_delay(cls.note_id)
 
                 # remove note from queue
-                prio = get_priority(cls.note_id)
                 update_priority_list(cls.note_id, 0)
 
                 # DEBUG
@@ -1269,6 +1269,20 @@ class Reader:
             flds += """<div class="siac-field-picker-opt" onclick="SIAC.Fields.appendToFieldHtml(%s, `<img src='%s'/>`); $(this.parentNode.parentNode).remove(); %s">%s</div>""" % (i, img_src, fld_update_js, f["name"])
         modal = modal % (img_src, flds, io, img_src)
         return "$('#siac-reading-modal-center').append('%s');" % modal.replace("\n", "").replace("'", "\\'")
+
+    @classmethod
+    @js
+    def show_text_extract_modal(cls) -> JS: 
+        text   = cls._editor.web.selectedText()
+        if text is None or len(text.strip()) == 0:
+            return "readerNotification('Could not detect any selected text.')"
+
+        fields = [f['name'] for f in cls._editor.note.model()['flds']]
+        dialog = TextExtractDialog(cls._editor.parentWindow, fields, text)
+        if dialog.exec_():
+            ix = dialog.chosen_field_ix
+            return f"SIAC.Fields.appendToFieldHtml({ix}, `{text.replace('`', '')}`);"
+
 
     @classmethod
     @js
