@@ -1229,6 +1229,13 @@ def update_text_comment_text(id: int, text: str):
 # end highlights
 #
 
+def get_all_tags_with_counts() -> Dict[str, int]:
+    """ Returns a dict containing all tags that appear in the user's notes, along with their counts. """
+    conn        = _get_connection()
+    all_tags    = conn.execute("select tags from notes where tags is not null").fetchall()
+    conn.close()
+    all_tags    = [t[0] for t in all_tags]
+    return utility.tags.to_tag_hierarchy_with_counts(all_tags)
 
 def get_all_tags() -> Set[str]:
     """ Returns a set containing all tags that appear in the user's notes. """
