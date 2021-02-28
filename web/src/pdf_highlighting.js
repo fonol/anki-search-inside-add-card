@@ -27,8 +27,9 @@ export const Highlighting = {
 
     /**
      * Main entry point, called after keyup in text layer with ctrl pressed.
+     * If colorId is given, the given color will be used, else colorSelected.
      */
-    highlight: function () {
+    highlight: function (colorId) {
         let s = window.getSelection();
         let r = s.getRangeAt(0);
         $('#text-layer > span').css("height", "auto");
@@ -39,9 +40,9 @@ export const Highlighting = {
         }
         let rects = this._fuseOverlappingClientRects(clientRects);
         let rectCanvas = byId("text-layer").getBoundingClientRect();
-        let offset = byId('text-layer').offsetLeft;
         //page group type [x,y,w,h]+ # text
-        let cmd = pdf.page + " -1 " + this.colorSelected.id + " ";
+        let color = colorId || this.colorSelected.id;
+        let cmd = pdf.page + " -1 " + color + " ";
 
         rects.forEach((r) => {
             let x = r.x - rectCanvas.x;
