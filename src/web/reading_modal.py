@@ -1281,7 +1281,11 @@ class Reader:
         dialog = TextExtractDialog(cls._editor.parentWindow, fields, text)
         if dialog.exec_():
             ix = dialog.chosen_field_ix
-            return f"SIAC.Fields.appendToFieldHtml({ix}, `{text.replace('`', '')}`);"
+            js = f"SIAC.Fields.appendToFieldHtml({ix}, `{dialog.selection.replace('`', '')}`);"
+            if TextExtractDialog.highlight_ix > 0:
+                js += f"Highlighting.highlight({TextExtractDialog.highlight_ix});"
+            return js
+
 
 
     @classmethod
