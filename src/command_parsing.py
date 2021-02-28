@@ -415,7 +415,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         insert_pages_total(int(cmd.split()[1]), int(cmd.split()[2]))
     
     elif cmd == "siac-show-text-extract-modal":
-        Reader.show_text_extract_dialog()
+        Reader.show_text_extract_modal()
 
     elif cmd.startswith("siac-show-cloze-modal "):
         selection = " ".join(cmd.split()[1:]).split("$$$")[0]
