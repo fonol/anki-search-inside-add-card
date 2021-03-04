@@ -1,5 +1,6 @@
 import {  } from "./init.js";
 import {  } from "./scripts.js";
+import {  } from "./helpers.js";
 import {  } from "./pdf_search.js";
 import {  } from "./pdf_image.js";
 import {  } from "./pdf_events.js";
