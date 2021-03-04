@@ -34,7 +34,6 @@ import aqt.stats
 import os
 import re
 import time as t
-import webbrowser
 import functools
 import typing
 from typing import Dict, Any, List, Tuple, Optional, Callable
@@ -46,19 +45,16 @@ import utility.tags
 import utility.misc
 import state
 
-from .state import check_index, get_index, set_edit, get_edit
+from .state import get_index, set_edit, get_edit
 from .index.indexing import build_index
-from .debug_logging import log
 from .web.web import *
 from .web.html import right_side_html
 from .notes import *
-from .hooks import add_hook, run_hooks
+from .hooks import add_hook
 from .review_interrupt import review_interruptor
 from .dialogs.editor import EditDialog, NoteEditor
-from .internals import requires_index_loaded
 from .config import get_config_value_or_default as conf_or_def, get_config_value
-from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search, search_by_tags
-#from .api import show_quick_open_pdf
+from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, add_note_to_index, try_repeat_last_search, search_by_tags
 from .menubar import Menu
 from .web.reading_modal import Reader
 from .output import UI
@@ -206,6 +202,9 @@ def on_load_note(editor: Editor):
             var delayWhileTyping     = {typing_delay};
             SIAC.Colors.pdfColorMode = "{pdf_color_mode}";
             SIAC.Fields.cacheFields();
+
+            document.addEventListener('mouseup', onTextSelectionChange);
+            onTextSelectionChange();
 
             setWindowMode('{state.window_mode.name}');
 
