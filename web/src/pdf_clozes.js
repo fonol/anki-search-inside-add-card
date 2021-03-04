@@ -40,7 +40,11 @@ window.joinTextLayerNodeTexts = function (nodes, text) {
 }
 
 window.nodesInSelection = function (range) {
-    var lAllChildren = byId("text-layer").children;
+    let textLayer = byId('text-layer');
+    if (!textLayer) {
+        return null;
+    }
+    var lAllChildren = textLayer.children;
     let nodes = [];
     let inside = false;
     let start = range.startContainer.nodeName === "#text" ? range.startContainer.parentNode : range.startContainer;
