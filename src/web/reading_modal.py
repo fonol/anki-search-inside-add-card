@@ -176,6 +176,7 @@ class ReaderSidebar():
             self._editor.web.eval("""
                 document.getElementById('siac-left-tab-browse-results').innerHTML = `%s`;
                 document.getElementById('siac-left-tab-browse-results').scrollTop = 0;
+                setTimeout(refreshMathJax, 10);
             """ % html)
         else:
             if not query_set:
@@ -185,7 +186,6 @@ class ReaderSidebar():
 
             self._editor.web.eval("""
                 document.getElementById('siac-left-tab-browse-results').innerHTML = `%s`;
-                setTimeout(refreshMathJax, 10);
             """ % message)
 
     def _print_sidebar_results_title_only(self, results: List[SiacNote]):
