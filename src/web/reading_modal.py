@@ -232,7 +232,7 @@ class Reader:
      
     @classmethod
     def set_editor(cls, editor):
-        cls._editor            = editor
+        cls._editor                 = editor
         cls.sidebar.set_editor(editor)
 
         #TODO: ugly fix
@@ -245,6 +245,7 @@ class Reader:
         cls.note                    = None
         cls.current_note            = None
         cls.sidebar.tab_displayed   = None
+
         if cls._original_win_title is not None:
             win = mw.app.activeWindow()
             if isinstance(win, aqt.addcards.AddCards):
@@ -1287,6 +1288,16 @@ class Reader:
             return js
 
 
+    @classmethod
+    @js
+    def send_text_extract_to_field(cls, field_ix: int) -> JS:
+        text   = cls._editor.web.selectedText()
+        if text is None or len(text.strip()) == 0:
+            return "readerNotification('Could not detect any selected text.')"
+        js = f"SIAC.Fields.appendToFieldHtml({field_ix}, `{text.replace('`', '')}`);"
+        if TextExtractDialog.highlight_ix > 0:
+            js += f"Highlighting.highlight({TextExtractDialog.highlight_ix});"
+        return js
 
     @classmethod
     @js
