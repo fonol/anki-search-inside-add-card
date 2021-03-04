@@ -416,6 +416,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     
     elif cmd == "siac-show-text-extract-modal":
         Reader.show_text_extract_modal()
+    
+    elif cmd.startswith("siac-text-extract-send-to-field "):
+        fld_ix = int(cmd.split()[1])
+        Reader.send_text_extract_to_field(fld_ix)
 
     elif cmd.startswith("siac-show-cloze-modal "):
         selection = " ".join(cmd.split()[1:]).split("$$$")[0]
@@ -952,6 +956,21 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             else:
                 Reader.show_img_field_picker_modal(name)
                 os.remove(image)
+    
+    elif cmd.startswith("siac-add-image-to-fld "):
+        fld_ix  = int(cmd.split()[1])
+        b64     = cmd.split()[2][13:]
+        image   = utility.misc.base64_to_file(b64)
+        if image is None or len(image) == 0:
+            tooltip("Failed to temporarily save file.", period=5000)
+        else:
+            name = mw.col.media.addFile(image)
+            if name is None or len(name) == 0:
+                tooltip("Failed to add file to media col.", period=5000)
+            else:
+                UI.js(f"SIAC.Fields.appendToFieldHtml({fld_ix}, `<img src='{name}'></img>`);")
+                os.remove(image)
+
 
     elif cmd.startswith("siac-remove-snap-image "):
         # user clicked on cancel, image is already added to the media folder, so we delete it
@@ -965,11 +984,12 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd.startswith("siac-screen-capture "):
         # capture part of webview (e.g. 'Capture' btn in Yt viewer clicked)
 
-        t = int(cmd.split()[1])
-        r = int(cmd.split()[2])
-        b = int(cmd.split()[3])
-        l = int(cmd.split()[4])
-        capture_web(t, r, b, l)
+        fld_ix  = int(cmd.split()[1])
+        t       = int(cmd.split()[2])
+        l       = int(cmd.split()[3])
+        w       = int(cmd.split()[4])
+        h       = int(cmd.split()[5])
+        capture_web(fld_ix, t, l, w, h)
 
 
     elif cmd.startswith("siac-generate-clozes "):
@@ -1135,6 +1155,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         index.highlighting      = cmd.split()[1] == "on"
         config["highlighting"]  = cmd.split()[1] == "on"
         mw.addonManager.writeConfig(__name__, config)
+
     elif cmd.startswith("deckSelection"):
         if not check_index():
             return (True, None)
@@ -1591,11 +1612,9 @@ def show_read_stats():
         UI.js(f"drawTopics({json.dumps(topics)}, {json.dumps(rec_topics)});")
 
 
-def capture_web(t: int, r: int, b: int, l: int):
+def capture_web(fld_ix: int, t: int, l: int, w: int, h: int):
     """ Save the given rectangle part of the webview as image. """
 
-    w       = r - l
-    h       = b - t
     web     = UI._editor.web
     image   = QImage(w, h, QImage.Format_ARGB32)
     region  = QRegion(l, t, w, h)
@@ -1617,7 +1636,10 @@ def capture_web(t: int, r: int, b: int, l: int):
         if name is None or len(name) == 0:
             tooltip("Failed to add file to media col.", period=5000)
         else:
-            Reader.show_img_field_picker_modal(name)
+            if fld_ix < 0:
+                Reader.show_img_field_picker_modal(name)
+            else:
+                UI.js(f"SIAC.Fields.appendToFieldHtml({fld_ix}, `<img src='{name}'/>`)")
             os.remove(image)
 
 
