@@ -860,6 +860,13 @@ window.globalKeydown = function (e) {
     if (displayedNoteId && e.keyCode === 122) {
         toggleBothBars();
     }
+    // CTRL/CMD + <n> + text is selected -> send selection to <n>th field
+    else if ((e.ctrlKey || e.metaKey) && e.keyCode >= 49 && e.keyCode <= 57 && (e.keyCode - 48) <= SIAC.Fields.count() && windowHasSelection() && !SIAC.Helpers.selectionIsInside(document.getElementById('leftSide'))) {
+        let sel = selectionCleaned();
+        if (sel && sel.length > 0) {
+            SIAC.Fields.appendToFieldHtml(e.keyCode - 49, sel);
+        }
+    }
 }
 
 window.toggleNoteSidebar = function () {

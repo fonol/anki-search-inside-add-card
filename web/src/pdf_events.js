@@ -17,14 +17,23 @@
 
 /** Experimental function to improve copy+paste from the text layer. */
 window.onPDFCopy = function (e) {
+    let text = selectionCleaned();
+    if (text) {
+        e.clipboardData.setData('text/plain', text);
+        e.preventDefault();
+    }
+}
+
+window.selectionCleaned = function() {
     let sel = getSelection();
     let r = sel.getRangeAt(0);
     let nodes = nodesInSelection(r);
-    if (!nodes) { return; }
+    if (!nodes) { return sel.toString(); }
     let text = "";
     let offsetLeftLast = 0;
     let offsetTopLast = 0;
     let widthLast = 0;
+    let textWidthLast = 0;
     let insertedCount = 0;
     let lastYDiffs = [];
     let lastFontSize = null;
@@ -59,17 +68,26 @@ window.onPDFCopy = function (e) {
             lastFontSize = Number(nodes[i].style.fontSize.substring(0, nodes[i].style.fontSize.indexOf("px")));
 
             // check for space between text divs, if there is enough space, we should probably insert a whitespace
-        } else if (offsetLeftLast + widthLast < nodes[i].offsetLeft - 2 && !nodes[i].innerText.startsWith(" ")) {
+        } else if (offsetLeftLast + textWidthLast < nodes[i].offsetLeft - 2 && !nodes[i].innerText.startsWith(" ")) {
             text += " " + nodes[i].innerText;
             insertedCount++;
         }
         else {
-            text += nodes[i].innerText;
+            if (offsetLeftLast + textWidthLast > nodes[i].offsetLeft - 5) {
+                text = text.trimRight() + nodes[i].innerText;
+            } else {
+                text += nodes[i].innerText;
+            }
         }
 
         offsetLeftLast = nodes[i].offsetLeft;
         offsetTopLast = nodes[i].offsetTop;
+
+        let fontDescriptor = (nodes[i].style.fontWeight || 'normal')  + " " + nodes[i].style.fontSize + " " + nodes[i].style.fontFamily;
+
         widthLast = nodes[i].offsetWidth;
+        let scaleX = /[0-9]+(\.[0-9]+)?/g.exec(nodes[i].style.transform) ? Number(/[0-9]+(\.[0-9]+)?/g.exec(nodes[i].style.transform)[0]) : 1;
+        textWidthLast = SIAC.Helpers.calculateTextWidth(nodes[i].innerText.trim(), fontDescriptor) * scaleX;
     }
     let original = sel.toString();
     if (!text.length && original.length) {
@@ -98,8 +116,7 @@ window.onPDFCopy = function (e) {
     text = text.replace(/ ([,.;:]) /g, "$1 ");
     text = text.replace(/ ([)\].!?:])/g, "$1");
     text = text.replace(/([(\[]) /g, "$1");
-    e.clipboardData.setData('text/plain', text);
-    e.preventDefault();
+    return text;
 }
 
 window.pdfLeftTabPdfSearchKeyup = function (value, event) {
@@ -200,7 +217,12 @@ window.pdfKeyup = function (e) {
     } else if ((e.ctrlKey || e.metaKey) && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
         // clicked with ctrl, text insert btn is active -> insert text area at coordinates
         Highlighting.insertText(e);
-    } 
+    }
+    // if ((e.ctrlKey || e.metaKey) && e.keyCode >= 49 && e.keyCode < 57 &&  (e.keyCode - 48) <= SIAC.Fields.count() && windowHasSelection()) {
+    //     // CTRL/Meta + [1-9] with text selected -> send to field (& optionally highlight)
+    //     pycmd('siac-show-text-extract-modal ' + (e.keyCode - 49));
+    // }
+
     
 }
 
@@ -253,4 +275,14 @@ window.pdfMouseWheel = function (event) {
         pdfScaleChange("down");
     }
     event.preventDefault();
+}
+
+window.onTextSelectionChange = function(event) {
+    setTimeout(function() {
+        if (windowHasSelection() && !SIAC.Helpers.selectionIsInside(document.getElementById('leftSide'))) {
+            SIAC.Fields.displaySelectionMenu();
+        } else {
+            SIAC.Fields.hideSelectionMenu();
+        }
+    }, 50);
 }

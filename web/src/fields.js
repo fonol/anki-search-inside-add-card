@@ -54,6 +54,7 @@ window.SIAC.Fields = {
         return f.text();
     },
     saveField: function(ix) {
+        // $(this._fields[ix]).trigger('blur');
         pycmd(`blur:${ix}:${this._noteId()}:${this.getFieldHtml(ix)}`);
     },
     getFieldHtml: function(ix) {
@@ -66,6 +67,14 @@ window.SIAC.Fields = {
         if (ix < this._fields.length) {
             this._fields[ix].innerHTML = html;
         }
+        this.saveField(ix);
+    },
+    appendSelectionToFieldHtml: function(ix) {
+        let sel = selectionCleaned();
+        if (sel && sel.length > 0) {
+            this.appendToFieldHtml(ix, sel);
+        }
+
     },
     appendToFieldHtml: function(ix, html) {
         if (ix < this._fields.length) {
@@ -100,6 +109,12 @@ window.SIAC.Fields = {
             this._fields = document.querySelectorAll('.field');
         }
     },
+    count: function() {
+        if (!this._fields || this._fields.length === 0) {
+            this.cacheFields();
+        }
+        return this._fields.length;
+    },
     empty: function() {
         for (var i = 0; i < this._fields.length; i++) {
             if (this._fields[i].innerText && this._fields[i].innerText.length > 0) {
@@ -115,6 +130,35 @@ window.SIAC.Fields = {
         }
         // - 2.1.40
         return currentNoteId;
+    },
+
+    displaySelectionMenu: function() {
+        this.hideSelectionMenu();
+        let fnames = document.querySelectorAll('.fname');
+        for (var i = 0; i < fnames.length; i++) {
+            let div = document.createElement("div");
+            div.classList.add('siac-fld-sel-menu');
+            let sc_icon = i < 9 ? `<b title="CTRL/CMD + ${i+1}: Send to this field">${i+1}</b>` : '';
+            div.innerHTML = `
+                <i class='fa fa-reply-all' onmousedown='SIAC.Fields.appendSelectionToFieldHtml(${i})'></i>
+                <i class='fa fa-picture-o ml-5' onmousedown='event.preventDefault(); selectionSnapshot(${i}); return false;'></i>
+                ${sc_icon} 
+                `;
+            if (typeof getEditorField !== "undefined") {
+                getEditorField(i).labelContainer.appendChild(div);
+            } else {
+                fnames[i].appendChild(div);
+            }
+
+        }
+
+
+    },
+    hideSelectionMenu: function() {
+        let fmenus = document.querySelectorAll('.siac-fld-sel-menu');
+        for (var i = 0; i < fmenus.length; i++) {
+            fmenus[i].parentNode.removeChild(fmenus[i]);
+        }
     }
 }
 
