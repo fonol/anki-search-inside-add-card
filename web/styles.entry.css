@@ -891,3 +891,32 @@ body.nightMode .siac-prog-tmp {
 summary, summary:focus {
     outline:none !important;
   }
+
+
+.fname {
+    position: relative;
+}
+.siac-fld-sel-menu {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.siac-fld-sel-menu * {
+    cursor: pointer;
+    color: #2e6286;
+}
+body.nightMode .siac-fld-sel-menu *  {
+    color: lightgrey;
+}
+.siac-fld-sel-menu .fa:hover {
+    color: coral !important;
+}
+.siac-fld-sel-menu b {
+    margin: 0 3px 0 5px;
+    user-select: none;
+    cursor: default;
+}
