@@ -28,7 +28,7 @@ window.selectionCleaned = function() {
     let sel = getSelection();
     let r = sel.getRangeAt(0);
     let nodes = nodesInSelection(r);
-    if (!nodes) { return sel.toString(); }
+    if (!nodes || nodes.length === 1) { return sel.toString(); }
     let text = "";
     let offsetLeftLast = 0;
     let offsetTopLast = 0;
@@ -237,9 +237,7 @@ window.pdfTooltip = function(e) {
     $('#text-layer > span').css("height", "auto");
     let nodesInSel = nodesInSelection(r);
     let sentences = getSentencesAroundSelection(r, nodesInSel, text);
-    if (nodesInSel.length > 1) {
-        text = joinTextLayerNodeTexts(nodesInSel, text);
-    }
+    text = selectionCleaned();
     let rect = r.getBoundingClientRect();
     let prect = byId("siac-reading-modal").getBoundingClientRect();
     let left = rect.left - prect.left;

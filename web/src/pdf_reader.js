@@ -1231,7 +1231,7 @@ window.modalBgUpdate = function () {
 // helpers
 //
 window.windowHasSelection = function () {
-    return window.getSelection().toString().length > 0;
+    return window.getSelection().toString().trim().length > 0;
 }
 window.pdfLoaderText = function (html) {
     try {

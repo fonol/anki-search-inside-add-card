@@ -19,26 +19,6 @@
 // Functions for the cloze / text extraction from PDFs.
 //
 
-
-window.joinTextLayerNodeTexts = function (nodes, text) {
-    let total = "";
-    for (var i = 0; i < nodes.length; i++) {
-        if (nodes[i].innerHTML === text) {
-            return text;
-        }
-        total += nodes[i].innerHTML += " ";
-    }
-    total = total.replace("  ", " ");
-    let spl = total.split(" ");
-    total = "";
-    for (var i = 0; i < spl.length; i++) {
-        if (spl[i].length > 0 && text.indexOf(spl[i]) >= 0) {
-            total += spl[i] + " ";
-        }
-    }
-    return total.trim();
-}
-
 window.nodesInSelection = function (range) {
     let textLayer = byId('text-layer');
     if (!textLayer) {
