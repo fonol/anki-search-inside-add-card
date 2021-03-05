@@ -1220,6 +1220,8 @@ class UI:
         return [
             "Display some buttons in the fields area when selecting text",
             "Display counts of add-on note tags in the sidebar",
+            "Clicking a highlight color if you have text selected will now highlight the text",
+            "Improvements to text selection",
             "Fix: Auto-filled fields being not saved when opening reader",
         ]
 
