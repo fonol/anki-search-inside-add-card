@@ -249,6 +249,10 @@ export const Highlighting = {
         $(elem).addClass("active");
         pycmd("siac-hl-clicked " + this.colorSelected.id + " " + this.colorSelected.color);
         if (this.colorSelected.id > 0) {
+            // if there is text selected in the text layer, highlight it
+            if (windowHasSelection() && byId('text-layer') && SIAC.Helpers.selectionIsInside(byId('text-layer'))) {
+                this.highlight();
+            }
             readerNotification("CTRL + select to Highlight<br>CTRL + Shift + A to Area Highlight");
         } else {
             readerNotification("CTRL + click to insert text<br>CTRL + click again to remove");
@@ -267,7 +271,6 @@ export const Highlighting = {
             el.dataset.ow = el.offsetWidth;
             el.dataset.oh = el.clientHeight;
 
-            let rectCanvas = byId("text-layer").getBoundingClientRect();
             let x0 = el.offsetLeft - activeCanvas().offsetLeft;
             let y0 = el.offsetTop ;
             let x1 = x0 + el.offsetWidth - 6; 
