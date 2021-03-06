@@ -823,9 +823,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         if check_index():
             UI.scale = factor
             if factor != 1.0:
-                UI.js("showTagInfoOnHover = false;")
+                UI.js("SIAC.State.showTagInfoOnHover = false;")
             else:
-                UI.js("showTagInfoOnHover = true;")
+                UI.js("SIAC.State.showTagInfoOnHover = true;")
 
     elif cmd.startswith("siac-pdf-page-read"):
         nid = cmd.split()[1]
@@ -2013,14 +2013,14 @@ def update_styling(cmd):
     elif name == "showTagInfoOnHover":
         config[name] = value == "true" or value == "on"
         if not config[name] and check_index():
-            UI.js("showTagInfoOnHover = false;")
+            UI.js("SIAC.State.showTagInfoOnHover = false;")
         elif config[name] and check_index():
-            UI.js("showTagInfoOnHover = true;")
+            UI.js("SIAC.State.showTagInfoOnHover = true;")
 
     elif name == "tagHoverDelayInMiliSec":
         config[name] = int(value)
         if check_index():
-            UI.js("tagHoverTimeout = %s;" % value)
+            UI.js("SIAC.State.tagHoverTimeout = %s;" % value)
 
     elif name == "alwaysRebuildIndexIfSmallerThan":
         config[name] = int(value)
