@@ -193,20 +193,29 @@ def on_load_note(editor: Editor):
         typing_delay            = max(500, conf_or_def('delayWhileTyping', 1000))
         show_tag_info_on_hover  = "true" if conf_or_def("showTagInfoOnHover", True) and conf_or_def("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
         pdf_color_mode          = conf_or_def("pdf.color_mode", "Day")
-
         pdf_highlights_render   = "siac-pdf-hl-alt-render" if conf_or_def("pdf.highlights.use_alt_render", False) else ""
 
         editor.web.eval(f"""
-            var showTagInfoOnHover   = {show_tag_info_on_hover};
-            tagHoverTimeout          = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
-            var delayWhileTyping     = {typing_delay};
-            SIAC.Colors.pdfColorMode = "{pdf_color_mode}";
-            SIAC.Fields.cacheFields();
+            
+            let init = () => {{
+                if (typeof(SIAC) === 'undefined') {{
+                    setTimeout(init, 50);
+                    return;
+                }}
 
-            document.addEventListener('mouseup', onTextSelectionChange);
-            onTextSelectionChange();
+                SIAC.State.showTagInfoOnHover   = {show_tag_info_on_hover};
+                SIAC.State.tagHoverTimeout      = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
+                SIAC.State.typingDelay          = {typing_delay};
+                SIAC.Colors.pdfColorMode        = "{pdf_color_mode}";
 
-            setWindowMode('{state.window_mode.name}');
+                SIAC.Fields.cacheFields();
+                document.addEventListener('mouseup', onTextSelectionChange);
+                onTextSelectionChange();
+
+                setWindowMode('{state.window_mode.name}');
+            }};
+            init();
+
 
             if ('{pdf_highlights_render}') {{
                 document.body.classList.add("{pdf_highlights_render}");
