@@ -27,10 +27,12 @@ window.SIAC.State = {
     loadingTimer: null,
     calTimer: null,
     gridView: false,
+    typingDelay: 100,
+    showTagInfoOnHover: true,
+    tagHoverTimeout: 750,
 };
 
 window.tagHoverCB = null;
-window.tagHoverTimeout = 750;
 window.searchMaskTimer = null;
 
 window.byId = function (id) {
@@ -165,13 +167,13 @@ window.totalOffset = function (elem) {
     };
 }
 window.tagMouseEnter = function (elem) {
-    if (!showTagInfoOnHover || !elem || !elem.parentElement || displayedNoteId)
+    if (!SIAC.State.showTagInfoOnHover || !elem || !elem.parentElement || displayedNoteId)
         return;
     tagHoverCB = setTimeout(function () {
         if (elem && elem.parentElement && elem.parentElement.querySelector(':hover') === elem && !byId('siac-tag-info-box-' + $(elem).data('stamp'))) {
             pycmd("siac-tag-info " + $(elem).data("stamp") + " " + $(elem).data("name"));
         }
-    }, tagHoverTimeout);
+    }, SIAC.State.tagHoverTimeout);
 }
 window.showTagInfo = function (elem) {
     let stamp = $(elem).data("stamp");
@@ -438,7 +440,7 @@ window.fieldKeypress = function (event) {
         }
         SIAC.State.timeout = setTimeout(function () {
             sendContent(event);
-        }, delayWhileTyping);
+        }, SIAC.State.typingDelay);
     }
     return true;
 }
