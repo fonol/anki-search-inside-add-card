@@ -117,7 +117,8 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
     height: 205px; 
     top: -184px;
     left: -181px;
-    border: 2px outset var(--c-reading-modal-theme-color); 
+    /* border: 2px outset var(--c-reading-modal-theme-color);  */
+    box-shadow: 0 0 7px 1px #202020;
     z-index: 5;
     transition: all 0.3s;
 }
