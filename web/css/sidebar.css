@@ -9,6 +9,7 @@
     user-select: none;
     margin: 0 0 0 5px;
     line-height: 20px;
+    cursor: pointer;
 }
 details .siac-notes-sidebar-item {
     margin-left: 13px;
