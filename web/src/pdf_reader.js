@@ -776,13 +776,14 @@ window.updatePdfDisplayedMarks = function (rerenderTop) {
         let html = "";
         $('.siac-mark-btn-inner').removeClass('active');
         if (pdf.page in pdf.displayedMarks) {
+            let template = "<div class='siac-pdf-mark-lbl'><span><i class='fa fa-star'></i>&nbsp; -1 &nbsp;</span><b onclick='$(\".siac-mark-btn-inner--2\").trigger(\"click\");'>&times</b></div>";
             for (var i = 0; i < pdf.displayedMarks[pdf.page].length; i++) {
                 switch (pdf.displayedMarks[pdf.page][i]) {
-                    case 1: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Revisit &nbsp;<b onclick='$(\".siac-mark-btn-inner-1\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-1').first().addClass('active'); break;
-                    case 2: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Hard &nbsp;<b onclick='$(\".siac-mark-btn-inner-2\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-2').first().addClass('active'); break;
-                    case 3: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; More Info &nbsp;<b onclick='$(\".siac-mark-btn-inner-3\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-3').first().addClass('active'); break;
-                    case 4: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; More Cards &nbsp;<b onclick='$(\".siac-mark-btn-inner-4\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-4').first().addClass('active'); break;
-                    case 5: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Bookmark &nbsp;<b onclick='$(\".siac-mark-btn-inner-5\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-5').first().addClass('active'); break;
+                    case 1: html += template.replace("-1", "Revisit").replace("-2", "1"); $('.siac-mark-btn-inner-1').first().addClass('active'); break;
+                    case 2: html += template.replace("-1", "Hard").replace("-2", "2"); $('.siac-mark-btn-inner-2').first().addClass('active'); break;
+                    case 3: html += template.replace("-1", "More Info").replace("-2", "3"); $('.siac-mark-btn-inner-3').first().addClass('active'); break;
+                    case 4: html += template.replace("-1", "More Cards").replace("-2", "4"); $('.siac-mark-btn-inner-4').first().addClass('active'); break;
+                    case 5: html += template.replace("-1", "Bookmark").replace("-2", "5"); $('.siac-mark-btn-inner-5').first().addClass('active'); break;
                 }
             }
         }
