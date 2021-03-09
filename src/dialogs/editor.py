@@ -774,7 +774,7 @@ class CreateTab(QWidget):
                 if text is None:
                     tooltip("Failed to fetch text from page.")
                 else:
-                    self.text.setHtml(text)
+                    self.text.setPlainText(text)
 
     def on_remove_formatting(self):
 
