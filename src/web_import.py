@@ -17,17 +17,18 @@
 
 import urllib.request
 import typing
-import re
 from typing import Optional
 from bs4 import BeautifulSoup, Comment
 from requests import get
+
+import html2text
 
 import utility.misc
 
 
 def _fetch(url: str) -> BeautifulSoup:
     html    = ""
-    req     = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'}) 
+    req     = urllib.request.Request(url, headers={'User-Agent': 'XYZ/3.0'}) 
 
     with urllib.request.urlopen(req) as response:
         html = response.read()
@@ -57,19 +58,21 @@ def import_webpage(url: str, inline_images: bool = False) -> Optional[str]:
         webpage = _fetch(url)
 
     except Exception as e:
+        print("[SIAC] Failed to fetch webpage")
+        print(f"[SIAC] {str(e)}")
         return None
     
     body = "\n".join(map(str, webpage.find('body').children))
 
-    base_path   = url.rsplit('/', 1)[0]
     if inline_images:
+        base_path   = url.rsplit('/', 1)[0]
         body        = utility.misc.try_inline_images(body, base_path)
-    # else:
-    #     images = utility.misc.find_all_images(body)
-    #     for i in images:
-    #         url = re.search("src=(\"[^\"]+\"|'[^']+')", i, flags=re.IGNORECASE).group(1)[1:-1]
-    #         if not url.startswith("http"):
-    #             url = f"{base_path}{url}"
-    #         body = body.replace(i, f"<img src='{url}'/>")
+    
+    try:
+        md_body     = html2text.html2text(body)
+        return md_body
+    except Exception as e:
+        print("[SIAC] Failed to convert HTML to Markdown.")
+        print(f"[SIAC] [html2text] {str(e)}")
 
     return body
