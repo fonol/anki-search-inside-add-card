@@ -15,13 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import platform
-import os
-import json
 import re
-import datetime
-import time
-import sys
 import aqt
 import typing
 from typing import List, Tuple
@@ -31,15 +25,15 @@ from aqt.editor import Editor
 import utility.tags
 import utility.text
 import utility.misc
-import state
 
 from aqt.qt import *
 
 
 from ..state import get_index, check_index
-from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
+from ..notes import get_note, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
 from .html import *
 from ..internals import js, requires_index_loaded, perf_time, JS, HTML
+from ..models import SiacNote
 from ..config import get_config_value_or_default
 from ..output import UI
 
@@ -235,6 +229,30 @@ def display_note_del_confirm_modal(editor, nid) -> JS:
         return
     return "$('#resultsWrapper').append(`%s`);" % html
 
+def display_note_linking(web, linked_note: Tuple[SiacNote, int]):
+
+    (note, page)    = linked_note
+    if page is None or page <= 0:
+        page_dsp = "-"
+    else:
+        page_dsp = page
+    html = f"""
+        <div id='siac-link-modal' style='display: none; min-width: 235px; position: absolute; bottom: 20px; right: 20px; padding: 15px; box-shadow: 0 0 7px 1px #dcdcdc; background: #fffef7; color: black; '>
+            <div style='font-size: 13px !important; margin-bottom: 10px !important;'>{utility.text.trim_if_longer_than(note.get_title().replace('`', ''), 80)}</div>
+            <div style='font-size: 13px !important; text-align: left;'><span style='opacity: 0.8;'>Page: {page_dsp}</span><a href="" style='float: right; color: #0096dc !important; font-size: 13px !important;' onclick='pycmd("siac-open-linked-note {note.id} {page}"); return false;'>Open in Add dialog</a></div>
+        </div>
+        """
+    js = f"""
+        if (document.getElementById('siac-link-modal')) {{
+            $('#siac-link-modal').remove();
+        }}
+        $(document.body).append(`{html}`);
+        if (document.body.classList.contains('night-mode') || document.body.classList.contains('nightMode')) {{
+            $('#siac-link-modal').css({{ 'box-shadow' : '0 0 7px 1px #202020', 'background': 'rgb(53,53,53)', 'color': 'white' }});
+        }}
+        $('#siac-link-modal').show();
+        """
+    web.eval(js)
 
 def fillTagSelect(editor = None, expanded = False):
     """
