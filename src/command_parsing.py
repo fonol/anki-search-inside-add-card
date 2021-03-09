@@ -52,6 +52,7 @@ from .dialogs.importing.zotero_import import ZoteroImporter
 from .dialogs.schedule_dialog import ScheduleDialog
 from .dialogs.timer_elapsed import TimerElapsedDialog
 from .dialogs.done_dialog import DoneDialog
+from .api import open_siac_with_id
 from .tag_find import findBySameTag, display_tag_info
 from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 from .models import SiacNote
@@ -76,6 +77,15 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     Todo: Needs some serious cleanup / splitting up.
     Todo: Maybe move cmd handling to components (reading_modal, sidebar, index)
     """
+
+    # special case: only cmd to be valid outside the editor
+    if cmd.startswith("siac-open-linked-note "):
+        siac_nid        = int(cmd.split()[1])
+        page            = int(cmd.split()[2])
+        open_siac_with_id(siac_nid, page=page)
+        return (True, None)
+
+
     if not isinstance(self, aqt.editor.Editor):
         return handled
 
@@ -928,7 +938,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         show_settings_modal(self)
 
     elif cmd.startswith("siac-styling "):
-        update_styling(cmd[13:])
+        handle_settings_update(cmd[13:])
 
     elif cmd.startswith("siac-update-config-str "):
         key = cmd.split()[1]
@@ -1941,7 +1951,7 @@ def show_timing_modal(render_time = None):
 
     UI.show_in_modal("Timing", html)
 
-def update_styling(cmd):
+def handle_settings_update(cmd: str):
 
     name    = cmd.split()[0]
     value   = " ".join(cmd.split()[1:])
