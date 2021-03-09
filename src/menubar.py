@@ -12,7 +12,6 @@ from .dialogs.settings import SettingsDialog
 #from .dialogs.knowledge_tree import KnowledgeTree
 
 
-import state
 import utility.misc
 
 class Menu():
