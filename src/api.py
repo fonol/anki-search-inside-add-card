@@ -90,9 +90,9 @@ def show_quick_open_pdf():
         if dialog.chosen_id is not None and dialog.chosen_id > 0:
             open_siac_with_id(dialog.chosen_id)
 
-def open_siac_with_id(id):
+def open_siac_with_id(id, page=None):
     def _open_id():
-        Reader.display(id)
+        Reader.display(id, page=page)
 
     open_or_switch_to_editor(_open_id)
 
