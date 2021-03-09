@@ -125,7 +125,7 @@ def init_addon():
     # patch webview dropevent to catch pdf file drop
     aqt.editor.EditorWebView.dropEvent =  wrap(aqt.editor.EditorWebView.dropEvent, webview_on_drop, "around")
 
-    #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
+    # when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
 
     # IO add note wrapping
@@ -134,6 +134,10 @@ def init_addon():
             register_io_add_hook()
         except:
             pass
+    
+    # reviewer hook to show linked SIAC notes 
+    gui_hooks.reviewer_did_show_answer.append(on_reviewer_did_show_answer)
+    gui_hooks.reviewer_did_show_question.append(on_reviewer_did_show_question)
 
 
 def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callable):
@@ -154,12 +158,27 @@ def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callab
 
 
 def on_reviewer_did_answer(reviewer, card, ease):
+
+    # hide link modal if existent
+    reviewer.web.eval("if (document.getElementById('siac-link-modal')) { $('#siac-link-modal').remove(); }")
+
     # check if we want to do review interruption
     if (get_config_value("mix_reviews_and_reading") == False) or state.rr_mix_disabled:
         return
 
     review_interruptor()
+ 
+def on_reviewer_did_show_question(card):
+    win = aqt.mw.app.activeWindow()
+    if win is not None and hasattr(win, "web"):
+        win.web.eval("if (document.getElementById('siac-link-modal')) { $('#siac-link-modal').remove(); }")
 
+def on_reviewer_did_show_answer(card):
+    note = get_linked_addon_note(card.nid)
+    if note is not None:
+        win = aqt.mw.app.activeWindow()
+        if hasattr(win, "web"):
+            display_note_linking(win.web, note)
 
 def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
     """ Used in the edit dialog for Anki notes to update the index on saving an edited note. """
@@ -197,9 +216,9 @@ def on_load_note(editor: Editor):
 
         editor.web.eval(f"""
             
-            let init = () => {{
+            var onloadNoteInit = () => {{
                 if (typeof(SIAC) === 'undefined') {{
-                    setTimeout(init, 50);
+                    setTimeout(onloadNoteInit, 50);
                     return;
                 }}
 
@@ -214,7 +233,7 @@ def on_load_note(editor: Editor):
 
                 setWindowMode('{state.window_mode.name}');
             }};
-            init();
+            onloadNoteInit();
 
 
             if ('{pdf_highlights_render}') {{
