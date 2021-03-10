@@ -4,7 +4,8 @@
   "description": "",
   "dependencies": {
     "webpack-cli": "^3.3.12",
-    "webpack": "^4.44.1"
+    "webpack": "^4.44.1",
+    "elliptic": ">=6.5.4"
   },
   "devDependencies": {
     "babel-minify-webpack-plugin": "^0.3.1",
