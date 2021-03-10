@@ -250,30 +250,21 @@ class NoteEditor(QDialog):
         if not success:
             return
 
-        # maybe more elegant solution to avoid renewing search please?
-        ix = get_index()
         if UI._editor is not None and UI._editor.web is not None:
             run_hooks("user-note-created")
 
         self.reject()
-
-        # if reading modal is open, we might have to update the bottom bar
-        if self.read_note_id is not None:
-            Reader.reload_bottom_bar()
+        Reader.reload_bottom_bar()
 
     def on_create_and_keep_open_clicked(self):
         success = self._create_note()
         if not success:
             return
 
-        # maybe more elegant solution to skip updating search/sidebar refresh?
-        ix = get_index()
         if UI._editor is not None and UI._editor.web is not None:
             run_hooks("user-note-created")
 
-
-        if self.read_note_id is not None:
-            Reader.reload_bottom_bar()
+        Reader.reload_bottom_bar()
 
         self._reset()
 
