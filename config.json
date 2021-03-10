@@ -20,7 +20,6 @@
 "useInEdit" : false,
 "logging": false,
 "freezeIndex": false,
-"renderImmediately": true,
 "tagClickShouldSearch": true,
 "leftSideWidthInPercent": 30,
 "showRetentionScores": true,
@@ -92,6 +91,7 @@
 "notes.queue.due_note_boundary": 7,
 "pdf.color_mode": "Day",
 "pdf.page_sidebar_shown": true,
+"pdf.tooltip_enabled": true,
 
 "notes.editor.autoFillWithLastTagsOnOpen": false,
 "notes.editor.defaultTagsIfEmpty": "",
