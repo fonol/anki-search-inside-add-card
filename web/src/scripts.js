@@ -1,8 +1,6 @@
 // anki-search-inside-add-card
 // Copyright (C) 2019 - 2020 Tom Z.
 
-const { Highlighting } = require("./pdf_highlighting");
-
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -735,7 +733,7 @@ window.fieldsMouseEnter = function(event) {
         event.target.classList.add('visible');
         if (displayedNoteId && pdf.instance) {
             setTimeout(() => { 
-                Highlighting.displayHighlights(); 
+                SIAC.Highlighting.displayHighlights(); 
                 byId('text-layer').style.left = activeCanvas().offsetLeft + "px";
             }, 50);
         }
@@ -749,7 +747,7 @@ window.addonMouseMove = function(event) {
             byId('leftSide').classList.remove('visible');
             if (displayedNoteId && pdf.instance) {
                 setTimeout(() => { 
-                    Highlighting.displayHighlights(); 
+                    SIAC.Highlighting.displayHighlights(); 
                     byId('text-layer').style.left = activeCanvas().offsetLeft + "px";
                 }, 50);
             }

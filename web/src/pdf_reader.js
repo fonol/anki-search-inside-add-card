@@ -14,10 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Highlighting } from "./pdf_highlighting.js";
-
-
-window.Highlighting = Highlighting;
 
 /** Tomato timer */
 window.tomato = {
@@ -411,7 +407,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                         pdf_canvas_0.style.display = "none";
                     canvas.style.display = "inline-block";
 
-                    Highlighting._removeAllHighlights();
+                    SIAC.Highlighting.removeAllHighlights();
 
                     if (fetchHighlights) {
                         updatePdfDisplayedMarks(true);
@@ -452,10 +448,11 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 }
                 pdf.displayedViewPort = viewport;
                 if (fetchHighlights) {
-                    Highlighting.current = [];
+
+                    SIAC.Highlighting.current = [];
                     pycmd("siac-pdf-page-loaded " + pdf.page);
                 } else {
-                    Highlighting.displayHighlights();
+                    SIAC.Highlighting.displayHighlights();
                 }
                 if (!pdf.pageNumPending && !pdf.pageRendering) {
 

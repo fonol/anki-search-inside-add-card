@@ -715,9 +715,6 @@ class Reader:
         html = html.replace("`", "\\`")
         return "$('#siac-reading-modal-bottom-bar').replaceWith(`%s`); updatePdfDisplayedMarks(true);" % html
 
-
-
-
     @classmethod
     def show_fields_tab(cls):
         cls.sidebar.show_fields_tab()
@@ -1105,7 +1102,7 @@ class Reader:
     def get_note_info_html(cls) -> HTML:
         """ Returns the html that is displayed in the "Info" tab in the bottom bar of the reading modal. """
 
-        note    = cls.note
+        note    = get_note(cls.note_id)
         created = note.created
         tags    = note.tags
 
@@ -1284,7 +1281,7 @@ class Reader:
             ix = dialog.chosen_field_ix
             js = f"SIAC.Fields.appendToFieldHtml({ix}, `{dialog.selection.replace('`', '')}`);"
             if TextExtractDialog.highlight_ix > 0:
-                js += f"Highlighting.highlight({TextExtractDialog.highlight_ix});"
+                js += f"SIAC.Highlighting.highlight({TextExtractDialog.highlight_ix});"
             return js
 
 
@@ -1296,7 +1293,7 @@ class Reader:
             return "readerNotification('Could not detect any selected text.')"
         js = f"SIAC.Fields.appendToFieldHtml({field_ix}, `{text.replace('`', '')}`);"
         if TextExtractDialog.highlight_ix > 0:
-            js += f"Highlighting.highlight({TextExtractDialog.highlight_ix});"
+            js += f"SIAC.Highlighting.highlight({TextExtractDialog.highlight_ix});"
         return js
 
     @classmethod
@@ -1817,7 +1814,7 @@ class Reader:
                 text = text.replace("`", "")
                 js = f"{js},[{x0},{y0},{x1},{y1},{type},{rowid}, `{text}`]"
             js = js[1:]
-            UI.js("Highlighting.current = [%s]; Highlighting.displayHighlights();" % js)
+            UI.js("SIAC.Highlighting.current = [%s]; SIAC.Highlighting.displayHighlights();" % js)
 
 
 

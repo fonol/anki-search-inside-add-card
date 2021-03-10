@@ -138,7 +138,7 @@ window.pdfLeftTabAnkiSearchKeyup = function (value, event) {
 }
 
 window.initAreaHighlightShortcutPressed = function() {
-    if (pdf.instance && !iframeIsDisplayed && Highlighting.colorSelected.id > 0) {
+    if (pdf.instance && !iframeIsDisplayed && SIAC.Highlighting.colorSelected.id > 0) {
         readerNotification("&nbsp;Area Highlight&nbsp;");
         initAreaHighlight();
         pdfTextLayerMetaKey = false;
@@ -210,13 +210,13 @@ window.pdfKeyup = function (e) {
     // selected text, no ctrl key -> show tooltip if enabled 
     if (!e.ctrlKey && !e.metaKey && pdfTooltipEnabled && windowHasSelection()) {
         pdfTooltip(e);
-    } else if ((e.ctrlKey || e.metaKey) && Highlighting.colorSelected.id > 0 && windowHasSelection()) {
+    } else if ((e.ctrlKey || e.metaKey) && SIAC.Highlighting.colorSelected.id > 0 && windowHasSelection()) {
         // selected text, ctrl key pressed -> highlight 
-        Highlighting.highlight();
+        SIAC.Highlighting.highlight();
         pdfTextLayerMetaKey = false;
-    } else if ((e.ctrlKey || e.metaKey) && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
+    } else if ((e.ctrlKey || e.metaKey) && SIAC.Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
         // clicked with ctrl, text insert btn is active -> insert text area at coordinates
-        Highlighting.insertText(e);
+        SIAC.Highlighting.insertText(e);
     }
     // if ((e.ctrlKey || e.metaKey) && e.keyCode >= 49 && e.keyCode < 57 &&  (e.keyCode - 48) <= SIAC.Fields.count() && windowHasSelection()) {
     //     // CTRL/Meta + [1-9] with text selected -> send to field (& optionally highlight)

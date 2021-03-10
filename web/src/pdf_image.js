@@ -21,7 +21,6 @@
  * ###########################################
  */
 
-// const { Highlighting } = require("./pdf_highlighting");
 
 window.pdfImgSel = {
     canvas: null,
@@ -188,7 +187,7 @@ window.pdfAreaHighlightMouseUp = function (event) {
     if (pdfImgSel.mouseIsDown) {
         pdfImgSel.mouseIsDown = false;
         drawSquare();
-        Highlighting.createAreaHighlight(pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY);
+        SIAC.Highlighting.createAreaHighlight(pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY);
         clearImgSelectionCanvas();
     }
 }
