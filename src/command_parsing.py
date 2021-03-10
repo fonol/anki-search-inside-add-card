@@ -1216,6 +1216,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and index is not None:
             UI.js("selectDeckAndSubdecksWithId(%s);" % deckChooser.selectedId())
+            
     elif cmd.startswith("siac-update-field-to-hide-in-results "):
         if not check_index():
             return (True, None)
@@ -1800,7 +1801,6 @@ def get_index_info():
                <tr><td>Index is always rebuilt if smaller than:</td><td>  <b>%s</b> notes</td></tr>
                <tr><td>Stopwords:</td><td>  <b>%s</b></td></tr>
                <tr><td>Logging:</td><td>  <b>%s</b></td></tr>
-               <tr><td>Render Immediately:</td><td>  <b>%s</b></td></tr>
                <tr><td>Tag Click:</td><td>  <b>%s</b></td></tr>
                <tr><td>Timeline:</td><td>  <b>%s</b></td></tr>
                <tr><td>Tag Info on Hover:</td><td>  <b>%s</b></td></tr>
@@ -1855,7 +1855,6 @@ def get_index_info():
             config["alwaysRebuildIndexIfSmallerThan"],
             len(config["stopwords"]),
             sp_on if index.logging else sp_off,
-            sp_on if config["renderImmediately"] else sp_off,
             "Search" if config["tagClickShouldSearch"] else "Add",
             sp_on if config["showTimeline"] else sp_off,
             sp_on if config["showTagInfoOnHover"] else sp_off,
@@ -1956,14 +1955,9 @@ def handle_settings_update(cmd: str):
     name    = cmd.split()[0]
     value   = " ".join(cmd.split()[1:])
 
-
     if name == "searchpane.zoom":
         config[name] = float(value)
         UI._editor.web.setZoomFactor(float(value))
-    elif name == "renderImmediately":
-        m = value == "true" or value == "on"
-        config["renderImmediately"] = m
-        UI.js("renderImmediately = %s;" % ("true" if m else "false"))
 
     elif name == "hideSidebar":
         m = value == "true" or value == "on"
