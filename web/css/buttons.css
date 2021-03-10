@@ -11,8 +11,8 @@
 }
 .siac-btn.siac-btn-dark, .siac-btn.siac-btn-dark-smaller {
     background-color: var(--c-reading-modal-background);
-    color: beige;
-    border: 2px outset #b2b2a0;
+    color: lightgrey;
+    border: 1px outset #b2b2a0;
     border-color: var(--c-reading-modal-button-border-color);
     border-radius: 3px;
     box-shadow: 2px 2px #1f1f1f;
@@ -24,6 +24,41 @@ body:not(.nightMode) #leftSide .siac-btn-dark {
     font-weight: bold;
     color: #6e6e6e;
 }
+.siac-btn-row {
+    background-color: var(--c-reading-modal-background);
+    color: white;
+    border: 1px outset #b2b2a0;
+    border-color: var(--c-reading-modal-button-border-color);
+    border-radius: 3px;
+    box-shadow: 2px 2px #1f1f1f;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+}
+.siac-btn-row > div {
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: lightgrey;
+    cursor: pointer;
+}
+.siac-btn-row > *:hover {
+    color: white;
+}
+.siac-btn-row > div.active > .fa {
+    color: #32abe4;
+}
+.siac-btn-row > div.active:hover > .fa {
+    color: #55c0f1;
+}
+.siac-btn-row-divider {
+    border-left: 1px solid #4e4e4e;
+    padding: 0 !important;
+    margin: 0 7px;
+}
+
 body.nightMode .modal-content input {
     background-color: var(--c-modal-background-night);
     color: var(--c-modal-foreground-night);
