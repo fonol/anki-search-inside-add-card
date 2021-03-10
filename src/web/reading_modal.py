@@ -65,19 +65,19 @@ class ReaderSidebar():
 
     def __init__(self):
 
-        self._editor                    : Editor                = None
-        self.tab_displayed              : str                   = "fields"
+        self._editor                    : Editor                        = None
+        self.tab_displayed              : str                           = "fields"
 
         # cache last results to display when the tab is reopened
-        self.browse_tab_last_results    : Optional[Tuple[Any, ...]]  = None
-        self.pdfs_tab_last_results      : Optional[Tuple[Any, ...]]  = None
+        self.browse_tab_last_results    : Optional[Tuple[Any, ...]]     = None
+        self.pdfs_tab_last_results      : Optional[Tuple[Any, ...]]     = None
 
         #
         # Pagination
         #
-        self.page                       : int                   = 1
-        self.last_results               : Optional[Tuple[Any, ...]]  = None
-        self.page_size                  : int                    = 100
+        self.page                       : int                           = 1
+        self.last_results               : Optional[Tuple[Any, ...]]     = None
+        self.page_size                  : int                           = 100
 
     def set_editor(self, editor: Editor):
         self._editor = editor
@@ -731,94 +731,91 @@ class Reader:
     def html(cls) -> HTML:
         """ Builds the html which has to be inserted into the webview to display the reading modal. """
 
-        note        = cls.note
-        note_id     = cls.note_id
-        text        = note.text
-        created_dt  = utility.date.dt_from_stamp(note.created)
-        diff        = datetime.datetime.now() - created_dt
-        time_str    = "Added %s ago." % utility.date.date_diff_to_string(diff)
+        note            = cls.note
+        note_id         = cls.note_id
+        text            = note.text
+        created_dt      = utility.date.dt_from_stamp(note.created)
+        diff            = datetime.datetime.now() - created_dt
+        time_str        = "Added %s ago." % utility.date.date_diff_to_string(diff)
 
-        if check_index():
+        title           = note.get_title()
+        title           = utility.text.trim_if_longer_than(title, 70)
+        title           = ihtml.escape(title)
+        source          = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
+        priority        = note.priority
+        img_folder      = utility.misc.img_src_base_path()
+        page_sidebar    = str(conf_or_def("pdf.page_sidebar_shown", True)).lower()
 
-            title           = note.get_title()
-            title           = utility.text.trim_if_longer_than(title, 70)
-            title           = ihtml.escape(title)
-            source          = note.source.strip() if note.source is not None and len(note.source.strip()) > 0 else "Empty"
-            priority        = note.priority
-            img_folder      = utility.misc.img_src_base_path()
-            page_sidebar    = str(conf_or_def("pdf.page_sidebar_shown", True)).lower()
-
-            rev_overlay     = ""
-            if get_config_value("notes.show_linked_cards_are_due_overlay"):
-                # check for last linked pages
-                last_linked     = get_last_linked_notes(note_id, limit = 500)
-                if len(last_linked) > 0:
-                    if hasattr(mw.col, "find_cards"):
-                        due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
+        rev_overlay     = ""
+        if get_config_value("notes.show_linked_cards_are_due_overlay"):
+            # check for last linked pages
+            last_linked     = get_last_linked_notes(note_id, limit = 500)
+            if len(last_linked) > 0:
+                if hasattr(mw.col, "find_cards"):
+                    due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
+                else:
+                    due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
+                if due_today and len(due_today) > 0:
+                    act         = "Reading"
+                    if note.is_pdf():
+                        ntype = "PDF"
+                    elif note.is_yt():
+                        ntype = "video"
+                        act   = "Watching"
                     else:
-                        due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
-                    if due_today and len(due_today) > 0:
-                        act         = "Reading"
-                        if note.is_pdf():
-                            ntype = "PDF"
-                        elif note.is_yt():
-                            ntype = "video"
-                            act   = "Watching"
-                        else:
-                            ntype = "note"
+                        ntype = "note"
 
-                        rev_overlay = f"""
-                            <div class='siac-rev-overlay'>
-                                <div class='ta_center bold fg_lightgrey' style='font-size: 22px;'>
-                                    <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
-                                </div>
-                                <div class='ta_center fg_grey bold mt-10' style='font-size: 18px'>
-                                    [{len(due_today)} due cards]
-                                </div>
-                                <div class='ta_center bold' style='opacity: 1; margin: 50px 0 30px 0;'>
-                                    <div class='siac-modal-btn' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
-                                    <div class='siac-modal-btn' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
-                                </div>
+                    rev_overlay = f"""
+                        <div class='siac-rev-overlay'>
+                            <div class='ta_center bold fg_lightgrey' style='font-size: 22px;'>
+                                <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
                             </div>
-                        """
+                            <div class='ta_center fg_grey bold mt-10' style='font-size: 18px'>
+                                [{len(due_today)} due cards]
+                            </div>
+                            <div class='ta_center bold' style='opacity: 1; margin: 50px 0 30px 0;'>
+                                <div class='siac-modal-btn' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
+                                <div class='siac-modal-btn' onclick='document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-book"></i>&nbsp;Continue {act}</div>
+                            </div>
+                        </div>
+                    """
 
-            overflow        = "auto"
-            notification    = ""
-            editable        = False
-            #check note type
-            if note.is_file() and not note.is_md():
-                editable = len(text) < 100000
-                overflow = "hidden"
-                text = cls.file_note_html(editable, priority, source)
-            elif note.is_pdf() and utility.misc.file_exists(source):
-                overflow        = "hidden"
-                text            = cls.pdf_viewer_html(source, note.get_title(), priority)
+        overflow        = "auto"
+        notification    = ""
+        editable        = False
+        #check note type
+        if note.is_file() and not note.is_md():
+            editable = len(text) < 100000
+            overflow = "hidden"
+            text = cls.file_note_html(editable, priority, source)
+        elif note.is_pdf() and utility.misc.file_exists(source):
+            overflow        = "hidden"
+            text            = cls.pdf_viewer_html(source, note.get_title(), priority)
 
-                if "/" in source:
-                    source  = source[source.rindex("/") +1:]
-            elif note.is_feed():
-                text        = cls.get_feed_html(note_id, source)
-            elif note.is_yt():
-                text        = cls.yt_html()
-            else:
-                editable    = len(text) < 100000
-                overflow    = "hidden"
-                text        = cls.text_note_html(editable, priority)
-            bottom_bar      = cls.bottom_bar(note)
+            if "/" in source:
+                source  = source[source.rindex("/") +1:]
+        elif note.is_feed():
+            text        = cls.get_feed_html(note_id, source)
+        elif note.is_yt():
+            text        = cls.yt_html()
+        else:
+            editable    = len(text) < 100000
+            overflow    = "hidden"
+            text        = cls.text_note_html(editable, priority)
+        bottom_bar      = cls.bottom_bar(note)
 
-            top_hidden      = "top-hidden" if conf_or_def("notes.queue.hide_top_bar", False) else ""
+        top_hidden      = "top-hidden" if conf_or_def("notes.queue.hide_top_bar", False) else ""
 
-            if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
-                notification    = f"readerNotification('Scheduled for {note.due_date_str()}');"
+        if not note.is_in_queue() and utility.date.schedule_is_due_in_the_future(note.reminder):
+            notification    = f"readerNotification('Scheduled for {note.due_date_str()}');"
 
-            params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, text = text,
-            overflow=overflow, top_hidden=top_hidden,
-            notification=notification, page_sidebar=page_sidebar, rev_overlay = rev_overlay, bottom_bar=bottom_bar)
+        params              = dict(note_id = note_id, title = title, source = source, time_str = time_str, img_folder = img_folder, text = text,
+        overflow=overflow, top_hidden=top_hidden,
+        notification=notification, page_sidebar=page_sidebar, rev_overlay = rev_overlay, bottom_bar=bottom_bar)
 
-            html = filled_template("rm/reading_modal", params)
+        html = filled_template("rm/reading_modal", params)
 
-            return html
-        return ""
+        return html
 
     @classmethod
     def file_note_html(cls, editable: bool, priority: int, source: str) -> HTML:
@@ -941,7 +938,7 @@ class Reader:
                 </div>
             </div>
             <script>
-                if (pdfTooltipEnabled) {{
+                if (pdf.tooltip.enabled) {{
                     $('#siac-pdf-tooltip-toggle').addClass('active');
                 }} else {{
                     $('#siac-pdf-tooltip-toggle').removeClass('active');
@@ -1080,6 +1077,7 @@ class Reader:
         nid                 = cls.note_id
         config              = mw.addonManager.getConfig(__name__)
         urls                = config["searchUrls"]
+        tooltip_enabled     = str(config["pdf.tooltip_enabled"]).lower() 
         search_sources      = cls.iframe_dialog(urls) if urls else ""
         marks_img_src       = utility.misc.img_src("mark-star-24px.png")
         marks_grey_img_src  = utility.misc.img_src("mark-star-lightgrey-24px.png")
@@ -1093,7 +1091,7 @@ class Reader:
                 extract = f"<div class='siac-extract-marker'>&nbsp;<i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {cls.note.extract_start} - {cls.note.extract_end}&nbsp;</div>"
 
         params = dict(nid = nid, pdf_title = title, pdf_path = source, search_sources=search_sources, marks_img_src=marks_img_src,
-        marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src, extract=extract)
+        marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src, extract=extract, tooltip_enabled=tooltip_enabled)
 
         html   = filled_template("rm/pdf_viewer", params)
         return html
@@ -1235,6 +1233,7 @@ class Reader:
         modal = filled_template("rm/theme", {}).replace('`', '\\`')
 
         return """modalShown=true;
+            $('#siac-pdf-tooltip').hide();
             $('#siac-timer-popup').hide();
             $('#siac-rm-greyout').show();
             $('#siac-reading-modal-center').append(`%s`);
