@@ -145,7 +145,8 @@
     pdf.notification.queue = [];
     $('#siac-pdf-color-mode-btn > span').first().text(SIAC.Colors.pdfColorMode);
     $('#siac-pdf-top').addClass("siac-pdf-" + SIAC.Colors.pdfColorMode.toLowerCase());
-    if (pdfTooltipEnabled) {
+    pdf.tooltip.enabled = {tooltip_enabled};
+    if (pdf.tooltip.enabled) {
         $('#siac-pdf-tooltip-toggle').addClass('active');
     } else {
         $('#siac-pdf-tooltip-toggle').removeClass('active');

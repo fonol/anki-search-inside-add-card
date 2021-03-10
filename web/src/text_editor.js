@@ -56,7 +56,7 @@ window.editorMDInit = function () {
  *  executed after keyup in the text editor pane
  */
 window.textEditorKeyup = function () {
-    if (pdfTooltipEnabled && windowHasSelection()) {
+    if (pdf.tooltip.enabled && windowHasSelection()) {
         let s = window.getSelection();
         let r = s.getRangeAt(0);
         let text = s.toString();

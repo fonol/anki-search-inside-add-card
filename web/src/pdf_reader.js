@@ -48,7 +48,7 @@ window.pdf = {
     },
 
     tooltip: {
-        lastEvent: null,
+        enabled: true,
     },
 
 };
@@ -57,7 +57,6 @@ window.pdf = {
 window.noteLoading = false;
 window.pdfLoading = false;
 window.modalShown = false;
-window.pdfTooltipEnabled = true;
 window.pdfLinksEnabled = false;
 window.iframeIsDisplayed = false;
 window.pageSidebarDisplayed = true;
@@ -891,8 +890,9 @@ window.togglePDFSelect = function (elem) {
     if (!elem) {
         return;
     }
-    pdfTooltipEnabled = !pdfTooltipEnabled;
-    if (pdfTooltipEnabled) {
+    pdf.tooltip.enabled = !pdf.tooltip.enabled;
+    pycmd('siac-config-bool pdf.tooltip_enabled ' + pdf.tooltip.enabled.toString());
+    if (pdf.tooltip.enabled) {
         $(elem).addClass('active');
         readerNotification("Search on select enabled.", true);
     } else {

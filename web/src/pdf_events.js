@@ -208,7 +208,7 @@ window.pdfKeyup = function (e) {
         return;
     }
     // selected text, no ctrl key -> show tooltip if enabled 
-    if (!e.ctrlKey && !e.metaKey && pdfTooltipEnabled && windowHasSelection()) {
+    if (!e.ctrlKey && !e.metaKey && pdf.tooltip.enabled && windowHasSelection()) {
         pdfTooltip(e);
     } else if ((e.ctrlKey || e.metaKey) && SIAC.Highlighting.colorSelected.id > 0 && windowHasSelection()) {
         // selected text, ctrl key pressed -> highlight 
@@ -247,12 +247,10 @@ window.pdfTooltip = function(e) {
     let top = rect.top - prect.top + rect.height;
     if (top < 0) { return; }
     // save render to be able to go back
-    pdf.tooltip = {
-        sentences: sentences,
-        selection: text,
-        top: top,
-        left: left,
-    };
+    pdf.tooltip.sentences = sentences;
+    pdf.tooltip.selection = text;
+    pdf.tooltip.top = top;
+    pdf.tooltip.left = left;
     renderTooltip(sentences, text, top, left);
     // limit height again to prevent selection jumping
     $('#text-layer > span').css("height", "200px");
