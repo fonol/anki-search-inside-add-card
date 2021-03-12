@@ -615,22 +615,6 @@ window.toggleFreeze = function (elem) {
     $(elem).toggleClass('frozen');
     pycmd("siac-freeze " + SIAC.State.isFrozen);
 }
-window.hideTop = function () {
-    $('#topContainer').hide();
-    $('#toggleTop').children().first().html('&#10097;');
-    pycmd("toggleTop off");
-}
-
-window.toggleTop = function (elem) {
-    $('#topContainer').toggle();
-    if ($('#topContainer').is(":hidden")) {
-        $(elem).children().first().html('&#10097;');
-        pycmd("toggleTop off");
-    } else {
-        $(elem).children().first().html('&#10096;');
-        pycmd("toggleTop on");
-    }
-}
 window.toggleGrid = function (elem) {
 
     if ($(elem).is(':checked')) {
