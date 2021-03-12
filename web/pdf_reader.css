@@ -2,7 +2,7 @@ body.siac-reading-modal-displayed #siac-right-side {
     border-left: 0px solid var(--c-reading-modal-theme-color);
 }
 body.nightMode.siac-reading-modal-displayed #siac-right-side {
-    border-left: 2px solid var(--c-reading-modal-theme-color);
+    border-left: 1px solid var(--c-separator);
 }
 #siac-reading-modal {
     display: none;
@@ -75,7 +75,7 @@ body.nightMode.siac-reading-modal-displayed #siac-right-side {
 .siac-toc-btn {
     border: 2px outset #2496dc !important;
     color: lightgrey;
-    padding: 3px 5px;
+    padding: 3px 6px;
 }
 #siac-toc {
     display: none;
@@ -639,7 +639,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     width: 100%; 
     flex: 0 0 auto; 
     position: relative; 
-    border-top: 2px solid var(--c-reading-modal-theme-color); 
+    border-top: 1px solid var(--c-separator-night); 
     margin-top: 5px; 
     padding: 2px 0 0 5px; 
     overflow: hidden; 
@@ -1101,7 +1101,7 @@ body.nightMode .siac-note-title-only:hover {
     padding: 10px 15px 5px 0;
     border-top: 2px solid;
     margin-top: 10px;
-    border-top: 2px solid var(--c-reading-modal-theme-color);
+    border-top: 1px solid var(--c-separator);
 }
 #siac-reading-modal-tabs-left .siac-btn {
     color: #b2b2a0;
@@ -1114,13 +1114,13 @@ body.nightMode .siac-note-title-only:hover {
     border-color: #2496dc !important;
 }
 .siac-pdf-main-color-border-bottom {
-    border-bottom: 2px solid var(--c-reading-modal-theme-color);
+    border-bottom: 1px solid var(--c-separator);
 }
 .siac-pdf-main-color-border-top {
-    border-top: 2px solid var(--c-reading-modal-theme-color);
+    border-top: 1px solid var(--c-separator);
 }
 .siac-pdf-main-color-border-left {
-    border-left: 2px solid var(--c-reading-modal-theme-color);
+    border-left: 1px solid var(--c-separator);
 }
 .siac-pdf-main-color-border {
     border: 3px outset var(--c-reading-modal-theme-color);
@@ -1212,12 +1212,11 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     background-position: center;
 }
 #siac-reading-modal-top-bar {
-    /* min-height: 77px;  */
     width: 100%; 
     flex: 0 0 77px; 
     display: flex; 
     flex-wrap: nowrap; 
-    border-bottom: 2px solid var(--c-reading-modal-theme-color); 
+    border-bottom: 1px solid var(--c-separator-night); 
     margin-bottom: 5px; 
     white-space: nowrap;
     position: relative;
@@ -1286,16 +1285,16 @@ label input:checked ~ span {
     font-weight: bold;
 }
 body.siac-left-right-switched #siac-right-side {
-    border-right: 2px solid var(--c-reading-modal-theme-color);
+    border-right: 1px solid var(--c-separator);
 }
 body.siac-reading-modal-displayed.siac-left-right-switched #siac-right-side {
     border-right: none;
 }
 body.nightMode.siac-reading-modal-displayed.siac-left-right-switched #siac-right-side {
-    border-right: 2px solid var(--c-reading-modal-theme-color);
+    border-right: 1px solid var(--c-separator);
 }
 #siac-right-side {
-    border-left: 2px solid var(--c-reading-modal-theme-color);
+    border-left: 1px solid var(--c-separator);
 }
 
 .annotationLayer {

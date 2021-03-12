@@ -387,7 +387,7 @@ table.siac-read-stats-table tr:hover .siac-read-box {
     color: grey;
     user-select: none;
     height: 23px;
-    border-top: 1px solid grey; 
+    border-top: 1px solid var(--c-separator); 
     margin: 10px 0 3px 7px;
 }
 #icns-large div, #icns-small div {
