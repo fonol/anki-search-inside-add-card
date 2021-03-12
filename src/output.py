@@ -985,8 +985,6 @@ class UI:
             cmd += "$('#typingCb').prop('checked', false); setSearchOnTyping(false);"
         if not get_config_value_or_default("searchOnSelection", True):
             cmd += "$('#selectionCb').prop('checked', false); SIAC.State.searchOnSelection = false;"
-        if not index.topToggled:
-            cmd += "hideTop();"
         if index is not None and not UI.uiVisible:
             cmd += "$('#siac-right-side').addClass('addon-hidden');"
         if config["gridView"]:
@@ -1218,11 +1216,11 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
-            "Display some buttons in the fields area when selecting text",
-            "Display counts of add-on note tags in the sidebar",
-            "Clicking a highlight color if you have text selected will now highlight the text",
-            "Improvements to text selection",
-            "Fix: Auto-filled fields being not saved when opening reader",
+            "Display linked PDF page / note after showing answer in reviewer",
+            "'Fetch from URL' will import the html as Markdown now",
+            "Remember Search on Select enabled/disabled in reader on next opening",
+            "Fix: Queue display in reader bottom bar not refreshing after adding a note",
+            "Fix: Tag not refreshing in reader bottom bar ('Info' tab) after switching tabs",
         ]
 
     @staticmethod
