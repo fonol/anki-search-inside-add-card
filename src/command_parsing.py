@@ -1176,14 +1176,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         #repeat last search if default
         try_repeat_last_search(self)
 
-    elif cmd == "toggleTop on":
-        if check_index():
-            index.topToggled = True
-
-    elif cmd == "toggleTop off":
-        if check_index():
-            index.topToggled = False
-
     elif cmd == "toggleGrid on":
         if not check_index():
             return (True, None)
@@ -1200,13 +1192,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         try_repeat_last_search(self)
         mw.addonManager.writeConfig(__name__, config)
 
-    elif cmd == "toggleAll on":
-        if check_index():
-            UI.uiVisible = True
-    elif cmd == "toggleAll off":
-        if check_index():
-            UI.uiVisible = False
-
     elif cmd == "siac-decks-select-current":
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and index is not None:
@@ -1216,7 +1201,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         deckChooser = aqt.mw.app.activeWindow().deckChooser if hasattr(aqt.mw.app.activeWindow(), "deckChooser") else None
         if deckChooser is not None and index is not None:
             UI.js("selectDeckAndSubdecksWithId(%s);" % deckChooser.selectedId())
-            
+
     elif cmd.startswith("siac-update-field-to-hide-in-results "):
         if not check_index():
             return (True, None)
