@@ -42,7 +42,7 @@
     pdf.displayedMarks = null;
     pdf.displayedMarksTable = null;
     displayedNoteId = {nid};
-    editorMDInit();
+    editorMDInit(byId("siac-text-top").children[0]);
     noteLoading = false;
     if (pageSidebarDisplayed) {
         pycmd('siac-linked-to-page -1 -1');
