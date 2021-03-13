@@ -35,9 +35,9 @@ window.saveTextNote = function (nid) {
     pycmd("siac-update-note-text " + nid + " " + html);
 }
 
-window.editorMDInit = function () {
+window.editorMDInit = function (elem) {
     textEditor = new SimpleMDE({
-        element: byId("siac-text-top").children[0],
+        element: elem,
         indentWithTabs: true,
         autoDownloadFontAwesome: false,
         autosave: { enabled: false },
