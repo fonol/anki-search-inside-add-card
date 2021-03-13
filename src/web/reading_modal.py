@@ -25,7 +25,7 @@ import aqt
 import html as ihtml
 from aqt import mw, gui_hooks
 from aqt.editor import Editor
-from aqt.utils import showInfo, tooltip
+from aqt.utils import tooltip
 
 import utility.tags
 import utility.text
@@ -33,7 +33,6 @@ import utility.misc
 import utility.date
 import state
 
-from ..state import check_index
 from ..notes import *
 from ..notes import _get_priority_list
 from ..special_searches import get_last_added_anki_notes
@@ -47,8 +46,8 @@ from .templating import filled_template
 from .note_templates import *
 from ..internals import js, HTML, JS
 from ..config import get_config_value_or_default, get_config_value
-from ..web_import import import_webpage
 from ..output import UI
+from ..md import get_folder_structure
 
 
 
@@ -106,7 +105,7 @@ class ReaderSidebar():
             return
         self.tab_displayed = "fields"
         self._editor.web.eval("""
-            $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
+            $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md').remove();
             document.getElementById("fields").style.display = 'block';
         """)
 
@@ -117,7 +116,7 @@ class ReaderSidebar():
         self.tab_displayed = "browse"
         self._editor.web.eval(f"""
             document.getElementById("fields").style.display = 'none';
-            $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
+            $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md').remove();
             $(`
                 <div id='siac-left-tab-browse' class='flex-col'>
                     <div class='siac-pdf-main-color-border-bottom user_sel_none' style='flex: 0 auto; padding: 5px 0 5px 0;'>
@@ -145,7 +144,7 @@ class ReaderSidebar():
         self.tab_displayed = "pdfs"
         self._editor.web.eval(f"""
             document.getElementById("fields").style.display = 'none';
-            $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
+            $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md').remove();
             $(`
                 <div id='siac-left-tab-pdfs' class='flex-col'>
                     <div class='siac-pdf-main-color-border-bottom' style='flex: 0 auto; padding: 5px 0 5px 0; user-select: none;'>
@@ -164,6 +163,32 @@ class ReaderSidebar():
             self.print(self.pdfs_tab_last_results)
         else:
             self._editor.web.eval("pycmd('siac-pdf-sidebar-pdfs-in-progress')")
+    
+    def show_md_tab(self):
+        if self.tab_displayed == "md":
+            return
+        self.tab_displayed = "md"
+
+        md_folder = get_config_value_or_default("md.folder_path", None)
+        if md_folder is None:
+            html = "<center class='mt-15'>Please set your markdown folder in the config: md.folder_path</center>"
+        
+        else:
+            tree = get_folder_structure(md_folder)
+            html = file_tree(tree)
+
+
+        self._editor.web.eval(f"""
+            document.getElementById("fields").style.display = 'none';
+            $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md').remove();
+            $(`
+                <div id='siac-left-tab-md' class='flex-col'>
+                    <div class='' style='flex: 0 1 auto; overflow: auto;'> 
+                        {html}
+                    </div>
+                </div>
+            `).insertBefore('#siac-reading-modal-tabs-left');
+        """)
 
 
     def _print_sidebar_search_results(self, results: List[Printable], stamp: str, query_set: List[str]):
@@ -295,10 +320,11 @@ class Reader:
             if (!document.getElementById('siac-reading-modal-tabs-left')) {
                 $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
                 $('#leftSide').append(`
-                    <div id='siac-reading-modal-tabs-left'>
-                        <div class='siac-btn siac-btn-dark active' onclick='modalTabsLeftClicked("flds", this);'>Fields</div>
-                        <div class='siac-btn siac-btn-dark' onclick='modalTabsLeftClicked("browse", this);'>Browse</div>
-                        <div class='siac-btn siac-btn-dark' onclick='modalTabsLeftClicked("pdfs", this);'>PDFs</div>
+                    <div id='siac-reading-modal-tabs-left' class='siac-note-outer'>
+                        <div class='active' onclick='modalTabsLeftClicked("flds", this);'>Fields</div>
+                        <div class='' onclick='modalTabsLeftClicked("browse", this);'>Browse</div>
+                        <div class='' onclick='modalTabsLeftClicked("pdfs", this);'>PDFs</div>
+                        <!--<div class='' onclick='modalTabsLeftClicked("md", this);'>MD</div>-->
                     </div>
                 `);
             }
@@ -726,6 +752,10 @@ class Reader:
     @classmethod
     def show_pdfs_tab(cls):
         cls.sidebar.show_pdfs_tab()
+
+    @classmethod
+    def show_md_tab(cls):
+        cls.sidebar.show_md_tab()
 
     @classmethod
     def html(cls) -> HTML:
