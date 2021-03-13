@@ -244,6 +244,35 @@ def display_note_linking(web, linked_note: Tuple[SiacNote, int]):
         """
     web.eval(js)
 
+def display_file(fname: str):
+
+    if not fname.lower().endswith(".md"):
+        print("[SIAC] Trying to open non-md file: " + fname)
+        return
+
+    md_folder = get_config_value_or_default("md.folder_path", None).replace("\\", "/")
+    if not md_folder.endswith("/"):
+        md_folder += "/"
+
+    fpath_full = md_folder + fname
+
+    UI.js("""
+        if (!byId('siac-md-edit')) {
+            $('#siac-right-side').append(`
+                <div id='siac-md-edit-wrapper'>
+                    <div id='siac-md-edit'>
+                        <textarea id='siac-md-edit-ta'></textarea>
+
+                    </div> 
+                </div>
+            `);
+        }
+        editorMDInit(byId('siac-md-edit-ta'));
+    """)
+
+    
+
+
 def fillTagSelect(editor = None, expanded = False):
     """
     Builds the html for the "browse tags" mode in the deck select.
