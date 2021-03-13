@@ -503,6 +503,32 @@ def get_loader_html(text: HTML) -> HTML:
     """ % text
     return html
 
+def file_tree(tree: Dict[str, Any]) -> HTML:
+
+    def _subtree(t, pre="") -> HTML:
+        html = ""
+        for k, v in t.items():
+            sub     = ""
+            fcls    = "file"
+            path    = ""
+            pre_u   = pre + k + "/"
+            if v is not None and len(v) > 0:
+                sub     = f"<ul>{_subtree(v, pre_u)}</ul>"
+                fcls    = "folder" 
+            else:
+                path    = pre + k
+                path    = utility.text.b64_encode_str(path) 
+
+            html = f"{html}<li class='siac-ft-item {fcls}' data-path='{path}' onclick='SIAC.Filetree.itemClicked(event, this)'><span>{k}</span>{sub}</li>"
+
+        return html
+    html = f"<ul class='siac-file-tree'>{_subtree(tree)}</ul>"
+    return html
+
+
+
+
+
 def get_pdf_list_first_card() -> HTML:
     """
         Returns the html for the body of a card that is displayed at first position when clicking on "PDFs".
