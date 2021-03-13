@@ -9,6 +9,7 @@
 @import "/css/sidebar.css";
 @import "/css/tomato.css";
 @import "/css/layout.css";
+@import "/css/filetree.css";
 
 :root {
     --tleft : 50%;

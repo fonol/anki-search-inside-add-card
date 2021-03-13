@@ -100,3 +100,24 @@ body.nightMode .siac-modal-body input {
     border-color: #5d5d5d;
     color: white;
 }
+
+/* Markdown edit */
+#siac-md-edit-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    background: rgba(0,0,0,0.7);
+}
+#siac-md-edit {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    left: 20px;
+    bottom: 20px;
+    display: flex; 
+    flex-direction: column;
+    background: var(--c-note-bg);
+}

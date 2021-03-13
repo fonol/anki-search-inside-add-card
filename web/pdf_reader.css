@@ -1097,21 +1097,34 @@ body.nightMode .siac-note-title-only:hover {
 }
 #siac-reading-modal-tabs-left {
     font-family: 'Open Sans', sans-serif;
-    margin: 10px 5px 0 5px;
-    padding: 10px 15px 5px 0;
-    border-top: 2px solid;
-    margin-top: 10px;
-    border-top: 1px solid var(--c-separator);
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    margin: 10px 4px 5px 4px;
+    user-select: none;
 }
-#siac-reading-modal-tabs-left .siac-btn {
-    color: #b2b2a0;
-    border-color: #b2b2a0;
-    margin-left: 4px;
-    border-width: 1px;
+#siac-reading-modal-tabs-left > div {
+    padding: 4px 5px;
+    border-right: 1px solid #d4d4d4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-weight: bold;
+    color: grey;
 }
-#siac-reading-modal-tabs-left .siac-btn.active {
+body.nightMode #siac-reading-modal-tabs-left > div {
+    border-right: 1px solid var(--c-separator);
+    color: #9c9c9c;
+}
+#siac-reading-modal-tabs-left > div:last-child {
+    border-right: none;
+}
+#siac-reading-modal-tabs-left > div.active {
+    color:var(--c-primary-color) !important;
+}
+body.nightMode #siac-reading-modal-tabs-left > div.active {
     color: #61c3ff !important;
-    border-color: #2496dc !important;
 }
 .siac-pdf-main-color-border-bottom {
     border-bottom: 1px solid var(--c-separator);
@@ -1126,7 +1139,7 @@ body.nightMode .siac-note-title-only:hover {
     border: 3px outset var(--c-reading-modal-theme-color);
     border-radius: 3px;
 }
-#siac-left-tab-browse,#siac-left-tab-pdfs {
+#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md {
     font-family: 'Open Sans', sans-serif;
     flex: 1 1 auto;
     width: 100%;
