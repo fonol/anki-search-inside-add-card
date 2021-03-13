@@ -155,6 +155,11 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         # direct exec, saves code
         exec(cmd[10:])
 
+    elif cmd.startswith("siac-open-file "):
+        b64_file = cmd.split()[1] 
+        f = utility.text.b64_decode_str(b64_file)
+        display_file(f)
+
     elif cmd.startswith("siac-open-folder "):
         # try to open a folder path with the default explorer
         folder = " ".join(cmd.split()[1:]).replace("\\", "/")
@@ -487,6 +492,9 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-reading-modal-tabs-left-pdfs":
         # clicked on "Fields" in the tabs on the fields' side.
         Reader.show_pdfs_tab()
+    
+    elif cmd == "siac-reading-modal-tabs-left-md":
+        Reader.show_md_tab()
 
     elif cmd.startswith("siac-pdf-left-tab-anki-search "):
         # search input coming from the "Browse" tab in the pdf viewer
