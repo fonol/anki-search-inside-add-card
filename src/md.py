@@ -16,7 +16,7 @@
 
 import os
 import typing
-from typing import List
+from typing import List, Dict, Any
 from time import mktime
 
 import utility.date
@@ -30,6 +30,24 @@ def scan_folder_for_changed_files(folder: str, last_index_date_stamp: str) -> Li
         md_files += [os.path.join(dirp, f).replace("\\", "/") for f in files if f.endswith(".md") and os.path.getmtime(os.path.join(dirp, f)) >= unix_ts]
 
     return md_files
+
+def get_folder_structure(folder: str) -> Dict[str, Any]:
+
+    folder      = folder.replace("\\", "/")
+    if not folder.endswith("/"):
+        folder += "/"
+
+    md_files    = []
+    for dirp,_,files in os.walk(folder):
+        md_files += [os.path.join(dirp, f).replace("\\", "/").replace(folder, "") for f in files if f.endswith(".md")]
+
+    dct = {}
+    for f in md_files:
+        p = dct
+        for x in f.split('/'):
+            p = p.setdefault(x, {})
+
+    return dct
 
 def update_markdown_file(fpath: str, content: str) -> bool:
     try:
