@@ -17,7 +17,6 @@
 
 import re
 from datetime import datetime
-import time
 import random
 from bs4 import BeautifulSoup
 import typing
@@ -25,6 +24,7 @@ from typing import Optional
 import aqt
 import os
 import string
+import base64
 
 
 p_trans             = str.maketrans('', '', string.punctuation)
@@ -573,3 +573,8 @@ def mark_highlights(text, querySet):
 
     return textMarked
 
+def b64_encode_str(s: str) -> str:
+    return base64.b64encode(s.encode('utf-8')).decode('ascii')
+
+def b64_decode_str(s: str) -> str:
+    return base64.b64decode(s.encode('ascii')).decode('utf-8')
