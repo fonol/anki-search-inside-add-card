@@ -1093,7 +1093,7 @@ window.onReadingModalClose = function () {
     }
     displayedNoteId = null;
     $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right").removeClass('siac-reading-modal-displayed');
-    $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
+    $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md,#siac-reading-modal-tabs-left').remove();
     $('#fields').show();
     $("#siac-reading-modal").hide();
     byId('resultsArea').style.display = 'block';
@@ -1116,7 +1116,7 @@ window.onReadingModalClose = function () {
 
 
 window.modalTabsLeftClicked = function (tab, elem) {
-    $('#siac-reading-modal-tabs-left .siac-btn').removeClass("active");
+    $('#siac-reading-modal-tabs-left > div').removeClass("active");
     $(elem).addClass("active");
     pycmd("siac-reading-modal-tabs-left-" + tab);
 }
