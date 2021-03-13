@@ -11,6 +11,7 @@ import {  } from "./pdf_colors.js";
 import {  } from "./text_editor.js";
 import {  } from "./yt.js";
 import {  } from "./fields.js";
+import {  } from "./filetree.js";
 import {  } from "./mathjax.js";
 
 
