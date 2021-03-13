@@ -1221,6 +1221,7 @@ class UI:
             "Remember Search on Select enabled/disabled in reader on next opening",
             "Fix: Queue display in reader bottom bar not refreshing after adding a note",
             "Fix: Tag not refreshing in reader bottom bar ('Info' tab) after switching tabs",
+            "Fix: Send to field and related functions not working properly after note type change",
         ]
 
     @staticmethod
