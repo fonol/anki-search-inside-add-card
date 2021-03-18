@@ -34,6 +34,8 @@ window.refreshMathJax = function() {
     if (typeof(MathJax) !== "undefined") { 
         if (typeof(MathJax.typesetPromise) !== 'undefined') {
             window._mathjaxActivePromise = window._mathjaxActivePromise.then(MathJax.typesetPromise); 
+        } else {
+            console.log("[SIAC] Mathjax typeset fn not found.");
         }
     } else { 
         console.log("[SIAC] Seems like MathJax is not loaded."); 
