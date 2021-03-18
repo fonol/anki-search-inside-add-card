@@ -18,37 +18,71 @@
 // Functions for the text editor (currently SimpleMDE) in the reading modal.
 //
 
-window.tryExtractTextFromTextNote = function () {
-    saveTextNote($('#siac-reading-modal-top-bar').data('nid'));
-    pycmd("siac-try-copy-text-note");
-}
+SIAC.MD = new function () {
 
-window.saveTextNote = function (nid) {
-    let html = "";
-    try {
-        html = textEditor.value();
-    } catch (e) {
-        pycmd("siac-notification Could not save text note for some reason.");
-        return;
-    }
-    readerNotification("&nbsp;<i class='fa fa-save'></i>&nbsp; Note saved.&nbsp;");
-    pycmd("siac-update-note-text " + nid + " " + html);
-}
+    var _mdSidebarEditors = {};
 
-window.editorMDInit = function (elem) {
-    textEditor = new SimpleMDE({
-        element: elem,
-        indentWithTabs: true,
-        autoDownloadFontAwesome: false,
-        autosave: { enabled: false },
-        placeholder: "",
-        status: false,
-        tagSize: 4,
-        toolbar: ["bold", "italic", "heading", "|", "code", "quote", "unordered-list", "ordered-list", "horizontal-rule", "|", "image", "link", "|", "preview"]
-    });
-    // textEditor.codemirror.on("cursorActivity", function(doc){
-    //     textEditorKeyup();
-    // });
+    this.tryExtractTextFromTextNote = function () {
+        saveTextNote($('#siac-reading-modal-top-bar').data('nid'));
+        pycmd("siac-try-copy-text-note");
+    };
+
+    this.saveTextNote = function (nid) {
+        let html = "";
+        try {
+            html = textEditor.value();
+        } catch (e) {
+            pycmd("siac-notification Could not save text note for some reason.");
+            return;
+        }
+        readerNotification("&nbsp;<i class='fa fa-save'></i>&nbsp; Note saved.&nbsp;");
+        pycmd("siac-update-note-text " + nid + " " + html);
+    };
+
+    this.editorMDInit = function (elem) {
+        textEditor = new SimpleMDE({
+            element: elem,
+            indentWithTabs: true,
+            autoDownloadFontAwesome: false,
+            autosave: { enabled: false },
+            placeholder: "",
+            status: false,
+            tagSize: 4,
+            toolbar: ["bold", "italic", "heading", "|", "code", "quote", "unordered-list", "ordered-list", "horizontal-rule", "|", "image", "link", "|", "preview"]
+        });
+    };
+    this.mdSidebarEdit = function (mdFilePath, elem) {
+    
+        _mdSidebarEditors[mdFilePath] = new SimpleMDE({
+            element: elem,
+            indentWithTabs: true,
+            autoDownloadFontAwesome: false,
+            autosave: { enabled: false },
+            placeholder: "",
+            status: false,
+            tagSize: 4,
+            toolbar: ["bold", "italic", "heading", "|", "code", "quote", "unordered-list", "ordered-list", "horizontal-rule", "|", "image", "link", "|", "preview"]
+        });
+        _mdSidebarEditors[mdFilePath].codemirror.on("blur", function(){
+
+            let fpathB64 =  window.SIAC.Helpers.b64EncodeUnicode(mdFilePath);
+            let content = _mdSidebarEditors[mdFilePath].value();
+            let fcontentB64 =  window.SIAC.Helpers.b64EncodeUnicode(content);
+            window.pycmd("siac-update-md-file " + fpathB64 + " " + fcontentB64);
+        });
+    };
+    this.mdSidebarDestroy = function(mdFilePath) {
+        if (!(mdFilePath in _mdSidebarEditors)) {
+            return;
+        }
+        let lMDEdit = _mdSidebarEditors[mdFilePath];
+        lMDEdit.toTextArea();
+        lMDEdit = null;
+        delete _mdSidebarEditors[mdFilePath];
+
+    };
+
+   
 }
 
 /**
@@ -77,7 +111,7 @@ window.textEditorKeyup = function () {
         if (top < 0) { return; }
         $('#siac-pdf-tooltip').css({ 'top': top + "px", 'left': left + "px" }).show();
         pycmd("siac-pdf-selection " + text);
-        $('#siac-pdf-tooltip').data({"sentences":  sentences, "selection": text, "top": top});
+        $('#siac-pdf-tooltip').data({ "sentences": sentences, "selection": text, "top": top });
     }
 
 }

@@ -26,8 +26,8 @@
     <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
         <div class='siac-btn siac-btn-dark' style="margin-left: -28px;" onclick='toggleBottomBar();'>&#x2195;</div>
         <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")'><b>&#9998; Note</b></div>
-        <div class='siac-btn siac-btn-dark ml-5' id='siac-extract-text-btn' onclick='tryExtractTextFromTextNote()'>&nbsp;<i class="fa fa-clone"></i> &nbsp;<b>Copy to new Note</b></div>
-        <div class='siac-btn siac-btn-dark ml-5' onclick='saveTextNote({nid}, remove=false)'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save&nbsp;</b></div>
+        <div class='siac-btn siac-btn-dark ml-5' id='siac-extract-text-btn' onclick='SIAC.MD.tryExtractTextFromTextNote()'>&nbsp;<i class="fa fa-clone"></i> &nbsp;<b>Copy to new Note</b></div>
+        <div class='siac-btn siac-btn-dark ml-5' onclick='SIAC.MD.saveTextNote({nid}, remove=false)'><b>&nbsp;<i class="fa fa-floppy-o"></i> &nbsp;Save&nbsp;</b></div>
         <div class='siac-btn siac-btn-dark ml-5' onclick='pycmd("siac-reopen-file")'><b> Reopen File</b></div>
         <span id='siac-text-note-status' class='fg_grey' style='margin-left: 30px;'></span>
     </div>
@@ -42,7 +42,7 @@
     pdf.displayedMarks = null;
     pdf.displayedMarksTable = null;
     displayedNoteId = {nid};
-    editorMDInit(byId("siac-text-top").children[0]);
+    SIAC.MD.editorMDInit(byId("siac-text-top").children[0]);
     noteLoading = false;
     if (pageSidebarDisplayed) {
         pycmd('siac-linked-to-page -1 -1');
