@@ -54,7 +54,8 @@ from .hooks import add_hook
 from .review_interrupt import review_interruptor
 from .dialogs.editor import EditDialog, NoteEditor
 from .config import get_config_value_or_default as conf_or_def, get_config_value
-from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, add_note_to_index, try_repeat_last_search, search_by_tags
+from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, add_note_to_index, try_repeat_last_search
+from .cmds.cmds_search import search_by_tags
 from .menubar import Menu
 from .web.reading_modal import Reader
 from .output import UI
@@ -308,7 +309,17 @@ def insert_scripts():
                 document.body.appendChild(script);
             }})();"""
 
-    def js(path: str) -> str:
+    def js(path: str, timeout: int = 0) -> str:
+        if timeout > 0:
+            return f"""
+                setTimeout(function () {{
+                    let script = document.createElement('script');
+                    script.type = 'text/javascript';
+                    script.src = 'http://127.0.0.1:{port}/{path}';
+                    document.body.appendChild(script);
+                }}, {timeout});
+
+            """
         return f"""
             (() => {{
                 let script = document.createElement('script');
@@ -317,8 +328,7 @@ def insert_scripts():
                 document.body.appendChild(script);
             }})();"""
     
-    js_css = ""
-    js_css += css(f"_addons/{addon_id}/web/dist/styles.min.css")
+    js_css = css(f"_addons/{addon_id}/web/dist/styles.min.css")
     js_css += js(f"_addons/{addon_id}/web/dist/siac.min.js")
     js_css += css(f"_addons/{addon_id}/web/fa/css/font-awesome.min.css")
     js_css += js(f"_addons/{addon_id}/web/simple_mde/simplemde.min.js")
@@ -330,6 +340,9 @@ def insert_scripts():
     js_css += css(f"_addons/{addon_id}/web/pdfjs/textlayer.css")
     js_css += css(f"_addons/{addon_id}/web/pdf_reader.css")
     js_css += js(f"_anki/js/vendor/mathjax/tex-chtml.js")
+    js_css += js(f"_addons/{addon_id}/web/dist/vuejs/js/main.js")
+    js_css += css(f"_addons/{addon_id}/web/dist/vuejs/css/main.css")
+    js_css += js(f"_addons/{addon_id}/web/cal-heatmap.min.js", timeout=200)
 
     js_css = f"""<script>
         {js_css}
@@ -338,13 +351,6 @@ def insert_scripts():
         script.type = 'text/javascript';
         script.src = 'https://www.youtube.com/iframe_api';
         document.body.appendChild(script);
-
-        setTimeout(function() {{
-            let script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/cal-heatmap.min.js';
-            document.body.appendChild(script);
-        }}, 200);
 
         var css = `@font-face {{
                         font-family: "Open Sans";
