@@ -54,6 +54,16 @@ def create_user_files_folder():
     if not os.path.isdir(folder):
         os.mkdir(folder)
 
+def file_content(file_path: str) -> str:
+    content = ""
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except:
+        return content
+    return content
+
+
 # endregion File / Folder Utils
 
 
