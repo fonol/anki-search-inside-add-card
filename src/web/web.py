@@ -227,7 +227,8 @@ def display_note_linking(web, linked_note: Tuple[SiacNote, int]):
     else:
         page_dsp = page
     html = f"""
-        <div id='siac-link-modal' style='display: none; min-width: 235px; position: absolute; bottom: 20px; right: 20px; padding: 15px; box-shadow: 0 0 7px 1px #dcdcdc; background: #fffef7; color: black; '>
+        <div id='siac-link-modal' style='display: none; min-width: 235px; position: fixed; bottom: 20px; right: 20px; padding: 15px; box-shadow: 0 0 7px 1px #dcdcdc; background: #fffef7; color: black; '>
+            <span style='position: absolute; right: 10px; top: 5px; vertical-align: top; line-height: 1em; opacity: 0.8; font-size: 13px; cursor: pointer;' onclick='this.parentNode.remove()'>&times;</span>
             <div style='font-size: 13px !important; margin-bottom: 10px !important;'>{utility.text.trim_if_longer_than(note.get_title().replace('`', ''), 80)}</div>
             <div style='font-size: 13px !important; text-align: left;'><span style='opacity: 0.8;'>Page: {page_dsp}</span><a href="" style='float: right; color: #0096dc !important; font-size: 13px !important;' onclick='pycmd("siac-open-linked-note {note.id} {page}"); return false;'>Open in Add dialog</a></div>
         </div>
