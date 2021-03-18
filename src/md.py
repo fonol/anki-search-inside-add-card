@@ -49,6 +49,40 @@ def get_folder_structure(folder: str) -> Dict[str, Any]:
 
     return dct
 
+def create_md_file(folder: str, path: str, name: str):
+
+    name   = name.strip()
+    if not name or len(name) == 0:
+        return
+    if not folder or len(folder) == 0:
+        return
+
+    if not folder.endswith("/"):
+        folder += "/"
+    if not path.endswith("/"):
+        path += "/"
+    if not name.lower().endswith(".md"):
+        name += ".md"
+
+    fullpath = folder + path + name
+    c        = 0
+    while os.path.isfile(fullpath):
+        c       += 1
+        if (c == 1):
+            fullpath = fullpath[:-3] + "_" + str(c) + ".md"
+        else:
+            fullpath = fullpath[:(-4-len(str(c)))] + "_" + str(c) + ".md"
+    open(fullpath, "a").close()
+
+def delete_md_file(fullpath):
+
+    if not fullpath.endswith(".md"):
+        return
+    if not os.path.isfile(fullpath):
+        return
+    os.remove(fullpath)
+    
+
 def update_markdown_file(fpath: str, content: str) -> bool:
     try:
         with open(fpath, "w+", encoding="utf-8") as f:
