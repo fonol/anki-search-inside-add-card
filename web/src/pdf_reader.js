@@ -1100,6 +1100,7 @@ window.onReadingModalClose = function () {
     byId('bottomContainer').style.display = 'block';
     byId('topContainer').style.display = 'flex';
     destroyPDF();
+    SIAC.Filetree.destroy();
     if (siacYt.player) {
         try {
             siacYt.player.destroy();
@@ -1111,6 +1112,7 @@ window.onReadingModalClose = function () {
     if (SIAC.State.searchOnTyping) {
         setSearchOnTyping(true, false);
     }
+
     pycmd("siac-on-reading-modal-close");
 }
 
