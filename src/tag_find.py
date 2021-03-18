@@ -19,10 +19,9 @@ from aqt import *
 import utility.text
 from .stats import getAvgTrueRetention, getTrueRetentionOverTime, retention_stats_for_tag
 from .output import UI
-from .notes import find_by_tag, get_recently_used_tags_with_counts
+from .notes import find_by_tag
 from .models import IndexNote
 import utility.misc
-import time
 
 def findBySameTag(tagStr, limit, decks, pinned):
    
