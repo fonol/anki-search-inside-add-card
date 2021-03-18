@@ -1216,12 +1216,8 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
-            "Display linked PDF page / note after showing answer in reviewer",
-            "'Fetch from URL' will import the html as Markdown now",
-            "Remember Search on Select enabled/disabled in reader on next opening",
-            "Fix: Queue display in reader bottom bar not refreshing after adding a note",
-            "Fix: Tag not refreshing in reader bottom bar ('Info' tab) after switching tabs",
-            "Fix: Send to field and related functions not working properly after note type change",
+            "Make review message for linked pdf page sticky, add close button",
+            "Fix: Occasional loading problem of Youtube notes",
         ]
 
     @staticmethod
