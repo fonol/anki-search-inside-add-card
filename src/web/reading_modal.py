@@ -105,7 +105,8 @@ class ReaderSidebar():
             return
         self.tab_displayed = "fields"
         self._editor.web.eval("""
-            $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md').remove();
+            $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
+            $('#siac-left-tab-md').hide();
             document.getElementById("fields").style.display = 'block';
         """)
 
@@ -116,7 +117,8 @@ class ReaderSidebar():
         self.tab_displayed = "browse"
         self._editor.web.eval(f"""
             document.getElementById("fields").style.display = 'none';
-            $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md').remove();
+            $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
+            $('#siac-left-tab-md').hide();
             $(`
                 <div id='siac-left-tab-browse' class='flex-col'>
                     <div class='siac-pdf-main-color-border-bottom user_sel_none' style='flex: 0 auto; padding: 5px 0 5px 0;'>
@@ -144,7 +146,8 @@ class ReaderSidebar():
         self.tab_displayed = "pdfs"
         self._editor.web.eval(f"""
             document.getElementById("fields").style.display = 'none';
-            $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md').remove();
+            $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
+            $('#siac-left-tab-md').hide();
             $(`
                 <div id='siac-left-tab-pdfs' class='flex-col'>
                     <div class='siac-pdf-main-color-border-bottom' style='flex: 0 auto; padding: 5px 0 5px 0; user-select: none;'>
@@ -174,20 +177,22 @@ class ReaderSidebar():
             html = "<center class='mt-15'>Please set your markdown folder in the config: md.folder_path</center>"
         
         else:
-            tree = get_folder_structure(md_folder)
-            html = file_tree(tree)
-
+            html ="<siac-md-tree ref='mdComp'></siac-md-tree>"
 
         self._editor.web.eval(f"""
             document.getElementById("fields").style.display = 'none';
-            $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md').remove();
-            $(`
-                <div id='siac-left-tab-md' class='flex-col'>
-                    <div class='' style='flex: 0 1 auto; overflow: auto;'> 
-                        {html}
+            $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
+            if (byId('siac-left-tab-md')) {{
+                $('#siac-left-tab-md').show();
+            }} else {{
+                $(`<div id='siac-left-tab-md' class='flex-col'>
+                        <div class='' style='flex: 0 1 auto; overflow: auto;'> 
+                            {html}
+                        </div>
                     </div>
-                </div>
-            `).insertBefore('#siac-reading-modal-tabs-left');
+                `).insertBefore('#siac-reading-modal-tabs-left');
+                SIAC.Filetree.init();
+            }}
         """)
 
 
