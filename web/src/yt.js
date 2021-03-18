@@ -16,11 +16,24 @@
 
 
 window.siacYt = {
-    player: null
+    player: null,
+    ready: false,
+
 };
 
+window.onYouTubeIframeAPIReady = function() {
+    siacYt.ready = true;
+};
 
-window.initYtPlayer = function(videoId, start) {
+window.initYtPlayer = function(videoId, start, tryCounter) {
+
+    if (!tryCounter) {
+        tryCounter = 1;
+    }
+    if (!siacYt.ready && tryCounter < 10) {
+        setTimeout(() => { initYtPlayer(videoId, start, tryCounter + 1); }, 100);
+
+    }
 
     if (typeof YT === "undefined") {
         readerNotification("Seems like Youtube API is not loaded. Maybe check your internet connection?");
