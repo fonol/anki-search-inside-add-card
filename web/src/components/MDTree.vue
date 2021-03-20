@@ -240,7 +240,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.3);
   z-index: 10;
   display: flex;
   align-items: center;
@@ -265,5 +265,8 @@ input.invalid {
 }
 .ta_wrapper .CodeMirror {
   font-size: 14px !important;
+}
+body.nightMode .siac-md-create-file-modal-wrapper {
+  background: rgba(0, 0, 0, 0.7);
 }
 </style>
