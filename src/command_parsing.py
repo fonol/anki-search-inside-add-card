@@ -1518,7 +1518,9 @@ def empty_filtered_deck_by_name(name: str) -> bool:
             else:
                 mw.col.sched.emptyDyn(did)
         return True
-    except:
+    except Exception as e:
+        print("[SIAC] Error on emptying filtered deck:")
+        print(e)
         return False
 
 def create_filtered_deck(cids: List[int]) -> bool:
@@ -1547,7 +1549,9 @@ def create_filtered_deck(cids: List[int]) -> bool:
             mw.col.sched.rebuildDyn(did)
         mw.col.decks.select(did)
         return True
-    except:
+    except Exception as e:
+        print("[SIAC] Error on creating filtered deck:")
+        print(e)
         return False
 
 
