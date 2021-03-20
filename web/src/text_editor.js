@@ -23,7 +23,7 @@ SIAC.MD = new function () {
     var _mdSidebarEditors = {};
 
     this.tryExtractTextFromTextNote = function () {
-        saveTextNote($('#siac-reading-modal-top-bar').data('nid'));
+        this.saveTextNote($('#siac-reading-modal-top-bar').data('nid'));
         pycmd("siac-try-copy-text-note");
     };
 
