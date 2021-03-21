@@ -1218,6 +1218,7 @@ class UI:
         return [
             "Make review message for linked pdf page sticky, add close button",
             "Fix: Occasional loading problem of Youtube notes",
+            "Fix: Display problem with icons of scheduled notes in reader bottom pane",
         ]
 
     @staticmethod
