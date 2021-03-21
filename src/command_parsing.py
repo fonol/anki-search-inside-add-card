@@ -808,7 +808,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 due_today   = mw.col.find_cards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
             else:
                 due_today   = mw.col.findCards("(is:due or is:new or (prop:due=1 and is:review)) and (%s)" % " or ".join([f"nid:{nid}" for nid in last_linked]))
-            success     = create_filtered_deck(due_today)
+            (success, message)     = create_filtered_deck(due_today)
             if success:
                 mw.col.startTimebox()
                 mw.moveToState("review")
@@ -817,7 +817,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 if isMac:
                     mw.raise_()
             else:
-                tooltip("Failed to create filtered deck.")
+                tooltip("Failed to create filtered deck.\n"+message)
 
     elif cmd == "siac-reopen-file":
         # opening a siac note in the reader which has a protocol in the source
@@ -1548,11 +1548,11 @@ def create_filtered_deck(cids: List[int]) -> bool:
         else:
             mw.col.sched.rebuildDyn(did)
         mw.col.decks.select(did)
-        return True
+        return (True, "")
     except Exception as e:
         print("[SIAC] Error on creating filtered deck:")
         print(e)
-        return False
+        return (False, str(e))
 
 
 @js
