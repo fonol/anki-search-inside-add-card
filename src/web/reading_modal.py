@@ -1067,7 +1067,7 @@ class Reader:
             hover_actions       = "onmouseenter='showQueueInfobox(this, %s);' onmouseleave='leaveQueueItem(this);'" % (queue_item.id) if not hide else ""
             #if the note is a pdf or feed, show a loader on click
             pdf_or_feed         = queue_item.is_feed() or queue_item.is_pdf()
-            clock               = "&nbsp; <i class='fa fa-calendar'/>&nbsp;" if queue_item.is_scheduled() else ""
+            clock               = "&nbsp; <i class='fa fa-calendar'></i>&nbsp;" if queue_item.is_scheduled() else ""
             should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showPDFLoader();' if pdf_or_feed else ""
             if show_prios:
                 if queue_item.id in priorities:
