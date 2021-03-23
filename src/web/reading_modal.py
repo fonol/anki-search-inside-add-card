@@ -1272,6 +1272,11 @@ class Reader:
             $('#siac-timer-popup').hide();
             $('#siac-rm-greyout').show();
             $('#siac-reading-modal-center').append(`%s`);
+            if (byId('siac-reading-modal-center').clientHeight < 530 &&
+                !byId('siac-reading-modal-bottom-bar').classList.contains('bottom-hidden'))
+            {
+                toggleBottomBar();
+            }
             """ % modal
 
     @classmethod
