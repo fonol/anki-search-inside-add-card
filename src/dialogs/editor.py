@@ -20,13 +20,10 @@ import aqt.editor
 import aqt
 import functools
 import time
-import math
 import re
 import random
-from aqt.utils import saveGeom, restoreGeom
 from anki.hooks import addHook, remHook
 from anki.lang import _
-from anki.utils import isMac
 from ..output import UI
 from ..notes import *
 from ..notes import _get_priority_list
@@ -42,7 +39,6 @@ from .components import QtPrioritySlider, MDTextEdit, QtScheduleComponent
 from .url_input_dialog import URLInputDialog
 from ..markdown.extensions.fenced_code import FencedCodeExtension
 from ..markdown.extensions.def_list import DefListExtension
-from ..utility.tag_tree import TagTree
 from ..web.reading_modal import Reader
 
 import utility.text
@@ -492,10 +488,13 @@ class CreateTab(QWidget):
         self.source         = QLineEdit()
         # if note is an extract, prevent source editing
         if self.parent.note is not None and self.parent.note.extract_end is not None:
-            source_lbl          = QLabel("Source - Note is an extract")
+            self.source_lbl          = QLabel("Source - Note is an extract")
             # self.source.setReadOnly(True)
         else:
-            source_lbl          = QLabel("Source")
+            self.source_lbl          = QLabel("Source")
+        
+        self.source.editingFinished.connect(self.on_source_edit_finish)
+        
         source_hb           = QHBoxLayout()
         #source_hb.addWidget(self.source)
         if self.parent.source_prefill is not None:
@@ -527,7 +526,7 @@ class CreateTab(QWidget):
         source_hb.addStretch()
         source_hb.addWidget(source_btn)
 
-        vbox.addWidget(source_lbl)
+        vbox.addWidget(self.source_lbl)
         vbox.addWidget(self.source)
         vbox.addLayout(source_hb)
 
@@ -747,6 +746,21 @@ class CreateTab(QWidget):
                 self.source.setText(path)
             else:
                 tooltip("Invalid URL")
+
+    def on_source_edit_finish(self):
+        if self.parent.note_id is not None and self.parent.note_id > 0:
+            return
+        src = self.source.text()
+        lbl_text = self.source_lbl.text()
+        if src is not None and len(src.strip()) > 0 and check_if_source_exists(src):
+            if not lbl_text.startswith("[Duplicate]"):
+                self.source_lbl.setText("[Duplicate] " + lbl_text)
+        else:
+            if lbl_text.startswith("[Duplicate]"):
+                self.source_lbl.setText(lbl_text[len("[Duplicate] "):])
+
+
+
 
     def on_tag_chooser_clicked(self):
         dialog = TagChooserDialog(self.tag.text(), self)

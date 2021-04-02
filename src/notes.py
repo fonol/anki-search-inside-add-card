@@ -977,6 +977,14 @@ def get_recently_created_marks(limit: int = 100) -> List[Tuple[Any, ...]]:
         return []
     return list(res)
 
+def check_if_source_exists(src: str) -> bool:
+    """ Checks if any note with the given Source field value exists. """
+    if not src or len(src) == 0:
+        return False
+    c   = _get_connection()
+    res = c.execute(f"select id from notes where lower(source) = '{src.lower()}'").fetchone()
+    c.close()
+    return res is not None and len(res) > 0
 
 
 def get_pdfs_by_sources(sources: List[str]) -> List[str]:
