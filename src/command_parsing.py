@@ -1540,6 +1540,8 @@ def create_filtered_deck(cids: List[int]) -> bool:
                 did = mw.col.decks.newDyn(REV_FILTERED_DECK_NAME)
         cids.sort()
         dyn = mw.col.decks.get(did)
+        if not "terms" in dyn:
+            dyn["terms"] = []
         dyn["terms"][0] = [" or ".join([f"cid:{cid}" for cid in cids]), 9999, 0]
         dyn["resched"] = True
         mw.col.decks.save(dyn)
