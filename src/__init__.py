@@ -339,7 +339,7 @@ def insert_scripts():
     js_css += css(f"_addons/{addon_id}/web/cal-heatmap.css")
     js_css += css(f"_addons/{addon_id}/web/pdfjs/textlayer.css")
     js_css += css(f"_addons/{addon_id}/web/pdf_reader.css")
-    js_css += js(f"_anki/js/vendor/mathjax/tex-chtml.js")
+    js_css += js(f"_anki/js/vendor/mathjax/tex-chtml.js", timeout=400)
     js_css += js(f"_addons/{addon_id}/web/dist/vuejs/js/main.js")
     js_css += css(f"_addons/{addon_id}/web/dist/vuejs/css/main.css")
     js_css += js(f"_addons/{addon_id}/web/cal-heatmap.min.js", timeout=200)
