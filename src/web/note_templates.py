@@ -20,7 +20,6 @@ HTML templates for search results.
 from aqt import mw
 from ..internals import HTML
 from ..web.templating import filled_template
-import state
 
 config                          = mw.addonManager.getConfig(__name__)
 PREVIEWER                       = """<div class='ml-10 turquoise-hover cursor-pointer' onclick='pycmd("siac-preview {nid}")'><i class="fa fa-id-card-o"></i></div>"""
