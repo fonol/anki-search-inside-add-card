@@ -297,7 +297,7 @@ class UI:
                     grid_class  = gridclass,
                     counter     = counter + 1 - meta_card_counter,
                     nid         = nid,
-                    creation    = "&nbsp;&#128336; " + timeDiffString,
+                    creation    = "&#128336; " + timeDiffString,
                     edited      = "" if str(nid) not in cls.edited else "<i class='fa fa-pencil ml-10 mr-5'></i> " + cls._build_edited_info(cls.edited[str(nid)]),
                     mouseup     = "getSelectionText()",
                     text        = text,
@@ -1216,10 +1216,8 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
-            "Check if Source is already existing when adding a note",
-            "Fix: Youtube viewer layout problems on 2.1.35 alternate",
-            "(Possible) Fix: Filtered deck creation key error",
-            "(Less possible) Fix: MathJax being rendered while editing",
+            "Possible fix for incorrect field input font-sizing",
+            "Display 'Created x days ago' as tooltip on hover over note number",
         ]
 
     @staticmethod
