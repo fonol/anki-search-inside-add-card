@@ -1216,9 +1216,10 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
-            "Make review message for linked pdf page sticky, add close button",
-            "Fix: Occasional loading problem of Youtube notes",
-            "Fix: Display problem with icons of scheduled notes in reader bottom pane",
+            "Check if Source is already existing when adding a note",
+            "Fix: Youtube viewer layout problems on 2.1.35 alternate",
+            "(Possible) Fix: Filtered deck creation key error",
+            "(Less possible) Fix: MathJax being rendered while editing",
         ]
 
     @staticmethod
