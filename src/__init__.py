@@ -32,6 +32,7 @@ from aqt.tagedit import TagEdit
 from aqt.editcurrent import EditCurrent
 import aqt.stats
 import os
+import json
 import re
 import time as t
 import functools
@@ -216,7 +217,6 @@ def on_load_note(editor: Editor):
         pdf_highlights_render   = "siac-pdf-hl-alt-render" if conf_or_def("pdf.highlights.use_alt_render", False) else ""
 
         editor.web.eval(f"""
-            
             var onloadNoteInit = () => {{
                 if (typeof(SIAC) === 'undefined') {{
                     setTimeout(onloadNoteInit, 50);
@@ -249,6 +249,9 @@ def on_load_note(editor: Editor):
             UI.set_editor(editor)
             Reader.reset()
             Reader.set_editor(editor)
+
+            # https://github.com/fonol/anki-search-inside-add-card/issues/268
+            editor.web.eval(f"setFonts({json.dumps(editor.fonts())})")
 
             if index is not None:
                 UI.setup_ui_after_index_built(editor, index)
