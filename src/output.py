@@ -1022,12 +1022,12 @@ class UI:
     def print_starting_info(cls):
         """ Displays the information that is visible after the first start of the add-on. """
 
-        config  = mw.addonManager.getConfig(__name__)
-        index   = get_index()
+        config    = mw.addonManager.getConfig(__name__)
+        index     = get_index()
 
-        notes   = []
+        notes     = []
+        html      = ""
 
-        html    = "<h3>Search is <span style='color: #32d296'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
         if not index.creation_info["index_was_rebuilt"]:
             html += "Initalized in <b>%s</b> s (no changes detected)." % index.initializationTime
         else:
