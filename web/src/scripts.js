@@ -293,10 +293,11 @@ window.switchLeftRight = function () {
  */
 window.onWindowResize = function (fitPdfToPage = true) {
 
-    let offsetTop = byId("topbutsOuter").offsetHeight + 3;
+    let btnBar = byId("topbutsOuter") || document.querySelector("nav");
+    let offsetTop = btnBar.offsetHeight + 3;
 
     // Anki 2.1.41+ uses sticky on the top row, so in that case, we don't have to set a margin-top
-    let pos_style = window.getComputedStyle(byId('topbutsOuter')).getPropertyValue('position');
+    let pos_style = window.getComputedStyle(btnBar).getPropertyValue('position');
     if (pos_style === 'fixed') {
         byId("outerWr").style.marginTop = offsetTop + "px";
     }

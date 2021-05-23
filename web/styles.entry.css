@@ -92,12 +92,10 @@
 #cal-wrapper {
     box-sizing: content-box;
 }
-
 .cal-heatmap-container {
     margin-left: auto;
     margin-right: auto;
 }
-
 .floatingBtnBar {
     display: inline;
     color: white;
@@ -116,7 +114,6 @@
 .flexCol > select {
     width: 200px;
 }
-
 #bottomContainer {
     z-index: 2;
     padding-top: 0px;
@@ -130,6 +127,7 @@
     color: var(--c-keyword);
     background-color: inherit !important;
     font-weight: bold;
+    text-decoration: none;
 }
 .keyword:hover {
     filter: brightness(150%);
@@ -137,9 +135,12 @@
 #topContainer {
     z-index: 5;
     position: relative;
+    display: flex;
     flex-wrap: nowrap;
-    height: 30px;
-    padding-left: 7px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0 !important;
+    border-bottom: 1px solid var(--c-separator);
 }
 #siac-right-side mark, #siac-left-tab-browse mark {
     background-color: var(--c-highlight-background);
@@ -149,10 +150,20 @@
 #siac-reading-modal mark {
     background-color: var(--c-highlight-background-night);
     color: var(--c-highlight-foreground-night);
+    padding: 0;
 }
 #siac-right-side select {
     background-color: var(--c-select-background);
     color: var(--c-select-foreground);
+}
+#siac-right-side h4 {
+    font-size: 14px;
+}
+#siac-right-side h3 {
+    font-size: 18px;
+}
+#siac-right-side h2 {
+    font-size: 20px;
 }
 body.nightMode select {
     border-color: grey;
@@ -298,7 +309,12 @@ body.nightMode .siac-input, #siac-reading-modal .siac-input {
 .addon-hidden {
     display: none !important;
 }
-
+#siac-right-side legend {
+    font-size: 12px;
+}
+#siac-right-side hr {
+    margin: 6px 0;
+}
 .sq-r {
     display: inline-block;
     width: 8px; 
@@ -387,8 +403,7 @@ table.siac-read-stats-table tr:hover .siac-read-box {
     color: grey;
     user-select: none;
     height: 23px;
-    border-top: 1px solid var(--c-separator); 
-    margin: 10px 0 3px 7px;
+    margin: 0 0 3px 7px;
 }
 #icns-large div, #icns-small div {
     margin-top: 3px;
@@ -485,6 +500,7 @@ table.striped {
     box-sizing: border-box;
     font-size: 12px !important;
     overflow-y: hidden;
+    box-sizing: content-box;
 }
 
 fieldset {

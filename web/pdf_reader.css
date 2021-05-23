@@ -586,6 +586,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     border-radius: 2px;
     width: 9px;
     height: 9px;
+    box-sizing: content-box;
 }
 #siac-pdf-tooltip-top {
     text-align: center;
@@ -596,6 +597,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     padding: 5px 10px;
     align-items: center;
     flex-direction: column;
+    min-height: 30px;
 }
 #siac-tooltip-center:hover {
     filter: brightness(1.4);
@@ -849,6 +851,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     cursor: pointer;
     background-color: inherit !important;
     display: inline-block;
+    text-decoration: none;
     border: 1px solid transparent;
 }
 .siac-link-btn.siac-disabled,.siac-queue-picker-icn.siac-disabled,.siac-page-mark-link.siac-disabled,.siac-queue-sched-btn.siac-disabled {
@@ -914,6 +917,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     border-radius: 3px;
     border: 3px double #186a9c; 
     background: radial-gradient(#89edff, #1773ac);
+    box-sizing: content-box;
     color: black;
     font-weight: bold;
     min-width: 9px;
@@ -1058,7 +1062,8 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     padding: 15px; 
     position: relative; 
     text-align: center;
-    border: 3px outset var(--c-reading-modal-theme-color);
+    /* border: 3px outset var(--c-reading-modal-theme-color); */
+    box-shadow: 0 0 7px 1px #202020;
     background: var(--c-reading-modal-background);
     color: white;
     z-index: 12;
@@ -1227,6 +1232,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
 #siac-reading-modal-top-bar {
     width: 100%; 
     flex: 0 0 77px; 
+
     display: flex; 
     flex-wrap: nowrap; 
     border-bottom: 1px solid var(--c-separator-night); 

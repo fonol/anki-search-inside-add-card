@@ -5,6 +5,7 @@
     background: var(--c-button-background);
     border: 1px solid  var(--c-button-border);
     cursor: pointer;
+    box-sizing: content-box;
     user-select: none;
     font-size: 13px !important;
     outline: none;
@@ -104,6 +105,7 @@ body.nightMode .siac-top-row-btn {
     display: block;
     max-height: 0px;
     position: absolute;
+    box-sizing: content-box !important;
     color: var(--c-button-color); 
     background-color: var(--c-card-bg);
     width: calc(100% - 8px);
