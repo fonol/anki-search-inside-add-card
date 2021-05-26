@@ -141,9 +141,9 @@ body.nightMode .siac-inner-card pre,
     margin-block-end: 0.5em;
 }
 .siac-note-hr {
-    border-top: 2px dotted !important;
+    border-top: 1px solid !important;
     border-bottom: 0 !important;
-    opacity: 0.5;
+    opacity: 0.2;
 }
 
 .siac-meta-btn {
@@ -171,6 +171,16 @@ body.nightMode .siac-note-outer, #siac-reading-modal .siac-note-outer {
     background: var(--c-card-bg-night) !important;
     box-shadow: 0 0 7px 1px #202020;
 }
+.siac-card {
+    background: var(--c-card-bg);
+    box-shadow: 0 0 7px 1px #dcdcdc;
+}
+body.nightMode .siac-card, #siac-reading-modal .siac-card {
+    background: var(--c-card-bg-night) !important;
+    box-shadow: 0 0 7px 1px #202020;
+}
+
+
 /* Header of note card */
 .siac-note-header {
     padding: 10px; 

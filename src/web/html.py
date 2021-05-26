@@ -265,7 +265,7 @@ def get_model_dialog_html() -> HTML:
 def get_calendar_html() -> HTML:
     """ Html for the timeline at the bottom of the search pane. """
 
-    html                    = """<div id='cal-row' class='w-100' style="height: 8px;" onmouseleave='calMouseLeave()'>%s</div> """
+    html                    = """<div id='cal-row' class='w-100' onmouseleave='calMouseLeave()'>%s</div> """
     #get notes created since the beginning of the year
     day_of_year             = datetime.datetime.now().timetuple().tm_yday
     date_year_begin         = datetime.datetime(year=datetime.datetime.utcnow().year, month=1, day=1, hour=0, minute=0)

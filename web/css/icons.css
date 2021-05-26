@@ -16,7 +16,6 @@
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAbElEQVRYR+2WQQpAIQgF60De/yAeqE+LWpX5oTBiWosNw0PNKfjl4P9TB1DV4oERERP6bx8AMGAaWAXOE9paMwpm6w0ABu4Zxd5E767DAAYwwCTEwN0GZnPfupSOn+UVCoA3Dew+NLz9wpfRB/4AoCGRuX4FAAAAAElFTkSuQmCC");
 }
 .siac-search-icn {
-    margin-top: -2px;
     background-image: var(--c-search-icn);
 }
 .siac-search-icn-dark {

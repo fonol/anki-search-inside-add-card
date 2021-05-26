@@ -207,8 +207,8 @@
                 <div id='searchInfo' style='display: none;' class='{sidebarHidden}'></div>
             </div>
         </div>
-        <div id='bottomContainer' style='display: block;'>
-            <div id='siac-pagination'>
+        <div id='bottomContainer' class="siac-card" style='display: block;'>
+            <div id='siac-pagination' class="pb-0">
                 <div id='siac-pagination-status'></div>
                 <div id='siac-pagination-wrapper'>&nbsp;</div>
                 <div id='siac-cache-displ'></div>
@@ -216,78 +216,73 @@
             <div style='position: relative;' id='cal-wrapper'>
                 {calendar}
             </div>
-            <div class="flexContainer">
-                <div class='flexCol' style='padding-left: 0px; padding-top: 3px; '>
-                    <div class='flexContainer' style="flex-wrap: nowrap;">
-                        <fieldset id="sortCol" style="flex: 0 0 auto; font-size: 0.85em;">
-                            <legend>Sorting & Filtering</legend>
-                            <div class='siac-table-container' style='height: 20px;'>
-                                <div class='siac-table-cell'>
-                                    <select id='sortSelect' class='h-100'>
-                                        <option value='newest' selected='true'>Sort By Newest</option>
-                                        <option value='oldest' selected='true'>Sort By Oldest</option>
-                                        <option value='remUntagged'>Remove Untagged</option>
-                                        <option value='remTagged'>Remove Tagged</option>
-                                        <option value='remUnreviewed'>Remove Unreviewed</option>
-                                        <option value='remReviewed'>Remove Reviewed</option>
-                                        <option value='remSuspended'>Remove Suspended</option>
-                                        <option value='remUnsuspended'>Remove Unsuspended</option>
-                                    </select>
-                                </div>
-                                <div class='siac-table-cell'>
-                                    <div class='siac-table-cell-btn ml-5' onclick='sort();' title='{shortcutFilter}'>GO
-                                    </div>
-                                </div>
+            <div class="flexContainer siac-note-divider-top">
+                <div id="sortCol" style="flex: 0 0 auto;" class="p-10">
+                    <div class="siac-text-muted">Sorting & Filtering</div>
+                    <div class='siac-table-container' style='height: 20px;'>
+                        <div class='siac-table-cell'>
+                            <select id='sortSelect' class='h-100'>
+                                <option value='newest' selected='true'>Sort By Newest</option>
+                                <option value='oldest' selected='true'>Sort By Oldest</option>
+                                <option value='remUntagged'>Remove Untagged</option>
+                                <option value='remTagged'>Remove Tagged</option>
+                                <option value='remUnreviewed'>Remove Unreviewed</option>
+                                <option value='remReviewed'>Remove Reviewed</option>
+                                <option value='remSuspended'>Remove Suspended</option>
+                                <option value='remUnsuspended'>Remove Unsuspended</option>
+                            </select>
+                        </div>
+                        <div class='siac-table-cell'>
+                            <div class='siac-table-cell-btn ml-5' onclick='sort();' title='{shortcutFilter}'>GO
                             </div>
-                        </fieldset>
+                        </div>
+                    </div>
+                </div>
 
-                        <fieldset id="searchMaskCol" style="flex: 1 1 auto; font-size: 0.85em;">
-                            <legend id="siac-search-inp-mode-lbl" onclick='toggleSearchbarMode(this);'>Mode:
-                                {searchbarMode}</legend>
-                            <span class='siac-search-icn'
-                                style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
-                            <input id='siac-browser-search-inp' placeholder=''
-                                onkeyup='searchMaskKeypress(event)'></input>
-                        </fieldset>
+                <div id="searchMaskCol" style="flex: 1 1 auto;" class="p-10 flex-col">
+                    <div id="siac-search-inp-mode-lbl" onclick='toggleSearchbarMode(this);'>Mode: {searchbarMode}</div>
+                    <div class="flex-1 flex-row flex-center">
+                        <span class='siac-search-icn' style='width: 16px; height: 16px; background-size: 16px 16px;'></span>
+                        <input id='siac-browser-search-inp' class="flex-1" placeholder='Search...' onkeyup='searchMaskKeypress(event)'></input>
+                    </div>
+               </div>
 
-                        <fieldset id="predefCol" style="flex: 0 0 auto; font-size: 0.85em;">
-                            <legend>Predefined Searches</legend>
-                            <div class='siac-table-container' style='height: 20px;'>
-                                <div class='siac-table-cell'>
-                                    <select id='predefSearchSelect' class='h-100'>
-                                        <option value='lastAdded' selected='true'>Last Added</option>
-                                        <option value='firstAdded'>First Added</option>
-                                        <option value='lastModified'>Last Modified</option>
-                                        <option value='lastReviewed'>Last Reviewed</option>
-                                        <option value='lastLapses'>Last Lapses</option>
-                                        <option value='highestPerf'>Performance (desc.)</option>
-                                        <option value='lowestPerf'>Performance (asc.)</option>
-                                        <option value='highestRet'>Pass Rate (desc.)</option>
-                                        <option value='lowestRet'>Pass Rate (asc.)</option>
-                                        <option value='longestTime'>Time Taken (desc.)</option>
-                                        <option value='shortestTime'>Time Taken (asc.)</option>
-                                        <option value='highestInterval'>Interval (desc.)</option>
-                                        <option value='lowestInterval'>Interval (asc.)</option>
-                                        <option value='longestText'>Longest HTML</option>
-                                        <option value='lastUntagged'>Newest Untagged</option>
-                                        <option value='randomUntagged'>Random Untagged</option>
-                                    </select>
-                                </div>
-                                <div class='siac-table-cell'>
-                                    <select id='predefSearchNumberSel' class='h-100'>
-                                        <option value='10'>10</option>
-                                        <option value='50' selected='true'>50</option>
-                                        <option value='100'>100</option>
-                                        <option value='200'>200</option>
-                                        <option value='500'>500</option>
-                                    </select>
-                                </div>
-                                <div class='siac-table-cell'>
-                                    <div class='siac-table-cell-btn' onclick='predefSearch();' title='{shortcutPredef}'>
-                                        GO</div>
-                                </div>
-                            </div>
-                        </fieldset>
+                <div id="predefCol" style="flex: 0 0 auto;" class="p-10">
+                    <div class="siac-text-muted">Predefined Searches</div>
+                    <div class='siac-table-container' style='height: 20px;'>
+                        <div class='siac-table-cell'>
+                            <select id='predefSearchSelect' class='h-100'>
+                                <option value='lastAdded' selected='true'>Last Added</option>
+                                <option value='firstAdded'>First Added</option>
+                                <option value='lastModified'>Last Modified</option>
+                                <option value='lastReviewed'>Last Reviewed</option>
+                                <option value='lastLapses'>Last Lapses</option>
+                                <option value='highestPerf'>Performance (desc.)</option>
+                                <option value='lowestPerf'>Performance (asc.)</option>
+                                <option value='highestRet'>Pass Rate (desc.)</option>
+                                <option value='lowestRet'>Pass Rate (asc.)</option>
+                                <option value='longestTime'>Time Taken (desc.)</option>
+                                <option value='shortestTime'>Time Taken (asc.)</option>
+                                <option value='highestInterval'>Interval (desc.)</option>
+                                <option value='lowestInterval'>Interval (asc.)</option>
+                                <option value='longestText'>Longest HTML</option>
+                                <option value='lastUntagged'>Newest Untagged</option>
+                                <option value='randomUntagged'>Random Untagged</option>
+                            </select>
+                        </div>
+                        <div class='siac-table-cell'>
+                            <select id='predefSearchNumberSel' class='h-100'>
+                                <option value='10'>10</option>
+                                <option value='50' selected='true'>50</option>
+                                <option value='100'>100</option>
+                                <option value='200'>200</option>
+                                <option value='500'>500</option>
+                            </select>
+                        </div>
+                        <div class='siac-table-cell'>
+                            <div class='siac-table-cell-btn' onclick='predefSearch();' title='{shortcutPredef}'>
+                                GO</div>
+                        </div>
                     </div>
                 </div>
             </div>

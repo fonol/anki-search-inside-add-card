@@ -1167,6 +1167,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
 }
 .siac-pdf-color-btn {
     height: 20px; 
+    box-sizing: content-box;
     width: 20px; 
     border-radius: 4px;
     margin-bottom: 4px;
@@ -1186,6 +1187,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     user-select: none;
 }
 .siac-text-hl {
+    box-sizing: content-box;
     z-index: 3;
     border: none;
     font-family: 'Open Sans', sans-serif;

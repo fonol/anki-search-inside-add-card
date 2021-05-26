@@ -43,7 +43,6 @@
     height: 100%;
     overflow: hidden;
     display: flex;
-    padding-left: 7px;
 }
 .signal {
     border: 5px solid #2496dc;
@@ -88,9 +87,14 @@
     max-width: 100%;
     position: relative;
     flex: 1 1 auto;
+    margin-bottom: 5px;
 }
 #cal-wrapper {
+    padding: 10px;
     box-sizing: content-box;
+}
+#cal-row {
+    line-height: 8px;
 }
 .cal-heatmap-container {
     margin-left: auto;
@@ -116,9 +120,7 @@
 }
 #bottomContainer {
     z-index: 2;
-    padding-top: 0px;
     margin-right: 0px;
-    padding-right: 0px;
     overflow-x: hidden;
     flex: 0 0 auto;
 }
@@ -226,11 +228,10 @@ body.nightMode .tagLbl:hover {
     border: 1px solid var(--c-input-border);
     border-radius: 3px;
     box-sizing: border-box;
-    width: calc(100% - 22px);
     min-width: 50px;
     margin-left: 2px;
     padding-left: 4px;
-    height: 25px;
+    height: 100%;
 }
 
 .siac-input {
@@ -253,9 +254,6 @@ body.nightMode .siac-input, #siac-reading-modal .siac-input {
     white-space: nowrap;
 }
 #siac-search-inp-mode-lbl:hover {
-    transform: scale(1.04);
-    padding-right: 2px;
-    padding-left: 2px;
     filter: brightness(150%);
 }
 #deckSelWrapper {
@@ -729,7 +727,7 @@ body.nightMode .noteFloatingHeader {
 #siac-pagination {
     position: relative;
     font-size: 13px !important;
-    margin: 4px 0 3px 5px;
+    padding: 10px;
     white-space: nowrap;
     overflow: hidden;
     vertical-align: bottom;
@@ -935,4 +933,16 @@ body.nightMode .siac-fld-sel-menu *  {
     margin: 0 3px 0 5px;
     user-select: none;
     cursor: default;
+}
+.siac-note-divider-top {
+    border-top: 1px solid #d4d4d4;
+}
+body.nightMode .siac-note-divider-top, #siac-reading-modal .siac-note-divider-top {
+    border-top: 1px solid #4e4e4e;
+}
+.siac-note-divider-bottom {
+    border-top: 1px solid #d4d4d4;
+}
+body.nightMode .siac-note-divider-bottom, #siac-reading-modal .siac-note-divider-bottom {
+    border-top: 1px solid #4e4e4e;
 }
