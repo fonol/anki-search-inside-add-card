@@ -1216,8 +1216,7 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
-            "Possible fix for incorrect field input font-sizing",
-            "Display 'Created x days ago' as tooltip on hover over note number",
+            "First changes to make add-on compatible with Anki 2.1.44+",
         ]
 
     @staticmethod
