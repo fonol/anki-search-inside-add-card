@@ -5,7 +5,7 @@
             <span id='siac-pin-dsp-{nid}' class='hidden' onclick='pinCard({nid})'><i class='fa fa-thumb-tack'></i></span>
             <span class='siac-note-lbl' onmouseup='getSelectionText()'>{title}</span>
         </span>
-        <div class='flex-row'>
+        <div class='flex-row siac-note-btns'>
             <div onclick='pycmd("siac-delete-user-note-modal {nid}");' class='red-hover cursor-pointer'><i class='fa fa-trash'></i></div>
             <div onclick='pycmd("siac-edit-user-note {nid}")' class='ml-10 turquoise-hover cursor-pointer'><i class="fa fa-pencil"></i></div>
             <div onclick='searchCard({nid})' class='ml-10 turquoise-hover cursor-pointer'><i class="fa fa-search"></i></div>

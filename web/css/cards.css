@@ -17,6 +17,10 @@ body.nightMode .siac-inner-card, #siac-reading-modal .siac-inner-card {
   .siac-note-outer.meta .siac-inner-card {
     max-height: none;
 }
+.siac-note-outer:hover .siac-note-btns {
+    /* visibility: visible; */
+    opacity: 1;
+}
 .pdf .siac-inner-card{
     min-width: 200px;
 }
@@ -135,6 +139,11 @@ body.nightMode .siac-inner-card pre,
     color: var(--c-field-separator);
     margin: 0 5px 0 5px;
   }
+.siac-note-btns {
+    /* visibility: hidden; */
+    opacity: 0;
+    transition: opacity 0.25s;
+}
 
 .siac-user-note .siac-inner-card p {
     margin-block-start: 0.5em;
