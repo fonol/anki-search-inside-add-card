@@ -69,7 +69,6 @@ def init_addon():
     """ Executed once on Anki startup. """
     global origEditorContextMenuEvt
 
-   
 
     if config["dev_mode"]:
         state.dev_mode = True
@@ -119,7 +118,7 @@ def init_addon():
     setup_hooks()
 
     # add shortcuts
-    aqt.editor._html += """ <script> document.addEventListener("keydown", function (e) {globalKeydown(e); }, false); </script>"""
+    aqt.editor._html += """ <script> document.addEventListener("keydown", function (e) { if (typeof (globalKeydown) !== 'undefined') globalKeydown(e); }, false); </script>"""
 
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific()
