@@ -806,7 +806,7 @@ class Reader:
                                 <span>Some of the last cards you made in this {ntype} are due today.<br>Review them before {act.lower()}?</span>
                             </div>
                             <div class='ta_center fg_grey bold mt-10' style='font-size: 18px'>
-                                [{len(due_today)} due cards]
+                                [{len(due_today)} due card{'s' if len(due_today) > 1 else ''}]
                             </div>
                             <div class='ta_center bold' style='opacity: 1; margin: 50px 0 30px 0;'>
                                 <div class='siac-modal-btn' style='margin-right: 15px;' onclick='pycmd("siac-rev-last-linked");document.getElementsByClassName("siac-rev-overlay")[0].style.display = "none";'><i class="fa fa-graduation-cap"></i>&nbsp;Review</div>
