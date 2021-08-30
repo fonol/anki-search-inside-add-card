@@ -127,6 +127,8 @@ def pdf_to_base64(path):
     return encoded_string
 
 def count_cards_added_today():
+    if hasattr(mw.col, "find_cards"):
+        return len(mw.col.find_cards("added:1"))
     return len(mw.col.findCards("added:1"))
 
 def dark_mode_is_used(config):
