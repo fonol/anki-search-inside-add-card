@@ -305,15 +305,13 @@ def create_note(title: str,
     #clean the text
     # text    = utility.text.clean_user_note_text(text)
 
-    if source is not None:
-        source = source.strip()
     if (len(text) + len(title)) == 0:
         return
-    if tags is None:
-        tags = ""
+
+    source = source.strip() if source is not None else source
+    tags = "" if tags is None else tags
     tags = tags.replace('"', "").replace("'", "")
-    if len(tags.strip()) > 0:
-        tags = " %s " % tags.strip()
+    tags = (" %s " % tags.strip()) if len(tags.strip()) > 0 else tags
 
     conn    = _get_connection()
     id      = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority, url)
@@ -408,8 +406,7 @@ def update_note_tags(id: int, tags: str):
 def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int, author: str, url: str):
 
     # text = utility.text.clean_user_note_text(text)
-    if tags is None:
-        tags = ""
+    tags    = "" if tags is None else tags
     tags    = " %s " % tags.strip()
     tags    = tags.replace('"', "").replace("'", "")
     mod     = _date_now_str()
@@ -1027,9 +1024,10 @@ def get_read_pages(nid: int) -> List[int]:
 
 def get_read(delta_days: int) -> Dict[int, Tuple[int, str]]:
     """ Get # of read pages by note ID. """
-    stamp = utility.date.date_x_days_ago_stamp(abs(delta_days))
-    conn = _get_connection()
-    res  = conn.execute(f"select counts.c, counts.nid, notes.title from notes join (select count(*) as c, nid from read where page > -1 and created like '{stamp}%' group by nid) as counts on notes.id = counts.nid").fetchall()
+    assert delta_days > 0
+    stamp   = utility.date.date_x_days_ago_stamp(abs(delta_days))
+    conn    = _get_connection()
+    res     = conn.execute(f"select counts.c, counts.nid, notes.title from notes join (select count(*) as c, nid from read where page > -1 and created like '{stamp}%' group by nid) as counts on notes.id = counts.nid").fetchall()
     conn.close()
     d = dict()
     for c, nid, title in res:
@@ -1038,9 +1036,10 @@ def get_read(delta_days: int) -> Dict[int, Tuple[int, str]]:
 
 def get_read_last_n_days(delta_days: int) -> Dict[int, Tuple[int, str]]:
     """ Get # of read pages by note ID for the last n days. """
-    stamp = utility.date.date_x_days_ago_stamp(abs(delta_days))
-    conn = _get_connection()
-    res  = conn.execute(f"select counts.c, counts.nid, notes.title from notes join (select count(*) as c, nid from read where page > -1 and created >= '{stamp}' group by nid) as counts on notes.id = counts.nid").fetchall()
+    assert delta_days > 0
+    stamp   = utility.date.date_x_days_ago_stamp(abs(delta_days))
+    conn    = _get_connection()
+    res     = conn.execute(f"select counts.c, counts.nid, notes.title from notes join (select count(*) as c, nid from read where page > -1 and created >= '{stamp}' group by nid) as counts on notes.id = counts.nid").fetchall()
     conn.close()
     d = dict()
     for c, nid, title in res:
@@ -1049,6 +1048,7 @@ def get_read_last_n_days(delta_days: int) -> Dict[int, Tuple[int, str]]:
 
 def get_read_last_n_days_by_day(delta_days: int) -> Dict[str, int]:
     """ Get # of read pages by dates. """
+    assert delta_days > 0
     stamp   = utility.date.date_x_days_ago_stamp(abs(delta_days))
     conn    = _get_connection()
     res     = conn.execute(f"select count(*) as c, substr(created, 0, 11) as date from read where page > -1 and created >= '{stamp}' group by substr(created, 0, 11)").fetchall()
