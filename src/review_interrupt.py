@@ -16,6 +16,9 @@ interrupt_in_n_cards    = 0
 def review_interruptor():
     global last_did, current_did, interrupt_in_n_cards
 
+    if state.rr_mix_disabled:
+        return
+
     interruption_mode = get_config_value("mix_reviews_and_reading.mode")
 
     if interruption_mode == "every_n":

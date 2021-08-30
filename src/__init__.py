@@ -164,7 +164,7 @@ def on_reviewer_did_answer(reviewer, card, ease):
     reviewer.web.eval("if (document.getElementById('siac-link-modal')) { $('#siac-link-modal').remove(); }")
 
     # check if we want to do review interruption
-    if (get_config_value("mix_reviews_and_reading") == False) or state.rr_mix_disabled:
+    if not get_config_value_or_default("mix_reviews_and_reading", False) or state.rr_mix_disabled:
         return
 
     review_interruptor()
