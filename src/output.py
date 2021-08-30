@@ -1208,7 +1208,10 @@ class UI:
             return False
 
         try:
-            win.deckChooser.setDeckName(deck)
+            if hasattr(win, "deck_chooser"):
+                win.deck_chooser.setDeckName(deck)
+            else:
+                win.deckChooser.setDeckName(deck)
             # win.deckChooser.onDeckChange()
             return True
         except:
