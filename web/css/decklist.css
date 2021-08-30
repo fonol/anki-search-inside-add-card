@@ -40,7 +40,8 @@
     color: white;
 }
 body.nightMode .deck-list-item:hover > .list-item-inner {
-    background: var(--c-primary-color-night);
+    /* background: var(--c-primary-color-night); */
+    background: #464646;
 }
 .check {
     float: right;
@@ -58,7 +59,8 @@ body.nightMode .deck-list-item:hover > .list-item-inner {
     display: none;
 }
 body.nightMode .siac-tl-plus {
-    background: var(--c-primary-color-night);
+    /* background: var(--c-primary-color-night); */
+    background: #464646;
 }
 .deck-list-item:hover > .list-item-inner > .siac-tl-plus {
     display: inline-block;

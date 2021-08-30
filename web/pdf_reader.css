@@ -598,6 +598,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     align-items: center;
     flex-direction: column;
     min-height: 30px;
+    box-sizing: content-box;
 }
 #siac-tooltip-center:hover {
     filter: brightness(1.4);

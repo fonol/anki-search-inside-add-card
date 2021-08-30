@@ -10,6 +10,7 @@
     margin: 0 0 0 5px;
     line-height: 20px;
     cursor: pointer;
+    border-radius: 3px;
 }
 details .siac-notes-sidebar-item {
     margin-left: 13px;
@@ -23,7 +24,8 @@ details .siac-notes-sidebar-item:hover {
 }
 
 body.nightMode .siac-notes-sidebar-item:hover, body.nightMode .siac-notes-sidebar-item summary:hover {
-    background: var(--c-primary-color-night);
+    /* background: var(--c-primary-color-night); */
+    background: #464646;
 }
 .siac-notes-sidebar-item:hover details {
     background: var(--c-card-bg);
