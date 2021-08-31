@@ -21,7 +21,6 @@ import aqt
 import os
 
 from ..api import *
-from ..config import get_config_value
 from ..notes import get_read_today_count
 import state
 import utility.misc
@@ -50,9 +49,9 @@ class ReviewReadInterruptDialog(QDialog):
         hb_icon.addStretch()
         self.vbox.addLayout(hb_icon)
         self.vbox.addSpacing(15)
-        lbl = QLabel("Open the first item in the queue?")
+        lbl = QLabel("Open first item in the queue?")
         lbl.setAlignment(Qt.AlignCenter)
-        lbl.setStyleSheet("font-size: 20px;font-variant: small-caps;")
+        lbl.setStyleSheet("font-size: 20px;")
         lbl.setMargin(15)
 
         cnt = get_read_today_count()

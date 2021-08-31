@@ -18,24 +18,21 @@ import sqlite3
 import os
 import sys
 import struct
-import re
 import time
 import math
-import collections
 from aqt import *
-from aqt.utils import showInfo, tooltip
 
-from ..output import *
 from ..debug_logging import log, persist_index_info, get_index_info
 from ..models import IndexNote, SiacNote
-from .indexing_data import get_notes_in_collection, index_data_size
+from ..output import UI
+from ..web.reading_modal import Reader
 import utility.misc
 import utility.text
 import state
 
 class FTSIndex:
 
-    def __init__(self, force_rebuild = False):
+    def __init__(self, anki_index_data, addon_index_data, force_rebuild = False):
 
         self.limit              = 20
         self.pinned             = []
@@ -46,7 +43,6 @@ class FTSIndex:
         self.creation_info      = {}
 
         self.threadPool         = QThreadPool()
-        self.ui                 = Output()
 
         config                  = mw.addonManager.getConfig(__name__)
 
@@ -78,21 +74,22 @@ class FTSIndex:
         except KeyError:
             self.fields_to_exclude                              = {}
 
-        self.ui.fields_to_exclude               = self.fields_to_exclude
+        UI.fields_to_exclude                    = self.fields_to_exclude
 
         # check if we have to rebuild the index
-        index_up_to_date = not force_rebuild and not self._should_rebuild()
+        index_data                              = anki_index_data + addon_index_data
+        index_up_to_date                        = not force_rebuild and not self._should_rebuild(index_data)
 
         self.creation_info["index_was_rebuilt"] = not index_up_to_date
 
         if not index_up_to_date:
-            corpus = state.index_data
+
             if self.porter:
                 sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs, tokenize=porter)"
             else:
                 sql = "create virtual table notes using fts%s(nid, text, tags, did, source, mid, refs)"
 
-            cleaned     = self._cleanText(corpus)
+            cleaned     = self._cleanText(index_data)
             file_path   = self.dir + "search-data.db"
             try:
                 os.remove(file_path)
@@ -125,7 +122,7 @@ class FTSIndex:
         state.index_data = None
 
 
-    def _should_rebuild(self):
+    def _should_rebuild(self, index_data):
         """ Check if the index should be rebuilt. """
 
         config  = mw.addonManager.getConfig(__name__)
@@ -157,7 +154,7 @@ class FTSIndex:
         except:
             return True
 
-        index_size = state.index_data_size
+        index_size = len(index_data)
         if info["size"] != index_size:
             return True
 
@@ -205,23 +202,15 @@ class FTSIndex:
 
 
 
-    def _cleanText(self, corpus):
+    def _cleanText(self, index_data):
         """ Prepare notes for indexing (cut stopwords, remove fields, remove special characters). """
 
-        filtered    = list()
-        text        = ""
-
-        for row in corpus:
-            text = row[1]
-
-            #if the notes model id is in our filter dict, that means we want to exclude some field(s)
-            if row[4] in self.fields_to_exclude:
-                text = utility.text.remove_fields(text, self.fields_to_exclude[row[4]])
-
-            text = utility.text.clean(text)
-            filtered.append((row[0], text, row[2], row[3], row[1], row[4], row[5]))
-
-        return filtered
+        return [
+            (row[0], 
+            utility.text.clean_for_indexing(utility.text.remove_fields(row[1], self.fields_to_exclude[row[4]])) if row[4] in self.fields_to_exclude else utility.text.clean_for_indexing(row[1]), 
+            row[2], row[3], row[1], row[4], row[5])
+            for row in index_data
+        ]
 
 
     def search(self, text, decks, only_user_notes = False, print_mode = "default", knowledge_tree = None):
@@ -233,7 +222,7 @@ class FTSIndex:
         """
         worker          = Worker(self.searchProc, text, decks, only_user_notes, print_mode)
         worker.stamp    = utility.misc.get_milisec_stamp()
-        self.ui.latest  = worker.stamp
+        UI.latest  = worker.stamp
 
         if knowledge_tree:
             worker.signals.result.connect(knowledge_tree.get_search_results_back)
@@ -244,7 +233,7 @@ class FTSIndex:
         elif print_mode == "pdf.left":
             worker.signals.result.connect(self.print_pdf_left)
 
-        worker.signals.tooltip.connect(self.ui.show_tooltip)
+        worker.signals.tooltip.connect(UI.show_tooltip)
         self.threadPool.start(worker)
 
 
@@ -255,7 +244,7 @@ class FTSIndex:
         orig                        = text
         text                        = self.clean(text)
         resDict["time-stopwords"]   = int((time.time() - start) * 1000)
-        self.lastSearch             = (text, decks, "default")
+        self.lastSearch             = (text, decks, "default", orig)
 
         if self.logging:
             log("\nFTS index - Received query: " + text)
@@ -266,7 +255,7 @@ class FTSIndex:
 
         if len(text) == 0:
             if print_mode == "default":
-                self.ui.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", "").replace("`", "&#96;"))
+                UI.empty_result("Query was empty after cleaning.<br/><br/><b>Query:</b> <i>%s</i>" % utility.text.trim_if_longer_than(orig, 100).replace("\u001f", "").replace("`", "&#96;"))
                 if mw.addonManager.getConfig(__name__)["hideSidebar"]:
                     return "Found 0 notes. Query was empty after cleaning."
                 return None
@@ -319,8 +308,7 @@ class FTSIndex:
             res                     = conn.execute(dbStr).fetchall()
             resDict["time-query"]   = int((time.time() - start) * 1000)
         except Exception as e:
-            if self.logging:
-                log("Executing db query threw exception: " + str(e))
+            print("Executing match query threw exception: " + str(e))
             res                     = []
         finally:
             conn.close()
@@ -359,20 +347,19 @@ class FTSIndex:
             #self.output.show_tooltip(result)
             pass
         elif result is not None:
-            self.ui.print_search_results(result["results"], stamp, timing_info = True, query_set=query_set)
+            q = utility.text.trim_if_longer_than(self.lastResDict["query"], 50) if "query" in self.lastResDict else ""
+            if q:
+                q = q.replace("\"", "")
+                q = f"\"{q}\""
+            UI.print_search_results(["Search", q],  result["results"], stamp, timing_info = True, query_set=query_set)
 
 
     def print_pdf(self, result, stamp):
         """
             Results printed in the tooltip in the pdf modal.
         """
-        query_set = None
-        if self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
-            query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
-        if result is not None:
-            self.ui.print_pdf_search_results(result["results"], stamp, query_set)
-        else:
-            self.ui.print_pdf_search_results([], stamp, self.lastSearch[0])
+        res = result["results"] if result is not None else []
+        UI.print_pdf_search_results(res, self.lastSearch[0], self.lastSearch[3])
 
     def print_pdf_left(self, result, stamp):
         """
@@ -383,17 +370,17 @@ class FTSIndex:
         if self.lastResDict is not None and "query" in self.lastResDict and self.lastResDict["query"] is not None:
             query_set =  set(utility.text.replace_accents_with_vowels(s).lower() for s in self.lastResDict["query"].split(" "))
         if result is not None:
-            self.ui.reading_modal.sidebar.print(result["results"], stamp, query_set)
+            Reader.sidebar.print(result["results"], stamp, query_set)
         else:
-            self.ui.reading_modal.sidebar.print([], stamp, self.lastSearch[0])
+            Reader.sidebar.print([], stamp, self.lastSearch[0])
 
     def searchDB(self, text, decks):
         """
         Used for searches in the search mask,
         doesn't use the index, instead use the traditional anki search
         """
-        stamp           = utility.misc.get_milisec_stamp()
-        self.ui.latest  = stamp
+        stamp               = utility.misc.get_milisec_stamp()
+        UI.latest    = stamp
         # compatibility with older versions (<2.1.24?)
         try:
             if hasattr(mw.col, "find_notes"):

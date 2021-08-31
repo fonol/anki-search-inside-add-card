@@ -21,7 +21,6 @@
  * ###########################################
  */
 
-// const { Highlighting } = require("./pdf_highlighting");
 
 window.pdfImgSel = {
     canvas: null,
@@ -40,22 +39,23 @@ window.pdfImgMouseUp = function (event) {
     if (pdfImgSel.mouseIsDown) {
         pdfImgSel.mouseIsDown = false;
         drawSquare();
-        var pdfC = activeCanvas();
-        cropSelection(pdfC, pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY, insertImage);
+        cropSelection(activeCanvas(), pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY, insertImage);
         $(pdfImgSel.canvas).remove();
         $('#text-layer').show();
     }
 }
 /** Save whole page to image */
-window.pageSnapshot = function() {
+window.pageSnapshot = function(fld_ix) {
     // Function can be called from Qt-controlled shortcut,
     // so it might be that there is no PDF opened when called.
     if (!pdf.instance) {
         return;
     }
-    var pdfC = activeCanvas();
-    cropSelection(pdfC, 0, 0, pdfC.offsetWidth, pdfC.offsetHeight, insertImage);
+    let pdfC = activeCanvas();
+    cropSelection(pdfC, 0, 0, pdfC.offsetWidth, pdfC.offsetHeight, function(data) { insertImage(data, fld_ix); });
 }
+
+
 window.extractPages = function() {
     // Function can be called from Qt-controlled shortcut,
     // so it might be that there is no PDF opened when called.
@@ -63,6 +63,25 @@ window.extractPages = function() {
         return;
     }
     pycmd("siac-create-pdf-extract " + pdf.page + " " + pdf.instance.numPages); event.stopPropagation();
+}
+
+/**
+ * Make a picture of the area around the current selection and send it to the given field. 
+ */
+window.selectionSnapshot = function(fld_ix) {
+    let r = SIAC.Helpers.getSelectionCoords();
+    if (r) {
+        let sel = getSelection();
+        if (sel && sel.rangeCount > 0) {
+            sel.getRangeAt(0).collapse();
+        }
+        if (byId('siac-pdf-tooltip')) {
+            byId('siac-pdf-tooltip').style.display = 'none';
+        }
+        setTimeout(function() {
+            pycmd(`siac-screen-capture ${fld_ix} ${Math.max(0, Math.trunc(r.top - 10))} ${Math.max(0, Math.trunc(r.left - 10))} ${Math.min(Math.trunc(r.width + 20), screen.width)} ${Math.min(screen.height, Math.trunc(r.height +20))}`); 
+        }, 50);
+    }
 }
 window.cropSelection = function(canvasSrc, offsetX, offsetY, width, height, callback) {
     if (width < 2 || height < 2) {
@@ -75,8 +94,12 @@ window.cropSelection = function(canvasSrc, offsetX, offsetY, width, height, call
     tctx.drawImage(canvasSrc, offsetX * window.devicePixelRatio, offsetY * window.devicePixelRatio, width * window.devicePixelRatio, height * window.devicePixelRatio, 0, 0, temp.width, temp.height);
     callback(temp.toDataURL());
 }
-window.insertImage = function(data) {
-    pycmd("siac-add-image 1 " + data.replace("image/png", ""));
+window.insertImage = function(data, fld_ix) {
+    if (fld_ix == null) {
+        pycmd("siac-add-image 1 " + data.replace("image/png", ""));
+    } else {
+        pycmd("siac-add-image-to-fld " + fld_ix + " " + data.replace("image/png", ""));
+    }
 }
 window.pdfImgMouseDown = function(event) {
     pdfImgSel.canvasDispl = activeCanvas().offsetLeft;
@@ -164,7 +187,7 @@ window.pdfAreaHighlightMouseUp = function (event) {
     if (pdfImgSel.mouseIsDown) {
         pdfImgSel.mouseIsDown = false;
         drawSquare();
-        Highlighting.createAreaHighlight(pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY);
+        SIAC.Highlighting.createAreaHighlight(pdfImgSel.startX, pdfImgSel.startY, pdfImgSel.endX - pdfImgSel.startX, pdfImgSel.endY - pdfImgSel.startY);
         clearImgSelectionCanvas();
     }
 }

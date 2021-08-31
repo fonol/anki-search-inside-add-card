@@ -1,12 +1,12 @@
 <div class='siac-note-outer {grid_class}' data-nid="{nid}" id='siac-note-wr-{nid}'>
     <div class='w-100 flex-row siac-note-header'>
         <span style='font-size: 12px;'>
-            <span id='siac-cnt-dsp-{nid}'>{counter}</span>
+            <span id='siac-cnt-dsp-{nid}' title="{creation}">{counter}</span>
             <span id='siac-pin-dsp-{nid}' class='hidden' onclick='pinCard({nid})'><i class='fa fa-thumb-tack'></i></span>
             <span id='siac-susp-dsp-{nid}'></span>
             <span id='siac-edited-dsp-{nid}'>{edited}</span>
         </span>
-        <div class='flex-row'>
+        <div class='flex-row siac-note-btns'>
             <div onclick='edit({nid})' class='ml-10 turquoise-hover cursor-pointer'><i class="fa fa-pencil"></i></div>
             {previewer}
             <div onclick='searchCard({nid})' class='ml-10 turquoise-hover cursor-pointer'><i class="fa fa-search"></i></div>

@@ -16,12 +16,10 @@
 
 
 from aqt.qt import *
-import aqt.editor
 import aqt
 import functools
 import re
 import random
-from aqt.utils import showInfo
 
 from ..config import get_config_value_or_default
 

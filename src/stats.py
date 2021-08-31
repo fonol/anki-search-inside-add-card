@@ -19,21 +19,19 @@ from aqt import mw
 from aqt.qt import *
 import aqt
 
+
 try:
-    from .special_searches import *
-    from .special_searches import _to_day_ivl
     from .models import IndexNote
 except: 
-    from special_searches import *
-    from special_searches import _to_day_ivl
     from models import IndexNote
 
 import time
 import json
+import utility.misc
 
 """
 Various statistics functions.
-Mainly used for the information displayed when clicking on "INFO" on a note or for some of the predefined searches.
+Mainly used for the information displayed when clicking on "i" on a note or for some of the predefined searches.
 Todo: Add typing annotation
 """
 
@@ -129,9 +127,7 @@ def getTrueRetentionOverTime(nids):
     return _getTrueRetentionOverTime(cids)
 
 def getRetentions(nids):
-    # for testing
-    if mw is None:
-        return dict()
+
     passedById  = dict()
     failedById  = dict()
     retsByNid   = {}
@@ -340,7 +336,6 @@ def calculateStats(nid, gridView):
     reviewPlotData      = {}
     ivlPlotData         = {}
     timePlotData        = {}
-    similar_res_by_cid  = {}
 
     infoTable["Card ID(s)"]     = ", ".join([str(c[0]) + f" ({_cardTypeStr(c[6])}) <span class='keyword' onclick='pycmd(\"siac-copy-to-cb {c[0]}\")'>[Copy]</span>" for c in cards])
 
@@ -432,10 +427,10 @@ def calculateStats(nid, gridView):
 
         infoTable                                                               = {}
         infoTable["<b>Reviews (Cards from this note)</b>"]                      = cnt
-        infoTable["&nbsp;&nbsp;&nbsp; <span style='color: red'>Failed</span>"]  = failed
-        infoTable["&nbsp;&nbsp;&nbsp; <span style='color: black'>Hard</span>"]  = hard
-        infoTable["&nbsp;&nbsp;&nbsp; <span style='color: green'>Good</span>"]  = good
-        infoTable["&nbsp;&nbsp;&nbsp; <span style='color: blue'>Easy</span>"]   = easy
+        infoTable["<span class='ml-5 bg-red rev-lbl'>Failed</span>"]  = failed
+        infoTable["<span class='ml-5 rev-lbl' style='background: black; color: white;'>Hard</span>"]  = hard
+        infoTable["<span class='ml-5 rev-lbl bg-green' style='color: black;'>Good</span>"]  = good
+        infoTable["<span class='ml-5 rev-lbl bg-blue'>Easy</span>"]   = easy
         tables["Stats"].append(infoTable)
 
         if cnt > 0:
@@ -475,61 +470,10 @@ def calculateStats(nid, gridView):
 
     html = _buildTable(tables, reviewPlotData, ivlPlotData,
                        timePlotData, cardNameById)
-    # if similar_res_by_cid:
-    #     html += _build_similarity_table(similar_res_by_cid, intervalsByCid)
     return(html, reviewPlotData, ivlPlotData, timePlotData)
 
 
-def _build_similarity_table(similar_res_by_cid, card_ivl_by_id):
-    html = """
-            <br/>
-            <h3 class='w-100 ta_center'>Similar Cards</h3>
-                Cards whose review history is similar to the given card one's. Similarity is measured among the interval steps (only in reviews) 
-                that a card went through. If our card has an interval of 95 days at the 4th review, and another card has 90 days at the 4th review, 
-                the similarity at this step is <br/>
-                (95 / 100) * 90 = 85.5 %.<br/> 
-                Similarities at each interval step are summed up and averaged to get the total similarity.
-                <br/>
-                <br/>
-            <b>Sample:</b> Cards, whose review history is as close as possible to the given card.<br/>
-            <b>Estimated Success Chance:</b> All cards in the given sample must have at least one more review than our card. Success chance is then <i>Number of Successful Next Reviews</i> / <i>Sample Size</i><br/>
-            <b>Average Interval:</b> Average Interval in the sample at our cards current step.<br/>
-            <b>Average Pass Rate:</b> <i>Sum of each sample's pass rate</i> / <i>Sample Size</i><br/>
-            """
-    for cid, similar_res in similar_res_by_cid.items():
-        html += "<br/><div class='w-100 ta_center mb-10'>Similar cards for " + str(cid) + ":</div>"
-        
-        if len(similar_res[0]) == 1 and 50 in similar_res[0] and similar_res[0][50]["sample_size"] == 0:
-            html += "Could not find any samples that have at least an average similarity of 50%."
-            continue
-        html += """<table class='striped w-100'>
-                        <thead>
-                            <tr>
-                                <td><b>Sample</b></td>
-                                <td><b>Est. Succ. Chance</b></td>
-                                <td><b>Avg. Ivl</b></td>
-                                <td><b>Avg. Pass Rate</b></td>
-                            </tr> 
-                        </thead>
-                        <tbody>
-                        """
-        rows = ""
-        for k, v in similar_res[0].items():
-            rows += """<tr class='sa-blue-hover cursor-pointer' onclick='pycmd("similarForCard %s %s")'>
-                                <td style='%s'>%s Cards w. Similarity > %s %%</td>
-                                <td style='%s'>%s %%</td>
-                                <td>%s %s</td>
-                                <td>%s %%</td>
-                            </tr>""" % (
-                                cid, k,
-                "color: grey;" if v["sample_size"] <= 1 else "", v["sample_size"], k,
-                "color: grey;text-decoration:line-through;" if v["sample_size"] <= 1 else "" , round(v["avg_next_success_chance"], 1),
-                int(v["avg_current_ivl"]), _get_ivl_diff_str(card_ivl_by_id[cid], int(v["avg_current_ivl"])),
-                round(v["avg_pass_rate"], 1)
-            )
-        html += rows
-        html += "</tbody></table>"
-    return html
+
 
 def _get_ivl_diff_str(ivl_base, ivl_cmp):
     diff = ivl_cmp - ivl_base
@@ -640,7 +584,7 @@ def _get_revlog_graph(cid):
     blocks = ""
     for _,_,_,ease,ivl,_,_,_,type in entries:
         ease = ease + 1 if type == 2 and ease > 1 else ease
-        sivl = int(_to_day_ivl(ivl)) if int(_to_day_ivl(ivl)) > 0 else "<1"
+        sivl = int(utility.misc.to_day_ivl(ivl)) if int(utility.misc.to_day_ivl(ivl)) > 0 else "<1"
         blocks += "<div class='revlog-block revlog-block-%s %s'>%s</div>" % (ease, "larger" if ivl > 1000 else "",  sivl)
     
     return html % blocks

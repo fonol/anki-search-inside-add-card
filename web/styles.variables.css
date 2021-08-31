@@ -7,6 +7,10 @@
 
 --c-primary-color: $styles.primaryColor$;
 --c-primary-color-night: $styles.night.primaryColor$;
+--c-card-bg: #fffef7;
+--c-card-bg-night: rgb(53,53,53);
+
+
 --c-reading-modal-background: $styles.readingModalBackgroundColor$;
 --c-reading-modal-button-border-color: $styles.readingModalButtonBorderColor$;
 --c-reading-modal-filter: $styles.readingModalFilter$;
@@ -36,9 +40,7 @@
 --c-button-color: rgb(30, 44, 44);
 --c-input-background: whitesmoke;
 --c-input-foreground: rgb(30, 44, 44);
---c-input-border: rgb(30, 44, 43);
---c-timeline-background: #595959;
---c-timeline-border: #595959;
+--c-input-border: #b6b6b6;
 --c-modal-foreground: black;
 --c-modal-background: whitesmoke;
 --c-ranking-lbl-foreground: white;
@@ -48,6 +50,7 @@
 --c-note-border: lightseagreen;
 --c-note-hover-border: #2496dc;
 --c-field-separator: #2496dc;
+--c-separator: #b5b5b5;
 
 --c-keyword: #2496dc;
 --c-striped-table-background: #e6e6e6;
@@ -62,9 +65,7 @@
 --c-button-color-night: lightgrey;
 --c-input-background-night: #2f2f31;
 --c-input-foreground-night: lightgrey;
---c-input-border-night: lightgrey;
---c-timeline-background-night: #2b2b30;
---c-timeline-border-night: darkorange;
+--c-input-border-night: grey;
 --c-modal-foreground-night: beige;
 --c-modal-background-night: #2f2f31;
 --c-ranking-lbl-foreground-night: black;
@@ -74,6 +75,7 @@
 --c-note-border-night: lightseagreen;
 --c-note-hover-border-night: #62C9C3;
 --c-field-separator-night: white;
+--c-separator-night: #656565;
 
 --c-keyword-night: #77ccff;
 --c-striped-table-background-night: #2b2b30;
@@ -81,5 +83,6 @@
 --c-select-background-night: #2f2f31;
 --c-deck-select-checkmark-night: lawngreen;
 --c-read-box-background-night: coral;
+
 
 }

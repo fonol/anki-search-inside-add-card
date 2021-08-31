@@ -276,7 +276,9 @@ class ScheduleEditTab(QWidget):
             line                = QFrame()
             line.setFrameShape(QFrame.HLine)
             line.setFrameShadow(QFrame.Sunken)
+            self.vbox.addSpacing(5)
             self.vbox.addWidget(line)
+            self.vbox.addSpacing(5)
 
             self.no_sched_rb    = QRadioButton("Keep schedule")
         else:
@@ -534,6 +536,12 @@ class MDTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super(QTextEdit, self).__init__(parent)
         self.text_was_pasted = False
+
+    def setMarkdown(self, markdown):
+        if "setMarkdown" in QTextEdit.__dict__:
+            super(MDTextEdit, self).setMarkdown(markdown)
+        else:
+            self.setPlainText(markdown)
 
     def toMarkdown(self):
         if 'toMarkdown' in QTextEdit.__dict__:

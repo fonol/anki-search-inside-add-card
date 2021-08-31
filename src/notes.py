@@ -24,7 +24,6 @@ from typing import Optional, Tuple, List, Dict, Set, Any
 from enum import Enum, unique
 from datetime import datetime, time, date, timedelta
 from aqt import mw
-from aqt.utils import tooltip, showInfo
 import random
 import time
 
@@ -32,18 +31,15 @@ try:
     from .state import get_index
     from .models import SiacNote, IndexNote, NoteRelations
     from .config import get_config_value_or_default, get_config_value, update_config
-    from .debug_logging import get_notes_info, persist_notes_db_checked
-    from .internals import perf_time
 except:
-    from internals import perf_time
     from state import get_index
     from models import SiacNote, IndexNote, NoteRelations
     from config import get_config_value_or_default, get_config_value, update_config
-    from debug_logging import get_notes_info, persist_notes_db_checked
 import utility.misc
 import utility.tags
 import utility.text
 import utility.date
+import md
 
 # will be set after the db file is accessed for the first time
 db_path                 : Optional[str] = None
@@ -65,6 +61,15 @@ class PDFMark(Enum):
     MORE_INFO   = 3
     MORE_CARDS  = 4
     BOOKMARK    = 5
+
+    @classmethod
+    def pretty(cls, value) -> str:
+        if value == cls.REVISIT     : return "Revisit"
+        if value == cls.HARD        : return "Hard"
+        if value == cls.MORE_INFO   : return "More Info"
+        if value == cls.MORE_CARDS  : return "More Cards"
+        if value == cls.BOOKMARK    : return "Bookmark"
+
 
 DEF_NOTES_TABLE = """
             (
@@ -198,6 +203,7 @@ def create_db_file_if_not_exists() -> bool:
         );
     """)
 
+    conn.execute("CREATE INDEX if not exists notes_source ON notes (source);")
     conn.execute("CREATE INDEX if not exists read_nid ON read (nid);")
     conn.execute("CREATE INDEX if not exists mark_nid ON marks (nid);")
     conn.execute("CREATE INDEX if not exists prio_nid ON queue_prio_log (nid);")
@@ -245,7 +251,7 @@ def create_db_file_if_not_exists() -> bool:
     columns = conn.execute("PRAGMA table_info(notes)").fetchall()
     # 14th column should be delay, if not, recreate 'notes' table with correct order
     if columns[13][1] != "delay":
-        tmp_table = """create table if not exists notes_tmp
+        tmp_table = f"""create table if not exists notes_tmp
             {DEF_NOTES_TABLE}
           """
 
@@ -281,6 +287,7 @@ def create_db_file_if_not_exists() -> bool:
 
     return existed
 
+#region note CRUD
 
 def create_note(title: str,
                 text: str,
@@ -298,15 +305,13 @@ def create_note(title: str,
     #clean the text
     # text    = utility.text.clean_user_note_text(text)
 
-    if source is not None:
-        source = source.strip()
     if (len(text) + len(title)) == 0:
         return
-    if tags is None:
-        tags = ""
+
+    source = source.strip() if source is not None else source
+    tags = "" if tags is None else tags
     tags = tags.replace('"', "").replace("'", "")
-    if len(tags.strip()) > 0:
-        tags = " %s " % tags.strip()
+    tags = (" %s " % tags.strip()) if len(tags.strip()) > 0 else tags
 
     conn    = _get_connection()
     id      = conn.execute("""insert into notes (title, text, source, tags, nid, created, modified, reminder, lastscheduled, position, extract_start, extract_end, delay, author, priority, last_priority, url)
@@ -319,10 +324,134 @@ def create_note(title: str,
     if index is not None:
         index.add_user_note((id, title, text, source, tags, nid, ""))
 
+    # if note is linked to a markdown file, update or create the file
+    if source is not None and source.startswith("md:///") and source.endswith(".md"):
+        fpath = source[6:]
+        md.update_markdown_file(fpath, text)
+
     return id
 
+def create_or_update_md_notes(md_files: List[Tuple[str, str, str]]) -> int:
+    """ 
+    Takes a list of changed markdown files, inserts or updates the according add-on notes.
+    If a note already exists for a given .md file is determined by the 'Source' field, e.g. if there is 
+    a note with 'md:///path/to/file.md' or not.
+     """
 
 
+    def _title(fpath):
+        return fpath[fpath.rindex("/")+1:]
+
+    c           = _get_connection()
+    # determine which of the md files already have notes
+    existing    = c.execute("select source from notes where source in ('%s')" % ("','".join([t[0].replace("'", "''") for t in md_files]))).fetchall()
+    ex_sources  = [e[0] for e in existing]
+    to_insert   = [(_title(f[0]), f[1], f[0], f[2]) for f in md_files if not f[0] in ex_sources]
+    c.executemany(f"insert into notes (title, text, source, tags, created) values (?,?,?,?, datetime('now', 'localtime'))", to_insert)
+    to_update   = [(_title(f[0]), f[1], f[0]) for f in md_files if f[0] in ex_sources]
+    c.executemany(f"update notes set title = ?, text = ? where source = ?", to_update)
+    c.commit()
+    c.close()
+    return len(existing)
+
+def update_reminder(nid: int, rem: str):
+    if rem is None:
+        rem = ""
+    conn    = _get_connection()
+    sql     = "update notes set reminder=?, modified=datetime('now', 'localtime') where id=? "
+    conn.execute(sql, (rem, nid))
+    conn.commit()
+    conn.close()
+
+
+def update_note_text(id: int, text: str):
+    conn = _get_connection()
+    sql = """
+        update notes set text=?, modified=datetime('now', 'localtime') where id=?
+    """
+    text = utility.text.clean_user_note_text(text)
+    conn.execute(sql, (text, id))
+    conn.commit()
+    note = conn.execute(f"select title, source, tags from notes where id={id}").fetchone()
+    conn.close()
+    source =  note[1]
+    index = get_index()
+    if index is not None:
+        index.update_user_note((id, note[0], text, source, note[2], -1, ""))
+
+    # if note is linked to a markdown file, update the file
+    if source is not None and source.startswith("md:///") and source.endswith(".md"):
+        fpath = source[6:]
+        md.update_markdown_file(fpath, text)
+
+def update_note_tags(id: int, tags: str):
+    if tags is None:
+        tags = ""
+    tags = tags.replace('"', "").replace("'", "")
+    if not tags.endswith(" "):
+        tags += " "
+    if not tags.startswith(" "):
+        tags = f" {tags}"
+
+    conn = _get_connection()
+    sql = """ update notes set tags=?, modified=datetime('now', 'localtime') where id=? """
+    conn.execute(sql, (tags, id))
+    conn.commit()
+    note = conn.execute(f"select title, source, tags, text from notes where id={id}").fetchone()
+    conn.close()
+    index = get_index()
+    if index is not None:
+        index.update_user_note((id, note[0], note[3], note[1], tags, -1, ""))
+
+def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int, author: str, url: str):
+
+    # text = utility.text.clean_user_note_text(text)
+    tags    = "" if tags is None else tags
+    tags    = " %s " % tags.strip()
+    tags    = tags.replace('"', "").replace("'", "")
+    mod     = _date_now_str()
+    conn    = _get_connection()
+    # a prio of -1 means unchanged, so don't update
+    if priority != -1:
+        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, last_priority=priority, priority=?, lastscheduled=coalesce(lastscheduled, ?), url=? where id=?"
+        conn.execute(sql, (title, text, source, tags, reminder, author, priority, mod, url, id))
+    else:
+        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, url=? where id=?"
+        conn.execute(sql, (title, text, source, tags, reminder, author, url, id))
+    conn.commit()
+    conn.close()
+    if priority != -1:
+        recalculate_priority_queue()
+    index = get_index()
+    if index is not None:
+        index.update_user_note((id, title, text, source, tags, -1, ""))
+
+    # if note is linked to a markdown file, update the file
+    if source is not None and source.startswith("md:///") and source.endswith(".md"):
+        fpath = source[6:]
+        md.update_markdown_file(fpath, text)
+
+def null_position(nid: int):
+    conn = _get_connection()
+    conn.execute("update notes set position = null where id = %s" % nid)
+    conn.commit()
+    conn.close()
+
+def delete_note(id: int):
+    update_priority_list(id, 0)
+    conn = _get_connection()
+    conn.executescript(f""" delete from read where nid ={id};
+                            delete from marks where nid ={id};
+                            delete from notes where id={id};
+                            delete from queue_prio_log where nid={id};
+                            delete from highlights where nid={id};
+                            delete from notes_pdf_page where siac_nid={id};
+                            delete from notes_opened where nid={id};
+                            """)
+    conn.commit()
+    conn.close()
+
+#endregion note CRUD
 #region priority queue
 
 def _get_priority_list_with_last_prios() -> List[Tuple[Any, ...]]:
@@ -349,7 +478,6 @@ def recalculate_priority_queue(is_addon_start: bool = False):
         2. All notes that have a reminder (special schedule) that is due today or was due in the last <DUE_NOTES_BOUNDARY> days (older due dates are ignored)
 
     """
-
     current             = _get_priority_list_with_last_prios()
     scores              = []
     to_decrease_delay   = []
@@ -729,14 +857,7 @@ def dynamic_sched_to_str(sched: int) -> str:
         return f"Very low ({sched})"
     return "Not in Queue (0)"
 
-def update_reminder(nid: int, rem: str):
-    if rem is None:
-        rem = ""
-    conn    = _get_connection()
-    sql     = "update notes set reminder=?, modified=datetime('now', 'localtime') where id=? "
-    conn.execute(sql, (rem, nid))
-    conn.commit()
-    conn.close()
+
 
 
 def get_extracts(nid: int, source: str) -> List[Tuple[int, int]]:
@@ -845,6 +966,24 @@ def get_pdf_marks(nid: int) -> List[Tuple[Any, ...]]:
     conn.close()
     return res
 
+def get_recently_created_marks(limit: int = 100) -> List[Tuple[Any, ...]]:
+    c   = _get_connection()
+    res = c.execute(f"select marks.created, marktype, marks.nid, page, pagestotal, notes.title from marks join notes on marks.nid = notes.id order by marks.created desc limit {limit}") .fetchall()
+    c.close()
+    if res is None:
+        return []
+    return list(res)
+
+def check_if_source_exists(src: str) -> bool:
+    """ Checks if any note with the given Source field value exists. """
+    if not src or len(src) == 0:
+        return False
+    c   = _get_connection()
+    res = c.execute(f"select id from notes where lower(source) = '{src.lower()}'").fetchone()
+    c.close()
+    return res is not None and len(res) > 0
+
+
 def get_pdfs_by_sources(sources: List[str]) -> List[str]:
     """
     Takes a list of (full) paths, and gives back those for whom a pdf note exists with the given path.
@@ -885,9 +1024,10 @@ def get_read_pages(nid: int) -> List[int]:
 
 def get_read(delta_days: int) -> Dict[int, Tuple[int, str]]:
     """ Get # of read pages by note ID. """
-    stamp = utility.date.date_x_days_ago_stamp(abs(delta_days))
-    conn = _get_connection()
-    res  = conn.execute(f"select counts.c, counts.nid, notes.title from notes join (select count(*) as c, nid from read where page > -1 and created like '{stamp}%' group by nid) as counts on notes.id = counts.nid").fetchall()
+    assert delta_days >= 0
+    stamp   = utility.date.date_x_days_ago_stamp(abs(delta_days))
+    conn    = _get_connection()
+    res     = conn.execute(f"select counts.c, counts.nid, notes.title from notes join (select count(*) as c, nid from read where page > -1 and created like '{stamp}%' group by nid) as counts on notes.id = counts.nid").fetchall()
     conn.close()
     d = dict()
     for c, nid, title in res:
@@ -896,9 +1036,10 @@ def get_read(delta_days: int) -> Dict[int, Tuple[int, str]]:
 
 def get_read_last_n_days(delta_days: int) -> Dict[int, Tuple[int, str]]:
     """ Get # of read pages by note ID for the last n days. """
-    stamp = utility.date.date_x_days_ago_stamp(abs(delta_days))
-    conn = _get_connection()
-    res  = conn.execute(f"select counts.c, counts.nid, notes.title from notes join (select count(*) as c, nid from read where page > -1 and created >= '{stamp}' group by nid) as counts on notes.id = counts.nid").fetchall()
+    assert delta_days >= 0
+    stamp   = utility.date.date_x_days_ago_stamp(abs(delta_days))
+    conn    = _get_connection()
+    res     = conn.execute(f"select counts.c, counts.nid, notes.title from notes join (select count(*) as c, nid from read where page > -1 and created >= '{stamp}' group by nid) as counts on notes.id = counts.nid").fetchall()
     conn.close()
     d = dict()
     for c, nid, title in res:
@@ -907,6 +1048,7 @@ def get_read_last_n_days(delta_days: int) -> Dict[int, Tuple[int, str]]:
 
 def get_read_last_n_days_by_day(delta_days: int) -> Dict[str, int]:
     """ Get # of read pages by dates. """
+    assert delta_days >= 0
     stamp   = utility.date.date_x_days_ago_stamp(abs(delta_days))
     conn    = _get_connection()
     res     = conn.execute(f"select count(*) as c, substr(created, 0, 11) as date from read where page > -1 and created >= '{stamp}' group by substr(created, 0, 11)").fetchall()
@@ -1019,62 +1161,7 @@ def get_head_of_queue() -> int:
         return -1
     return res[0]
 
-def update_note_text(id: int, text: str):
-    conn = _get_connection()
-    sql = """
-        update notes set text=?, modified=datetime('now', 'localtime') where id=?
-    """
-    text = utility.text.clean_user_note_text(text)
-    conn.execute(sql, (text, id))
-    conn.commit()
-    note = conn.execute(f"select title, source, tags from notes where id={id}").fetchone()
-    conn.close()
-    index = get_index()
-    if index is not None:
-        index.update_user_note((id, note[0], text, note[1], note[2], -1, ""))
 
-def update_note_tags(id: int, tags: str):
-    if tags is None:
-        tags = ""
-    tags = tags.replace('"', "").replace("'", "")
-    if not tags.endswith(" "):
-        tags += " "
-    if not tags.startswith(" "):
-        tags = f" {tags}"
-
-    conn = _get_connection()
-    sql = """ update notes set tags=?, modified=datetime('now', 'localtime') where id=? """
-    conn.execute(sql, (tags, id))
-    conn.commit()
-    note = conn.execute(f"select title, source, tags, text from notes where id={id}").fetchone()
-    conn.close()
-    index = get_index()
-    if index is not None:
-        index.update_user_note((id, note[0], note[3], note[1], tags, -1, ""))
-
-def update_note(id: int, title: str, text: str, source: str, tags: str, reminder: str, priority: int, author: str, url: str):
-
-    # text = utility.text.clean_user_note_text(text)
-    if tags is None:
-        tags = ""
-    tags    = " %s " % tags.strip()
-    tags    = tags.replace('"', "").replace("'", "")
-    mod     = _date_now_str()
-    conn    = _get_connection()
-    # a prio of -1 means unchanged, so don't update
-    if priority != -1:
-        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, last_priority=priority, priority=?, lastscheduled=coalesce(lastscheduled, ?), url=? where id=?"
-        conn.execute(sql, (title, text, source, tags, reminder, author, priority, mod, url, id))
-    else:
-        sql = f"update notes set title=?, text=?, source=?, tags=?, modified='{mod}', reminder=?, author=?, url=? where id=?"
-        conn.execute(sql, (title, text, source, tags, reminder, author, url, id))
-    conn.commit()
-    conn.close()
-    if priority != -1:
-        recalculate_priority_queue()
-    index = get_index()
-    if index is not None:
-        index.update_user_note((id, title, text, source, tags, -1, ""))
 
 def get_read_stats(nid: int) -> Tuple[Any, ...]:
     conn = _get_connection()
@@ -1150,6 +1237,13 @@ def update_text_comment_text(id: int, text: str):
 # end highlights
 #
 
+def get_all_tags_with_counts() -> Dict[str, int]:
+    """ Returns a dict containing all tags that appear in the user's notes, along with their counts. """
+    conn        = _get_connection()
+    all_tags    = conn.execute("select tags from notes where tags is not null").fetchall()
+    conn.close()
+    all_tags    = [t[0] for t in all_tags]
+    return utility.tags.to_tag_hierarchy_with_counts(all_tags)
 
 def get_all_tags() -> Set[str]:
     """ Returns a set containing all tags that appear in the user's notes. """
@@ -1161,8 +1255,7 @@ def get_all_tags() -> Set[str]:
     for tag_str in all_tags:
         for t in tag_str[0].split():
             if len(t) > 0:
-                if t not in tag_set:
-                    tag_set.add(t)
+                tag_set.add(t)
     return tag_set
 
 def get_all_tags_with_recency() -> List[Tuple[str, str]]:
@@ -1177,7 +1270,7 @@ def get_all_tags_with_recency() -> List[Tuple[str, str]]:
             if len(t) > 0:
                 if t not in tag_set:
                     tag_set.add(t)
-                    tags.append((t, max(modified, created)))
+                    tags.append((t, max(modified or "", created)))
     return tags
 
 
@@ -1357,25 +1450,7 @@ def get_position(nid: int) -> Optional[int]:
         return None
     return res[0]
 
-def null_position(nid: int):
-    conn = _get_connection()
-    conn.execute("update notes set position = null where id = %s" % nid)
-    conn.commit()
-    conn.close()
 
-def delete_note(id: int):
-    update_priority_list(id, 0)
-    conn = _get_connection()
-    conn.executescript(f"""delete from read where nid ={id};
-                            delete from marks where nid ={id};
-                            delete from notes where id={id};
-                            delete from queue_prio_log where nid={id};
-                            delete from highlights where nid={id};
-                            delete from notes_pdf_page where siac_nid={id};
-                            delete from notes_opened where nid={id};
-                            """)
-    conn.commit()
-    conn.close()
 
 def get_read_today_count() -> int:
     now     = datetime.today().strftime('%Y-%m-%d')
@@ -1481,6 +1556,24 @@ def get_newest(limit: int, pinned: List[int]) -> List[SiacNote]:
 def get_random(limit: int, pinned: List[int]) -> List[SiacNote]:
     conn = _get_connection()
     res = conn.execute("select * from notes order by random() limit %s" % limit).fetchall()
+    conn.close()
+    return _to_notes(res, pinned)
+
+def get_random_pdf_notes(limit: int, pinned: List[int]) -> List[SiacNote]:
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%%.pdf' order by random() limit %s" % limit).fetchall()
+    conn.close()
+    return _to_notes(res, pinned)
+
+def get_random_text_notes(limit: int, pinned: List[int]) -> List[SiacNote]:
+    conn = _get_connection()
+    res = conn.execute("select * from notes where not lower(source) like '%%.pdf' and not lower(source) like '%%youtube.com/watch%%' order by random() limit %s" % limit).fetchall()
+    conn.close()
+    return _to_notes(res, pinned)
+
+def get_random_video_notes(limit: int, pinned: List[int]) -> List[SiacNote]:
+    conn = _get_connection()
+    res = conn.execute("select * from notes where lower(source) like '%%youtube.com/watch%%' order by random() limit %s" % limit).fetchall()
     conn.close()
     return _to_notes(res, pinned)
 
@@ -1637,12 +1730,28 @@ def get_in_progress_pdf_notes() -> List[SiacNote]:
     return _to_notes(res)
 
 def get_last_opened_notes() -> List[SiacNote]:
-    c = _get_connection()
-    res = c.execute("""
-        select distinct notes.* from notes_opened join notes on notes_opened.nid = notes.id order by notes_opened.created desc limit 100
-    """).fetchall()
-    c.close()
+    conn = _get_connection()
+    res = conn.execute("select notes.* from notes inner join (select nid, created as nc from notes_opened group by nid order by max(created) desc) as ot on notes.id = ot.nid order by ot.nc desc limit 100").fetchall()
+    conn.close()
     return _to_notes(res)
+
+def get_last_opened_pdf_notes(limit: int = 200) -> List[SiacNote]:
+    conn = _get_connection()
+
+    res = conn.execute(f"""
+        select notes.* from notes inner join (select nid, created as nc from notes_opened group by nid order by max(created) desc) as ot on notes.id = ot.nid where lower(notes.source) like '%.pdf' order by ot.nc desc limit {limit};
+    """).fetchall()
+    conn.close()
+    return _to_notes(res)
+
+def get_last_opened_note_id() -> int:
+    c = _get_connection()
+    res = c.execute(""" select nid from notes_opened order by created desc limit 1 """).fetchone()
+    c.close()
+    if res is None:
+        return None
+    return res[0]
+
 
 def get_pdf_notes_last_added_first(limit : int = None) -> List[SiacNote]:
     if limit:
@@ -1869,6 +1978,13 @@ def get_linked_anki_notes(siac_nid: int) -> List[IndexNote]:
     conn.close()
     return _anki_to_index_note(res)
 
+def get_linked_anki_notes_count(siac_nid: int) -> int:
+    conn = _get_connection()
+    c = conn.execute(f"select count(*) from (select distinct nid from notes_pdf_page where siac_nid = {siac_nid})").fetchone()
+    conn.close()
+    if not c or len(c) == 0:
+        return 0
+    return c[0]
 
 def get_linked_anki_notes_for_pdf_page(siac_nid: int, page: int) -> List[IndexNote]:
     """ Query to retrieve the Anki notes that were created while on a given pdf page. """
@@ -1891,7 +2007,7 @@ def get_linked_anki_notes_for_pdf_page(siac_nid: int, page: int) -> List[IndexNo
 
 def get_linked_anki_notes_around_pdf_page(siac_nid: int, page: int) -> List[Tuple[int, int]]:
     conn = _get_connection()
-    nps  = conn.execute(f"select page from notes_pdf_page where siac_nid = {siac_nid} and page >= {page-6} and page <= {page + 6}").fetchall()
+    nps  = conn.execute(f"select page from notes_pdf_page where siac_nid = {siac_nid} and page >= {page-6} and page <= {page + 6} group by nid").fetchall()
     conn.close()
     if not nps or len(nps) == 0:
         return []
@@ -1925,6 +2041,16 @@ def get_last_linked_notes(siac_nid: int, limit: int = 10) -> List[int]:
         return []
     return [nid[0] for nid in nids]
 
+def get_linked_addon_note(anki_nid: int) -> Optional[Tuple[SiacNote, int]]:
+    c   = _get_connection()
+    res = c.execute(f"select distinct notes.*, notes_pdf_page.page from notes join notes_pdf_page on notes.id = notes_pdf_page.siac_nid where notes_pdf_page.nid = {anki_nid}").fetchall()
+    c.close()
+    if res is not None and len(res) == 0:
+        return None
+    page = res[0][-1]
+    if page is None:
+        page = -1
+    return ( _to_notes([res[0][:-1]])[0], page) 
 
 #endregion page-note linking
 
@@ -2028,7 +2154,10 @@ def _date_now_str() -> str:
     return datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
 def _dt_from_date_str(dtst) -> datetime:
-    return datetime.strptime(dtst, '%Y-%m-%d-%H-%M-%S')
+    try:
+        return datetime.strptime(dtst, '%Y-%m-%d-%H-%M-%S')
+    except:
+        return datetime.strptime(dtst, '%Y-%m-%d %H:%M:%S')
 
 def _table_exists(name) -> bool:
     conn = _get_connection()

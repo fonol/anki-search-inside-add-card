@@ -15,13 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import platform
-import os
-import json
 import re
-import datetime
-import time
-import sys
 import aqt
 import typing
 from typing import List, Tuple
@@ -31,17 +25,18 @@ from aqt.editor import Editor
 import utility.tags
 import utility.text
 import utility.misc
-import state
 
 from aqt.qt import *
 
 
-from ..tag_find import get_most_active_tags
-from ..state import get_index, check_index, set_deck_map
-from ..notes import get_note, _get_priority_list, get_all_tags, get_read_pages, get_pdf_marks, insert_pages_total, get_read_today_count
+from ..state import get_index
+from ..notes import get_note, get_all_tags
 from .html import *
 from ..internals import js, requires_index_loaded, perf_time, JS, HTML
+from ..models import SiacNote
 from ..config import get_config_value_or_default
+from ..output import UI
+
 
 @js
 def toggleAddon() -> JS:
@@ -61,16 +56,10 @@ def getScriptPlatformSpecific() -> HTML:
     icon_vars = """
     :root {
         --c-search-icn: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='black' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='black' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3C/g%3E%3C/svg%3E");
-        --c-trash-icn: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cpath stroke='black' transform='rotate(179.51019287109375 6.166921615600586,6.9911985397338885) ' id='svg_4' d='m2.799955,10.675048l1.262613,-7.3677l4.208709,0l1.262612,7.3677l-6.733934,0z' fill-opacity='null' stroke-opacity='null' stroke-width='1.5' fill='none'/%3E%3Crect stroke='black' id='svg_7' height='0.638096' width='1.884984' y='0.823103' x='5.256614' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke='black' transform='rotate(2.7647311687469482 6.056345462799075,1.717745661735527) ' stroke-linecap='null' stroke-linejoin='null' id='svg_9' y2='1.451854' x2='10.882708' y1='1.983638' x1='1.229983' fill-opacity='null' stroke-opacity='null' fill='none'/%3E%3C/g%3E%3C/svg%3E");
-        --c-pdf-icn: url("data:image/svg+xml,%3Csvg version='1.0' xmlns='http://www.w3.org/2000/svg' width='17px' height='17px' viewBox='0 0 225.000000 225.000000' preserveAspectRatio='xMidYMid meet'%3E%3Cg transform='translate(0.000000,225.000000) scale(0.100000,-0.100000)'%0Afill='black' stroke='none'%3E%3Cpath d='M690 2099 c-29 -12 -67 -45 -83 -74 -8 -14 -14 -134 -17 -380 l-5%0A-360 -120 -5 c-107 -4 -125 -8 -166 -32 -59 -35 -96 -90 -110 -163 -14 -76 -7%0A-389 10 -430 15 -37 75 -101 116 -123 21 -12 65 -18 150 -22 l120 -5 5 -125%0Ac3 -69 11 -136 17 -150 14 -32 51 -66 86 -79 19 -7 231 -11 639 -11 l610 0 40%0A22 c21 12 49 38 61 58 l22 35 0 695 c0 578 -2 699 -14 720 -29 50 -363 409%0A-396 424 -29 14 -92 16 -487 15 -276 0 -463 -4 -478 -10z m890 -268 c0 -226%0A-15 -210 205 -213 l170 -3 3 -664 c2 -607 1 -666 -14 -683 -16 -17 -48 -18%0A-619 -18 -548 0 -604 1 -616 17 -19 22 -26 208 -9 228 11 13 76 15 434 15%0Al422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120%0A133 l-51 24 -421 0 c-349 0 -424 2 -433 14 -18 22 -11 667 8 689 12 15 56 17%0A442 17 l429 0 0 -169z m-906 -765 c51 -21 76 -60 76 -118 0 -43 -5 -55 -33%0A-83 -19 -19 -46 -36 -60 -39 -15 -3 -38 -8 -52 -11 -23 -5 -25 -10 -25 -64 0%0A-53 -2 -59 -23 -65 -12 -3 -33 -3 -45 1 -22 5 -22 8 -22 192 0 103 3 191 7%0A194 12 13 143 7 177 -7z m400 -15 c96 -60 102 -247 11 -319 -55 -43 -198 -67%0A-246 -42 -18 10 -19 23 -19 188 0 129 3 182 13 191 9 9 39 12 107 9 79 -3 102%0A-8 134 -27z m366 14 c7 -8 10 -25 6 -39 -5 -22 -12 -25 -64 -28 l-57 -3 0 -35%0A0 -35 52 -3 c47 -3 54 -6 59 -27 11 -43 -1 -54 -58 -57 l-53 -3 -3 -72 c-3%0A-64 -5 -72 -25 -77 -13 -3 -33 -3 -45 1 -22 5 -22 8 -22 193 0 141 3 190 13%0A193 6 3 51 6 98 6 65 1 90 -3 99 -14z'/%3E%3Cpath d='M928 994 c-5 -4 -8 -56 -8 -116 l0 -108 36 0 c26 0 43 8 66 30 28 29%0A30 35 26 91 -3 42 -10 66 -24 80 -21 21 -84 36 -96 23z'/%3E%3C/g%3E%3C/svg%3E%0A");
 
         --c-search-icn-night: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='white' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='white' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3C/g%3E%3C/svg%3E");
-        --c-trash-icn-night: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cpath stroke='white' transform='rotate(179.51019287109375 6.166921615600586,6.9911985397338885) ' id='svg_4' d='m2.799955,10.675048l1.262613,-7.3677l4.208709,0l1.262612,7.3677l-6.733934,0z' fill-opacity='null' stroke-opacity='null' stroke-width='1.5' fill='none'/%3E%3Crect stroke='white' id='svg_7' height='0.638096' width='1.884984' y='0.823103' x='5.256614' fill-opacity='null' stroke-opacity='null' stroke-width='0.7' fill='none'/%3E%3Cline stroke='black' transform='rotate(2.7647311687469482 6.056345462799075,1.717745661735527) ' stroke-linecap='null' stroke-linejoin='null' id='svg_9' y2='1.451854' x2='10.882708' y1='1.983638' x1='1.229983' fill-opacity='null' stroke-opacity='null' fill='none'/%3E%3C/g%3E%3C/svg%3E");
-        --c-pdf-icn-night: url("data:image/svg+xml,%3Csvg version='1.0' xmlns='http://www.w3.org/2000/svg' width='17px' height='17px' viewBox='0 0 225.000000 225.000000' preserveAspectRatio='xMidYMid meet'%3E%3Cg transform='translate(0.000000,225.000000) scale(0.100000,-0.100000)'%0Afill='white' stroke='none'%3E%3Cpath d='M690 2099 c-29 -12 -67 -45 -83 -74 -8 -14 -14 -134 -17 -380 l-5%0A-360 -120 -5 c-107 -4 -125 -8 -166 -32 -59 -35 -96 -90 -110 -163 -14 -76 -7%0A-389 10 -430 15 -37 75 -101 116 -123 21 -12 65 -18 150 -22 l120 -5 5 -125%0Ac3 -69 11 -136 17 -150 14 -32 51 -66 86 -79 19 -7 231 -11 639 -11 l610 0 40%0A22 c21 12 49 38 61 58 l22 35 0 695 c0 578 -2 699 -14 720 -29 50 -363 409%0A-396 424 -29 14 -92 16 -487 15 -276 0 -463 -4 -478 -10z m890 -268 c0 -226%0A-15 -210 205 -213 l170 -3 3 -664 c2 -607 1 -666 -14 -683 -16 -17 -48 -18%0A-619 -18 -548 0 -604 1 -616 17 -19 22 -26 208 -9 228 11 13 76 15 434 15%0Al422 0 53 26 c64 32 105 86 120 155 16 73 13 385 -3 432 -22 59 -64 107 -120%0A133 l-51 24 -421 0 c-349 0 -424 2 -433 14 -18 22 -11 667 8 689 12 15 56 17%0A442 17 l429 0 0 -169z m-906 -765 c51 -21 76 -60 76 -118 0 -43 -5 -55 -33%0A-83 -19 -19 -46 -36 -60 -39 -15 -3 -38 -8 -52 -11 -23 -5 -25 -10 -25 -64 0%0A-53 -2 -59 -23 -65 -12 -3 -33 -3 -45 1 -22 5 -22 8 -22 192 0 103 3 191 7%0A194 12 13 143 7 177 -7z m400 -15 c96 -60 102 -247 11 -319 -55 -43 -198 -67%0A-246 -42 -18 10 -19 23 -19 188 0 129 3 182 13 191 9 9 39 12 107 9 79 -3 102%0A-8 134 -27z m366 14 c7 -8 10 -25 6 -39 -5 -22 -12 -25 -64 -28 l-57 -3 0 -35%0A0 -35 52 -3 c47 -3 54 -6 59 -27 11 -43 -1 -54 -58 -57 l-53 -3 -3 -72 c-3%0A-64 -5 -72 -25 -77 -13 -3 -33 -3 -45 1 -22 5 -22 8 -22 193 0 141 3 190 13%0A193 6 3 51 6 98 6 65 1 90 -3 99 -14z'/%3E%3Cpath d='M928 994 c-5 -4 -8 -56 -8 -116 l0 -108 36 0 c26 0 43 8 66 30 28 29%0A30 35 26 91 -3 42 -10 66 -24 80 -21 21 -84 36 -96 23z'/%3E%3C/g%3E%3C/svg%3E%0A");
     }
     """.replace("%", "%%")
-
-    addon_id    = utility.misc.get_addon_id()
 
     # css + js
     all = """
@@ -80,16 +69,10 @@ def getScriptPlatformSpecific() -> HTML:
     <style id='siac-styles'>
         %s
     </style>
-
-    <script type='text/javascript'>
-        window.renderImmediately = %s;
-        window.ADDON_ID = '%s';
-    </script>
     """
     css                 = styles()
-    render_immediately  = str(get_config_value_or_default("renderImmediately", False)).lower()
 
-    return all % (icon_vars, css, render_immediately, addon_id)
+    return all % (icon_vars, css)
 
 def styles() -> str:
     """ Returns the content of styles.css with all config values inserted. """
@@ -124,8 +107,10 @@ def styles() -> str:
 
     rm_texture          = str(get_config_value_or_default("styles.readingModalTexture", "none"))
     url                 = f"http://127.0.0.1:{port}/_addons/{addon_id}/web/icons/"
+
     if re.match("url\(.+\)", rm_texture):
         rm_texture      = rm_texture.replace("url('", "url('" + url)
+
     rm_bg_size          = str(get_config_value_or_default("styles.readingModalBackgroundSize", "80"))
     rm_theme            = str(get_config_value_or_default("styles.readingModalThemeColor", "darkorange"))
 
@@ -159,7 +144,7 @@ def reload_styles():
 
     css                 = styles()
     aqt.editor._html    = re.sub("<style id='siac-styles'>(?:\r\n|\n|.)+?</style>", f"<style id='siac-styles'>{css}</style>", aqt.editor._html)
-    editor              = get_index().ui._editor
+    editor              = UI._editor
 
     if editor is not None:
         if editor.web is not None:
@@ -196,144 +181,12 @@ def activate_nightmode(shortcuts: List[Tuple], editor: Editor):
 
 
 
-def setup_ui_after_index_built(editor: Optional[Editor], index, init_time=None):
-    #editor is None if index building finishes while add dialog is not open
-    if editor is None:
-        return
-    config = mw.addonManager.getConfig(__name__)
-    show_search_result_area(editor, init_time)
-    #restore previous settings
-    cmd = ""
-    if not index.highlighting:
-       cmd += "$('#highlightCb').prop('checked', false);"
-    if not get_config_value_or_default("searchOnTyping", True):
-        cmd += "$('#typingCb').prop('checked', false); setSearchOnTyping(false);"
-    if not get_config_value_or_default("searchOnSelection", True):
-        cmd += "$('#selectionCb').prop('checked', false); siacState.searchOnSelection = false;"
-    if not index.topToggled:
-        cmd += "hideTop();"
-    if index.ui is not None and not index.ui.uiVisible:
-        cmd += "$('#siac-right-side').addClass('addon-hidden');"
-    if config["gridView"]:
-        cmd += "activateGridView();"
-    editor.web.eval(cmd)
-    if index.ui is not None:
-        #plot.js is already loaded if a note was just added, so this is a lazy solution for now
-        index.ui.plotjsLoaded = False
-    if config["notes.sidebar.visible"]:
-        index.ui.set_editor(editor)
-        index.ui.sidebar.display()
-
-    editor.web.eval("""pycmd('siac-initialised-editor');""")
-
-
-def show_search_result_area(editor=None, initializationTime=0):
-    """ Toggle between the loader and search result area when the index has finished building. """
-
-    js = """
-        if (document.getElementById('searchResults')) {
-            document.getElementById('searchResults').style.display = 'block';
-        }
-        if (document.getElementById('loader')) {
-            document.getElementById('loader').style.display = 'none';
-        }"""
-
-    if check_index():
-        get_index().ui.js(js)
-    elif editor is not None and editor.web is not None:
-        editor.web.eval(js)
-
-
-def print_starting_info():
-    """ Displays the information that is visible after the first start of the add-on. """
-
-    config  = mw.addonManager.getConfig(__name__)
-    index   = get_index()
-
-    notes   = []
-
-    
-
-    html    = "<h3>Search is <span style='color: #32d296'>ready</span>. (%s)</h3>" %  index.type if index is not None else "?"
-    if not index.creation_info["index_was_rebuilt"]:
-        html += "Initalized in <b>%s</b> s (no changes detected)." % index.initializationTime
-    else:
-        html += "Initalized in <b>%s</b> s." % index.initializationTime
-
-    html += "<br/>Index contains <b>%s</b> notes." % index.get_number_of_notes()
-    html += "<br/><i>Search on typing</i> delay is set to <b>%s</b> ms." % config["delayWhileTyping"]
-    html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
-    html += "<br/>Layout Shortcuts:<br> <b>%s</b> (toggle left), <b>%s</b> (toggle right), <b>%s</b> (show both)." % (config["shortcuts.window_mode.show_left"], config["shortcuts.window_mode.show_right"], config["shortcuts.window_mode.show_both"])
-
-    if not state.db_file_existed:
-        html += "<br><br><b><i>siac-notes.db</i> was not existing, created a new one.</b>"
-
-    if index is None or index.ui is None:
-        html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
-
-    notes.append(("Status", html))
-
-    html    = ""
-    changes = changelog()
-    if changes:
-        for ix, c in enumerate(changes):
-            html += f"{ix + 1}. {c}<br>"
-    notes.append(("Changelog", html))
-
-    chr_v   = utility.misc.chromium_version()
-    if chr_v is not None and chr_v < "73":
-        notes.append(("Notice", f"""It seems like your Anki version is using an older version of Chromium ({chr_v}).
-            It might happen that parts of the layout behave incorrectly.
-            If you experience UI issues, consider updating to a newer Anki version (or if you are on Windows, using the standard installer instead of the alternate installer, 
-            which uses an older toolkit version).
-        """))
-
-    html    = """
-        This add-on has grown so large, that it is now infeasible for a single person to test all features on every update (and the large number of possible combinations of config settings makes this even more difficult).
-        So if you think you spotted an error, an inconsistency or even just some UI part that doesn't seem right, please report it.
-        <br><br>
-        <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github issue tracker'>Github issue tracker</a>
-        <br><br>
-        Thanks in advance.
-
-
-    """
-    notes.append(("Community Debugging", html))
-
-    html    = ""
-    issues  = known_issues()
-    if issues:
-        for ix, i in enumerate(issues):
-            html += f"{ix + 1}. {i}<br>"
-    notes.append(("Known Issues", html))
-
-    html = f"""
-        <div class='ta_center'>
-            <div class='flex-row mt-10' style='margin-bottom: 20px; justify-content: center;'>
-                <div class='ta_center'>
-                    <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BUGS & FEEDBACK</div>
-                    <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github repository'><img src='{utility.misc.img_src("github_light.png" if state.night_mode else "github_dark.png")}' style='height: 32px;'/></a>
-                </div>
-                <div class='ta_center' style='margin-left: 30px;'>
-                    <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BECOME A PATRON</div>
-                    <a href='https://www.patreon.com/tomtomtom' title='Patreon site'><img src='{utility.misc.img_src("patreon.png")}' style='height: 32px;'/></a>
-                </div>
-            </div>
-            <span class='siac-caps' style='opacity: 0.8;'>
-                Thanks to all supporters!
-            </span>
-        </div>
-        """
-    notes.append(("Bugs, Feedback, Support", html))
-    index.ui.print_in_meta_cards(notes)
-
-
 @requires_index_loaded
 def display_model_dialog():
     """ Called after clicking on "Set Fields" in the settings modal. """
 
     html = get_model_dialog_html()
-    get_index().ui.show_in_modal("Set Fields", html)
+    UI.show_in_modal("Set Fields", html)
 
 @js
 def show_settings_modal(editor) -> JS:
@@ -343,7 +196,7 @@ def show_settings_modal(editor) -> JS:
     html    = get_settings_modal_html(config)
     index   = get_index()
 
-    index.ui.show_in_modal("Settings", html)
+    UI.show_in_modal("Settings", html)
     return "$('.modal-close').on('click', function() {pycmd(`siac-write-config`); })"
 
 @js
@@ -353,8 +206,8 @@ def show_unsuspend_modal(nid) -> JS:
     html    = get_unsuspend_modal(nid)
     index   = get_index()
 
-    index.ui.show_in_modal("Unsuspend Cards", html)
-    return "siacState.keepPositionAtRendering = true; $('.siac-modal-close').on('click', function() { pycmd(`siac-rerender`);$('.siac-modal-close').off('click'); });"
+    UI.show_in_modal("Unsuspend Cards", html)
+    return "SIAC.State.keepPositionAtRendering = true; $('.siac-modal-close').on('click', function() { pycmd(`siac-rerender`);$('.siac-modal-close').off('click'); });"
 
 
 @js
@@ -365,6 +218,32 @@ def display_note_del_confirm_modal(editor, nid) -> JS:
     if not html:
         return
     return "$('#resultsWrapper').append(`%s`);" % html
+
+def display_note_linking(web, linked_note: Tuple[SiacNote, int]):
+
+    (note, page)    = linked_note
+    if page is None or page <= 0:
+        page_dsp = "-"
+    else:
+        page_dsp = page
+    html = f"""
+        <div id='siac-link-modal' style='display: none; min-width: 235px; position: fixed; bottom: 20px; right: 20px; padding: 15px; box-shadow: 0 0 7px 1px #dcdcdc; background: #fffef7; color: black; '>
+            <span style='position: absolute; right: 10px; top: 5px; vertical-align: top; line-height: 1em; opacity: 0.8; font-size: 13px; cursor: pointer;' onclick='this.parentNode.remove()'>&times;</span>
+            <div style='font-size: 13px !important; margin-bottom: 10px !important;'>{utility.text.trim_if_longer_than(note.get_title().replace('`', ''), 80)}</div>
+            <div style='font-size: 13px !important; text-align: left;'><span style='opacity: 0.8;'>Page: {page_dsp}</span><a href="" style='float: right; color: #0096dc !important; font-size: 13px !important;' onclick='pycmd("siac-open-linked-note {note.id} {page}"); return false;'>Open in Add dialog</a></div>
+        </div>
+        """
+    js = f"""
+        if (document.getElementById('siac-link-modal')) {{
+            $('#siac-link-modal').remove();
+        }}
+        $(document.body).append(`{html}`);
+        if (document.body.classList.contains('night-mode') || document.body.classList.contains('nightMode')) {{
+            $('#siac-link-modal').css({{ 'box-shadow' : '0 0 7px 1px #202020', 'background': 'rgb(53,53,53)', 'color': 'white' }});
+        }}
+        $('#siac-link-modal').show();
+        """
+    web.eval(js)
 
 
 def fillTagSelect(editor = None, expanded = False):
@@ -414,123 +293,10 @@ def fillTagSelect(editor = None, expanded = False):
     if editor is not None:
         editor.web.eval(cmd)
     else:
-        get_index().ui.js(cmd)
-
-def fillDeckSelect(editor: Optional[Editor] = None, expanded= False, update = True):
-    """ Fill the selection with user's decks """
-
-    deckMap     = dict()
-    config      = mw.addonManager.getConfig(__name__)
-    deckList    = config['decks']
-    index       = get_index()
-    if editor is None:
-        if index is not None and index.ui is not None and index.ui._editor is not None:
-            editor = index.ui._editor
-        else:
-            return
-
-    for d in list(mw.col.decks.decks.values()):
-       if d['name'] == 'Standard':
-          continue
-       if deckList is not None and len(deckList) > 0 and d['name'] not in deckList:
-           continue
-       deckMap[d['name']] = d['id']
-    set_deck_map(deckMap)
-    dmap        = {}
-    for name, id in deckMap.items():
-        dmap = addToDecklist(dmap, id, name)
-
-    dmap        = dict(sorted(dmap.items(), key=lambda item: item[0].lower()))
-    def iterateMap(dmap, prefix, start=False):
-        decks = index.selectedDecks if index is not None else []
-        if start:
-            html = "<ul class='deck-sub-list outer'>"
-        else:
-            html = "<ul class='deck-sub-list'>"
-        for key, value in dmap.items():
-            full = prefix + "::" + key if prefix else key
-            if full in deckMap:
-                did = deckMap[full]
-            elif len(deckMap) == 1:
-                did = list(deckMap.values())[0]
-            html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( 
-                "selected" if str(did) in decks or decks == ["-1"] else "", 
-                did,  "[+]" if value else "", 
-                utility.text.trim_if_longer_than(key, 35), 
-                iterateMap(value, full, False))
-        html += "</ul>"
-        return html
-
-    html        = iterateMap(dmap, "", True)
-    expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
-    update_js   = "updateSelectedDecks();" if update else ""
-
-    cmd         = """
-    document.getElementById('deck-sel-info-lbl').style.display = 'block';
-    document.getElementById('deckSel').innerHTML = `%s`;
-    $('#deckSelWrapper .exp').click(function(e) {
-		e.stopPropagation();
-        let icn = $(this);
-        if (icn.text()) {
-            if (icn.text() === '[+]')
-                icn.text('[-]');
-            else
-                icn.text('[+]');
-        }
-        $(this).parent().parent().children('ul').toggle();
-    });
-    %s
-    $("#siac-deck-sel-btn-wrapper").show();
-    %s
-    """ % (html, expanded_js, update_js)
-    editor.web.eval(cmd)
-
-def addToDecklist(dmap, id, name):
-    names = [s for s in name.split("::") if s != ""]
-    for c, d in enumerate(names):
-        found = dmap
-        for i in range(c):
-            found = found.setdefault(names[i], {})
-        if not d in found:
-            found.update({d : {}})
-    return dmap
-
-def try_select_deck(deck: str) -> bool:
-    """ Try to select a deck with the given name. """
-
-    if not deck or len(deck.strip()) == 0:
-        return False
-
-    win = aqt.mw.app.activeWindow()
-    # dont trigger keypress in edit dialogs opened within the add dialog
-    if not isinstance(win, aqt.addcards.AddCards):
-        return False
-
-    try:
-        win.deckChooser.setDeckName(deck)
-        # win.deckChooser.onDeckChange()
-        return True
-    except:
-        return False
+        UI.js(cmd)
 
 
 
-def changelog() -> List[str]:
-    """ Returns recent add-on changes. """
 
-    return [
-        "Increase max size for text searches",
-        "Display notice on starting info when on older Chromium versions",
-        "(Possible) Fix: Layout problems on older Chromium versions",
-        "Fix: Possible error on index building on add-on startup",
-    ]
 
-def known_issues() -> List[str]:
-    """ Returns currently known issues/bugs. """
 
-    return [
-        "Tag autocomplete in Create/Update note modal only works on first tag",
-        "PDF reader \"Loading PDF\" message positioned wrong on older Anki versions",
-        "Highlights in PDFs not working on some platforms/Anki versions, workaround: set 'pdf.highlights.use_alt_render' to true in the config",
-        "PDFs are not scrollable on Anki installs with older Qt versions (i.e. OS X - alternate (!) build)"
-    ]

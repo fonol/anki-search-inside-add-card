@@ -17,14 +17,15 @@
 import datetime
 import time
 from aqt import mw
-import utility.misc
 import random
+from typing import List, Tuple, Any
+
 try:
-    from .state import check_index
-    from .models import SiacNote, IndexNote
+    from .models import IndexNote
+    from .internals import HTML
 except:
-    from state import check_index
-    from models import SiacNote, IndexNote
+    from models import IndexNote
+    from internals import HTML
 
 
 """
@@ -32,7 +33,7 @@ Various functions to retrieve (Anki) notes based on special search criteria.
 Todo: add typing annotation
 """
 
-def get_notes_added_on_day_of_year(day_of_year : int, limit: int):
+def get_notes_added_on_day_of_year(day_of_year : int, limit: int) -> List[IndexNote]:
     
     date_now            = datetime.datetime.utcnow() 
     date_year_begin     = datetime.datetime(year=date_now.year, month=1, day=1, hour=0, minute=0)    
@@ -43,7 +44,7 @@ def get_notes_added_on_day_of_year(day_of_year : int, limit: int):
     return to_notes(res)
 
 
-def get_cal_info_context(day_of_year : int):
+def get_cal_info_context(day_of_year : int) -> HTML:
 
     date_now                        = datetime.datetime.utcnow() 
     oneday                          = 24 * 60 * 60 * 1000
@@ -80,12 +81,7 @@ def get_cal_info_context(day_of_year : int):
 
     return html
 
-
-def get_created_same_day(index, editor, nid):
-
-    stamp               = utility.misc.get_milisec_stamp()
-    index.ui.latest     = stamp
-    index.lastSearch    = (nid, None, "createdSameDay")
+def get_created_same_day(nid, pinned, limit) -> List[IndexNote]:
 
     try:
         nidMinusOneDay  = nid - (24 * 60 * 60 * 1000)
@@ -101,33 +97,20 @@ def get_created_same_day(index, editor, nid):
             dayCreated = int(time.strftime("%d", time.localtime(int(r[0])/1000)))
             if dayCreated != dayOfNote:
                 continue
-            if not str(r[0]) in index.pinned:
+            if not str(r[0]) in pinned:
                 rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
                 c += 1
-                if c >= index.limit:
+                if c >= limit:
                     break
-        if check_index():
-            if len(rList) > 0:
-                index.ui.print_search_results(rList, stamp, editor)
-            else:
-                index.ui.empty_result("No results found.")
+        return rList
     except:
-        if check_index():
-            index.ui.empty_result("Error in calculation.")
+        return []
+        
 
-def getRandomNotes(index, decks):
-    if index is None:
-        return
-    stamp = utility.misc.get_milisec_stamp()
-    index.ui.latest = stamp
-    index.lastSearch = (None, decks, "random")
+def get_random_notes(decks, limit) -> Tuple[Any]:
 
-    if not "-1" in decks:
-        deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
+    deckQ = _deck_query(decks) 
 
-    limit = index.limit
     if deckQ:
         res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s and notes.id in (select id from notes order by random() limit %s)" % (deckQ, limit))
     else:
@@ -136,15 +119,15 @@ def getRandomNotes(index, decks):
     if len(res) > 0:
         random.shuffle(res)
 
-    return { "result" : res, "stamp" : stamp }
+    return res
 
-def get_last_added_anki_notes(limit):
+def get_last_added_anki_notes(limit: int) -> List[IndexNote]:
     """ Get notes ordered by their nid descending, no decks or pinned notes excluded. """
 
     res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid order by nid desc limit %s" % limit)
     return to_notes(res)
 
-def get_notes_by_created_date(index, editor, decks, limit, sortOrder):
+def get_notes_by_created_date(index, editor, decks, limit, sortOrder) -> List[IndexNote]:
 
     if sortOrder == "desc":
         index.lastSearch = (None, decks, "lastCreated", limit)
@@ -168,11 +151,9 @@ def get_notes_by_created_date(index, editor, decks, limit, sortOrder):
     return rList
 
 
-def getLastReviewed(decks, limit):
-    if decks is not None and len(decks) > 0 and not "-1" in decks:
-        deckQ = "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
+def getLastReviewed(decks, limit) -> List[IndexNote]:
+
+    deckQ = _deck_query(decks) 
 
     if deckQ:
         cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid from notes join cr on notes.id = cr.nid where cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
@@ -181,11 +162,9 @@ def getLastReviewed(decks, limit):
     res = mw.col.db.all(cmd)
     return to_notes(res)
 
-def getLastLapses(decks, limit):
-    if decks is not None and len(decks) > 0 and not "-1" in decks:
-        deckQ = "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
+def getLastLapses(decks, limit) -> List[IndexNote]:
+   
+    deckQ = _deck_query(decks) 
 
     if deckQ:
         cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s order by cr.rid desc limit %s" % (deckQ, limit)
@@ -194,33 +173,27 @@ def getLastLapses(decks, limit):
     res = mw.col.db.all(cmd)
     return to_notes(res)
 
-def getRandomUntagged(decks, limit):
-    if not "-1" in decks:
-        deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
+def getRandomUntagged(decks, limit) -> List[IndexNote]:
+
+    deckQ = _deck_query(decks) 
     if deckQ:
         res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s and (tags is null or tags = '') order by random() limit %s" % (deckQ, limit))
     else:
         res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by random() limit %s" % limit)
     return to_notes(res) 
     
-def get_last_untagged(decks, limit):
-    if not "-1" in decks:
-        deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
+def get_last_untagged(decks, limit) -> List[IndexNote]:
+
+    deckQ = _deck_query(decks) 
     if deckQ:
         res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where did in %s and (tags is null or tags = '') order by notes.id desc limit %s" % (deckQ, limit))
     else:
         res = mw.col.db.all("select distinct notes.id, flds, tags, did, mid from notes left join cards on notes.id = cards.nid where tags is null or tags = '' order by notes.id desc limit %s" % limit)
     return to_notes(res) 
 
-def findNotesWithLongestText(decks, limit, pinned):
-    if not "-1" in decks and len(decks) > 0:
-        deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
+def findNotesWithLongestText(decks, limit, pinned) -> List[IndexNote]:
+
+    deckQ = _deck_query(decks) 
     if pinned is None:
         pinned = []
     if len(deckQ) > 0:
@@ -234,12 +207,9 @@ def findNotesWithLongestText(decks, limit, pinned):
             rList.append(IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")))
     return rList
 
-def getByTimeTaken(decks, limit, mode):
-    if decks is not None and len(decks) > 0 and not "-1" in decks:
-        deckQ = "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
+def getByTimeTaken(decks: List[int], limit: int, mode: str) -> List[IndexNote]:
 
+    deckQ = _deck_query(decks) 
     if deckQ:
         cmd = "with cr as (select cards.nid, cards.id, cards.did, revlog.time, revlog.id as rid, revlog.ease from revlog join cards on cards.id = revlog.cid) select distinct notes.id, flds, tags, cr.did, notes.mid, avg(cr.time) as timeavg from notes join cr on notes.id = cr.nid where cr.ease = 1 and cr.did in %s group by cr.nid order by timeavg %s limit %s" % (deckQ, mode, limit)
     else:
@@ -252,12 +222,9 @@ def getByTimeTaken(decks, limit, mode):
 
     return rList
 
-def get_last_modified_notes(index, editor, decks, limit):
+def get_last_modified_notes(index, decks: List[int], limit: int) -> List[IndexNote]:
 
-    if not "-1" in decks and len(decks) > 0:
-        deckQ =  "(%s)" % ",".join(decks)
-    else:
-        deckQ = ""
+    deckQ = _deck_query(decks) 
     if len(deckQ) > 0:
         res = mw.col.db.all("select distinct notes.id, flds, tags, did, notes.mid, notes.mod from notes left join cards on notes.id = cards.nid where did in %s order by notes.mod desc limit %s" %(deckQ, limit))
     else:
@@ -270,16 +237,21 @@ def get_last_modified_notes(index, editor, decks, limit):
     return rList
 
 
-def get_suspended(nids):
+def get_suspended(nids) -> List[int]:
     res = mw.col.db.all("select distinct nid from cards where nid in (%s) and queue = -1" % ",".join([str(nid) for nid in nids]))
     res = [r[0] for r in res]
     return res
 
 
-def to_notes(db_list):
+def to_notes(db_list: List[Tuple[Any]]) -> List[IndexNote]:
     return list(map(lambda r : IndexNote((r[0], r[1], r[2], r[3], r[1], -1, r[4], "")), db_list))
 
-def _to_day_ivl(ivl):
-    if ivl < 0:
-        return abs(ivl) / (24 * 60 * 60)
-    return ivl
+def _deck_query(decks: List[Any]) -> str:
+
+    if decks is None or len(decks) == 0:
+        return ""
+
+    as_str = [str(d) for d in decks]
+    if not "-1" in as_str:
+        return "(%s)" % ",".join(as_str)
+    return ""

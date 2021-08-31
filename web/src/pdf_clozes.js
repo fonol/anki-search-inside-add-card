@@ -19,28 +19,12 @@
 // Functions for the cloze / text extraction from PDFs.
 //
 
-
-window.joinTextLayerNodeTexts = function (nodes, text) {
-    let total = "";
-    for (var i = 0; i < nodes.length; i++) {
-        if (nodes[i].innerHTML === text) {
-            return text;
-        }
-        total += nodes[i].innerHTML += " ";
-    }
-    total = total.replace("  ", " ");
-    let spl = total.split(" ");
-    total = "";
-    for (var i = 0; i < spl.length; i++) {
-        if (spl[i].length > 0 && text.indexOf(spl[i]) >= 0) {
-            total += spl[i] + " ";
-        }
-    }
-    return total.trim();
-}
-
 window.nodesInSelection = function (range) {
-    var lAllChildren = byId("text-layer").children;
+    let textLayer = byId('text-layer');
+    if (!textLayer) {
+        return null;
+    }
+    var lAllChildren = textLayer.children;
     let nodes = [];
     let inside = false;
     let start = range.startContainer.nodeName === "#text" ? range.startContainer.parentNode : range.startContainer;
@@ -142,11 +126,23 @@ window.generateClozes = function () {
 
 window.extractPrev = function (text, extracted, selection) {
     text = text.substring(0, text.lastIndexOf(selection) + selection.length) + text.substring(text.lastIndexOf(selection) + selection.length).replace(/\./g, "$DOT$");
+    text = text.replace(/etc\./g, '$etc$');
+    text = text.replace(/e\.g\./g, '$eg$');
+    text = text.replace(/i\.e\./g, '$ie$');
+    text = text.replace(/cf\./g, '$cf$');
+    text = text.replace(/\.,/g, '$cc$');
+
     let matches = text.match(/.*[^.\d][.!?]"? (.+)/);
     if (!matches || matches[1].indexOf(selection) === -1) {
         return [false, extracted];
     }
     let ext = matches[1].replace(/\$DOT\$/g, ".");
+    ext = ext.replace(/\$etc\$/g, 'etc.');
+    ext = ext.replace(/\$eg\$/g, 'e.g.');
+    ext = ext.replace(/\$ie\$/g, 'i.e.');
+    ext = ext.replace(/\$cf\$/g, 'cf.');
+    ext = ext.replace(/\$cc\$/g, '.,');
+
     if (extracted.indexOf(ext) === -1) {
         extracted.push(ext);
     }
@@ -156,11 +152,22 @@ window.extractPrev = function (text, extracted, selection) {
 window.extractNext = function (text, extracted, selection) {
     text = text.substring(0, text.indexOf(selection)).replace(/\./g, "$DOT$") + text.substring(text.indexOf(selection));
 
+    text = text.replace(/etc\./g, '$etc$');
+    text = text.replace(/e\.g\./g, '$eg$');
+    text = text.replace(/i\.e\./g, '$ie$');
+    text = text.replace(/cf\./g, '$cf$');
+    text = text.replace(/\.,/g, '$cc$');
+
     let matches = text.match(/(.+?(\.\.\.(?!,| [a-z])|[^.]\.(?!(\.|[0-9]|[A-Z]{2,20}))|[!?]|[^0-9]\. [A-Z])).*/);
     if (!matches || matches[1].indexOf(selection) === -1) {
         return [false, extracted];
     }
     let ext = matches[1].replace(/\$DOT\$/g, ".");
+    ext = ext.replace(/\$etc\$/g, 'etc.');
+    ext = ext.replace(/\$eg\$/g, 'e.g.');
+    ext = ext.replace(/\$ie\$/g, 'i.e.');
+    ext = ext.replace(/\$cf\$/g, 'cf.');
+    ext = ext.replace(/\$cc\$/g, '.,');
     if (extracted.indexOf(ext) === -1) {
         extracted.push(ext);
     }

@@ -1,15 +1,15 @@
 <div id='siac-modal' class='siac-modal-overlay'>
     <div class='siac-modal'>
-        <div class='siac-note-header flex-row bold' style='padding: 15px;'>
+        <div class='siac-note-header flex-row bold' style='padding: 15px; min-height: 40px;'>
             <div>{title}</div>
             <div class='mr-5'>
                 <i class='fa fa-times cursor-pointer red-hover siac-modal-close' style='font-size: 20px;' onclick='byId("siac-modal").remove()'></i>
             </div>
         </div>
         <div class='siac-modal-body'>{body}</div>
-        <div class='siac-note-footer ta_right' style='overflow: visible'>
+        <div class='siac-note-footer ta_right' style='overflow: visible; padding-bottom: 9px;'>
             <div></div>
-            <div class='siac-modal-btn siac-modal-close' onclick='byId("siac-modal").remove()'>Close</div>
+            <div class='siac-modal-btn siac-modal-close mb-0' onclick='byId("siac-modal").remove()'>Close</div>
         </div>
     </div>
 </div>

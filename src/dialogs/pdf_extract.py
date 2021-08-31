@@ -18,14 +18,12 @@
 from aqt.qt import *
 from aqt.utils import tooltip
 import aqt
-import random
-import os
-import copy
 import json
 
-from ..state import get_index
+from ..output import UI
 from ..notes import create_note, get_priority, get_extracts
 from ..hooks import run_hooks
+from ..web.reading_modal import Reader
 from .components import QtPrioritySlider
 
 class PDFExtractDialog(QDialog):
@@ -56,6 +54,7 @@ class PDFExtractDialog(QDialog):
         self.title_inp.setText(self.note.title)
         self.vbox.addWidget(self.title_inp)
 
+        self.vbox.addWidget(QLabel("Tags"))
         self.tags_inp = QLineEdit()
         self.tags_inp.setText(self.note.tags)
         self.vbox.addWidget(self.tags_inp)
@@ -117,10 +116,9 @@ class PDFExtractDialog(QDialog):
 
         # if we have a pdf displayed, send the updated extract info to the js,
         # and reload the page
-        ix = get_index()
-        if ix.ui.reading_modal.note_id and ix.ui.reading_modal.note.is_pdf():
-            extracts = get_extracts(ix.ui.reading_modal.note_id, ix.ui.reading_modal.note.source)
-            ix.ui.js(f"pdf.extractExclude={json.dumps(extracts)}; refreshPDFPage();")
+        if Reader.note_id and Reader.note.is_pdf():
+            extracts = get_extracts(Reader.note_id, Reader.note.source)
+            UI.js(f"pdf.extractExclude={json.dumps(extracts)}; refreshPDFPage();")
 
         run_hooks("user-note-created")
         run_hooks("updated-schedule")

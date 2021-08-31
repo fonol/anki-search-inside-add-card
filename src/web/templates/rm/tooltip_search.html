@@ -1,0 +1,14 @@
+<div id='siac-pdf-tooltip-top'>
+    <div id='siac-tooltip-center' onclick='centerTooltip();'></div>
+    <div class='siac-search-icn-dark' id='siac-tt-web-btn' onclick='pycmd("siac-show-web-search-tooltip " + $("#siac-pdf-tooltip").data("selection"));'></div>
+    <span id='siac-cloze-btn' onclick='sendClozes();'>Cloze ...</span>
+    <div style='width: calc(100% - 18px); padding: 0 9px; text-align: center; margin: 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
+        <i>{query}</i>
+    </div>
+</div>
+<div id='siac-pdf-tooltip-results-area' onkeyup="pdfTooltipClozeKeyup(event);">
+    {search_results}
+</div>
+<div id='siac-pdf-tooltip-bottom'>
+    <input id='siac-pdf-tooltip-searchbar' placeholder="Search" onkeyup='if (event.keyCode === 13) {pycmd("siac-pdf-tooltip-search " + this.value);}'></input>
+</div>

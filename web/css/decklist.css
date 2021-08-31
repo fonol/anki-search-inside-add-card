@@ -19,6 +19,15 @@
     position: relative;
     border-radius: 3px;
 }
+#siac-notes-sidebar .deck-list-item {
+    margin: 1px 0;
+}
+#siac-notes-sidebar .list-item-inner {
+    display: flex !important;
+}
+#siac-notes-sidebar .list-item-inner .exp {
+    margin-right: 3px;
+}
 .deck-list-item > div {
     display: inline-block;
     overflow-x: hidden;
@@ -31,7 +40,8 @@
     color: white;
 }
 body.nightMode .deck-list-item:hover > .list-item-inner {
-    background: var(--c-primary-color-night);
+    /* background: var(--c-primary-color-night); */
+    background: #464646;
 }
 .check {
     float: right;
@@ -49,7 +59,8 @@ body.nightMode .deck-list-item:hover > .list-item-inner {
     display: none;
 }
 body.nightMode .siac-tl-plus {
-    background: var(--c-primary-color-night);
+    /* background: var(--c-primary-color-night); */
+    background: #464646;
 }
 .deck-list-item:hover > .list-item-inner > .siac-tl-plus {
     display: inline-block;
@@ -99,4 +110,21 @@ body.nightMode .deck-list-button {
     margin-top: 0px;
     margin-left: 0px;
     padding-left: 0px;
+}
+
+.siac-tag {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.siac-tag-cnt {
+    margin-left: 5px;
+    color: #9a9a9a;
+}
+body.nightMode .siac-tag-cnt {
+    color: grey;
+}
+
+.deck-list-item:hover > .list-item-inner > .siac-tag-cnt {
+    color: #b3b3b3;
 }

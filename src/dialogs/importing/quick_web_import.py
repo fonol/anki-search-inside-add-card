@@ -29,6 +29,7 @@ from aqt.utils import tooltip
 from ...config import get_config_value, get_config_value_or_default
 from ...web_import import import_webpage
 from ..editor import NoteEditor
+from ..components import MDTextEdit
 
 import utility.misc
 import utility.text
@@ -202,7 +203,7 @@ class QuickWebImport(QWidget):
         self.open_note_window()
 
     def markdown(self):
-        mdtext      = QTextEdit()
+        mdtext      = MDTextEdit()
         self.source = ""
         mdtext.setHtml(import_webpage(self.web_url, inline_images=False))
         mdtext.setPlainText(mdtext.toMarkdown())

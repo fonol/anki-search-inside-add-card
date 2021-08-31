@@ -1,0 +1,21 @@
+<div id='siac-pdf-tooltip-top' style='min-height: 20px;'>
+    <div id='siac-tooltip-center' onclick='centerTooltip();'></div>
+</div>
+<div id='siac-pdf-tooltip-results-area'>
+    <div class='mb-10 mt-10'>
+        <div class='mb-5 fg_lightgrey'>
+            <label>1. Query (click inside to edit):</label>
+        </div>
+        <input class='siac-rm-bg w-100 mb-5' placeholder="Search query" id="siac-tt-ws-inp" value="{input}"></input>
+        <div class='mb-5 mt-10 fg_lightgrey'>
+            <label>2. Choose a search source:</label>
+        </div>
+        <div class='mt-5'>
+            {search_sources}
+        </div>
+    </div>
+</div>
+<div id='siac-pdf-tooltip-bottom' class='flex-row flex-between'>
+    <div class="siac-modal-btn mr-10" onclick="pdfTooltipBack()"><i class='fa fa-arrow-left mr-5'></i>Back</div>
+    <div class="siac-modal-btn" onclick="$('#siac-pdf-tooltip').hide()">Close</div>
+</div>

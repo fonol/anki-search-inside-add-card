@@ -23,20 +23,19 @@ import io
 import typing
 from aqt import mw
 from aqt.utils import showInfo
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Any
 
 from .note_templates import *
 from .templating import filled_template
-from ..stats import getRetentions
 from ..state import get_index, check_index
-from ..notes import  get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str, get_read_today_count
-from ..feeds import read
+from ..notes import  PDFMark, get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority, dynamic_sched_to_str, get_read_today_count
 from ..internals import perf_time, HTML, JS
 from ..config import get_config_value_or_default as conf_or_def
 from ..models import IndexNote
 import utility.misc
 import utility.tags
 import utility.text
+import utility.date
 
 
 """ Html.py - various HTML-building functions. 
@@ -140,8 +139,8 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
     Returns the javascript call that inserts the html that is essentially the right side of the add card dialog.
     The right side html is only inserted if not already present, so it is safe to call this function on every note load.
     """
-    leftSideWidth       = conf_or_def("leftSideWidthInPercent", 40)
 
+    leftSideWidth                           = conf_or_def("leftSideWidthInPercent", 40)
     if not isinstance(leftSideWidth, int) or leftSideWidth <= 0 or leftSideWidth > 100:
         leftSideWidth = 50
 
@@ -183,7 +182,7 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
                 $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
                 let aFn = () => {
                     if (typeof(updatePinned) === "undefined") {
-                        setTimeout(aFn, 100);
+                        setTimeout(aFn, 50);
                         return;
                     }
                     updatePinned();
@@ -195,19 +194,18 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
             var there = true;
             }
             let sFn = () => {
-                if (typeof(siacState) === 'undefined') {
-                    setTimeout(sFn, 100);
+                if (typeof(SIAC) === 'undefined' || typeof(SIAC.State) === 'undefined') {
+                    setTimeout(sFn, 50);
                     return;
                 } 
-                if (siacState.searchOnTyping) {
-                    $('.field').off('siac').on('keydown.siac', fieldKeypress);
+                if (SIAC.State.searchOnTyping) {
+                    SIAC.Fields.enableSearchOnTypingEventListener();
                 } 
-                $('.field').attr('onmouseup', 'getSelectionText()');
-                window.$fields = $('.field');
+                SIAC.Fields.setSelectionMouseUpEventListener();
                 window.$searchInfo = $('#searchInfo');
                 window.addEventListener('resize', onWindowResize, true);
-                $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this);});
-                $('.cal-block-outer').on('click', function(event) { displayCalInfo(this);});
+                $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this); });
+                $('.cal-block-outer').on('click', function(event) { displayCalInfo(this); });
             };
             sFn();
             return there; 
@@ -267,14 +265,14 @@ def get_model_dialog_html() -> HTML:
 def get_calendar_html() -> HTML:
     """ Html for the timeline at the bottom of the search pane. """
 
-    html                    = """<div id='cal-row' class='w-100' style="height: 8px;" onmouseleave='calMouseLeave()'>%s</div> """
+    html                    = """<div id='cal-row' class='w-100' onmouseleave='calMouseLeave()'>%s</div> """
     #get notes created since the beginning of the year
     day_of_year             = datetime.datetime.now().timetuple().tm_yday
     date_year_begin         = datetime.datetime(year=datetime.datetime.utcnow().year, month=1, day=1, hour=0, minute=0)
     nid_now                 = int(time.time() * 1000)
     nid_minus_day_of_year   = int(date_year_begin.timestamp() * 1000)
 
-    res                     = mw.col.db.all("select distinct notes.id from notes left join cards on notes.id = cards.nid where nid > %s and nid < %s order by nid asc" %(nid_minus_day_of_year, nid_now))
+    res                     = mw.col.db.all("select distinct notes.id from notes where id > %s and id < %s order by id asc" %(nid_minus_day_of_year, nid_now))
 
     counts                  = []
     c                       = 1
@@ -312,7 +310,7 @@ def get_calendar_html() -> HTML:
         else:
             color = ""
 
-        html_content += "<div class='cal-block-outer'><div class='cal-block %s %s' data-index='%s'></div></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
+        html_content = f"{html_content}<div class='cal-block-outer'><div class='cal-block %s %s' data-index='%s'></div></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
         added += 1
 
     html = html % html_content
@@ -344,84 +342,57 @@ def read_counts_card_body(counts: Dict[int, int]) -> HTML:
                 row = f"{row}<span class='siac-read-box'></span>" 
             row = f"{row}<span class='keyword'>&nbsp; (+ {c-100})</span>"
 
-        html = f"{html}<tr><td style='min-width: 240px;'><a class='keyword' onclick='pycmd(\"siac-read-user-note {nid}\")'>{ix}. {title}</a></td><td style='padding-left: 5px; text-align: right;'><b style='vertical-align: middle;'>{c}</b></td><td style='padding-left: 5px;'>{row}</td></tr>"
+        html = f"{html}<tr><td style='min-width: 240px;'><a class='keyword' onclick='pycmd(\"siac-read-user-note {nid}\")'>{ix}. {title}</a></td><td style='padding-left: 5px; text-align: right;'><b style='vertical-align: middle; word-break: keep-all;'>{c}</b></td><td style='padding-left: 5px;'>{row}</td></tr>"
     html = f"<br><table class='siac-read-stats-table'>{html}</table>"
 
     html += """
     """
     return html
 
+def marks_card_body(marks: List[Tuple[Any, ...]]) -> HTML:
+    """ Builds the HTML for the card which is displayed when clicking on PDF -> Marks """
+
+    if marks is None or len(marks) == 0:
+        return """<center class='pt-10 pb-10'>No marks have been set yet.</center>"""
+
+    html = ""
+    dnow = datetime.datetime.now()
+
+    for created, marktype, nid, page, pagestotal, pdf_title in marks:
+
+        marktype_str    = PDFMark.pretty(PDFMark(marktype))
+        cdate           = utility.date.dt_from_stamp(created)
+        diff            = utility.date.date_diff_to_string(dnow-cdate)
+        html            = f"""{html}
+            <tr style=''>
+                <td style='white-space: nowrap;'>{diff} ago</td>
+                <td style='white-space: nowrap;'>{marktype_str}</td>
+                <td><a class='keyword' onclick='pycmd("siac-read-user-note {nid} {page}")'>{pdf_title}</a></td>
+                <td style='white-space: nowrap;'>{page} / {pagestotal}</td>
+            </tr>
+        """
+    html = f"""
+        <table class='w-100'>
+            {html}
+        </table>
+    """
+
+    return html
+
 def topic_card_body(topics: List[Tuple[str, float]]) -> HTML:
     html = """
-                <div class='flex-row w-100' style='margin-top: 20px;'>
-                    <div style='width: 50%; flex: 0 1 auto;'>
+                <div class='flex-row w-100' style='margin-top: 20px; flex-wrap: wrap;'>
+                    <div style='min-width: 400px; flex: 1 1 auto;'>
                         <div class='w-100 ta_center bold'>All PDFs</div>
                         <div id='siac-read-stats-topics-pc_1' class='w-100' style='height: 400px;'></div>
                     </div> 
-                    <div style='width: 50%; flex: 0 1 auto;'>
+                    <div style='min-width: 400px; flex: 1 1 auto;'>
                         <div class='w-100 ta_center bold'>Read last 7 days</div>
                         <div id='siac-read-stats-topics-pc_2' class='w-100' style='height: 400px;'></div>
                     </div> 
                 </div> 
                 """
     return html
-
-def search_results(db_list: List[IndexNote], query_set: List[str]) -> HTML:
-    """ Prints a list of index notes. Used e.g. in the pdf viewer. """
-    html                        = ""
-    newNote                     = ""
-    nids                        = [r.id for r in db_list]
-    show_ret                    = conf_or_def("showRetentionScores", True)
-    fields_to_hide_in_results   = conf_or_def("fieldsToHideInResults", {})
-    hide_clozes                 = conf_or_def("results.hide_cloze_brackets", False)
-    remove_divs                 = conf_or_def("removeDivsFromOutput", False)
-    if show_ret:
-        retsByNid               = getRetentions(nids)
-    ret                         = 0
-    highlighting                = conf_or_def("highlighting", True)
-
-    for counter, res in enumerate(db_list):
-        ret = retsByNid[int(res.id)] if show_ret and int(res.id) in retsByNid else None
-        if ret is not None:
-            retMark = "border-color: %s;" % (utility.misc._retToColor(ret))
-            retInfo = """<div class='retMark' style='%s'>PR: %s</div> """ % (retMark, int(ret))
-        else:
-            retInfo = ""
-
-        text        = res.get_content()
-
-        # hide fields that should not be shown
-        if str(res.mid) in fields_to_hide_in_results:
-            text = "\u001f".join([spl for i, spl in enumerate(text.split("\u001f")) if i not in fields_to_hide_in_results[str(res.mid)]])
-
-        #remove <div> tags if set in config
-        if remove_divs and res.note_type != "user":
-            text = utility.text.remove_divs(text)
-
-        # remove cloze brackets if set in config
-        if hide_clozes and res.note_type != "user":
-            text = utility.text.hide_cloze_brackets(text)
-
-        if highlighting and query_set is not None:
-            text = utility.text.mark_highlights(text, query_set)
-
-        text        = utility.text.clean_field_separators(text).replace("\\", "\\\\").replace("`", "\\`").replace("$", "&#36;")
-        text        = utility.text.try_hide_image_occlusion(text)
-        #try to put fields that consist of a single image in their own line
-        text        = utility.text.newline_before_images(text)
-        template    = NOTE_TMPL_SIMPLE if res.note_type == "index" else NOTE_TMPL_SIAC_SIMPLE
-        newNote     = template.format(
-            counter=counter+1,
-            nid=res.id,
-            edited="",
-            mouseup="",
-            text=text,
-            ret=retInfo,
-            tags=utility.tags.build_tag_string(res.tags, False, False, maxLength = 15, maxCount = 2),
-            creation="")
-        html += newNote
-    return html
-
 
 def read_counts_by_date_card_body(counts: Dict[str, int]) -> HTML:
     """ Html for the card that displays read pages / day (heatmap). """
@@ -532,6 +503,32 @@ def get_loader_html(text: HTML) -> HTML:
     """ % text
     return html
 
+def file_tree(tree: Dict[str, Any]) -> HTML:
+
+    def _subtree(t, pre="") -> HTML:
+        html = ""
+        for k, v in t.items():
+            sub     = ""
+            fcls    = "file"
+            path    = ""
+            pre_u   = pre + k + "/"
+            if v is not None and len(v) > 0:
+                sub     = f"<ul>{_subtree(v, pre_u)}</ul>"
+                fcls    = "folder" 
+            else:
+                path    = pre + k
+                path    = utility.text.b64_encode_str(path) 
+
+            html = f"{html}<li class='siac-ft-item {fcls}' data-path='{path}' onclick='SIAC.Filetree.itemClicked(event, this)'><span>{k}</span>{sub}</li>"
+
+        return html
+    html = f"<ul class='siac-file-tree'>{_subtree(tree)}</ul>"
+    return html
+
+
+
+
+
 def get_pdf_list_first_card() -> HTML:
     """
         Returns the html for the body of a card that is displayed at first position when clicking on "PDFs".
@@ -599,7 +596,6 @@ def get_unsuspend_modal(nid: int) -> HTML:
     unsuspend_all   = ""
 
     note            = mw.col.getNote(int(nid))
-    print(note)
     flds            = "<br>".join([utility.text.trim_if_longer_than(f, 100) for f in note.fields])
 
     for c in cards:

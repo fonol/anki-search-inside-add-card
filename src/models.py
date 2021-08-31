@@ -108,6 +108,9 @@ class SiacNote(Printable):
 
     def is_yt(self) -> bool:
         return self.source is not None and re.match("(?:https?://)?www\.youtube\..+", self.source.strip().lower())
+    
+    def is_md(self) -> bool:
+        return self.source is not None and self.source.lower().startswith("md:///")
 
     def get_note_type(self) -> str:
         if self.is_pdf():
@@ -232,8 +235,7 @@ class SiacNote(Printable):
                         </p>
                     """
 
-
-        title   = "%s<b>%s</b>%s" % ("<i class='fa fa-file-pdf-o' style='margin-right: 7px;'></i>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5 siac-note-hr'>" if len(body.strip()) > 0 else "")
+        # title   = "%s<b>%s</b>%s" % ("<i class='fa fa-file-pdf-o' style='margin-right: 7px;'></i>" if self.is_pdf() else "", title if len(title) > 0 else "Unnamed Note", "<hr class='mb-5 siac-note-hr'>" if len(body.strip()) > 0 else "")
 
         # add the source, separated by a line
         if src is not None and len(src) > 0 and get_config_value_or_default("notes.showSource", True):
@@ -241,11 +243,14 @@ class SiacNote(Printable):
                 src = src[src.rindex("/") +1:]
             if self.is_yt():
                 src = f"<a href='{src}'>{src}</a>"
-            src = f"<hr class='siac-note-hr'><i>Source: {src}</i>"
+            if len(body) > 0:
+                src = f"<hr class='siac-note-hr'><i>Source: {src}</i>"
+            else:
+                src = f"<i>Source: {src}</i>"
         else:
             src = ""
 
-        return title + body + src
+        return body + src
 
 class IndexNote(Printable):
 

@@ -20,13 +20,11 @@ import aqt.editor
 import aqt
 import functools
 import time
-import math
 import re
 import random
-from aqt.utils import saveGeom, restoreGeom
 from anki.hooks import addHook, remHook
 from anki.lang import _
-from anki.utils import isMac
+from ..output import UI
 from ..notes import *
 from ..notes import _get_priority_list
 from ..hooks import run_hooks
@@ -41,8 +39,7 @@ from .components import QtPrioritySlider, MDTextEdit, QtScheduleComponent
 from .url_input_dialog import URLInputDialog
 from ..markdown.extensions.fenced_code import FencedCodeExtension
 from ..markdown.extensions.def_list import DefListExtension
-from ..utility.tag_tree import TagTree
-from ..web.reading_modal import ReadingModal
+from ..web.reading_modal import Reader
 
 import utility.text
 import utility.misc
@@ -143,7 +140,7 @@ class NoteEditor(QDialog):
         self.prio_prefill   = prio_prefill
         self.dark_mode_used = state.night_mode
 
-        open_note = ReadingModal.current_note
+        open_note = Reader.current_note
         if prefill_with_opened_note and open_note is not None:
             self.tag_prefill = open_note.tags
             self.prio_prefill = open_note.priority
@@ -249,30 +246,21 @@ class NoteEditor(QDialog):
         if not success:
             return
 
-        # maybe more elegant solution to avoid renewing search please?
-        ix = get_index()
-        if ix is not None and ix.ui is not None and ix.ui._editor is not None and ix.ui._editor.web is not None:
+        if UI._editor is not None and UI._editor.web is not None:
             run_hooks("user-note-created")
 
         self.reject()
-
-        # if reading modal is open, we might have to update the bottom bar
-        if self.read_note_id is not None:
-            get_index().ui.reading_modal.reload_bottom_bar()
+        Reader.reload_bottom_bar()
 
     def on_create_and_keep_open_clicked(self):
         success = self._create_note()
         if not success:
             return
 
-        # maybe more elegant solution to skip updating search/sidebar refresh?
-        ix = get_index()
-        if ix is not None and ix.ui is not None and ix.ui._editor is not None and ix.ui._editor.web is not None:
+        if UI._editor is not None and UI._editor.web is not None:
             run_hooks("user-note-created")
 
-
-        if self.read_note_id is not None:
-            get_index().ui.reading_modal.reload_bottom_bar()
+        Reader.reload_bottom_bar()
 
         self._reset()
 
@@ -447,12 +435,6 @@ class CreateTab(QWidget):
         t_h = QHBoxLayout()
         t_h.addWidget(text_lbl)
 
-        self.tb = QToolBar("Format")
-
-        self.tb.setHidden(False)
-        self.tb.setOrientation(Qt.Horizontal)
-        self.tb.setIconSize(QSize(12, 12))
-
         clean_btn = QPushButton()
         clean_btn.setText("Clean...  ")
         clean_btn.setFocusPolicy(Qt.NoFocus)
@@ -473,10 +455,9 @@ class CreateTab(QWidget):
         clean_menu.addAction("Remove HTML").triggered.connect(self.on_remove_html)
         # clean_menu.addAction("Remove all Headers (#)").triggered.connect(self.on_remove_headers_clicked)
         clean_btn.setMenu(clean_menu)
-        self.tb.addWidget(clean_btn)
 
         t_h.addStretch(1)
-        t_h.addWidget(self.tb)
+        t_h.addWidget(clean_btn)
 
         url_btn = QPushButton(u"Fetch from URL ... ")
         url_btn.setFocusPolicy(Qt.NoFocus)
@@ -507,34 +488,45 @@ class CreateTab(QWidget):
         self.source         = QLineEdit()
         # if note is an extract, prevent source editing
         if self.parent.note is not None and self.parent.note.extract_end is not None:
-            source_lbl          = QLabel("Source - Note is an extract")
+            self.source_lbl          = QLabel("Source - Note is an extract")
             # self.source.setReadOnly(True)
         else:
-            source_lbl          = QLabel("Source")
+            self.source_lbl          = QLabel("Source")
+        
+        self.source.editingFinished.connect(self.on_source_edit_finish)
+        
         source_hb           = QHBoxLayout()
         #source_hb.addWidget(self.source)
         if self.parent.source_prefill is not None:
             self.source.setText(self.parent.source_prefill.replace("\\", "/"))
 
-        file_btn            = QPushButton("External file")
-        file_btn.setFocusPolicy(Qt.NoFocus)
-        file_btn.clicked.connect(self.on_file_clicked)
-        source_hb.addWidget(file_btn)
-        pdf_btn             = QPushButton("PDF")
-        pdf_btn.setFocusPolicy(Qt.NoFocus)
-        pdf_btn.clicked.connect(self.on_pdf_clicked)
-        source_hb.addWidget(pdf_btn)
-        pdf_from_url_btn    = QPushButton("PDF from Webpage")
-        pdf_from_url_btn.clicked.connect(self.on_pdf_from_url_clicked)
-        pdf_from_url_btn.setFocusPolicy(Qt.NoFocus)
-        source_hb.addWidget(pdf_from_url_btn)
 
-        # if note is an extract, prevent source editing
-        # if self.parent.note is not None and self.parent.note.extract_end is not None:
-        #     pdf_btn.setDisabled(True)
-        #     pdf_from_url_btn.setDisabled(True)
+        source_btn = QPushButton("")
+        source_btn.setText("Source...  ")
+        source_btn.setFocusPolicy(Qt.NoFocus)
+        source_menu = QMenu(source_btn)
+        if self.parent.dark_mode_used:
+            source_menu.setStyleSheet("""
+                QMenu { background: #3a3a3a; color: lightgrey; font-size: 10px; }
+                QMenu:item:selected { background: steelblue; color: white; }
+            """)
+        else:
+            source_menu.setStyleSheet("""
+                QMenu { background: white; color: black; font-size: 10px;}
+                QMenu:item:selected { background: #2496dc; color: white; }
+            """)
 
-        vbox.addWidget(source_lbl)
+
+        source_menu.addAction("PDF").triggered.connect(self.on_pdf_clicked)
+        source_menu.addAction("Markdown File (.md)").triggered.connect(self.on_md_clicked)
+        source_menu.addAction("External File (.*)").triggered.connect(self.on_file_clicked)
+        source_menu.addAction("Webpage to PDF (URL)").triggered.connect(self.on_pdf_from_url_clicked)
+        source_btn.setMenu(source_menu)
+
+        source_hb.addStretch()
+        source_hb.addWidget(source_btn)
+
+        vbox.addWidget(self.source_lbl)
         vbox.addWidget(self.source)
         vbox.addLayout(source_hb)
 
@@ -721,6 +713,22 @@ class CreateTab(QWidget):
         fname = QFileDialog.getOpenFileName(self, 'Pick a PDF', '',"PDF (*.pdf)")
         if fname is not None:
             self.source.setText(fname[0])
+        
+    def on_md_clicked(self):
+        fp = get_config_value_or_default("md.folder_path", "")
+        if fp is None or len(fp) == 0 or not os.path.exists(fp):
+            if fp is not None and len(fp) > 0:
+                tooltip("Invalid .md folder path set in config.")
+            self.source.setText("md:///")
+            self.source.setFocus()
+            return
+        fp = fp.replace("\\", "/")
+        if not fp.endswith("/"):
+            fp += "/"
+        if fp.startswith("/"):
+            fp = fp[1:]
+        self.source.setText("md:///"+ fp)
+        self.source.setFocus()
 
     def on_pdf_from_url_clicked(self):
         dialog = UrlImporter(self, show_schedule=False)
@@ -739,6 +747,21 @@ class CreateTab(QWidget):
             else:
                 tooltip("Invalid URL")
 
+    def on_source_edit_finish(self):
+        if self.parent.note_id is not None and self.parent.note_id > 0:
+            return
+        src = self.source.text()
+        lbl_text = self.source_lbl.text()
+        if src is not None and len(src.strip()) > 0 and check_if_source_exists(src):
+            if not lbl_text.startswith("[Duplicate]"):
+                self.source_lbl.setText("[Duplicate] " + lbl_text)
+        else:
+            if lbl_text.startswith("[Duplicate]"):
+                self.source_lbl.setText(lbl_text[len("[Duplicate] "):])
+
+
+
+
     def on_tag_chooser_clicked(self):
         dialog = TagChooserDialog(self.tag.text(), self)
 
@@ -756,7 +779,7 @@ class CreateTab(QWidget):
                 if text is None:
                     tooltip("Failed to fetch text from page.")
                 else:
-                    self.text.setHtml(text)
+                    self.text.setPlainText(text)
 
     def on_remove_formatting(self):
 

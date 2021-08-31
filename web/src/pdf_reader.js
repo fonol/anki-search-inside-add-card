@@ -14,10 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Highlighting } from "./pdf_highlighting.js";
-
-
-window.Highlighting = Highlighting;
 
 /** Tomato timer */
 window.tomato = {
@@ -49,14 +45,18 @@ window.pdf = {
     notification: {
         queue: [],
         current: ""
-    }
+    },
+
+    tooltip: {
+        enabled: true,
+    },
+
 };
 
 /** State variables */
 window.noteLoading = false;
 window.pdfLoading = false;
 window.modalShown = false;
-window.pdfTooltipEnabled = true;
 window.pdfLinksEnabled = false;
 window.iframeIsDisplayed = false;
 window.pageSidebarDisplayed = true;
@@ -193,7 +193,7 @@ window.loadTOC = function () {
             return Promise.all(promises);
         }
     }).then(function () {
-        let html = "<ul>";
+        let html = "<ul style='margin-top: 0;'>";
         if (pdf.TOC && pdf.TOC.length) {
             for (var i = 0; i < pdf.TOC.length; i++) {
                 html += `<li class='siac-toc-item blue-hover' onclick='pdfGotoPg(${pdf.TOC[i].page})'><div><div>${pdf.TOC[i].page}:</div><div class='siac_toc_title'>${pdf.TOC[i].title || '&lt;Untitled&gt;'}</div></div>`;
@@ -207,8 +207,8 @@ window.loadTOC = function () {
                 }
                 html += "</li>"
             }
-            html = `<div style='text-align: center; margin-bottom: 10px; padding-bottom: 7px; border-bottom: 2px dotted grey;'><b style='font-size: 14px;' class='fg_lightgrey'>Table of Contents</b></div>
-                    <div style='overflow: auto; color: lightgrey; padding-right: 4px;'>${html}</div>`;
+            html = `<div class='ta_center siac-note-header mb-10'><b style='font-size: 14px;'>Table of Contents</b></div>
+                    <div style='overflow: auto;' class='p-10 fg_lightgrey'>${html}</div>`;
         }
         byId("siac-toc").innerHTML = html;
 
@@ -406,13 +406,13 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                         pdf_canvas_0.style.display = "none";
                     canvas.style.display = "inline-block";
 
-                    Highlighting._removeAllHighlights();
+                    SIAC.Highlighting.removeAllHighlights();
 
                     if (fetchHighlights) {
                         updatePdfDisplayedMarks(true);
                     }
-                    if (["Sand", "Peach", "Night", "X1", "X2", "Mud", "Coral", "Moss"].indexOf(pdfColorMode) !== -1) {
-                        invertCanvas(ctx);
+                    if (SIAC.Colors.shouldChangeColors()) {
+                        SIAC.Colors.invertCanvas(ctx);
                     }
                 }
                 return lPage.getTextContent({ normalizeWhitespace: false, disableCombineTextItems: false });
@@ -444,14 +444,14 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
 
                 if (isInitial) {
                     $('#siac-pdf-loader-wrapper').remove();
-                    // setTimeout(function () { refreshCanvas(); }, 3000);
                 }
                 pdf.displayedViewPort = viewport;
                 if (fetchHighlights) {
-                    Highlighting.current = [];
+
+                    SIAC.Highlighting.current = [];
                     pycmd("siac-pdf-page-loaded " + pdf.page);
                 } else {
-                    Highlighting.displayHighlights();
+                    SIAC.Highlighting.displayHighlights();
                 }
                 if (!pdf.pageNumPending && !pdf.pageRendering) {
 
@@ -772,13 +772,14 @@ window.updatePdfDisplayedMarks = function (rerenderTop) {
         let html = "";
         $('.siac-mark-btn-inner').removeClass('active');
         if (pdf.page in pdf.displayedMarks) {
+            let template = "<div class='siac-pdf-mark-lbl'><span><i class='fa fa-star'></i>&nbsp; -1 &nbsp;</span><b onclick='$(\".siac-mark-btn-inner--2\").trigger(\"click\");'>&times</b></div>";
             for (var i = 0; i < pdf.displayedMarks[pdf.page].length; i++) {
                 switch (pdf.displayedMarks[pdf.page][i]) {
-                    case 1: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Revisit &nbsp;<b onclick='$(\".siac-mark-btn-inner-1\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-1').first().addClass('active'); break;
-                    case 2: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Hard &nbsp;<b onclick='$(\".siac-mark-btn-inner-2\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-2').first().addClass('active'); break;
-                    case 3: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; More Info &nbsp;<b onclick='$(\".siac-mark-btn-inner-3\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-3').first().addClass('active'); break;
-                    case 4: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; More Cards &nbsp;<b onclick='$(\".siac-mark-btn-inner-4\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-4').first().addClass('active'); break;
-                    case 5: html += "<div class='siac-pdf-mark-lbl'><i class='fa fa-star'></i>&nbsp; Bookmark &nbsp;<b onclick='$(\".siac-mark-btn-inner-5\").trigger(\"click\");'>&times</b></div>"; $('.siac-mark-btn-inner-5').first().addClass('active'); break;
+                    case 1: html += template.replace("-1", "Revisit").replace("-2", "1"); $('.siac-mark-btn-inner-1').first().addClass('active'); break;
+                    case 2: html += template.replace("-1", "Hard").replace("-2", "2"); $('.siac-mark-btn-inner-2').first().addClass('active'); break;
+                    case 3: html += template.replace("-1", "More Info").replace("-2", "3"); $('.siac-mark-btn-inner-3').first().addClass('active'); break;
+                    case 4: html += template.replace("-1", "More Cards").replace("-2", "4"); $('.siac-mark-btn-inner-4').first().addClass('active'); break;
+                    case 5: html += template.replace("-1", "Bookmark").replace("-2", "5"); $('.siac-mark-btn-inner-5').first().addClass('active'); break;
                 }
             }
         }
@@ -889,8 +890,9 @@ window.togglePDFSelect = function (elem) {
     if (!elem) {
         return;
     }
-    pdfTooltipEnabled = !pdfTooltipEnabled;
-    if (pdfTooltipEnabled) {
+    pdf.tooltip.enabled = !pdf.tooltip.enabled;
+    pycmd('siac-config-bool pdf.tooltip_enabled ' + pdf.tooltip.enabled.toString());
+    if (pdf.tooltip.enabled) {
         $(elem).addClass('active');
         readerNotification("Search on select enabled.", true);
     } else {
@@ -941,13 +943,26 @@ window.beforeNoteQuickOpen = function () {
     return true;
 }
 
+/**
+ * Go back to the pdf tooltip start page (search results).
+ */
+window.pdfTooltipBack = function() {
+    if (pdf.tooltip) {
+        renderTooltip(pdf.tooltip.sentences, pdf.tooltip.selection, pdf.tooltip.top, pdf.tooltip.left);
+    }
+};
+
 window.centerTooltip = function () {
     let w = $('#siac-pdf-top').width();
     let h = $('#siac-pdf-top').height();
     let $tt = $('#siac-pdf-tooltip');
     byId("siac-pdf-tooltip-results-area").style.removeProperty('max-height');
     byId("siac-pdf-tooltip").style.removeProperty('max-width');
-    $tt.css({ 'top': h / 2 - ($tt.height() / 2), 'left': w / 2 - ($tt.width() / 2) });
+    let top = h / 2 - ($tt.height() / 2);
+    let left =  w / 2 - ($tt.width() / 2);
+    $tt.css({ 'top': top, 'left': left });
+    pdf.tooltip.top = top;
+    pdf.tooltip.left = left;
 }
 window.destroyPDF = function () {
     if (pdf.instance) {
@@ -1078,13 +1093,14 @@ window.onReadingModalClose = function () {
     }
     displayedNoteId = null;
     $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right").removeClass('siac-reading-modal-displayed');
-    $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-reading-modal-tabs-left').remove();
+    $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md,#siac-reading-modal-tabs-left').remove();
     $('#fields').show();
     $("#siac-reading-modal").hide();
     byId('resultsArea').style.display = 'block';
     byId('bottomContainer').style.display = 'block';
     byId('topContainer').style.display = 'flex';
     destroyPDF();
+    SIAC.Filetree.destroy();
     if (siacYt.player) {
         try {
             siacYt.player.destroy();
@@ -1092,16 +1108,17 @@ window.onReadingModalClose = function () {
     }
     byId("siac-reading-modal-center").innerHTML = "";
     onWindowResize();
-    window.$fields = $('.field');
-    if (siacState.searchOnTyping) {
+    SIAC.Fields.cacheFields();
+    if (SIAC.State.searchOnTyping) {
         setSearchOnTyping(true, false);
     }
+
     pycmd("siac-on-reading-modal-close");
 }
 
 
 window.modalTabsLeftClicked = function (tab, elem) {
-    $('#siac-reading-modal-tabs-left .siac-btn').removeClass("active");
+    $('#siac-reading-modal-tabs-left > div').removeClass("active");
     $(elem).addClass("active");
     pycmd("siac-reading-modal-tabs-left-" + tab);
 }
@@ -1130,7 +1147,7 @@ window.prioVerbose = function (prio) {
 
 window.scheduleDialogQuickAction = function () {
     let cmd = $("input[name=sched]:checked").data("pycmd");
-    pycmd(`siac-eval index.ui.reading_modal.schedule_note(${cmd})`);
+    pycmd(`siac-eval Reader.schedule_note(${cmd})`);
 }
 window.removeDialogOk = function (nid) {
     if ($("input[name=del]:checked").data("pycmd") == "1") {
@@ -1214,7 +1231,7 @@ window.modalBgUpdate = function () {
 // helpers
 //
 window.windowHasSelection = function () {
-    return window.getSelection().toString().length;
+    return window.getSelection().toString().trim().length > 0;
 }
 window.pdfLoaderText = function (html) {
     try {

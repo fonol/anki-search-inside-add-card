@@ -8,12 +8,16 @@ from .dialogs.review_read_interrupt import ReviewReadInterruptDialog
 from .config import get_config_value
 from.notes import get_notes_scheduled_for_today
 
-last_did = 0
-current_did = 1
-interrupt_in_n_cards = 0
+
+last_did                = 0
+current_did             = 1
+interrupt_in_n_cards    = 0
 
 def review_interruptor():
     global last_did, current_did, interrupt_in_n_cards
+
+    if state.rr_mix_disabled:
+        return
 
     interruption_mode = get_config_value("mix_reviews_and_reading.mode")
 
@@ -23,14 +27,10 @@ def review_interruptor():
     if interruption_mode == "due_random":
         # get number of siac notes scheduled for today
         due_siac_notes = get_notes_scheduled_for_today()
-        if due_siac_notes is None:
+        if due_siac_notes is None or len(due_siac_notes) == 0:
             return
-        number_siac_notes = float(len(due_siac_notes))
-        # should not happen, but better safe than sorry
-        if number_siac_notes == 0.0:
-            return
-
-        current_did = mw.col.decks.selected()
+        number_siac_notes           = float(len(due_siac_notes))
+        current_did                 = mw.col.decks.selected()
 
         # check if did has changed
         if last_did != current_did:
@@ -38,21 +38,17 @@ def review_interruptor():
 
 
             # get number of due cards for today
-            counts = list(mw.col.sched.counts())
-            count_new = counts[0]
-            count_learn = counts[1]
-            count_review = counts[2]
-            due_cards = float(count_learn + count_new + count_review)
+            counts                  = list(mw.col.sched.counts())
+            count_new               = counts[0]
+            count_learn             = counts[1]
+            count_review            = counts[2]
+            due_cards               = float(count_learn + count_new + count_review)
 
             # interrupt every n cards, add fuzz
-            n_cards = due_cards/number_siac_notes
-            fuzz_amount = get_config_value("mix_reviews_and_reading.fuzz")
-            n_cards_fuzz = n_cards + fuzz_amount*n_cards*random.uniform(-1.0, 1.0)
-
-            interrupt_in_n_cards = math.floor(n_cards_fuzz)
-
-            if interrupt_in_n_cards >= due_cards:
-                interrupt_in_n_cards = int(due_cards)
+            n_cards                 = due_cards / number_siac_notes
+            fuzz_amount             = get_config_value("mix_reviews_and_reading.fuzz")
+            n_cards_fuzz            = n_cards + fuzz_amount * n_cards * random.uniform(-1.0, 1.0)
+            interrupt_in_n_cards    = min(due_cards, math.floor(n_cards_fuzz))
 
 
     state.review_counter += 1

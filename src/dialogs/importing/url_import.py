@@ -69,6 +69,7 @@ class UrlImporter(QDialog):
 
         url_label = QLabel("Url")
         self.url = QLineEdit()
+        self.url.setMinimumWidth(300)
         self.vbox.addWidget(url_label)
         self.vbox.addWidget(self.url)
 

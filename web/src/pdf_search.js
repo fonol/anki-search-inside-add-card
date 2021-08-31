@@ -82,6 +82,9 @@ window.nextPDFSearchResult = async function (dir = "right") {
         return;
     }
     let value = $("#siac-pdf-search-btn-inner input").first().val().toLowerCase();
+    if (!value || value.trim().length === 0) {
+        return;
+    }
     if (pdfCurrentSearch.query === null) {
         pdfCurrentSearch.query = value;
     } else {
@@ -100,7 +103,17 @@ window.nextPDFSearchResult = async function (dir = "right") {
 
     var shouldBreak = false;
     var found = false;
-    var spl = pdfCurrentSearch.query.toLowerCase().split(" ");
+    var spl = [...new Set(pdfCurrentSearch.query.toLowerCase().split(" "))].filter(function(t) {
+        return t !== '' && !/^[a-zA-Z0-9]$/.test(t);
+    }).map(function(t)  {
+        return t.replace(/[.,;-]$/, '');
+    });
+    if (spl.length === 0) {
+        pdfSearchOngoing = false;
+        ungreyoutBottom();
+        readerNotification("Query was empty after cleaning", true);
+        return;
+    }
     var it = 0;
     do {
         it++;

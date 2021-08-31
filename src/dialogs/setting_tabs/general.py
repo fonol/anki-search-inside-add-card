@@ -1,7 +1,5 @@
 from aqt.qt import *
-from aqt import mw
 
-import state
 from ...config import get_config_value, update_config
 
 

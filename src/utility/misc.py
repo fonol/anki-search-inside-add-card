@@ -54,6 +54,16 @@ def create_user_files_folder():
     if not os.path.isdir(folder):
         os.mkdir(folder)
 
+def file_content(file_path: str) -> str:
+    content = ""
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except:
+        return content
+    return content
+
+
 # endregion File / Folder Utils
 
 
@@ -117,6 +127,8 @@ def pdf_to_base64(path):
     return encoded_string
 
 def count_cards_added_today():
+    if hasattr(mw.col, "find_cards"):
+        return len(mw.col.find_cards("added:1"))
     return len(mw.col.findCards("added:1"))
 
 def dark_mode_is_used(config):
@@ -404,6 +416,10 @@ def load_rust_lib():
 def subdirs_fullpath(path):
     return [entry.path for entry in os.scandir(path) if entry.is_dir()]
 
+def to_day_ivl(ivl):
+    if ivl < 0:
+        return abs(ivl) / (24 * 60 * 60)
+    return ivl
 
 # region Color Utils
 

@@ -17,7 +17,6 @@
 
 import re
 from datetime import datetime
-import time
 import random
 from bs4 import BeautifulSoup
 import typing
@@ -25,10 +24,11 @@ from typing import Optional
 import aqt
 import os
 import string
+import base64
 
 
 p_trans             = str.maketrans('', '', string.punctuation)
-sp_list             = [".",";",":","!","?","/","\\",",","#","@","$","&",")","(","'","\""]
+sp_list             = [".","-","_",";",":","!","?","/","\\",",","#","@","$","&",")","(","'","\"", "`", "|"]
 p_to_space_trans    = str.maketrans(dict.fromkeys(sp_list, " "))
 
 
@@ -42,17 +42,17 @@ IO_REPLACE      = re.compile('<img src="[^"]+(-\d+-Q|-\d+-A|-(<mark>)?oa(</mark>
 IMG_FLD         = re.compile('\\|</span> ?(<img[^>]+/?>)( ?<span class=\'fldSep\'>|$)')
 
 # hide cloze brackets
-CLOZE_REPLACE   = re.compile(r"{{c\d+::([^}]*?)(?:::[^}]+)?}}")
+CLOZE_REPLACE               = re.compile(r"{{c\d+::([^}]*?)(?:::[^}]+)?}}")
 
-tagReg          = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
-spaceReg        = re.compile('\s{2,}')
-normalChar      = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U) 
+tagReg                      = re.compile(r'<[^>]+>|&nbsp;', flags = re.I)
+spaceReg                    = re.compile('\s{2,}')
+normalChar                  = re.compile(u"[a-z0-9öäü\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.I | re.U) 
 
-asian_or_arabic_char    = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.U)
-asian_char              = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.U)
+asian_or_arabic_char        = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D\u0621-\u064A]", re.U)
+asian_char                  = re.compile(u"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D]", re.U)
 
-clean_spaces    = re.compile(u"[\r\n\t\u001f]+", re.U)
-asian_char_or_whitespace  = re.compile(u"([\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D ])", re.U)
+clean_spaces                = re.compile(u"[\r\n\t\u001f]+", re.U)
+asian_char_or_whitespace    = re.compile(u"([\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u3131-\uD79D ])", re.U)
 
 
 def _get_config():
@@ -70,11 +70,7 @@ def clean(text):
 
     filtered    = ""
 
-    text        = text.replace("`", "")
     text        = clean_spaces.sub(" ", text)
-    # text        = text.replace("\r\n", " ").replace("\n", " ")
-    # text        = text.replace("\t", " ")
-    # text        = text.replace("\u001f", " ")
     text        = tagReg.sub(" ", text)
     text        = text.translate(p_to_space_trans)
     text        = spaceReg.sub(" ", text)
@@ -86,11 +82,28 @@ def clean(text):
         token = token.translate(p_trans)
         if (len(token) <= 1 and not asian_or_arabic_char.search(token)) or token.lower() in stopwords:
             continue
+
         filtered = f"{filtered}{token} "
 
     if len(filtered) > 0:
         return filtered[:-1]
     return ""
+
+
+def clean_for_indexing(text):
+
+    text        = clean_spaces.sub(" ", text)
+    text        = tagReg.sub(" ", text)
+    filtered    = ""
+    for token in tokenize(text):
+        if len(token) > 200:
+            continue
+        if token.lower() in stopwords:
+            continue
+        filtered = f"{filtered}{token} "
+
+    return filtered
+
 
 
 def trim_if_longer_than(text, n):
@@ -132,12 +145,12 @@ def replace_accents_with_vowels(text):
 
 def tokenize(text):
 
-    text    = text.replace("|", " ")
     if not asian_char.search(text):
-        return [t for t in text.split(" ") if len(t) > 0]
+        return [t for t in text.split(" ") if t != ""]
 
     result  = []
     spl     = text.split(" ")
+
     for token in spl:
         if token == "":
             continue
@@ -412,22 +425,32 @@ def try_find_sentence(text, selection):
     text        = re.sub("  +", " ", text).strip()
     last        = text.rindex(selection)
     pre         = text[:last]
+
+    reps        = {
+        "?," : "<QMCOMMA>",
+        "etc.)" : "<ETCCB>",
+        "e.g.": "<EG>",
+    }
+
+    for k, v in reps.items():
+        pre = pre.replace(k, v)
     
     def _try_find_closing(text):
         found = False
-        for c in ["\\.\\B", "!", "\\?", "•", ":", "=", "#", "-", "§", "Ø", "\\*"]:
+        for c in ["\\.\\B", "!", "\\?", "•", ":", "=", "#", "§", "Ø", "\\*"]:
             try:
                 found = [(i.start()) for i in re.finditer(c,text)]
                 if len(found) > 0:
                     last_index = found[-1]
                     if last_index < len(text) - 1:
-                        text = text[last_index + 1]
+                        text = text[last_index + 1:]
                         found = True
                         break
-            except:
+            except Exception as e:
+                print(e)
                 continue
         if not found: 
-            if len(text) < 50:
+            if len(text) < 400:
                 return text
             return None
         return text
@@ -437,11 +460,18 @@ def try_find_sentence(text, selection):
     if pre is None:
         return None
     after       = text[last:]
+    
+    for k, v in reps.items():
+        after = after.replace(k, v)
+
     after       = _try_find_closing(after[::-1])
     if after is None: 
         return None
 
-    return pre + after[::-1] + "."
+    res = pre + after[::-1] + "."
+    for k, v in reps.items():
+        res = res.replace(v, k)
+    return res
 
 def set_yt_time(src: str, time: int) -> str:
     id = get_yt_video_id(src)
@@ -542,3 +572,9 @@ def mark_highlights(text, querySet):
             textMarked = ''.join((textMarked, currentWord))
 
     return textMarked
+
+def b64_encode_str(s: str) -> str:
+    return base64.b64encode(s.encode('utf-8')).decode('ascii')
+
+def b64_decode_str(s: str) -> str:
+    return base64.b64decode(s.encode('ascii')).decode('utf-8')

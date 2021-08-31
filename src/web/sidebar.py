@@ -4,7 +4,7 @@ from aqt.editor import Editor
 from anki.utils import isMac, isLin
 from aqt import mw
 
-from ..notes import get_note, _get_priority_list, get_avg_pages_read, get_all_tags, get_related_notes, get_priority_as_str, get_notes_scheduled_for_today
+from ..notes import get_note, get_all_tags_with_counts, get_notes_scheduled_for_today
 from ..config import get_config_value_or_default as conf_or_def
 from ..internals import HTML
 from .templating import filled_template
@@ -32,8 +32,7 @@ class Sidebar:
         tab_displayed_name = self._tab_displayed_name()
 
         if self.tab == self.ADDON_NOTES_TAB:
-            tags = get_all_tags()
-            tmap = utility.tags.to_tag_hierarchy(tags)
+            (tmap, tcounts) = get_all_tags_with_counts()
 
             def iterateMap(tmap, prefix, start=False):
                 if start:
@@ -42,7 +41,7 @@ class Sidebar:
                     html = "<ul class='deck-sub-list'>"
                 for key, value in tmap.items():
                     full = prefix + "::" + key if prefix else key
-                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); searchUserNoteTag(event, '%s');\"><div class='list-item-inner'><b class='exp' data-t='%s'>%s</b> %s <span class='siac-tl-plus' onclick='event.stopPropagation(); pycmd(\"siac-create-note-tag-prefill %s\") '><i class='fa fa-plus mr-5 ml-5'></i></span></div>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), full, iterateMap(value, full, False))
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); searchUserNoteTag(event, '%s');\"><div class='list-item-inner'><b class='exp' data-t='%s'>%s</b> <span class='siac-tag'>%s</span> <span class='siac-tag-cnt'>%s</span><span class='siac-tl-plus' onclick='event.stopPropagation(); pycmd(\"siac-create-note-tag-prefill %s\") '><i class='fa fa-plus mr-5 ml-5'></i></span></div>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), tcounts.get(full.lower(), "?"), full, iterateMap(value, full, False))
                 html += "</ul>"
                 return html
 
@@ -52,7 +51,7 @@ class Sidebar:
             # check if there are any notes scheduled for today
             scheduled_for_today = get_notes_scheduled_for_today()
             if scheduled_for_today is not None and len(scheduled_for_today) > 0:
-                sched_today_menu_item = f"""<div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-due-today")'>Due today ({len(scheduled_for_today)})</div>"""
+                sched_today_menu_item = f"""<div class='siac-notes-sidebar-item' onclick='pycmd("siac-r-show-due-today")'>&nbsp; Due today ({len(scheduled_for_today)})</div>"""
             else:
                 sched_today_menu_item = ""
 
@@ -146,7 +145,7 @@ class Sidebar:
                     html = "<ul class='deck-sub-list'>"
                 for key, value in tmap.items():
                     full = prefix + "::" + key if prefix else key
-                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s');\"><div class='list-item-inner'><b class='exp' data-t='%s'>%s</b> %s</div>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s');\"><div class='list-item-inner'><b class='exp' data-t='%s'>%s</b> <span class='siac-tag'>%s</span></div>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
                 html += "</ul>"
                 return html
 

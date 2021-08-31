@@ -20,7 +20,6 @@
 "useInEdit" : false,
 "logging": false,
 "freezeIndex": false,
-"renderImmediately": true,
 "tagClickShouldSearch": true,
 "leftSideWidthInPercent": 30,
 "showRetentionScores": true,
@@ -53,7 +52,7 @@
 "pdf.clozegen.field.page": "",
 "searchUrls": ["https://en.wikipedia.org/w/index.php?search=[QUERY]&title=Special%3ASearch&go=Go&ns0=1", "https://dictionary.cambridge.org/dictionary/english/[QUERY]" ],
 "pdf.queue.hide": false,
-"pdf.highlights.use_alt_render": false,
+"pdf.highlights.use_alt_render": true,
 "notes.sidebar.visible": false,
 "notes.showSource": true,
 "notes.show_linked_cards_are_due_overlay": true,
@@ -92,6 +91,7 @@
 "notes.queue.due_note_boundary": 7,
 "pdf.color_mode": "Day",
 "pdf.page_sidebar_shown": true,
+"pdf.tooltip_enabled": true,
 
 "notes.editor.autoFillWithLastTagsOnOpen": false,
 "notes.editor.defaultTagsIfEmpty": "",
@@ -163,6 +163,9 @@
 "mix_reviews_and_reading.fuzz" : 0.5,
 "mix_reviews_and_reading.mode" : "every_n",
 "mix_reviews_and_reading.review_after_done" : false,
+
+"md.folder_path": "",
+"md.last_index_stamp": "",
 
 "window_mode": "Both"
 }

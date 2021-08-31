@@ -23,3 +23,9 @@
       opacity: 0;
     }
 }
+@keyframes slide-in {
+  100% { transform: translateX(0%); }
+}
+.slide-in {
+  animation: slide-in 0.5s forwards;
+}

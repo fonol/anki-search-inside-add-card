@@ -16,11 +16,24 @@
 
 
 window.siacYt = {
-    player: null
+    player: null,
+    ready: false,
+
 };
 
+window.onYouTubeIframeAPIReady = function() {
+    siacYt.ready = true;
+};
 
-window.initYtPlayer = function(videoId, start) {
+window.initYtPlayer = function(videoId, start, tryCounter) {
+
+    if (!tryCounter) {
+        tryCounter = 1;
+    }
+    if (!siacYt.ready && tryCounter < 10) {
+        setTimeout(() => { initYtPlayer(videoId, start, tryCounter + 1); }, 100);
+
+    }
 
     if (typeof YT === "undefined") {
         readerNotification("Seems like Youtube API is not loaded. Maybe check your internet connection?");
@@ -33,9 +46,8 @@ window.initYtPlayer = function(videoId, start) {
         playerVars: {
             start
         }
-    
       });
-}
+};
 
 window.ytCurrentTime = function() {
     return Math.trunc(siacYt.player.getCurrentTime());
@@ -45,14 +57,14 @@ window.ytScreenCapture = function() {
     let playerEl = document.getElementById("siac-yt-player");
     if (!playerEl) { return; }
     let r =  playerEl.getBoundingClientRect();
-    pycmd(`siac-screen-capture ${Math.trunc(r.top)} ${Math.trunc(r.right)} ${Math.trunc(r.bottom)} ${Math.trunc(r.left)}`);
+    pycmd(`siac-screen-capture -1 ${Math.trunc(r.top)} ${Math.trunc(r.left)} ${Math.trunc(r.width)} ${Math.trunc(r.height)}`);
 
 };
 
 window.ytSavePosition = function() {
     let time = ytCurrentTime();
     let secs = time%60;
-    if (secs === 0) { secs = "00"; }
+    if (secs < 10) { secs = "0" + secs; }
     pycmd("siac-yt-save-time " + time); 
     readerNotification(`Saved Position.<br>Video will resume at ${Math.trunc(time / 60.0)}:${secs}`);
 };

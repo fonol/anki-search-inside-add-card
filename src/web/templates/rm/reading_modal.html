@@ -20,18 +20,14 @@
     </div>
 
     <div id='siac-pdf-tooltip' onclick='event.stopPropagation();' onkeyup='event.stopPropagation();'>
-        <div id='siac-pdf-tooltip-top'></div>
-        <div id='siac-pdf-tooltip-results-area' onkeyup="pdfTooltipClozeKeyup(event);"></div>
-        <div id='siac-pdf-tooltip-bottom'></div>
-        <input id='siac-pdf-tooltip-searchbar' placeholder="Search" onkeyup='if (event.keyCode === 13) {pycmd("siac-pdf-tooltip-search " + this.value);}'></input>
     </div>
     <div id='siac-reading-modal-top-bar' class='{top_hidden}' data-nid='{note_id}'>
         <div style='flex: 1 1; overflow: hidden;'>
-            <h2 id='siac-rm-title' class='oflow_hidden' style='margin: 0 0 5px 0; white-space: nowrap; vertical-align:middle;'>{title}</h2>
+            <h2 class='oflow_hidden' style='margin: 0 0 5px 0; white-space: nowrap; vertical-align:middle;'>{title}</h2>
             <h4 class='fg_lightgrey' style='white-space: nowrap; margin: 5px 0 6px 0;'>Source: <i>{source}</i></h4>
             <div id='siac-prog-bar-wr'></div>
         </div>
-        <div style='flex: 0 0; min-width: 130px; padding: 0 130px 0 10px;'>
+        <div style='flex: 0 0 auto; min-width: 145px; padding: 0 145px 0 10px;'>
             <span class='siac-timer-btn 5' onclick='resetTimer(this)'>5</span><span class='siac-timer-btn 10' onclick='resetTimer(this)'>10</span><span class='siac-timer-btn 15' onclick='resetTimer(this)'>15</span><span class='siac-timer-btn 25' onclick='resetTimer(this)'>25</span><span class='siac-timer-btn 30 default active' onclick='resetTimer(this)'>30</span><br>
             <span id='siac-reading-modal-timer' class='siac-reading-modal-timer-lbl'>30 : 00</span><br>
             <span class='siac-timer-btn 45' onclick='resetTimer(this)'>45</span><span class='siac-timer-btn 60' onclick='resetTimer(this)'>60</span><span class='siac-timer-play-btn inactive ml-5' onclick='toggleTimer();'><i class='fa fa-play mr-5'></i>Start</span>
@@ -40,7 +36,7 @@
         <div id='siac-reading-modal-change-theme'>
             <a class='siac-link-btn' onclick='pycmd("siac-zoom-out")'><i class='fa fa-search-minus'></i></a>&nbsp;
             <a class='siac-link-btn' onclick='pycmd("siac-zoom-in")' style='margin-right: 15px;'><i class='fa fa-search-plus'></i></a>
-            <a class='siac-link-btn' onclick='pycmd("siac-eval index.ui.reading_modal.show_theme_dialog()")'><i class="fa fa-cogs"></i>&nbsp; Theme</a>
+            <a class='siac-link-btn' onclick='pycmd("siac-eval Reader.show_theme_dialog()")'><i class="fa fa-cogs"></i>&nbsp; Theme</a>
         </div>
         
     </div>

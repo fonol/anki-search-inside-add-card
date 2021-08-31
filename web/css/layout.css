@@ -16,15 +16,25 @@
     body.siac-wm-autohide::after, body.siac-wm-both::after {
         content: "Window too small to show both panes";
         position: absolute;
-        bottom: 10px;
-        border: 2px outset var(--c-modal-border);
+        bottom: 5px;
         padding: 8px;
         border-radius: 4px;
         right: 10px;
-        background: var(--c-modal-background);
+        background: var(--c-card-bg);
+        box-shadow: 0 0 7px 1px #dcdcdc;
+        color: #202020;
+    }
+    body.nightMode.siac-wm-autohide::after, body.nightMode.siac-wm-both::after {
+        background: var(--c-card-bg);
+        box-shadow: 0 0 7px 1px #202020;
+        color: #c1c1c1;
     }
     body.siac-wm-autohide #leftSide::after {
         display: none !important;
+    }
+    
+    #siac-reading-modal-tabs-left {
+        display: none;
     }
 }
 
@@ -70,7 +80,7 @@ body.nightMode.siac-wm-autohide #leftSide:not(.visible)::after {
     border-color:#545454;
 }
 
-body.siac-fullscreen-show-right #topbuts {
+body.siac-fullscreen-show-right #topbutsOuter {
     display: none; 
 }
 body.siac-fullscreen-show-right #outerWr {

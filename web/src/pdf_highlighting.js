@@ -15,20 +15,21 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-export const Highlighting = {
+window.SIAC.Highlighting = new function () {
 
     /**
      * state
      */
-    colorSelected: { id: 1, color: "red" },
-    current: [],
+    this.colorSelected = { id: 1, color: "red" };
+    this.current = [];
 
 
 
     /**
      * Main entry point, called after keyup in text layer with ctrl pressed.
+     * If colorId is given, the given color will be used, else colorSelected.
      */
-    highlight: function () {
+    this.highlight = function (colorId) {
         let s = window.getSelection();
         let r = s.getRangeAt(0);
         $('#text-layer > span').css("height", "auto");
@@ -37,11 +38,11 @@ export const Highlighting = {
             readerNotification("Selection too long to highlight.");
             return;
         }
-        let rects = this._fuseOverlappingClientRects(clientRects);
+        let rects = _fuseOverlappingClientRects(clientRects);
         let rectCanvas = byId("text-layer").getBoundingClientRect();
-        let offset = byId('text-layer').offsetLeft;
         //page group type [x,y,w,h]+ # text
-        let cmd = pdf.page + " -1 " + this.colorSelected.id + " ";
+        let color = colorId || this.colorSelected.id;
+        let cmd = pdf.page + " -1 " + color + " ";
 
         rects.forEach((r) => {
             let x = r.x - rectCanvas.x;
@@ -52,15 +53,15 @@ export const Highlighting = {
             conv = pdf.displayedViewPort.convertToPdfPoint(x + r.w, y + r.h);
             cmd += conv[0] + " " + conv[1] + " ";
             // text layer spans seem to be shifted to the top by some pixels, so add a small offset to the highlight div
-            // this._createHighlightDiv(x + offset, y, r.w, r.h, this.colorSelected.id);
+            // _createHighlightDiv(x + offset, y, r.w, r.h, this.colorSelected.id);
 
         });
         cmd += "# " + s.toString();
         s.removeAllRanges();
         pycmd("siac-hl-new " + cmd);
         $('#text-layer > span').css("height", "100px");
-    },
-    createAreaHighlight: function(x, y, w, h) {
+    };
+    this.createAreaHighlight = function(x, y, w, h) {
         let t = this.colorSelected.id;
         if (t < 1 || (w < 2 && h < 2)) {return;}
         if (x + w > activeCanvas().offsetWidth) {
@@ -78,28 +79,28 @@ export const Highlighting = {
         let conv_wh = pdf.displayedViewPort.convertToPdfPoint(x + w, y + h);
         let cmd = `siac-hl-new ${pdf.page} -1 ${t} ${conv_xy[0]} ${conv_xy[1]} ${conv_wh[0]} ${conv_wh[1]} # `;
         pycmd(cmd);
-    },
-    insertText: function (event) {
+    };
+    this.insertText = function (event) {
         let rectCanvas = byId("text-layer").getBoundingClientRect();
         let offset = byId('text-layer').offsetLeft;
 
         let x = event.clientX - rectCanvas.x;
         let y = event.clientY - rectCanvas.y;
-        this._createHighlightDiv(x + offset, y, 100, 20, this.colorSelected.id, "");
+        _createHighlightDiv(x + offset, y, 100, 20, this.colorSelected.id, "");
         let cmd = pdf.page + " -1 0 ";
         let conv = pdf.displayedViewPort.convertToPdfPoint(x, y);
         cmd += conv[0] + " " + conv[1] + " ";
         conv = pdf.displayedViewPort.convertToPdfPoint(x + 100, y + 20);
         cmd += conv[0] + " " + conv[1] + " #";
         pycmd("siac-hl-new " + cmd);
-    },
+    };
 
-    displayFakeHighlight: function() {
-        this._createHighlightDiv(0,0,50,50,1, -1);
-    },
+    this.displayFakeHighlight = function() {
+        _createHighlightDiv(0,0,50,50,1, -1);
+    };
 
-    displayHighlights: function () {
-        this._removeAllHighlights();
+    this.displayHighlights = function () {
+        this.removeAllHighlights();
         let canvas = activeCanvas();
         if (!canvas) { return; }
         let st = byId("siac-pdf-overflow").scrollTop;
@@ -118,20 +119,20 @@ export const Highlighting = {
             let y = Math.min(bounds[1], bounds[3]);
             let w = Math.abs(bounds[0] - bounds[2]);
             let h = Math.abs(bounds[1] - bounds[3]);
-            this._createHighlightDiv(x, y, w, h, t, id, text);
+            _createHighlightDiv(x, y, w, h, t, id, text);
 
         });
         byId("siac-pdf-overflow").scrollTop = st;
-    },
+    };
 
-    _removeAllHighlights: function () {
+    this.removeAllHighlights = function () {
         let all = document.getElementsByClassName('siac-hl');
         while (all[0]) {
             all[0].parentNode.removeChild(all[0]);
         }
-    },
+    };
 
-    _colorById: function (t) {
+    var _colorById= function (t) {
         switch (t) {
             case 0: return "white";
             case 1: return "#e65100";
@@ -143,13 +144,13 @@ export const Highlighting = {
             case 7: case 10: return "#558b2f";
             case 8: case 11: return "#2196f3";
         }
-    },
+    };
 
 
     /**
      *  getClientRects returns many overlapping rects for the text layer, so we try to fuse them together 
      */
-    _fuseOverlappingClientRects: function (domRectList) {
+    var _fuseOverlappingClientRects = function (domRectList) {
         let fused = true;
         let x, y, w, h = 0;
         let clientRects = [];
@@ -237,28 +238,32 @@ export const Highlighting = {
             clientRects = Array.from(out);
         }
         return clientRects;
-    },
+    };
     /**
      * Button at the side of the pdf pane clicked.
      * Switches selected highlighting tool.
      */
-    onColorBtn: function (elem) {
+    this.onColorBtn = function (elem) {
         this.colorSelected = { id: Number($(elem).data("id")), color: $(elem).data("color") };
         $('.siac-pdf-color-btn,.siac-pdf-ul-btn').removeClass("active");
         $(elem).addClass("active");
         pycmd("siac-hl-clicked " + this.colorSelected.id + " " + this.colorSelected.color);
         if (this.colorSelected.id > 0) {
+            // if there is text selected in the text layer, highlight it
+            if (windowHasSelection() && byId('text-layer') && SIAC.Helpers.selectionIsInside(byId('text-layer'))) {
+                this.highlight();
+            }
             readerNotification("CTRL + select to Highlight<br>CTRL + Shift + A to Area Highlight");
         } else {
             readerNotification("CTRL + click to insert text<br>CTRL + click again to remove");
         }
-    },
+    };
 
     /**
      * Mouse up in text comment, should check if width has changed (element was resized by dragging), if yes,
      * update db entry. 
      */
-    onTextMouseUp: function(event, el) {
+    this.onTextMouseUp = function(event, el) {
         if (!el.dataset.id) {
             return;
         }
@@ -266,7 +271,6 @@ export const Highlighting = {
             el.dataset.ow = el.offsetWidth;
             el.dataset.oh = el.clientHeight;
 
-            let rectCanvas = byId("text-layer").getBoundingClientRect();
             let x0 = el.offsetLeft - activeCanvas().offsetLeft;
             let y0 = el.offsetTop ;
             let x1 = x0 + el.offsetWidth - 6; 
@@ -281,28 +285,28 @@ export const Highlighting = {
 
             pycmd(`siac-hl-text-update-coords ${el.dataset.id} ${x0} ${y0} ${x1-2} ${y1+2}`);
         }
-    },
+    };
 
     /**
      * Text comment loses focus, so save changed content to db. 
      */
-    onTextBlur: function(el) {
+    this.onTextBlur = function(el) {
         if (!el.dataset.id) {
             return;
         }
         pycmd(`siac-hl-text-update-text ${el.dataset.id} ${pdf.page} ${$(el).val()}`);
-    },
+    };
 
-    onTextKeyup: function(el) {
+    this.onTextKeyup = function(el) {
         $(el).height(1); 
         $(el).height($(el).prop('scrollHeight') + 1);
         this.onTextMouseUp(null, el);
-    },
+    };
 
     /**
      * Clicked on a highlight marker 
      */
-    hlClick: function (event, el) {
+    this.hlClick = function (event, el) {
         if (!el.dataset.id) {
             return;
         }
@@ -311,11 +315,11 @@ export const Highlighting = {
             pycmd("siac-hl-del " + el.dataset.id);
             $(el).remove();
         }
-    },
+    };
     /**
      *  create the actual div that will be the highlight and append it to the dom
      */
-    _createHighlightDiv: function (x, y, w, h, t, id = -1, text = "") {
+    var _createHighlightDiv = function (x, y, w, h, t, id = -1, text = "") {
 
         let el;
         //regular highlight
@@ -329,13 +333,13 @@ export const Highlighting = {
             if (id !== -1) {
                 el.dataset.id = id;
             }
-            el.setAttribute("onclick", "Highlighting.hlClick(event, this);");
+            el.setAttribute("onclick", "SIAC.Highlighting.hlClick(event, this);");
             if (t >= 6 && t < 9)
-                el.style.borderBottom = "3px solid " + this._colorById(t);
+                el.style.borderBottom = "3px solid " + _colorById(t);
             else if (t >= 9)
-                el.style.border = "3px solid " + this._colorById(t);
+                el.style.border = "3px solid " + _colorById(t);
             else
-                el.style.background = this._colorById(t);
+                el.style.background = _colorById(t);
         }
         // text highlight 
         else {
@@ -349,14 +353,14 @@ export const Highlighting = {
                 el.dataset.id = id;
             }
             el.value = text;
-            el.setAttribute("onclick", "Highlighting.hlClick(event, this);");
-            el.style.background = this._colorById(t);
-            el.setAttribute("onmouseup", "Highlighting.onTextMouseUp(event, this);");
-            el.setAttribute("onblur", "Highlighting.onTextBlur(this);");
-            el.setAttribute("onkeyup", "Highlighting.onTextKeyup(this);");
+            el.setAttribute("onclick", "SIAC.Highlighting.hlClick(event, this);");
+            el.style.background = _colorById(t);
+            el.setAttribute("onmouseup", "SIAC.Highlighting.onTextMouseUp(event, this);");
+            el.setAttribute("onblur", "SIAC.Highlighting.onTextBlur(this);");
+            el.setAttribute("onkeyup", "SIAC.Highlighting.onTextKeyup(this);");
         }
 
         byId("siac-pdf-overflow").append(el);
         return el;
-    }
+    };
 };

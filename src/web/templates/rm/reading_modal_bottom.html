@@ -2,15 +2,15 @@
     <div class='w-100'
         style='height: calc(100% - 5px); display: inline-block; padding-top: 5px; white-space: nowrap; display: relative;'>
         <div id='siac-queue-actions' class='flex-col'>
-            <div id='siac-queue-lbl' class='siac-bb-btn' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-eval index.ui.reading_modal.show_prio_dialog()");}'>{queue_info}</div>
+            <div id='siac-queue-lbl' class='siac-bb-btn' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-eval Reader.show_prio_dialog()");}'>{queue_info}</div>
             <div class='w-100 flex-row'>
                 <div class='siac-bb-btn {has_schedule}' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-schedule-dialog");}' id='siac-schedule-dialog-btn' style='flex: 1 1 auto;'><i class="fa fa-calendar mr-5"></i>Schedule</div>
-                <div class='siac-bb-btn' id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-eval index.ui.reading_modal.show_postpone_dialog()");}' style='flex: 1 1 auto;'>Postpone</div>
+                <div class='siac-bb-btn' id='siac-later-btn' onclick='if (!pdfLoading && !modalShown) {pycmd("siac-eval Reader.show_postpone_dialog()");}' style='flex: 1 1 auto;'>Postpone</div>
             </div>
             <div id='siac-first-in-queue-btn' class='siac-bb-btn' onclick='if (!pdfLoading && !modalShown) { noteLoading = true; greyoutBottom(); pycmd("siac-user-note-done") }'>{queue_btn_text}</div>
             <div class='w-100 flex-row'>
                 <div class='siac-bb-btn' style='flex: 1 1 auto;' onclick='if (!pdfLoading && !modalShown) { noteLoading = true; greyoutBottom(); pycmd("siac-user-note-queue-read-random")}'><i class="fa fa-random mr-5"></i>Random</div>
-                <div class='siac-bb-btn' style='flex: 1 1 auto;' onclick='if (!pdfLoading && !modalShown) { modalShown = true; greyoutBottom(); pycmd("siac-eval index.ui.reading_modal.show_remove_dialog()");}'><i class="fa fa-minus-square mr-5"></i>Remove</div>
+                <div class='siac-bb-btn' style='flex: 1 1 auto;' onclick='if (!pdfLoading && !modalShown) { modalShown = true; greyoutBottom(); pycmd("siac-eval Reader.show_remove_dialog()");}'><i class="fa fa-minus-square mr-5"></i>Remove</div>
             </div>
         </div>
         {queue_readings_list}

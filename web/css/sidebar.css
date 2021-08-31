@@ -7,17 +7,33 @@
 .siac-notes-sidebar-item {
     font-weight: bold;
     user-select: none;
-    padding: 1px 5px 1px 5px;
-    border: 1px solid transparent;
-    transition: margin 0.15s ease;
+    margin: 0 0 0 5px;
+    line-height: 20px;
+    cursor: pointer;
+    border-radius: 3px;
 }
-.siac-notes-sidebar-item:hover {
-    padding-left: 5px;
+details .siac-notes-sidebar-item {
+    margin-left: 13px;
+}
+.siac-notes-sidebar-item:hover, .siac-notes-sidebar-item summary:hover {
     background: var(--c-primary-color);
     color: white;
 }
-body.nightMode .siac-notes-sidebar-item:hover {
-    background: var(--c-primary-color-night);
+details .siac-notes-sidebar-item:hover {
+    color: white;
+}
+
+body.nightMode .siac-notes-sidebar-item:hover, body.nightMode .siac-notes-sidebar-item summary:hover {
+    /* background: var(--c-primary-color-night); */
+    background: #464646;
+}
+.siac-notes-sidebar-item:hover details {
+    background: var(--c-card-bg);
+    color: black;
+}
+body.nightMode .siac-notes-sidebar-item:hover details {
+    background:var(--c-card-bg);
+    color: white;
 }
 .siac-sidebar-inp {
     background: var(--c-input-background);
@@ -41,14 +57,14 @@ body.nightMode .siac-sidebar-inp {
     border-bottom: 2px solid white;
 }
 .siac-notes-sidebar-section {
-    background: #fffef7;
+    background: var(--c-card-bg);
     overflow: hidden;
     display: flex;
     flex-direction: column;
     box-shadow: 0 0 7px 1px #dcdcdc;
 }
 body.nightMode .siac-notes-sidebar-section {
-    background:  rgb(53,53,53);
+    background:  var(--c-card-bg);
     box-shadow: 0px 0px 7px 1px #202020;
 }
 #siac-notes-sidebar > div > .siac-notes-sidebar-section-header:first-child {
@@ -102,8 +118,10 @@ body.nightMode #siac-notes-sidebar .siac-btn-small-dropdown {
     background-color: var(--c-primary-color-night) !important;
 }
 .siac-sidebar-bg {
-    background: #fffef7;
+    background: var(--c-card-bg);
 }
 body.nightMode .siac-sidebar-bg {
-    background:  rgb(53,53,53);
+    background:  var(--c-card-bg);
 }
+
+

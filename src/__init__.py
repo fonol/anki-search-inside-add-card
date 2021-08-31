@@ -32,9 +32,9 @@ from aqt.tagedit import TagEdit
 from aqt.editcurrent import EditCurrent
 import aqt.stats
 import os
+import json
 import re
 import time as t
-import webbrowser
 import functools
 import typing
 from typing import Dict, Any, List, Tuple, Optional, Callable
@@ -46,20 +46,21 @@ import utility.tags
 import utility.misc
 import state
 
-from .state import check_index, get_index, set_edit, get_edit
+from .state import get_index, set_edit, get_edit
 from .index.indexing import build_index
-from .debug_logging import log
 from .web.web import *
 from .web.html import right_side_html
 from .notes import *
-from .hooks import add_hook, run_hooks
+from .hooks import add_hook
 from .review_interrupt import review_interruptor
 from .dialogs.editor import EditDialog, NoteEditor
-from .internals import requires_index_loaded
 from .config import get_config_value_or_default as conf_or_def, get_config_value
-from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, rerender_info, add_note_to_index, try_repeat_last_search, search_by_tags
-#from .api import show_quick_open_pdf
+from .command_parsing import expanded_on_bridge_cmd, toggleAddon, rerenderNote, add_note_to_index, try_repeat_last_search
+from .cmds.cmds_search import search_by_tags
 from .menubar import Menu
+from .web.reading_modal import Reader
+from .output import UI
+
 
 
 config = mw.addonManager.getConfig(__name__)
@@ -67,6 +68,7 @@ config = mw.addonManager.getConfig(__name__)
 def init_addon():
     """ Executed once on Anki startup. """
     global origEditorContextMenuEvt
+
 
     if config["dev_mode"]:
         state.dev_mode = True
@@ -116,7 +118,7 @@ def init_addon():
     setup_hooks()
 
     # add shortcuts
-    aqt.editor._html += """ <script> document.addEventListener("keydown", function (e) {globalKeydown(e); }, false); </script>"""
+    aqt.editor._html += """ <script> document.addEventListener("keydown", function (e) { if (typeof (globalKeydown) !== 'undefined') globalKeydown(e); }, false); </script>"""
 
     #this inserts all the javascript functions in scripts.js into the editor webview
     aqt.editor._html += getScriptPlatformSpecific()
@@ -124,7 +126,7 @@ def init_addon():
     # patch webview dropevent to catch pdf file drop
     aqt.editor.EditorWebView.dropEvent =  wrap(aqt.editor.EditorWebView.dropEvent, webview_on_drop, "around")
 
-    #when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
+    # when a note is loaded (i.e. the add cards dialog is opened), we have to insert our html for the search ui
     gui_hooks.editor_did_load_note.append(on_load_note)
 
     # IO add note wrapping
@@ -133,6 +135,10 @@ def init_addon():
             register_io_add_hook()
         except:
             pass
+    
+    # reviewer hook to show linked SIAC notes 
+    gui_hooks.reviewer_did_show_answer.append(on_reviewer_did_show_answer)
+    gui_hooks.reviewer_did_show_question.append(on_reviewer_did_show_question)
 
 
 def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callable):
@@ -144,7 +150,7 @@ def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callab
             for url in mime.urls():
                 url = url.toLocalFile()
                 if re.match("^.+\.pdf$", url, re.IGNORECASE):
-                    editor = get_index().ui._editor
+                    editor = UI._editor
                     # editor.web.eval("dropTarget = document.getElementById('f0');")
                     # _old(web, evt)
                     expanded_on_bridge_cmd(None, f"siac-create-note-source-prefill {url}", editor)
@@ -153,12 +159,27 @@ def webview_on_drop(web: aqt.editor.EditorWebView, evt: QDropEvent, _old: Callab
 
 
 def on_reviewer_did_answer(reviewer, card, ease):
+
+    # hide link modal if existent
+    reviewer.web.eval("if (document.getElementById('siac-link-modal')) { $('#siac-link-modal').remove(); }")
+
     # check if we want to do review interruption
-    if (get_config_value("mix_reviews_and_reading") == False) or state.rr_mix_disabled:
+    if not get_config_value_or_default("mix_reviews_and_reading", False) or state.rr_mix_disabled:
         return
 
     review_interruptor()
+ 
+def on_reviewer_did_show_question(card):
+    win = aqt.mw.app.activeWindow()
+    if win is not None and hasattr(win, "web"):
+        win.web.eval("if (document.getElementById('siac-link-modal')) { $('#siac-link-modal').remove(); }")
 
+def on_reviewer_did_show_answer(card):
+    note = get_linked_addon_note(card.nid)
+    if note is not None:
+        win = aqt.mw.app.activeWindow()
+        if hasattr(win, "web"):
+            display_note_linking(win.web, note)
 
 def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
     """ Used in the edit dialog for Anki notes to update the index on saving an edited note. """
@@ -171,10 +192,10 @@ def editor_save_with_index_update(dialog: EditDialog, _old: Callable):
         # note should be rerendered
         rerenderNote(dialog.editor.note.id)
          # keep track of edited notes (to display a little remark in the results)
-        index.ui.edited[str(dialog.editor.note.id)] = t.time()
+        UI.edited[str(dialog.editor.note.id)] = t.time()
 
-        if index.ui.reading_modal.note_id is not None:
-            index.ui.js("updatePageSidebarIfShown()")
+        if Reader.note_id is not None:
+            UI.js("updatePageSidebarIfShown()")
 
 
 def on_load_note(editor: Editor):
@@ -192,16 +213,28 @@ def on_load_note(editor: Editor):
         typing_delay            = max(500, conf_or_def('delayWhileTyping', 1000))
         show_tag_info_on_hover  = "true" if conf_or_def("showTagInfoOnHover", True) and conf_or_def("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
         pdf_color_mode          = conf_or_def("pdf.color_mode", "Day")
-
         pdf_highlights_render   = "siac-pdf-hl-alt-render" if conf_or_def("pdf.highlights.use_alt_render", False) else ""
 
         editor.web.eval(f"""
-            var showTagInfoOnHover  = {show_tag_info_on_hover};
-            tagHoverTimeout         = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
-            var delayWhileTyping    = {typing_delay};
-            var pdfColorMode        = "{pdf_color_mode}";
+            var onloadNoteInit = () => {{
+                if (typeof(SIAC) === 'undefined') {{
+                    setTimeout(onloadNoteInit, 50);
+                    return;
+                }}
 
-            setWindowMode('{state.window_mode.name}');
+                SIAC.State.showTagInfoOnHover   = {show_tag_info_on_hover};
+                SIAC.State.tagHoverTimeout      = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
+                SIAC.State.typingDelay          = {typing_delay};
+                SIAC.Colors.pdfColorMode        = "{pdf_color_mode}";
+
+                SIAC.Fields.cacheFields();
+                document.addEventListener('mouseup', onTextSelectionChange);
+                onTextSelectionChange();
+
+                setWindowMode('{state.window_mode.name}');
+            }};
+            onloadNoteInit();
+
 
             if ('{pdf_highlights_render}') {{
                 document.body.classList.add("{pdf_highlights_render}");
@@ -212,17 +245,21 @@ def on_load_note(editor: Editor):
             if was_already_rendered:
                 return
 
-            if index is not None and index.ui is not None:
-                index.ui.set_editor(editor)
+            UI.set_editor(editor)
+            Reader.reset()
+            Reader.set_editor(editor)
+
+            # https://github.com/fonol/anki-search-inside-add-card/issues/268
+            editor.web.eval(f"setFonts({json.dumps(editor.fonts())})")
 
             if index is not None:
-                setup_ui_after_index_built(editor, index)
+                UI.setup_ui_after_index_built(editor, index)
 
             # editor.web.eval("onWindowResize()")
 
-            fillDeckSelect(editor)
+            UI.fillDeckSelect(editor)
             if index is not None and index.lastSearch is None:
-                print_starting_info()
+                UI.print_starting_info()
 
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
@@ -235,17 +272,16 @@ def on_load_note(editor: Editor):
 
 def save_pdf_page(note: Note):
 
-    ix = get_index()
-    if ix.ui.reading_modal.note_id is None:
+    if Reader.note_id is None:
         return
 
-    nid = ix.ui.reading_modal.note_id
+    nid = Reader.note_id
     def cb(page: int):
         link_note_and_page(nid, note.id, page)
         # update sidebar if shown
-        ix.ui.js("updatePageSidebarIfShown()")
+        UI.js("updatePageSidebarIfShown()")
 
-    ix.ui.reading_modal.page_displayed(cb)
+    Reader.page_displayed(cb)
 
 
 def insert_scripts():
@@ -263,79 +299,57 @@ def insert_scripts():
     # pdfjs_v     = "2.6.347" if chromium_v  > "76" else "2.4.456"
     pdfjs_v     = "2.4.456"
 
-    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf|woff2?)$")
-    aqt.editor._html += f"""
-    <script>
+    mw.addonManager.setWebExports(addon_id, ".*\\.(js|css|map|png|svg|ttf|woff2?|bcmap)$")
 
-        var script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/dist/styles.min.css';
-        document.body.appendChild(script);
+    def css(path: str) -> str:
+        return f"""
+            (() => {{
+                let script = document.createElement('link');
+                script.type = 'text/css';
+                script.rel = 'stylesheet';
+                script.href = 'http://127.0.0.1:{port}/{path}';
+                document.body.appendChild(script);
+            }})();"""
 
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/dist/siac.min.js';
-        document.body.appendChild(script);
+    def js(path: str, timeout: int = 0) -> str:
+        if timeout > 0:
+            return f"""
+                setTimeout(function () {{
+                    let script = document.createElement('script');
+                    script.type = 'text/javascript';
+                    script.src = 'http://127.0.0.1:{port}/{path}';
+                    document.body.appendChild(script);
+                }}, {timeout});
 
-        script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/fa/css/font-awesome.min.css';
-        document.body.appendChild(script);
+            """
+        return f"""
+            (() => {{
+                let script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = 'http://127.0.0.1:{port}/{path}';
+                document.body.appendChild(script);
+            }})();"""
+    
+    js_css = css(f"_addons/{addon_id}/web/dist/styles.min.css")
+    js_css += js(f"_addons/{addon_id}/web/dist/siac.min.js")
+    js_css += css(f"_addons/{addon_id}/web/fa/css/font-awesome.min.css")
+    js_css += js(f"_addons/{addon_id}/web/simple_mde/simplemde.min.js")
+    js_css += css(f"_addons/{addon_id}/web/simple_mde/simplemde.min.css")
+    js_css += js(f"_addons/{addon_id}/web/pdfjs/{pdfjs_v}/pdf.js")
+    js_css += js(f"_addons/{addon_id}/web/plot.js")
+    js_css += js(f"_addons/{addon_id}/web/d3.min.js")
+    js_css += css(f"_addons/{addon_id}/web/cal-heatmap.css")
+    js_css += css(f"_addons/{addon_id}/web/pdfjs/textlayer.css")
+    js_css += css(f"_addons/{addon_id}/web/pdf_reader.css")
+    js_css += js(f"_anki/js/vendor/mathjax/tex-chtml.js", timeout=400)
+    js_css += js(f"_addons/{addon_id}/web/dist/vuejs/js/main.js")
+    js_css += css(f"_addons/{addon_id}/web/dist/vuejs/css/main.css")
+    js_css += js(f"_addons/{addon_id}/web/cal-heatmap.min.js", timeout=200)
 
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/simple_mde/simplemde.min.js';
-        document.body.appendChild(script);
-
-        script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/simple_mde/simplemde.min.css';
-        document.body.appendChild(script);
-
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/{pdfjs_v}/pdf.min.js';
-        document.body.appendChild(script);
-
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/plot.js';
-        document.body.appendChild(script);
-
-        setTimeout(function() {{
-            script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/cal-heatmap.min.js';
-            document.body.appendChild(script);
-        }}, 200);
-
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/d3.min.js';
-        document.body.appendChild(script);
-
-        script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/cal-heatmap.css';
-        document.body.appendChild(script);
-
-        script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdfjs/textlayer.css';
-        document.body.appendChild(script);
-
-        script = document.createElement('link');
-        script.type = 'text/css';
-        script.rel = 'stylesheet';
-        script.href = 'http://127.0.0.1:{port}/_addons/{addon_id}/web/pdf_reader.css';
-        document.body.appendChild(script);
-
-        script = document.createElement('script');
+    js_css = f"""<script>
+        {js_css}
+        (() => {{
+        var script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = 'https://www.youtube.com/iframe_api';
         document.body.appendChild(script);
@@ -362,9 +376,11 @@ def insert_scripts():
         document.head.appendChild(font_style);
         font_style.type = 'text/css';
         font_style.appendChild(document.createTextNode(css));
+        }})();
+    </script>"""
 
-    </script>
-    """
+
+    aqt.editor._html += js_css
 
 def set_editor_ready():
     state.editor_is_ready = True
@@ -373,21 +389,21 @@ def setup_hooks():
     """ Todo: move more add-on code to hooks. """
     add_hook("editor-with-siac-initialised", lambda: set_editor_ready())
 
-    add_hook("user-note-created", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("user-note-created", lambda: UI.sidebar.refresh_tab(1))
     add_hook("user-note-created", lambda: try_repeat_last_search())
 
-    add_hook("user-note-deleted", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("user-note-deleted", lambda: UI.sidebar.refresh_tab(1))
     add_hook("user-note-deleted", lambda: recalculate_priority_queue())
     add_hook("user-note-deleted", lambda: try_repeat_last_search())
 
-    add_hook("user-note-edited", lambda: get_index().ui.sidebar.refresh_tab(1))
-    add_hook("user-note-edited", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+    add_hook("user-note-edited", lambda: UI.sidebar.refresh_tab(1))
+    add_hook("user-note-edited", lambda: Reader.reload_bottom_bar())
     add_hook("user-note-edited", lambda: try_repeat_last_search())
 
     add_hook("updated-schedule", lambda: recalculate_priority_queue())
-    add_hook("updated-schedule", lambda: get_index().ui.reading_modal.reload_bottom_bar())
+    add_hook("updated-schedule", lambda: Reader.reload_bottom_bar())
 
-    add_hook("reading-modal-closed", lambda: get_index().ui.sidebar.refresh_tab(1))
+    add_hook("reading-modal-closed", lambda: UI.sidebar.refresh_tab(1))
     add_hook("reading-modal-closed", lambda: try_repeat_last_search())
 
 def setup_switch_btn(editor: Editor):
@@ -440,7 +456,7 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
 
     index                   = get_index()
     if index:
-        index.ui.frozen     = False
+        UI.frozen     = False
 
     if state.night_mode is None:
         def cb(night_mode: bool):
@@ -535,9 +551,8 @@ def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
 def show_note_modal():
     """ Displays the Create/Update dialog if not already shown. """
     if not state.note_editor_shown:
-        ix              = get_index()
-        read_note_id    = ix.ui.reading_modal.note_id
-        NoteEditor(ix.ui._editor.parentWindow, note_id=None, add_only=read_note_id is not None, read_note_id=read_note_id)
+        read_note_id    = Reader.note_id
+        NoteEditor(UI._editor.parentWindow, note_id=None, add_only=read_note_id is not None, read_note_id=read_note_id)
 
 
 def register_io_add_hook():
@@ -549,18 +564,18 @@ def register_io_add_hook():
     def snew(gen, omask_path, qmask, amask, img, note_id, nid=None):
         old(gen, omask_path, qmask, amask, img, note_id, nid)
         index = get_index()
-        if index and index.ui.reading_modal.note_id and index.ui.reading_modal.note.is_pdf() and not nid:
+        if index and Reader.note_id and Reader.note.is_pdf() and not nid:
             stamp = utility.misc.get_milisec_stamp() - 1000
             res = mw.col.db.list(f"select * from notes where id > {stamp}")
             if res and len(res) > 0:
-                nid = index.ui.reading_modal.note_id
+                nid = Reader.note_id
                 def cb(page: int):
                     if page is not None and page >= 0:
                         for anid in res:
                             link_note_and_page(nid, anid, page)
                         # update sidebar if shown
-                        index.ui.js("updatePageSidebarIfShown()")
-                index.ui.reading_modal.page_displayed(cb)
+                        UI.js("updatePageSidebarIfShown()")
+                Reader.page_displayed(cb)
 
     io.ngen.ImgOccNoteGenerator._saveMaskAndReturnNote = snew
 
@@ -583,7 +598,7 @@ def tag_edit_keypress(self, evt, _old):
     if modifiers == Qt.ControlModifier or modifiers == Qt.AltModifier or modifiers == Qt.MetaModifier:
         return
     index = get_index()
-    if index.ui.frozen:
+    if UI.frozen:
         return
 
     if index is not None and len(self.text().strip()) > 0:

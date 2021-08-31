@@ -17,14 +17,23 @@
 
 /** Experimental function to improve copy+paste from the text layer. */
 window.onPDFCopy = function (e) {
+    let text = selectionCleaned();
+    if (text) {
+        e.clipboardData.setData('text/plain', text);
+        e.preventDefault();
+    }
+}
+
+window.selectionCleaned = function() {
     let sel = getSelection();
     let r = sel.getRangeAt(0);
     let nodes = nodesInSelection(r);
-    if (!nodes) { return; }
+    if (!nodes || nodes.length === 1) { return sel.toString(); }
     let text = "";
     let offsetLeftLast = 0;
     let offsetTopLast = 0;
     let widthLast = 0;
+    let textWidthLast = 0;
     let insertedCount = 0;
     let lastYDiffs = [];
     let lastFontSize = null;
@@ -59,17 +68,26 @@ window.onPDFCopy = function (e) {
             lastFontSize = Number(nodes[i].style.fontSize.substring(0, nodes[i].style.fontSize.indexOf("px")));
 
             // check for space between text divs, if there is enough space, we should probably insert a whitespace
-        } else if (offsetLeftLast + widthLast < nodes[i].offsetLeft - 2 && !nodes[i].innerText.startsWith(" ")) {
+        } else if (offsetLeftLast + textWidthLast < nodes[i].offsetLeft - 2 && !nodes[i].innerText.startsWith(" ")) {
             text += " " + nodes[i].innerText;
             insertedCount++;
         }
         else {
-            text += nodes[i].innerText;
+            if (offsetLeftLast + textWidthLast > nodes[i].offsetLeft - 5) {
+                text = text.trimRight() + nodes[i].innerText;
+            } else {
+                text += nodes[i].innerText;
+            }
         }
 
         offsetLeftLast = nodes[i].offsetLeft;
         offsetTopLast = nodes[i].offsetTop;
+
+        let fontDescriptor = (nodes[i].style.fontWeight || 'normal')  + " " + nodes[i].style.fontSize + " " + nodes[i].style.fontFamily;
+
         widthLast = nodes[i].offsetWidth;
+        let scaleX = /[0-9]+(\.[0-9]+)?/g.exec(nodes[i].style.transform) ? Number(/[0-9]+(\.[0-9]+)?/g.exec(nodes[i].style.transform)[0]) : 1;
+        textWidthLast = SIAC.Helpers.calculateTextWidth(nodes[i].innerText.trim(), fontDescriptor) * scaleX;
     }
     let original = sel.toString();
     if (!text.length && original.length) {
@@ -98,8 +116,7 @@ window.onPDFCopy = function (e) {
     text = text.replace(/ ([,.;:]) /g, "$1 ");
     text = text.replace(/ ([)\].!?:])/g, "$1");
     text = text.replace(/([(\[]) /g, "$1");
-    e.clipboardData.setData('text/plain', text);
-    e.preventDefault();
+    return text;
 }
 
 window.pdfLeftTabPdfSearchKeyup = function (value, event) {
@@ -121,7 +138,7 @@ window.pdfLeftTabAnkiSearchKeyup = function (value, event) {
 }
 
 window.initAreaHighlightShortcutPressed = function() {
-    if (pdf.instance && !iframeIsDisplayed && Highlighting.colorSelected.id > 0) {
+    if (pdf.instance && !iframeIsDisplayed && SIAC.Highlighting.colorSelected.id > 0) {
         readerNotification("&nbsp;Area Highlight&nbsp;");
         initAreaHighlight();
         pdfTextLayerMetaKey = false;
@@ -187,46 +204,62 @@ window.textlayerClicked = function (event, el) {
  *  executed after keyup in the pdf pane
  */
 window.pdfKeyup = function (e) {
+    if (!e) {
+        return;
+    }
     // selected text, no ctrl key -> show tooltip if enabled 
-    if (!e.ctrlKey && !e.metaKey && pdfTooltipEnabled && windowHasSelection()) {
-        $('#text-layer .tl-highlight').remove();
-        let s = window.getSelection();
-        let r = s.getRangeAt(0);
-        let text = s.toString();
-        if (text.trim().length === 0 || text.length > 500) { return; }
-        // spans in textlayer have a max height to prevent selection jumping, but here we have to temporarily 
-        // disable it, to get the actual bounding client rect
-        $('#text-layer > span').css("height", "auto");
-        let nodesInSel = nodesInSelection(r);
-        let sentences = getSentencesAroundSelection(r, nodesInSel, text);
-        if (nodesInSel.length > 1) {
-            text = joinTextLayerNodeTexts(nodesInSel, text);
-        }
-        let rect = r.getBoundingClientRect();
-        let prect = byId("siac-reading-modal").getBoundingClientRect();
-        byId('siac-pdf-tooltip-results-area').innerHTML = '<center>Searching...</center>';
-        byId('siac-pdf-tooltip-searchbar').value = "";
-        let left = rect.left - prect.left;
-        if (prect.width - left < 250) {
-            left -= 200;
-        }
-        let top = rect.top - prect.top + rect.height;
-        if (top < 0) { return; }
-        $('#siac-pdf-tooltip').css({ 'top': top + "px", 'left': left + "px" }).show();
-        pycmd("siac-pdf-selection " + text);
-        $('#siac-pdf-tooltip').data({"sentences":  sentences, "selection": text, "top": top});
-        // $('#siac-pdf-tooltip').data("selection", text);
-        // limit height again to prevent selection jumping
-        $('#text-layer > span').css("height", "200px");
-    } else if ((e.ctrlKey || e.metaKey) && Highlighting.colorSelected.id > 0 && windowHasSelection()) {
+    if (!e.ctrlKey && !e.metaKey && pdf.tooltip.enabled && windowHasSelection()) {
+        pdfTooltip(e);
+    } else if ((e.ctrlKey || e.metaKey) && SIAC.Highlighting.colorSelected.id > 0 && windowHasSelection()) {
         // selected text, ctrl key pressed -> highlight 
-        Highlighting.highlight();
+        SIAC.Highlighting.highlight();
         pdfTextLayerMetaKey = false;
-    } else if ((e.ctrlKey || e.metaKey) && Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
+    } else if ((e.ctrlKey || e.metaKey) && SIAC.Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
         // clicked with ctrl, text insert btn is active -> insert text area at coordinates
-        Highlighting.insertText(e);
-    } 
+        SIAC.Highlighting.insertText(e);
+    }
+    // if ((e.ctrlKey || e.metaKey) && e.keyCode >= 49 && e.keyCode < 57 &&  (e.keyCode - 48) <= SIAC.Fields.count() && windowHasSelection()) {
+    //     // CTRL/Meta + [1-9] with text selected -> send to field (& optionally highlight)
+    //     pycmd('siac-show-text-extract-modal ' + (e.keyCode - 49));
+    // }
+
     
+}
+
+window.pdfTooltip = function(e) {
+    $('#text-layer .tl-highlight').remove();
+    let s = window.getSelection();
+    let r = s.getRangeAt(0);
+    let text = s.toString();
+    if (text.trim().length === 0 || text.length > 500) { return; }
+    // spans in textlayer have a max height to prevent selection jumping, but here we have to temporarily 
+    // disable it, to get the actual bounding client rect
+    $('#text-layer > span').css("height", "auto");
+    let nodesInSel = nodesInSelection(r);
+    let sentences = getSentencesAroundSelection(r, nodesInSel, text);
+    text = selectionCleaned();
+    let rect = r.getBoundingClientRect();
+    let prect = byId("siac-reading-modal").getBoundingClientRect();
+    let left = rect.left - prect.left;
+    if (prect.width - left < 250) {
+        left -= 200;
+    }
+    let top = rect.top - prect.top + rect.height;
+    if (top < 0) { return; }
+    // save render to be able to go back
+    pdf.tooltip.sentences = sentences;
+    pdf.tooltip.selection = text;
+    pdf.tooltip.top = top;
+    pdf.tooltip.left = left;
+    renderTooltip(sentences, text, top, left);
+    // limit height again to prevent selection jumping
+    $('#text-layer > span').css("height", "200px");
+}
+window.renderTooltip = function(sentences, selection, top, left) {
+    byId('siac-pdf-tooltip').innerHTML = '<center>Searching...</center>';
+    $('#siac-pdf-tooltip').css({ 'top': top + "px", 'left': left + "px", 'display': 'flex' });
+    pycmd("siac-pdf-selection " + selection);
+    $('#siac-pdf-tooltip').data({"sentences":  sentences, "selection": selection, "top": top});
 }
 
 window.pdfMouseWheel = function (event) {
@@ -238,4 +271,14 @@ window.pdfMouseWheel = function (event) {
         pdfScaleChange("down");
     }
     event.preventDefault();
+}
+
+window.onTextSelectionChange = function(event) {
+    setTimeout(function() {
+        if (windowHasSelection() && !SIAC.Helpers.selectionIsInside(document.getElementById('leftSide'))) {
+            SIAC.Fields.displaySelectionMenu();
+        } else {
+            SIAC.Fields.hideSelectionMenu();
+        }
+    }, 50);
 }
