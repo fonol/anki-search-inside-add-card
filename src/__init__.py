@@ -80,7 +80,7 @@ def init_addon():
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
 
     #todo: Find out if there is a better moment to start index creation
-    if create_db_file_if_not_exists():
+    if not create_db_file_if_not_exists():
         print("[SIAC] Notes DB file did not exist, created a new one.")
 
     state.window_mode = state.WindowMode[config["window_mode"]]
