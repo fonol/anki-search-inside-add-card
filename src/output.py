@@ -1220,8 +1220,10 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
-            "Due to time issues, and Ankis rapid speed of development, I will in future focus on only keeping the add-on compatible with Ankis current versions",
-            "First changes to make add-on compatible with Anki 2.1.44+",
+            "Due to time issues, and Anki's rapid speed of development, I will in future focus on only keeping the add-on compatible with Anki's more recent versions",
+            "Tested compatibility with 2.1.48",
+            "Small style changes & fixes",
+            "Fix: Review interrupt ignoring 'Enough for today'",
             "Fix: auto-filled tags when opening add-on note being ignored on first added card"
         ]
 
