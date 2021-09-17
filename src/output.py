@@ -1038,9 +1038,6 @@ class UI:
         html += "<br/>Window split is <b>%s / %s</b>." % (config["leftSideWidthInPercent"], 100 - int(config["leftSideWidthInPercent"]))
         html += "<br/>Layout Shortcuts:<br> <b>%s</b> (toggle left), <b>%s</b> (toggle right), <b>%s</b> (show both)." % (config["shortcuts.window_mode.show_left"], config["shortcuts.window_mode.show_right"], config["shortcuts.window_mode.show_both"])
 
-        if not state.db_file_existed:
-            html += "<br><br><b><i>siac-notes.db</i> was not existing, created a new one.</b>"
-
         if index is None:
             html += "<br/><b>Seems like something went wrong while building the index. Try to close the dialog and reopen it. If the problem persists, contact the addon author.</b>"
 
@@ -1085,7 +1082,7 @@ class UI:
                 <div class='flex-row mt-10' style='margin-bottom: 20px; justify-content: center;'>
                     <div class='ta_center'>
                         <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BUGS & FEEDBACK</div>
-                        <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github repository'><img src='{utility.misc.img_src("github_light.png" if state.night_mode else "github_dark.png")}' style='height: 32px;'/></a>
+                        <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github repository'><img src='{utility.misc.img_src("github_light.png" if state.is_nightmode() else "github_dark.png")}' style='height: 32px;'/></a>
                     </div>
                     <div class='ta_center' style='margin-left: 30px;'>
                         <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BECOME A PATRON</div>
@@ -1223,7 +1220,9 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
+            "Due to time issues, and Ankis rapid speed of development, I will in future focus on only keeping the add-on compatible with Ankis current versions",
             "First changes to make add-on compatible with Anki 2.1.44+",
+            "Fix: auto-filled tags when opening add-on note being ignored on first added card"
         ]
 
     @staticmethod

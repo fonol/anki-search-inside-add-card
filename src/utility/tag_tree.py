@@ -46,7 +46,7 @@ class TagTree(QTreeWidget):
         self.cards_icon         = QIcon(icons_path + "icon-cards-24.png")
 
         config = mw.addonManager.getConfig(__name__)
-        if state.night_mode:
+        if state.is_nightmode():
             tag_bg                  = config["styles.night.tagBackgroundColor"]
             tag_fg                  = config["styles.night.tagForegroundColor"]
         else:
@@ -73,11 +73,11 @@ class TagTree(QTreeWidget):
             self.setHeaderHidden(True)
 
 
-        vline_icn         = icons_path + ('vline-night'         if state.night_mode else 'vline')
-        branch_more_icn   = icons_path + ('branch-more-night'   if state.night_mode else 'branch-more')
-        branch_end_icn    = icons_path + ('branch-end-night'    if state.night_mode else 'branch-end')
-        branch_closed_icn = icons_path + ('branch-closed-night' if state.night_mode else 'branch-closed')
-        branch_open_icn   = icons_path + ('branch-open-night'   if state.night_mode else 'branch-open')
+        vline_icn         = icons_path + ('vline-night'         if state.is_nightmode() else 'vline')
+        branch_more_icn   = icons_path + ('branch-more-night'   if state.is_nightmode() else 'branch-more')
+        branch_end_icn    = icons_path + ('branch-end-night'    if state.is_nightmode() else 'branch-end')
+        branch_closed_icn = icons_path + ('branch-closed-night' if state.is_nightmode() else 'branch-closed')
+        branch_open_icn   = icons_path + ('branch-open-night'   if state.is_nightmode() else 'branch-open')
 
         stylesheet = f"""
             QTreeWidget::branch:has-siblings:!adjoins-item {{

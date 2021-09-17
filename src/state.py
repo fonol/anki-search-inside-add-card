@@ -16,12 +16,12 @@
 
 from aqt import mw
 import aqt
-import typing
 
 from enum import Enum, unique
 from typing import List, Tuple, Any, Optional, Dict
 from aqt.editor import Editor
 from aqt.editcurrent import EditCurrent
+import os
 
 import utility.misc
 
@@ -32,9 +32,6 @@ class WindowMode(Enum):
     Addon       = 3,
     Autohide    = 4
 
-# set after create_db_file_if_not_exists has been called
-db_file_existed     : Optional[bool]                    = None
-
 #
 # Globals
 #
@@ -44,9 +41,11 @@ contextEvt          : Any                               = None
 corpus              : Optional[List[Tuple[Any, ...]]]   = None
 deck_map            : Optional[Dict[str, int]]          = None
 edit                : Optional[Editor]                  = None
-night_mode          : Optional[bool]                    = None
 editor_is_ready     : bool                              = False
 interrupted_review  : bool                              = False
+
+
+
 
 # Determines whether the both, the fields and the add-on pane, or only one of them are visible
 window_mode         : WindowMode                        = WindowMode.Both
@@ -72,6 +71,13 @@ last_page_requested : Optional[int]                     = None
 
 shortcuts_failed    : List[str]                         = []
 
+
+# night mode
+def set_nightmode(b: bool):
+    os.environ['SIAC_NIGHTMODE'] = str(b)
+
+def is_nightmode() -> bool:
+    return bool(os.environ.get('SIAC_NIGHTMODE', 'False'))
 
 def check_index() -> bool:
     """ Returns True if index and ui are ready to use. """

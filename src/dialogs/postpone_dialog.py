@@ -57,8 +57,8 @@ class PostponeDialog(QDialog):
 
         c_lbl = QLabel(self)
         a_lbl = QLabel(self)
-        c_icon   = "clock_night.png" if state.night_mode else "clock.png"
-        a_icon   = "rarrow_night.png" if state.night_mode else "rarrow.png"
+        c_icon   = "clock_night.png" if state.is_nightmode() else "clock.png"
+        a_icon   = "rarrow_night.png" if state.is_nightmode() else "rarrow.png"
         c_pixmap  = QPixmap(utility.misc.get_web_folder_path() + f"icons/{c_icon}")
         c_lbl.setPixmap(c_pixmap)
         a_pixmap  = QPixmap(utility.misc.get_web_folder_path() + f"icons/{a_icon}")
@@ -74,7 +74,7 @@ class PostponeDialog(QDialog):
 
         self.layout.addWidget(self.later_rb)
 
-        icon = "calendar_night" if state.night_mode else "calendar"
+        icon = "calendar_night" if state.is_nightmode() else "calendar"
         pmap = QPixmap(utility.misc.get_web_folder_path() + f"icons/{icon}").scaled(QSize(13, 13), Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         # Tomorrow radio button + label

@@ -138,7 +138,7 @@ class NoteEditor(QDialog):
         self.text_prefill   = text_prefill
         self.title_prefill  = title_prefill
         self.prio_prefill   = prio_prefill
-        self.dark_mode_used = state.night_mode
+        self.dark_mode_used = state.is_nightmode()
 
         open_note = Reader.current_note
         if prefill_with_opened_note and open_note is not None:

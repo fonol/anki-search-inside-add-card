@@ -69,19 +69,19 @@ def init_addon():
     """ Executed once on Anki startup. """
     global origEditorContextMenuEvt
 
-
     if config["dev_mode"]:
         state.dev_mode = True
 
     if hasattr(mw.pm, "night_mode"):
-        state.night_mode = mw.pm.night_mode()
+        state.set_nightmode(mw.pm.night_mode())
 
     gui_hooks.reviewer_did_answer_card.append(on_reviewer_did_answer)
 
     gui_hooks.webview_did_receive_js_message.append(expanded_on_bridge_cmd)
 
     #todo: Find out if there is a better moment to start index creation
-    state.db_file_existed = create_db_file_if_not_exists()
+    if create_db_file_if_not_exists():
+        print("[SIAC] Notes DB file did not exist, created a new one.")
 
     state.window_mode = state.WindowMode[config["window_mode"]]
 
@@ -458,10 +458,10 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
     if index:
         UI.frozen     = False
 
-    if state.night_mode is None:
-        def cb(night_mode: bool):
-            state.night_mode = night_mode
-        editor.web.evalWithCallback("(() => {  return document.body.classList.contains('nightMode'); })();", cb)
+    # if state.is_ni is None:
+    #     def cb(night_mode: bool):
+    #         state.set_nightmode(night_mode)
+    #     editor.web.evalWithCallback("(() => {  return document.body.classList.contains('nightMode'); })();", cb)
 
 
 def set_zoom(shortcuts: List[Tuple], editor: Editor):

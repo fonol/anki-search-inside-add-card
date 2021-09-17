@@ -61,14 +61,14 @@ class QueuePicker(QDialog):
 
         if QueuePicker.icons_path is None:
             QueuePicker.icons_path          = utility.misc.get_web_folder_path()+ "icons/"
-            QueuePicker.vline_icn           = QueuePicker.icons_path + ('vline-night' if state.night_mode else 'vline')
-            QueuePicker.branch_more_icn     = QueuePicker.icons_path + ('branch-more-night' if state.night_mode else 'branch-more')
-            QueuePicker.branch_end_icn      = QueuePicker.icons_path + ('branch-end-night' if state.night_mode else 'branch-end')
-            QueuePicker.branch_closed_icn   = QueuePicker.icons_path + ('branch-closed-night' if state.night_mode else 'branch-closed')
-            QueuePicker.branch_open_icn     = QueuePicker.icons_path + ('branch-open-night' if state.night_mode else 'branch-open')
+            QueuePicker.vline_icn           = QueuePicker.icons_path + ('vline-night' if state.is_nightmode() else 'vline')
+            QueuePicker.branch_more_icn     = QueuePicker.icons_path + ('branch-more-night' if state.is_nightmode() else 'branch-more')
+            QueuePicker.branch_end_icn      = QueuePicker.icons_path + ('branch-end-night' if state.is_nightmode() else 'branch-end')
+            QueuePicker.branch_closed_icn   = QueuePicker.icons_path + ('branch-closed-night' if state.is_nightmode() else 'branch-closed')
+            QueuePicker.branch_open_icn     = QueuePicker.icons_path + ('branch-open-night' if state.is_nightmode() else 'branch-open')
 
         try:
-            self.dark_mode_used = state.night_mode
+            self.dark_mode_used = state.is_nightmode()
         except:
             self.dark_mode_used = False
 
@@ -386,7 +386,7 @@ class TagsTab(QWidget):
         self.vbox_left.addWidget(r_lbl)
         self.vbox_left.setAlignment(r_lbl, Qt.AlignTop)
 
-        if state.night_mode:
+        if state.is_nightmode():
             self.tag_fg                 = get_config_value("styles.night.tagForegroundColor")
             self.tag_bg                 = get_config_value("styles.night.tagBackgroundColor")
         else:
@@ -664,7 +664,7 @@ class ScheduleMWidget(QWidget):
             item.setTextAlignment(Qt.AlignTop)
             self.table.setItem(ix, 0, item)
             if ix == 0 and today_stmp == due_date:
-                self.table.item(ix, 0).setForeground(Qt.blue if not state.night_mode else Qt.cyan)
+                self.table.item(ix, 0).setForeground(Qt.blue if not state.is_nightmode() else Qt.cyan)
                 self.table.item(ix, 0).setText("Today")
             elif (datetime.today().date() + timedelta(days=1)).strftime("%Y-%m-%d") == due_date:
                 self.table.item(ix, 0).setText(f"{pretty}\n(Tomorrow)")
@@ -784,8 +784,8 @@ class QueueWidget(QWidget):
 
         # buttons under queue table
 
-        uncheck_icn = "icons/unchecked" + ("_night.png" if state.night_mode else ".png")
-        check_icn   = "icons/checked" + ("_night.png" if state.night_mode else ".png")
+        uncheck_icn = "icons/unchecked" + ("_night.png" if state.is_nightmode() else ".png")
+        check_icn   = "icons/checked" + ("_night.png" if state.is_nightmode() else ".png")
 
         self.check_all_btn = QPushButton("")
         self.check_all_btn.setIcon(QIcon(utility.misc.get_web_folder_path()+ check_icn))

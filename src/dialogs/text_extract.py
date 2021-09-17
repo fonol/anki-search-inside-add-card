@@ -124,13 +124,13 @@ class TextExtractDialog(QDialog):
     def set_highlights(self):
         for ix, lbl in enumerate(self.color_lbls):
             if ix == 0 and ix != TextExtractDialog.highlight_ix:
-                if state.night_mode:
+                if state.is_nightmode():
                     lbl.setStyleSheet(""" border: 2px solid grey; """)
                 else:
                     lbl.setStyleSheet(""" border: 2px solid grey; """)
 
             elif ix == TextExtractDialog.highlight_ix:
-                if state.night_mode:
+                if state.is_nightmode():
                     lbl.setStyleSheet(""" border: 2px solid white; """)
                 else:
                     lbl.setStyleSheet(""" border: 2px solid #0096dc; """)

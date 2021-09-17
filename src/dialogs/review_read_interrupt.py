@@ -42,7 +42,7 @@ class ReviewReadInterruptDialog(QDialog):
 
         self.vbox = QVBoxLayout()
         self.vbox.addSpacing(15)
-        icon = utility.misc.qlabel_image("graduation_cap_night.png" if state.night_mode else "graduation_cap.png", 50, 50)
+        icon = utility.misc.qlabel_image("graduation_cap_night.png" if state.is_nightmode() else "graduation_cap.png", 50, 50)
         hb_icon = QHBoxLayout()
         hb_icon.addStretch()
         hb_icon.addWidget(icon)
