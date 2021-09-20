@@ -1049,6 +1049,8 @@ class UI:
             for ix, c in enumerate(changes):
                 html += f"{ix + 1}. {c}<br>"
         notes.append(("Changelog", html))
+        nm      = mw.pm.night_mode()
+
 
         chr_v   = utility.misc.chromium_version()
         if chr_v is not None and chr_v < "73":
@@ -1082,7 +1084,7 @@ class UI:
                 <div class='flex-row mt-10' style='margin-bottom: 20px; justify-content: center;'>
                     <div class='ta_center'>
                         <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BUGS & FEEDBACK</div>
-                        <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github repository'><img src='{utility.misc.img_src("github_light.png" if state.is_nightmode() else "github_dark.png")}' style='height: 32px;'/></a>
+                        <a href='https://github.com/fonol/anki-search-inside-add-card/issues' title='Github repository'><img src='{utility.misc.img_src("github_light.png" if nm else "github_dark.png")}' style='height: 32px;'/></a>
                     </div>
                     <div class='ta_center' style='margin-left: 30px;'>
                         <div class='siac-caps' style='opacity: 0.8; margin-bottom: 15px;'>BECOME A PATRON</div>
