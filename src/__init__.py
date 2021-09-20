@@ -458,10 +458,9 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
     if index:
         UI.frozen     = False
 
-    # if state.is_ni is None:
-    #     def cb(night_mode: bool):
-    #         state.set_nightmode(night_mode)
-    #     editor.web.evalWithCallback("(() => {  return document.body.classList.contains('nightMode'); })();", cb)
+    def cb(night_mode: bool):
+        state.set_nightmode(night_mode)
+    editor.web.evalWithCallback("(() => {  return document.body.classList.contains('nightMode'); })();", cb)
 
 
 def set_zoom(shortcuts: List[Tuple], editor: Editor):
