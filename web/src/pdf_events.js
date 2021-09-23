@@ -141,7 +141,7 @@ window.initAreaHighlightShortcutPressed = function() {
     if (pdf.instance && !iframeIsDisplayed && SIAC.Highlighting.colorSelected.id > 0) {
         readerNotification("&nbsp;Area Highlight&nbsp;");
         initAreaHighlight();
-        pdfTextLayerMetaKey = false;
+        pdf.textLayerMetaKey = false;
     }
 }
 
@@ -213,7 +213,7 @@ window.pdfKeyup = function (e) {
     } else if ((e.ctrlKey || e.metaKey) && SIAC.Highlighting.colorSelected.id > 0 && windowHasSelection()) {
         // selected text, ctrl key pressed -> highlight 
         SIAC.Highlighting.highlight();
-        pdfTextLayerMetaKey = false;
+        pdf.textLayerMetaKey = false;
     } else if ((e.ctrlKey || e.metaKey) && SIAC.Highlighting.colorSelected.id === 0 && !windowHasSelection()) {
         // clicked with ctrl, text insert btn is active -> insert text area at coordinates
         SIAC.Highlighting.insertText(e);

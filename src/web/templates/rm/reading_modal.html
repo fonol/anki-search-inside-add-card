@@ -61,7 +61,7 @@
         $('.siac-reading-modal-timer-lbl').html(Math.floor(rs / 60) + " : " + (rs % 60 < 10 ? "0" + rs % 60 : rs % 60));
         setTimerActive(tomato.lastStart);
     }
-    if (pdfFullscreen) {
+    if (pdf.fullScreen) {
         activateReadingModalFullscreen();
     } 
     if (pageSidebarDisplayed) {

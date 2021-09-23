@@ -979,7 +979,7 @@ class Reader:
                 }} else {{
                     $('#siac-pdf-tooltip-toggle').removeClass('active');
                 }}
-                if (pdfLinksEnabled) {{
+                if (pdf.linksEnabled) {{
                     $('#siac-pdf-links-toggle').addClass('active');
                 }} else {{
                     $('#siac-pdf-links-toggle').removeClass('active');

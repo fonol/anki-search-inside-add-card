@@ -63,7 +63,7 @@
             <canvas id="siac-pdf-canvas"></canvas>
             <div class="annotationLayer"></div>
             <canvas id="siac-pdf-canvas_1"></canvas>
-            <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdfTextLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
+            <div id="text-layer" style='display: none;' onmouseup='pdfKeyup(event);' onkeyup='pdf.textLayerMetaKey = false;' onclick='textlayerClicked(event, this);' class="textLayer"></div>
         </div>
         <div id='siac-pdf-br-notify'> </div>
     </div>
@@ -151,7 +151,7 @@
     } else {
         $('#siac-pdf-tooltip-toggle').removeClass('active');
     }
-    if (pdfLinksEnabled) {
+    if (pdf.linksEnabled) {
         $('#siac-pdf-links-toggle').addClass('active');
         $('.annotationLayer').show();
     } else {
@@ -160,5 +160,4 @@
     }
     $('.siac-pdf-color-btn[data-id=' + SIAC.Highlighting.colorSelected.id + ']').addClass('active');
     $('.siac-pdf-ul-btn[data-id=' + SIAC.Highlighting.colorSelected.id + ']').addClass('active');
-    // registerButtonWidthObserver();
 </script>

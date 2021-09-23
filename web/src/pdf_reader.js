@@ -42,6 +42,10 @@ window.pdf = {
     displayedMarksTable: null,
     lastReadPages: {},
 
+    fullScreen: false,
+    textLayerMetaKey: false,
+    linksEnabled: false,
+
     notification: {
         queue: [],
         current: ""
@@ -57,12 +61,9 @@ window.pdf = {
 window.noteLoading = false;
 window.pdfLoading = false;
 window.modalShown = false;
-window.pdfLinksEnabled = false;
 window.iframeIsDisplayed = false;
 window.pageSidebarDisplayed = true;
-window.pdfFullscreen = false;
 window.displayedNoteId = null;
-window.pdfTextLayerMetaKey = false;
 window.bottomBarTabDisplayed = "marks";
 
 /** SimpleMDE */
@@ -383,7 +384,7 @@ window.renderPDFPage = function (num, shouldScrollUp = true, fitToPage = false, 
                 return Promise.reject();
             }
             renderTask.promise.then(function () {
-                if (pdfLinksEnabled) {
+                if (pdf.linksEnabled) {
                     setupAnnotations(page, viewport, canvas, $('.annotationLayer'));
                 }
 
@@ -870,8 +871,8 @@ window.togglePDFLinks = function (elem) {
     if (!elem) {
         return;
     }
-    pdfLinksEnabled = !pdfLinksEnabled;
-    if (pdfLinksEnabled) {
+    pdf.linksEnabled = !pdf.linksEnabled;
+    if (pdf.linksEnabled) {
         $(elem).addClass('active');
         $('.annotationLayer').show();
         readerNotification("PDF Links enabled.", true);
@@ -1067,8 +1068,8 @@ window.topBarIsHidden = function() {
 }
 
 window.toggleReadingModalFullscreen = function () {
-    pdfFullscreen = !pdfFullscreen;
-    if (pdfFullscreen) {
+    pdf.fullScreen = !pdf.fullScreen;
+    if (pdf.fullScreen) {
         $(document.body).removeClass("siac-fullscreen-show-fields").addClass("siac-fullscreen-show-right");
         if (pdf.instance) {
             pdfFitToPage();
@@ -1084,7 +1085,7 @@ window.toggleReadingModalFullscreen = function () {
 
 }
 window.activateReadingModalFullscreen = function () {
-    pdfFullscreen = false;
+    pdf.fullScreen = false;
     toggleReadingModalFullscreen();
 }
 window.onReadingModalClose = function () {
@@ -1127,28 +1128,7 @@ window.setPdfTheme = function (theme) {
     document.documentElement.style.setProperty('--c-reading-modal-theme-color', theme);
     pycmd("siac-eval update_config('styles.readingModalThemeColor', '" + theme + "')");
 }
-window.schedChange = function (slider) {
-    byId('siac-sched-prio-val').innerHTML = prioVerbose(slider.value);
-}
-window.prioVerbose = function (prio) {
-    if (prio >= 85)
-        return `Very high (<b>${prio}</b>)`;
-    if (prio >= 70)
-        return `High (<b>${prio}</b>)`;
-    if (prio >= 30)
-        return `Medium (<b>${prio}</b>)`;
-    if (prio >= 15)
-        return `Low (<b>${prio}</b>)`;
-    if (prio >= 1)
-        return `Very low (<b>${prio}</b>)`;
-    return "Remove from Queue (<b>0</b>)";
-}
 
-
-window.scheduleDialogQuickAction = function () {
-    let cmd = $("input[name=sched]:checked").data("pycmd");
-    pycmd(`siac-eval Reader.schedule_note(${cmd})`);
-}
 window.removeDialogOk = function (nid) {
     if ($("input[name=del]:checked").data("pycmd") == "1") {
         pycmd("siac-remove-from-queue " + nid);
@@ -1159,28 +1139,6 @@ window.removeDialogOk = function (nid) {
     $('#siac-rm-greyout').hide();
     $('#siac-schedule-dialog').hide();
 }
-window.updateSchedule = function () {
-    let checked = $("input[name=sched]:checked").data("pycmd");
-    if (checked == "4") {
-        let td = byId("siac-sched-td-inp").value;
-        if (!td) { pycmd('siac-notification Value is empty!'); return; }
-        pycmd("siac-update-schedule td " + td);
-    } else if (checked == "5") {
-        let w = '';
-        $('#siac-sched-wd input').each(function (ix) {
-            if ($(this).is(":checked")) {
-                w += (ix + 1).toString();
-            }
-        });
-        if (!w.length) { pycmd('siac-notification Value is empty!'); return; }
-        pycmd("siac-update-schedule wd " + w);
-    } else {
-        let id = byId("siac-sched-id-inp").value;
-        if (!id) { pycmd('siac-notification Value is empty!'); return; }
-        pycmd("siac-update-schedule id " + id);
-    }
-}
-
 /**
  * Show or hide the pdf page sidebar.
  * @param {boolean} persist if the updated value should be sent to the backend 
@@ -1239,29 +1197,3 @@ window.pdfLoaderText = function (html) {
     } catch (e) { }
 }
 
-window.registerButtonWidthObserver = function () {
-    if ('ResizeObserver' in self) {
-        window.siac_ro = new ResizeObserver(function (entries) {
-            let entry = entries[0];
-            let el = document.getElementsByClassName('siac-reading-modal-button-bar-wrapper');
-            if (!el || el.length === 0) { return; }
-            if ($('#siac-page-sidebar').is(':visible')) {
-                el[0].classList.add("sidebar")
-            } else {
-                el[0].classList.remove("sidebar")
-            }
-            if (entry.contentRect.width <= 560) {
-                el[0].classList.add("smaller");
-                el[0].classList.add("small");
-            }
-            else if (entry.contentRect.width <= 690) {
-                el[0].classList.remove("smaller");
-                el[0].classList.add("small");
-            } else {
-                el[0].classList.remove("small");
-                el[0].classList.remove("smaller");
-            }
-        });
-        siac_ro.observe(byId("siac-pdf-overflow"));
-    }
-};
