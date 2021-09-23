@@ -1800,7 +1800,7 @@ class Reader:
         return """
             if (pdf.pagesRead && pdf.pagesRead.length) {
                 pdf.page = Math.max(...pdf.pagesRead);
-                rerenderPDFPage(pdf.page, false, true);
+                renderPDFPage(pdf.page, false, true);
             }
         """
 
@@ -1818,7 +1818,7 @@ class Reader:
                 }
                 if (options.length > 0) {
                     pdf.page = options[Math.floor(Math.random() * options.length)];
-                    rerenderPDFPage(pdf.page, false, true);
+                    renderPDFPage(pdf.page, false, true);
                 }
             }
         """
@@ -1831,7 +1831,7 @@ class Reader:
                 for (var i = start; i < start + numPagesExtract(); i++) {
                     if (!pdf.pagesRead || pdf.pagesRead.indexOf(i) === -1) {
                         pdf.page = i;
-                        rerenderPDFPage(pdf.page, false, true);
+                        renderPDFPage(pdf.page, false, true);
                         break;
                     }
                 }

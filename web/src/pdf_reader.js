@@ -229,14 +229,14 @@ window.tocBtnClicked = function () {
 
 window.pdfFitToPage = function () {
     if (!iframeIsDisplayed) {
-        rerenderPDFPage(pdf.page, false, true, false, '', false);
+        renderPDFPage(pdf.page, false, true, false, '', false);
     }
 }
 window.queueRenderPage = function (num, shouldScrollUp = true, fitToPage = false, isInitial = false, query = '', fetchHighlights = true) {
     if (pdf.pageRendering) {
         pdf.pageNumPending = num;
     } else {
-        rerenderPDFPage(num, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
+        renderPDFPage(num, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
     }
 }
 window.setupAnnotations = function (page, viewport, canvas, $annotationLayerDiv) {
@@ -335,10 +335,10 @@ window.setupAnnotations = function (page, viewport, canvas, $annotationLayerDiv)
 }
 
 window.refreshPDFPage = function () {
-    rerenderPDFPage(pdf.page, false, false, false, '', true);
+    renderPDFPage(pdf.page, false, false, false, '', true);
 }
 
-window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false, isInitial = false, query = '', fetchHighlights = true) {
+window.renderPDFPage = function (num, shouldScrollUp = true, fitToPage = false, isInitial = false, query = '', fetchHighlights = true) {
     if (!pdf.instance || iframeIsDisplayed) {
         return;
     }
@@ -378,7 +378,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 transform: window.devicePixelRatio !== 1 ? [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0] : null,
             });
             if (pdf.pageNumPending !== null) {
-                rerenderPDFPage(pdf.pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
+                renderPDFPage(pdf.pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
                 pdf.pageNumPending = null;
                 return Promise.reject();
             }
@@ -390,7 +390,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                 byId("siac-pdf-page-lbl").innerHTML = `${pdf.page} / ${pdf.instance.numPages}`;
                 pdf.pageRendering = false;
                 if (pdf.pageNumPending !== null) {
-                    rerenderPDFPage(pdf.pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
+                    renderPDFPage(pdf.pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
                     pdf.pageNumPending = null;
                     return Promise.reject();
                 } else {
@@ -421,7 +421,7 @@ window.rerenderPDFPage = function (num, shouldScrollUp = true, fitToPage = false
                     return Promise.reject();
                 }
                 if (pdf.pageNumPending) {
-                    rerenderPDFPage(pdf.pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
+                    renderPDFPage(pdf.pageNumPending, shouldScrollUp, fitToPage, isInitial, query, fetchHighlights);
                     pdf.pageNumPending = null;
                     return null;
                 }
