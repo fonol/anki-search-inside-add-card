@@ -815,7 +815,7 @@ window.updatePdfDisplayedMarks = function (rerenderTop) {
         if (tableHtml.length) {
             byId("siac-marks-display").innerHTML = tableHtml;
         } else {
-            byId("siac-marks-display").innerHTML = `<div style='display: flex; flex-direction: column; justify-content: center; height: 80px; width: 135px; text-align: center; color: grey;'>
+            byId("siac-marks-display").innerHTML = `<div style='display: flex; flex-direction: column; justify-content: center; height: 100%; width: 100%; text-align: center; color: grey;'>
                     <div class='siac-caps'><i class="fa fa-star-o"></i>&nbsp; No marks</div>
                 </div>`;
         }

@@ -17,17 +17,14 @@
         <div id='siac-queue-infobox-wrapper'>
             <div id='siac-queue-infobox' onmouseleave='leaveQueueItem();'></div>
         </div>
-        <div id='siac-pdf-bottom-tabs'
-            style='display: inline-block; vertical-align: top; margin-left: 16px; user-select: none;'>
-            <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")'
-                style='margin-right: 10px;'><i class='fa fa-star-o' style='margin-right: 5px;'></i>Marks</a>
-            <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")'
-                style='margin-right: 10px;'>Related</a>
-            <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")'
-                style='margin-right: 10px;'>Info</a>
-            <a class='siac-link-btn {hide_page_map} tab'
-                onclick='pycmd("siac-pdf-show-bottom-tab {note_id} pages")'>Pages</a><br>
-            <div id='siac-pdf-bottom-tab'>
+        <div id='siac-pdf-bottom-tabs' class="siac-card">
+            <div style='background: #3c3c3c'>
+                <a class='siac-link-btn tab active' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} marks")' ><i class='fa fa-star-o mr-5'></i>Marks</a>
+                <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} related")' >Related</a>
+                <a class='siac-link-btn tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} info")' >Info</a>
+                <a class='siac-link-btn {hide_page_map} tab' onclick='pycmd("siac-pdf-show-bottom-tab {note_id} pages")'>Pages</a><br>
+            </div>
+            <div id='siac-pdf-bottom-tab'> 
                 <div id='siac-marks-display' onclick='markClicked(event);'></div>
             </div>
         </div>

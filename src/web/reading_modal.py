@@ -1150,12 +1150,12 @@ class Reader:
 
         html = f"""
             <table class='fg_grey' style='min-width: 190px; line-height: 1.2;'>
-                <tr><td>ID</td><td><b>{note.id}</b> &nbsp;<b style='color: #ababab; cursor: pointer;' onclick='pycmd("siac-copy-to-cb {note.id}")'>[Copy]</b></td></tr>
-                <tr><td>Created</td><td><b>{created}</b></td></tr>
-                <tr><td>Schedule</td><td><b>{schedule}</b></td></tr>
+                <tr><td>ID</td><td class='pl-5'><b>{note.id}</b> &nbsp;<b style='color: #ababab; cursor: pointer;' onclick='pycmd("siac-copy-to-cb {note.id}")'>[Copy]</b></td></tr>
+                <tr><td>Created</td><td class='pl-5'><b>{created}</b></td></tr>
+                <tr><td>Schedule</td><td class='pl-5'><b>{schedule}</b></td></tr>
                 <tr>
                     <td style='padding-top: 10px;'><i class='fa fa-tags'></i>&nbsp; Tags</td>
-                    <td style='padding-top: 10px;'>
+                    <td style='padding-top: 10px;' class='pl-5'>
                         <input type='text' class='siac-rm-bg fg_lightgrey' style='width: 210px; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
                     </td>
                 </tr>
@@ -1294,8 +1294,8 @@ class Reader:
             io  = f"<div class='siac-modal-btn mr-10' onclick='pycmd(\"siac-cutout-io {img_src}\"); $(this.parentNode).remove();'><i class='fa fa-eraser'></i>&nbsp; Image Occlusion</div>"
         modal   = """<div class="siac-modal-small dark ta_center oflow_hidden">
                         <img src="%s" style="max-height: 90px; max-width: 100%%;"/><br>
-                        <b>Append to field:</b><br><br>
-                        <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding: 0 4px; overflow-x: hidden;">%s</div>
+                        <div style='border-bottom: 1px solid #484848; padding-bottom: 10px;' class="mb-10"><b>Append to field:</b></div>
+                        <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 20px; padding: 0 4px; overflow-x: hidden;">%s</div>
                         <br><br>
                         %s
                         <div class="siac-modal-btn" onclick="$(this.parentNode).remove(); pycmd('siac-remove-snap-image %s')">Cancel</div>
@@ -1346,8 +1346,8 @@ class Reader:
 
         cloze_text  = cloze_text.replace("`", "").replace("\n", "")
         modal       = """ <div class="siac-modal-small dark ta_center oflow_hidden">
-                        <b>Append to field:</b><br><br>
-                        <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 40px; padding: 0 4px; overflow-x: hidden;">%s</div><br><br>
+                        <div style='border-bottom: 1px solid #484848; padding-bottom: 10px;' class="mb-10"><b>Append to field:</b></div>
+                        <div class='oflow_y_auto ta_left' style="max-height: 200px; margin: 0 20px; padding: 0 4px; overflow-x: hidden;">%s</div><br><br>
                         <div class="siac-modal-btn" onclick="$(this.parentNode).remove();">Cancel</div>
                     </div> """
         flds        = ""
@@ -1496,7 +1496,7 @@ class Reader:
                     <div class='siac-note-header flex-row'>{header}</div>
                     {around_s}
                 </div>
-                <div class='fg_lightgrey flex-col' style='flex: 1 1 auto; justify-content: center;'>
+                <div class='fg_lightgrey flex-col' style='flex: 1 1 auto; justify-content: center; opacity: 0.7;'>
                     <div class='mb-10' style='font-size: 25px;'><i class="fa fa-graduation-cap"></i></div>
                     <center class='bold' style='padding: 20px; font-variant-caps: small-caps; font-size: medium;'>No notes added while on this page.</center>
                 </div>
@@ -1558,10 +1558,7 @@ class Reader:
             else:
                 html = f"{html}<i class='sq-r' onclick='pdfGotoPg({ix})'></i>"
 
-        if total < 50:
-            html = f"<div class='mt-10' style='line-height: 1em;'>{html}</div>"
-        else:
-            html = f"<div style='line-height: 1em;'>{html}</div>"
+        html = f"<div style='line-height: 1em; overflow-y: auto; height: 100%;'>{html}</div>"
         return html
 
 
@@ -1610,6 +1607,8 @@ class Reader:
             pdf_or_feed         = rel.is_pdf() or rel.is_feed()
             should_show_loader  = 'document.getElementById("siac-reading-modal-center").innerHTML = ""; showPDFLoader();' if pdf_or_feed else ""
             html                = f"{html}<div class='siac-related-notes-item' onclick='if (!pdfLoading) {{ {should_show_loader}  destroyPDF(); noteLoading = true; greyoutBottom(); pycmd(\"siac-read-user-note {rel.id}\"); }}'>{title}</div>"
+
+        html = f"<div style='overflow-y: auto; height: 100%;'>{html}</div>"
         return html
 
 

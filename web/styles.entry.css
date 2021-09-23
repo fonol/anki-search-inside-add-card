@@ -319,7 +319,7 @@ body.nightMode .siac-input, #siac-reading-modal .siac-input {
     height: 8px;
     border-radius: 1px;
     margin-right: 2px;
-    background: rgb(167, 167, 167);
+    background: #757575;
 }
 .sq-rg {
     background: #2496dc;
