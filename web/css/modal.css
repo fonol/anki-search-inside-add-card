@@ -100,6 +100,9 @@ body.nightMode .siac-modal-body input {
     border-color: #5d5d5d;
     color: white;
 }
+.siac-modal-body table img {
+    max-height: 100px;
+}
 
 /* Markdown edit */
 #siac-md-edit-wrapper {
