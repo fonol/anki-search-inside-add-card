@@ -61,7 +61,7 @@ from .dialogs.timer_elapsed import TimerElapsedDialog
 from .dialogs.done_dialog import DoneDialog
 from .api import open_siac_with_id
 from .tag_find import display_tag_info
-from .stats import calculateStats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
+from .stats import calculate_note_stats, findNotesWithLowestPerformance, findNotesWithHighestPerformance, getSortedByInterval
 from .models import SiacNote
 try:
     from .previewer import AddPreviewer
@@ -131,7 +131,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
  
     elif cmd.startswith("siac-note-stats "):
         # note "Info" button clicked
-        set_stats(cmd[16:], calculateStats(cmd[16:], UI.gridView))
+        set_stats(cmd[16:], calculate_note_stats(cmd[16:]))
 
     elif cmd.startswith("siac-tag-clicked ") and not config["tagClickShouldSearch"]:
         add_tag(cmd[17:])
@@ -141,10 +141,10 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         open_editor(mw, int(cmd[15:]))
 
     elif cmd.startswith("siac-eval "):
-        # direct eval, saves code
+        # direct eval
         eval(cmd[10:])
     elif cmd.startswith("siac-exec "):
-        # direct exec, saves code
+        # direct exec
         exec(cmd[10:])
 
     elif cmd.startswith("siac-open-folder "):
@@ -239,7 +239,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
             if (pdfLoading || noteLoading || modalShown) {
                 hideQueueInfobox();
             } else {
-                document.getElementById('siac-pdf-bottom-tabs').style.visibility = "hidden";
+                // document.getElementById('siac-pdf-bottom-tabs').style.visibility = "hidden";
                 document.getElementById('siac-queue-infobox').style.display = "block";
                 document.getElementById('siac-queue-infobox').innerHTML =`%s`;
             }
@@ -1460,9 +1460,10 @@ def handle_settings_update(cmd: str):
 
     elif name == "showTimeline":
         config[name] = value == "true" or value == "on"
-        if not config[name] and check_index():
-            UI.js("document.getElementById('cal-row').style.display = 'none'; onWindowResize();")
-        elif config[name] and check_index():
+        if not config[name]:
+            UI.js("""document.getElementById('cal-row').style.display = 'none'; 
+            onWindowResize();""")
+        else:
             UI.js("""
             if (document.getElementById('cal-row')) {
                 document.getElementById('cal-row').style.display = 'block';
