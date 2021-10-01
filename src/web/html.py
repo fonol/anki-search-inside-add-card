@@ -610,20 +610,20 @@ def get_unsuspend_modal(nid: int) -> HTML:
         susp        = "<span class='bold fg-red'>Suspended</span>" if c[2] == -1 else "<span class='bold fg-green'>Not suspended</span>"
         btn         = f"<div class='siac-modal-btn' onclick='pycmd(\"siac-unsuspend {nid} {c[0]}\");'>Unsuspend</div>" if c[2] == -1 else ""
         ivl         = f"{c[1]} days" if c[1] >= 0 else f"{c[1]} seconds"
-        cards_html += f"""
+        cards_html  = f"""{cards_html}
             <tr>
-                <td class='p-10'><b>{temp_name}</b></td>
-                <td class='p-10'>{c[0]}</td>
-                <td class='p-10'>{ivl}</td>
-                <td class='p-10'>{susp}</td>
-                <td class='p-10'>{btn}</td>
+                <td class='p-10 ta_center'><b>{temp_name}</b></td>
+                <td class='p-10 ta_center'>{c[0]}</td>
+                <td class='p-10 ta_center'>{ivl}</td>
+                <td class='p-10 ta_center'>{susp}</td>
+                <td class='p-10 ta_center'>{btn}</td>
             </tr>
         """
     return f"""
             <div class='flex-col oflow_hidden' style='flex: 1 0 auto; font-size: 15px;'>
                 <div style='flex: 1 1 auto;'>
                     <center style='margin: 10px 0 20px 0;'>
-                        <table style='margin-bottom: 50px;'>
+                        <table style='margin-bottom: 50px; width: 80%;'>
                             <tr>
                                 <td class='bold p-10'>Note ID</td>
                                 <td>{nid}</td>
@@ -633,25 +633,23 @@ def get_unsuspend_modal(nid: int) -> HTML:
                                 <td>{flds}</td>
                             </tr>
                         <table>
-                        <table style='min-width: 500px; margin-top: 20px;'>
-                            <thead>
+                        <table style='min-width: 500px; margin-top: 20px; width: 80%;'>
+                            <thead style='border-bottom: 1px solid'>
                                 <tr>
-                                    <th>Card template name</th>
-                                    <th>CID</th>
-                                    <th>Interval</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th class='p-10 ta_center'>Card template name</th>
+                                    <th class='p-10 ta_center'>CID</th>
+                                    <th class='p-10 ta_center'>Interval</th>
+                                    <th class='p-10 ta_center'>Status</th>
+                                    <th class='p-10 ta_center'>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody style='border-bottom: 1px solid'>
                                 {cards_html}
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td class='p-10'><div class='siac-modal-btn' onclick='pycmd(\"siac-unsuspend {nid} {unsuspend_all[:-1]}\")'>Unsuspend All</div> </td>
                             </tbody>
                         </table>
+                        <div class='ta_right mt-10' style='width: 80%'>
+                            <div class='siac-modal-btn mr-10' onclick='pycmd(\"siac-unsuspend {nid} {unsuspend_all[:-1]}\")'>Unsuspend All</div>
+                        </div>
                     </center>
                 </div>
             </div>
