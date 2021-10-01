@@ -99,7 +99,7 @@ def _calcScores(decks, limit, retOnly):
         else:
             cardsByNotes[note[0]] = (note, [note[1]])
     for k, v in cardsByNotes.items():
-        score = _getScore(v[1], retOnly)
+        score = _get_score(v[1], retOnly)
         if score is not None:
             if retOnly:
                 scores[k] = (score, v[0])
@@ -112,7 +112,7 @@ def getAvgTrueRetention(nids):
     query   = "select id from cards where nid in %s" % ("(%s)" % ",".join([str(nid) for nid in nids]))
     cids    = mw.col.db.all(query)
     cids    = [c[0] for c in cids]
-    tret    = _getScore(cids, True)
+    tret    = _get_score(cids, True)
 
     return tret
 
@@ -124,7 +124,7 @@ def getTrueRetentionOverTime(nids):
     cids = mw.col.db.all(query)
     cids = [c[0] for c in cids]
 
-    return _getTrueRetentionOverTime(cids)
+    return _get_true_retention_over_time(cids)
 
 def getRetentions(nids):
 
@@ -174,10 +174,10 @@ def getAvgTrueRetentionAndTime():
 
     return (round(retention, 1), round(timeTaken / cnt, 1))
 
-def calcAbsDiffInPercent(i1, i2):
+def calc_abs_diff_in_percent(i1, i2):
     return round(i1 - i2, 2)
   
-def _getTrueRetentionOverTime(cards):
+def _get_true_retention_over_time(cards):
     if not cards:
         return None
     cStr = "("
@@ -218,7 +218,7 @@ def _getTrueRetentionOverTime(cards):
         return None
     return retentionsOverTime
 
-def _getScore(cards, onlyRet=False):
+def _get_score(cards, onlyRet=False):
     if not cards:
         return None
 
@@ -237,7 +237,7 @@ def _getScore(cards, onlyRet=False):
     goodAndEasy = 0
     hard        = 0
     timeTaken   = 0
-    for (cid, ease, taken, ty) in reversed(entries):
+    for (_, ease, taken, ty) in reversed(entries):
         # only look for reviews
         if ty != 1:
             continue
@@ -259,38 +259,38 @@ def _getScore(cards, onlyRet=False):
     if onlyRet:
         return retention
     avgTime = round(timeTaken / cnt, 1)
-    return _calcPerformanceScore(retention, avgTime, goodAndEasy, hard)
+    return _calc_performance_score(retention, avgTime, goodAndEasy, hard)
 
-def calculateStats(nid, gridView):
+def calculate_note_stats(nid):
 
     tables = {
         "Note"  : [],
         "Cards" : [],
         "Stats" : []
     }
-    infoTable = {}
-    infoTable["Note ID"] = f"""{nid} &nbsp;<span class='keyword' onclick='pycmd("siac-copy-to-cb {nid}")'>[Copy to Clipboard]</span>"""
+    i_table = {}
+    i_table["Note ID"] = f"""{nid} &nbsp;<span class='keyword' onclick='pycmd("siac-copy-to-cb {nid}")'>[Copy to Clipboard]</span>"""
 
     note        = mw.col.getNote(int(nid))
     model       = mw.col.models.get(note.mid)
 
     try:
-        infoTable["Created Date"] = time.strftime("%Y-%m-%d", time.localtime(int(nid)/1000)) + " &nbsp;&nbsp;<a class='keyword' href='#' style='float: right;' onclick='pycmd(\"siac-r-added-same-day %s\"); $(\"#siac-modal\").hide(); return false;'>Added Same Day</a>" % nid
-        infoTable["Last Modified"] = time.strftime("%Y-%m-%d", time.localtime(note.mod))
+        i_table["Created Date"] = time.strftime("%Y-%m-%d", time.localtime(int(nid)/1000)) + " &nbsp;&nbsp;<a class='keyword' href='#' style='float: right;' onclick='pycmd(\"siac-r-added-same-day %s\"); $(\"#siac-modal\").hide(); return false;'>Added Same Day</a>" % nid
+        i_table["Last Modified"] = time.strftime("%Y-%m-%d", time.localtime(note.mod))
  
     except:
         pass
     if model is not None:
-        infoTable["Note Type"] = model["name"]
+        i_table["Note Type"] = model["name"]
     
-    infoTable["Tags"] = " ".join(note.tags) if note.tags else "-"
+    i_table["Tags"] = " ".join(note.tags) if note.tags else "-"
 
     # get card ids for note
     cards               = mw.col.db.all("select * from cards where nid = %s" % (nid))
     if not cards:
-        infoTable["Result"] = "No cards found"
-        tables["Note"].append(infoTable)
-        return _buildTable(tables)
+        i_table["Result"] = "No cards found"
+        tables["Note"].append(i_table)
+        return _build_table(tables)
 
     cardOrdById         = {}
     cardTypeById        = {}
@@ -303,18 +303,18 @@ def calculateStats(nid, gridView):
         d = mw.col.decks.get(c[2])["name"]
         if not d in decks:
             decks.add(d)
-        cStr                        += str(c[0]) + ", "
+        cStr                        = f"{cStr}{c[0]}, "
         cardOrdById[c[0]]           = c[3]
-        cardTypeById[c[0]]          = _cardTypeStr(c[6])
+        cardTypeById[c[0]]          = _card_type_str(c[6])
         cardEaseFactorById[c[0]]    = int(c[10] / 10)
         cardQueueById[c[0]]         = c[7]
 
-    cStr                = cStr[:-2] + ")"
+    cStr                = f"{cStr[:-2]})"
 
     if len(decks) > 0:
-        infoTable["Deck(s)"] = ", ".join(decks)
+        i_table["Deck(s)"] = ", ".join(decks)
     else:
-        infoTable["Deck(s)"] = "Could not determine decks."
+        i_table["Deck(s)"] = "Could not determine decks."
 
     cardNameById = {}
     for k, v in cardOrdById.items():
@@ -337,11 +337,11 @@ def calculateStats(nid, gridView):
     ivlPlotData         = {}
     timePlotData        = {}
 
-    infoTable["Card ID(s)"]     = ", ".join([str(c[0]) + f" ({_cardTypeStr(c[6])}) <span class='keyword' onclick='pycmd(\"siac-copy-to-cb {c[0]}\")'>[Copy]</span>" for c in cards])
+    i_table["Card ID(s)"]     = ", ".join([str(c[0]) + f" ({_card_type_str(c[6])}) <span class='keyword' onclick='pycmd(\"siac-copy-to-cb {c[0]}\")'>[Copy]</span>" for c in cards])
 
     if not entries or not hasReview:
-        infoTable["[Stats]"]        = "Not enough reviews to compute statistics"
-        tables["Note"].append(infoTable)
+        i_table["[Stats]"]        = "Not enough reviews to compute statistics"
+        tables["Note"].append(i_table)
     else:
         cnt             = 0
         passed          = 0
@@ -389,16 +389,16 @@ def calculateStats(nid, gridView):
         retention               = 100 * passed / (passed + failed) if cnt > 0 else 0
         retention               = round(retention, 1)
         avgTime                 = round(timeTaken / cnt, 1) if cnt > 0 else 0
-        score                   = _calcPerformanceScore(retention, avgTime, goodAndEasy, hard) if cnt > 0 else (0, 0, 0, 0)
+        score                   = _calc_performance_score(retention, avgTime, goodAndEasy, hard) if cnt > 0 else (0, 0, 0, 0)
         
-        tables["Note"].append(infoTable)
-        infoTable               = {}
+        tables["Note"].append(i_table)
+        i_table               = {}
 
-        infoTable["Cards Found"] = len(cards)
-        tables["Cards"].append(infoTable)
+        i_table["Cards Found"] = len(cards)
+        tables["Cards"].append(i_table)
 
         for k, v in cardNameById.items():
-            infoTable   = {}
+            i_table   = {}
             label       = ""
 
             if cardQueueById[k] == -1:
@@ -408,83 +408,72 @@ def calculateStats(nid, gridView):
             elif cardQueueById[k] == 1:
                 label = "<span style='background: orange; color: black;'>LEARNING</span>"
 
-            infoTable["<b>%s</b>  &nbsp;(%s):" % (v, k)] = label
+            i_table["<b>%s</b>  &nbsp;(%s):" % (v, k)] = label
 
             if k in intervalsByCid:
-                infoTable[_get_revlog_graph(k)] = ""
-                infoTable["Interval"] = "%s %s" % (
+                i_table[_get_revlog_graph(k)] = ""
+                i_table["Interval"] = "%s %s" % (
                     abs(intervalsByCid[k]), "Days" if intervalsByCid[k] > 0 else "Seconds")
 
             if k in cardEaseFactorById:
-                infoTable["Ease"] = str(cardEaseFactorById[k]) + " %"
+                i_table["Ease"] = str(cardEaseFactorById[k]) + " %"
 
             if k in cardTypeById:
-                infoTable["Type"] = cardTypeById[k]
+                i_table["Type"] = cardTypeById[k]
 
-            tables["Cards"].append(infoTable)
+            tables["Cards"].append(i_table)
             # similar_res = find_cards_with_similar_rep_history(int(k))
             # similar_res_by_cid[int(k)] = similar_res
 
-        infoTable                                                               = {}
-        infoTable["<b>Reviews (Cards from this note)</b>"]                      = cnt
-        infoTable["<span class='ml-5 bg-red rev-lbl'>Failed</span>"]  = failed
-        infoTable["<span class='ml-5 rev-lbl' style='background: black; color: white;'>Hard</span>"]  = hard
-        infoTable["<span class='ml-5 rev-lbl bg-green' style='color: black;'>Good</span>"]  = good
-        infoTable["<span class='ml-5 rev-lbl bg-blue'>Easy</span>"]   = easy
-        tables["Stats"].append(infoTable)
+        i_table                                                               = {}
+        i_table["<b>Reviews (Cards from this note)</b>"]                      = cnt
+        i_table["<span class='ml-5 bg-red rev-lbl'>Failed</span>"]  = failed
+        i_table["<span class='ml-5 rev-lbl' style='background: black; color: white;'>Hard</span>"]  = hard
+        i_table["<span class='ml-5 rev-lbl bg-green' style='color: black;'>Good</span>"]  = good
+        i_table["<span class='ml-5 rev-lbl bg-blue'>Easy</span>"]   = easy
+        tables["Stats"].append(i_table)
 
         if cnt > 0:
             avgRetAndTime = getAvgTrueRetentionAndTime()
-            infoTable = {}
-            infoTable["<b>Pass Rate (Successful Reviews * 100 / Reviews)</b>"] = ""
-            infoTable["Cards from this note"] = str(retention) + " %"
-            infoTable["Collection"] = str(avgRetAndTime[0]) + " %"
-            diff = calcAbsDiffInPercent(retention, avgRetAndTime[0]) 
+            i_table = {}
+            i_table["<b>Pass Rate (Successful Reviews * 100 / Reviews)</b>"] = ""
+            i_table["Cards from this note"] = str(retention) + " %"
+            i_table["Collection"] = str(avgRetAndTime[0]) + " %"
+            diff = calc_abs_diff_in_percent(retention, avgRetAndTime[0]) 
             if diff > 0:
-                infoTable["Difference"] = f"{diff} % <span style='color: green'>better</span>"
+                i_table["Difference"] = f"{diff} % <span style='color: green'>better</span>"
             elif diff < 0:
-                infoTable["Difference"] = f"{diff} % <span style='color: red'>worse</span>"
+                i_table["Difference"] = f"{diff} % <span style='color: red'>worse</span>"
 
             
-            tables["Stats"].append(infoTable)
+            tables["Stats"].append(i_table)
 
-            infoTable                                       = {}
-            infoTable["<b>Average Time (Reviews Only)</b>"] = ""
-            infoTable["Cards from this note"]               = str(avgTime) + " seconds"
-            infoTable["Collection"]                         = str(avgRetAndTime[1]) + " seconds"
-            diff                                            = calcAbsDiffInPercent(avgTime, avgRetAndTime[1])
+            i_table                                       = {}
+            i_table["<b>Average Time (Reviews Only)</b>"] = ""
+            i_table["Cards from this note"]               = str(avgTime) + " seconds"
+            i_table["Collection"]                         = str(avgRetAndTime[1]) + " seconds"
+            diff                                            = calc_abs_diff_in_percent(avgTime, avgRetAndTime[1])
 
             if diff > 0:
-                infoTable["Difference"]                     = f"{diff} seconds <span style='color: red'>slower</span>"
+                i_table["Difference"]                     = f"{diff} seconds <span style='color: red'>slower</span>"
             elif diff < 0:
-                infoTable["Difference"]                     = f"{abs(diff)} seconds <span style='color: green'>faster</span>"
+                i_table["Difference"]                     = f"{abs(diff)} seconds <span style='color: green'>faster</span>"
         
-            tables["Stats"].append(infoTable)
+            tables["Stats"].append(i_table)
 
-        infoTable                       = {}
-        infoTable["Retention Score"]    = score[2]
-        infoTable["Time Score"]         = score[1]
-        infoTable["Rating Score"]       = score[3]
-        infoTable["<b>Performance</b>"] = score[0]
-        tables["Stats"].append(infoTable)
+        i_table                       = {}
+        i_table["Retention Score"]    = score[2]
+        i_table["Time Score"]         = score[1]
+        i_table["Rating Score"]       = score[3]
+        i_table["<b>Performance</b>"] = score[0]
+        tables["Stats"].append(i_table)
 
-    html = _buildTable(tables, reviewPlotData, ivlPlotData,
+    html = _build_table(tables, reviewPlotData, ivlPlotData,
                        timePlotData, cardNameById)
     return(html, reviewPlotData, ivlPlotData, timePlotData)
 
 
-
-
-def _get_ivl_diff_str(ivl_base, ivl_cmp):
-    diff = ivl_cmp - ivl_base
-    if diff < 0:
-        return "<span style='color: red;'>(- %s)</span>" % abs(diff)
-    if diff == 0:
-        return "<span>(+0)</span>"
-    return "<span style='color: green;'>(+ %s)</span>" % abs(diff)
-
-
-def _buildTable(tables, reviewPlotData, ivlPlotData, timePlotData, namesByCid):
+def _build_table(tables, reviewPlotData, ivlPlotData, timePlotData, namesByCid):
     s = "<div style='width: calc(100%% - 5px); overflow-y: auto; padding-right: 5px;'>%s</div>"
     rows = ""
     for k, v in tables.items():
@@ -591,7 +580,7 @@ def _get_revlog_graph(cid):
 
 
 
-def _calcPerformanceScore(retention, time, goodAndEasy, hard):
+def _calc_performance_score(retention, time, goodAndEasy, hard):
     if goodAndEasy == 0 and hard == 0:
         return (0, 0, 0, 0)
 
@@ -610,7 +599,7 @@ def _calcPerformanceScore(retention, time, goodAndEasy, hard):
     return (int(score), int(timeSc), int(retentionSc * 100.0 / 200.0), int(ratingSc))
 
 
-def _cardTypeStr(typeNumber):
+def _card_type_str(typeNumber):
     if typeNumber == 0:
         return "New"
     if typeNumber == 1:
