@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import typing
+import traceback
 from typing import Optional
 import aqt
 from aqt import mw
@@ -35,9 +35,8 @@ def queue_has_items() -> bool:
     return get_queue_count() > 0
 
 def open_or_switch_to_editor(function):
-    aqt.dialogs.open("AddCards", mw)
-
     try:
+        aqt.dialogs.open("AddCards", mw)
         win = mw.app.activeWindow()
         if isinstance(win, aqt.addcards.AddCards):
             if isMac:
@@ -51,16 +50,18 @@ def open_or_switch_to_editor(function):
                     win[1].raise_()
                 else:
                     win[1].showMaximized()
+        mw.requireReset()
+        if state.get_bool(state.editor_is_ready):
+            function()
+        else:
+            print("else")
+            add_tmp_hook("editor-with-siac-initialised", lambda: function())
     except Exception as e:
+        print(traceback.format_exc())
         print("Failed to open.")
         print(e)
 
-    if state.editor_is_ready:
-        function()
-    else:
-        add_tmp_hook("editor-with-siac-initialised", lambda: function())
 
-    mw.requireReset()
     # mw.requireReset(reason=ResetReason.AddCardsAddNote)
 
 def show_queue_picker():
@@ -73,7 +74,6 @@ def show_queue_picker():
         if dialog.chosen_id() is not None and dialog.chosen_id() > 0:
             open_or_switch_to_editor(_open_id)
         else:
-            index = get_index()
             if Reader is not None:
                 Reader.reload_bottom_bar()
 
