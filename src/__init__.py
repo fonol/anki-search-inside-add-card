@@ -383,7 +383,7 @@ def insert_scripts():
     aqt.editor._html += js_css
 
 def set_editor_ready():
-    state.editor_is_ready = True
+    state.set_bool(state.editor_is_ready, True)
 
 def setup_hooks():
     """ Todo: move more add-on code to hooks. """
@@ -452,7 +452,7 @@ def reset_state(shortcuts: List[Tuple], editor: Editor):
 
     # might still be true if Create Note dialog was closed by closing its parent window, so reset it
     state.note_editor_shown = False
-    state.editor_is_ready   = False
+    state.set_bool(state.editor_is_ready, False)
 
     index                   = get_index()
     if index:
