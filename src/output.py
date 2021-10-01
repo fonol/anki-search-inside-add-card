@@ -979,8 +979,7 @@ class UI:
         config = mw.addonManager.getConfig(__name__)
         cls.show_search_result_area(editor, init_time)
         #restore previous settings
-        cmd = ""
-        cmd += f"$('#highlightCb').prop('checked', {str(cls.highlighting).lower()});"
+        cmd = f"$('#highlightCb').prop('checked', {str(cls.highlighting).lower()});"
         if not get_config_value_or_default("searchOnTyping", True):
             cmd += "$('#typingCb').prop('checked', false); setSearchOnTyping(false);"
         if not get_config_value_or_default("searchOnSelection", True):
