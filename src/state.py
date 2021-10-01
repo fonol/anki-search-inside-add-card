@@ -41,7 +41,7 @@ contextEvt          : Any                               = None
 corpus              : Optional[List[Tuple[Any, ...]]]   = None
 deck_map            : Optional[Dict[str, int]]          = None
 edit                : Optional[Editor]                  = None
-editor_is_ready     : bool                              = False
+editor_is_ready     : str                               = 'siac.editor_is_ready'
 interrupted_review  : bool                              = False
 
 
@@ -71,6 +71,12 @@ last_page_requested : Optional[int]                     = None
 
 shortcuts_failed    : List[str]                         = []
 
+def set_bool(key: str, val: bool):
+    os.environ[key] = str(val)
+
+def get_bool(key: str, default: Optional[bool] = False) -> bool:
+    def_value = str(default)
+    return bool(os.environ.get(key, def_value))
 
 # night mode
 def set_nightmode(b: bool):
