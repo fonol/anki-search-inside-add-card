@@ -92,7 +92,7 @@ body.siac-left-right-switched #siac-right-side {
     padding-left: 0px;
     padding-right: 10px;
 }
-body.siac-left-right-switched #fields {
+body.siac-left-right-switched .fields {
     padding-right: 0px;
     padding-left: 8px
 }
