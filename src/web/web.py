@@ -52,27 +52,15 @@ def getScriptPlatformSpecific() -> HTML:
         They could be exposed on the internal web server, but as they contain placeholders for config-defined styles,
         it is easier for now that way.
     """
-
-    icon_vars = """
-    :root {
-        --c-search-icn: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='black' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='black' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3C/g%3E%3C/svg%3E");
-
-        --c-search-icn-night: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect fill='none' id='canvas_background' height='14' width='14' y='-1' x='-1'/%3E%3Cg display='none' overflow='visible' y='0' x='0' height='100%25' width='100%25' id='canvasGrid'%3E%3Crect fill='url(%23gridpattern)' stroke-width='0' y='0' x='0' height='100%25' width='100%25'/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cellipse stroke='white' ry='2.301459' rx='2.317666' id='svg_10' cy='4.004963' cx='4.055105' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3Cline stroke='white' stroke-linecap='null' stroke-linejoin='null' id='svg_11' y2='9.969307' x2='10.003241' y1='5.722954' x1='5.497568' fill-opacity='null' stroke-opacity='null' stroke-width='1.3' fill='none'/%3E%3C/g%3E%3C/svg%3E");
-    }
-    """.replace("%", "%%")
-
     # css + js
     all = """
-    <style>
-        %s
-    </style>
     <style id='siac-styles'>
         %s
     </style>
     """
     css                 = styles()
 
-    return all % (icon_vars, css)
+    return all % (css)
 
 def styles() -> str:
     """ Returns the content of styles.css with all config values inserted. """
