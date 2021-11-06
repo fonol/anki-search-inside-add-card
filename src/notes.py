@@ -1323,7 +1323,7 @@ def find_notes(text: str) -> List[SiacNote]:
             q = f"{q} or lower(title) like '%{token}%'"
     q = q[4:] if len(q) > 0 else ""
     if len(q) == 0:
-        return
+        return []
     conn = _get_connection()
     res = conn.execute(f"select * from notes where ({q}) order by id desc").fetchall()
     conn.close()
