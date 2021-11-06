@@ -173,7 +173,7 @@ def on_webview_will_set_content(web_content: Any, context):
     
     print("[SIAC] on_webview_will_set_content()")
 
-    web_content.head += getScriptPlatformSpecific()
+    web_content.head += get_styles()
     web_content.body += insert_scripts()
  
 def on_reviewer_did_show_question(card):
