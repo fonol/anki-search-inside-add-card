@@ -43,7 +43,7 @@ def toggleAddon() -> JS:
     return "toggleAddon();"
 
 
-def getScriptPlatformSpecific() -> HTML:
+def get_styles() -> HTML:
     """
         Returns the css and js used by the add-on in <style>/<script> tags.
         Some placeholders in the scripts.js file and in the styles.css file are replaced
@@ -131,7 +131,6 @@ def reload_styles():
     """ Refresh the css variables in the editor's style tag. For use e.g. after config color options have been changed. """
 
     css                 = styles()
-    aqt.editor._html    = re.sub("<style id='siac-styles'>(?:\r\n|\n|.)+?</style>", f"<style id='siac-styles'>{css}</style>", aqt.editor._html)
     editor              = UI._editor
 
     if editor is not None:
@@ -145,7 +144,7 @@ def activate_nightmode(shortcuts: List[Tuple], editor: Editor):
     """ Activate dark theme if Anki's night mode is active. """
 
     editor.web.eval("""
-    if (document.body.classList.contains('nightMode')) {
+    if (document.body.classList.contains('nightMode') || document.body.classList.contains('night-mode')) {
         var props = [];
         for (var i = 0; i < document.styleSheets.length; i++){
             try {
