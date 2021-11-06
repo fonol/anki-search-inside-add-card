@@ -29,7 +29,7 @@ class TagAssignDialog(QDialog):
     """ Fetch a URL to load the page into the note text. """
 
     def __init__(self, parent, nids: List[int]):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.tags       = None
         self.parent     = parent

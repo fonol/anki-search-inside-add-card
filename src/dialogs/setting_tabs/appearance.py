@@ -123,7 +123,7 @@ class AppearanceSettingsTab(QWidget):
 
             gridbox.setColumnStretch(0, 1)
             gridbox.setColumnStretch(2, 1)
-            gridbox.setAlignment(Qt.AlignTop)
+            gridbox.setAlignment(Qt.AlignmentFlag.AlignTop)
 
 
         self.setLayout(gridbox)

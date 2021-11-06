@@ -15,6 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 window.SIAC.State = {
+    noteId: 0,
     selectedDecks: ["-1"],
     timeout: null,
     isFrozen: false,
@@ -293,7 +294,7 @@ window.switchLeftRight = function () {
  */
 window.onWindowResize = function (fitPdfToPage = true) {
 
-    let btnBar = byId("topbutsOuter") || document.querySelector("nav");
+    let btnBar = byId("topbutsOuter") || document.querySelector("nav") || document.querySelector('.btn-toolbar');
     let offsetTop = btnBar.offsetHeight + 3;
 
     // Anki 2.1.41+ uses sticky on the top row, so in that case, we don't have to set a margin-top
@@ -528,8 +529,11 @@ window.setSearchResults = function (header, html, infoStr, infoMap, page = 1, pa
         SIAC.State.lastHadResults = true;
     else
         SIAC.State.lastHadResults = false;
-    if (!$searchInfo.hasClass('hidden'))
-        $searchInfo.get(0).style.display = "flex";
+    if (!window.$searchInfo) {
+        window.$searchInfo = byId('searchInfo');
+    }
+    if (!$searchInfo.classList.contains('hidden'))
+        $searchInfo.style.display = "flex";
    
     if (SIAC.State.gridView)
         $('#searchResults .cardWrapper').css("display", "inline-block");

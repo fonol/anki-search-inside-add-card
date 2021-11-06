@@ -124,7 +124,7 @@ class NoteEditor(QDialog):
                  text_prefill = None, title_prefill = None, prio_prefill = None,
                  author_prefill = None, url_prefill = None, prefill_with_opened_note = False):
 
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.WindowMaximizeButtonHint | Qt.WindowType.WindowMinimizeButtonHint)
 
         self.mw             = aqt.mw
         self.parent         = parent
@@ -150,7 +150,8 @@ class NoteEditor(QDialog):
                 self.prio_prefill = get_last_priority(open_note.id)
 
 
-        self.screen_h       = QApplication.desktop().screenGeometry().height()
+        # self.screen_h       = QApplication.desktop().screenGeometry().height()
+        self.screen_h       = QGuiApplication.screens()[0].size().height()
 
         if self.note_id is not None:
             self.note = get_note(note_id)
@@ -190,14 +191,14 @@ class NoteEditor(QDialog):
                 self.priority = self.prio_prefill
 
             self.save_and_stay = QPushButton(" \u2714 Create && Keep Open ")
-            self.save_and_stay.setFocusPolicy(Qt.NoFocus)
+            self.save_and_stay.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             self.save_and_stay.clicked.connect(self.on_create_and_keep_open_clicked)
             self.save_and_stay.setShortcut("Ctrl+Shift+Return")
             self.save_and_stay.setToolTip("Ctrl+Shift+Return")
 
         self.save.setShortcut("Ctrl+Return")
         self.save.setToolTip("Ctrl+Return")
-        self.save.setFocus(True)
+        self.save.setFocus()
         self.cancel = QPushButton("Cancel")
         self.cancel.clicked.connect(self.reject)
         priority_list = _get_priority_list()
@@ -426,9 +427,9 @@ class CreateTab(QWidget):
             self.text.setMinimumWidth(470)
 
         self.text.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Expanding)
-        self.text.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding)
+        self.text.setFrameStyle(QFrame.StyledPanel | QFrame.Shadow.Sunken)
         self.text.setLineWidth(2)
         if hasattr(self.text, "setTabStopDistance"):
             self.text.setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 4)
@@ -437,7 +438,7 @@ class CreateTab(QWidget):
 
         clean_btn = QPushButton()
         clean_btn.setText("Clean...  ")
-        clean_btn.setFocusPolicy(Qt.NoFocus)
+        clean_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         clean_menu = QMenu(clean_btn)
         if self.parent.dark_mode_used:
             clean_menu.setStyleSheet("""
@@ -460,12 +461,12 @@ class CreateTab(QWidget):
         t_h.addWidget(clean_btn)
 
         url_btn = QPushButton(u"Fetch from URL ... ")
-        url_btn.setFocusPolicy(Qt.NoFocus)
+        url_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         url_btn.clicked.connect(self.on_url_clicked)
         t_h.addWidget(url_btn)
 
         self.preview_btn = QPushButton("Preview")
-        self.preview_btn.setFocusPolicy(Qt.NoFocus)
+        self.preview_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.preview_btn.clicked.connect(self.on_preview_clicked)
         t_h.addWidget(self.preview_btn)
 
@@ -481,7 +482,7 @@ class CreateTab(QWidget):
             self.preview.setMinimumHeight(380)
             self.preview.setMinimumWidth(470)
 
-        self.preview.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.preview.setSizePolicy( QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.preview.setVisible(False)
         vbox.addWidget(self.preview)
 
@@ -503,7 +504,7 @@ class CreateTab(QWidget):
 
         source_btn = QPushButton("")
         source_btn.setText("Source...  ")
-        source_btn.setFocusPolicy(Qt.NoFocus)
+        source_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         source_menu = QMenu(source_btn)
         if self.parent.dark_mode_used:
             source_menu.setStyleSheet("""
@@ -561,7 +562,7 @@ class CreateTab(QWidget):
         tag_lbl2.setPixmap(tag_icn)
 
         tag_hb2 = QHBoxLayout()
-        tag_hb2.setAlignment(Qt.AlignLeft)
+        tag_hb2.setAlignment(Qt.AlignmentFlag.AlignLeft)
         tag_hb2.addWidget(tag_lbl2)
         tag_hb2.addWidget(QLabel("Tags"))
 
@@ -584,11 +585,11 @@ class CreateTab(QWidget):
 
 
         self.slider = QtPrioritySlider(self.parent.priority, self.parent.note_id, show_spec_sched=False, show_similar=False)
-        self.slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.slider.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         vbox.addWidget(self.slider)
         # vbox.addStretch()
 
-        vbox.setAlignment(Qt.AlignTop)
+        vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
         vbox.addSpacing(10)
         vbox.addLayout(hbox)
         vbox.setSpacing(5)
@@ -814,7 +815,7 @@ class ScheduleTab(QWidget):
         vbox_priority.addWidget(self.scheduler)
 
         widget_priority = QWidget()
-        widget_priority.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
+        widget_priority.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
         widget_priority.setLayout(vbox_priority)
 
@@ -840,17 +841,17 @@ class PriorityTab(QWidget):
         self.set_remove_btns(priority_list)
 
         self.t_view.resizeColumnsToContents()
-        self.t_view.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.t_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
         if priority_list is not None and len(priority_list) > 0:
-            self.t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-            self.t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-            self.t_view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+            self.t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+            self.t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+            self.t_view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
 
         self.t_view.resizeRowsToContents()
 
         self.t_view.verticalHeader().setSectionsMovable(False)
-        self.t_view.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.t_view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
 
         self.vbox = QVBoxLayout()
         lbl = QLabel("'Remove' will only remove the item from the queue, not delete it.")
@@ -975,12 +976,12 @@ class SettingsTab(QWidget):
         self.layout.addSpacing(15)
 
         lbl = QLabel("Queue Settings")
-        lbl.setAlignment(Qt.AlignCenter)
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(lbl)
 
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         self.layout.addWidget(line)
 
         self.priority_mod_le = QDoubleSpinBox()

@@ -35,7 +35,7 @@ class UrlImporter(QDialog):
         Used to generate a pdf file from an url.
     """
     def __init__(self, parent, show_schedule=True):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.chosen_url     = None
         self._chosen_name   = None

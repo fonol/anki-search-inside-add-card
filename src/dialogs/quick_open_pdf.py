@@ -48,7 +48,7 @@ class QuickOpenNote(QDialog):
     """
     def __init__(self, parent):
         self.chosen_id = None 
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
         self.mw = aqt.mw
         self.parent = parent
         try:
@@ -70,20 +70,20 @@ class QuickOpenNote(QDialog):
         self.input.setFocus()
 
         lbl = QLabel("Ctrl + <Number>") 
-        lbl.setAlignment(Qt.AlignCenter)
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.vbox.addWidget(lbl)
 
 
         self.sug_list = QTableWidget()
         self.sug_list.setColumnCount(4)
         self.sug_list.setHorizontalHeaderLabels(["Title", "Type", "Prio", ""])
-        self.sug_list.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.sug_list.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.sug_list.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.sug_list.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.sug_list.setSelectionMode(QAbstractItemView.NoSelection)
-        self.sug_list.setFocusPolicy(Qt.NoFocus)
-        self.sug_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.sug_list.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.sug_list.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.sug_list.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.sug_list.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.sug_list.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.sug_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.sug_list.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.sug_list.verticalHeader().setVisible(False)
         self.sug_list.setMinimumWidth(400)
         self.sug_list.setMinimumHeight(350)
@@ -174,7 +174,7 @@ class QuickOpenNote(QDialog):
                 title = QTableWidgetItem(f"{ix+1}.  {note.get_title()}")
             else:
                 title = QTableWidgetItem(note.get_title())
-            title.setData(Qt.UserRole, QVariant(note.id))
+            title.setData(Qt.ItemDataRole.UserRole, QVariant(note.id))
 
             ntype = QTableWidgetItem(note.get_note_type())
             if note.priority is None or note.priority == 0:
@@ -182,7 +182,7 @@ class QuickOpenNote(QDialog):
             else:
                 prio  = QLabel(str(int(note.priority)))
                 prio.setStyleSheet(f"background-color: {utility.misc.prio_color(note.priority)}; color: white; font-size: 14px; text-align: center;")
-            prio.setAlignment(Qt.AlignCenter)
+            prio.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             edit_btn = QToolButton()
             edit_btn.setText(u"\u270E")

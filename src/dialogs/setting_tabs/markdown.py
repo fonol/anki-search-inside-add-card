@@ -46,7 +46,7 @@ class MarkdownSettingsTab(QWidget):
         hbox.addWidget(dir_btn)
         vbox.addLayout(hbox)
 
-        vbox.setAlignment(Qt.AlignTop)
+        vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.setLayout(vbox)
 
     def on_dir_btn(self):

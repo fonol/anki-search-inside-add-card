@@ -41,7 +41,7 @@ class PostponeDialog(QDialog):
         self.layout.setContentsMargins(30,20,30,10)
 
         header      = QLabel(f"Postpone ({shortcut})")
-        header.setAlignment(Qt.AlignCenter)
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header.setStyleSheet("font-size: 15px; font-weight: bold;")
         self.layout.addSpacing(5)
         self.layout.addWidget(header)
@@ -128,7 +128,7 @@ class PostponeDialog(QDialog):
         self.layout.addSpacing(30)
         self.layout.addLayout(self.hbox)
         self.layout.addSpacing(10)
-        self.layout.setAlignment(Qt.AlignHCenter)
+        self.layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.setLayout(self.layout)
         self.setMinimumWidth(300)
 

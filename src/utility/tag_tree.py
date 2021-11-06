@@ -54,7 +54,7 @@ class TagTree(QTreeWidget):
             tag_fg                  = config["styles.tagForegroundColor"]
 
         self.recursive_build_tree(self.map)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMinimumHeight(150)
         self.setMinimumWidth(220)
 
@@ -68,7 +68,7 @@ class TagTree(QTreeWidget):
 
             self.itemExpanded.connect(self.item_expanded)
         else:
-            self.setSelectionMode(QAbstractItemView.NoSelection)
+            self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
             self.setColumnCount(1)
             self.setHeaderHidden(True)
 

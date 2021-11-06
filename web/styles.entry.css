@@ -914,9 +914,9 @@ summary, summary:focus {
     position: relative;
 }
 .siac-fld-sel-menu {
-    position: absolute;
+    /* position: absolute;
     right: 0;
-    top: 0;
+    top: 0; */
     height: 100%;
     display: flex;
     align-items: center;

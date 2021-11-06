@@ -25,7 +25,7 @@ class TagChooserDialog(QDialog):
     """Dialog for choosing the appropriate tag from the note editor"""
 
     def __init__(self, tag_string, parent):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.mw             = aqt.mw
         self.parent         = parent
@@ -45,7 +45,7 @@ class TagChooserDialog(QDialog):
         tag_lbl.setPixmap(tag_icn)
 
         tag_hb = QHBoxLayout()
-        tag_hb.setAlignment(Qt.AlignLeft)
+        tag_hb.setAlignment(Qt.AlignmentFlag.AlignLeft)
         tag_hb.addWidget(tag_lbl)
         tag_hb.addWidget(QLabel("Tags (Click to Add)"))
 

@@ -64,8 +64,8 @@ class QtPrioritySlider(QWidget):
         vbox.addWidget(self.slider)
 
         self.value_lbl          = QLabel(str(prio_default))
-        self.value_lbl.setAlignment(Qt.AlignCenter)
-        self.value_lbl.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.value_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.value_lbl.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
 
         hvalue                  = QHBoxLayout()
         hvalue.addSpacing(40)
@@ -75,7 +75,7 @@ class QtPrioritySlider(QWidget):
 
         avg_lbl                 = QLabel(f"Ø: {self.avg_prio}")
         avg_lbl.setStyleSheet(f"padding-left: 4px; padding-right: 4px; color: white; background-color: {utility.misc.prio_color(self.avg_prio)};")
-        avg_lbl.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        avg_lbl.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         hvalue.addWidget(avg_lbl)
         vbox.addLayout(hvalue)
 
@@ -94,7 +94,7 @@ class QtPrioritySlider(QWidget):
         vbox_outer.addWidget(box)
         self.setLayout(vbox_outer)
 
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
         self.update_lbl()
         self.slider.valueChanged.connect(self.update_lbl)
@@ -217,12 +217,12 @@ class ScheduleSettingsTab(QWidget):
         self.setLayout(QVBoxLayout())
 
         header          = QLabel("General scheduling settings")
-        header.setAlignment(Qt.AlignCenter)
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout().addWidget(header)
 
         line            = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         self.layout().addWidget(line)
 
         self.layout().addStretch()
@@ -270,12 +270,12 @@ class ScheduleEditTab(QWidget):
         if self.parent.has_schedule:
 
             s_rep_label         = QLabel(utility.date.schedule_verbose(self.parent.initial_schedule))
-            s_rep_label.setAlignment(Qt.AlignCenter)
+            s_rep_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.vbox.addWidget(s_rep_label)
 
             line                = QFrame()
-            line.setFrameShape(QFrame.HLine)
-            line.setFrameShadow(QFrame.Sunken)
+            line.setFrameShape(QFrame.Shape.HLine)
+            line.setFrameShadow(QFrame.Shadow.Sunken)
             self.vbox.addSpacing(5)
             self.vbox.addWidget(line)
             self.vbox.addSpacing(5)
@@ -625,17 +625,17 @@ class NoteSelector(QWidget):
         self.layout.setSpacing(3)
 
         lbl_sel = QLabel("Selection")
-        lbl_sel.setAlignment(Qt.AlignCenter)
+        lbl_sel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(lbl_sel)
         self.selected_list = QTableWidget()
         self.selected_list.setColumnCount(3)
         self.selected_list.setHorizontalHeaderLabels(["", "Title", "Type"])
-        self.selected_list.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.selected_list.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.selected_list.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.selected_list.setSelectionMode(QAbstractItemView.NoSelection)
-        self.selected_list.setFocusPolicy(Qt.NoFocus)
-        self.selected_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.selected_list.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.selected_list.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.selected_list.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.selected_list.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.selected_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.selected_list.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.selected_list.setMaximumHeight(80)
         self.layout.addWidget(self.selected_list)
 
@@ -646,17 +646,17 @@ class NoteSelector(QWidget):
         self.input.setPlaceholderText("Type to search")
         self.layout.addWidget(self.input)
         self.lbl_sr = QLabel("Search Results")
-        self.lbl_sr.setAlignment(Qt.AlignCenter)
+        self.lbl_sr.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.lbl_sr)
         self.list = QTableWidget()
         self.list.setColumnCount(3)
         self.list.setHorizontalHeaderLabels(["", "Title", "Type"])
-        self.list.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.list.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.list.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.list.setSelectionMode(QAbstractItemView.NoSelection)
-        self.list.setFocusPolicy(Qt.NoFocus)
-        self.list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.list.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.list.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.list.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.list.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.list.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
         self.layout.addWidget(self.list)
 
@@ -712,11 +712,11 @@ class NoteSelector(QWidget):
             lcb = QHBoxLayout()
             cw.setLayout(lcb)
             lcb.addWidget(cb)
-            lcb.setAlignment(Qt.AlignCenter)
+            lcb.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lcb.setContentsMargins(0,0,0,0)
 
             title = QTableWidgetItem(n.get_title())
-            title.setData(Qt.UserRole, QVariant(n.id))
+            title.setData(Qt.ItemDataRole.UserRole, QVariant(n.id))
 
             ntype = QTableWidgetItem(n.get_note_type())
 

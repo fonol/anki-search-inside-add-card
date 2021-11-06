@@ -86,7 +86,7 @@ class DoneDialog(QDialog):
 
         self.layout.addLayout(self.hbox)
         self.setLayout(self.layout)
-        self.accept_btn.setFocus(True)
+        self.accept_btn.setFocus()
         self.setMinimumWidth(300)
 
     def on_accept(self):
@@ -152,7 +152,7 @@ class DoneTab(QWidget):
         self.tag_filter_cb.setMenu(menu)
 
         clear_btn = QToolButton()
-        clear_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
+        clear_btn.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
         clear_btn.clicked.connect(self.clear_tag_filter)
         tag_filter_hb.addSpacing(2)
         tag_filter_hb.addWidget(clear_btn)

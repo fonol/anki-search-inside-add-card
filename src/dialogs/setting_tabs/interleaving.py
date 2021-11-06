@@ -82,7 +82,7 @@ class InterleavingSettingsTab(QWidget):
         self.sb_every_n_card.setSuffix(" card(s)")
         hbox_every_n.addWidget(self.rb_every_n)
         hbox_every_n.addWidget(self.sb_every_n_card)
-        hbox_every_n.setAlignment(Qt.AlignLeft)
+        hbox_every_n.setAlignment(Qt.AlignmentFlag.AlignLeft)
         vbox.addLayout(hbox_every_n)
 
         # due_random
@@ -96,7 +96,7 @@ class InterleavingSettingsTab(QWidget):
         self.sb_fuzz.setSuffix("%")
         hbox_random_due.addWidget(self.rb_random_due)
         hbox_random_due.addWidget(self.sb_fuzz)
-        hbox_random_due.setAlignment(Qt.AlignLeft)
+        hbox_random_due.setAlignment(Qt.AlignmentFlag.AlignLeft)
         vbox.addLayout(hbox_random_due)
 
         # group radiobuttons, preset
@@ -120,7 +120,7 @@ class InterleavingSettingsTab(QWidget):
         self.cb_cards_are_due_overlay.setChecked(self.previous_cards_are_due_overlay)
         vbox.addWidget(self.cb_cards_are_due_overlay)
 
-        vbox.setAlignment(Qt.AlignTop)
+        vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.setLayout(vbox)
 
     def save_changes(self):

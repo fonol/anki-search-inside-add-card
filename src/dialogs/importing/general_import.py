@@ -127,7 +127,7 @@ class Ui_OrganiserDialog(object):
     def setupUi(self, OrganiserDialog):
         OrganiserDialog.setObjectName("OrganiserDialog")
         OrganiserDialog.resize(525, 536)
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Policy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(OrganiserDialog.sizePolicy().hasHeightForWidth())

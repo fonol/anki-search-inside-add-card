@@ -596,6 +596,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
                 os.remove(image)
     
     elif cmd.startswith("siac-add-image-to-fld "):
+        # append the given base 64 encoded image to the field with the given index
         fld_ix  = int(cmd.split()[1])
         b64     = cmd.split()[2][13:]
         image   = utility.misc.base64_to_file(b64)
@@ -975,15 +976,17 @@ def add_note_to_index(note: Note):
 def add_tag(tag: str):
     """ Insert the given tag in the tag field at bottom if not already there. """
 
-    index = get_index()
-    if tag == "" or index is None or UI._editor is None:
-        return
-    tagsExisting = UI._editor.tags.text()
-    if (tag == tagsExisting or  " " +  tag + " " in tagsExisting or tagsExisting.startswith(tag + " ") or tagsExisting.endswith(" " + tag)):
-        return
+    # index = get_index()
+    # if tag == "" or index is None or UI._editor is None:
+    #     return
+    # tagsExisting = UI._editor.tags.text()
+    # if (tag == tagsExisting or  " " +  tag + " " in tagsExisting or tagsExisting.startswith(tag + " ") or tagsExisting.endswith(" " + tag)):
+    #     return
 
-    UI._editor.tags.setText(tagsExisting + " " + tag)
-    UI._editor.saveTags()
+    # UI._editor.tags.setText(tagsExisting + " " + tag)
+    # UI._editor.saveTags()
+
+    UI.js("setTags("+tag.replace('"', '\\"')+")")
 
 @requires_index_loaded
 def set_pinned(cmd: str):
@@ -1087,15 +1090,16 @@ def capture_web(fld_ix: int, t: int, l: int, w: int, h: int):
     """ Save the given rectangle part of the webview as image. """
 
     web     = UI._editor.web
-    image   = QImage(w, h, QImage.Format_ARGB32)
+    image   = QImage(w, h, QImage.Format.Format_ARGB32)
     region  = QRegion(l, t, w, h)
     painter = QPainter(image)
 
-    web.page().view().render(painter, QPoint(), region)
+    page    = web.page()
+    QWebEngineView.forPage(page).render(painter, QPoint(), region)
     painter.end()
     ba      = QByteArray()
     buf     = QBuffer(ba)
-    buf.open(QBuffer.ReadWrite)
+    # buf.open(QImage.OpenMode.ReadWrite)
     image.save(buf, "JPG", 100)
     b64     = ba.toBase64()
     buf.close()
@@ -1135,7 +1139,6 @@ def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: i
             fld_name    = "Text"
 
         model           = mw.col.models.byName(model_name)
-        index           = get_index()
         if model is None:
             tooltip("""Could not resolve note model.<br>
             If you don't have a note type called 'Cloze', try filling 'pdf.clozegen.notetype' in the config. """, period=8000)

@@ -86,8 +86,10 @@ def init_addon():
     state.window_mode = state.WindowMode[config["window_mode"]]
 
     gui_hooks.profile_did_open.append(build_index)
-    gui_hooks.profile_did_open.append(insert_scripts)
+    # gui_hooks.profile_did_open.append(insert_scripts)
     gui_hooks.profile_did_open.append(lambda : recalculate_priority_queue(True))
+
+    gui_hooks.webview_will_set_content.append(on_webview_will_set_content)
 
     if conf_or_def("searchOnTagEntry", True):
         TagEdit.keyPressEvent = wrap(TagEdit.keyPressEvent, tag_edit_keypress, "around")
@@ -96,6 +98,7 @@ def init_addon():
 
     # add new notes to search index when adding
     gui_hooks.add_cards_did_add_note.append(add_note_to_index)
+    # save that a note has been created while on a certain pdf page
     gui_hooks.add_cards_did_add_note.append(save_pdf_page)
 
     # update notes in index when changed through the "Edit" button
@@ -117,11 +120,8 @@ def init_addon():
     # add-on internal hooks
     setup_hooks()
 
-    # add shortcuts
-    aqt.editor._html += """ <script> document.addEventListener("keydown", function (e) { if (typeof (globalKeydown) !== 'undefined') globalKeydown(e); }, false); </script>"""
-
     #this inserts all the javascript functions in scripts.js into the editor webview
-    aqt.editor._html += getScriptPlatformSpecific()
+    # aqt.editor._html += getScriptPlatformSpecific()
 
     # patch webview dropevent to catch pdf file drop
     aqt.editor.EditorWebView.dropEvent =  wrap(aqt.editor.EditorWebView.dropEvent, webview_on_drop, "around")
@@ -168,6 +168,26 @@ def on_reviewer_did_answer(reviewer, card, ease):
         return
 
     review_interruptor()
+
+def on_webview_will_set_content(web_content: Any, context):
+                
+    if not isinstance(context, aqt.editor.Editor):
+        return
+    
+    print("on_webview_will_set_content()")
+    
+    
+    addon_package = mw.addonManager.addonFromModule(__name__)
+    
+    # web_content.css.append(
+        # f"/_addons/{addon_package}/web/my-addon.css")
+    # web_content.js.append(
+        # f"/_addons/{addon_package}/web/my-addon.js")
+    # web_content.head += "<script>console.log('my-addon')</script>
+
+    web_content.head += getScriptPlatformSpecific()
+    web_content.body += insert_scripts()
+    # web_content.body += f"<script type='text/javascript'>{right_side_html()}</script>"
  
 def on_reviewer_did_show_question(card):
     win = aqt.mw.app.activeWindow()
@@ -226,6 +246,7 @@ def on_load_note(editor: Editor):
                 SIAC.State.tagHoverTimeout      = {conf_or_def("tagHoverDelayInMiliSec", 1000)};
                 SIAC.State.typingDelay          = {typing_delay};
                 SIAC.Colors.pdfColorMode        = "{pdf_color_mode}";
+                SIAC.State.noteId               = {editor.note.id};
 
                 SIAC.Fields.cacheFields();
                 document.addEventListener('mouseup', onTextSelectionChange);
@@ -264,6 +285,7 @@ def on_load_note(editor: Editor):
         # render the right side (search area) of the editor
         # (the script checks if it has been rendered already)
         editor.web.evalWithCallback(right_side_html(index is not None), cb)
+        print("on_load_note > right_side_html()")
 
 
     if get_edit() is None and editor is not None:
@@ -332,6 +354,7 @@ def insert_scripts():
     
     js_css = css(f"_addons/{addon_id}/web/dist/styles.min.css")
     js_css += js(f"_addons/{addon_id}/web/dist/siac.min.js")
+    js_css += js(f"_addons/{addon_id}/web/jquery.min.js")
     js_css += css(f"_addons/{addon_id}/web/fa/css/font-awesome.min.css")
     js_css += js(f"_addons/{addon_id}/web/simple_mde/simplemde.min.js")
     js_css += css(f"_addons/{addon_id}/web/simple_mde/simplemde.min.css")
@@ -342,8 +365,8 @@ def insert_scripts():
     js_css += css(f"_addons/{addon_id}/web/pdfjs/textlayer.css")
     js_css += css(f"_addons/{addon_id}/web/pdf_reader.css")
     js_css += js(f"_anki/js/vendor/mathjax/tex-chtml.js", timeout=400)
-    js_css += js(f"_addons/{addon_id}/web/dist/vuejs/js/main.js")
-    js_css += css(f"_addons/{addon_id}/web/dist/vuejs/css/main.css")
+    # js_css += js(f"_addons/{addon_id}/web/dist/vuejs/js/main.js")
+    # js_css += css(f"_addons/{addon_id}/web/dist/vuejs/css/main.css")
     js_css += js(f"_addons/{addon_id}/web/cal-heatmap.min.js", timeout=200)
 
     js_css = f"""<script>
@@ -376,11 +399,15 @@ def insert_scripts():
         document.head.appendChild(font_style);
         font_style.type = 'text/css';
         font_style.appendChild(document.createTextNode(css));
+
+        document.addEventListener("keydown", function (e) {{ if (typeof (globalKeydown) !== 'undefined') globalKeydown(e); }}, false);
         }})();
     </script>"""
 
+    print("insert_scripts()")
 
-    aqt.editor._html += js_css
+    # aqt.editor._html += js_css
+    return js_css
 
 def set_editor_ready():
     state.set_bool(state.editor_is_ready, True)

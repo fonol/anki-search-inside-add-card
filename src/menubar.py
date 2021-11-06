@@ -6,7 +6,7 @@ from aqt.utils import showInfo, tooltip
 from .dialogs.editor import NoteEditor
 from .dialogs.importing.zotero_import import ZoteroImporter
 from .dialogs.importing.quick_youtube_import import QuickYoutubeImport
-from .dialogs.importing.quick_web_import import QuickWebImport
+# from .dialogs.importing.quick_web_import import QuickWebImport
 from .dialogs.importing.general_import import NoteImporterDialog
 from .dialogs.settings import SettingsDialog
 #from .dialogs.knowledge_tree import KnowledgeTree
@@ -31,7 +31,7 @@ class Menu():
 
         import_options=( #SHORTCUT_CONF_KEY, TITLE, CALLBACK
             ("shortcuts.menubar.import.create_new", "Create New",           self.import_create_new),
-            ("shortcuts.menubar.import.web",        "Web",    self.import_web),
+            # ("shortcuts.menubar.import.web",        "Web",    self.import_web),
             ("shortcuts.menubar.import.youtube",    "YouTube",       self.import_youtube),
             ("shortcuts.menubar.import.zotero_csv", "Zotero CSV",    self.import_zotero),
             # WIP https://github.com/fonol/anki-search-inside-add-card/issues/191
@@ -59,12 +59,12 @@ class Menu():
         if dialog.exec_():
             tooltip(f"Created {dialog.total_count} notes.")
 
-    def import_web(self):
-        if self.quick_web is None:
-            self.quick_web = QuickWebImport()
+    # def import_web(self):
+    #     if self.quick_web is None:
+    #         self.quick_web = QuickWebImport()
 
-        self.quick_web.show()
-        self.quick_web.raise_()
+    #     self.quick_web.show()
+    #     self.quick_web.raise_()
 
     def import_general(self):
 
@@ -148,7 +148,8 @@ def add_menu_actions(menu, menu_options):
         act = QAction(t,menu)
         if hk:
             act.setShortcut(QKeySequence(hk))
-            act.setShortcutContext(Qt.ApplicationShortcut)
+            act.setShortcutContext(Qt.ShortcutContext.ApplicationShortcut)
+
 
         if len(mp) > 3:
             icon = mp[3]

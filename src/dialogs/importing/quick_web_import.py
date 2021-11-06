@@ -89,8 +89,8 @@ class QuickWebImport(QWidget):
         self.setMinimumWidth(900)
 
         line                    = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
 
         back_btn = QPushButton(" < ")
         back_btn.clicked.connect(self.back)
@@ -526,7 +526,7 @@ class SearchBar(QWidget):
 
     def showEvent(self, event):
         super(SearchBar, self).showEvent(event)
-        self.setFocus(True)
+        self.setFocus()
 
     search_sig = pyqtSignal(str, QWebEnginePage.FindFlag)
     close_sig = pyqtSignal()

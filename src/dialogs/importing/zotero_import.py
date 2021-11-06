@@ -34,7 +34,7 @@ class ZoteroImporter(QDialog):
     """ Create pdf notes from a Zotero exported CSV file. """
 
     def __init__(self, parent):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.queue_schedule = 0
         self.mw             = aqt.mw

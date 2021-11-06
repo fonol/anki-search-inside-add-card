@@ -41,17 +41,24 @@ window.SIAC.Fields = {
         }
     },
     setSelectionMouseUpEventListener: function() {
-        $('.field').attr('onmouseup', 'getSelectionText()');
+        let flds = document.getElementsByClassName('editor-field');
+        if (!flds || !flds.length) {
+            console.warn('[SIAC] setSelectionMouseUpEventListener(): no field elements found.');
+            return;
+        }
+        for (let e of flds) {
+            e.setAttribute('onmouseup', 'getSelectionText()');
+        }
     },
     getFocusedFieldText: function() {
         if (window.getCurrentField) {
             return window.getCurrentField().shadowRoot.querySelector('anki-editable').innerText;
         }
-        let f = $('.field:focus').first();
-        if (!f.length) {
+        let f = document.querySelector('.field:focus');
+        if (!f) {
             return null;
         }
-        return f.text();
+        return f.innerText;
     },
     saveField: function(ix) {
         // $(this._fields[ix]).trigger('blur');
@@ -98,15 +105,23 @@ window.SIAC.Fields = {
     },
     cacheFields: function() {
         this._fields = [];
-        if (!$('#fields [contenteditable]').length) {
-            // 2.1.41+
-            let fields = document.querySelectorAll('.field');
-            for (let f of fields) {
-                this._fields.push(f.shadowRoot.querySelector('anki-editable'));
+
+        let fields = document.querySelectorAll('.editing-area');
+        if (!fields||!fields.length||!fields[0].children[0].shadowRoot||!fields[0].children[0].shadowRoot.querySelector('anki-editable')) {
+            console.info('[SIAC] cacheFields(): .editing-area not found, retrying in 30ms.');
+            setTimeout(this.cacheFields, 30);
+            return;
+        }
+        for (let f of fields) {
+            let el = f.children[0].shadowRoot.querySelector('anki-editable');
+            if (!el) {
+                console.warn('[SIAC] cacheFields(): failed to find field element.');
+                continue;
             }
-        } else {
-            // - 2.1.40
-            this._fields = document.querySelectorAll('.field');
+            this._fields.push(el);
+        }
+        if (!this._fields.length) {
+            console.warn("[SIAC] cacheFields(): failed to find any fields.");
         }
     },
     count: function() {
@@ -129,27 +144,26 @@ window.SIAC.Fields = {
             return getNoteId();
         }
         // - 2.1.40
-        return currentNoteId;
+        return SIAC.State.noteId;
     },
 
     displaySelectionMenu: function() {
         this.hideSelectionMenu();
-        let fnames = document.querySelectorAll('.fname');
+        let fnames = document.querySelectorAll('.field-state');
+        if (!fnames.length) {
+            console.warn("[SIAC] .field-state not found.");
+            return;
+        }
         for (var i = 0; i < fnames.length; i++) {
             let div = document.createElement("div");
             div.classList.add('siac-fld-sel-menu');
             let sc_icon = i < 9 ? `<b title="CTRL/CMD + ${i+1}: Send to this field">${i+1}</b>` : '';
             div.innerHTML = `
                 <i class='fa fa-reply-all' onmousedown='SIAC.Fields.appendSelectionToFieldHtml(${i})'></i>
-                <i class='fa fa-picture-o ml-5' onmousedown='event.preventDefault(); selectionSnapshot(${i}); return false;'></i>
+                <i class='fa fa-picture-o ml-5' title='Append selection as image to this field' onmousedown='event.preventDefault(); selectionSnapshot(${i}); return false;'></i>
                 ${sc_icon} 
                 `;
-            if (typeof getEditorField !== "undefined") {
-                getEditorField(i).labelContainer.appendChild(div);
-            } else {
-                fnames[i].appendChild(div);
-            }
-
+            fnames[i].appendChild(div);
         }
 
 

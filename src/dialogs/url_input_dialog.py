@@ -30,7 +30,7 @@ class URLInputDialog(QDialog):
     """ Fetch a URL to load the page into the note text. """
 
     def __init__(self, parent):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.chosen_url = None
         self.parent     = parent

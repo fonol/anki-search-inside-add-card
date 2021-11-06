@@ -357,8 +357,10 @@ class Reader:
 
         # auto fill tag entry if pdf has tags and config option is set
         if note.tags is not None and len(note.tags.strip()) > 0 and get_config_value_or_default("pdf.onOpen.autoFillTagsWithPDFsTags", True):
-            cls._editor.tags.setText(" ".join(mw.col.tags.canonify(mw.col.tags.split(note.tags))))
-            cls._editor.note.tags = mw.col.tags.canonify(mw.col.tags.split(note.tags))
+            UI.js('setTags(%s)' % json.dumps(mw.col.tags.canonify(mw.col.tags.split(note.tags))))
+
+            # cls._editor.tags.setText(" ".join(mw.col.tags.canonify(mw.col.tags.split(note.tags))))
+            # cls._editor.note.tags = mw.col.tags.canonify(mw.col.tags.split(note.tags))
 
 
         # auto fill user defined fields

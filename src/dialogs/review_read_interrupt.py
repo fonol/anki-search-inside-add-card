@@ -50,20 +50,20 @@ class ReviewReadInterruptDialog(QDialog):
         self.vbox.addLayout(hb_icon)
         self.vbox.addSpacing(15)
         lbl = QLabel("Open first item in the queue?")
-        lbl.setAlignment(Qt.AlignCenter)
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setStyleSheet("font-size: 20px;")
         lbl.setMargin(15)
 
         cnt = get_read_today_count()
         s   = "s" if cnt != 1 else ""
         sub = QLabel(f"Read today: <b>{cnt}</b> page{s}")
-        sub.setAlignment(Qt.AlignCenter)
+        sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sub.setStyleSheet("font-size: 15px; color: grey;")
 
         at  = utility.misc.count_cards_added_today()
         s   = "s" if at != 1 else ""
         sub_1 = QLabel(f"Added today: <b>{at}</b> card{s}")
-        sub_1.setAlignment(Qt.AlignCenter)
+        sub_1.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sub_1.setStyleSheet("font-size: 15px; color: grey;")
 
         self.vbox.addWidget(lbl)

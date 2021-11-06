@@ -978,14 +978,15 @@ class UI:
 
         config = mw.addonManager.getConfig(__name__)
         cls.show_search_result_area(editor, init_time)
+        print("setup_ui_after_index_built()")
         #restore previous settings
-        cmd = f"$('#highlightCb').prop('checked', {str(cls.highlighting).lower()});"
+        cmd = f"document.getElementById('highlightCb').checked = {str(cls.highlighting).lower()};"
         if not get_config_value_or_default("searchOnTyping", True):
-            cmd += "$('#typingCb').prop('checked', false); setSearchOnTyping(false);"
+            cmd += "document.getElementById('typingCb').checked = false; setSearchOnTyping(false);"
         if not get_config_value_or_default("searchOnSelection", True):
-            cmd += "$('#selectionCb').prop('checked', false); SIAC.State.searchOnSelection = false;"
+            cmd += "document.getElementById('selectionCb').checked = false; SIAC.State.searchOnSelection = false;"
         if index is not None and not UI.uiVisible:
-            cmd += "$('#siac-right-side').addClass('addon-hidden');"
+            cmd += "document.getElementById('siac-right-side').classList.add('addon-hidden');"
         if config["gridView"]:
             cmd += "activateGridView();"
         editor.web.eval(cmd)
@@ -1158,8 +1159,18 @@ class UI:
             return html
 
         html        = iterateMap(dmap, "", True)
-        expanded_js = """$('#siac-switch-deck-btn').addClass("expanded");""" if expanded else ""
-        update_js   = "updateSelectedDecks();" if update else ""
+        expanded_js = """document.getElementById('siac-switch-deck-btn').classList.add("expanded");""" if expanded else ""
+        update_js   = """
+            var updateSelDecksFn = () => {
+                if (typeof(window.updateSelectedDecks) === 'undefined') {
+                    console.log('[SIAC] updateSelectedDecks is undefined, retrying in 50ms.');
+                    setTimeout(updateSelDecksFn, 50);
+                    return;
+                }
+                updateSelectedDecks();
+            }
+            updateSelDecksFn();
+        """ if update else ""
 
         cmd         = """
         document.getElementById('deck-sel-info-lbl').style.display = 'block';

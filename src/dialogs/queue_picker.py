@@ -54,7 +54,7 @@ class QueuePicker(QDialog):
     branch_open_icn     = None
 
     def __init__(self, parent):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowMaximizeButtonHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.mw         = aqt.mw
         self.parent     = parent
@@ -85,7 +85,7 @@ class QueuePicker(QDialog):
         self.mode_sel.currentIndexChanged.connect(self.mode_change)
 
         self.layout().addWidget(self.mode_sel)
-        self.layout().setAlignment(Qt.AlignTop)
+        self.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.queue_widget = QueueWidget(self)
         self.sched_widget = ScheduleMWidget(self)
@@ -120,7 +120,7 @@ class PDFsTab(QWidget):
     def setup_ui(self):
         self.vbox_right = QVBoxLayout()
         r_lbl = QLabel("PDF notes, not in Queue")
-        r_lbl.setAlignment(Qt.AlignCenter)
+        r_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.vbox_right.addWidget(r_lbl)
         self.search_bar_right = QLineEdit()
         self.search_bar_right.setPlaceholderText("Type to search")
@@ -128,7 +128,7 @@ class PDFsTab(QWidget):
         self.vbox_right.addWidget(self.search_bar_right)
         self.t_view_right = NoteList(self)
         self.vbox_right.addWidget(self.t_view_right)
-        self.vbox_right.setAlignment(Qt.AlignHCenter)
+        self.vbox_right.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.setLayout(self.vbox_right)
 
@@ -158,7 +158,7 @@ class VideosTab(QWidget):
     def setup_ui(self):
         self.vbox_right = QVBoxLayout()
         r_lbl = QLabel("Video notes, not in Queue")
-        r_lbl.setAlignment(Qt.AlignCenter)
+        r_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.vbox_right.addWidget(r_lbl)
         self.search_bar_right = QLineEdit()
         self.search_bar_right.setPlaceholderText("Type to search")
@@ -166,7 +166,7 @@ class VideosTab(QWidget):
         self.vbox_right.addWidget(self.search_bar_right)
         self.t_view_right = NoteList(self)
         self.vbox_right.addWidget(self.t_view_right)
-        self.vbox_right.setAlignment(Qt.AlignHCenter)
+        self.vbox_right.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.setLayout(self.vbox_right)
 
     def refresh(self):
@@ -194,7 +194,7 @@ class TextNotesTab(QWidget):
     def setup_ui(self):
         self.vbox_right         = QVBoxLayout()
         r_lbl                   = QLabel("Text notes, not in Queue")
-        r_lbl.setAlignment(Qt.AlignCenter)
+        r_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.vbox_right.addWidget(r_lbl)
 
         self.search_bar_right   = QLineEdit()
@@ -205,7 +205,7 @@ class TextNotesTab(QWidget):
         self.t_view_right       = NoteList(self)
         self.vbox_right.addWidget(self.t_view_right)
 
-        self.vbox_right.setAlignment(Qt.AlignHCenter)
+        self.vbox_right.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.setLayout(self.vbox_right)
 
     def refresh(self):
@@ -234,13 +234,13 @@ class FoldersTab(QWidget):
     def setup_ui(self):
         self.vbox_left = QVBoxLayout()
         r_lbl = QLabel("Most Used Folders:")
-        r_lbl.setAlignment(Qt.AlignCenter)
+        r_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.vbox_left.addWidget(r_lbl)
-        self.vbox_left.setAlignment(r_lbl, Qt.AlignTop)
+        self.vbox_left.setAlignment(r_lbl, Qt.AlignmentFlag.AlignTop)
 
         self.folders_tree = QTreeWidget()
         self.folders_tree.setColumnCount(1)
-        # self.folders_tree.setSizePolicy(QSizePolicy.M, QSizePolicy.Minimum)
+        # self.folders_tree.setSizePolicy(QSizePolicy.M, QSizePolicy.Policy.Minimum)
         self.folders_tree.setHeaderHidden(True)
         self.folders_tree.setRootIsDecorated(False)
         self.folders_tree.setMaximumWidth(370)
@@ -270,8 +270,8 @@ class FoldersTab(QWidget):
 
 
         style = QApplication.style()
-        self.dir_open = style.standardIcon(QStyle.SP_DirOpenIcon)
-        self.dir_closed = style.standardIcon(QStyle.SP_DirClosedIcon)
+        self.dir_open = style.standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
+        self.dir_closed = style.standardIcon(QStyle.StandardPixmap.SP_DirClosedIcon)
         self.pdf_icon = QIcon(utility.misc.get_web_folder_path()+ "icons/pdf-icon.png")
         self.vbox_left.addWidget(self.folders_tree)
         self.path_displayed = None
@@ -325,7 +325,7 @@ class FoldersTab(QWidget):
         self.list.clear()
         for ix, n in enumerate(names):
             title_i = QListWidgetItem(self.pdf_icon, n)
-            title_i.setData(Qt.UserRole, QVariant(os.path.join(path, n)))
+            title_i.setData(Qt.ItemDataRole.UserRole, QVariant(os.path.join(path, n)))
             self.list.insertItem(ix, title_i)
 
     def fill_tree(self, folders):
@@ -333,7 +333,7 @@ class FoldersTab(QWidget):
         fmap = utility.tags.to_tag_hierarchy(folders, sep="/")
         for t, children in fmap.items():
             ti = QTreeWidgetItem([t])
-            ti.setTextAlignment(0, Qt.AlignLeft)
+            ti.setTextAlignment(0, Qt.AlignmentFlag.AlignLeft)
             ti.setData(1, 1, QVariant(t))
             ti.setIcon(0, self.dir_open)
             ti.addChildren(self._add_to_tree(children, t + "/"))
@@ -345,7 +345,7 @@ class FoldersTab(QWidget):
         res = []
         for t, children in map.items():
             ti = QTreeWidgetItem([t])
-            ti.setTextAlignment(0, Qt.AlignLeft)
+            ti.setTextAlignment(0, Qt.AlignmentFlag.AlignLeft)
             ti.setData(1, 1, QVariant(prefix + t))
             ti.setIcon(0, self.dir_open)
             prefix_c = prefix + t + "/"
@@ -355,7 +355,7 @@ class FoldersTab(QWidget):
         return res
 
     def add_pdf_note(self, item_clicked):
-        full_path = item_clicked.data(Qt.UserRole)
+        full_path = item_clicked.data(Qt.ItemDataRole.UserRole)
 
         if not state.note_editor_shown:
             if self.path_displayed is not None:
@@ -381,10 +381,10 @@ class TagsTab(QWidget):
 
         self.vbox_left                  = QVBoxLayout()
         r_lbl                           = QLabel("Tags")
-        r_lbl.setAlignment(Qt.AlignCenter)
+        r_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.vbox_left.addWidget(r_lbl)
-        self.vbox_left.setAlignment(r_lbl, Qt.AlignTop)
+        self.vbox_left.setAlignment(r_lbl, Qt.AlignmentFlag.AlignTop)
 
         if state.is_nightmode():
             self.tag_fg                 = get_config_value("styles.night.tagForegroundColor")
@@ -472,7 +472,7 @@ class TagsTab(QWidget):
         self.load_tags_unused_notes(tag)
 
     def list_item_clicked(self, item):
-        self.parent.set_chosen(item.data(Qt.UserRole), item.text())
+        self.parent.set_chosen(item.data(Qt.ItemDataRole.UserRole), item.text())
 
     def load_tags_unused_notes(self, tag):
         notes = get_unqueued_notes_for_tag(tag)
@@ -490,7 +490,7 @@ class TagsTab(QWidget):
         fmap = utility.tags.to_tag_hierarchy(tags)
         for t, children in fmap.items():
             ti = QTreeWidgetItem([t])
-            ti.setTextAlignment(0, Qt.AlignLeft)
+            ti.setTextAlignment(0, Qt.AlignmentFlag.AlignLeft)
             ti.setData(1, 1, QVariant(t))
             ti.setIcon(0, self.tag_icon)
             ti.addChildren(self._add_to_tree(children, t + "::"))
@@ -504,7 +504,7 @@ class TagsTab(QWidget):
         res = []
         for t, children in map.items():
             ti = QTreeWidgetItem([t])
-            ti.setTextAlignment(0, Qt.AlignLeft)
+            ti.setTextAlignment(0, Qt.AlignmentFlag.AlignLeft)
             ti.setData(1, 1, QVariant(prefix + t))
             ti.setIcon(0, self.tag_icon)
             prefix_c = prefix + t + "::"
@@ -524,7 +524,7 @@ class TagsTab(QWidget):
         sels = self.list.selectedItems()
         if sels is None or len(sels) == 0:
             return
-        nid = sels[0].data(Qt.UserRole)
+        nid = sels[0].data(Qt.ItemDataRole.UserRole)
         self.parent.set_chosen(-1, "")
         update_priority_list(nid, sched)
         self.parent.refresh_queue_list()
@@ -586,14 +586,14 @@ class ScheduleMWidget(QWidget):
     def setup_ui(self):
         self.setLayout(QHBoxLayout())
         self.table = QTableWidget()
-        self.table.setFocusPolicy(Qt.NoFocus)
-        self.table.setSelectionMode(QAbstractItemView.NoSelection)
+        self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.table.setRowCount(len(self.notes))
         self.table.setColumnCount(2)
         self.table.horizontalHeader().setVisible(False)
         self.table.verticalHeader().setVisible(False)
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
 
         v_left = QVBoxLayout()
 
@@ -650,18 +650,18 @@ class ScheduleMWidget(QWidget):
             pretty      = utility.date.dt_from_date_only_stamp(due_date).strftime("%a, %d %b, %Y")
 
             sub         = QTableWidget()
-            sub.setFocusPolicy(Qt.NoFocus)
-            sub.setSelectionMode(QAbstractItemView.NoSelection)
+            sub.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            sub.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
             sub.setRowCount(len(self.notes[due_date]))
             sub.setColumnCount(3)
             sub.horizontalHeader().setVisible(False)
             sub.verticalHeader().setVisible(False)
-            sub.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-            sub.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-            sub.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+            sub.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            sub.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+            sub.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
 
             item = QTableWidgetItem(pretty)
-            item.setTextAlignment(Qt.AlignTop)
+            item.setTextAlignment(Qt.AlignmentFlag.AlignTop)
             self.table.setItem(ix, 0, item)
             if ix == 0 and today_stmp == due_date:
                 self.table.item(ix, 0).setForeground(Qt.blue if not state.is_nightmode() else Qt.cyan)
@@ -699,7 +699,7 @@ class ScheduleMWidget(QWidget):
                     prio = "-"
 
                 prio_lbl = QLabel(str(prio))
-                prio_lbl.setAlignment(Qt.AlignCenter)
+                prio_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 if prio != "-":
                     prio_lbl.setStyleSheet(f"background: {utility.misc.prio_color(prio)}; color: white;")
 
@@ -768,15 +768,15 @@ class QueueWidget(QWidget):
 
         self.t_view_left.setColumnCount(6)
         self.t_view_left.setHorizontalHeaderLabels(["", "Title", "Sched.", "Prio", "", ""])
-        self.t_view_left.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.t_view_left.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.t_view_left.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.t_view_left.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.t_view_left.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        self.t_view_left.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        self.t_view_left.setSelectionMode(QAbstractItemView.NoSelection)
-        self.t_view_left.setFocusPolicy(Qt.NoFocus)
-        self.t_view_left.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.t_view_left.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+        self.t_view_left.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.t_view_left.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.t_view_left.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.t_view_left.cellDoubleClicked.connect(self.cell_clicked)
 
         self.t_view_left.setMinimumWidth(470)
@@ -797,11 +797,11 @@ class QueueWidget(QWidget):
 
         self.unqueue_btn = QPushButton(" Remove Sel.")
         self.unqueue_btn.setDisabled(True)
-        self.unqueue_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
+        self.unqueue_btn.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
         self.unqueue_btn.clicked.connect(self.rem_selected_clicked)
 
         self.unqueue_all_btn = QPushButton(" Empty... ")
-        self.unqueue_all_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
+        self.unqueue_all_btn.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
         self.unqueue_all_btn.clicked.connect(self.empty_clicked)
 
         self.shuffle_queue_btn = QPushButton(" Shuffle... ")
@@ -918,8 +918,8 @@ class QueueWidget(QWidget):
         else:
             t_view.setRowCount(len(db_res))
 
-        open_icon       = QApplication.style().standardIcon(QStyle.SP_FileDialogContentsView)
-        rem_icon        = QApplication.style().standardIcon(QStyle.SP_TrashIcon)
+        open_icon       = QApplication.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView)
+        rem_icon        = QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)
         prios           = get_priorities([n.id for n in db_res])
         self.priorities = prios
         note_types      = {}
@@ -932,12 +932,12 @@ class QueueWidget(QWidget):
                 note_types[t] += 1
             title       = n.title if n.title is not None and len(n.title) > 0 else "Untitled"
             title_i     = QTableWidgetItem(title)
-            title_i.setData(Qt.UserRole, QVariant(n.id))
+            title_i.setData(Qt.ItemDataRole.UserRole, QVariant(n.id))
 
             sched       = utility.date.next_instance_of_schedule_verbose(n.reminder) if n.has_schedule() else "-"
             sched_lbl   = QLabel(sched)
             sched_lbl.setStyleSheet("padding-left: 4px; padding-right: 4px;")
-            sched_lbl.setAlignment(Qt.AlignCenter)
+            sched_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
 
             cb = QCheckBox()
@@ -947,7 +947,7 @@ class QueueWidget(QWidget):
             lcb = QHBoxLayout()
             cw.setLayout(lcb)
             lcb.addWidget(cb)
-            lcb.setAlignment(Qt.AlignCenter)
+            lcb.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lcb.setContentsMargins(0,0,0,0)
 
 
@@ -967,7 +967,7 @@ class QueueWidget(QWidget):
             else:
                 prio_lbl    = QLabel("-")
                 prio_lbl.setStyleSheet(f"font-size: 14px; text-align: center;")
-            prio_lbl.setAlignment(Qt.AlignCenter)
+            prio_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             # t_view.setItem(ix, 0, cb)
             t_view.setCellWidget(ix, 0, cw)
@@ -1006,12 +1006,12 @@ class QueueWidget(QWidget):
         self.unqueue_btn.setDisabled(True)
         self.tags_btn.setDisabled(True)
 
-        t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        t_view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        t_view.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        t_view.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        t_view.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        t_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        t_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        t_view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        t_view.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        t_view.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        t_view.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
         t_view.resizeRowsToContents()
         # t_view.resizeColumnsToContents()
 
@@ -1019,7 +1019,7 @@ class QueueWidget(QWidget):
         r = []
         for ix in range(self.t_view_left.rowCount()):
             if self.t_view_left.cellWidget(ix, 0).layout().itemAt(0).widget().checkState() == Qt.Checked:
-                r.append(self.t_view_left.item(ix, 1).data(Qt.UserRole))
+                r.append(self.t_view_left.item(ix, 1).data(Qt.ItemDataRole.UserRole))
         return r
 
     def check_all_clicked(self):
@@ -1108,7 +1108,7 @@ class QueueWidget(QWidget):
 
     def cell_clicked(self, row, col):
         if col == 1:
-            nid = int(self.t_view_left.item(row, col).data(Qt.UserRole))
+            nid = int(self.t_view_left.item(row, col).data(Qt.ItemDataRole.UserRole))
             self.display_note_modal(nid)
 
 
@@ -1159,14 +1159,14 @@ class NoteList(QTableWidget):
         super(NoteList, self).__init__(parent)
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(["Title", "", "", ""])
-        self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.setSelectionMode(QAbstractItemView.NoSelection)
-        self.setFocusPolicy(Qt.NoFocus)
+        self.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.cellDoubleClicked.connect(self.cell_clicked)
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
 
     def fill(self, notes):
@@ -1176,12 +1176,12 @@ class NoteList(QTableWidget):
             return
         self.setRowCount(len(notes))
 
-        open_icon = QApplication.style().standardIcon(QStyle.SP_FileDialogContentsView)
-        del_icon = QApplication.style().standardIcon(QStyle.SP_TrashIcon)
+        open_icon = QApplication.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView)
+        del_icon = QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)
         for ix, n in enumerate(notes):
 
             title = QTableWidgetItem(n.get_title())
-            title.setData(Qt.UserRole, QVariant(n.id))
+            title.setData(Qt.ItemDataRole.UserRole, QVariant(n.id))
 
             open_btn = QToolButton()
             open_btn.setIcon(open_icon)
@@ -1223,7 +1223,7 @@ class NoteList(QTableWidget):
 
     def cell_clicked(self, row, col):
         if col == 0:
-            nid = int(self.item(row, col).data(Qt.UserRole))
+            nid = int(self.item(row, col).data(Qt.ItemDataRole.UserRole))
             self.parent.parent.display_note_modal(nid)
 
 

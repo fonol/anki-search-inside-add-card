@@ -10,7 +10,7 @@ import utility.text
 class QuickYoutubeImport(QDialog):
     """Quickly prepare notes from YouTube videos"""
     def __init__(self, parent):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.parent             = parent
         self.last_yt_id         = None

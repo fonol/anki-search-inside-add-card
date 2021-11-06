@@ -31,7 +31,7 @@ class PDFExtractDialog(QDialog):
 
     def __init__(self, parent, current_page, pages_total, note):
 
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.extract_start  = None
         self.extract_end    = None

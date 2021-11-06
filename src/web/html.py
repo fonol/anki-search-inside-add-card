@@ -171,15 +171,35 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
   
     # the javascript that inserts the add-on's UI. The anonymous function returns a bool indicating whether the UI was already
     # present or not.
+    # $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
     return """
-        (() => { 
+        var wfn = () => { 
+            if (!document.getElementsByClassName('fields').length) {
+                setTimeout(wfn, 50);
+                console.log('[SIAC] right_side_html(): fields DOM element not yet rendered, timeout=50');
+                return;
+            }
+            if (typeof($) === 'undefined') {
+                setTimeout(wfn, 50);
+                console.log('[SIAC] right_side_html(): jquery not yet loaded, retrying in 50ms.');
+                return;
+            }
             if (document.getElementById('outerWr') == null) {
-                $(`#fields`).wrap(`<div class='siac-col' id='leftSide' onmouseenter='fieldsMouseEnter(event)' style='flex-grow: 1; width: %s%%;'></div>`);
-                $('#dupes').insertAfter('#fields');
+                console.log('[SIAC] right_side_html(): wrapping fields.');
+                let fields = document.getElementsByClassName('fields')[0];
+                if (!fields) {
+                    console.log('[SIAC] right_side_html: .fields DOM element not found.');
+                    return;
+                }
+                $(fields).wrap(`<div class='siac-col' id='leftSide' onmouseenter='fieldsMouseEnter(event)' style='flex-grow: 1; width: %s%%;'></div>`);
+                //$('#dupes').insertAfter('#fields');
                 
                 let toInsert = `%s`;
                 %s  
+
+
                 $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
+
                 let aFn = () => {
                     if (typeof(updatePinned) === "undefined") {
                         setTimeout(aFn, 50);
@@ -191,10 +211,12 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
                 aFn();
                 var there = false;
             } else {
-            var there = true;
+                console.log('[SIAC] right_side_html(): fields are already wrapped.');
+                var there = true;
             }
             let sFn = () => {
                 if (typeof(SIAC) === 'undefined' || typeof(SIAC.State) === 'undefined') {
+                    console.log('[SIAC] right_side_html(): SIAC js not yet set, retrying in 50 ms.');
                     setTimeout(sFn, 50);
                     return;
                 } 
@@ -202,14 +224,14 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
                     SIAC.Fields.enableSearchOnTypingEventListener();
                 } 
                 SIAC.Fields.setSelectionMouseUpEventListener();
-                window.$searchInfo = $('#searchInfo');
                 window.addEventListener('resize', onWindowResize, true);
                 $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this); });
                 $('.cal-block-outer').on('click', function(event) { displayCalInfo(this); });
             };
             sFn();
             return there; 
-        })();
+        };
+        wfn();
     """ % (
     leftSideWidth,
     main_ui,

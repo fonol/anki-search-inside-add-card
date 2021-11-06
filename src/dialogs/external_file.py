@@ -30,7 +30,7 @@ class ExternalFile(QDialog):
     """ Set up a link to an external file which will be opened by the add-on. """
 
     def __init__(self, parent):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.chosen_file = None
         self.parent     = parent

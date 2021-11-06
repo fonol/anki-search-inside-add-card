@@ -54,9 +54,9 @@ class TimerElapsedDialog(QDialog):
         self.layout().addSpacing(16)
 
         header = QLabel("Time is up!")
-        header.setAlignment(Qt.AlignCenter)
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header.setStyleSheet("font-size: 20px; font-weight: bold;")
-        self.layout().addWidget(header, Qt.AlignCenter)
+        self.layout().addWidget(header, Qt.AlignmentFlag.AlignCenter)
         self.layout().addSpacing(10)
 
         read_today_count    = get_read_today_count()
@@ -65,9 +65,9 @@ class TimerElapsedDialog(QDialog):
         cards               = "cards" if added_today_count != 1 else "card"
 
         read_lbl  = QLabel(f"Read <b>{read_today_count}</b> {pages} today")
-        read_lbl.setAlignment(Qt.AlignCenter)
+        read_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         added_lbl = QLabel(f"Added <b>{added_today_count}</b> {cards} today")
-        added_lbl.setAlignment(Qt.AlignCenter)
+        added_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.layout().addWidget(read_lbl)
         self.layout().addWidget(added_lbl)

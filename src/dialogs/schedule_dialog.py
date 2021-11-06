@@ -26,7 +26,7 @@ class ScheduleDialog(QDialog):
     """ Edit the schedule of a note. """
 
     def __init__(self, note, parent):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.mw     = aqt.mw
         self.parent = parent

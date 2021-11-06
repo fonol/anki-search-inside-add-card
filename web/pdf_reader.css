@@ -1217,6 +1217,7 @@ body.nightMode #siac-left-tab-browse input, body.nightMode #siac-left-tab-pdfs i
     outline: none;
     color: white;
     background: #424242 !important;
+    resize: both !important;
     padding: 5px;
     mix-blend-mode: normal !important;
     border-radius: 5px;

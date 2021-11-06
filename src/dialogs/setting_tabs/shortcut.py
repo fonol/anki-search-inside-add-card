@@ -132,7 +132,7 @@ class ShortcutSettingsTab(QWidget):
             gridbox.setColumnStretch(3, 2)
             gridbox.setColumnStretch(1, 1)
             gridbox.setColumnStretch(4, 1)
-            gridbox.setAlignment(Qt.AlignTop)
+            gridbox.setAlignment(Qt.AlignmentFlag.AlignTop)
 
             tab = QWidget()
             tab.setLayout(gridbox)

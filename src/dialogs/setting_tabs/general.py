@@ -49,7 +49,7 @@ class GeneralSettingsTab(QWidget):
         vbox.addLayout(fields_hbox)
 
 
-        vbox.setAlignment(Qt.AlignTop)
+        vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.setLayout(vbox)
 
     def save_changes(self):

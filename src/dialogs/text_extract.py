@@ -32,7 +32,7 @@ class TextExtractDialog(QDialog):
     highlight_ix : int = 0
 
     def __init__(self, parent, field_names: List[str], selection: str):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowSystemMenuHint | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
         self.mw                 = aqt.mw
         self.parent             = parent
@@ -98,10 +98,10 @@ class TextExtractDialog(QDialog):
                     color: white;
                 }
             """)
-            lbl.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+            lbl.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
             gb_vbox.addWidget(lbl)
         container = QWidget()
-        container.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        container.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
         container.setLayout(gb_vbox)
         sa = QScrollArea()
         sa.setWidget(container)
@@ -119,7 +119,7 @@ class TextExtractDialog(QDialog):
         vbox.addLayout(hbox_bot)
         self.setLayout(vbox)
 
-        self.reject_btn.setFocus(True)
+        self.reject_btn.setFocus()
 
     def set_highlights(self):
         for ix, lbl in enumerate(self.color_lbls):
