@@ -894,10 +894,10 @@ window.addFloatingNote = function (nid) {
             <div id="nFC-${nid}" class='noteFloatingContent'  onmouseup='getSelectionText()' >${content}</div>
                 </div>
             `;
-    if ($('.field').length > 8)
-        $('.field').first().after(floatingNote);
+    if ($('.editor-field').length > 8)
+        $('.editor-field').first().after(floatingNote);
     else
-        $('.field').last().after(floatingNote);
+        $('.editor-field').last().after(floatingNote);
     dragElement(byId("nF-" + nid), `nFH-${nid}`);
     updatePinned();
 }
