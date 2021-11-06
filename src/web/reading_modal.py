@@ -304,6 +304,7 @@ class Reader:
         note                    = get_note(note_id)
 
         if not note:
+            print(f"[SIAC] Reader: could not find note for id {note_id}.")
             return
 
         # persist note as opened in db
@@ -520,7 +521,7 @@ class Reader:
         siacnote = cls.note
 
         # todo: apparently _editor.note can be None here, find out why
-        if siacnote is not None and cls._editor.note is not None and get_config_value_or_default("pdf.onOpen.autoFillSourceFieldsBool", True):
+        if siacnote is not None and cls._editor is not None and cls._editor.note is not None and get_config_value_or_default("pdf.onOpen.autoFillSourceFieldsBool", True):
             note                = cls._editor.note
 
             fields_to_prefill   = get_config_value_or_default("pdf.onOpen.autoFillFieldsWithPDFName", [])
@@ -534,6 +535,7 @@ class Reader:
                     if f in list(note.keys()):
                         i = note._fieldOrd(f)
                         cls._editor.web.eval(f"SIAC.Fields.setFieldHtml({i}, `{title}`);")
+        
 
 
     @classmethod

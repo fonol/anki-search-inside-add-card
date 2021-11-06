@@ -398,6 +398,7 @@ class UI:
             Use webview's eval function to execute the given js.
         """
         if cls._editor is None or cls._editor.web is None or not js:
+            print("[SIAC] Reader > js(): _editor is not set")
             return
         cls._editor.web.eval(js)
 
@@ -978,7 +979,7 @@ class UI:
 
         config = mw.addonManager.getConfig(__name__)
         cls.show_search_result_area(editor, init_time)
-        print("setup_ui_after_index_built()")
+        print("[SIAC] setup_ui_after_index_built()")
         #restore previous settings
         cmd = f"document.getElementById('highlightCb').checked = {str(cls.highlighting).lower()};"
         if not get_config_value_or_default("searchOnTyping", True):

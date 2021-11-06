@@ -50,11 +50,11 @@ def open_or_switch_to_editor(function):
                     win[1].raise_()
                 else:
                     win[1].showMaximized()
-        mw.requireReset()
-        if state.get_bool(state.editor_is_ready):
+        # mw.requireReset()
+        # mw.CollectionOp()
+        if state.get_bool(state.editor_is_ready, default=False):
             function()
         else:
-            print("else")
             add_tmp_hook("editor-with-siac-initialised", lambda: function())
     except Exception as e:
         print(traceback.format_exc())

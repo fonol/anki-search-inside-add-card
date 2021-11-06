@@ -76,7 +76,7 @@ def set_bool(key: str, val: bool):
 
 def get_bool(key: str, default: Optional[bool] = False) -> bool:
     def_value = str(default)
-    return bool(os.environ.get(key, def_value))
+    return os.environ.get(key, def_value).lower() == "true"
 
 # night mode
 def set_nightmode(b: bool):

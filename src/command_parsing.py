@@ -403,8 +403,6 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-initialised-editor":
         run_hooks("editor-with-siac-initialised")
 
-
-
     elif cmd.startswith("siac-read-user-note "):
         id = int(cmd.split()[1])
         if id >= 0:
