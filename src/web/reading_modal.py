@@ -1067,7 +1067,8 @@ class Reader:
             else:
                 qi_title = utility.text.trim_if_longer_than(re.sub("[^ ]", "?",queue_item.get_title()), 40)
 
-            hover_actions       = "onmouseenter='showQueueInfobox(this, %s);' onmouseleave='leaveQueueItem(this);'" % (queue_item.id) if not hide else ""
+            # hover_actions       = "onmouseenter='showQueueInfobox(this, %s);' onmouseleave='leaveQueueItem(this);'" % (queue_item.id) if not hide else ""
+            hover_actions       = ""
             #if the note is a pdf or feed, show a loader on click
             pdf_or_feed         = queue_item.is_feed() or queue_item.is_pdf()
             clock               = "&nbsp; <i class='fa fa-calendar'></i>&nbsp;" if queue_item.is_scheduled() else ""
