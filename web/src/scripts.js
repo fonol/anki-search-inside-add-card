@@ -294,7 +294,7 @@ window.switchLeftRight = function () {
  */
 window.onWindowResize = function (fitPdfToPage = true) {
 
-    let btnBar = byId("topbutsOuter") || document.querySelector("nav") || document.querySelector('.btn-toolbar');
+    let btnBar = document.querySelector("header") || document.querySelector("nav") || document.querySelector('.btn-toolbar');
     let offsetTop = btnBar.offsetHeight + 3;
 
     // Anki 2.1.41+ uses sticky on the top row, so in that case, we don't have to set a margin-top

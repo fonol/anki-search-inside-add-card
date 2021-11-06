@@ -1067,27 +1067,7 @@ window.topBarIsHidden = function() {
     return byId('siac-reading-modal-top-bar').classList.contains('top-hidden');
 }
 
-window.toggleReadingModalFullscreen = function () {
-    pdf.fullScreen = !pdf.fullScreen;
-    if (pdf.fullScreen) {
-        $(document.body).removeClass("siac-fullscreen-show-fields").addClass("siac-fullscreen-show-right");
-        if (pdf.instance) {
-            pdfFitToPage();
-        }
-        hideBothBars();
-    } else {
-        $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right");
-        onWindowResize();
-        if (pdf.instance) {
-            pdfFitToPage();
-        }
-    }
 
-}
-window.activateReadingModalFullscreen = function () {
-    pdf.fullScreen = false;
-    toggleReadingModalFullscreen();
-}
 window.onReadingModalClose = function () {
     if (pdfLoading) {
         return;

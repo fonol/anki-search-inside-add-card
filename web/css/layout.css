@@ -79,10 +79,6 @@ body.siac-wm-autohide #leftSide:not(.visible)::after {
 body.nightMode.siac-wm-autohide #leftSide:not(.visible)::after {
     border-color:#545454;
 }
-
-body.siac-fullscreen-show-right #topbutsOuter {
-    display: none; 
-}
 body.siac-fullscreen-show-right #outerWr {
     margin-top: 3px !important;
     height: calc(100vh - 3px) !important;

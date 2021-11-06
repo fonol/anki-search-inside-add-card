@@ -942,10 +942,10 @@ class UI:
         else:
             if query_cleaned is None or len(query_cleaned) == 0:
                 query   = raw_query
-                sr_html = "<center class='mt-5 mb-5'>Query was empty after cleaning.</center>"
+                sr_html = "<center class='mt-5 mb-5 fg_grey'>Query was empty after cleaning.</center>"
             else:
                 query   = query_cleaned
-                sr_html = "<center class='mt-5 mb-5'>Nothing found for query.</center>"
+                sr_html = "<center class='mt-5 mb-5 fg_grey'>Nothing found for query.</center>"
 
         html        = filled_template("rm/tooltip_search", dict(search_results = sr_html, query = query))
 

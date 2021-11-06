@@ -12,11 +12,11 @@
                 <span class='siac-timer-btn 60 siac-btn siac-btn-dark' onclick='resetTimer(this)'>60</span>
                 <span class='siac-timer-play-btn siac-btn siac-btn-dark inactive' style='min-width: 58px;' onclick='toggleTimer();'><i class='fa fa-play mr-5'></i>Start</span>
         </div>
-        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}switch_layout.png");' onclick='switchLeftRight();'></div>
-        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}fullscreen.png");' onclick='toggleReadingModalFullscreen();'></div>
-        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}partition.png");' onclick='pycmd("siac-left-side-width");'></div>
-        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}toggle_bars.png");' onclick='toggleTopBar();'></div>
-        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}close.png");' onclick='onReadingModalClose({note_id});'></div>
+        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}switch_layout.png");' title='Switch left & right side' onclick='switchLeftRight();'></div>
+        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}fullscreen.png");' title='Toggle top & bottom bar (F11)' onclick='toggleBothBars();'></div>
+        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}partition.png");' title='Change side partitioning' onclick='pycmd("siac-left-side-width");'></div>
+        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}toggle_bars.png");' title='Toggle top bar' onclick='toggleTopBar();'></div>
+        <div class='siac-btn siac-btn-dark' style='background-image: url("{img_folder}close.png");' title='Close reader' onclick='onReadingModalClose({note_id});'></div>
     </div>
 
     <div id='siac-pdf-tooltip' onclick='event.stopPropagation();' onkeyup='event.stopPropagation();'>
@@ -61,9 +61,6 @@
         $('.siac-reading-modal-timer-lbl').html(Math.floor(rs / 60) + " : " + (rs % 60 < 10 ? "0" + rs % 60 : rs % 60));
         setTimerActive(tomato.lastStart);
     }
-    if (pdf.fullScreen) {
-        activateReadingModalFullscreen();
-    } 
     if (pageSidebarDisplayed) {
         pageSidebarDisplayed = false;
         togglePageSidebar(false);
