@@ -107,7 +107,7 @@ class ReaderSidebar():
         self._editor.web.eval("""
             $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
             $('#siac-left-tab-md').hide();
-            document.getElementById("fields").style.display = 'block';
+            document.getElementsByClassName("fields")[0].style.display = 'block';
         """)
 
 
@@ -116,7 +116,7 @@ class ReaderSidebar():
             return
         self.tab_displayed = "browse"
         self._editor.web.eval(f"""
-            document.getElementById("fields").style.display = 'none';
+            document.getElementsByClassName("fields")[0].style.display = 'none';
             $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
             $('#siac-left-tab-md').hide();
             $(`
@@ -145,7 +145,7 @@ class ReaderSidebar():
             return
         self.tab_displayed = "pdfs"
         self._editor.web.eval(f"""
-            document.getElementById("fields").style.display = 'none';
+            document.getElementsByClassName("fields")[0].style.display = 'none';
             $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
             $('#siac-left-tab-md').hide();
             $(`
@@ -180,7 +180,7 @@ class ReaderSidebar():
             html ="<siac-md-tree ref='mdComp'></siac-md-tree>"
 
         self._editor.web.eval(f"""
-            document.getElementById("fields").style.display = 'none';
+            document.getElementsByClassName("fields")[0].style.display = 'none';
             $('#siac-left-tab-browse,#siac-left-tab-pdfs').remove();
             if (byId('siac-left-tab-md')) {{
                 $('#siac-left-tab-md').show();
