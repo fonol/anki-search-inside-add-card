@@ -1095,7 +1095,7 @@ window.onReadingModalClose = function () {
     displayedNoteId = null;
     $(document.body).removeClass("siac-fullscreen-show-fields").removeClass("siac-fullscreen-show-right").removeClass('siac-reading-modal-displayed');
     $('#siac-left-tab-browse,#siac-left-tab-pdfs,#siac-left-tab-md,#siac-reading-modal-tabs-left').remove();
-    $('#fields').show();
+    document.getElementsByClassName('fields')[0].style.display = 'grid';
     $("#siac-reading-modal").hide();
     byId('resultsArea').style.display = 'block';
     byId('bottomContainer').style.display = 'block';
