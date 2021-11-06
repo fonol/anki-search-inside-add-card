@@ -120,9 +120,6 @@ def init_addon():
     # add-on internal hooks
     setup_hooks()
 
-    #this inserts all the javascript functions in scripts.js into the editor webview
-    # aqt.editor._html += getScriptPlatformSpecific()
-
     # patch webview dropevent to catch pdf file drop
     aqt.editor.EditorWebView.dropEvent =  wrap(aqt.editor.EditorWebView.dropEvent, webview_on_drop, "around")
 
@@ -174,20 +171,10 @@ def on_webview_will_set_content(web_content: Any, context):
     if not isinstance(context, aqt.editor.Editor):
         return
     
-    print("on_webview_will_set_content()")
-    
-    
-    addon_package = mw.addonManager.addonFromModule(__name__)
-    
-    # web_content.css.append(
-        # f"/_addons/{addon_package}/web/my-addon.css")
-    # web_content.js.append(
-        # f"/_addons/{addon_package}/web/my-addon.js")
-    # web_content.head += "<script>console.log('my-addon')</script>
+    print("[SIAC] on_webview_will_set_content()")
 
     web_content.head += getScriptPlatformSpecific()
     web_content.body += insert_scripts()
-    # web_content.body += f"<script type='text/javascript'>{right_side_html()}</script>"
  
 def on_reviewer_did_show_question(card):
     win = aqt.mw.app.activeWindow()
