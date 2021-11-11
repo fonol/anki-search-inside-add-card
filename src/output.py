@@ -315,9 +315,7 @@ class UI:
 
         tags.sort()
         html    = html.replace("`", "&#96;").replace("$", "&#36;")
-        print(meta_notes_cnt)
         pageMax = math.ceil((len(notes) - meta_notes_cnt) / 50.0) 
-        print(pageMax)
 
         if get_index() is not None and get_index().lastResDict is not None:
             index                                           = get_index()
