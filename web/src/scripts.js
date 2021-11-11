@@ -43,7 +43,7 @@ if (typeof(globalThis) === 'undefined') {
 }
 
 window.sendContent = function (event) {
-    if ((event && event.repeat) || pdf.instance != null || SIAC.State.isFrozen) {
+    if ((event && event.repeat) || pdf.instance != null || window.displayedNoteId || SIAC.State.isFrozen) {
         return;
     }
     if (SIAC.Fields.empty()) {
@@ -633,7 +633,7 @@ window.toggleGrid = function (elem) {
 window.activateGridView = function () {
     SIAC.State.gridView = true;
     window.setTimeout(function () {
-        $('#gridCb').prop("checked", true);
+        document.getElementById('gridCb').checked = true;
     }, 400);
 }
 
