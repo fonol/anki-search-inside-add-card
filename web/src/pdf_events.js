@@ -32,7 +32,6 @@ window.selectionCleaned = function() {
     let text = "";
     let offsetLeftLast = 0;
     let offsetTopLast = 0;
-    let widthLast = 0;
     let textWidthLast = 0;
     let insertedCount = 0;
     let lastYDiffs = [];
