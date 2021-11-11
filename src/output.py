@@ -315,7 +315,9 @@ class UI:
 
         tags.sort()
         html    = html.replace("`", "&#96;").replace("$", "&#36;")
-        pageMax = math.ceil(len(notes) / 50.0)
+        print(meta_notes_cnt)
+        pageMax = math.ceil((len(notes) - meta_notes_cnt) / 50.0) 
+        print(pageMax)
 
         if get_index() is not None and get_index().lastResDict is not None:
             index                                           = get_index()
@@ -341,9 +343,9 @@ class UI:
                 "Found" :  "<b>%s</b> notes" % (len(notes) if len(notes) > 0 else "<span style='color: red;'>0</span>")
             }
             info = cls.build_info_table(infoMap, tags, allText)
-            cmd = "setSearchResults(%s, `%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (json.dumps(header), html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes), len(cls.previous_calls), stamp, timing, rerender)
+            cmd = "setSearchResults(%s, `%s`, `%s`, %s, page=%s, pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (json.dumps(header), html, info[0].replace("`", "&#96;"), json.dumps(info[1]), page, pageMax, len(notes) - meta_notes_cnt, len(cls.previous_calls), stamp, timing, rerender)
         else:
-            cmd = "setSearchResults(%s, `%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (json.dumps(header), html, page, pageMax, len(notes), len(cls.previous_calls), stamp, timing, rerender)
+            cmd = "setSearchResults(%s, `%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (json.dumps(header), html, page, pageMax, len(notes) - meta_notes_cnt, len(cls.previous_calls), stamp, timing, rerender)
 
         cls._js(cmd, editor)
 
@@ -989,7 +991,16 @@ class UI:
         if index is not None and not UI.uiVisible:
             cmd += "document.getElementById('siac-right-side').classList.add('addon-hidden');"
         if config["gridView"]:
-            cmd += "activateGridView();"
+            cmd = f"""{cmd}
+            var acGV = () => {{
+                if (typeof('activateGridView') === 'undefined') {{
+                    setTimeout(acGV, 50);
+                    return;
+                }}
+                activateGridView();
+            }};
+            acGV();
+            """
         editor.web.eval(cmd)
         if index is not None:
             #plot.js is already loaded if a note was just added, so this is a lazy solution for now
