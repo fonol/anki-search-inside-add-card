@@ -766,14 +766,14 @@ class QueueWidget(QWidget):
         self.tabs.addTab(self.videos_tab, "Videos")
         self.tabs.addTab(self.folders_tab, "Folders - Import")
 
-        self.t_view_left.setColumnCount(6)
-        self.t_view_left.setHorizontalHeaderLabels(["", "Title", "Sched.", "Prio", "", ""])
+        self.t_view_left.setColumnCount(5)
+        self.t_view_left.setHorizontalHeaderLabels(["", "Title", "Sched.", "Prio", ""])
         self.t_view_left.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.t_view_left.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.t_view_left.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.t_view_left.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         self.t_view_left.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-        self.t_view_left.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+        # self.t_view_left.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
         self.t_view_left.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.t_view_left.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.t_view_left.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -919,7 +919,7 @@ class QueueWidget(QWidget):
             t_view.setRowCount(len(db_res))
 
         open_icon       = QApplication.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView)
-        rem_icon        = QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)
+        # rem_icon        = QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)
         prios           = get_priorities([n.id for n in db_res])
         self.priorities = prios
         note_types      = {}
@@ -956,10 +956,10 @@ class QueueWidget(QWidget):
             read_btn.setToolTip("Open")
             read_btn.clicked.connect(functools.partial(self.read_btn_clicked, n.id))
 
-            rem_btn     = QToolButton()
-            rem_btn.setIcon(rem_icon)
-            rem_btn.setToolTip("Remove from Queue")
-            rem_btn.clicked.connect(functools.partial(self.rem_btn_clicked, n.id))
+            # rem_btn     = QToolButton()
+            # rem_btn.setIcon(rem_icon)
+            # rem_btn.setToolTip("Remove from Queue")
+            # rem_btn.clicked.connect(functools.partial(self.rem_btn_clicked, n.id))
 
             if n.id in prios:
                 prio_lbl    = QLabel(str(int(prios[n.id])))
@@ -975,7 +975,7 @@ class QueueWidget(QWidget):
             t_view.setCellWidget(ix, 2, sched_lbl)
             t_view.setCellWidget(ix, 3, prio_lbl)
             t_view.setCellWidget(ix, 4, read_btn)
-            t_view.setCellWidget(ix, 5, rem_btn)
+            # t_view.setCellWidget(ix, 5, rem_btn)
 
         # clear title layout
         for i in reversed(range(self.title_hbox.count())):
@@ -1011,7 +1011,7 @@ class QueueWidget(QWidget):
         t_view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         t_view.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         t_view.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-        t_view.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+        # t_view.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
         t_view.resizeRowsToContents()
         # t_view.resizeColumnsToContents()
 
