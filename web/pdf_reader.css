@@ -1080,7 +1080,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    z-index: 13;
+    z-index: 14;
 }
 .siac-pdf-loader {
     width: 250px; 
