@@ -11,7 +11,7 @@
     outline: none;
 }
 .siac-btn.siac-btn-dark, .siac-btn.siac-btn-dark-smaller {
-    background-color: var(--c-reading-modal-background);
+    background-color: var(--c-card-bg-night);
     color: lightgrey;
     border: 1px outset #b2b2a0;
     border-color: var(--c-reading-modal-button-border-color);
@@ -73,7 +73,7 @@ body.nightMode .modal-content input {
 }
 .siac-btn-dark:hover, .siac-btn-dark-smaller:hover {
     color: white;
-    border-color: lightgrey;
+    border-color: #5d5d5d;
 }
 .siac-btn-small {
     display: inline;

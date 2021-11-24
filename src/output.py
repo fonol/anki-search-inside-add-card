@@ -345,6 +345,15 @@ class UI:
         else:
             cmd = "setSearchResults(%s, `%s`, ``, null, page=%s , pageMax=%s, total=%s, cacheSize=%s, stamp=%s, printTiming=%s, isRerender=%s);" % (json.dumps(header), html, page, pageMax, len(notes) - meta_notes_cnt, len(cls.previous_calls), stamp, timing, rerender)
 
+        cmd = f"""window.srFn = () => {{ 
+                if (typeof(setSearchResults) === 'undefined') {{
+                    console.log('[SIAC] setSearchResults not yet loaded, retrying in 50ms');
+                    setTimeout(srFn, 50);
+                    return;
+                }}
+                {cmd}
+        }}; srFn();"""
+
         cls._js(cmd, editor)
 
         if len(remaining_to_highlight) > 0:

@@ -159,7 +159,7 @@ window.SIAC.Fields = {
             div.classList.add('siac-fld-sel-menu');
             let sc_icon = i < 9 ? `<b title="CTRL/CMD + ${i+1}: Send to this field">${i+1}</b>` : '';
             div.innerHTML = `
-                <i class='fa fa-reply-all' onmousedown='SIAC.Fields.appendSelectionToFieldHtml(${i})'></i>
+                <i class='fa fa-reply-all' title='Append selection to this field' onmousedown='SIAC.Fields.appendSelectionToFieldHtml(${i})'></i>
                 <i class='fa fa-picture-o ml-5' title='Append selection as image to this field' onmousedown='event.preventDefault(); selectionSnapshot(${i}); return false;'></i>
                 ${sc_icon} 
                 `;

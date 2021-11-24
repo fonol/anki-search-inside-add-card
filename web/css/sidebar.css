@@ -41,12 +41,12 @@ body.nightMode .siac-notes-sidebar-item:hover details {
     flex: 1 1 auto; 
     box-sizing: border-box; 
     border-radius: 3px; 
-    padding-left: 4px; 
+    padding: 4px; 
     border: 1px solid #929292;
     background: transparent;
 }
 body.nightMode .siac-sidebar-inp {
-    border: 1px solid grey;
+    border: 1px solid #404040;
     background:  #2f2f31;
 }
 #siac-sidebar-selected {

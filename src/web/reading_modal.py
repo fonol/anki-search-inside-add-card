@@ -1161,7 +1161,7 @@ class Reader:
                 <tr>
                     <td style='padding-top: 10px;'><i class='fa fa-tags'></i>&nbsp; Tags</td>
                     <td style='padding-top: 10px;' class='pl-5'>
-                        <input type='text' class='siac-rm-bg fg_lightgrey' style='width: 210px; margin-left: 4px; padding-left: 4px; border: 1px solid grey; border-radius: 4px;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
+                        <input type='text' class='siac-rm-bg fg_lightgrey' style='width: 230px; margin-left: 4px; padding: 4px; border: 1px solid #464646; border-radius: 4px;' onfocusout='pycmd("siac-update-note-tags {note.id} " + this.value)' value='{tags}'></input>
                     </td>
                 </tr>
             </table>
@@ -1487,7 +1487,7 @@ class Reader:
             html = UI.get_result_html_simple(linked, tag_hover=False, search_on_selection=False, query_set=None)
             html = html.replace("`", "\\`")
             html = f"""
-                <div class='fg_lightgrey siac-page-sidebar-header'>
+                <div class='siac-page-sidebar-header'>
                     <div class='siac-note-header flex-row'>{header}</div>
                     {around_s}
                 </div>
@@ -1497,7 +1497,7 @@ class Reader:
                 {stats_s}"""
         else:
             html = f"""
-                <div class='fg_lightgrey siac-page-sidebar-header'>
+                <div class='siac-page-sidebar-header'>
                     <div class='siac-note-header flex-row'>{header}</div>
                     {around_s}
                 </div>

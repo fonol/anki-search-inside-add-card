@@ -120,7 +120,7 @@
 "styles.modalBorderColor": "#2496dc",
 "styles.night.modalBorderColor": "darkorange",
 "styles.readingModalBackgroundColor": "#2f2f31",
-"styles.readingModalButtonBorderColor": "#b2b2a0",
+"styles.readingModalButtonBorderColor": "#484848",
 "styles.readingModalTexture": "none",
 "styles.readingModalBackgroundSize": "80",
 "styles.readingModalFilter": "none",

@@ -41,7 +41,7 @@
 }
 body.nightMode .deck-list-item:hover > .list-item-inner {
     /* background: var(--c-primary-color-night); */
-    background: #464646;
+    background: #3e3e3e;
 }
 .check {
     float: right;
@@ -60,7 +60,7 @@ body.nightMode .deck-list-item:hover > .list-item-inner {
 }
 body.nightMode .siac-tl-plus {
     /* background: var(--c-primary-color-night); */
-    background: #464646;
+    background: #3e3e3e;
 }
 .deck-list-item:hover > .list-item-inner > .siac-tl-plus {
     display: inline-block;
