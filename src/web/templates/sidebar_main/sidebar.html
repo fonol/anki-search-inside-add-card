@@ -2,8 +2,8 @@
     <div class='h-100 flex-col'>
         <div style='flex: 0 1 auto; align-items: center; justify-content: space-between; font-size: 17px; min-height: 35px;' class='siac-notes-sidebar-section-header flex-row'>
             <div>
-                <div class='cursor-pointer bold turquoise-hover' style='padding-left: 8px; padding-right: 8px; float: left;' onclick='pycmd("siac-create-note");'><i class='fa fa-pencil'></i></div>
-                <div class='cursor-pointer bold turquoise-hover ml-5' style='padding-left: 8px; padding-right: 8px; float: left;' onclick='pycmd("siac-user-note-queue-picker");'><i class='fa fa-inbox'></i></div>
+                <div class='cursor-pointer bold turquoise-hover' title='New Note' style='padding-left: 8px; padding-right: 8px; float: left;' onclick='pycmd("siac-create-note");'><i class='fa fa-pencil'></i></div>
+                <div class='cursor-pointer bold turquoise-hover ml-5' title='Open Queue Manager' style='padding-left: 8px; padding-right: 8px; float: left;' onclick='pycmd("siac-user-note-queue-picker");'><i class='fa fa-inbox'></i></div>
             </div>
             <div class='cursor-pointer turquoise-hover siac-btn-small' style='position: relative; margin-top: -4px; min-width: 98px; box-sizing: border-box;' onclick='$(this).toggleClass("expanded")' onmouseleave='$(this).removeClass("expanded")'>
                 <div id='siac-sidebar-selected' class=''><i class="fa fa-sort-desc mr-5" style='vertical-align: top;'></i><span>{tab_displayed_name}</span></div>

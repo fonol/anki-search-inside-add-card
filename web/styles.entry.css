@@ -448,13 +448,6 @@ table.striped {
 .exp:empty {
     display: none;
 }
-
-#indexInfo, #synonymsIcon, #stylingIcon, #siac-note-icn {
-    margin-right: 5px;
-}
-#indexInfo:hover, #synonymsIcon:hover, #stylingIcon:hover, #siac-note-icn:hover, #siac-timetable-icn:hover, #siac-settings-icn:hover {
-    color: #2496dc;
-}
 .siac-switch-deck-btn-inner {
     width: 48%; 
     display: inline-block; 

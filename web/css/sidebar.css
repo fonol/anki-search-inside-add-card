@@ -25,7 +25,7 @@ details .siac-notes-sidebar-item:hover {
 
 body.nightMode .siac-notes-sidebar-item:hover, body.nightMode .siac-notes-sidebar-item summary:hover {
     /* background: var(--c-primary-color-night); */
-    background: #464646;
+    background: #3e3e3e;
 }
 .siac-notes-sidebar-item:hover details {
     background: var(--c-card-bg);
@@ -46,7 +46,7 @@ body.nightMode .siac-notes-sidebar-item:hover details {
     background: transparent;
 }
 body.nightMode .siac-sidebar-inp {
-    border: 1px solid #404040;
+    border: 1px solid #404040 !important;
     background:  #2f2f31;
 }
 #siac-sidebar-selected {

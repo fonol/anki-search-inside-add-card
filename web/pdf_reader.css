@@ -665,10 +665,10 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 }
 #siac-pdf-page-inp {
     background: var(--c-reading-modal-background);
-    color: beige;
-    border: 2px inset #b2b2a0;
+    color: lightgrey;
+    border: 1px solid #4e4e4e;
     border-radius: 3px;
-    height: 20px;
+    height: 24px;
 }
 #siac-pdf-page-lbl {
     display: inline-block; 
