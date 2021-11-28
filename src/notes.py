@@ -31,15 +31,16 @@ try:
     from .state import get_index
     from .models import SiacNote, IndexNote, NoteRelations
     from .config import get_config_value_or_default, get_config_value, update_config
+    from .md import *
 except:
     from state import get_index
     from models import SiacNote, IndexNote, NoteRelations
     from config import get_config_value_or_default, get_config_value, update_config
+    from md import *
 import utility.misc
 import utility.tags
 import utility.text
 import utility.date
-import md
 
 # will be set after the db file is accessed for the first time
 db_path                 : Optional[str] = None
@@ -327,7 +328,7 @@ def create_note(title: str,
     # if note is linked to a markdown file, update or create the file
     if source is not None and source.startswith("md:///") and source.endswith(".md"):
         fpath = source[6:]
-        md.update_markdown_file(fpath, text)
+        update_markdown_file(fpath, text)
 
     return id
 
@@ -382,7 +383,7 @@ def update_note_text(id: int, text: str):
     # if note is linked to a markdown file, update the file
     if source is not None and source.startswith("md:///") and source.endswith(".md"):
         fpath = source[6:]
-        md.update_markdown_file(fpath, text)
+        update_markdown_file(fpath, text)
 
 def update_note_tags(id: int, tags: str):
     if tags is None:
@@ -429,7 +430,7 @@ def update_note(id: int, title: str, text: str, source: str, tags: str, reminder
     # if note is linked to a markdown file, update the file
     if source is not None and source.startswith("md:///") and source.endswith(".md"):
         fpath = source[6:]
-        md.update_markdown_file(fpath, text)
+        update_markdown_file(fpath, text)
 
 def null_position(nid: int):
     conn = _get_connection()
