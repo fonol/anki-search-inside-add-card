@@ -46,10 +46,6 @@ interrupted_review  : bool                              = False
 
 
 
-
-# Determines whether the both, the fields and the add-on pane, or only one of them are visible
-window_mode         : WindowMode                        = WindowMode.Both
-
 # Indicates whether the Rust lib has been successfully loaded or not
 rust_lib            : Optional[bool]                    = None
 
@@ -109,8 +105,6 @@ def set_deck_map(dm: Dict[str, int]):
 
 def set_window_mode(mode: str, editor):
     """ Set the window mode and update the UI. """
-    global window_mode
-    window_mode = WindowMode[mode]
 
     mod                     = utility.misc.get_addon_id()
     config                  = mw.addonManager.getConfig(mod)
@@ -135,11 +129,11 @@ def set_window_mode(mode: str, editor):
 
 def switch_window_mode(direction: str, editor):
 
-    global window_mode
 
     mod                     = utility.misc.get_addon_id()
     config                  = mw.addonManager.getConfig(mod)
     switched                = config["switchLeftRight"]
+    window_mode             = WindowMode[config["window_mode"]]
 
     if direction in ["left", "right"]:
         if window_mode == WindowMode.Both:
