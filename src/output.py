@@ -998,13 +998,17 @@ class UI:
         if index is not None and not UI.uiVisible:
             cmd += "document.getElementById('siac-right-side').classList.add('addon-hidden');"
         if config["gridView"]:
-            cmd = f"""{cmd}
+            cmd = f"{cmd} activategridView();"
+
+        cmd = f"""
             var acGV = () => {{
-                if (typeof('activateGridView') === 'undefined') {{
+                if (typeof('activateGridView') === 'undefined'
+                || !document.getElementById('highlightCb')
+                ) {{
                     setTimeout(acGV, 50);
                     return;
                 }}
-                activateGridView();
+                {cmd}
             }};
             acGV();
             """
