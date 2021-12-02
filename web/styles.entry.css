@@ -165,10 +165,13 @@
     font-size: 14px;
 }
 #siac-right-side h3 {
-    font-size: 18px;
+    font-size: 1.3rem;
 }
 #siac-right-side h2 {
-    font-size: 20px;
+    font-size: 1.5rem;
+        }
+#siac-right-side h2 {
+    font-size: 1.7rem;
 }
 body.nightMode select {
     border-color: grey;
