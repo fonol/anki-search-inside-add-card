@@ -156,43 +156,45 @@
                         </div>
                     </div>
                 </div>
-                <div class='siac-tomato-main'>
-                    <div class='siac-sidebar-bg'>
-                        <span class='siac-timer-btn 5 siac-btn-small' onclick='resetTimer(this)'>5</span>
-                        <span class='siac-timer-btn 10 siac-btn-small' onclick='resetTimer(this)'>10</span>
-                        <span class='siac-timer-btn 15 siac-btn-small' onclick='resetTimer(this)'>15</span>
-                        <span class='siac-timer-btn 25 siac-btn-small' onclick='resetTimer(this)'>25</span>
-                        <span class='siac-reading-modal-timer siac-reading-modal-timer-lbl bold'>30 : 00</span>
-                        <span class='siac-timer-btn 30 siac-btn-small default active'
-                            onclick='resetTimer(this)'>30</span>
-                        <span class='siac-timer-btn 45 siac-btn-small' onclick='resetTimer(this)'>45</span>
-                        <span class='siac-timer-btn 60 siac-btn-small' onclick='resetTimer(this)'>60</span>
+                <div class="flex-row" style="align-items: stretch">
+                    <div id="icns-large" class="mr-10">
+
+                        <div class='rnd-icon' title='Read First in Queue' onclick='pycmd("siac-user-note-queue-read-head")'><i
+                                class="fa fa-inbox"></i></div>
+                        <div class='rnd-icon' title='PDF Notes' onclick='pycmd("siac-r-show-pdfs")'> <i
+                                class="fa fa-file-pdf-o"></i></div>
+                        <div class='rnd-icon' title='Text Notes' onclick='pycmd("siac-r-show-text-notes")'> <i
+                                class="fa fa-file-text-o"></i></div>
+                        <div class='rnd-icon' title='Video Notes' onclick='pycmd("siac-r-show-video-notes")'> <i
+                                class="fa fa-file-video-o"></i></div>
+                        <div class='rnd-icon' title='Toggle Sidebar' onclick='toggleNoteSidebar();'><i class="fa fa-bars"></i></div>
+                        <div class='rnd-icon' title='Search for fields content' onclick='fieldsBtnClicked()'><i class="fa fa-search"></i></div>
+                        <div class='rnd-icon' title='Random Anki Notes'
+                            onclick='pycmd("siac-r-random-notes " + SIAC.State.selectedDecks.toString())'><i
+                                class="fa fa-random"></i></div>
+                        <div class='freeze-icon' title='Freeze results' onclick='toggleFreeze(this)'><i class="fa fa-snowflake-o"></i></div>
+                        <div class='rnd-icon' onclick='switchLeftRight();' title='Switch Layout'><i class="fa fa-arrows-h"></i></div>
                     </div>
-                    <div class='siac-sidebar-bg'>
-                        <span class='siac-timer-play-btn siac-btn-small inactive' onclick='toggleTimer();'><i
-                                class='fa fa-play mr-5'></i></span>
+                    <div class='siac-tomato-main'>
+                        <div class='siac-sidebar-bg'>
+                            <span class='siac-timer-btn 5 siac-btn-small' onclick='resetTimer(this)'>5</span>
+                            <span class='siac-timer-btn 10 siac-btn-small' onclick='resetTimer(this)'>10</span>
+                            <span class='siac-timer-btn 15 siac-btn-small' onclick='resetTimer(this)'>15</span>
+                            <span class='siac-timer-btn 25 siac-btn-small' onclick='resetTimer(this)'>25</span>
+                            <span class='siac-reading-modal-timer siac-reading-modal-timer-lbl bold'>30 : 00</span>
+                            <span class='siac-timer-btn 30 siac-btn-small default active'
+                                onclick='resetTimer(this)'>30</span>
+                            <span class='siac-timer-btn 45 siac-btn-small' onclick='resetTimer(this)'>45</span>
+                            <span class='siac-timer-btn 60 siac-btn-small' onclick='resetTimer(this)'>60</span>
+                        </div>
+                        <div class='siac-sidebar-bg'>
+                            <span class='siac-timer-play-btn siac-btn-small inactive' onclick='toggleTimer();'><i
+                                    class='fa fa-play mr-5'></i></span>
+                        </div>
                     </div>
                 </div>
-
         </div>
-        <div id="icns-large">
-
-            <div class='rnd-icon' title='Read First in Queue' onclick='pycmd("siac-user-note-queue-read-head")'><i
-                    class="fa fa-inbox"></i></div>
-            <div class='rnd-icon' title='PDF Notes' onclick='pycmd("siac-r-show-pdfs")'> <i
-                    class="fa fa-file-pdf-o"></i></div>
-            <div class='rnd-icon' title='Text Notes' onclick='pycmd("siac-r-show-text-notes")'> <i
-                    class="fa fa-file-text-o"></i></div>
-            <div class='rnd-icon' title='Video Notes' onclick='pycmd("siac-r-show-video-notes")'> <i
-                    class="fa fa-file-video-o"></i></div>
-            <div class='rnd-icon' title='Toggle Sidebar' onclick='toggleNoteSidebar();'><i class="fa fa-bars"></i></div>
-            <div class='rnd-icon' title='Search for fields content' onclick='fieldsBtnClicked()'><i class="fa fa-search"></i></div>
-            <div class='rnd-icon' title='Random Anki Notes'
-                onclick='pycmd("siac-r-random-notes " + SIAC.State.selectedDecks.toString())'><i
-                    class="fa fa-random"></i></div>
-            <div class='freeze-icon' title='Freeze results' onclick='toggleFreeze(this)'><i class="fa fa-snowflake-o"></i></div>
-            <div class='rnd-icon' onclick='switchLeftRight();' title='Switch Layout'><i class="fa fa-arrows-h"></i></div>
-        </div>
+      
         <div id="resultsArea">
             <div id='loader' style='{showLoader}'>
                 <div class='signal'></div>

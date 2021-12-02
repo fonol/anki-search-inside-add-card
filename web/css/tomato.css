@@ -14,6 +14,7 @@
 }
 body.nightMode .siac-tomato-main {
     background:  var(--c-card-bg);
+    border: 1px solid rgb(64,64,64);
 }
 .siac-tomato-main .siac-btn-small {
     text-align: center;
@@ -64,7 +65,7 @@ body.nightMode .siac-tomato-main .siac-reading-modal-timer-lbl {
 }
 
 .siac-tomato-main > div {
-    padding: 4px 5px;
+    padding: 1px 5px;
     display: flex;
     align-items: center;
 }

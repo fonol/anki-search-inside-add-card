@@ -202,7 +202,11 @@ body.nightMode .siac-card, #siac-reading-modal .siac-card {
     color: white;
 }
 body.nightMode .siac-note-header {
-    background: var(--c-primary-color-night);
+    /* background: var(--c-primary-color-night); */
+    background: var(--c-card-bg) !important;
+}
+body.nightMode .siac-cnt-dsp, body.nightMode .siac-note-footer span {
+    color: grey;
 }
 .siac-note-footer {
     border-top: 1px solid #d4d4d4; 
@@ -218,6 +222,9 @@ body.nightMode .siac-note-footer, #siac-reading-modal .siac-note-footer {
     border-top-color:rgb(78, 78, 78);
     background: var(--c-card-bg-night) !important;
     color: white !important;
+}
+body.nightMode .siac-note-footer .fa {
+    color: #afafaf;
 }
 .siac-note-footer > div {
     margin-bottom: 9px;

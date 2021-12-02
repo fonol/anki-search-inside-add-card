@@ -144,7 +144,7 @@
     flex-wrap: nowrap;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 0 !important;
+    padding: 6px 0 !important;
     border-bottom: 1px solid var(--c-separator);
 }
 #siac-right-side mark, #siac-left-tab-browse mark {
@@ -359,9 +359,6 @@ body.nightMode .siac-input, #siac-reading-modal .siac-input {
 .tbLb label {
     cursor: pointer;
 }
-#icns-small {
-    display: none;
-}
 #searchInfo {
     flex: 0 0 150px;
     margin-bottom: 8px;
@@ -402,18 +399,24 @@ table.siac-read-stats-table tr:hover .siac-read-box {
 }
 
 
-#icns-large, #icns-small {
+#icns-large {
     text-align: right;
     color: grey;
     user-select: none;
-    height: 23px;
-    margin: 0 0 3px 7px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    background: var(--c-card-bg);
 }
-#icns-large div, #icns-small div {
-    margin-top: 3px;
+#icns-large > div {
+    margin: 0 5px;
 }
+
 body.nightMode #icns-large {
-    border-color: #4e4e4e;
+    background: var(--c-card-bg-night);
+    border: 1px solid rgb(64,64,64);
 }
 .rnd-icon,.flds-icon,.freeze-icon {
     display: inline-block;
