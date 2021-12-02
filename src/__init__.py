@@ -83,7 +83,7 @@ def init_addon():
     if not create_db_file_if_not_exists():
         print("[SIAC] Notes DB file did not exist, created a new one.")
 
-    state.window_mode = state.WindowMode[config["window_mode"]]
+    # state.window_mode = state.WindowMode[config["window_mode"]]
 
     gui_hooks.profile_did_open.append(build_index)
     # gui_hooks.profile_did_open.append(insert_scripts)
@@ -224,6 +224,7 @@ def on_load_note(editor: Editor):
         show_tag_info_on_hover  = "true" if conf_or_def("showTagInfoOnHover", True) and conf_or_def("noteScale", 1.0) == 1.0 and zoom == 1.0 else "false"
         pdf_color_mode          = conf_or_def("pdf.color_mode", "Day")
         pdf_highlights_render   = "siac-pdf-hl-alt-render" if conf_or_def("pdf.highlights.use_alt_render", False) else ""
+        window_mode             = state.WindowMode[conf_or_def("window_mode", "Both")]
 
         editor.web.eval(f"""
             var onloadNoteInit = () => {{
@@ -242,7 +243,7 @@ def on_load_note(editor: Editor):
                 document.addEventListener('mouseup', onTextSelectionChange);
                 onTextSelectionChange();
 
-                setWindowMode('{state.window_mode.name}');
+                setWindowMode('{window_mode.name}');
             }};
             onloadNoteInit();
 
@@ -444,7 +445,7 @@ def setup_switch_btn(editor: Editor):
     if hasattr(box, "switch_btn") and box.switch_btn is not None:
         return
 
-    button  = QPushButton(state.window_mode.name)
+    button  = QPushButton(conf_or_def("window_mode", "Both"))
     menu    = QMenu(button)
     a1      = menu.addAction("Show Both")
     a1.triggered.connect(functools.partial(state.set_window_mode, "Both", editor))
