@@ -170,6 +170,9 @@ def on_webview_will_set_content(web_content: Any, context):
                 
     if not isinstance(context, aqt.editor.Editor):
         return
+
+    if not can_run_in_editor_context(context):
+        return
     
     print("[SIAC] on_webview_will_set_content()")
 
@@ -213,7 +216,7 @@ def on_load_note(editor: Editor):
     but for backwards compatibility, this hook is still used instead.
     """
     #only display in add cards dialog or in the review edit dialog (if enabled)
-    if editor.addMode or (conf_or_def("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent)):
+    if can_run_in_editor_context(editor):
 
         index                   = get_index()
         zoom                    = conf_or_def("searchpane.zoom", 1.0)
@@ -489,9 +492,17 @@ def set_zoom(shortcuts: List[Tuple], editor: Editor):
     if zoom != 1.0:
         editor.web.setZoomFactor(zoom)
 
+def can_run_in_editor_context(editor: Editor):
+    """ Determine if the add-on can run in the given context. E.g. in Add Cards window or in the Edit Current dialog, but not in the Card Browser. """
+    return editor.addMode or (conf_or_def("useInEdit", False) and isinstance(editor.parentWindow, EditCurrent))
 
 def register_shortcuts(shortcuts: List[Tuple], editor: Editor):
     """ Register shortcuts used by the add-on. """
+
+    # prevent shortcuts from 
+    if not can_run_in_editor_context(editor):
+        print("[SIAC] register_shortcuts() called, but invalid editor context")
+        return
 
     def _try_register(shortcut: str, activated: Callable):
         try:
