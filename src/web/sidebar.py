@@ -157,7 +157,11 @@ class Sidebar:
 
     def display(self):
         html = self._html()
-        self._editor.web.eval("""(() => {
+        self._editor.web.eval("""var sbFn = () => {
+        if (!document.getElementById('resultsWrapper')) {
+            setTimeout(sbFn, 50);
+            return;
+        }
         if (document.getElementById('siac-notes-sidebar')) {
             $('#siac-notes-sidebar').remove();
         }
@@ -211,7 +215,8 @@ class Sidebar:
         if (scrollTop && scrollTop > 0) {
             $('.tag_scroll').first().get(0).scrollTop = scrollTop;
         }
-        })();
+        };
+        sbFn();
         """ % (html, self.tab))
 
     def hide(self):
