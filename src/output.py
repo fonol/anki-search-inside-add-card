@@ -1183,35 +1183,33 @@ class UI:
 
         html        = iterateMap(dmap, "", True)
         expanded_js = """document.getElementById('siac-switch-deck-btn').classList.add("expanded");""" if expanded else ""
-        update_js   = """
+        update_js   = "updateSelectedDecks();" if update else ""
+
+        cmd         = """
             var updateSelDecksFn = () => {
-                if (typeof(window.updateSelectedDecks) === 'undefined') {
+                if (typeof(window.updateSelectedDecks) === 'undefined' || !document.getElementById('deck-sel-info-lbl')) {
                     console.log('[SIAC] updateSelectedDecks is undefined, retrying in 50ms.');
                     setTimeout(updateSelDecksFn, 50);
                     return;
                 }
-                updateSelectedDecks();
-            }
+                document.getElementById('deck-sel-info-lbl').style.display = 'block';
+                document.getElementById('deckSel').innerHTML = `%s`;
+                $('#deckSelWrapper .exp').click(function(e) {
+                    e.stopPropagation();
+                    let icn = $(this);
+                    if (icn.text()) {
+                        if (icn.text() === '[+]')
+                            icn.text('[-]');
+                        else
+                            icn.text('[+]');
+                    }
+                    $(this).parent().parent().children('ul').toggle();
+                });
+                %s
+                $("#siac-deck-sel-btn-wrapper").show();
+                %s
+            };
             updateSelDecksFn();
-        """ if update else ""
-
-        cmd         = """
-        document.getElementById('deck-sel-info-lbl').style.display = 'block';
-        document.getElementById('deckSel').innerHTML = `%s`;
-        $('#deckSelWrapper .exp').click(function(e) {
-            e.stopPropagation();
-            let icn = $(this);
-            if (icn.text()) {
-                if (icn.text() === '[+]')
-                    icn.text('[-]');
-                else
-                    icn.text('[+]');
-            }
-            $(this).parent().parent().children('ul').toggle();
-        });
-        %s
-        $("#siac-deck-sel-btn-wrapper").show();
-        %s
         """ % (html, expanded_js, update_js)
         editor.web.eval(cmd)
 
