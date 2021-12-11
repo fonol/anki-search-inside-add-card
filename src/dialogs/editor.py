@@ -19,16 +19,14 @@ from aqt.utils import tooltip
 import aqt.editor
 import aqt
 import functools
-import time
-import re
-import random
+from aqt import gui_hooks
 from anki.hooks import addHook, remHook
 from anki.lang import _
+from anki.errors import NotFoundError
 from ..output import UI
 from ..notes import *
 from ..notes import _get_priority_list
 from ..hooks import run_hooks
-from ..state import get_index
 from ..markdown import markdown
 from ..config import get_config_value_or_default, update_config
 from ..web_import import import_webpage
@@ -56,28 +54,45 @@ class EditDialog(QDialog):
 
     def __init__(self, mw, note):
 
-        QDialog.__init__(self, None, Qt.Window)
-        mw.setupDialogGC(self)
-
-        self.mw         = mw
-        self.form       = aqt.forms.editcurrent.Ui_Dialog()
-
+        QDialog.__init__(self, None, Qt.WindowType.Window)
+        mw.garbage_collect_on_dialog_finish(self)
+        self.mw = mw
+        self.form = aqt.forms.editcurrent.Ui_Dialog()
         self.form.setupUi(self)
-        self.form.buttonBox.button(QDialogButtonBox.Close).setShortcut(QKeySequence("Ctrl+Return"))
-        self.editor     = aqt.editor.Editor(self.mw, self.form.fieldsArea, self)
-
         self.setWindowTitle(_("Edit Note"))
         self.setMinimumHeight(400)
         self.setMinimumWidth(500)
         if EditDialog.last_geom and get_config_value_or_default("anki.editor.remember_location", True):
             self.setGeometry(EditDialog.last_geom)
-        else:
-            self.resize(500, 850)
+        self.form.buttonBox.button(QDialogButtonBox.StandardButton.Close).setShortcut(
+            QKeySequence("Ctrl+Return")
+        )
+        self.editor = aqt.editor.Editor(self.mw, self.form.fieldsArea, self)
         self.editor.setNote(note, focusTo=0)
-        addHook("reset", self.onReset)
-        self.mw.requireReset()
+        gui_hooks.operation_did_execute.append(self.on_operation_did_execute)
         self.show()
-        self.mw.progress.timer(100, lambda: self.editor.web.setFocus(), False)
+
+    def on_operation_did_execute( self, changes: Any, handler: Optional[object]) -> None:
+        if changes.note_text and handler is not self.editor:
+            # reload note
+            note = self.editor.note
+            if note is not None:
+                try:
+                    note.load()
+                except NotFoundError:
+                    # note's been deleted
+                    self.cleanup_and_close()
+                    return
+
+                self.editor.set_note(note)
+
+    def cleanup_and_close(self) -> None:
+        gui_hooks.operation_did_execute.remove(self.on_operation_did_execute)
+        self.editor.cleanup()
+        aqt.dialogs.markClosed("EditCurrent")
+        QDialog.reject(self)
+
+
 
     def onReset(self):
         try:
