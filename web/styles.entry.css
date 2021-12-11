@@ -493,7 +493,7 @@ table.striped {
     color: #2496dc;
 }
 #siac-right-side {
-    padding: 0px 20px 4px 13px;
+    padding: 0px 3px 4px 13px;
     margin-left: 8px;
     position: relative;
     font-family: 'Open Sans', sans-serif;
@@ -626,6 +626,9 @@ span.tag-symbol {
 body.nightMode .noteFloatingContent {
     background:  var(--c-card-bg);
     color: white;
+}
+.noteFloatingContent img {
+    max-width: 100%;
 }
 .noteFloatingHeader {
     display: flex;

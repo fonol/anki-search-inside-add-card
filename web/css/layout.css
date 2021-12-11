@@ -52,7 +52,7 @@ body.siac-wm-autohide #leftSide {
     max-width: 45px;
     visibility: hidden;
     transform: translateZ(0);
-    /* transition: max-width 0.3s ease; */
+    transition: max-width 0.4s ease;
 }
 body.siac-wm-autohide #leftSide.visible {
     max-width: 3000px;
