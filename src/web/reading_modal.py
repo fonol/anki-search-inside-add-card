@@ -20,7 +20,7 @@ import json
 import re
 from datetime import datetime as dt
 import typing
-from typing import List, Optional, Tuple, Any, Callable
+from typing import List, Optional, Tuple, Any, Callable, Union
 import aqt
 import html as ihtml
 from aqt import mw, gui_hooks
@@ -36,7 +36,7 @@ import state
 from ..notes import *
 from ..notes import _get_priority_list
 from ..special_searches import get_last_added_anki_notes
-from ..models import SiacNote, IndexNote, Printable
+from ..models import SiacNote, IndexNote
 from .html import *
 from ..dialogs.done_dialog import DoneDialog
 from ..dialogs.priority_dialog import PriorityDialog
@@ -196,7 +196,7 @@ class ReaderSidebar():
         """)
 
 
-    def _print_sidebar_search_results(self, results: List[Printable], stamp: str, query_set: List[str]):
+    def _print_sidebar_search_results(self, results: List[Union[SiacNote, IndexNote]], stamp: str, query_set: List[str]):
         """
             Print the results of the browse tab.
         """
@@ -356,6 +356,22 @@ class Reader:
                 if deck_name:
                     selected = UI.try_select_deck(deck_name)
 
+        elif note.is_epub():
+
+            if not utility.misc.file_exists(note.source):
+                message = "<i class='fa fa-exclamation-triangle mb-10' style='font-size: 20px;'></i><br>Could not load the given ePub.<br>Are you sure the path is correct?"
+                cls.notification(message)
+            elif not os.access(note.source, os.R_OK):
+                message = "<i class='fa fa-exclamation-triangle mb-10' style='font-size: 20px;'></i><br>Could not read the file."
+                print("[SIAC] Failed to open ePub file: " + note.source)
+                cls.notification(message)
+            else:
+                cls._display_epub(note.source.strip(), note_id, page=page)
+                # try to select deck which was mostly used when adding notes while this pdf was open
+                deck_name = get_deck_mostly_linked_to_note(note_id)
+                if deck_name:
+                    selected = UI.try_select_deck(deck_name)
+
         # auto fill tag entry if pdf has tags and config option is set
         if note.tags is not None and len(note.tags.strip()) > 0 and get_config_value_or_default("pdf.onOpen.autoFillTagsWithPDFsTags", True):
             UI.js('setTags(%s)' % json.dumps(mw.col.tags.canonify(mw.col.tags.split(note.tags))))
@@ -374,6 +390,114 @@ class Reader:
             if Reader._original_win_title is None:
                 Reader._original_win_title = win.windowTitle()
             win.setWindowTitle(f"{Reader._original_win_title} [{cls.note.get_title()}]")
+
+    @classmethod
+    def _display_epub(cls, full_path: str, note_id: int, page: Optional[int] = None):
+        # use rust based lib for better performance if possible
+        if state.rust_lib:
+            try:
+                base64pdf       = encode_file(full_path)
+            except:
+                state.rust_lib = False
+        if not state.rust_lib:
+            base64pdf       = utility.misc.pdf_to_base64(full_path)
+        blen            = len(base64pdf)
+
+        #pages read are stored in js array [int]
+        pages_read      = get_read_pages(note_id)
+        pages_read_js   = "" if len(pages_read) == 0 else ",".join([str(p) for p in pages_read])
+
+        #marks are stored in two js maps, one with pages as keys, one with mark types (ints) as keys
+        marks           = get_pdf_marks(note_id)
+        js_maps         = utility.misc.marks_to_js_map(marks)
+        marks_js        = "pdf.displayedMarks = %s; pdf.displayedMarksTable = %s;" % (js_maps[0], js_maps[1])
+
+        # pdf might be an extract (should only show a range of pages)
+        extract_js      = f"pdf.extract = [{cls.note.extract_start}, {cls.note.extract_end}];" if cls.note.extract_start is not None else "pdf.extract = null;"
+
+        # get possible other extracts created from the current pdf
+        extracts        = get_extracts(note_id, cls.note.source)
+        extract_js      += f"pdf.extractExclude = {json.dumps(extracts)};"
+
+        # pages read are ordered by date, so take last
+        last_page_read  = pages_read[-1] if len(pages_read) > 0 else 1
+
+
+        if cls.note.extract_start is not None:
+            if len(pages_read) > 0:
+                read_in_extract = [p for p in pages_read if p >= cls.note.extract_start and p <= cls.note.extract_end]
+                last_page_read = read_in_extract[-1] if len(read_in_extract) > 0 else cls.note.extract_start
+            else:
+                last_page_read  = cls.note.extract_start
+        
+        open_at_page = "null"
+        if page is not None and page > 0:
+            open_at_page = page
+
+        title           = utility.text.trim_if_longer_than(cls.note.get_title(), 50).replace('"', "")
+        addon_id        = utility.misc.get_addon_id()
+        port            = mw.mediaServer.getPort()
+
+        init_code = """
+            (() => {
+            pdfLoading = true;
+            var bstr = atob(b64);
+            var len = bstr.length;
+            var bytes = new Uint8Array(len);
+            for (var i = 0; i < len; i++) {
+                bytes[i] = bstr.charCodeAt(i);
+            }
+            pdf.pagesRead = [%s];
+            %s
+            %s
+            var loadFn = function(retry) {
+                if (typeof(ePub) === 'undefined') {
+                    window.setTimeout(() => { loadFn(retry + 1);}, 800);
+                    pdfLoaderText(`PDF.js was not loaded. Retrying (${retry+1} / 5)`);
+                    return;
+                }
+                try {
+                    SIAC.epub.display(bytes.buffer, 'siac-epub-display');
+                } catch (error) {
+                    console.error(error);
+                    //$('#siac-pdf-loader-wrapper').remove();
+                    //$('#siac-reader-popup').html(`<br><center>Could not load ePub.</center><br>`).show();
+                    ungreyoutBottom();
+                    pdfLoading = false;
+                    noteLoading = false;
+                }
+                displayedNoteId = %s;
+                pdf.page = %s || getLastReadPage() || %s;
+                $('#siac-pdf-loader-wrapper').remove();
+                //if (pdf.pagesRead.length === pdfDoc.numPages) {
+                //    pdf.page = %s || getLastReadPage() || 1;
+                //}
+                //updatePdfProgressBar();
+                if (topBarIsHidden()) {
+                    readerNotification("%s");
+                }
+            };
+            loadFn();
+            b64 = "";
+            bstr = null; file = null;
+            })();
+        """ % (pages_read_js, marks_js, extract_js, note_id, open_at_page, last_page_read, open_at_page, title)
+
+        #send large files in multiple packets
+        page        = cls._editor.web.page()
+        chunk_size  = 50000000
+        if blen > chunk_size:
+            page.runJavaScript(f"var b64 = `{base64pdf[0: chunk_size]}`;")
+            sent = chunk_size
+            while sent < blen:
+                page.runJavaScript(f"b64 += `{base64pdf[sent: min(blen,sent + chunk_size)]}`;")
+                sent += min(blen - sent, chunk_size)
+            page.runJavaScript(init_code)
+        else:
+            page.runJavaScript("""
+                var b64 = `%s`;
+                    %s
+            """ % (base64pdf, init_code))
 
 
     @classmethod
@@ -434,10 +558,8 @@ class Reader:
             var loadFn = function(retry) {
                 if (retry > 4) {
                     $('#siac-pdf-loader-wrapper').remove();
-                    $('#siac-timer-popup').html(`<br><center>PDF.js could not be loaded from CDN.</center><br>`).show();
                     pdf.instance = null;
                     ungreyoutBottom();
-                    fileReader = null;
                     pdfLoading = false;
                     noteLoading = false;
                     return;
@@ -461,10 +583,9 @@ class Reader:
                 });
                 loadingTask.promise.catch(function(error) {
                         $('#siac-pdf-loader-wrapper').remove();
-                        $('#siac-timer-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
+                        $('#siac-reader-popup').html(`<br><center>Could not load PDF - seems to be invalid.</center><br>`).show();
                         pdf.instance = null;
                         ungreyoutBottom();
-                        fileReader = null;
                         pdfLoading = false;
                         noteLoading = false;
                 });
@@ -486,7 +607,6 @@ class Reader:
                             readerNotification("%s");
                         }
                         if (pdf.pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
-                        fileReader = null;
                         pdf.TOC = null;
                         setTimeout(checkTOC, 300);
                 }).catch(function(err) { setTimeout(function() { console.log(err); }); });
@@ -823,21 +943,26 @@ class Reader:
         overflow        = "auto"
         notification    = ""
         editable        = False
+
         #check note type
         if note.is_file() and not note.is_md():
             editable = len(text) < 100000
             overflow = "hidden"
             text = cls.file_note_html(editable, priority, source)
+
         elif note.is_pdf() and utility.misc.file_exists(source):
             overflow        = "hidden"
-            text            = cls.pdf_viewer_html(source, note.get_title(), priority)
+            text            = cls.pdf_viewer_html()
 
             if "/" in source:
                 source  = source[source.rindex("/") +1:]
-        elif note.is_feed():
-            text        = cls.get_feed_html(note_id, source)
+     
         elif note.is_yt():
             text        = cls.yt_html()
+
+        elif note.is_epub():
+            text        = cls.epub_html()
+
         else:
             editable    = len(text) < 100000
             overflow    = "hidden"
@@ -924,73 +1049,36 @@ class Reader:
         )
         return filled_template("rm/yt_viewer", params)
 
-
     @classmethod
-    def get_feed_html(cls, nid, source) -> HTML:
-        """ Not used currently. """
+    def epub_html(cls) -> HTML:
+        """ Returns the HTML for the epub viewer. """
 
-        #extract feed url
-        try:
-            feed_url    = source[source.index(":") +1:].strip()
-        except:
-            return "<center>Could not load feed. Please check the URL.</center>"
-        res             = read(feed_url)
-        search_sources  = ""
-        config          = mw.addonManager.getConfig(__name__)
-        urls            = config["searchUrls"]
-        if urls is not None and len(urls) > 0:
-            search_sources = cls.iframe_dialog(urls)
-        text            = ""
-        templ           = """
-                <div class='siac-feed-item'>
-                    <div><span class='siac-blue-outset'>%s</span> &nbsp;<a href="%s" class='siac-ul-a'>%s</a></div>
-                    <div><i>%s</i> <span style='margin-left: 15px;'>%s</span></div>
-                    <div style='margin: 15px;'>%s</div>
-                </div> """
+        nid                 = cls.note_id
+        title               = cls.note.get_title()
+        source              = cls.note.source.strip()
+        config              = mw.addonManager.getConfig(__name__)
+        urls                = config["searchUrls"]
+        tooltip_enabled     = str(config["pdf.tooltip_enabled"]).lower() 
+        search_sources      = cls.iframe_dialog(urls) if urls else ""
+        marks_img_src       = utility.misc.img_src("mark-star-24px.png")
+        marks_grey_img_src  = utility.misc.img_src("mark-star-lightgrey-24px.png")
+        pdf_search_img_src  = utility.misc.img_src("magnify-24px.png")
+        extract             = ""
 
-        for ix, message in enumerate(res[:25]):
-            if len(message.categories) > 0:
-                if len(message.categories) == 1:
-                    cats = f"<span class='blue-underline'>{message.categories[0]}</span>"
-                else:
-                    cats = "<span class='blue-underline'>" + "</span> &nbsp;<span class='blue-underline'>".join(message.categories) + "</span>"
+        if cls.note.extract_start:
+            if cls.note.extract_start == cls.note.extract_end:
+                extract = f"<div class='siac-extract-marker'>&nbsp;<i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {cls.note.extract_start}&nbsp;</div>"
             else:
-                cats = ""
-            text = ''.join((text, templ % (ix + 1, message.link, message.title, message.date, cats, message.text)))
-        html = """
-            <div id='siac-iframe-btn' style='top: 5px; left: 0px;' class='siac-btn siac-btn-dark' onclick='iframeBtnClicked(event)'><i class="fa fa-globe" aria-hidden="true"></i>
-                <div style='margin-left: 5px; margin-top: 4px; color: lightgrey; width: calc(100% - 35px); text-align: right; color: grey; font-size: 10px;'>Note: Not all sites allow embedding!</div>
-                <div style='padding: 0 15px 10px 15px; margin-top: 10px; max-height: 500px; overflow-y: auto; box-sizing: border-box; width: 100%;'>
-                    <input onclick="event.stopPropagation();" onkeyup="if (event.keyCode === 13) {{ pdfUrlSearch(this.value); this.value = ''; }}"></input>
-                    <br/>
-                {search_sources}
-                </div>
-            </div>
-            <div id='siac-close-iframe-btn' class='siac-btn siac-btn-dark fg_lightgrey' onclick='pycmd("siac-close-iframe")'><b>&times; &nbsp;CLOSE</b></div>
-            <div id='siac-text-top' contenteditable='false' onmouseup='nonPDFKeyup();' onclick='if (!window.getSelection().toString().length) {{$("#siac-pdf-tooltip").hide();}}'>
-                {text}
-            </div>
-            <iframe id='siac-iframe' sandbox='allow-scripts' style='height: calc(100% - 47px);'></iframe>
-            <div class="siac-reading-modal-button-bar-wrapper">
-                <div style='position: absolute; left: 0; z-index: 1; user-select: none;'>
-                    <div class='siac-btn siac-btn-dark' style="margin-left: -20px;" onclick='toggleBottomBar();'>&#x2195;</div>
-                    <div class='siac-btn siac-btn-dark ml-5' id='siac-rd-note-btn' onclick='pycmd("siac-create-note-add-only {nid}")'><b>&#9998; Note</b></div>
-                </div>
-            </div>
-            <script>
-                if (pdf.tooltip.enabled) {{
-                    $('#siac-pdf-tooltip-toggle').addClass('active');
-                }} else {{
-                    $('#siac-pdf-tooltip-toggle').removeClass('active');
-                }}
-                if (pdf.linksEnabled) {{
-                    $('#siac-pdf-links-toggle').addClass('active');
-                }} else {{
-                    $('#siac-pdf-links-toggle').removeClass('active');
-                }}
-                ungreyoutBottom();
-            </script>
-        """.format_map(dict(text = text, nid = nid, search_sources=search_sources))
+                extract = f"<div class='siac-extract-marker'>&nbsp;<i class='fa fa-book' aria-hidden='true'></i> &nbsp;Extract: P. {cls.note.extract_start} - {cls.note.extract_end}&nbsp;</div>"
+
+        params = dict(nid = nid, pdf_title = title, pdf_path = source, search_sources=search_sources, marks_img_src=marks_img_src,
+        marks_grey_img_src=marks_grey_img_src, pdf_search_img_src=pdf_search_img_src, extract=extract, tooltip_enabled=tooltip_enabled)
+
+        html   = filled_template("rm/epub_viewer", params)
+
+        
+
+
         return html
 
 
@@ -1112,10 +1200,12 @@ class Reader:
 
 
     @classmethod
-    def pdf_viewer_html(cls, source: str, title: str, priority: int) -> HTML:
+    def pdf_viewer_html(cls) -> HTML:
         """ Returns the center area of the reading modal. Use this if the displayed note is a pdf. """
 
         nid                 = cls.note_id
+        title               = cls.note.get_title()
+        source              = cls.note.source.strip() if cls.note.source is not None and len(cls.note.source.strip()) > 0 else "Empty"
         config              = mw.addonManager.getConfig(__name__)
         urls                = config["searchUrls"]
         tooltip_enabled     = str(config["pdf.tooltip_enabled"]).lower() 
@@ -1211,7 +1301,7 @@ class Reader:
 
         modal   = filled_template("remove_modal", dict(title = title, rem_cl = rem_cl, del_cl = del_cl, note_id = note_id))
         return """modalShown=true;
-            $('#siac-timer-popup').hide();
+            $('#siac-reader-popup').hide();
             $('#siac-rm-greyout').show();
             $('#siac-reading-modal-center').append(`%s`);
             """ % modal
@@ -1275,7 +1365,7 @@ class Reader:
 
         return """modalShown=true;
             $('#siac-pdf-tooltip').hide();
-            $('#siac-timer-popup').hide();
+            $('#siac-reader-popup').hide();
             $('#siac-rm-greyout').show();
             $('#siac-reading-modal-center').append(`%s`);
             if (byId('siac-reading-modal-center').clientHeight < 530 &&

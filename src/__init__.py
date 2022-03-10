@@ -350,6 +350,8 @@ def insert_scripts():
     js_css += js(f"_addons/{addon_id}/web/simple_mde/simplemde.min.js")
     js_css += css(f"_addons/{addon_id}/web/simple_mde/simplemde.min.css")
     js_css += js(f"_addons/{addon_id}/web/pdfjs/{pdfjs_v}/pdf.js")
+    js_css += js(f"_addons/{addon_id}/web/epubjs/jszip.min.js")
+    js_css += js(f"_addons/{addon_id}/web/epubjs/epub.min.js")
     js_css += js(f"_addons/{addon_id}/web/plot.js", timeout=1000)
     js_css += js(f"_addons/{addon_id}/web/d3.min.js")
     js_css += css(f"_addons/{addon_id}/web/cal-heatmap.css")

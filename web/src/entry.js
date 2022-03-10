@@ -14,6 +14,7 @@ import {  } from "./filetree.js";
 import {  } from "./fields.js";
 import {  } from "./fetch.js";
 import {  } from "./mathjax.js";
+import {  } from "./epub_reader.js";
 
 
 import "../styles.entry.css";
