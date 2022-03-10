@@ -1042,7 +1042,7 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
 #siac-pdf-mark-btn img {
     margin: 5px !important;
 }
-#siac-timer-popup {
+#siac-reader-popup {
     z-index: 9999999;
     background: var(--c-reading-modal-background);
     color: white;
@@ -1052,7 +1052,6 @@ body.siac-pdf-hl-alt-render .siac-hl-c {
     transform: translate(-50%, -50%);
     padding: 15px;
     width: 300px;
-    border: 4px outset var(--c-reading-modal-theme-color);
     border-radius: 5px;
     display: none;
 }

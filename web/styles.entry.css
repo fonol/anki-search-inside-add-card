@@ -8,6 +8,7 @@
 @import "/css/keyframes.css";
 @import "/css/sidebar.css";
 @import "/css/tomato.css";
+@import "/css/epub.css";
 @import "/css/layout.css";
 
 :root {
@@ -79,7 +80,7 @@
     color: var(--c-modal-foregroundl);
 }
 #searchResults {
-    display: none;
+    /* display: none; */
     height: calc(100% - 15px);
     overflow-y: auto;
     padding: 10px 10px 5px 10px;
@@ -238,6 +239,9 @@ body.nightMode .tagLbl:hover {
     margin-left: 2px;
     padding-left: 4px;
     height: 100%;
+}
+input[type="radio"] {
+    min-width: 21px;
 }
 
 .siac-input {

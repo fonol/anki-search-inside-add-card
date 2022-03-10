@@ -8,6 +8,7 @@
     box-sizing: content-box;
     user-select: none;
     font-size: 13px !important;
+    min-width: 9px;
     outline: none;
 }
 .siac-btn.siac-btn-dark, .siac-btn.siac-btn-dark-smaller {

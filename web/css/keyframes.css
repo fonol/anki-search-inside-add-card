@@ -29,3 +29,9 @@
 .slide-in {
   animation: slide-in 0.5s forwards;
 }
+@keyframes details-show {
+  from {
+    opacity:0;
+    transform: var(--details-translate, translateY(-0.5em));
+  }
+}

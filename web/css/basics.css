@@ -133,6 +133,9 @@
 .siac-text-muted {
     color: #9a9a9a;
 }
+  details[open] > *:not(summary) {
+    animation: details-show 180ms ease-in-out;
+  }
 body.nightMode .siac-text-muted, #siac-reading-modal .siac-text-muted {
     color: grey;
 }
