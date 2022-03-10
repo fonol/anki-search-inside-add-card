@@ -106,14 +106,15 @@ window.SIAC.Fields = {
     cacheFields: function() {
         this._fields = [];
 
-        let fields = document.querySelectorAll('.editing-area');
-        if (!fields||!fields.length||!fields[0].children[0].shadowRoot||!fields[0].children[0].shadowRoot.querySelector('anki-editable')) {
+        let fields = document.querySelectorAll('.rich-text-editable');
+
+        if (!fields||!fields.length||!fields[0].shadowRoot||!fields[0].shadowRoot.querySelector('anki-editable')) {
             console.info('[SIAC] cacheFields(): .editing-area not found, retrying in 30ms.');
             setTimeout(this.cacheFields, 30);
             return;
         }
         for (let f of fields) {
-            let el = f.children[0].shadowRoot.querySelector('anki-editable');
+            let el = f.shadowRoot.querySelector('anki-editable');
             if (!el) {
                 console.warn('[SIAC] cacheFields(): failed to find field element.');
                 continue;
