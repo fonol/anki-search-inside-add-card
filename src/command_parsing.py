@@ -1572,18 +1572,24 @@ def update_config(key, value):
 
 def handle_json_fetch(web, key, resource_name, resource_args):
 
-    r = {}
-    if resource_name == "md-file-content":
+    res = resource_name
+    r   = {}
+
+    if res == "md-file-content":
         fpath           = resource_args[0]
         md_folder       = get_config_value("md.folder_path").replace("\\", "/")
         if not md_folder.endswith("/"):
             md_folder += "/"
         fpath_full      = md_folder + fpath
-        r["content"]    = utility.misc.file_content(fpath_full)
-    elif resource_name == "md-file-tree":
+        r    = utility.misc.file_content(fpath_full)
+
+    elif res == "md-file-tree":
         r["tree"] = get_folder_structure(get_config_value("md.folder_path").replace("\\", "/"))
 
-    web.eval(f"SIAC.fetch.callback('{key}', {json.dumps(r)})")
+    elif res == "last-opened":
+        r = get_last_opened_notes()
+
+    web.eval(f"SIAC.fetch.callback('{key}', {json.dumps(r, default=vars)})")
 
 
 
