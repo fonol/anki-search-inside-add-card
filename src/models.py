@@ -18,6 +18,7 @@ import utility.text
 import utility.misc
 import html
 import re
+import json
 import typing
 from typing import Tuple, List, Any, Optional
 
@@ -30,16 +31,8 @@ from .markdown.extensions.def_list import DefListExtension
 
 DUE_NOTES_BOUNDARY = get_config_value_or_default("notes.queue.due_note_boundary", 7)
 
-class Printable():
 
-    def get_content(self) -> str:
-        """
-        Should return the "body" of the note, e.g. the 'source' field in case of index notes and the
-        'text' field in case of SiacNote.
-        """
-        raise NotImplementedError()
-
-class SiacNote(Printable):
+class SiacNote():
 
     _ct_timestamp   = 0
     note_type       = "user"
@@ -69,6 +62,8 @@ class SiacNote(Printable):
         self.url            : str           = props[17]
 
         self.mid            : int = -1
+
+        # dict.__init__(self)
 
     @staticmethod
     def from_index(index_props: Tuple[Any, ...]) -> 'SiacNote':
@@ -108,6 +103,11 @@ class SiacNote(Printable):
 
     def is_yt(self) -> bool:
         return self.source is not None and re.match("(?:https?://)?www\.youtube\..+", self.source.strip().lower())
+
+    def is_epub(self) -> bool:
+        if self.is_file():
+            return False
+        return self.source is not None and self.source.strip().lower().endswith(".epub")
     
     def is_md(self) -> bool:
         return self.source is not None and self.source.lower().startswith("md:///")
@@ -252,7 +252,7 @@ class SiacNote(Printable):
 
         return body + src
 
-class IndexNote(Printable):
+class IndexNote():
 
     note_type: str = "index"
 
