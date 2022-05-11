@@ -14,25 +14,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#TODO: tidy up, make config accessible from either settings or describe in config.md
-from aqt.qt import *
-import sip
-import time
 import re
+import time
 import urllib
-from aqt.qt import *
-from aqt import mw
-import aqt
-from anki.utils import isMac
-from aqt.utils import tooltip
 
-from ...config import get_config_value, get_config_value_or_default
-from ...web_import import import_webpage
-from ..editor import NoteEditor
-from ..components import MDTextEdit
+# TODO: tidy up, make config accessible from either settings or describe in config.md
+import sip
+from anki.utils import isMac
+from aqt import mw
+from aqt.qt import *
+from aqt.utils import tooltip
 
 import utility.misc
 import utility.text
+from ..components import MDTextEdit
+from ..editor import NoteEditor
+from ...config import get_config_value, get_config_value_or_default
+from ...web_import import import_webpage
 
 
 class QuickWebImport(QWidget):
@@ -518,7 +516,7 @@ class SearchBar(QWidget):
         self.on_search_forward(QWebEnginePage.FindBackward)
 
     @pyqtSlot()
-    def on_search_forward(self, direction= QWebEnginePage.FindFlag()):
+    def on_search_forward(self, direction= QWebEnginePage.FindFlag):
         flag = direction
         if self.case_btn.isChecked():
             flag |= QWebEnginePage.FindCaseSensitively
