@@ -79,7 +79,7 @@ def set_nightmode(b: bool):
     os.environ['SIAC_NIGHTMODE'] = str(b)
 
 def is_nightmode() -> bool:
-    return bool(os.environ.get('SIAC_NIGHTMODE', 'False'))
+    return os.environ.get('SIAC_NIGHTMODE', 'False').lower() == "true"
 
 def check_index() -> bool:
     """ Returns True if index and ui are ready to use. """
