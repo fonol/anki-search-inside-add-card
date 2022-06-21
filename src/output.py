@@ -1252,7 +1252,7 @@ class UI:
         """ Returns recent add-on changes. """
 
         return [
-            "Adaptations & fixes for 2.1.50",
+            "Test release for Anki 2.1.51+",
             "Please note this version will probably not run on versions < 2.1.50"
         ]
 
