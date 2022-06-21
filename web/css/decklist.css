@@ -3,29 +3,23 @@
     list-style-type: none;
     cursor: pointer;
     margin: 0;
-    padding: 0px;
     border-spacing: 0px;
     width: calc(100% - 8px);
     position: relative;
     user-select: none;
     font-size: 12px !important;
     font-weight: bold;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.deck-list-item:not(:last-child) {
+    margin: 2px 0;
 }
 .deck-list-item .deck-list-item {
     width: 100%;
 }
-.list-item-inner {
-    text-overflow: ellipsis;
-    position: relative;
-    border-radius: 3px;
-}
-#siac-notes-sidebar .deck-list-item {
-    margin: 1px 0;
-}
-#siac-notes-sidebar .list-item-inner {
-    display: flex !important;
-}
-#siac-notes-sidebar .list-item-inner .exp {
+#siac-notes-sidebar .exp {
     margin-right: 3px;
 }
 .deck-list-item > div {
@@ -35,11 +29,19 @@
     width: 100%;
     padding: 2px 4px;
 }
-.deck-list-item:hover >.list-item-inner  {
+.deck-list-item:hover {
     background: var(--c-primary-color);
     color: white;
 }
-body.nightMode .deck-list-item:hover > .list-item-inner {
+.deck-list-item:hover > .deck-sub-list {
+    background: var(--c-card-bg);
+    color: var(--text-fg);
+}
+body.nightMode .deck-list-item:hover > .deck-sub-list {
+    background: var(--c-card-bg-night);
+    color: whitesmoke;
+}
+body.nightMode .deck-list-item:hover {
     /* background: var(--c-primary-color-night); */
     background: #3e3e3e;
 }
@@ -47,6 +49,7 @@ body.nightMode .deck-list-item:hover > .list-item-inner {
     float: right;
     color: var(--c-deck-select-checkmark);
     display: none;
+    margin-right: 3px;
 }
 
 .siac-tl-plus {
@@ -62,16 +65,16 @@ body.nightMode .siac-tl-plus {
     /* background: var(--c-primary-color-night); */
     background: #3e3e3e;
 }
-.deck-list-item:hover > .list-item-inner > .siac-tl-plus {
+.deck-list-item:hover > .siac-tl-plus {
     display: inline-block;
 }
 .siac-tl-plus:hover {
     color: coral;
 }
-.deck-list-item.selected > .list-item-inner > .check {
+.deck-list-item.selected > .check {
     display: inline;
 }
-.deck-list-item.selected:hover > .list-item-inner:hover > .check {
+.deck-list-item.selected:hover > .check {
     color: white;
 }
 #siac-deck-sel-btn-wrapper, #deck-sel-info-lbl {
@@ -102,8 +105,7 @@ body.nightMode .deck-list-button {
 .deck-sub-list {
     display: none;
     margin-top: 2px;
-    margin-left: 12px;
-    padding-left: 0px;
+    padding-left: 12px;
 }
 .deck-sub-list.outer {
     display: block;
@@ -125,6 +127,6 @@ body.nightMode .siac-tag-cnt {
     color: grey;
 }
 
-.deck-list-item:hover > .list-item-inner > .siac-tag-cnt {
+.deck-list-item:hover > .siac-tag-cnt {
     color: #b3b3b3;
 }

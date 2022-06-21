@@ -251,7 +251,7 @@ def fillTagSelect(editor = None, expanded = False):
             html = "<ul class='deck-sub-list'>"
         for key, value in tmap.items():
             full = prefix + "::" + key if prefix else key
-            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s')\"><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+            html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s')\"><b class='exp'>%s</b> %s <span class='check'>&#10004;</span>%s</li>" % (full, "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
         html += "</ul>"
         return html
 
@@ -272,7 +272,7 @@ def fillTagSelect(editor = None, expanded = False):
             else
                 icn.text('[+]');
         }
-        $(this).parent().parent().children('ul').toggle();
+        $(this).parent().children('ul').toggle();
     });
     $("#siac-deck-sel-btn-wrapper").hide();
     %s

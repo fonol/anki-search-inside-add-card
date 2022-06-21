@@ -1173,7 +1173,7 @@ class UI:
                 # https://github.com/fonol/anki-search-inside-add-card/issues/286
                 # ???
                 if did is not None:
-                    html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><div class='list-item-inner'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span></div>%s</li>" % ( 
+                    html += "<li class='deck-list-item %s' data-id='%s' onclick='event.stopPropagation(); updateSelectedDecks(this);'><b class='exp'>%s</b> %s <span class='check'>&#10004;</span>%s</li>" % ( 
                         "selected" if str(did) in decks or decks == ["-1"] else "", 
                         did,  "[+]" if value else "", 
                         utility.text.trim_if_longer_than(key, 35), 
@@ -1203,7 +1203,7 @@ class UI:
                         else
                             icn.text('[+]');
                     }
-                    $(this).parent().parent().children('ul').toggle();
+                    $(this).parent().children('ul').toggle();
                 });
                 %s
                 $("#siac-deck-sel-btn-wrapper").show();

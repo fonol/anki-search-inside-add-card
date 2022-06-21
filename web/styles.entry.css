@@ -446,6 +446,7 @@ body.nightMode #icns-large {
 }
 .exp {
     user-select: none;
+    margin-left: 3px;
 }
 .exp:hover {
     color: coral;
@@ -459,7 +460,7 @@ table.striped {
     border-collapse: collapse;
 }
 .exp:empty {
-    display: none;
+    margin-right: 0;
 }
 .siac-switch-deck-btn-inner {
     width: 48%; 

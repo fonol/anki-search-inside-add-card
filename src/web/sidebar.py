@@ -41,7 +41,7 @@ class Sidebar:
                     html = "<ul class='deck-sub-list'>"
                 for key, value in tmap.items():
                     full = prefix + "::" + key if prefix else key
-                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); searchUserNoteTag(event, '%s');\"><div class='list-item-inner'><b class='exp' data-t='%s'>%s</b> <span class='siac-tag'>%s</span> <span class='siac-tag-cnt'>%s</span><span class='siac-tl-plus' onclick='event.stopPropagation(); pycmd(\"siac-create-note-tag-prefill %s\") '><i class='fa fa-plus mr-5 ml-5'></i></span></div>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), tcounts.get(full.lower(), "?"), full, iterateMap(value, full, False))
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); searchUserNoteTag(event, '%s');\"><b class='exp' data-t='%s'>%s</b> <span class='siac-tag'>%s</span> <span class='siac-tag-cnt'>%s</span><span class='siac-tl-plus' onclick='event.stopPropagation(); pycmd(\"siac-create-note-tag-prefill %s\") '><i class='fa fa-plus mr-5 ml-5'></i></span>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), tcounts.get(full.lower(), "?"), full, iterateMap(value, full, False))
                 html += "</ul>"
                 return html
 
@@ -111,7 +111,7 @@ class Sidebar:
                             click       = f"pycmd(\"siac-create-note-source-prefill {full}\")" if full.endswith(".pdf") else ""
                             exp         = "[+]" if value else ""
                             should_bold = "style='font-weight: bold;'" if value else ""
-                            html        = f"{html}<li class='deck-list-item' onclick='event.stopPropagation(); {click}'><div class='list-item-inner' {should_bold}><b class='exp'>{exp}</b> {utility.text.trim_if_longer_than(key, 35)}</div>{iterateMap(value, full, False)}</li>"
+                            html        = f"{html}<li class='deck-list-item' onclick='event.stopPropagation(); {click}' {should_bold}><b class='exp'>{exp}</b> {utility.text.trim_if_longer_than(key, 35)}{iterateMap(value, full, False)}</li>"
                         html += "</ul>"
                         return html
                     folders = iterateMap(map, "", True)
@@ -145,7 +145,7 @@ class Sidebar:
                     html = "<ul class='deck-sub-list'>"
                 for key, value in tmap.items():
                     full = prefix + "::" + key if prefix else key
-                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s');\"><div class='list-item-inner'><b class='exp' data-t='%s'>%s</b> <span class='siac-tag'>%s</span></div>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s');\"><b class='exp' data-t='%s'>%s</b> <span class='siac-tag'>%s</span>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
                 html += "</ul>"
                 return html
 
@@ -198,7 +198,7 @@ class Sidebar:
                     }
                 }
             }
-            $(this).parent().parent().children('ul').toggle();
+            $(this).parent().children('ul').toggle();
         });
         let exp = [];
         let scrollTop = 0;

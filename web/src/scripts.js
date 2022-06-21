@@ -339,7 +339,7 @@ window.noteSidebarExpandAll = function () {
         if (icn.text().length) {
             if (icn.text() === '[+]') {
                 icn.text('[-]');
-                icn.parent().parent().children('ul').toggle();
+                icn.parent().children('ul').toggle();
                 let t = elem.dataset.t;
                 if (_siacSidebar.tab === 1) {
                     if (_siacSidebar.addonTagsExpanded.indexOf(t) === -1) {
@@ -360,7 +360,7 @@ window.noteSidebarCollapseAll = function () {
         if (icn.text().length) {
             if (icn.text() === '[-]') {
                 icn.text('[+]');
-                icn.parent().parent().children('ul').toggle();
+                icn.parent().children('ul').toggle();
                 let t = elem.dataset.t;
                 if (_siacSidebar.tab === 1) {
                     if (_siacSidebar.addonTagsExpanded.indexOf(t) !== -1) {
