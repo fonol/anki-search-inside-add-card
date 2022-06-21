@@ -225,8 +225,8 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
                 } 
                 SIAC.Fields.setSelectionMouseUpEventListener();
                 window.addEventListener('resize', onWindowResize, true);
-                $('.cal-block-outer').on('mouseenter', function(event) { calBlockMouseEnter(event, this); });
-                $('.cal-block-outer').on('click', function(event) { displayCalInfo(this); });
+                $('.cal-block').on('mouseenter', function(event) { calBlockMouseEnter(event, this); });
+                $('.cal-block').on('click', function(event) { displayCalInfo(this); });
             };
             sFn();
             return there; 
@@ -332,7 +332,7 @@ def get_calendar_html() -> HTML:
         else:
             color = ""
 
-        html_content = f"{html_content}<div class='cal-block-outer'><div class='cal-block %s %s' data-index='%s'></div></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
+        html_content = f"{html_content}<div class='cal-block %s %s' data-index='%s'></div>" % ("cal-today" if i == len(counts) - 1 else "", color, added)
         added += 1
 
     html = html % html_content

@@ -1470,8 +1470,8 @@ def handle_settings_update(cmd: str):
                 document.getElementById('cal-row').style.display = 'block';
             } else {
                 document.getElementById('bottomContainer').children[1].innerHTML = `%s`;
-                $('.cal-block-outer').mouseenter(function(event) { calBlockMouseEnter(event, this);});
-                $('.cal-block-outer').click(function(event) { displayCalInfo(this);});
+                $('.cal-block').mouseenter(function(event) { calBlockMouseEnter(event, this);});
+                $('.cal-block').click(function(event) { displayCalInfo(this);});
             }
             onWindowResize();
             """ % get_calendar_html())

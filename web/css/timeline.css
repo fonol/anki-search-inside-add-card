@@ -1,23 +1,19 @@
-.cal-block-outer {
+.cal-block:hover  {
+    background-color: var(--c-tag-background) !important;
+}
+.cal-block {
     height: 100%;
+    width: calc(100% / 365);
+    position: relative;
     box-sizing: content-box;
     height: 8px;
     cursor: pointer;
     display: inline-block;
-    width: calc(100% / 365);
 }
-.cal-block-outer:hover > .cal-block, .cal-block-outer:hover > .cal-block {
-    background-color: var(--c-tag-background) !important;
-}
-.cal-block {
-    position: relative;
-    height: 100%;
-    width: 100%;
-}
-.cal-block-outer .cal-block:empty {
+.cal-block:empty {
     background: #ececec;
 }
-body.nightMode .cal-block-outer .cal-block:empty {
+body.nightMode .cal-block:empty {
     background: #3e3e3e;
 }
 .cal-block-week {

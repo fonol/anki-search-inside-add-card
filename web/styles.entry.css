@@ -119,6 +119,9 @@
     transform: scale(1.04);
     color: #2496dc;
 }
+.floatingBtnBarItem:not(:last-child) {
+    margin-right: 5px;
+}
 .flexCol > select {
     width: 200px;
 }

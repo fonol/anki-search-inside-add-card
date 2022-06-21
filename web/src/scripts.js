@@ -767,7 +767,7 @@ window.calBlockMouseEnter = function (event, elem) {
 }
 window.displayCalInfo = function (elem) {
 
-    let offset = getOffset(elem.children[0]);
+    let offset = getOffset(elem);
 
     let offsetLeft = offset.left - 153;
     let offsetRight = byId("siac-second-col-wrapper").clientWidth - offset.left - 153;
@@ -783,7 +783,7 @@ window.displayCalInfo = function (elem) {
     }
     $('#cal-info').css("left", offsetLeft + "px").css("top", (offset.top - 275) + "px");
     byId('cal-info').style.display = "block";
-    pycmd("siac-cal-info " + $(elem.children[0]).data("index"));
+    pycmd("siac-cal-info " + $(elem).data("index"));
 }
 
 window.calMouseLeave = function () {
@@ -885,9 +885,9 @@ window.addFloatingNote = function (nid) {
     content = content.replace(/<\/?mark>/g, "");
     $('#siac-note-wr-' + nid).remove();
     let btnBar = `<div class='floatingBtnBar'>
-        <div class="floatingBtnBarItem" onclick='${onedit}'>Edit</div>&nbsp;&#65372;
-        <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>&nbsp;&#65372;
-        <div class="floatingBtnBarItem" id='rem-${nid}' onclick='byId("nF-${nid}").outerHTML = ""; updatePinned();'><span>&#10006;&nbsp;&nbsp;</span></div>
+        <div class="floatingBtnBarItem" onclick='${onedit}'>Edit</div>
+        <div class="floatingBtnBarItem" onclick='searchCardFromFloated("nFC-${nid}")'>Search</div>
+        <div class="floatingBtnBarItem" id='rem-${nid}' onclick='byId("nF-${nid}").outerHTML = ""; updatePinned();'>&times;</div>
     </div>`;
     let floatingNote = `<div id="nF-${nid}" class='noteFloating'>
             <div id="nFH-${nid}" class='noteFloatingHeader' onmousedown='dragElement(this.parentElement, "nFH-${nid}")'>&nbsp;${btnBar}</div>
