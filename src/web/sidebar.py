@@ -41,7 +41,7 @@ class Sidebar:
                     html = "<ul class='deck-sub-list'>"
                 for key, value in tmap.items():
                     full = prefix + "::" + key if prefix else key
-                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); searchUserNoteTag(event, '%s');\"><b class='exp' data-t='%s'>%s</b> <span class='siac-tag'>%s</span> <span class='siac-tag-cnt'>%s</span><span class='siac-tl-plus' onclick='event.stopPropagation(); pycmd(\"siac-create-note-tag-prefill %s\") '><i class='fa fa-plus mr-5 ml-5'></i></span>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), tcounts.get(full.lower(), "?"), full, iterateMap(value, full, False))
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); searchUserNoteTag(event, '%s');\"><b class='exp' data-t='%s'>%s</b> %s <span class='siac-tag-cnt'>%s</span><i class='siac-tl-plus fa fa-plus mr-5 ml-5' onclick='event.stopPropagation(); pycmd(\"siac-create-note-tag-prefill %s\") '></i>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), tcounts.get(full.lower(), "?"), full, iterateMap(value, full, False))
                 html += "</ul>"
                 return html
 
@@ -145,7 +145,7 @@ class Sidebar:
                     html = "<ul class='deck-sub-list'>"
                 for key, value in tmap.items():
                     full = prefix + "::" + key if prefix else key
-                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s');\"><b class='exp' data-t='%s'>%s</b> <span class='siac-tag'>%s</span>%s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
+                    html += "<li class='deck-list-item' onclick=\"event.stopPropagation(); pycmd('siac-r-search-tag %s');\"><b class='exp' data-t='%s'>%s</b> %s %s</li>" % (full, full.replace("'", ""), "[+]" if value else "", utility.text.trim_if_longer_than(key, 35), iterateMap(value, full, False))
                 html += "</ul>"
                 return html
 

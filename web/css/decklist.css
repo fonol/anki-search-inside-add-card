@@ -55,18 +55,19 @@ body.nightMode .deck-list-item:hover {
 .siac-tl-plus {
     position: absolute;
     right: 3px;
+    top: 3px;
     z-index: 2;
     padding-left: 2px;
     background: var(--c-primary-color);
     color: white;
-    display: none;
+    display: none !important;
 }
 body.nightMode .siac-tl-plus {
     /* background: var(--c-primary-color-night); */
     background: #3e3e3e;
 }
 .deck-list-item:hover > .siac-tl-plus {
-    display: inline-block;
+    display: inline-block !important;
 }
 .siac-tl-plus:hover {
     color: coral;
