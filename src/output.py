@@ -1159,6 +1159,8 @@ class UI:
         dmap        = dict(sorted(dmap.items(), key=lambda item: item[0].lower()))
         def iterateMap(dmap, prefix, start=False):
             decks = index.selectedDecks if index is not None else []
+            if len(dmap) == 0:
+                return ""
             if start:
                 html = "<ul class='deck-sub-list outer'>"
             else:

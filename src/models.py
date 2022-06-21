@@ -195,12 +195,12 @@ class SiacNote():
         body    = self.text
 
 
-        # old notes where saved with html tags
+        # old notes were saved with html tags
         # new ones are saved with markdown
         # so the markdown -> html conversion should only be called if the text is not already html
         # markdown conversion should also not be called for meta notes
         if not self.is_meta_note() and not utility.text.is_html(body):
-            body    = markdown(body[:3000],extensions=[FencedCodeExtension(), DefListExtension()])
+            body    = markdown(body[:2000],extensions=[FencedCodeExtension(), DefListExtension()])
 
 
         #trim very long texts:
@@ -217,7 +217,7 @@ class SiacNote():
                 if last_close_bracket < last_open_bracket:
                     body = body[:last_open_bracket]
 
-            body += "<br></ul></b></i></em></span></p></a></p><p class='ta_center' style='user-select: none;'><b>(Text was cut - too long to display)</b></p>"
+            body += "<br></ul></b></i></em></span></p></a></p></blockquote><p class='ta_center' style='user-select: none;'><b>(Text was cut - too long to display)</b></p>"
 
         # yt vids are prepended with thumbnail image
         if self.is_yt():

@@ -324,6 +324,9 @@ def insert_scripts():
                 document.body.appendChild(script);
             }})();"""
 
+    def css_deferred(path: str) -> str: 
+        return f"""<link as="style" rel="preload" href="http://127.0.0.1:{port}/{path}" onload="this.onload=null;this.rel='stylesheet'">"""
+
     def js(path: str, timeout: int = 0) -> str:
         if timeout > 0:
             return f"""
@@ -343,26 +346,27 @@ def insert_scripts():
                 document.body.appendChild(script);
             }})();"""
     
+    css_def = css_deferred(f"_addons/{addon_id}/web/fa/css/font-awesome.min.css")
+    css_def += css_deferred(f"_addons/{addon_id}/web/simple_mde/simplemde.min.css")
+    css_def += css_deferred(f"_addons/{addon_id}/web/cal-heatmap.css")
+    css_def += css_deferred(f"_addons/{addon_id}/web/pdfjs/textlayer.css")
+    css_def += css_deferred(f"_addons/{addon_id}/web/pdf_reader.css")
+
     js_css = css(f"_addons/{addon_id}/web/dist/styles.min.css")
     js_css += js(f"_addons/{addon_id}/web/dist/siac.min.js")
     js_css += js(f"_addons/{addon_id}/web/jquery.min.js")
-    js_css += css(f"_addons/{addon_id}/web/fa/css/font-awesome.min.css")
     js_css += js(f"_addons/{addon_id}/web/simple_mde/simplemde.min.js")
-    js_css += css(f"_addons/{addon_id}/web/simple_mde/simplemde.min.css")
     js_css += js(f"_addons/{addon_id}/web/pdfjs/{pdfjs_v}/pdf.js")
-    js_css += js(f"_addons/{addon_id}/web/epubjs/jszip.min.js")
-    js_css += js(f"_addons/{addon_id}/web/epubjs/epub.min.js")
+    # js_css += js(f"_addons/{addon_id}/web/epubjs/jszip.min.js")
+    # js_css += js(f"_addons/{addon_id}/web/epubjs/ub.min.js")
     js_css += js(f"_addons/{addon_id}/web/plot.js", timeout=1000)
     js_css += js(f"_addons/{addon_id}/web/d3.min.js")
-    js_css += css(f"_addons/{addon_id}/web/cal-heatmap.css")
-    js_css += css(f"_addons/{addon_id}/web/pdfjs/textlayer.css")
-    js_css += css(f"_addons/{addon_id}/web/pdf_reader.css")
     js_css += js(f"_anki/js/vendor/mathjax/tex-chtml.js", timeout=400)
-    # js_css += js(f"_addons/{addon_id}/web/dist/vuejs/js/main.js")
-    # js_css += css(f"_addons/{addon_id}/web/dist/vuejs/css/main.css")
-    js_css += js(f"_addons/{addon_id}/web/cal-heatmap.min.js", timeout=200)
+    js_css += js(f"_addons/{addon_id}/web/cal-heatmap.min.js", timeout=300)
 
-    js_css = f"""<script>
+    js_css = f"""
+        {css_def}
+        <script>
         {js_css}
         (() => {{
         var script = document.createElement('script');
