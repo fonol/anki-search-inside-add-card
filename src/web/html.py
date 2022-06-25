@@ -192,11 +192,13 @@ def right_side_html(indexIsLoaded: bool = False) -> HTML:
                     return;
                 }
                 $(fields).wrap(`<div class='siac-col' id='leftSide' onmouseenter='fieldsMouseEnter(event)' style='flex-grow: 1; width: %s%%;'></div>`);
-                //$('#dupes').insertAfter('#fields');
+                let leftSide = document.getElementById('leftSide');
+                let toolBar = document.getElementsByClassName('button-toolbar')[0];
+                toolBar.style.marginTop = '4px';
+                leftSide.prepend(toolBar);
                 
                 let toInsert = `%s`;
                 %s  
-
 
                 $(`.siac-col`).wrapAll('<div id="outerWr" style="width: 100%%; display: flex; overflow: hidden; height: 100%%;"></div>');
 
