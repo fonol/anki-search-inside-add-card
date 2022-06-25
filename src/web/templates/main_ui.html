@@ -1,4 +1,4 @@
-<div class='siac-col' style='width: {rightSideWidth}%; flex-grow: 1;' id='siac-right-side'>
+<div class='siac-col' style='width: {rightSideWidth}%; flex-grow: 1;' id='siac-right-side' onmousedown="document.getElementById('tmp_inp').focus(); document.getElementById('tmp_inp').blur()">
     <div id='siac-second-col-wrapper'>
         <div id="greyout"></div>
         <div id='siac-search-modal'>
@@ -291,5 +291,6 @@
         </div>
         <div id='cal-info'  onmouseleave='calMouseLeave()'></div>
         <div id='siac-reading-modal'></div>
+        <input id="tmp_inp" style="height: 0; border: 0; padding: 0;"/>
     </div>
 </div>
