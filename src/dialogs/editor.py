@@ -304,10 +304,9 @@ class NoteEditor(QDialog):
         author              = self.metadata_tab.author.text()
         url                 = self.metadata_tab.url.text()
 
-        # if source is a pdf, title must be given
+        # if source is a pdf, and title is empty, construct from file name
         if len(title.strip()) == 0 and source.lower().strip().endswith(".pdf"):
-            tooltip("Title must be set if source is PDF.")
-            return False
+            title = utility.misc.path_to_file_name(source)
 
         if len(title.strip()) + len(text.strip()) == 0:
             tooltip("Either Text or Title have to be filled out.")

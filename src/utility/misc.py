@@ -28,6 +28,7 @@ import pathlib
 import shutil
 import importlib.util
 from typing import Optional
+from pathlib import Path
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import tooltip, showInfo
@@ -62,6 +63,10 @@ def file_content(file_path: str) -> str:
     except:
         return content
     return content
+
+def path_to_file_name(path: str) -> str:
+
+    return Path(path).stem
 
 
 # endregion File / Folder Utils
