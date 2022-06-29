@@ -970,21 +970,11 @@ def search_for_user_notes_only(editor: aqt.editor.Editor, text: str):
 def add_note_to_index(note: Note):
     get_index().addNote(note)
 
-@requires_index_loaded
 def add_tag(tag: str):
     """ Insert the given tag in the tag field at bottom if not already there. """
 
-    # index = get_index()
-    # if tag == "" or index is None or UI._editor is None:
-    #     return
-    # tagsExisting = UI._editor.tags.text()
-    # if (tag == tagsExisting or  " " +  tag + " " in tagsExisting or tagsExisting.startswith(tag + " ") or tagsExisting.endswith(" " + tag)):
-    #     return
-
-    # UI._editor.tags.setText(tagsExisting + " " + tag)
-    # UI._editor.saveTags()
-
-    UI.js("setTags("+tag.replace('"', '\\"')+")")
+    tjson = json.dumps(mw.col.tags.canonify(mw.col.tags.split(tag)))
+    UI.js(f"setTags({tjson}); pycmd(`saveTags:{tjson}`)")
 
 @requires_index_loaded
 def set_pinned(cmd: str):
@@ -1147,8 +1137,12 @@ def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: i
             return
         did = deck_chooser.selectedId()
         if check_index():
-            tags        = UI._editor.tags.text()
-            tags        = mw.col.tags.canonify(mw.col.tags.split(tags))
+            if hasattr(UI._editor, "tags"):
+                tags        = UI._editor.tags.text()
+            else:
+                tags        = UI._editor.note.tags
+            if tags and isinstance(tags, str):
+                tags        = mw.col.tags.canonify(mw.col.tags.split(tags))
         else:
             tags        = []
 
@@ -1193,7 +1187,8 @@ def generate_clozes(sentences: List[str], pdf_path: str, pdf_title: str, page: i
         tooltip(f"""<center>Added {added} Cloze{s}.</center><br>
                   <center>Deck: <b>{deck_name}</b></center>
                   <center>Tags: <b>{tags_str}</b></center>""", period=3000)
-    except:
+    except Exception as e:
+        print(e)
         tooltip("Something went wrong during Cloze generation.", period=3000)
 
 @requires_index_loaded
