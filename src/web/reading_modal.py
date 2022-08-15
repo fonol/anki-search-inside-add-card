@@ -513,6 +513,7 @@ class Reader:
         if not state.rust_lib:
             base64pdf       = utility.misc.pdf_to_base64(full_path)
         blen            = len(base64pdf)
+        print(len(base64pdf))
 
         #pages read are stored in js array [int]
         pages_read      = get_read_pages(note_id)
@@ -609,12 +610,19 @@ class Reader:
                         }
                         if (pdf.pagesRead.length === 0) { pycmd('siac-insert-pages-total %s ' + numPagesExtract()); }
                         pdf.TOC = null;
+                        b64 = "";
+                        bstr = null; 
+                        file = null;
                         setTimeout(checkTOC, 300);
-                }).catch(function(err) { setTimeout(function() { console.log(err); }); });
+                }).catch(function(err) { 
+                    b64 = "";
+                    bstr = null; 
+                    file = null;
+                    setTimeout(function() { console.log(err); }); 
+                });
             };
             loadFn();
-            b64 = "";
-            bstr = null; file = null;
+           
             })();
         """ % (pages_read_js, marks_js, extract_js, port, addon_id, cls.pdfjs_v, port, addon_id, note_id, open_at_page, last_page_read, open_at_page, title, note_id)
 
