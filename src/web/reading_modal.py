@@ -513,7 +513,6 @@ class Reader:
         if not state.rust_lib:
             base64pdf       = utility.misc.pdf_to_base64(full_path)
         blen            = len(base64pdf)
-        print(len(base64pdf))
 
         #pages read are stored in js array [int]
         pages_read      = get_read_pages(note_id)
