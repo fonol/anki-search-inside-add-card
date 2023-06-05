@@ -34,6 +34,7 @@ from aqt.qt import *
 from aqt.utils import tooltip, showInfo
 from urllib.parse import urlparse
 from anki.utils import isMac, isLin
+from PyQt6.QtPrintSupport import QPrinter
 
 
 # region File / Folder Utils
@@ -339,8 +340,8 @@ def url_to_pdf(url, output_path, cb_after_finish = None):
 
     def save_pdf(finished):
         printer = QPrinter()
-        printer.setPageMargins(10, 10, 10, 10, QPrinter.Millimeter)
-        printer.setPageSize(QPrinter.A3)
+        printer.setPageMargins(QMarginsF(10, 10, 10, 10), QPageLayout.Unit.Millimeter)
+        printer.setPageSize(QPageSize(QPageSize.A3))
         printer.setPageOrientation(QPageLayout.Portrait)
         temp.page().printToPdf(output_path, printer.pageLayout())
 
