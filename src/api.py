@@ -18,7 +18,7 @@ import traceback
 from typing import Optional
 import aqt
 from aqt import mw
-from anki.utils import isMac
+from anki.utils import is_mac
 from aqt.utils import tooltip
 
 import state

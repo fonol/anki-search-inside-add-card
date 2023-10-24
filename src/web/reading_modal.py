@@ -703,7 +703,7 @@ class Reader:
         note        = cls.note
         done_dialog = DoneDialog(cls._editor.parentWindow, cls.note_id)
 
-        if done_dialog.exec_():
+        if done_dialog.exec():
             new_priority        = done_dialog.priority
             new_schedule        = done_dialog.schedule
             sched_has_changed   = done_dialog.schedule_has_changed
