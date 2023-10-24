@@ -33,7 +33,7 @@ from aqt import mw
 from aqt.qt import *
 from aqt.utils import tooltip, showInfo
 from urllib.parse import urlparse
-from anki.utils import isMac, isLin
+from anki.utils import is_mac, is_lin
 
 
 # region File / Folder Utils

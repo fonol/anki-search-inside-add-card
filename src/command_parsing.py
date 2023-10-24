@@ -23,7 +23,7 @@ import aqt.editor
 import aqt.stats
 from anki.notes import Note
 from aqt.utils import tooltip, showInfo
-from anki.utils import isMac, isLin
+from anki.utils import is_mac, is_lin
 import os
 import time
 import urllib.parse

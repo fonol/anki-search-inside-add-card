@@ -21,7 +21,7 @@ from aqt import mw, gui_hooks
 from aqt.qt import *
 from anki.hooks import wrap, addHook
 import aqt
-from anki.utils import isMac, isLin
+from anki.utils import is_mac, is_lin
 import aqt.webview
 from aqt.addcards import AddCards
 from anki.notes import Note

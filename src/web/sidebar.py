@@ -1,7 +1,7 @@
 import typing
 from typing import List, Optional, Tuple, Any
 from aqt.editor import Editor
-from anki.utils import isMac, isLin
+from anki.utils import is_mac, is_lin
 from aqt import mw
 
 from ..notes import get_note, get_all_tags_with_counts, get_notes_scheduled_for_today
