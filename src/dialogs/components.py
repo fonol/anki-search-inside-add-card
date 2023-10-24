@@ -52,7 +52,7 @@ class QtPrioritySlider(QWidget):
         vbox                    = QVBoxLayout()
         vbox.setContentsMargins(7,7,7,7)
 
-        self.slider             = QSlider(Qt.Horizontal)
+        self.slider             = QSlider(Qt.Orientation.Horizontal)
 
         if prio_default is not None and prio_default >= 0:
             self.slider.setValue(prio_default)

@@ -443,7 +443,7 @@ class CreateTab(QWidget):
         self.text.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Expanding)
-        self.text.setFrameStyle(QFrame.StyledPanel | QFrame.Shadow.Sunken)
+        self.text.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Sunken)
         self.text.setLineWidth(2)
         if hasattr(self.text, "setTabStopDistance"):
             self.text.setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 4)
@@ -918,18 +918,18 @@ class PriorityTab(QWidget):
 
             item = QStandardItem(text)
             item.setData(QVariant(pitem.id))
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDragEnabled)
+            item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsDragEnabled)
             model.setItem(c, 0, item)
             titem = QStandardItem(tags)
-            titem.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDragEnabled)
+            titem.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsDragEnabled)
             model.setItem(c, 1, titem)
             oitem = QStandardItem()
-            oitem.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDragEnabled)
+            oitem.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsDragEnabled)
             model.setItem(c, 2, oitem)
 
-        model.setHeaderData(0, Qt.Horizontal, "Title")
-        model.setHeaderData(1, Qt.Horizontal, "Tags")
-        model.setHeaderData(2, Qt.Horizontal, "Actions")
+        model.setHeaderData(0, Qt.Orientation.Horizontal, "Title")
+        model.setHeaderData(1, Qt.Orientation.Horizontal, "Tags")
+        model.setHeaderData(2, Qt.Orientation.Horizontal, "Actions")
         return model
 
     def set_remove_btns(self, priority_list):
@@ -1024,7 +1024,7 @@ class SettingsTab(QWidget):
 
         qs = QScrollArea()
         qs.setStyleSheet(""" QScrollArea { background-color: transparent; } """)
-        qs.setFrameShape(QFrame.NoFrame)
+        qs.setFrameShape(QFrame.Shape.NoFrame)
         qs.setWidgetResizable(True)
         qs.setWidget(container)
         qs.setMaximumHeight(300)
