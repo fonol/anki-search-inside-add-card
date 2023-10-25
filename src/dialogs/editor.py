@@ -719,7 +719,7 @@ class CreateTab(QWidget):
     def on_file_clicked(self):
         dialog = ExternalFile(self)
 
-        if dialog.exec_():
+        if dialog.exec():
             path = dialog.chosen_file
             if path is not None and len(path.strip())> 0:
                 self.source.setText(path)
@@ -747,7 +747,7 @@ class CreateTab(QWidget):
 
     def on_pdf_from_url_clicked(self):
         dialog = UrlImporter(self, show_schedule=False)
-        if dialog.exec_():
+        if dialog.exec():
             if dialog.chosen_url is not None and len(dialog.chosen_url.strip()) > 0:
                 name = dialog.get_name()
                 path = get_config_value_or_default("pdfUrlImportSavePath", "")
@@ -780,7 +780,7 @@ class CreateTab(QWidget):
     def on_tag_chooser_clicked(self):
         dialog = TagChooserDialog(self.tag.text(), self)
 
-        if dialog.exec_():
+        if dialog.exec():
             tag = dialog.chosen_tag
             if tag is not None and len(tag.strip()) > 0:
                 self.tag.setText(tag)
@@ -788,7 +788,7 @@ class CreateTab(QWidget):
 
     def on_url_clicked(self):
         dialog = URLInputDialog(self)
-        if dialog.exec_():
+        if dialog.exec():
             if dialog.chosen_url is not None and len(dialog.chosen_url.strip()) > 0:
                 text = import_webpage(dialog.chosen_url, inline_images=False)
                 if text is None:

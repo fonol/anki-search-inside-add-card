@@ -70,7 +70,7 @@ def show_queue_picker():
     def _open_id():
         Reader.display(dialog.chosen_id())
 
-    if dialog.exec_():
+    if dialog.exec():
         if dialog.chosen_id() is not None and dialog.chosen_id() > 0:
             open_or_switch_to_editor(_open_id)
         else:
@@ -86,7 +86,7 @@ def show_quick_open_pdf():
 
     dialog = QuickOpenNote(mw.app.activeWindow())
 
-    if dialog.exec_():
+    if dialog.exec():
         if dialog.chosen_id is not None and dialog.chosen_id > 0:
             open_siac_with_id(dialog.chosen_id)
 

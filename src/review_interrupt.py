@@ -68,7 +68,7 @@ def review_interruptor():
 def execute_review_interruption():
     if get_config_value("mix_reviews_and_reading.show_dialog"):
         dialog = ReviewReadInterruptDialog(mw)
-        if not dialog.exec_():
+        if not dialog.exec():
             return
 
     state.interrupted_review = True

@@ -268,7 +268,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     
     elif cmd == "siac-url-dialog":
         dialog = UrlImporter(self.parentWindow)
-        if dialog.exec_():
+        if dialog.exec():
             if dialog.chosen_url:
                 prio    = dialog.queue_schedule
                 name    = dialog.get_name()
@@ -284,7 +284,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
 
     elif cmd == "siac-zotero-import":
         dialog = ZoteroImporter(self.parentWindow)
-        if dialog.exec_():
+        if dialog.exec():
             tooltip(f"Created {dialog.total_count} notes.")
 
     elif cmd == "siac-schedule-dialog":
@@ -485,7 +485,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-user-note-queue-picker":
         # show the queue manager dialog
         dialog  = QueuePicker(self.parentWindow)
-        if dialog.exec_():
+        if dialog.exec():
             if dialog.chosen_id() is not None and dialog.chosen_id() > 0:
                 Reader.display(dialog.chosen_id())
             else:
@@ -1056,7 +1056,7 @@ def show_schedule_dialog(parent_window):
     original_sched  = Reader.note.reminder
     nid             = Reader.note_id
     dialog          = ScheduleDialog(Reader.note, parent_window)
-    if dialog.exec_():
+    if dialog.exec():
         schedule = dialog.schedule()
         if schedule != original_sched:
             update_reminder(nid, schedule)

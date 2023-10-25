@@ -427,7 +427,7 @@ class ScheduleEditTab(QWidget):
 
     def cal_btn_clicked(self):
         dialog = CalendarDialog(self)
-        if dialog.exec_():
+        if dialog.exec():
            date = dialog.date
            if date:
                diff = (date - datetime.today().date()).days

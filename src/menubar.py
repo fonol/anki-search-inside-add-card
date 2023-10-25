@@ -56,7 +56,7 @@ class Menu():
     def import_zotero(self):
         dialog = ZoteroImporter(mw.app.activeWindow())
 
-        if dialog.exec_():
+        if dialog.exec():
             tooltip(f"Created {dialog.total_count} notes.")
 
     # def import_web(self):
@@ -71,13 +71,13 @@ class Menu():
         d = NoteImporterDialog(mw.app.activeWindow())
         d.show()
         d.raise_()
-        #if dialog.exec_():
+        #if dialog.exec():
 
     def import_youtube(self):
         active_win = mw.app.activeWindow()
         dialog = QuickYoutubeImport(active_win)
 
-        if dialog.exec_():
+        if dialog.exec():
             title   = dialog.youtube_title
             channel = dialog.youtube_channel
             url     = dialog.youtube_url

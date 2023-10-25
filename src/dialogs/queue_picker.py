@@ -539,7 +539,7 @@ class TagsTab(QWidget):
             return
         dialog = PriorityDialog(self, None)
 
-        if dialog.exec_():
+        if dialog.exec():
             empty_priority_list()
             prio = dialog.value
             for n in notes:
@@ -557,7 +557,7 @@ class TagsTab(QWidget):
             return
         dialog = PriorityDialog(self, None)
 
-        if dialog.exec_():
+        if dialog.exec():
             prio = dialog.value
             for n in notes:
                 update_priority_list(n.id, prio)
@@ -1092,7 +1092,7 @@ class QueueWidget(QWidget):
     def tag_assign_clicked(self):
         selected    = [int(nid) for nid in self.selected()]
         dialog      = TagAssignDialog(self, selected)
-        if dialog.exec_():
+        if dialog.exec():
             chosen = dialog.tags
             if chosen is not None and len(chosen.strip()) > 0:
                 tags = [t for t in chosen.split(" ") if len(t.strip()) > 0]
@@ -1229,7 +1229,7 @@ class NoteList(QTableWidget):
 
     def add_btn_clicked(self, id):
         dialog = PriorityDialog(self, id)
-        if dialog.exec_():
+        if dialog.exec():
             prio = dialog.value
             update_priority_list(id, prio)
             self.parent.parent.refresh_queue_list()
