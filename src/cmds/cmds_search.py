@@ -27,7 +27,7 @@ def handle(editor, cmd: str) -> bool:
     elif cmd.startswith("siac-r-srch-db "):
         # bottom search input used, so trigger either an add-on search or a browser search
         if get_index().searchbar_mode.lower() == "add-on":
-            rerender_info(editor, cmd[15:])
+            rerender_info(editor, cmd[15:])  # "siac-r-srch-db " is exactly 15 characters long
         else:
             rerender_info(editor, cmd[15:], searchDB = True)
         return True
@@ -72,7 +72,7 @@ def rerender_info(editor: aqt.editor.Editor, content: str = "", searchDB: bool =
         UI.empty_result("No results found for empty string")
 
     decks = []
-    if "~" in content:
+    if "~" in content or len(content) - content.index('~ ') == 2:
         decks = [s.strip() for s in content[:content.index('~')].split(',') if s.strip() != ""]
 
     if searchDB:

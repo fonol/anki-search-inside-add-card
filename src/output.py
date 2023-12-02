@@ -728,7 +728,8 @@ class UI:
     def empty_result(cls, message: str):
         if cls._editor is None or cls._editor.web is None:
             return
-        cls._editor.web.eval("setSearchResults(null, '', `%s`, null, 1, 1, 50, %s)" % (message, len(cls.previous_calls) + 1))
+        # The line below kills anki, can't figure out why it happens when web.eval calls any javascript
+        # cls._editor.web.eval("setSearchResults(null, '', `%s`, null, 1, 1, 50, %s)" % (message, len(cls.previous_calls) + 1))
 
     @classmethod
     def show_search_modal(cls, on_enter_attr: JS, header: HTML):
