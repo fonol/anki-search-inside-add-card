@@ -30,6 +30,7 @@ from aqt.editor import Editor, EditorWebView
 from aqt.browser import Browser
 from aqt.tagedit import TagEdit
 from aqt.editcurrent import EditCurrent
+from aqt.theme import theme_manager
 import aqt.stats
 import os
 import json
@@ -73,7 +74,7 @@ def init_addon():
         state.dev_mode = True
 
     if hasattr(mw.pm, "night_mode"):
-        state.set_nightmode(mw.pm.night_mode())
+        state.set_nightmode(theme_manager.night_mode)
 
     gui_hooks.reviewer_did_answer_card.append(on_reviewer_did_answer)
 

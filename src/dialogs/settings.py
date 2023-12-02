@@ -19,7 +19,7 @@ class SettingsDialog(QDialog):
 
         self.setWindowTitle("SIAC Settings")
         self.setup_ui()
-        self.exec_()
+        self.exec()
 
     def setup_ui(self):
         self.vbox             = QVBoxLayout()
@@ -40,7 +40,7 @@ class SettingsDialog(QDialog):
         self.tabs.addTab(self.tab_markdown,     "Markdown")
 
         # Cancel and Okay Buttons
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok|QDialogButtonBox.StandardButton.Close)
         self.buttonBox.accepted.connect(self.accept_clicked)
         self.buttonBox.rejected.connect(self.reject)
 
