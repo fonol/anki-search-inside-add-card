@@ -39,14 +39,14 @@ def open_or_switch_to_editor(function):
         aqt.dialogs.open("AddCards", mw)
         win = mw.app.activeWindow()
         if isinstance(win, aqt.addcards.AddCards):
-            if isMac:
+            if is_mac:
                 win.raise_()
             else:
                 win.showMaximized()
         else:
             win = aqt.dialogs._dialogs["AddCards"]
             if win:
-                if isMac:
+                if is_mac:
                     win[1].raise_()
                 else:
                     win[1].showMaximized()

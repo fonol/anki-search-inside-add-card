@@ -22,6 +22,7 @@ import math
 import aqt
 from datetime import datetime
 from aqt import mw
+from aqt.theme import theme_manager
 from aqt.utils import tooltip
 import typing
 from typing import Tuple, List, Optional, Dict, Callable
@@ -1073,7 +1074,7 @@ class UI:
             for ix, c in enumerate(changes):
                 html += f"{ix + 1}. {c}<br>"
         notes.append(("Changelog", html))
-        nm      = mw.pm.night_mode()
+        nm      = theme_manager.night_mode
 
 
         chr_v   = utility.misc.chromium_version()
