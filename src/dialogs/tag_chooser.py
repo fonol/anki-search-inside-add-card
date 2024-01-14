@@ -79,7 +79,7 @@ class TagChooserDialog(QDialog):
         tags = get_all_tags()
         if tags:
             completer = QCompleter(tags)
-            completer.setCaseSensitivity(Qt.CaseInsensitive)
+            completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
             self.tag.setCompleter(completer)
         vbox.addWidget(self.tag)
         if self.tag_string is not None:
@@ -117,9 +117,9 @@ class TagChooserDialog(QDialog):
             self.tag.setText(" ".join(existing))
 
     def tag_cb_changed(self, state):
-        self.tree.include_anki_tags = (state == Qt.Checked)
+        self.tree.include_anki_tags = (state == Qt.CheckState.Checked)
         self.tree.rebuild_tree()
-        update_config("notes.editor.include_anki_tags", state == Qt.Checked)
+        update_config("notes.editor.include_anki_tags", state == Qt.CheckState.Checked)
 
     def on_tag_sort_change(self, new_sort: str):
         self.tree.sort = new_sort.lower()

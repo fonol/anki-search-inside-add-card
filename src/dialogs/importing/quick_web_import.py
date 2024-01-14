@@ -302,8 +302,8 @@ class QuickImportBrowserTabs(QTabWidget):
 
         self._add_tab()
         self.addTab(QWidget(), "+")
-        if self.tabBar().tabButton(1, QTabBar.RightSide) is not None:
-            self.tabBar().tabButton(1, QTabBar.RightSide).resize(0,0)
+        if self.tabBar().tabButton(1, QTabBar.ButtonPosition.RightSide) is not None:
+            self.tabBar().tabButton(1, QTabBar.ButtonPosition.RightSide).resize(0,0)
 
         self.currentChanged.connect(self._tab_clicked)
         self.tabCloseRequested.connect(self._tab_close)
@@ -440,11 +440,11 @@ class UrlInput(QLineEdit):
         self.cb = cb
         self.suggestions = []
         self.completer = QCompleter(self.suggestions, self)
-        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.setCompleter(self.completer)
 
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key_Enter or e.key() == Qt.Key_Return:
+        if e.key() == Qt.Key.Key_Enter or e.key() == Qt.Key.Key_Return:
             self.cb()
             self._refresh_completer()
             e.accept()
@@ -456,7 +456,7 @@ class UrlInput(QLineEdit):
         if len(t) > 0 and not t in self.suggestions:
             self.suggestions.append(t)
             self.completer = QCompleter(self.suggestions, self)
-            self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+            self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
             self.setCompleter(self.completer)
 
     def mousePressEvent(self, e):
@@ -471,7 +471,7 @@ class SuppressLineEdit(QLineEdit):
         QLineEdit.__init__(self, parent)
 
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key_Enter or e.key() == Qt.Key_Return:
+        if e.key() == Qt.Key.Key_Enter or e.key() == Qt.Key.Key_Return:
             e.accept()
         else:
             QLineEdit.keyPressEvent(self, e)
@@ -501,8 +501,8 @@ class SearchBar(QWidget):
         self.input.textChanged.connect(self.on_search_forward)
         self.input.returnPressed.connect(self.on_search_forward)
 
-        QShortcut(QKeySequence.FindNext, self, activated=next_btn.animateClick)
-        QShortcut(QKeySequence.FindPrevious, self, activated=prev_btn.animateClick)
+        QShortcut(QKeySequence.StandardKey.FindNext, self, activated=next_btn.animateClick)
+        QShortcut(QKeySequence.StandardKey.FindPrevious, self, activated=prev_btn.animateClick)
         #QShortcut(QKeySequence(get_config_value(shortcuts.quickweb.search_on_page)), self.input, activated=self.close_sig)
 
     def signal_not_found(self):

@@ -727,7 +727,7 @@ class NoteSelector(QWidget):
         list.resizeRowsToContents()
 
     def cb_clicked(self, ix, nid, state):
-        if state == Qt.Checked:
+        if state == Qt.CheckState.Checked:
             self.selected_ids.append(nid)
             self.selected_notes.append([n for n in self._current if n.id == nid][0])
         else:
@@ -737,4 +737,4 @@ class NoteSelector(QWidget):
         self.refresh()
 
     def cb_outer_clicked(self, cb):
-        cb.setChecked(not cb.checkState() == Qt.Checked)
+        cb.setChecked(not cb.checkState() == Qt.CheckState.Checked)

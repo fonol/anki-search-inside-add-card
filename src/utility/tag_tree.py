@@ -59,7 +59,7 @@ class TagTree(QTreeWidget):
         self.setMinimumWidth(220)
 
         if self.knowledge_tree:
-            self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+            self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
             self.setColumnCount(2)
             self.setHeaderLabels(["Item", "Deck"])
             self.setHeaderHidden(False)

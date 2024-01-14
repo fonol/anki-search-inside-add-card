@@ -587,7 +587,7 @@ class CreateTab(QWidget):
         tags = get_all_tags()
         if tags:
             completer = QCompleter(tags)
-            completer.setCaseSensitivity(Qt.CaseInsensitive)
+            completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
             self.tag.setCompleter(completer)
         tag_hbox.addWidget(self.tag)
         if self.parent.tag_prefill is not None:
@@ -1108,7 +1108,7 @@ class PriorityListModel(QStandardItemModel):
                 rem_btn.setStyleSheet("border: 1px solid darkgrey; border-style: outset; font-size: 10px; background: #313233; color: white; margin: 0px; padding: 3px;")
             else:
                 rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; margin: 0px; padding: 3px;")
-            rem_btn.setCursor(Qt.PointingHandCursor)
+            rem_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             rem_btn.setMinimumHeight(18)
             rem_btn.clicked.connect(functools.partial(self.parent.on_remove_clicked, self.item(row).data()))
 
@@ -1152,19 +1152,19 @@ class HTMLDelegate(QStyledItemDelegate):
 
         style = QApplication.style() if options.widget is None \
             else options.widget.style()
-        style.drawControl(QStyle.CE_ItemViewItem, options, painter)
+        style.drawControl(QStyle.ControlElement.CE_ItemViewItem, options, painter)
 
         ctx = QAbstractTextDocumentLayout.PaintContext()
 
-        if option.state & QStyle.State_Selected:
-            ctx.palette.setColor(QPalette.Text, option.palette.color(
-                QPalette.Active, QPalette.HighlightedText))
+        if option.state & QStyle.StateFlag.State_Selected:
+            ctx.palette.setColor(QPalette.ColorRole.Text, option.palette.color(
+                QPalette.ColorGroup.Active, QPalette.ColorRole.HighlightedText))
         else:
-            ctx.palette.setColor(QPalette.Text, option.palette.color(
-                QPalette.Active, QPalette.Text))
+            ctx.palette.setColor(QPalette.ColorRole.Text, option.palette.color(
+                QPalette.ColorGroup.Active, QPalette.ColorRole.Text))
 
         textRect = style.subElementRect(
-            QStyle.SE_ItemViewItemText, options)
+            QStyle.SubElement.SE_ItemViewItemText, options)
 
         painter.translate(textRect.topLeft())
         painter.setClipRect(textRect.translated(-textRect.topLeft()))
@@ -1244,8 +1244,8 @@ class FlowLayout(QLayout):
 
         for item in self.itemList:
             wid = item.widget()
-            spaceX = self.spacing() + wid.style().layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal)
-            spaceY = self.spacing() + wid.style().layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical)
+            spaceX = self.spacing() + wid.style().layoutSpacing(QSizePolicy.ControlType.PushButton, QSizePolicy.ControlType.PushButton, Qt.Orientation.Horizontal)
+            spaceY = self.spacing() + wid.style().layoutSpacing(QSizePolicy.ControlType.PushButton, QSizePolicy.ControlType.PushButton, Qt.Orientation.Vertical)
             nextX = x + item.sizeHint().width() + spaceX
             if nextX - spaceX > rect.right() and lineHeight > 0:
                 x = rect.x()

@@ -309,7 +309,7 @@ def img_src_base_path():
 def qlabel_image(icon_name, w, h):
     """ Return a QLabel with the given icon as pixmap. """
     lbl     = QLabel()
-    pixmap  = QPixmap(get_web_folder_path() + f"icons/{icon_name}").scaled(QSize(w, h), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    pixmap  = QPixmap(get_web_folder_path() + f"icons/{icon_name}").scaled(QSize(w, h), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
     lbl.setPixmap(pixmap)
     return lbl
 
@@ -339,9 +339,9 @@ def url_to_pdf(url, output_path, cb_after_finish = None):
 
     def save_pdf(finished):
         printer = QPrinter()
-        printer.setPageMargins(10, 10, 10, 10, QPrinter.Millimeter)
+        printer.setPageMargins(10, 10, 10, 10, QPrinter.Unit.Millimeter)
         printer.setPageSize(QPrinter.A3)
-        printer.setPageOrientation(QPageLayout.Portrait)
+        printer.setPageOrientation(QPageLayout.Orientation.Portrait)
         temp.page().printToPdf(output_path, printer.pageLayout())
 
     temp.loadFinished.connect(save_pdf)
