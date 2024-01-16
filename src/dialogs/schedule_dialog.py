@@ -42,7 +42,7 @@ class ScheduleDialog(QDialog):
 
         c_lbl = QLabel(self)
         c_icon   = "calendar_night.png" if state.is_nightmode() else "calendar.png"
-        c_pixmap  = QPixmap(utility.misc.get_web_folder_path() + f"icons/{c_icon}").scaled(QSize(35, 35), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        c_pixmap  = QPixmap(utility.misc.get_web_folder_path() + f"icons/{c_icon}").scaled(QSize(35, 35), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         c_lbl.setPixmap(c_pixmap)
         hbox    = QHBoxLayout()
         hbox.addStretch()

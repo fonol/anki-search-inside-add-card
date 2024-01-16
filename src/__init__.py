@@ -627,7 +627,7 @@ def tag_edit_keypress(self, evt, _old):
     if not isinstance(win, AddCards):
         return
     modifiers = evt.modifiers()
-    if modifiers == Qt.ControlModifier or modifiers == Qt.AltModifier or modifiers == Qt.MetaModifier:
+    if modifiers == Qt.KeyboardModifier.ControlModifier or modifiers == Qt.KeyboardModifier.AltModifier or modifiers == Qt.KeyboardModifier.MetaModifier:
         return
     index = get_index()
     if UI.frozen:

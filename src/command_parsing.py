@@ -670,7 +670,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
     elif cmd == "siac-timer-elapsed":
         # timer has elapsed, show a modal
         d = TimerElapsedDialog(aqt.mw.app.activeWindow())
-        if d.exec_():
+        if d.exec():
             if d.restart is not None:
                 UI.js(f"startTimer({d.restart});")
 
@@ -824,7 +824,7 @@ def expanded_on_bridge_cmd(handled: Tuple[bool, Any], cmd: str, self: Any) -> Tu
         source = Reader.note.source
         tooltip("Opening external file:<br>" + source)
         try:
-            QDesktopServices.openUrl(QUrl(source, QUrl.TolerantMode))
+            QDesktopServices.openUrl(QUrl(source, QUrl.ParsingMode.TolerantMode))
         except:
             tooltip("Failed to open external file:<br>" + source)
 

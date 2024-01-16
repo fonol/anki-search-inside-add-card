@@ -664,7 +664,7 @@ class ScheduleMWidget(QWidget):
             item.setTextAlignment(Qt.AlignmentFlag.AlignTop)
             self.table.setItem(ix, 0, item)
             if ix == 0 and today_stmp == due_date:
-                self.table.item(ix, 0).setForeground(Qt.blue if not state.is_nightmode() else Qt.cyan)
+                self.table.item(ix, 0).setForeground(Qt.GlobalColor.blue if not state.is_nightmode() else Qt.GlobalColor.cyan)
                 self.table.item(ix, 0).setText("Today")
             elif (datetime.today().date() + timedelta(days=1)).strftime("%Y-%m-%d") == due_date:
                 self.table.item(ix, 0).setText(f"{pretty}\n(Tomorrow)")
@@ -1018,7 +1018,7 @@ class QueueWidget(QWidget):
     def selected(self):
         r = []
         for ix in range(self.t_view_left.rowCount()):
-            if self.t_view_left.cellWidget(ix, 0).layout().itemAt(0).widget().checkState() == Qt.Checked:
+            if self.t_view_left.cellWidget(ix, 0).layout().itemAt(0).widget().checkState() == Qt.CheckState.Checked:
                 r.append(self.t_view_left.item(ix, 1).data(Qt.ItemDataRole.UserRole))
         return r
 
@@ -1054,8 +1054,8 @@ class QueueWidget(QWidget):
             tooltip("Select some items first")
 
     def empty_clicked(self):
-        reply = QMessageBox.question(self, 'Empty Queue', "This will remove all items from the queue.<br> Are you sure?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        reply = QMessageBox.question(self, 'Empty Queue', "This will remove all items from the queue.<br> Are you sure?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             empty_priority_list()
             self.refresh_queue_list()
             self.tabs.currentWidget().refresh()
@@ -1063,8 +1063,8 @@ class QueueWidget(QWidget):
     def shuffle_clicked(self):
         reply = QMessageBox.question(self, 'Shuffle Queue', """This will change the current order of all items in the queue.
                                             <br>Priorities and schedules will stay the same.<br>
-                                            Are you sure?<br>""".replace("\n", ""), QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+                                            Are you sure?<br>""".replace("\n", ""), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             shuffle_queue()
             self.refresh_queue_list()
             self.tabs.currentWidget().refresh()
@@ -1073,8 +1073,8 @@ class QueueWidget(QWidget):
         reply = QMessageBox.question(self, 'Spread Priorities', """
                                             This will spread the current priorities between 1 and 100.<br>
                                             Are you sure?<br>
-                                            """.replace("\n", ""), QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+                                            """.replace("\n", ""), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             spread_priorities()
             self.refresh_queue_list()
             self.tabs.currentWidget().refresh()
@@ -1083,8 +1083,8 @@ class QueueWidget(QWidget):
         reply = QMessageBox.question(self, 'Random Priorities', """
                                             This will change the priorities of all items to a random value between 1 and 100.<br>
                                             Are you sure?<br>
-                                            """.replace("\n", ""), QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+                                            """.replace("\n", ""), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             assign_random_priorities()
             self.refresh_queue_list()
             self.tabs.currentWidget().refresh()
@@ -1125,7 +1125,7 @@ class QueueWidget(QWidget):
 
     def cb_outer_clicked(self, row):
         widget = self.t_view_left.cellWidget(row, 0).layout().itemAt(0).widget()
-        widget.setChecked(not widget.checkState() == Qt.Checked)
+        widget.setChecked(not widget.checkState() == Qt.CheckState.Checked)
 
 
     def display_note_modal(self, id):
@@ -1213,8 +1213,8 @@ class NoteList(QTableWidget):
 
     def del_btn_clicked(self, id):
 
-        reply = QMessageBox.question(self, 'Delete Note?', "This will irreversibly delete the chosen note. \nAre you sure?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
-        if reply == QMessageBox.Yes:
+        reply = QMessageBox.question(self, 'Delete Note?', "This will irreversibly delete the chosen note. \nAre you sure?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel)
+        if reply == QMessageBox.StandardButton.Yes:
             delete_note(id)
             if get_index() is not None:
                 get_index().deleteNote(id)
