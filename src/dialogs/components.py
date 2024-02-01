@@ -52,7 +52,7 @@ class QtPrioritySlider(QWidget):
         vbox                    = QVBoxLayout()
         vbox.setContentsMargins(7,7,7,7)
 
-        self.slider             = QSlider(Qt.Horizontal)
+        self.slider             = QSlider(Qt.Orientation.Horizontal)
 
         if prio_default is not None and prio_default >= 0:
             self.slider.setValue(prio_default)
@@ -427,7 +427,7 @@ class ScheduleEditTab(QWidget):
 
     def cal_btn_clicked(self):
         dialog = CalendarDialog(self)
-        if dialog.exec_():
+        if dialog.exec():
            date = dialog.date
            if date:
                diff = (date - datetime.today().date()).days
@@ -727,7 +727,7 @@ class NoteSelector(QWidget):
         list.resizeRowsToContents()
 
     def cb_clicked(self, ix, nid, state):
-        if state == Qt.Checked:
+        if state == Qt.CheckState.Checked:
             self.selected_ids.append(nid)
             self.selected_notes.append([n for n in self._current if n.id == nid][0])
         else:
@@ -737,4 +737,4 @@ class NoteSelector(QWidget):
         self.refresh()
 
     def cb_outer_clicked(self, cb):
-        cb.setChecked(not cb.checkState() == Qt.Checked)
+        cb.setChecked(not cb.checkState() == Qt.CheckState.Checked)

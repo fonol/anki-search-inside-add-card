@@ -29,7 +29,7 @@ class PostponeDialog(QDialog):
     """ Values can be 0 (later today), or 1+ (in x days) """
 
     def __init__(self, parent, note_id):
-        QDialog.__init__(self, parent, Qt.FramelessWindowHint)
+        QDialog.__init__(self, parent, Qt.WindowType.FramelessWindowHint)
         self.note_id    = note_id
         self.value      = 0    
         self.setup_ui()
@@ -75,7 +75,7 @@ class PostponeDialog(QDialog):
         self.layout.addWidget(self.later_rb)
 
         icon = "calendar_night" if state.is_nightmode() else "calendar"
-        pmap = QPixmap(utility.misc.get_web_folder_path() + f"icons/{icon}").scaled(QSize(13, 13), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        pmap = QPixmap(utility.misc.get_web_folder_path() + f"icons/{icon}").scaled(QSize(13, 13), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
 
         # Tomorrow radio button + label
         t_hb = QHBoxLayout()

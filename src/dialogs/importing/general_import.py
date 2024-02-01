@@ -34,10 +34,10 @@ class NoteImporterDialog(QDialog):
     ##########################################################################
 
     def choose_file_and_add_to_ignore_list(self):
-        self.choose_and_add_to_ignore_list(mode=QFileDialog.AnyFile)
+        self.choose_and_add_to_ignore_list(mode=QFileDialog.FileMode.AnyFile)
 
     def choose_dir_and_add_to_ignore_list(self):
-        self.choose_and_add_to_ignore_list(mode=QFileDialog.Directory)
+        self.choose_and_add_to_ignore_list(mode=QFileDialog.FileMode.Directory)
 
     def choose_and_add_to_ignore_list(self, mode):
         # todo: add ignored directories to settings and then load for future multiple use
@@ -49,7 +49,7 @@ class NoteImporterDialog(QDialog):
 
         self.file_dialog = QFileDialog(parent=self, directory=path)
         self.file_dialog.setFileMode(mode)
-        if self.file_dialog.exec_():
+        if self.file_dialog.exec():
             fileNames = QFileDialog.selectedFiles(self.file_dialog)
             if fileNames:
                 for file in fileNames:
@@ -127,7 +127,7 @@ class Ui_OrganiserDialog(object):
     def setupUi(self, OrganiserDialog):
         OrganiserDialog.setObjectName("OrganiserDialog")
         OrganiserDialog.resize(525, 536)
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Policy.Minimum)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(OrganiserDialog.sizePolicy().hasHeightForWidth())

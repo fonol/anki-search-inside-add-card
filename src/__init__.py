@@ -21,7 +21,7 @@ from aqt import mw, gui_hooks
 from aqt.qt import *
 from anki.hooks import wrap, addHook
 import aqt
-from anki.utils import isMac, isLin
+from anki.utils import is_mac, is_lin
 import aqt.webview
 from aqt.addcards import AddCards
 from anki.notes import Note
@@ -30,6 +30,7 @@ from aqt.editor import Editor, EditorWebView
 from aqt.browser import Browser
 from aqt.tagedit import TagEdit
 from aqt.editcurrent import EditCurrent
+from aqt.theme import theme_manager
 import aqt.stats
 import os
 import json
@@ -73,7 +74,7 @@ def init_addon():
         state.dev_mode = True
 
     if hasattr(mw.pm, "night_mode"):
-        state.set_nightmode(mw.pm.night_mode())
+        state.set_nightmode(theme_manager.night_mode)
 
     gui_hooks.reviewer_did_answer_card.append(on_reviewer_did_answer)
 
@@ -626,7 +627,7 @@ def tag_edit_keypress(self, evt, _old):
     if not isinstance(win, AddCards):
         return
     modifiers = evt.modifiers()
-    if modifiers == Qt.ControlModifier or modifiers == Qt.AltModifier or modifiers == Qt.MetaModifier:
+    if modifiers == Qt.KeyboardModifier.ControlModifier or modifiers == Qt.KeyboardModifier.AltModifier or modifiers == Qt.KeyboardModifier.MetaModifier:
         return
     index = get_index()
     if UI.frozen:

@@ -443,7 +443,7 @@ class CreateTab(QWidget):
         self.text.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Expanding)
-        self.text.setFrameStyle(QFrame.StyledPanel | QFrame.Shadow.Sunken)
+        self.text.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Sunken)
         self.text.setLineWidth(2)
         if hasattr(self.text, "setTabStopDistance"):
             self.text.setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 4)
@@ -587,7 +587,7 @@ class CreateTab(QWidget):
         tags = get_all_tags()
         if tags:
             completer = QCompleter(tags)
-            completer.setCaseSensitivity(Qt.CaseInsensitive)
+            completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
             self.tag.setCompleter(completer)
         tag_hbox.addWidget(self.tag)
         if self.parent.tag_prefill is not None:
@@ -719,7 +719,7 @@ class CreateTab(QWidget):
     def on_file_clicked(self):
         dialog = ExternalFile(self)
 
-        if dialog.exec_():
+        if dialog.exec():
             path = dialog.chosen_file
             if path is not None and len(path.strip())> 0:
                 self.source.setText(path)
@@ -747,7 +747,7 @@ class CreateTab(QWidget):
 
     def on_pdf_from_url_clicked(self):
         dialog = UrlImporter(self, show_schedule=False)
-        if dialog.exec_():
+        if dialog.exec():
             if dialog.chosen_url is not None and len(dialog.chosen_url.strip()) > 0:
                 name = dialog.get_name()
                 path = get_config_value_or_default("pdfUrlImportSavePath", "")
@@ -780,7 +780,7 @@ class CreateTab(QWidget):
     def on_tag_chooser_clicked(self):
         dialog = TagChooserDialog(self.tag.text(), self)
 
-        if dialog.exec_():
+        if dialog.exec():
             tag = dialog.chosen_tag
             if tag is not None and len(tag.strip()) > 0:
                 self.tag.setText(tag)
@@ -788,7 +788,7 @@ class CreateTab(QWidget):
 
     def on_url_clicked(self):
         dialog = URLInputDialog(self)
-        if dialog.exec_():
+        if dialog.exec():
             if dialog.chosen_url is not None and len(dialog.chosen_url.strip()) > 0:
                 text = import_webpage(dialog.chosen_url, inline_images=False)
                 if text is None:
@@ -918,18 +918,18 @@ class PriorityTab(QWidget):
 
             item = QStandardItem(text)
             item.setData(QVariant(pitem.id))
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDragEnabled)
+            item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsDragEnabled)
             model.setItem(c, 0, item)
             titem = QStandardItem(tags)
-            titem.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDragEnabled)
+            titem.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsDragEnabled)
             model.setItem(c, 1, titem)
             oitem = QStandardItem()
-            oitem.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDragEnabled)
+            oitem.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsDragEnabled)
             model.setItem(c, 2, oitem)
 
-        model.setHeaderData(0, Qt.Horizontal, "Title")
-        model.setHeaderData(1, Qt.Horizontal, "Tags")
-        model.setHeaderData(2, Qt.Horizontal, "Actions")
+        model.setHeaderData(0, Qt.Orientation.Horizontal, "Title")
+        model.setHeaderData(1, Qt.Orientation.Horizontal, "Tags")
+        model.setHeaderData(2, Qt.Orientation.Horizontal, "Actions")
         return model
 
     def set_remove_btns(self, priority_list):
@@ -1024,7 +1024,7 @@ class SettingsTab(QWidget):
 
         qs = QScrollArea()
         qs.setStyleSheet(""" QScrollArea { background-color: transparent; } """)
-        qs.setFrameShape(QFrame.NoFrame)
+        qs.setFrameShape(QFrame.Shape.NoFrame)
         qs.setWidgetResizable(True)
         qs.setWidget(container)
         qs.setMaximumHeight(300)
@@ -1108,7 +1108,7 @@ class PriorityListModel(QStandardItemModel):
                 rem_btn.setStyleSheet("border: 1px solid darkgrey; border-style: outset; font-size: 10px; background: #313233; color: white; margin: 0px; padding: 3px;")
             else:
                 rem_btn.setStyleSheet("border: 1px solid black; border-style: outset; font-size: 10px; background: white; margin: 0px; padding: 3px;")
-            rem_btn.setCursor(Qt.PointingHandCursor)
+            rem_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             rem_btn.setMinimumHeight(18)
             rem_btn.clicked.connect(functools.partial(self.parent.on_remove_clicked, self.item(row).data()))
 
@@ -1152,19 +1152,19 @@ class HTMLDelegate(QStyledItemDelegate):
 
         style = QApplication.style() if options.widget is None \
             else options.widget.style()
-        style.drawControl(QStyle.CE_ItemViewItem, options, painter)
+        style.drawControl(QStyle.ControlElement.CE_ItemViewItem, options, painter)
 
         ctx = QAbstractTextDocumentLayout.PaintContext()
 
-        if option.state & QStyle.State_Selected:
-            ctx.palette.setColor(QPalette.Text, option.palette.color(
-                QPalette.Active, QPalette.HighlightedText))
+        if option.state & QStyle.StateFlag.State_Selected:
+            ctx.palette.setColor(QPalette.ColorRole.Text, option.palette.color(
+                QPalette.ColorGroup.Active, QPalette.ColorRole.HighlightedText))
         else:
-            ctx.palette.setColor(QPalette.Text, option.palette.color(
-                QPalette.Active, QPalette.Text))
+            ctx.palette.setColor(QPalette.ColorRole.Text, option.palette.color(
+                QPalette.ColorGroup.Active, QPalette.ColorRole.Text))
 
         textRect = style.subElementRect(
-            QStyle.SE_ItemViewItemText, options)
+            QStyle.SubElement.SE_ItemViewItemText, options)
 
         painter.translate(textRect.topLeft())
         painter.setClipRect(textRect.translated(-textRect.topLeft()))
@@ -1244,8 +1244,8 @@ class FlowLayout(QLayout):
 
         for item in self.itemList:
             wid = item.widget()
-            spaceX = self.spacing() + wid.style().layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal)
-            spaceY = self.spacing() + wid.style().layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical)
+            spaceX = self.spacing() + wid.style().layoutSpacing(QSizePolicy.ControlType.PushButton, QSizePolicy.ControlType.PushButton, Qt.Orientation.Horizontal)
+            spaceY = self.spacing() + wid.style().layoutSpacing(QSizePolicy.ControlType.PushButton, QSizePolicy.ControlType.PushButton, Qt.Orientation.Vertical)
             nextX = x + item.sizeHint().width() + spaceX
             if nextX - spaceX > rect.right() and lineHeight > 0:
                 x = rect.x()

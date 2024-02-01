@@ -703,7 +703,7 @@ class Reader:
         note        = cls.note
         done_dialog = DoneDialog(cls._editor.parentWindow, cls.note_id)
 
-        if done_dialog.exec_():
+        if done_dialog.exec():
             new_priority        = done_dialog.priority
             new_schedule        = done_dialog.schedule
             sched_has_changed   = done_dialog.schedule_has_changed
@@ -757,7 +757,7 @@ class Reader:
     @classmethod
     def show_prio_dialog(cls):
         dialog          = PriorityDialog(cls._editor.parentWindow, cls.note_id)
-        if dialog.exec_():
+        if dialog.exec():
             initial = get_priority(cls.note_id)
             prio    = dialog.value
 
@@ -779,7 +779,7 @@ class Reader:
             return
 
         dialog          = PostponeDialog(cls._editor.parentWindow, cls.note_id)
-        if dialog.exec_():
+        if dialog.exec():
             # 1. option: later today (move back in queue)
             if dialog.value == 0:
                 qlen = len(_get_priority_list())
@@ -1420,7 +1420,7 @@ class Reader:
 
         fields = [f['name'] for f in cls._editor.note.model()['flds']]
         dialog = TextExtractDialog(cls._editor.parentWindow, fields, text)
-        if dialog.exec_():
+        if dialog.exec():
             ix = dialog.chosen_field_ix
             js = f"SIAC.Fields.appendToFieldHtml({ix}, `{dialog.selection.replace('`', '')}`);"
             if TextExtractDialog.highlight_ix > 0:

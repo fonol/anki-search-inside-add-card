@@ -22,6 +22,7 @@ import math
 import aqt
 from datetime import datetime
 from aqt import mw
+from aqt.theme import theme_manager
 from aqt.utils import tooltip
 import typing
 from typing import Tuple, List, Optional, Dict, Callable
@@ -728,7 +729,8 @@ class UI:
     def empty_result(cls, message: str):
         if cls._editor is None or cls._editor.web is None:
             return
-        cls._editor.web.eval("setSearchResults(null, '', `%s`, null, 1, 1, 50, %s)" % (message, len(cls.previous_calls) + 1))
+        # The line below kills anki, can't figure out why it happens when web.eval calls any javascript
+        # cls._editor.web.eval("setSearchResults(null, '', `%s`, null, 1, 1, 50, %s)" % (message, len(cls.previous_calls) + 1))
 
     @classmethod
     def show_search_modal(cls, on_enter_attr: JS, header: HTML):
@@ -1072,7 +1074,7 @@ class UI:
             for ix, c in enumerate(changes):
                 html += f"{ix + 1}. {c}<br>"
         notes.append(("Changelog", html))
-        nm      = mw.pm.night_mode()
+        nm      = theme_manager.night_mode
 
 
         chr_v   = utility.misc.chromium_version()

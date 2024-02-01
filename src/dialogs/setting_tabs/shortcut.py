@@ -163,7 +163,7 @@ class ManualShortcut(QDialog):
 
         self.shortcut_item = shortcut_item
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.accept_clicked)
         button_box.rejected.connect(self.reject)
 
@@ -179,7 +179,7 @@ class ManualShortcut(QDialog):
 
     def __call__(self):
         self.line_edit.setText(self.shortcut_item.current_shortcut)
-        self.exec_()
+        self.exec()
 
     def accept_clicked(self):
         # TODO: ugly, check for stupid user input
@@ -214,7 +214,7 @@ class GrabKeyDialog(QDialog):
         self.extra = None
         self.new_shortcut = ""
 
-        self.exec_()
+        self.exec()
 
 
     def setup_ui(self):
@@ -229,29 +229,29 @@ class GrabKeyDialog(QDialog):
         self.active += 1
 
         # some special keys
-        if evt.key() == Qt.Key_Return:
+        if evt.key() == Qt.Key.Key_Return:
             self.extra = "Return"
-        elif evt.key() == Qt.Key_Left:
+        elif evt.key() == Qt.Key.Key_Left:
             self.extra = "Left"
-        elif evt.key() == Qt.Key_Right:
+        elif evt.key() == Qt.Key.Key_Right:
             self.extra = "Right"
-        elif evt.key() == Qt.Key_Up:
+        elif evt.key() == Qt.Key.Key_Up:
             self.extra = "Up"
-        elif evt.key() == Qt.Key_Down:
+        elif evt.key() == Qt.Key.Key_Down:
             self.extra = "Down"
 
         # normal keys
         elif evt.key() > 0 and evt.key() < 127:
             self.extra = chr(evt.key())
-            if evt.key() == Qt.Key_Space:
+            if evt.key() == Qt.Key.Key_Space:
                 self.extra = "Space"
 
         # base keys
-        elif evt.key() == Qt.Key_Control:
+        elif evt.key() == Qt.Key.Key_Control:
             self.ctrl = True
-        elif evt.key() == Qt.Key_Alt:
+        elif evt.key() == Qt.Key.Key_Alt:
             self.alt = True
-        elif evt.key() == Qt.Key_Shift:
+        elif evt.key() == Qt.Key.Key_Shift:
             self.shift = True
 
 

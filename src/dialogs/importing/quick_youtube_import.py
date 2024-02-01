@@ -26,7 +26,7 @@ class QuickYoutubeImport(QDialog):
         vbox = QVBoxLayout()
 
         # Cancel and Okay Buttons
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.button_box.accepted.connect(self.accept_clicked)
         self.button_box.rejected.connect(self.reject)
 
@@ -66,7 +66,7 @@ class QuickYoutubeImport(QDialog):
         image = QPixmap(320, 180)
 
         def _reset_yt_properties():
-            self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
+            self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
             self.last_yt_id = None
             self.label_title.setText("<b>Paste a Youtube video url</b>")
             self.label_author.setText("Youtube Channel")
@@ -122,7 +122,7 @@ class QuickYoutubeImport(QDialog):
             return
 
         self.set_youtube_url(lineedit_text, yt_id)
-        self.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(True)
 
     def set_youtube_url(self, urlstring: str, yt_id: str):
         time = utility.text.get_yt_time(urlstring)
